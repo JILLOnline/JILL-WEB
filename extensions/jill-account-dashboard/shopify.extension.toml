@@ -2,7 +2,7 @@ api_version = "2026-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "My JILL Dashboard"
+name = "My JILL"
 handle = "jill-account-dashboard"
 
 [[extensions.targeting]]
