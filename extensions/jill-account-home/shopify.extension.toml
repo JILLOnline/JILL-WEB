@@ -2,7 +2,7 @@ api_version = "2026-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "JILL Profile Dashboard"
+name = "Profile Manager"
 handle = "jill-account-home"
 
 [[extensions.targeting]]
@@ -10,4 +10,4 @@ target = "customer-account.profile.block.render"
 module = "./src/AccountHome.jsx"
 
 [extensions.capabilities]
-api_access = true
+api_access = false
