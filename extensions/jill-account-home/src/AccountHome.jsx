@@ -248,7 +248,7 @@ function AccountHome({customer}) {
         </s-stack>
       </s-section>
 
-      {requestExists ? (
+      {requestExists && (
         <s-section>
           <s-stack direction="block" gap="base">
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
@@ -271,22 +271,6 @@ function AccountHome({customer}) {
             <s-stack direction="inline" gap="base">
               <s-button href="extension:jill-account-dashboard/">View full request details</s-button>
               <s-button href={`${STORE}/pages/quote`}>Start another request</s-button>
-            </s-stack>
-          </s-stack>
-        </s-section>
-      ) : (
-        <s-section>
-          <s-stack direction="block" gap="base">
-            <s-stack direction="block" gap="small-100">
-              <s-heading>Make this profile work for you</s-heading>
-              <s-text color="subdued">
-                Your first custom request unlocks the useful stuff here: saved theme and color preferences, event dates,
-                fulfillment details, request status, and faster repeat orders.
-              </s-text>
-            </s-stack>
-            <s-stack direction="inline" gap="base">
-              <s-button variant="primary" href={`${STORE}/pages/quote`}>Create my first custom request</s-button>
-              <s-button href={`${STORE}/pages/contact`}>Ask JILL a question</s-button>
             </s-stack>
           </s-stack>
         </s-section>
