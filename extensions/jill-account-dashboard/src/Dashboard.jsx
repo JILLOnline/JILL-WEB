@@ -1,5 +1,6 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
+import {useEffect, useState} from 'preact/hooks';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
@@ -123,18 +124,37 @@ function SavedDetail({label, value}) {
   );
 }
 
-export default async function extension() {
-  let customer = null;
-  try {
-    customer = await loadData();
-  } catch (error) {
-    console.warn('JILL dashboard data error', error);
-  }
-
-  render(<Dashboard customer={customer} />, document.body);
+export default function extension() {
+  render(<Dashboard />, document.body);
 }
 
-function Dashboard({customer}) {
+function Dashboard() {
+  const [customer, setCustomer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    loadData()
+      .then((data) => {
+        if (!active) return;
+        setCustomer(data);
+        setLoadError(false);
+      })
+      .catch((error) => {
+        console.warn('JILL dashboard data error', error);
+        if (active) setLoadError(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const meta = metaMap(customer);
   const firstName = customer?.firstName || customer?.displayName?.split(' ')?.[0] || '';
   const subscribed = customer?.emailAddress?.marketingState === 'SUBSCRIBED';
@@ -184,7 +204,17 @@ function Dashboard({customer}) {
           </s-stack>
         </s-section>
 
-        {hasRequest ? (
+        {loadError && (
+          <s-banner tone="info">
+            My JILL is open, but some saved account details could not load right now. You can still use the shortcuts below.
+          </s-banner>
+        )}
+
+        {loading ? (
+          <s-section>
+            <s-text color="subdued">Loading your saved JILL details…</s-text>
+          </s-section>
+        ) : hasRequest ? (
           <s-section>
             <s-stack direction="block" gap="base">
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
@@ -264,7 +294,9 @@ function Dashboard({customer}) {
               <s-link href="shopify:customer-account/orders">View all orders</s-link>
             </s-stack>
 
-            {orders.length ? (
+            {loading ? (
+              <s-text color="subdued">Loading recent orders…</s-text>
+            ) : orders.length ? (
               orders.map((order, index) => (
                 <s-stack key={order.id} direction="block" gap="small-400">
                   {index > 0 && <s-divider />}
