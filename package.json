@@ -1,0 +1,20 @@
+{
+  "name": "jill-web",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "workspaces": [
+    "extensions/*"
+  ],
+  "scripts": {
+    "shopify": "shopify",
+    "link": "shopify app config link",
+    "build": "shopify app build",
+    "dev": "shopify app dev",
+    "info": "shopify app info",
+    "deploy": "shopify app deploy"
+  },
+  "devDependencies": {
+    "shopify": "^4.7.1"
+  }
+}
