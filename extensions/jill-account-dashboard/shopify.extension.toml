@@ -1,0 +1,13 @@
+api_version = "2026-07"
+
+[[extensions]]
+type = "ui_extension"
+name = "My JILL Dashboard"
+handle = "jill-account-dashboard"
+
+[[extensions.targeting]]
+target = "customer-account.page.render"
+module = "./src/Dashboard.jsx"
+
+[extensions.capabilities]
+api_access = true
