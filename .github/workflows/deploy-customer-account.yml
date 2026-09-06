@@ -1,0 +1,78 @@
+name: Deploy JILL customer account
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'extensions/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/deploy-customer-account.yml'
+
+jobs:
+  deploy:
+    name: Deploy customer account extensions
+    runs-on: ubuntu-latest
+    env:
+      SHOPIFY_CLIENT_ID: ebf1a69d82f46619d2f2945faab78afa
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Shopify deployment token
+        id: auth
+        env:
+          TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        shell: bash
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Shopify deployment token is configured."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "SHOPIFY_APP_AUTOMATION_TOKEN is not configured yet; deployment will be skipped safely."
+          fi
+
+      - name: Set up Node.js
+        if: steps.auth.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        if: steps.auth.outputs.ready == 'true'
+        run: npm install
+
+      - name: Pull current JILL Custom Form app configuration
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: >-
+          npx shopify app config link
+          --client-id "$SHOPIFY_CLIENT_ID"
+          --file-name production
+          --force
+
+      - name: Preserve current scopes and add Customer Account scopes
+        if: steps.auth.outputs.ready == 'true'
+        run: node scripts/merge-shopify-scopes.mjs shopify.app.production.toml
+
+      - name: Validate Shopify configuration and extensions
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: npx shopify app config validate --config production
+
+      - name: Deploy JILL customer account extensions
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: >-
+          npx shopify app deploy
+          --config production
+          --allow-updates
+          --source-control-url "$COMMIT_URL"
