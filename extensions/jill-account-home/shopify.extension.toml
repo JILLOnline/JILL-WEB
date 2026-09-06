@@ -2,11 +2,11 @@ api_version = "2026-07"
 
 [[extensions]]
 type = "ui_extension"
-name = "JILL Account Home"
+name = "JILL Profile Dashboard"
 handle = "jill-account-home"
 
 [[extensions.targeting]]
-target = "customer-account.order-index.block.render"
+target = "customer-account.profile.block.render"
 module = "./src/AccountHome.jsx"
 
 [extensions.capabilities]
