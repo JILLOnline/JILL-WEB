@@ -285,95 +285,101 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     const showBottomRail = showAllRewards && !isLast;
 
     return (
-      <s-stack key={`journey-${tier.points}`} direction="block" gap="none">
+      <s-grid
+        key={`journey-${tier.points}`}
+        gridTemplateColumns="32px minmax(0, 1fr)"
+        gap="small-300"
+        blockAlignment="stretch"
+      >
         <s-grid
-          gridTemplateColumns="28px minmax(0, 1fr)"
-          gap="small-200"
-          blockAlignment="stretch"
+          gridTemplateRows="1fr auto 1fr"
+          blockSize="100%"
+          justifyItems="center"
+          alignItems="stretch"
         >
-          <s-grid
-            gridTemplateRows="1fr auto 1fr"
-            blockSize="100%"
-            justifyItems="center"
-            alignItems="stretch"
-          >
-            {showTopRail ? (
-              <s-box
-                inlineSize={2}
-                blockSize="100%"
-                border="base base solid"
-              />
-            ) : (
-              <s-box />
-            )}
-
-            <s-stack direction="inline" justifyContent="center" alignItems="center">
-              <s-icon
-                type={isUnlocked ? 'check-circle-filled' : 'circle'}
-                tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
-                size="small-200"
-              />
+          {showTopRail ? (
+            <s-stack direction="inline" justifyContent="center">
+              <s-box inlineSize={1} blockSize="100%" border="large base solid" />
             </s-stack>
+          ) : (
+            <s-box />
+          )}
 
-            {showBottomRail ? (
-              <s-box
-                inlineSize={2}
-                blockSize="100%"
-                border="base base solid"
-              />
-            ) : (
-              <s-box />
-            )}
-          </s-grid>
+          <s-stack direction="inline" justifyContent="center" alignItems="center">
+            <s-icon
+              type={isUnlocked ? 'check-circle-filled' : 'circle'}
+              tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+              size="small-200"
+            />
+          </s-stack>
 
-          <s-box
-            padding="small-300"
-            background={isUnlocked || isNext ? 'base' : 'subdued'}
-            borderRadius="large"
-            border="base base solid"
-          >
-            <s-stack direction="block" gap="small-200">
-              <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                <s-stack direction="inline" gap="small-200" alignItems="center">
-                  <s-heading>${tier.value} OFF</s-heading>
-                  <s-text color="subdued">${tier.minimum} minimum order</s-text>
-                </s-stack>
-                {isUnlocked ? (
-                  <s-badge tone="success">Unlocked ✓</s-badge>
-                ) : isNext ? (
-                  <s-badge tone="info">Next reward ★</s-badge>
-                ) : (
-                  <s-badge tone="neutral">{tier.points} pts</s-badge>
-                )}
-              </s-stack>
-
-              <s-stack direction="block" gap="small-100">
-                <s-progress
-                  value={progressValue}
-                  max={tier.points}
-                  accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
-                />
-                <s-text type="strong">
-                  {tierProgress} / {tier.points} pts · {isUnlocked ? 'Unlocked' : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
-                </s-text>
-              </s-stack>
-
-              {isUnlocked && !activeCouponCode && !pendingPoints && (
-                <s-button
-                  variant={tier.points === unlocked?.points ? 'primary' : 'secondary'}
-                  onClick={() => handleRedeem(tier)}
-                >
-                  Redeem ${tier.value} OFF
-                </s-button>
-              )}
-
-              {isPendingTier && (
-                <s-text type="strong" tone="info">Creating this reward… ✨</s-text>
-              )}
+          {showBottomRail ? (
+            <s-stack direction="inline" justifyContent="center">
+              <s-box inlineSize={1} blockSize="100%" border="large base solid" />
             </s-stack>
-          </s-box>
+          ) : (
+            <s-box />
+          )}
         </s-grid>
-      </s-stack>
+
+        <s-box
+          padding="small-300"
+          background={isUnlocked || isNext ? 'base' : 'subdued'}
+          borderRadius="large"
+          border="base base solid"
+        >
+          <s-stack direction="block" gap="small-200">
+            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+              <s-stack direction="inline" gap="small-200" alignItems="center">
+                <s-heading>${tier.value} OFF</s-heading>
+                <s-text color="subdued">${tier.minimum} minimum order</s-text>
+              </s-stack>
+              {isUnlocked ? (
+                <s-badge tone="success">Unlocked ✓</s-badge>
+              ) : isNext ? (
+                <s-badge tone="info">Next reward ★</s-badge>
+              ) : (
+                <s-badge tone="neutral">{tier.points} pts</s-badge>
+              )}
+            </s-stack>
+
+            <s-stack direction="block" gap="small-100">
+              <s-progress
+                value={progressValue}
+                max={tier.points}
+                accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
+              />
+              <s-text type="strong">
+                {tierProgress} / {tier.points} pts · {isUnlocked ? 'Unlocked' : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
+              </s-text>
+            </s-stack>
+
+            {isUnlocked && !activeCouponCode && !pendingPoints && (
+              <s-button
+                variant={tier.points === unlocked?.points ? 'primary' : 'secondary'}
+                onClick={() => handleRedeem(tier)}
+              >
+                Redeem ${tier.value} OFF
+              </s-button>
+            )}
+
+            {isPendingTier && (
+              <s-text type="strong" tone="info">Creating this reward… ✨</s-text>
+            )}
+          </s-stack>
+        </s-box>
+      </s-grid>
+    );
+  }
+
+  function rewardConnector() {
+    return (
+      <s-grid gridTemplateColumns="32px minmax(0, 1fr)" gap="small-300">
+        <s-stack direction="inline" justifyContent="center">
+          <s-box inlineSize={1} blockSize={18} border="large base solid" />
+        </s-stack>
+        <s-box blockSize={18} />
+      </s-grid>
     );
   }
 
@@ -390,16 +396,17 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-200">
-              {rewardMilestone(REWARD_TIERS[0], 0)}
-
-              {showAllRewards && (
-                <s-stack direction="block" gap="none">
-                  {REWARD_TIERS.slice(1).map((tier, index) =>
-                    rewardMilestone(tier, REWARD_TIERS[index].points),
-                  )}
-                </s-stack>
-              )}
+            <s-stack direction="block" gap="small-300">
+              <s-stack direction="block" gap="none">
+                {(showAllRewards ? REWARD_TIERS : REWARD_TIERS.slice(0, 1)).map(
+                  (tier, index, visibleTiers) => (
+                    <s-stack key={`reward-group-${tier.points}`} direction="block" gap="none">
+                      {rewardMilestone(tier, index === 0 ? 0 : visibleTiers[index - 1].points)}
+                      {index < visibleTiers.length - 1 && rewardConnector()}
+                    </s-stack>
+                  ),
+                )}
+              </s-stack>
 
               <s-button
                 variant="secondary"
