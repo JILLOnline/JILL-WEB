@@ -310,12 +310,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
     return (
       <s-stack key={`journey-${tier.points}`} direction="block" gap="none">
-        <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
-          <s-stack direction="inline" justifyContent="center">
-            <RewardLiquidSegment points={points} from={previousPoints} to={tier.points} />
-          </s-stack>
-          <s-box blockSize={8} />
-        </s-grid>
+        {previousPoints > 0 && (
+          <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
+            <s-stack direction="inline" justifyContent="center">
+              <RewardLiquidSegment points={points} from={previousPoints} to={tier.points} />
+            </s-stack>
+            <s-box blockSize={8} />
+          </s-grid>
+        )}
 
         <s-grid
           gridTemplateColumns="44px minmax(0, 1fr)"
