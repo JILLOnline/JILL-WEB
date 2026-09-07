@@ -222,17 +222,21 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardRailSegment({points, from, to}) {
-  const units = 5;
+function RewardLiquidSegment({points, from, to}) {
   const span = Math.max(1, to - from);
+  const rows = span <= 10 ? 5 : 7;
   const ratio = Math.max(0, Math.min(1, (points - from) / span));
-  const filledUnits = Math.round(ratio * units);
+  const totalEighths = Math.round(ratio * rows * 8);
   const complete = points >= to;
+  const liquidGlyphs = ['', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
 
   return (
-    <s-stack direction="block" gap="small-100" alignItems="center">
-      {Array.from({length: units}, (_, index) => {
-        const filled = index >= units - filledUnits;
+    <s-stack direction="block" gap="none" alignItems="center">
+      {Array.from({length: rows}, (_, index) => {
+        const eighthsBelow = (rows - 1 - index) * 8;
+        const fill = Math.max(0, Math.min(8, totalEighths - eighthsBelow));
+        const filled = fill > 0;
+
         return (
           <s-text
             key={`${from}-${to}-${index}`}
@@ -240,7 +244,7 @@ function RewardRailSegment({points, from, to}) {
             tone={filled ? (complete ? 'success' : 'info') : 'neutral'}
             accessibilityVisibility="hidden"
           >
-            {filled ? '●' : '○'}
+            {filled ? liquidGlyphs[fill] : '│'}
           </s-text>
         );
       })}
@@ -315,7 +319,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                 <s-stack direction="block" gap="small-100">
                   <s-text type="strong">Your reward path</s-text>
-                  <s-text color="subdued">Stack points as long as you like. Your progress climbs upward.</s-text>
+                  <s-text color="subdued">Every point raises the bar toward your next reward.</s-text>
                 </s-stack>
                 <s-badge tone="info">Progress ↑</s-badge>
               </s-stack>
@@ -399,7 +403,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                       {index < displayTiers.length - 1 && (
                         <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
                           <s-stack direction="inline" justifyContent="center">
-                            <RewardRailSegment points={points} from={lowerPoints} to={tier.points} />
+                            <RewardLiquidSegment points={points} from={lowerPoints} to={tier.points} />
                           </s-stack>
                           <s-box blockSize={12} />
                         </s-grid>
@@ -410,7 +414,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
                 <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
                   <s-stack direction="inline" justifyContent="center">
-                    <RewardRailSegment points={points} from={0} to={10} />
+                    <RewardLiquidSegment points={points} from={0} to={10} />
                   </s-stack>
                   <s-box blockSize={8} />
                 </s-grid>
