@@ -265,17 +265,20 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
   const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
-  const nextTier = SORTED_REWARD_TIERS.find(
-    (tier) =>
-      points < tier.points &&
-      !activeCoupons.some((coupon) => Number(coupon?.points) === tier.points),
-  ) || null;
-  const collapsedTier = nextTier || SORTED_REWARD_TIERS[SORTED_REWARD_TIERS.length - 1];
-  const visibleRewardTiers = showAllRewards ? SORTED_REWARD_TIERS : [collapsedTier];
 
   function activeCouponForTier(tierPoints) {
     return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
   }
+
+  const availableTiers = SORTED_REWARD_TIERS.filter(
+    (tier) => points >= tier.points && !activeCouponForTier(tier.points),
+  );
+  const nextTier = SORTED_REWARD_TIERS.find(
+    (tier) => points < tier.points && !activeCouponForTier(tier.points),
+  ) || null;
+  const bestAvailableTier = availableTiers[availableTiers.length - 1] || null;
+  const collapsedTier = bestAvailableTier || nextTier || SORTED_REWARD_TIERS[SORTED_REWARD_TIERS.length - 1];
+  const visibleRewardTiers = showAllRewards ? SORTED_REWARD_TIERS : [collapsedTier];
 
   async function handleRedeem(tier) {
     if (
@@ -296,8 +299,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
       const requestNonce = await requestReward(customer.id, tier.points);
       let completed = false;
 
-      // Stay with the request long enough for either the normal webhook path
-      // or the once-per-minute Apps Script safety sweep to finish it.
       for (let attempt = 0; attempt < 42; attempt += 1) {
         await wait(attempt === 0 ? 900 : 1500);
         if (attempt === 8) setSlowRequest(true);
@@ -351,14 +352,73 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     }
   }
 
+  function rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending) {
+    if (isThisPending) {
+      return (
+        <s-stack direction="inline" gap="small-200" alignItems="center">
+          <s-spinner size="small" />
+          <s-text type="strong" tone="accent">
+            {slowRequest ? 'Still creating…' : 'Creating…'}
+          </s-text>
+        </s-stack>
+      );
+    }
+
+    if (coupon) {
+      return (
+        <s-clickable
+          href="extension:jill-account-coupons/"
+          background="subdued"
+          padding="small-200"
+          borderRadius="max"
+          accessibilityLabel={`Open your $${tier.value} OFF coupon`}
+        >
+          <s-text type="strong" tone="info">Redeemed</s-text>
+        </s-clickable>
+      );
+    }
+
+    if (isAvailable) {
+      return (
+        <s-clickable
+          disabled={Boolean(pendingPoints)}
+          background="subdued"
+          padding="small-200"
+          borderRadius="max"
+          accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF`}
+          onClick={() => {
+            setRedeemError('');
+            setConfirmTier(tier);
+          }}
+        >
+          <s-text type="strong" tone="success">Redeem</s-text>
+        </s-clickable>
+      );
+    }
+
+    if (isNext) {
+      return (
+        <s-box background="subdued" padding="small-200" borderRadius="max">
+          <s-text type="strong" tone="accent">Next Reward ★</s-text>
+        </s-box>
+      );
+    }
+
+    return (
+      <s-box background="subdued" padding="small-200" borderRadius="max">
+        <s-text type="strong" tone="neutral">Locked</s-text>
+      </s-box>
+    );
+  }
+
   function rewardMilestone(tier, showTopRail = false, showBottomRail = false) {
-    const hasActiveCoupon = Boolean(activeCouponForTier(tier.points));
-    const isRedeemed = hasActiveCoupon;
+    const coupon = activeCouponForTier(tier.points);
+    const isRedeemed = Boolean(coupon);
     const isAvailable = !isRedeemed && points >= tier.points;
     const isNext = !isRedeemed && !isAvailable && tier.points === nextTier?.points;
-    const tierProgress = isRedeemed
-      ? tier.points
-      : Math.max(0, Math.min(points, tier.points));
+    const isThisPending = isGeneratingReward && pendingPoints === tier.points;
+    const isThisConfirming = confirmTier?.points === tier.points && !pendingPoints;
+    const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
     const isAchieved = isRedeemed || isAvailable;
@@ -384,8 +444,8 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
           <s-stack direction="inline" justifyContent="center" alignItems="center">
             <s-icon
-              type={isAchieved ? 'check-circle-filled' : 'circle'}
-              tone={isAchieved ? 'success' : isNext ? 'info' : 'neutral'}
+              type={isAchieved ? 'check-circle-filled' : isNext ? 'star-filled' : 'circle'}
+              tone={isRedeemed ? 'info' : isAchieved ? 'success' : isNext ? 'custom' : 'neutral'}
               size="small-200"
             />
           </s-stack>
@@ -409,15 +469,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 <s-heading>${tier.value} OFF</s-heading>
                 <s-text color="subdued">${tier.minimum} minimum order</s-text>
               </s-stack>
-              {isRedeemed ? (
-                <s-badge tone="success">Redeemed</s-badge>
-              ) : isAvailable ? (
-                <s-badge tone="success">Available</s-badge>
-              ) : isNext ? (
-                <s-badge tone="info">Next Reward ★</s-badge>
-              ) : (
-                <s-badge tone="neutral">Locked</s-badge>
-              )}
+              {rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending)}
             </s-stack>
 
             <s-stack direction="block" gap="small-200">
@@ -427,13 +479,43 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
               />
               <s-text type="strong">
-                {tierProgress} / {tier.points} pts · {isRedeemed
-                  ? 'Redeemed'
-                  : isAvailable
-                    ? 'Available'
-                    : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
+                {tierProgress} / {tier.points} pts · {isThisPending
+                  ? 'Creating coupon…'
+                  : isRedeemed
+                    ? 'Redeemed'
+                    : isAvailable
+                      ? 'Redeem'
+                      : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
               </s-text>
+              {isThisPending && (
+                <s-text color="subdued">
+                  {slowRequest
+                    ? 'Shopify is taking a little longer than usual. Your points stay safe while we finish.'
+                    : 'This usually only takes a few seconds. Your points stay safe while we finish.'}
+                </s-text>
+              )}
             </s-stack>
+
+            {isThisConfirming && (
+              <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
+                <s-stack direction="block" gap="small-300">
+                  <s-text type="strong">
+                    Redeem {tier.points} points for ${tier.value} OFF?
+                  </s-text>
+                  <s-text color="subdued">
+                    ${tier.minimum} minimum order · Expires 30 days after creation · Can combine with eligible storewide discounts.
+                  </s-text>
+                  <s-stack direction="inline" gap="small-300">
+                    <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
+                      Cancel
+                    </s-button>
+                    <s-button variant="primary" onClick={() => handleRedeem(tier)}>
+                      Generate coupon
+                    </s-button>
+                  </s-stack>
+                </s-stack>
+              </s-box>
+            )}
           </s-stack>
         </s-box>
       </s-grid>
@@ -451,13 +533,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     );
   }
 
-  const redeemMessage = confirmTier
-    ? 'Confirm your choice below before any points are spent.'
-    : points >= SORTED_REWARD_TIERS[0].points
-      ? 'You earned it — choose any reward you have unlocked. ✨'
-      : activeCoupons.length
-        ? 'Your active rewards are safe in My Coupons. Keep stacking points for the next one. ✨'
-        : 'Keep stacking points — your first reward is getting closer. ✨';
+  const rewardMessage = activeCoupons.length || availableTiers.length
+    ? 'Tap Redeem on any unlocked reward. Redeemed rewards open your coupon wallet. ✨'
+    : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
     <s-section>
@@ -467,12 +545,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
             <s-heading>Rewards ★</s-heading>
             <s-text color="subdued">Earn 1 point for every $10 of eligible JILL merchandise spend.</s-text>
           </s-stack>
-          <s-badge tone="info">{loading ? 'Loading…' : `${points} pts`}</s-badge>
+          <s-badge>{loading ? 'Loading…' : `${points} pts`}</s-badge>
         </s-stack>
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
             <s-stack direction="block" gap="base">
+              <s-text color="subdued">{rewardMessage}</s-text>
+
               <s-grid
                 key={`reward-journey-${showAllRewards ? 'expanded' : collapsedTier.points}-${points}`}
                 gridTemplateColumns="1fr"
@@ -495,75 +575,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                   {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
                 </s-button>
               </s-stack>
-
-              <s-divider />
-
-              <s-stack direction="block" gap="small-300">
-                <s-stack direction="block" gap="small-100">
-                  <s-text type="strong">Redeem</s-text>
-                  {isGeneratingReward ? (
-                    <s-stack direction="inline" gap="small-300" alignItems="center">
-                      <s-spinner size="base" />
-                      <s-stack direction="block" gap="small-100">
-                        <s-text type="strong">
-                          {slowRequest ? 'Still creating your coupon…' : 'Creating your coupon…'}
-                        </s-text>
-                        <s-text color="subdued">
-                          {slowRequest
-                            ? 'Shopify is taking a little longer than usual. Your points stay safe while we finish.'
-                            : 'This usually only takes a few seconds. Your points stay safe while we finish.'}
-                        </s-text>
-                      </s-stack>
-                    </s-stack>
-                  ) : (
-                    <s-text color="subdued">{redeemMessage}</s-text>
-                  )}
-                </s-stack>
-
-                <s-box padding="small-300" background="base" borderRadius="large" border="base base solid">
-                  <s-grid gridTemplateColumns="repeat(4, minmax(0, 1fr))" gap="small-200">
-                    {SORTED_REWARD_TIERS.map((tier) => {
-                      const hasThisTier = Boolean(activeCouponForTier(tier.points));
-                      const canRedeem = points >= tier.points && !pendingPoints && !hasThisTier;
-
-                      return (
-                        <s-button
-                          key={`redeem-${tier.points}`}
-                          variant="secondary"
-                          disabled={!canRedeem}
-                          onClick={() => {
-                            setRedeemError('');
-                            setConfirmTier(tier);
-                          }}
-                        >
-                          ${tier.value} OFF
-                        </s-button>
-                      );
-                    })}
-                  </s-grid>
-                </s-box>
-
-                {confirmTier && !pendingPoints && (
-                  <s-box padding="base" background="base" borderRadius="large" border="base base solid">
-                    <s-stack direction="block" gap="small-300">
-                      <s-text type="strong">
-                        Redeem {confirmTier.points} points for ${confirmTier.value} OFF?
-                      </s-text>
-                      <s-text color="subdued">
-                        ${confirmTier.minimum} minimum order · Expires 30 days after creation · Can combine with eligible storewide discounts.
-                      </s-text>
-                      <s-stack direction="inline" gap="small-300">
-                        <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
-                          Cancel
-                        </s-button>
-                        <s-button variant="primary" onClick={() => handleRedeem(confirmTier)}>
-                          Generate coupon
-                        </s-button>
-                      </s-stack>
-                    </s-stack>
-                  </s-box>
-                )}
-              </s-stack>
             </s-stack>
           </s-box>
         )}
@@ -582,12 +593,17 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               <s-text color="subdued">
                 Expires {formatDate(freshCoupon.expires_at)} · Can combine with eligible storewide discounts.
               </s-text>
-              <s-button
-                variant="primary"
-                href={`${STORE}/discount/${encodeURIComponent(freshCoupon.code)}?redirect=/cart`}
-              >
-                Use now
-              </s-button>
+              <s-stack direction="inline" gap="small-300">
+                <s-button variant="secondary" href="extension:jill-account-coupons/">
+                  View coupon
+                </s-button>
+                <s-button
+                  variant="primary"
+                  href={`${STORE}/discount/${encodeURIComponent(freshCoupon.code)}?redirect=/cart`}
+                >
+                  Use now
+                </s-button>
+              </s-stack>
             </s-stack>
           </s-box>
         )}
@@ -700,8 +716,8 @@ function Dashboard() {
                   </s-stack>
                   <s-text color="subdued">{formatDate(order.processedAt)}</s-text>
                   <s-stack direction="inline" gap="small-400">
-                    {order.financialStatus && <s-badge tone="neutral">{cleanStatus(order.financialStatus)}</s-badge>}
-                    {order.fulfillmentStatus && <s-badge tone="info">{cleanStatus(order.fulfillmentStatus)}</s-badge>}
+                    {order.financialStatus && <s-badge>{cleanStatus(order.financialStatus)}</s-badge>}
+                    {order.fulfillmentStatus && <s-badge>{cleanStatus(order.fulfillmentStatus)}</s-badge>}
                   </s-stack>
                   {order.lineItems?.nodes?.length > 0 && (
                     <s-text color="subdued">
@@ -733,7 +749,7 @@ function Dashboard() {
                     <s-text color="subdued">Request {meta.last_custom_request_id}</s-text>
                   )}
                 </s-stack>
-                <s-badge tone="info">{requestStatus}</s-badge>
+                <s-badge>{requestStatus}</s-badge>
               </s-stack>
               <Detail label="Submitted" value={formatDate(meta.last_custom_request_at)} />
               <Detail label="Event" value={formatDate(meta.event_date)} />
@@ -761,7 +777,7 @@ function Dashboard() {
             <s-stack direction="block" gap="small-400">
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                 <s-heading>Next celebration ✨</s-heading>
-                {meta.annual_reminder_enabled === 'true' && <s-badge tone="info">Reminder on</s-badge>}
+                {meta.annual_reminder_enabled === 'true' && <s-badge>Reminder on</s-badge>}
               </s-stack>
               <Detail label="Event date" value={formatDate(meta.event_date)} />
               <Detail label="Next reminder" value={formatDate(meta.next_event_reminder_date)} />
