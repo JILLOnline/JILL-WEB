@@ -1,0 +1,63 @@
+name: Patch Rewards cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-rewards-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove leading rail before first reward
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          text = path.read_text()
+
+          old = '''        <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
+          <s-stack direction="inline" justifyContent="center">
+            <RewardLiquidSegment points={points} from={previousPoints} to={tier.points} />
+          </s-stack>
+          <s-box blockSize={8} />
+        </s-grid>
+'''
+
+          new = '''        {previousPoints > 0 && (
+          <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
+            <s-stack direction="inline" justifyContent="center">
+              <RewardLiquidSegment points={points} from={previousPoints} to={tier.points} />
+            </s-stack>
+            <s-box blockSize={8} />
+          </s-grid>
+        )}
+'''
+
+          if old not in text:
+              raise SystemExit('Expected Rewards rail block not found; refusing to patch.')
+
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "JILL Rewards automation"
+          git config user.email "info@jillonlinestore.com"
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx
+          if git diff --cached --quiet; then
+            echo "No Dashboard change needed."
+            exit 0
+          fi
+          git commit -m "Remove leading Rewards rail"
+          git push origin HEAD:main
