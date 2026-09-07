@@ -239,6 +239,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const nextPointSpendCents = 1000 - (eligibleSpendCents % 1000 || 0);
   const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
+  const progressTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
+  const progressValue = nextTier ? Math.min(points, progressTier.points) : progressTier.points;
+  const progressLabel = nextTier
+    ? `${points} of ${progressTier.points} points toward $${progressTier.value} OFF`
+    : 'All JILL Rewards tiers unlocked';
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -285,6 +290,24 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           </s-stack>
           <s-badge tone="info">{loading ? 'Loading…' : `${points} pts`}</s-badge>
         </s-stack>
+
+        {!loading && (
+          <s-stack direction="block" gap="small-200">
+            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+              <s-text type="strong">
+                {nextTier ? `Progress to $${nextTier.value} OFF` : 'Top reward unlocked 🎉'}
+              </s-text>
+              <s-text color="subdued">
+                {nextTier ? `${points} / ${nextTier.points} pts` : `${points} pts`}
+              </s-text>
+            </s-stack>
+            <s-progress
+              value={progressValue}
+              max={progressTier.points}
+              accessibilityLabel={progressLabel}
+            />
+          </s-stack>
+        )}
 
         {redeemError && (
           <s-banner tone="critical">
