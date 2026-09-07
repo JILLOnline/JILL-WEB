@@ -76,3 +76,5 @@ jobs:
           --config production
           --allow-updates
           --source-control-url "$COMMIT_URL"
+
+# Keeps customer-account UI fixes deployable through the normal validated pipeline.
