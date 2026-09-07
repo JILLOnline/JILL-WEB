@@ -238,6 +238,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
   const progressPoints = Math.max(0, Math.min(points, 50));
+  const renderedProgressPoints = progressPoints === 0 ? Number.EPSILON : progressPoints;
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -288,9 +289,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         {!loading && (
           <s-stack direction="block" gap="small-300">
             <s-progress
-              value={progressPoints}
+              value={renderedProgressPoints}
               max={50}
-              accessibility-label={`${progressPoints} of 50 points across JILL Rewards`}
+              accessibilityLabel={`${progressPoints} of 50 points across JILL Rewards`}
             />
 
             <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
