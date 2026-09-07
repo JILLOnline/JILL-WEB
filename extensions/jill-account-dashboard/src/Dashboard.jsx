@@ -408,12 +408,28 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 )}
               </s-stack>
 
-              <s-button
-                variant="secondary"
-                onClick={() => setShowAllRewards((current) => !current)}
-              >
-                {showAllRewards ? 'Collapse rewards ↑' : 'View all rewards ↓'}
-              </s-button>
+              <s-stack direction="inline" justifyContent="center">
+
+
+                <s-button
+
+
+                  variant="secondary"
+
+
+                  onClick={() => setShowAllRewards((current) => !current)}
+
+
+                >
+
+
+                  {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
+
+
+                </s-button>
+
+
+              </s-stack>
             </s-stack>
           </s-box>
         )}
