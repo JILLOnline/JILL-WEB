@@ -1,0 +1,102 @@
+name: One-time reward pill visual fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-fix-reward-pills.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore compact reward pills and apply color only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          s = p.read_text()
+          start = s.index('  function rewardStatusControl(')
+          end = s.index('\n  function rewardMilestone(', start)
+          new = r'''  function rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending) {
+    if (isThisPending) {
+      return (
+        <s-stack direction="inline" gap="small-200" alignItems="center">
+          <s-spinner size="small" />
+          <s-text tone="info">
+            {slowRequest ? 'Still creating…' : 'Creating…'}
+          </s-text>
+        </s-stack>
+      );
+    }
+
+    if (coupon) {
+      return (
+        <s-clickable
+          href="extension:jill-account-coupons/"
+          background="subdued"
+          padding="small-200"
+          borderRadius="max"
+          accessibilityLabel={`Open your $${tier.value} OFF coupon`}
+        >
+          <s-text tone="info">Redeemed</s-text>
+        </s-clickable>
+      );
+    }
+
+    if (isAvailable) {
+      return (
+        <s-clickable
+          disabled={Boolean(pendingPoints)}
+          background="subdued"
+          padding="small-200"
+          borderRadius="max"
+          accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF`}
+          onClick={() => {
+            setRedeemError('');
+            setConfirmTier(tier);
+          }}
+        >
+          <s-text tone="success">Redeem</s-text>
+        </s-clickable>
+      );
+    }
+
+    if (isNext) {
+      return (
+        <s-box background="subdued" padding="small-200" borderRadius="max">
+          <s-text tone="custom">Next Reward ★</s-text>
+        </s-box>
+      );
+    }
+
+    return (
+      <s-box background="subdued" padding="small-200" borderRadius="max">
+        <s-text type="strong" tone="neutral">Locked</s-text>
+      </s-box>
+    );
+  }
+'''
+          s = s[:start] + new + s[end:]
+          s = s.replace(
+            "type={isAchieved ? 'check-circle-filled' : isNext ? 'star-filled' : 'circle'}\n              tone={isRedeemed ? 'info' : isAchieved ? 'success' : isNext ? 'custom' : 'neutral'}",
+            "type={isAchieved ? 'check-circle-filled' : 'circle'}\n              tone={isAchieved ? 'success' : isNext ? 'info' : 'neutral'}",
+          )
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "JILLOnline"
+          git config user.email "info@jillonlinestore.com"
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "Restore compact reward pills with status colors"
+            git push
+          fi
