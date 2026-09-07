@@ -503,7 +503,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                   <s-text type="strong">Redeem</s-text>
                   {isGeneratingReward ? (
                     <s-stack direction="inline" gap="small-300" alignItems="center">
-                      <s-spinner accessibilityLabel="Creating your JILL coupon" />
+                      <s-spinner size="base" />
                       <s-stack direction="block" gap="small-100">
                         <s-text type="strong">
                           {slowRequest ? 'Still creating your coupon…' : 'Creating your coupon…'}
