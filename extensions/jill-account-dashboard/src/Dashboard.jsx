@@ -323,12 +323,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         </s-grid>
 
         <s-box
-          padding="small-300"
+          padding="base"
           background={isUnlocked || isNext ? 'base' : 'subdued'}
           borderRadius="large"
           border="base base solid"
         >
-          <s-stack direction="block" gap="small-200">
+          <s-stack direction="block" gap="small-300">
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
               <s-stack direction="inline" gap="small-200" alignItems="center">
                 <s-heading>${tier.value} OFF</s-heading>
@@ -343,7 +343,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               )}
             </s-stack>
 
-            <s-stack direction="block" gap="small-100">
+            <s-stack direction="block" gap="small-200">
               <s-progress
                 value={progressValue}
                 max={tier.points}
