@@ -358,7 +358,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         <s-stack direction="inline" gap="small-200" alignItems="center">
           <s-spinner size="small" />
           <s-text tone="info">
-            {slowRequest ? 'Still creating…' : 'Creating…"}
+            {slowRequest ? 'Still creating…' : 'Creating…'}
           </s-text>
         </s-stack>
       );
@@ -385,7 +385,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           background="subdued"
           padding="small-200"
           borderRadius="max"
-          accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF}
+          accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF`}
           onClick={() => {
             setRedeemError('');
             setConfirmTier(tier);
@@ -444,8 +444,8 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
           <s-stack direction="inline" justifyContent="center" alignItems="center">
             <s-icon
-              type={isAchieved ? 'check-circle-filled' : isNext ? 'star-filled' : 'circle'}
-              tone={isRedeemed ? 'info' : isAchieved ? 'success' : isNext ? 'custom' : 'neutral'}
+              type={isAchieved ? 'check-circle-filled' : 'circle'}
+              tone={isAchieved ? 'success' : isNext ? 'info' : 'neutral'}
               size="small-200"
             />
           </s-stack>
