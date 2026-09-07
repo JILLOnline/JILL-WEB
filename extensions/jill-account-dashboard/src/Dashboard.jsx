@@ -234,12 +234,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const requestedPoints = toInteger(meta.redeem_request_points);
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
 
-  const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const collapsedTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
 
   async function handleRedeem(tier) {
-    if (!customer?.id || pendingPoints || activeCouponCode) return;
+    if (!customer?.id || pendingPoints || activeCouponCode || points < tier.points) return;
 
     setRedeemError('');
     setSubmittingPoints(tier.points);
@@ -279,7 +278,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     const tierProgress = Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
-    const isPendingTier = pendingPoints === tier.points;
     const isFirst = previousPoints === 0;
     const isLast = tier.points === REWARD_TIERS[REWARD_TIERS.length - 1].points;
     const showTopRail = showAllRewards && !isFirst;
@@ -354,19 +352,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 {tierProgress} / {tier.points} pts · {isUnlocked ? 'Unlocked' : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
               </s-text>
             </s-stack>
-
-            {isUnlocked && !activeCouponCode && !pendingPoints && (
-              <s-button
-                variant={tier.points === unlocked?.points ? 'primary' : 'secondary'}
-                onClick={() => handleRedeem(tier)}
-              >
-                Redeem ${tier.value} OFF
-              </s-button>
-            )}
-
-            {isPendingTier && (
-              <s-text type="strong" tone="info">Creating this reward… ✨</s-text>
-            )}
           </s-stack>
         </s-box>
       </s-grid>
@@ -384,6 +369,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     );
   }
 
+  const redeemMessage = activeCouponCode
+    ? 'Your reward is ready — use it whenever you are ready to shop. ✨'
+    : pendingPoints
+      ? 'Making your reward now — your choices will unlock again in just a moment. ✨'
+      : points >= REWARD_TIERS[0].points
+        ? 'You earned it — choose any reward you have unlocked. ✨'
+        : 'Keep stacking points — your first reward is getting closer. ✨';
+
   return (
     <s-section>
       <s-stack direction="block" gap="base">
@@ -397,7 +390,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-300">
+            <s-stack direction="block" gap="base">
               <s-stack direction="block" gap="none">
                 {(showAllRewards ? REWARD_TIERS : [collapsedTier]).map(
                   (tier, index, visibleTiers) => (
@@ -410,26 +403,41 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               </s-stack>
 
               <s-stack direction="inline" justifyContent="center">
-
-
                 <s-button
-
-
                   variant="secondary"
-
-
                   onClick={() => setShowAllRewards((current) => !current)}
-
-
                 >
-
-
                   {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
-
-
                 </s-button>
+              </s-stack>
 
+              <s-divider />
 
+              <s-stack direction="block" gap="small-300">
+                <s-stack direction="block" gap="small-100">
+                  <s-text type="strong">Redeem</s-text>
+                  <s-text color="subdued">{redeemMessage}</s-text>
+                </s-stack>
+
+                <s-box padding="small-300" background="base" borderRadius="large" border="base base solid">
+                  <s-grid gridTemplateColumns="repeat(4, minmax(0, 1fr))" gap="small-200">
+                    {REWARD_TIERS.map((tier) => {
+                      const canRedeem =
+                        points >= tier.points && !pendingPoints && !activeCouponCode;
+
+                      return (
+                        <s-button
+                          key={`redeem-${tier.points}`}
+                          variant="secondary"
+                          disabled={!canRedeem}
+                          onClick={() => handleRedeem(tier)}
+                        >
+                          ${tier.value} OFF
+                        </s-button>
+                      );
+                    })}
+                  </s-grid>
+                </s-box>
               </s-stack>
             </s-stack>
           </s-box>
