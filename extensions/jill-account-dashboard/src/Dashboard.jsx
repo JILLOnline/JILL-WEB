@@ -228,7 +228,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [redeemError, setRedeemError] = useState('');
 
   const points = toInteger(meta.points_balance);
-  const eligibleSpendCents = toInteger(meta.eligible_spend_cents);
   const activeCouponCode = String(meta.active_coupon_code || '').trim();
   const activeCouponValueCents = toInteger(meta.active_coupon_value_cents);
   const requestedPoints = toInteger(meta.redeem_request_points);
@@ -237,13 +236,18 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
   const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
-  const nextPointSpendCents = 1000 - (eligibleSpendCents % 1000 || 0);
   const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
-  const progressTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
-  const progressValue = nextTier ? Math.min(points, progressTier.points) : progressTier.points;
-  const progressLabel = nextTier
-    ? `${points} of ${progressTier.points} points toward $${progressTier.value} OFF`
-    : 'All JILL Rewards tiers unlocked';
+  const rewardSegments = REWARD_TIERS.map((tier, index) => {
+    const previousPoints = index === 0 ? 0 : REWARD_TIERS[index - 1].points;
+    const segmentMax = tier.points - previousPoints;
+    const segmentValue = Math.max(0, Math.min(segmentMax, points - previousPoints));
+
+    return {
+      ...tier,
+      segmentMax,
+      segmentValue,
+    };
+  });
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -292,20 +296,37 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         </s-stack>
 
         {!loading && (
-          <s-stack direction="block" gap="small-200">
+          <s-stack direction="block" gap="small-400">
+            <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
+              {rewardSegments.map((segment) => (
+                <s-progress
+                  key={`bar-${segment.points}`}
+                  value={segment.segmentValue}
+                  max={segment.segmentMax}
+                  accessibilityLabel={`${Math.min(points, segment.points)} points toward the ${segment.points}-point reward`}
+                />
+              ))}
+            </s-grid>
+
+            <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
+              {rewardSegments.map((segment) => (
+                <s-stack key={`tier-${segment.points}`} direction="block" gap="small-100">
+                  <s-text type="strong">${segment.value} OFF</s-text>
+                  <s-text color="subdued">{segment.points} pts · ${segment.minimum} min</s-text>
+                </s-stack>
+              ))}
+            </s-grid>
+
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
               <s-text type="strong">
-                {nextTier ? `Progress to $${nextTier.value} OFF` : 'Top reward unlocked 🎉'}
-              </s-text>
-              <s-text color="subdued">
                 {nextTier ? `${points} / ${nextTier.points} pts` : `${points} pts`}
               </s-text>
+              <s-text color="subdued">
+                {nextTier
+                  ? `${pointsToNext} ${pointsToNext === 1 ? 'point' : 'points'} until next reward`
+                  : 'Top reward unlocked 🎉'}
+              </s-text>
             </s-stack>
-            <s-progress
-              value={progressValue}
-              max={progressTier.points}
-              accessibilityLabel={progressLabel}
-            />
           </s-stack>
         )}
 
@@ -359,29 +380,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               ))}
             </s-grid>
           </s-stack>
-        ) : !loading && nextTier ? (
-          <s-stack direction="block" gap="small-400">
-            <s-text type="strong">
-              {pointsToNext} {pointsToNext === 1 ? 'point' : 'points'} until ${nextTier.value} OFF
-            </s-text>
-            <s-text color="subdued">
-              {eligibleSpendCents > 0
-                ? `${formatDollarCents(nextPointSpendCents)} more eligible spend earns your next point.`
-                : 'Your points begin building with eligible paid orders.'}
-            </s-text>
-          </s-stack>
         ) : null}
-
-        <s-divider />
-
-        <s-grid gridTemplateColumns="repeat(auto-fit, minmax(120px, 1fr))" gap="small-400">
-          {REWARD_TIERS.map((tier) => (
-            <s-stack key={tier.points} direction="block" gap="small-100">
-              <s-text type="strong">${tier.value} OFF</s-text>
-              <s-text color="subdued">{tier.points} points · ${tier.minimum} minimum</s-text>
-            </s-stack>
-          ))}
-        </s-grid>
       </s-stack>
     </s-section>
   );
