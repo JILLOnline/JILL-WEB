@@ -56,11 +56,7 @@ const QUERY = `
           statusPageUrl
           totalPrice { amount currencyCode }
           lineItems(first: 4) {
-            nodes {
-              id
-              title
-              quantity
-            }
+            nodes { id title quantity }
           }
         }
       }
@@ -77,16 +73,8 @@ const QUERY = `
 const REQUEST_REWARD_MUTATION = `
   mutation RequestJillReward($metafields: [MetafieldsSetInput!]!) {
     metafieldsSet(metafields: $metafields) {
-      metafields {
-        namespace
-        key
-        value
-      }
-      userErrors {
-        field
-        message
-        code
-      }
+      metafields { namespace key value }
+      userErrors { field message code }
     }
   }
 `;
@@ -153,7 +141,6 @@ async function requestReward(customerId, points) {
 
   const payload = await response.json();
   const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
-
   if (!response.ok || payload?.errors?.length || userErrors.length) {
     throw new Error(
       userErrors?.[0]?.message ||
@@ -161,7 +148,6 @@ async function requestReward(customerId, points) {
         'Unable to request your JILL reward right now.',
     );
   }
-
   return nonce;
 }
 
@@ -182,7 +168,6 @@ function toInteger(value) {
 
 function rewardWallet(value) {
   if (!value) return [];
-
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed.filter(Boolean);
@@ -190,17 +175,14 @@ function rewardWallet(value) {
   } catch (error) {
     console.warn('JILL rewards wallet parse error', error);
   }
-
   return [];
 }
 
 function rewardCouponStatus(coupon) {
   const status = String(coupon?.status || 'active').toLowerCase();
   if (status === 'used' || status === 'expired') return status;
-
   const expiresAt = Date.parse(coupon?.expires_at || '');
   if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) return 'expired';
-
   return 'active';
 }
 
@@ -269,27 +251,34 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [redeemError, setRedeemError] = useState('');
   const [showAllRewards, setShowAllRewards] = useState(false);
   const [slowRequest, setSlowRequest] = useState(false);
+  const [confirmTier, setConfirmTier] = useState(null);
+  const [freshCoupon, setFreshCoupon] = useState(null);
 
   const points = toInteger(meta.points_balance);
   const wallet = rewardWallet(meta.coupons);
   const activeCoupons = wallet
     .filter((coupon) => rewardCouponStatus(coupon) === 'active')
     .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || ''));
-  const activeCoupon = activeCoupons[0] || null;
-  const activeCouponCode = String(activeCoupon?.code || '').trim();
-  const activeCouponValueCents = toInteger(
-    activeCoupon?.value_cents || Number(activeCoupon?.value || 0) * 100,
-  );
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
-
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const collapsedTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
 
-  async function handleRedeem(tier) {
-    if (!customer?.id || pendingPoints || activeCouponCode || points < tier.points) return;
+  function activeCouponForTier(tierPoints) {
+    return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
+  }
 
+  async function handleRedeem(tier) {
+    if (
+      !customer?.id ||
+      pendingPoints ||
+      points < tier.points ||
+      activeCouponForTier(tier.points)
+    ) return;
+
+    setConfirmTier(null);
+    setFreshCoupon(null);
     setRedeemError('');
     setSlowRequest(false);
     setSubmittingPoints(tier.points);
@@ -299,8 +288,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
       const requestNonce = await requestReward(customer.id, tier.points);
       let completed = false;
 
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        await wait(attempt === 0 ? 900 : 1600);
+      // Stay with the request long enough for either the normal webhook path
+      // or the once-per-minute Apps Script safety sweep to finish it.
+      for (let attempt = 0; attempt < 42; attempt += 1) {
+        await wait(attempt === 0 ? 900 : 1500);
+        if (attempt === 8) setSlowRequest(true);
+
         const nextCustomer = await loadData();
         if (nextCustomer) onCustomerUpdate(nextCustomer);
 
@@ -312,6 +305,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         );
 
         if (createdCoupon) {
+          setFreshCoupon(createdCoupon);
           setLocalPendingPoints(0);
           setSlowRequest(false);
           completed = true;
@@ -334,7 +328,10 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
       if (!completed) {
         setLocalPendingPoints(0);
-        setSlowRequest(true);
+        setSlowRequest(false);
+        setRedeemError(
+          'This reward is taking longer than expected. Your points remain safe until a coupon is created.',
+        );
       }
     } catch (error) {
       console.warn('JILL reward request error', error);
@@ -374,9 +371,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
             <s-stack direction="inline" justifyContent="center">
               <s-box inlineSize={1} blockSize="100%" border="large base solid" />
             </s-stack>
-          ) : (
-            <s-box />
-          )}
+          ) : <s-box />}
 
           <s-stack direction="inline" justifyContent="center" alignItems="center">
             <s-icon
@@ -390,9 +385,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
             <s-stack direction="inline" justifyContent="center">
               <s-box inlineSize={1} blockSize="100%" border="large base solid" />
             </s-stack>
-          ) : (
-            <s-box />
-          )}
+          ) : <s-box />}
         </s-grid>
 
         <s-box
@@ -443,15 +436,17 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     );
   }
 
-  const redeemMessage = activeCouponCode
-    ? 'Your reward is ready and saved in Coupons. ✨'
-    : pendingPoints
-      ? slowRequest
-        ? 'Your reward request is queued. Your points stay safe while JILL finishes it. ✨'
-        : 'Making your reward now — your choices will unlock again in just a moment. ✨'
+  const redeemMessage = pendingPoints
+    ? slowRequest
+      ? 'Still working — your points stay safe until Shopify creates the coupon.'
+      : 'Finishing your reward… ✨'
+    : confirmTier
+      ? 'Confirm your choice below before any points are spent.'
       : points >= REWARD_TIERS[0].points
         ? 'You earned it — choose any reward you have unlocked. ✨'
-        : 'Keep stacking points — your first reward is getting closer. ✨';
+        : activeCoupons.length
+          ? 'Your active rewards are safe in My Coupons. Keep stacking points for the next one. ✨'
+          : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
     <s-section>
@@ -479,10 +474,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               </s-stack>
 
               <s-stack direction="inline" justifyContent="center">
-                <s-button
-                  variant="secondary"
-                  onClick={() => setShowAllRewards((current) => !current)}
-                >
+                <s-button variant="secondary" onClick={() => setShowAllRewards((current) => !current)}>
                   {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
                 </s-button>
               </s-stack>
@@ -498,15 +490,18 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 <s-box padding="small-300" background="base" borderRadius="large" border="base base solid">
                   <s-grid gridTemplateColumns="repeat(4, minmax(0, 1fr))" gap="small-200">
                     {REWARD_TIERS.map((tier) => {
-                      const canRedeem =
-                        points >= tier.points && !pendingPoints && !activeCouponCode;
+                      const hasThisTier = Boolean(activeCouponForTier(tier.points));
+                      const canRedeem = points >= tier.points && !pendingPoints && !hasThisTier;
 
                       return (
                         <s-button
                           key={`redeem-${tier.points}`}
                           variant="secondary"
                           disabled={!canRedeem}
-                          onClick={() => handleRedeem(tier)}
+                          onClick={() => {
+                            setRedeemError('');
+                            setConfirmTier(tier);
+                          }}
                         >
                           ${tier.value} OFF
                         </s-button>
@@ -514,6 +509,27 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     })}
                   </s-grid>
                 </s-box>
+
+                {confirmTier && !pendingPoints && (
+                  <s-box padding="base" background="base" borderRadius="large" border="base base solid">
+                    <s-stack direction="block" gap="small-300">
+                      <s-text type="strong">
+                        Redeem {confirmTier.points} points for ${confirmTier.value} OFF?
+                      </s-text>
+                      <s-text color="subdued">
+                        ${confirmTier.minimum} minimum order · Expires 30 days after creation · Can combine with eligible storewide discounts.
+                      </s-text>
+                      <s-stack direction="inline" gap="small-300">
+                        <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
+                          Cancel
+                        </s-button>
+                        <s-button variant="primary" onClick={() => handleRedeem(confirmTier)}>
+                          Generate coupon
+                        </s-button>
+                      </s-stack>
+                    </s-stack>
+                  </s-box>
+                )}
               </s-stack>
             </s-stack>
           </s-box>
@@ -521,44 +537,34 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
 
-        {!loading && activeCouponCode ? (
-          <s-stack direction="block" gap="small-400">
-            <s-text type="strong">
-              Your {formatDollarCents(activeCouponValueCents)} reward is ready 🎉
-            </s-text>
-            <s-text>
-              Code: <s-text type="strong">{activeCouponCode}</s-text>
-            </s-text>
-            <s-text color="subdued">
-              This coupon is unique to your account, can be used once, and does not combine with other discounts.
-            </s-text>
-            <s-stack direction="inline" gap="small-300">
+        {!loading && freshCoupon && (
+          <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
+            <s-stack direction="block" gap="small-300">
+              <s-text type="strong">
+                Your {formatDollarCents(toInteger(freshCoupon.value_cents))} reward is ready 🎉
+              </s-text>
+              <s-text>
+                Code: <s-text type="strong">{freshCoupon.code}</s-text>
+              </s-text>
+              <s-text color="subdued">
+                Expires {formatDate(freshCoupon.expires_at)} · Can combine with eligible storewide discounts.
+              </s-text>
               <s-button
                 variant="primary"
-                href={`${STORE}/discount/${encodeURIComponent(activeCouponCode)}?redirect=/`}
+                href={`${STORE}/discount/${encodeURIComponent(freshCoupon.code)}?redirect=/cart`}
               >
-                Use my reward
-              </s-button>
-              <s-button
-                variant="secondary"
-                href="extension:jill-account-coupons/"
-              >
-                My Coupons
+                Use now
               </s-button>
             </s-stack>
-          </s-stack>
-        ) : !loading && pendingPoints ? (
-          <s-stack direction="block" gap="small-400">
-            <s-text type="strong">
-              {slowRequest ? 'Reward request queued ✨' : 'Creating your unique reward… ✨'}
-            </s-text>
-            <s-text color="subdued">
-              {slowRequest
-                ? `Your ${pendingPoints}-point request is still queued. Your points have not been deducted unless a coupon is created.`
-                : `Your ${pendingPoints}-point redemption request was received. JILL is creating your coupon now.`}
-            </s-text>
-          </s-stack>
-        ) : null}
+          </s-box>
+        )}
+
+        <s-divider />
+        <s-stack direction="inline" justifyContent="center">
+          <s-button variant="secondary" href="extension:jill-account-coupons/">
+            My Coupons
+          </s-button>
+        </s-stack>
       </s-stack>
     </s-section>
   );
@@ -575,7 +581,6 @@ function Dashboard() {
 
   useEffect(() => {
     let active = true;
-
     loadData()
       .then((data) => {
         if (!active) return;
@@ -589,10 +594,7 @@ function Dashboard() {
       .finally(() => {
         if (active) setLoading(false);
       });
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   const meta = metaMap(customer);
@@ -618,9 +620,7 @@ function Dashboard() {
       heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
       subheading="Your celebrations, custom requests, saved details, and orders in one place."
     >
-      <s-button slot="primary-action" variant="primary" href={STORE}>
-        Back to JILL
-      </s-button>
+      <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>
 
       <s-stack direction="block" gap="base">
         {loadError && (
@@ -629,12 +629,7 @@ function Dashboard() {
           </s-banner>
         )}
 
-        <RewardsCard
-          customer={customer}
-          meta={meta}
-          loading={loading}
-          onCustomerUpdate={setCustomer}
-        />
+        <RewardsCard customer={customer} meta={meta} loading={loading} onCustomerUpdate={setCustomer} />
 
         <s-section>
           <s-stack direction="block" gap="base">
@@ -644,9 +639,7 @@ function Dashboard() {
             </s-stack>
             <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
               {COLLECTIONS.map(([emoji, label, path]) => (
-                <s-button key={path} href={`${STORE}${path}`}>
-                  {emoji} {label}
-                </s-button>
+                <s-button key={path} href={`${STORE}${path}`}>{emoji} {label}</s-button>
               ))}
             </s-grid>
           </s-stack>
@@ -674,12 +667,8 @@ function Dashboard() {
                   </s-stack>
                   <s-text color="subdued">{formatDate(order.processedAt)}</s-text>
                   <s-stack direction="inline" gap="small-400">
-                    {order.financialStatus && (
-                      <s-badge tone="neutral">{cleanStatus(order.financialStatus)}</s-badge>
-                    )}
-                    {order.fulfillmentStatus && (
-                      <s-badge tone="info">{cleanStatus(order.fulfillmentStatus)}</s-badge>
-                    )}
+                    {order.financialStatus && <s-badge tone="neutral">{cleanStatus(order.financialStatus)}</s-badge>}
+                    {order.fulfillmentStatus && <s-badge tone="info">{cleanStatus(order.fulfillmentStatus)}</s-badge>}
                   </s-stack>
                   {order.lineItems?.nodes?.length > 0 && (
                     <s-text color="subdued">
@@ -700,9 +689,7 @@ function Dashboard() {
         </s-section>
 
         {loading ? (
-          <s-section>
-            <s-text color="subdued">Loading your saved JILL details…</s-text>
-          </s-section>
+          <s-section><s-text color="subdued">Loading your saved JILL details…</s-text></s-section>
         ) : hasRequest ? (
           <s-section>
             <s-stack direction="block" gap="base">
@@ -715,12 +702,10 @@ function Dashboard() {
                 </s-stack>
                 <s-badge tone="info">{requestStatus}</s-badge>
               </s-stack>
-
               <Detail label="Submitted" value={formatDate(meta.last_custom_request_at)} />
               <Detail label="Event" value={formatDate(meta.event_date)} />
               <Detail label="Needed" value={formatDate(meta.date_needed)} />
               <Detail label="Fulfillment" value={meta.fulfillment_preference} />
-
               <s-button variant="primary" href={`${STORE}/pages/quote`}>Start another request</s-button>
             </s-stack>
           </s-section>
@@ -759,7 +744,6 @@ function Dashboard() {
                 <s-heading>Saved for you</s-heading>
                 <s-text color="subdued">Details from your latest JILL request, ready for next time.</s-text>
               </s-stack>
-
               <s-grid gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap="base">
                 <SavedDetail label="Theme" value={meta.theme_interest} />
                 <SavedDetail label="Colors" value={meta.color_preferences} />
