@@ -264,7 +264,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
-  const nextTier = SORTED_REWARD_TIERS.find((tier) => points < tier.points) || null;
+  const nextTier = SORTED_REWARD_TIERS.find(
+    (tier) =>
+      points < tier.points &&
+      !activeCoupons.some((coupon) => Number(coupon?.points) === tier.points),
+  ) || null;
   const collapsedTier = nextTier || SORTED_REWARD_TIERS[SORTED_REWARD_TIERS.length - 1];
   const visibleRewardTiers = showAllRewards ? SORTED_REWARD_TIERS : [collapsedTier];
 
@@ -347,11 +351,16 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   }
 
   function rewardMilestone(tier, showTopRail = false, showBottomRail = false) {
-    const isUnlocked = points >= tier.points;
-    const isNext = tier.points === nextTier?.points;
-    const tierProgress = Math.max(0, Math.min(points, tier.points));
+    const hasActiveCoupon = Boolean(activeCouponForTier(tier.points));
+    const isRedeemed = hasActiveCoupon;
+    const isAvailable = !isRedeemed && points >= tier.points;
+    const isNext = !isRedeemed && !isAvailable && tier.points === nextTier?.points;
+    const tierProgress = isRedeemed
+      ? tier.points
+      : Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
+    const isAchieved = isRedeemed || isAvailable;
 
     return (
       <s-grid
@@ -374,8 +383,8 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
           <s-stack direction="inline" justifyContent="center" alignItems="center">
             <s-icon
-              type={isUnlocked ? 'check-circle-filled' : 'circle'}
-              tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+              type={isAchieved ? 'check-circle-filled' : 'circle'}
+              tone={isAchieved ? 'success' : isNext ? 'info' : 'neutral'}
               size="small-200"
             />
           </s-stack>
@@ -389,7 +398,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         <s-box
           padding="base"
-          background={isUnlocked || isNext ? 'base' : 'subdued'}
+          background={isAchieved || isNext ? 'base' : 'subdued'}
           borderRadius="large"
           border="base base solid"
         >
@@ -399,12 +408,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 <s-heading>${tier.value} OFF</s-heading>
                 <s-text color="subdued">${tier.minimum} minimum order</s-text>
               </s-stack>
-              {isUnlocked ? (
-                <s-badge tone="success">Unlocked ✓</s-badge>
+              {isRedeemed ? (
+                <s-badge tone="success">Redeemed</s-badge>
+              ) : isAvailable ? (
+                <s-badge tone="success">Available</s-badge>
               ) : isNext ? (
-                <s-badge tone="info">Next reward ★</s-badge>
+                <s-badge tone="info">Next Reward ★</s-badge>
               ) : (
-                <s-badge tone="neutral">{tier.points} pts</s-badge>
+                <s-badge tone="neutral">Locked</s-badge>
               )}
             </s-stack>
 
@@ -415,7 +426,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
               />
               <s-text type="strong">
-                {tierProgress} / {tier.points} pts · {isUnlocked ? 'Unlocked' : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
+                {tierProgress} / {tier.points} pts · {isRedeemed
+                  ? 'Redeemed'
+                  : isAvailable
+                    ? 'Available'
+                    : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
               </s-text>
             </s-stack>
           </s-stack>
