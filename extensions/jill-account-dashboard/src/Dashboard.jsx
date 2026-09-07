@@ -342,7 +342,10 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           >
             <s-stack direction="block" gap="small-300">
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                <s-heading>${tier.value} OFF</s-heading>
+                <s-stack direction="inline" gap="small-200" alignItems="center">
+                  <s-heading>${tier.value} OFF</s-heading>
+                  <s-text color="subdued">${tier.minimum} minimum order</s-text>
+                </s-stack>
                 {isUnlocked ? (
                   <s-badge tone="success">Unlocked ✓</s-badge>
                 ) : isNext ? (
@@ -350,11 +353,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 ) : (
                   <s-badge tone="neutral">{tier.points} pts</s-badge>
                 )}
-              </s-stack>
-
-              <s-stack direction="inline" gap="base">
-                <s-text type="strong">{tier.points} points</s-text>
-                <s-text color="subdued">${tier.minimum} minimum order</s-text>
               </s-stack>
 
               <s-stack direction="block" gap="small-100">
