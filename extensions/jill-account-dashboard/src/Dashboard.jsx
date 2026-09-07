@@ -60,6 +60,14 @@ const QUERY = `
   }
 `;
 
+const COLLECTIONS = [
+  ['🎉', 'Piñatas', '/collections/pinatas'],
+  ['🎁', 'Party Favors', '/collections/catalog'],
+  ['🎨', 'Kid Activities', '/collections/kid-activities'],
+  ['🎈', 'Party Supplies', '/collections/party-supplies'],
+  ['👕', 'Apparel & Gifts', '/collections/apparel-gifts-dtf-sublimation'],
+];
+
 async function loadData() {
   const response = await fetch(API, {
     method: 'POST',
@@ -157,7 +165,6 @@ function Dashboard() {
 
   const meta = metaMap(customer);
   const firstName = customer?.firstName || customer?.displayName?.split(' ')?.[0] || '';
-  const subscribed = customer?.emailAddress?.marketingState === 'SUBSCRIBED';
   const orders = customer?.orders?.nodes || [];
   const hasRequest = Boolean(
     meta.last_custom_request_at || meta.last_custom_request_id || meta.custom_request_status,
@@ -176,39 +183,114 @@ function Dashboard() {
 
   return (
     <s-page
-      heading={firstName ? `Hi, ${firstName} 👋` : 'My JILL'}
-      subheading="Everything JILL has saved for your celebrations, custom requests, and orders."
+      heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
+      subheading="Your JILL home for celebrations, custom requests, saved details, and orders."
     >
-      <s-button slot="primary-action" variant="primary" href={`${STORE}/pages/quote`}>
-        Start a Custom Order
+      <s-button slot="primary-action" variant="primary" href={STORE}>
+        Back to JILL
+      </s-button>
+      <s-button slot="secondary-actions" href={`${STORE}/pages/quote`}>
+        Create Custom Order
       </s-button>
       <s-button slot="secondary-actions" href={`${STORE}/collections/all`}>
         Shop JILL
       </s-button>
-      <s-button slot="secondary-actions" href="shopify:customer-account/profile">
-        Profile
-      </s-button>
 
       <s-stack direction="block" gap="base">
         <s-section>
-          <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-            <s-stack direction="block" gap="small-200">
-              <s-heading>Welcome back</s-heading>
-              <s-text color="subdued">
-                We keep your JILL details together so returning feels easy.
-              </s-text>
+          <s-box padding="base" background="subdued" borderRadius="large-100">
+            <s-stack direction="block" gap="base">
+              <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                <s-stack direction="block" gap="small-200">
+                  <s-heading>My JILL</s-heading>
+                  <s-text color="subdued">
+                    Everything we know about your JILL journey, together in one place.
+                  </s-text>
+                </s-stack>
+                <s-badge tone="info">JILL ★</s-badge>
+              </s-stack>
+
+              <s-stack direction="inline" gap="small-400">
+                <s-button href="shopify:customer-account/orders">Orders</s-button>
+                <s-button href={`${STORE}/pages/coupons`}>Coupons</s-button>
+                <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
+                <s-button href="shopify:customer-account/profile">Settings</s-button>
+              </s-stack>
             </s-stack>
-            <s-badge tone={subscribed ? 'info' : 'neutral'}>
-              {subscribed ? 'Subscribed ★' : 'JILL account'}
-            </s-badge>
-          </s-stack>
+          </s-box>
         </s-section>
 
         {loadError && (
           <s-banner tone="info">
-            My JILL is open, but some saved account details could not load right now. You can still use the shortcuts below.
+            Your JILL account is open, but some saved details could not load right now. Your shortcuts and account pages still work normally.
           </s-banner>
         )}
+
+        <s-section>
+          <s-stack direction="block" gap="base">
+            <s-stack direction="block" gap="small-100">
+              <s-heading>Shop your JILL favorites</s-heading>
+              <s-text color="subdued">Jump back into the same collections you see on the JILL storefront.</s-text>
+            </s-stack>
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
+              {COLLECTIONS.map(([emoji, label, path]) => (
+                <s-button key={path} href={`${STORE}${path}`}>
+                  {emoji} {label}
+                </s-button>
+              ))}
+            </s-grid>
+          </s-stack>
+        </s-section>
+
+        <s-section>
+          <s-stack direction="block" gap="base">
+            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+              <s-stack direction="block" gap="small-100">
+                <s-heading>Recent orders</s-heading>
+                <s-text color="subdued">Your latest JILL purchases and their current status.</s-text>
+              </s-stack>
+              <s-link href="shopify:customer-account/orders">View all orders</s-link>
+            </s-stack>
+
+            {loading ? (
+              <s-text color="subdued">Loading recent orders…</s-text>
+            ) : orders.length ? (
+              orders.map((order, index) => (
+                <s-stack key={order.id} direction="block" gap="small-400">
+                  {index > 0 && <s-divider />}
+                  <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                    <s-text type="strong">{order.name}</s-text>
+                    <s-text type="strong">{formatMoney(order.totalPrice)}</s-text>
+                  </s-stack>
+                  <s-text color="subdued">{formatDate(order.processedAt)}</s-text>
+                  <s-stack direction="inline" gap="small-400">
+                    {order.financialStatus && (
+                      <s-badge tone="neutral">{cleanStatus(order.financialStatus)}</s-badge>
+                    )}
+                    {order.fulfillmentStatus && (
+                      <s-badge tone="info">{cleanStatus(order.fulfillmentStatus)}</s-badge>
+                    )}
+                  </s-stack>
+                  {order.lineItems?.nodes?.length > 0 && (
+                    <s-text color="subdued">
+                      {order.lineItems.nodes
+                        .map((item) => `${item.title}${item.quantity > 1 ? ` ×${item.quantity}` : ''}`)
+                        .join(' · ')}
+                    </s-text>
+                  )}
+                  {order.statusPageUrl && <s-link href={order.statusPageUrl}>View order</s-link>}
+                </s-stack>
+              ))
+            ) : (
+              <s-stack direction="block" gap="small-400">
+                <s-text color="subdued">
+                  No account-linked orders yet. Orders placed while signed in will appear here automatically.
+                </s-text>
+                <s-button href={`${STORE}/collections/all`}>Browse JILL</s-button>
+              </s-stack>
+            )}
+          </s-stack>
+        </s-section>
 
         {loading ? (
           <s-section>
@@ -233,16 +315,23 @@ function Dashboard() {
               <Detail label="Fulfillment" value={meta.fulfillment_preference} />
 
               <s-stack direction="inline" gap="base">
-                <s-button href={`${STORE}/pages/quote`}>Start another request</s-button>
+                <s-button variant="primary" href={`${STORE}/pages/quote`}>Start another request</s-button>
                 <s-button href={`${STORE}/pages/contact`}>Ask JILL a question</s-button>
               </s-stack>
             </s-stack>
           </s-section>
         ) : (
-          <s-banner tone="info">
-            Tell us what you’re dreaming up. After your first custom request, its dates, theme, colors,
-            and fulfillment details will live right here.
-          </s-banner>
+          <s-section>
+            <s-stack direction="block" gap="base">
+              <s-stack direction="block" gap="small-100">
+                <s-heading>Your custom creations</s-heading>
+                <s-text color="subdued">
+                  Once you send your first custom request, its event date, theme, colors, fulfillment details, and status can live here for your next visit.
+                </s-text>
+              </s-stack>
+              <s-button variant="primary" href={`${STORE}/pages/quote`}>Start a Custom Order</s-button>
+            </s-stack>
+          </s-section>
         )}
 
         {(meta.event_date || meta.next_event_reminder_date) && (
@@ -250,9 +339,7 @@ function Dashboard() {
             <s-stack direction="block" gap="small-400">
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                 <s-heading>Next celebration ✨</s-heading>
-                {meta.annual_reminder_enabled === 'true' && (
-                  <s-badge tone="info">Annual reminder on</s-badge>
-                )}
+                {meta.annual_reminder_enabled === 'true' && <s-badge tone="info">Reminder on</s-badge>}
               </s-stack>
               <Detail label="Event date" value={formatDate(meta.event_date)} />
               <Detail label="Next reminder" value={formatDate(meta.next_event_reminder_date)} />
@@ -286,65 +373,13 @@ function Dashboard() {
 
         <s-section>
           <s-stack direction="block" gap="base">
-            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-              <s-stack direction="block" gap="small-100">
-                <s-heading>Recent orders</s-heading>
-                <s-text color="subdued">Your latest purchases, all in one place.</s-text>
-              </s-stack>
-              <s-link href="shopify:customer-account/orders">View all orders</s-link>
-            </s-stack>
-
-            {loading ? (
-              <s-text color="subdued">Loading recent orders…</s-text>
-            ) : orders.length ? (
-              orders.map((order, index) => (
-                <s-stack key={order.id} direction="block" gap="small-400">
-                  {index > 0 && <s-divider />}
-                  <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                    <s-text type="strong">{order.name}</s-text>
-                    <s-text type="strong">{formatMoney(order.totalPrice)}</s-text>
-                  </s-stack>
-                  <s-text color="subdued">{formatDate(order.processedAt)}</s-text>
-                  <s-stack direction="inline" gap="small-400">
-                    {order.financialStatus && (
-                      <s-badge tone="neutral">{cleanStatus(order.financialStatus)}</s-badge>
-                    )}
-                    {order.fulfillmentStatus && (
-                      <s-badge tone="info">{cleanStatus(order.fulfillmentStatus)}</s-badge>
-                    )}
-                  </s-stack>
-                  {order.lineItems?.nodes?.length > 0 && (
-                    <s-text color="subdued">
-                      {order.lineItems.nodes
-                        .map((item) => `${item.title}${item.quantity > 1 ? ` ×${item.quantity}` : ''}`)
-                        .join(' · ')}
-                    </s-text>
-                  )}
-                  {order.statusPageUrl && (
-                    <s-link href={order.statusPageUrl}>View order</s-link>
-                  )}
-                </s-stack>
-              ))
-            ) : (
-              <s-stack direction="block" gap="small-400">
-                <s-text color="subdued">
-                  No account-linked orders yet. When you order while signed in, they’ll appear here.
-                </s-text>
-                <s-link href={`${STORE}/collections/all`}>Browse JILL</s-link>
-              </s-stack>
-            )}
-          </s-stack>
-        </s-section>
-
-        <s-section>
-          <s-stack direction="block" gap="base">
             <s-stack direction="block" gap="small-100">
-              <s-heading>What would you like to do?</s-heading>
-              <s-text color="subdued">Jump straight back into JILL.</s-text>
+              <s-heading>Keep celebrating with JILL 🎉</s-heading>
+              <s-text color="subdued">Your account is part of the store, not a dead end.</s-text>
             </s-stack>
             <s-stack direction="inline" gap="base">
-              <s-button variant="primary" href={`${STORE}/pages/quote`}>Custom Order</s-button>
-              <s-button href={`${STORE}/collections/all`}>Shop</s-button>
+              <s-button variant="primary" href={STORE}>Back to JILL</s-button>
+              <s-button href={`${STORE}/pages/quote`}>Custom Order</s-button>
               <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
             </s-stack>
           </s-stack>
