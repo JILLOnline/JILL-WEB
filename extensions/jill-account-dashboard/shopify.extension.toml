@@ -12,4 +12,4 @@ module = "./src/Dashboard.jsx"
 [extensions.capabilities]
 api_access = true
 
-# deploy sync: centered rewards toggle
+# Rewards dashboard reads and writes Customer Account API data.
