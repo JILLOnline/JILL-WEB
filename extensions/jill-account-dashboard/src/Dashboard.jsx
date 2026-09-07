@@ -309,38 +309,33 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
     const isPendingTier = pendingPoints === tier.points;
+    const connectToNext = showAllRewards && tier.points < REWARD_TIERS[REWARD_TIERS.length - 1].points;
 
     return (
       <s-stack key={`journey-${tier.points}`} direction="block" gap="none">
-        {previousPoints > 0 && (
-          <s-grid gridTemplateColumns="44px minmax(0, 1fr)" gap="base">
-            <s-stack direction="inline" justifyContent="center">
-              <RewardLiquidSegment points={points} from={previousPoints} to={tier.points} />
-            </s-stack>
-            <s-box blockSize={8} />
-          </s-grid>
-        )}
-
         <s-grid
-          gridTemplateColumns="44px minmax(0, 1fr)"
-          gap="base"
-          blockAlignment="center"
+          gridTemplateColumns="28px minmax(0, 1fr)"
+          gap="small-200"
+          blockAlignment="start"
         >
-          <s-stack direction="inline" justifyContent="center" alignItems="center">
+          <s-stack direction="block" gap="none" alignItems="center">
             <s-icon
               type={isUnlocked ? 'check-circle-filled' : 'circle'}
               tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
               size="small-200"
             />
+            {connectToNext && (
+              <s-box inlineSize={1} blockSize={48} border="base base solid" />
+            )}
           </s-stack>
 
           <s-box
-            padding="base"
+            padding="small-300"
             background={isUnlocked || isNext ? 'base' : 'subdued'}
             borderRadius="large"
             border="base base solid"
           >
-            <s-stack direction="block" gap="small-300">
+            <s-stack direction="block" gap="small-200">
               <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                 <s-stack direction="inline" gap="small-200" alignItems="center">
                   <s-heading>${tier.value} OFF</s-heading>
@@ -398,7 +393,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-400">
+            <s-stack direction="block" gap="small-300">
               {rewardMilestone(REWARD_TIERS[0], 0)}
 
               {showAllRewards && (
