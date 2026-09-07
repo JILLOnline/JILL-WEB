@@ -222,36 +222,6 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardLiquidSegment({points, from, to}) {
-  const span = Math.max(1, to - from);
-  const rows = span <= 10 ? 5 : 7;
-  const ratio = Math.max(0, Math.min(1, (points - from) / span));
-  const totalEighths = Math.round(ratio * rows * 8);
-  const complete = points >= to;
-  const liquidGlyphs = ['', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
-
-  return (
-    <s-stack direction="block" gap="none" alignItems="center">
-      {Array.from({length: rows}, (_, index) => {
-        const eighthsAbove = index * 8;
-        const fill = Math.max(0, Math.min(8, totalEighths - eighthsAbove));
-        const filled = fill > 0;
-
-        return (
-          <s-text
-            key={`${from}-${to}-${index}`}
-            type="strong"
-            tone={filled ? (complete ? 'success' : 'info') : 'neutral'}
-            accessibilityVisibility="hidden"
-          >
-            {filled ? liquidGlyphs[fill] : '│'}
-          </s-text>
-        );
-      })}
-    </s-stack>
-  );
-}
-
 function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [submittingPoints, setSubmittingPoints] = useState(0);
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
@@ -309,25 +279,52 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
     const isPendingTier = pendingPoints === tier.points;
-    const connectToNext = showAllRewards && tier.points < REWARD_TIERS[REWARD_TIERS.length - 1].points;
+    const isFirst = previousPoints === 0;
+    const isLast = tier.points === REWARD_TIERS[REWARD_TIERS.length - 1].points;
+    const showTopRail = showAllRewards && !isFirst;
+    const showBottomRail = showAllRewards && !isLast;
 
     return (
       <s-stack key={`journey-${tier.points}`} direction="block" gap="none">
         <s-grid
           gridTemplateColumns="28px minmax(0, 1fr)"
           gap="small-200"
-          blockAlignment="start"
+          blockAlignment="stretch"
         >
-          <s-stack direction="block" gap="none" alignItems="center">
-            <s-icon
-              type={isUnlocked ? 'check-circle-filled' : 'circle'}
-              tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
-              size="small-200"
-            />
-            {connectToNext && (
-              <s-box inlineSize={1} blockSize={48} border="base base solid" />
+          <s-grid
+            gridTemplateRows="1fr auto 1fr"
+            blockSize="100%"
+            justifyItems="center"
+            alignItems="stretch"
+          >
+            {showTopRail ? (
+              <s-box
+                inlineSize={2}
+                blockSize="100%"
+                border="base base solid"
+              />
+            ) : (
+              <s-box />
             )}
-          </s-stack>
+
+            <s-stack direction="inline" justifyContent="center" alignItems="center">
+              <s-icon
+                type={isUnlocked ? 'check-circle-filled' : 'circle'}
+                tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+                size="small-200"
+              />
+            </s-stack>
+
+            {showBottomRail ? (
+              <s-box
+                inlineSize={2}
+                blockSize="100%"
+                border="base base solid"
+              />
+            ) : (
+              <s-box />
+            )}
+          </s-grid>
 
           <s-box
             padding="small-300"
@@ -393,7 +390,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-300">
+            <s-stack direction="block" gap="small-200">
               {rewardMilestone(REWARD_TIERS[0], 0)}
 
               {showAllRewards && (
