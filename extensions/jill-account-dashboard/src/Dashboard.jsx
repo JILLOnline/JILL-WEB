@@ -33,6 +33,7 @@ const REWARD_KEYS = [
   'active_coupon_code',
   'active_coupon_value_cents',
   'active_coupon_points',
+  'redeem_request_points',
 ];
 
 const IDENTIFIERS = [
@@ -74,6 +75,23 @@ const QUERY = `
   }
 `;
 
+const REQUEST_REWARD_MUTATION = `
+  mutation RequestJillReward($metafields: [MetafieldsSetInput!]!) {
+    metafieldsSet(metafields: $metafields) {
+      metafields {
+        namespace
+        key
+        value
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+`;
+
 const COLLECTIONS = [
   ['🎉', 'Piñatas', '/collections/pinatas'],
   ['🎁', 'Party Favors', '/collections/catalog'],
@@ -100,6 +118,44 @@ async function loadData() {
     throw new Error(payload?.errors?.[0]?.message || 'Unable to load JILL dashboard data');
   }
   return payload?.data?.customer || null;
+}
+
+async function requestReward(customerId, points) {
+  const response = await fetch(API, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      query: REQUEST_REWARD_MUTATION,
+      variables: {
+        metafields: [
+          {
+            ownerId: customerId,
+            namespace: 'jill_rewards',
+            key: 'redeem_request_points',
+            type: 'number_integer',
+            value: String(points),
+          },
+        ],
+      },
+    }),
+  });
+
+  const payload = await response.json();
+  const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
+
+  if (!response.ok || payload?.errors?.length || userErrors.length) {
+    throw new Error(
+      userErrors?.[0]?.message ||
+        payload?.errors?.[0]?.message ||
+        'Unable to request your JILL reward right now.',
+    );
+  }
+
+  return payload?.data?.metafieldsSet?.metafields || [];
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 function metaMap(customer) {
@@ -166,16 +222,58 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardsCard({meta, loading}) {
+function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
+  const [submittingPoints, setSubmittingPoints] = useState(0);
+  const [localPendingPoints, setLocalPendingPoints] = useState(0);
+  const [redeemError, setRedeemError] = useState('');
+
   const points = toInteger(meta.points_balance);
   const eligibleSpendCents = toInteger(meta.eligible_spend_cents);
   const activeCouponCode = String(meta.active_coupon_code || '').trim();
   const activeCouponValueCents = toInteger(meta.active_coupon_value_cents);
+  const requestedPoints = toInteger(meta.redeem_request_points);
+  const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
 
   const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
+  const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const nextPointSpendCents = 1000 - (eligibleSpendCents % 1000 || 0);
   const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
+
+  async function handleRedeem(tier) {
+    if (!customer?.id || pendingPoints || activeCouponCode) return;
+
+    setRedeemError('');
+    setSubmittingPoints(tier.points);
+    setLocalPendingPoints(tier.points);
+
+    try {
+      await requestReward(customer.id, tier.points);
+
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        await wait(attempt === 0 ? 900 : 1600);
+        const nextCustomer = await loadData();
+        if (nextCustomer) onCustomerUpdate(nextCustomer);
+
+        const nextMeta = metaMap(nextCustomer);
+        if (String(nextMeta.active_coupon_code || '').trim()) {
+          setLocalPendingPoints(0);
+          break;
+        }
+
+        if (attempt > 0 && toInteger(nextMeta.redeem_request_points) === 0) {
+          setLocalPendingPoints(0);
+          break;
+        }
+      }
+    } catch (error) {
+      console.warn('JILL reward request error', error);
+      setLocalPendingPoints(0);
+      setRedeemError(error?.message || 'Unable to request your reward right now.');
+    } finally {
+      setSubmittingPoints(0);
+    }
+  }
 
   return (
     <s-section>
@@ -188,6 +286,12 @@ function RewardsCard({meta, loading}) {
           <s-badge tone="info">{loading ? 'Loading…' : `${points} pts`}</s-badge>
         </s-stack>
 
+        {redeemError && (
+          <s-banner tone="critical">
+            {redeemError}
+          </s-banner>
+        )}
+
         {!loading && activeCouponCode ? (
           <s-stack direction="block" gap="small-400">
             <s-text type="strong">
@@ -196,6 +300,9 @@ function RewardsCard({meta, loading}) {
             <s-text>
               Code: <s-text type="strong">{activeCouponCode}</s-text>
             </s-text>
+            <s-text color="subdued">
+              This coupon is unique to your account, can be used once, and does not combine with other discounts.
+            </s-text>
             <s-button
               variant="primary"
               href={`${STORE}/discount/${encodeURIComponent(activeCouponCode)}?redirect=/`}
@@ -203,12 +310,31 @@ function RewardsCard({meta, loading}) {
               Use my reward
             </s-button>
           </s-stack>
+        ) : !loading && pendingPoints ? (
+          <s-stack direction="block" gap="small-400">
+            <s-text type="strong">Creating your unique reward… ✨</s-text>
+            <s-text color="subdued">
+              Your {pendingPoints}-point redemption request was received. JILL is creating your coupon now.
+            </s-text>
+          </s-stack>
         ) : !loading && unlocked ? (
           <s-stack direction="block" gap="small-400">
-            <s-text type="strong">Reward unlocked: ${unlocked.value} OFF 🎉</s-text>
+            <s-text type="strong">You have rewards ready to redeem 🎉</s-text>
             <s-text color="subdued">
-              Your available reward can be redeemed from JILL Coupons once reward redemption is active.
+              Choose any reward you can afford. Redeeming converts those points into one unique JILL coupon.
             </s-text>
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(160px, 1fr))" gap="small-400">
+              {unlockedTiers.map((tier) => (
+                <s-button
+                  key={tier.points}
+                  variant={tier.points === unlocked.points ? 'primary' : 'secondary'}
+                  disabled={Boolean(pendingPoints)}
+                  onClick={() => handleRedeem(tier)}
+                >
+                  Redeem ${tier.value} OFF · {tier.points} pts
+                </s-button>
+              ))}
+            </s-grid>
           </s-stack>
         ) : !loading && nextTier ? (
           <s-stack direction="block" gap="small-400">
@@ -303,7 +429,12 @@ function Dashboard() {
           </s-banner>
         )}
 
-        <RewardsCard meta={meta} loading={loading} />
+        <RewardsCard
+          customer={customer}
+          meta={meta}
+          loading={loading}
+          onCustomerUpdate={setCustomer}
+        />
 
         <s-section>
           <s-stack direction="block" gap="base">
