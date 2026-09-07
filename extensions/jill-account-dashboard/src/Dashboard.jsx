@@ -393,35 +393,23 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-300">
-              <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                <s-stack direction="block" gap="small-100">
-                  <s-text type="strong">Your reward path</s-text>
-                  <s-text color="subdued">Every point fills your path. Stack points and choose the reward you want.</s-text>
+            <s-stack direction="block" gap="small-400">
+              {rewardMilestone(REWARD_TIERS[0], 0)}
+
+              {showAllRewards && (
+                <s-stack direction="block" gap="none">
+                  {REWARD_TIERS.slice(1).map((tier, index) =>
+                    rewardMilestone(tier, REWARD_TIERS[index].points),
+                  )}
                 </s-stack>
-                <s-badge tone="info">{showAllRewards ? 'All rewards' : 'Next reward'}</s-badge>
-              </s-stack>
+              )}
 
-              <s-divider />
-
-              <s-stack direction="block" gap="small-400">
-                {rewardMilestone(REWARD_TIERS[0], 0)}
-
-                {showAllRewards && (
-                  <s-stack direction="block" gap="none">
-                    {REWARD_TIERS.slice(1).map((tier, index) =>
-                      rewardMilestone(tier, REWARD_TIERS[index].points),
-                    )}
-                  </s-stack>
-                )}
-
-                <s-button
-                  variant="secondary"
-                  onClick={() => setShowAllRewards((current) => !current)}
-                >
-                  {showAllRewards ? 'Collapse rewards ↑' : 'View all rewards ↓'}
-                </s-button>
-              </s-stack>
+              <s-button
+                variant="secondary"
+                onClick={() => setShowAllRewards((current) => !current)}
+              >
+                {showAllRewards ? 'Collapse rewards ↑' : 'View all rewards ↓'}
+              </s-button>
             </s-stack>
           </s-box>
         )}
