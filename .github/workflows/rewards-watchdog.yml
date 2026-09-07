@@ -1,0 +1,47 @@
+name: JILL rewards watchdog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  watchdog:
+    name: Verify rewards backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping JILL Rewards watchdog
+        shell: bash
+        env:
+          WATCHDOG_URL: https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec?jill_rewards_watchdog=1
+        run: |
+          set -euo pipefail
+          response="$(curl -L --fail --silent --show-error --max-time 180 "$WATCHDOG_URL")"
+          printf '%s\n' "$response"
+
+          RESPONSE="$response" python - <<'PY'
+          import json
+          import os
+          import sys
+
+          raw = os.environ.get('RESPONSE', '').strip()
+          try:
+              data = json.loads(raw)
+          except Exception:
+              print('JILL Rewards watchdog endpoint is not active yet; waiting for the hardened Apps Script deployment.')
+              sys.exit(0)
+
+          if not data.get('watchdog'):
+              print('JILL Rewards watchdog endpoint is not active yet; waiting for the hardened Apps Script deployment.')
+              sys.exit(0)
+
+          if data.get('ok') is not True:
+              print('JILL Rewards watchdog reported a failure:', raw)
+              sys.exit(1)
+
+          print('JILL Rewards watchdog OK:', raw)
+          PY
