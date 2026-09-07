@@ -36,8 +36,8 @@ const REWARD_KEYS = [
 ];
 
 const IDENTIFIERS = [
-  ...JILL_KEYS.map((key) => `{namespace:"jill",key:"${key}"}`),
-  ...REWARD_KEYS.map((key) => `{namespace:"jill_rewards",key:"${key}"}`),
+  ...JILL_KEYS.map((key) => `{namespace:\"jill\",key:\"${key}\"}`),
+  ...REWARD_KEYS.map((key) => `{namespace:\"jill_rewards\",key:\"${key}\"}`),
 ].join(',');
 
 const QUERY = `
@@ -264,6 +264,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
+  const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
   const nextTier = SORTED_REWARD_TIERS.find(
     (tier) =>
       points < tier.points &&
@@ -450,17 +451,13 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     );
   }
 
-  const redeemMessage = pendingPoints
-    ? slowRequest
-      ? 'Still working — your points stay safe until Shopify creates the coupon.'
-      : 'Finishing your reward… ✨'
-    : confirmTier
-      ? 'Confirm your choice below before any points are spent.'
-      : points >= SORTED_REWARD_TIERS[0].points
-        ? 'You earned it — choose any reward you have unlocked. ✨'
-        : activeCoupons.length
-          ? 'Your active rewards are safe in My Coupons. Keep stacking points for the next one. ✨'
-          : 'Keep stacking points — your first reward is getting closer. ✨';
+  const redeemMessage = confirmTier
+    ? 'Confirm your choice below before any points are spent.'
+    : points >= SORTED_REWARD_TIERS[0].points
+      ? 'You earned it — choose any reward you have unlocked. ✨'
+      : activeCoupons.length
+        ? 'Your active rewards are safe in My Coupons. Keep stacking points for the next one. ✨'
+        : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
     <s-section>
@@ -504,7 +501,23 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               <s-stack direction="block" gap="small-300">
                 <s-stack direction="block" gap="small-100">
                   <s-text type="strong">Redeem</s-text>
-                  <s-text color="subdued">{redeemMessage}</s-text>
+                  {isGeneratingReward ? (
+                    <s-stack direction="inline" gap="small-300" alignItems="center">
+                      <s-spinner accessibilityLabel="Creating your JILL coupon" />
+                      <s-stack direction="block" gap="small-100">
+                        <s-text type="strong">
+                          {slowRequest ? 'Still creating your coupon…' : 'Creating your coupon…'}
+                        </s-text>
+                        <s-text color="subdued">
+                          {slowRequest
+                            ? 'Shopify is taking a little longer than usual. Your points stay safe while we finish.'
+                            : 'This usually only takes a few seconds. Your points stay safe while we finish.'}
+                        </s-text>
+                      </s-stack>
+                    </s-stack>
+                  ) : (
+                    <s-text color="subdued">{redeemMessage}</s-text>
+                  )}
                 </s-stack>
 
                 <s-box padding="small-300" background="base" borderRadius="large" border="base base solid">
