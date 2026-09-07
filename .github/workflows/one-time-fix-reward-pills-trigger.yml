@@ -1,7 +1,0 @@
-name: Temporary reward pill patch trigger
-on: push
-jobs:
-  noop:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo trigger
