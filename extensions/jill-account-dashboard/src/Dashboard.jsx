@@ -237,13 +237,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const progressPoints = Math.max(0, Math.min(points, 50));
-  const rewardTrack = Array.from({length: 50}, (_, index) => {
-    const point = index + 1;
-    return {
-      point,
-      tier: REWARD_TIERS.find((item) => item.points === point) || null,
-    };
-  });
+  const renderedProgressPoints = progressPoints === 0 ? Number.EPSILON : progressPoints;
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -292,29 +286,35 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         </s-stack>
 
         {!loading && (
-          <s-box padding="base" background="subdued" borderRadius="large">
+          <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
             <s-stack direction="block" gap="small-300">
-              <s-grid gridTemplateColumns="repeat(50, minmax(0, 1fr))" gap="none" blockAlignment="center">
-                {rewardTrack.map((step) =>
-                  step.tier ? (
-                    <s-icon
-                      key={`marker-${step.point}`}
-                      type={points >= step.point ? 'check-circle-filled' : 'circle'}
-                      tone={points >= step.point ? 'success' : step.point === nextTier?.points ? 'info' : 'neutral'}
-                      size="small-200"
-                    />
-                  ) : (
-                    <s-text
-                      key={`track-${step.point}`}
-                      tone={step.point <= progressPoints ? 'info' : 'neutral'}
-                      type="strong"
-                      accessibilityVisibility="hidden"
-                    >
-                      ━
-                    </s-text>
-                  ),
-                )}
-              </s-grid>
+              <s-stack direction="block" gap="none">
+                <s-progress
+                  value={renderedProgressPoints}
+                  max={50}
+                  accessibilityLabel={`${progressPoints} of 50 points across Rewards`}
+                />
+                <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="none">
+                  {REWARD_TIERS.map((tier) => {
+                    const isUnlocked = points >= tier.points;
+                    const isNext = tier.points === nextTier?.points;
+                    return (
+                      <s-stack
+                        key={`marker-${tier.points}`}
+                        direction="inline"
+                        justifyContent="end"
+                        alignItems="center"
+                      >
+                        <s-icon
+                          type={isUnlocked ? 'check-circle-filled' : 'circle'}
+                          tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+                          size="small-200"
+                        />
+                      </s-stack>
+                    );
+                  })}
+                </s-grid>
+              </s-stack>
 
               <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
                 {REWARD_TIERS.map((tier) => {
