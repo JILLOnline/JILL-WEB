@@ -1,0 +1,59 @@
+name: Patch centered rewards toggle
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/patch-center-rewards-toggle.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Center rewards toggle and remove arrows
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          text = path.read_text()
+
+          old = '''              <s-button
+                variant="secondary"
+                onClick={() => setShowAllRewards((current) => !current)}
+              >
+                {showAllRewards ? 'Collapse rewards ↑' : 'View all rewards ↓'}
+              </s-button>'''
+
+          new = '''              <s-stack direction="inline" justifyContent="center">
+                <s-button
+                  variant="secondary"
+                  onClick={() => setShowAllRewards((current) => !current)}
+                >
+                  {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
+                </s-button>
+              </s-stack>'''
+
+          if old not in text:
+            raise SystemExit('Rewards toggle block not found exactly as expected.')
+
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Commit patch and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/patch-center-rewards-toggle.yml
+          git config user.name "JILL Rewards automation"
+          git config user.email "info@jillonlinestore.com"
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx .github/workflows/patch-center-rewards-toggle.yml
+          git commit -m "Center rewards toggle and remove arrows"
+          git push origin HEAD:main
