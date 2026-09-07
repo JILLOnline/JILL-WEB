@@ -94,6 +94,8 @@ const REWARD_TIERS = [
   {points: 50, value: 40, minimum: 150},
 ];
 
+const SORTED_REWARD_TIERS = [...REWARD_TIERS].sort((a, b) => a.points - b.points);
+
 async function loadData() {
   const response = await fetch(API, {
     method: 'POST',
@@ -262,8 +264,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
-  const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
-  const collapsedTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
+  const nextTier = SORTED_REWARD_TIERS.find((tier) => points < tier.points) || null;
+  const collapsedTier = nextTier || SORTED_REWARD_TIERS[SORTED_REWARD_TIERS.length - 1];
+  const visibleRewardTiers = showAllRewards ? SORTED_REWARD_TIERS : [collapsedTier];
 
   function activeCouponForTier(tierPoints) {
     return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
@@ -343,16 +346,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     }
   }
 
-  function rewardMilestone(tier, previousPoints) {
+  function rewardMilestone(tier, showTopRail = false, showBottomRail = false) {
     const isUnlocked = points >= tier.points;
     const isNext = tier.points === nextTier?.points;
     const tierProgress = Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
-    const isFirst = previousPoints === 0;
-    const isLast = tier.points === REWARD_TIERS[REWARD_TIERS.length - 1].points;
-    const showTopRail = showAllRewards && !isFirst;
-    const showBottomRail = showAllRewards && !isLast;
 
     return (
       <s-grid
@@ -442,7 +441,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
       : 'Finishing your reward… ✨'
     : confirmTier
       ? 'Confirm your choice below before any points are spent.'
-      : points >= REWARD_TIERS[0].points
+      : points >= SORTED_REWARD_TIERS[0].points
         ? 'You earned it — choose any reward you have unlocked. ✨'
         : activeCoupons.length
           ? 'Your active rewards are safe in My Coupons. Keep stacking points for the next one. ✨'
@@ -462,16 +461,22 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
             <s-stack direction="block" gap="base">
-              <s-stack direction="block" gap="none">
-                {(showAllRewards ? REWARD_TIERS : [collapsedTier]).map(
-                  (tier, index, visibleTiers) => (
-                    <s-stack key={`reward-group-${tier.points}`} direction="block" gap="none">
-                      {rewardMilestone(tier, index === 0 ? 0 : visibleTiers[index - 1].points)}
-                      {index < visibleTiers.length - 1 && rewardConnector()}
-                    </s-stack>
-                  ),
-                )}
-              </s-stack>
+              <s-grid
+                key={`reward-journey-${showAllRewards ? 'expanded' : collapsedTier.points}-${points}`}
+                gridTemplateColumns="1fr"
+                gap="none"
+              >
+                {visibleRewardTiers.map((tier, index) => (
+                  <s-grid key={`reward-group-${tier.points}`} gridTemplateColumns="1fr" gap="none">
+                    {rewardMilestone(
+                      tier,
+                      showAllRewards && index > 0,
+                      showAllRewards && index < visibleRewardTiers.length - 1,
+                    )}
+                    {index < visibleRewardTiers.length - 1 && rewardConnector()}
+                  </s-grid>
+                ))}
+              </s-grid>
 
               <s-stack direction="inline" justifyContent="center">
                 <s-button variant="secondary" onClick={() => setShowAllRewards((current) => !current)}>
@@ -489,7 +494,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
                 <s-box padding="small-300" background="base" borderRadius="large" border="base base solid">
                   <s-grid gridTemplateColumns="repeat(4, minmax(0, 1fr))" gap="small-200">
-                    {REWARD_TIERS.map((tier) => {
+                    {SORTED_REWARD_TIERS.map((tier) => {
                       const hasThisTier = Boolean(activeCouponForTier(tier.points));
                       const canRedeem = points >= tier.points && !pendingPoints && !hasThisTier;
 
