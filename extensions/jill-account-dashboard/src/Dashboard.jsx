@@ -236,6 +236,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
   const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
+  const collapsedTier = nextTier || REWARD_TIERS[REWARD_TIERS.length - 1];
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -398,7 +399,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
             <s-stack direction="block" gap="small-300">
               <s-stack direction="block" gap="none">
-                {(showAllRewards ? REWARD_TIERS : REWARD_TIERS.slice(0, 1)).map(
+                {(showAllRewards ? REWARD_TIERS : [collapsedTier]).map(
                   (tier, index, visibleTiers) => (
                     <s-stack key={`reward-group-${tier.points}`} direction="block" gap="none">
                       {rewardMilestone(tier, index === 0 ? 0 : visibleTiers[index - 1].points)}
