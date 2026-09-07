@@ -376,9 +376,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     return (
       <s-grid gridTemplateColumns="32px minmax(0, 1fr)" gap="small-300">
         <s-stack direction="inline" justifyContent="center">
-          <s-box inlineSize={1} blockSize={18} border="large base solid" />
+          <s-box inlineSize={1} blockSize={26} border="large base solid" />
         </s-stack>
-        <s-box blockSize={18} />
+        <s-box blockSize={26} />
       </s-grid>
     );
   }
