@@ -5,6 +5,7 @@ const requiredScopes = [
   'read_customers',
   'write_customers',
   'customer_read_customers',
+  'customer_write_customers',
   'customer_read_orders',
 ];
 
