@@ -22,30 +22,33 @@ jobs:
         run: |
           python3 <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
           text = path.read_text()
 
-          old = '''              <s-button
-                variant="secondary"
-                onClick={() => setShowAllRewards((current) => !current)}
-              >
-                {showAllRewards ? 'Collapse rewards ↑' : 'View all rewards ↓'}
-              </s-button>'''
+          pattern = re.compile(
+              r'(?P<indent>\s*)<s-button\s+variant="secondary"\s+onClick=\{\(\) => setShowAllRewards\(\(current\) => !current\)\}\s*>\s*\{showAllRewards \? \'Collapse rewards ↑\' : \'View all rewards ↓\'\}\s*</s-button>',
+              re.S,
+          )
 
-          new = '''              <s-stack direction="inline" justifyContent="center">
-                <s-button
-                  variant="secondary"
-                  onClick={() => setShowAllRewards((current) => !current)}
-                >
-                  {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
-                </s-button>
-              </s-stack>'''
+          match = pattern.search(text)
+          if not match:
+            raise SystemExit('Rewards toggle block not found.')
 
-          if old not in text:
-            raise SystemExit('Rewards toggle block not found exactly as expected.')
+          indent = match.group('indent')
+          replacement = (
+              f'{indent}<s-stack direction="inline" justifyContent="center">\n'
+              f'{indent}  <s-button\n'
+              f'{indent}    variant="secondary"\n'
+              f'{indent}    onClick={{() => setShowAllRewards((current) => !current)}}\n'
+              f'{indent}  >\n'
+              f"{indent}    {{showAllRewards ? 'Collapse rewards' : 'View all rewards'}}\n"
+              f'{indent}  </s-button>\n'
+              f'{indent}</s-stack>'
+          )
 
-          path.write_text(text.replace(old, new, 1))
+          path.write_text(pattern.sub(replacement, text, count=1))
           PY
 
       - name: Commit patch and remove one-time workflow
