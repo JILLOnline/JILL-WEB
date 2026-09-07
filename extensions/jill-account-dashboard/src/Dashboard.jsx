@@ -237,17 +237,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
   const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
-  const rewardSegments = REWARD_TIERS.map((tier, index) => {
-    const previousPoints = index === 0 ? 0 : REWARD_TIERS[index - 1].points;
-    const segmentMax = tier.points - previousPoints;
-    const segmentValue = Math.max(0, Math.min(segmentMax, points - previousPoints));
-
-    return {
-      ...tier,
-      segmentMax,
-      segmentValue,
-    };
-  });
+  const progressPoints = Math.max(0, Math.min(points, 50));
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -296,23 +286,18 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         </s-stack>
 
         {!loading && (
-          <s-stack direction="block" gap="small-400">
-            <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
-              {rewardSegments.map((segment) => (
-                <s-progress
-                  key={`bar-${segment.points}`}
-                  value={segment.segmentValue}
-                  max={segment.segmentMax}
-                  accessibilityLabel={`${Math.min(points, segment.points)} points toward the ${segment.points}-point reward`}
-                />
-              ))}
-            </s-grid>
+          <s-stack direction="block" gap="small-300">
+            <s-progress
+              value={progressPoints}
+              max={50}
+              accessibility-label={`${progressPoints} of 50 points across JILL Rewards`}
+            />
 
             <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
-              {rewardSegments.map((segment) => (
-                <s-stack key={`tier-${segment.points}`} direction="block" gap="small-100">
-                  <s-text type="strong">${segment.value} OFF</s-text>
-                  <s-text color="subdued">{segment.points} pts · ${segment.minimum} min</s-text>
+              {REWARD_TIERS.map((tier) => (
+                <s-stack key={`tier-${tier.points}`} direction="block" gap="small-100" alignItems="center">
+                  <s-badge tone={points >= tier.points ? 'info' : 'neutral'}>${tier.value} OFF</s-badge>
+                  <s-text color="subdued">{tier.points} pts · ${tier.minimum} min</s-text>
                 </s-stack>
               ))}
             </s-grid>
