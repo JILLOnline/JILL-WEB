@@ -30,10 +30,9 @@ const REWARD_KEYS = [
   'eligible_spend_cents',
   'points_earned_lifetime',
   'points_redeemed_lifetime',
-  'active_coupon_code',
-  'active_coupon_value_cents',
-  'active_coupon_points',
   'redeem_request_points',
+  'redeem_request_nonce',
+  'coupons',
 ];
 
 const IDENTIFIERS = [
@@ -120,7 +119,12 @@ async function loadData() {
   return payload?.data?.customer || null;
 }
 
+function createRewardNonce() {
+  return `jill:${Date.now()}:${Math.random().toString(36).slice(2, 12)}`;
+}
+
 async function requestReward(customerId, points) {
+  const nonce = createRewardNonce();
   const response = await fetch(API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -134,6 +138,13 @@ async function requestReward(customerId, points) {
             key: 'redeem_request_points',
             type: 'number_integer',
             value: String(points),
+          },
+          {
+            ownerId: customerId,
+            namespace: 'jill_rewards',
+            key: 'redeem_request_nonce',
+            type: 'single_line_text_field',
+            value: nonce,
           },
         ],
       },
@@ -151,7 +162,7 @@ async function requestReward(customerId, points) {
     );
   }
 
-  return payload?.data?.metafieldsSet?.metafields || [];
+  return nonce;
 }
 
 function wait(milliseconds) {
@@ -167,6 +178,36 @@ function metaMap(customer) {
 function toInteger(value) {
   const parsed = Number.parseInt(value || '0', 10);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function rewardWallet(value) {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    if (Array.isArray(parsed?.coupons)) return parsed.coupons.filter(Boolean);
+  } catch (error) {
+    console.warn('JILL rewards wallet parse error', error);
+  }
+
+  return [];
+}
+
+function rewardCouponStatus(coupon) {
+  const status = String(coupon?.status || 'active').toLowerCase();
+  if (status === 'used' || status === 'expired') return status;
+
+  const expiresAt = Date.parse(coupon?.expires_at || '');
+  if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) return 'expired';
+
+  return 'active';
+}
+
+function rewardRequestIsPending(meta) {
+  const points = toInteger(meta.redeem_request_points);
+  const nonce = String(meta.redeem_request_nonce || '').trim();
+  return points > 0 && Boolean(nonce) && !nonce.startsWith('consumed:');
 }
 
 function formatDate(value) {
@@ -227,11 +268,20 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
   const [redeemError, setRedeemError] = useState('');
   const [showAllRewards, setShowAllRewards] = useState(false);
+  const [slowRequest, setSlowRequest] = useState(false);
 
   const points = toInteger(meta.points_balance);
-  const activeCouponCode = String(meta.active_coupon_code || '').trim();
-  const activeCouponValueCents = toInteger(meta.active_coupon_value_cents);
-  const requestedPoints = toInteger(meta.redeem_request_points);
+  const wallet = rewardWallet(meta.coupons);
+  const activeCoupons = wallet
+    .filter((coupon) => rewardCouponStatus(coupon) === 'active')
+    .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || ''));
+  const activeCoupon = activeCoupons[0] || null;
+  const activeCouponCode = String(activeCoupon?.code || '').trim();
+  const activeCouponValueCents = toInteger(
+    activeCoupon?.value_cents || Number(activeCoupon?.value || 0) * 100,
+  );
+  const persistedPending = rewardRequestIsPending(meta);
+  const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
 
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
@@ -241,31 +291,55 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     if (!customer?.id || pendingPoints || activeCouponCode || points < tier.points) return;
 
     setRedeemError('');
+    setSlowRequest(false);
     setSubmittingPoints(tier.points);
     setLocalPendingPoints(tier.points);
 
     try {
-      await requestReward(customer.id, tier.points);
+      const requestNonce = await requestReward(customer.id, tier.points);
+      let completed = false;
 
-      for (let attempt = 0; attempt < 6; attempt += 1) {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
         await wait(attempt === 0 ? 900 : 1600);
         const nextCustomer = await loadData();
         if (nextCustomer) onCustomerUpdate(nextCustomer);
 
         const nextMeta = metaMap(nextCustomer);
-        if (String(nextMeta.active_coupon_code || '').trim()) {
+        const nextWallet = rewardWallet(nextMeta.coupons);
+        const createdCoupon = nextWallet.find(
+          (coupon) =>
+            coupon?.request_nonce === requestNonce && rewardCouponStatus(coupon) === 'active',
+        );
+
+        if (createdCoupon) {
           setLocalPendingPoints(0);
+          setSlowRequest(false);
+          completed = true;
           break;
         }
 
-        if (attempt > 0 && toInteger(nextMeta.redeem_request_points) === 0) {
+        if (attempt > 0 && !rewardRequestIsPending(nextMeta)) {
           setLocalPendingPoints(0);
+          setSlowRequest(false);
+          completed = true;
+
+          if (!nextWallet.some((coupon) => coupon?.request_nonce === requestNonce)) {
+            setRedeemError(
+              'Your reward was not created, and your points were not spent. Please try again.',
+            );
+          }
           break;
         }
+      }
+
+      if (!completed) {
+        setLocalPendingPoints(0);
+        setSlowRequest(true);
       }
     } catch (error) {
       console.warn('JILL reward request error', error);
       setLocalPendingPoints(0);
+      setSlowRequest(false);
       setRedeemError(error?.message || 'Unable to request your reward right now.');
     } finally {
       setSubmittingPoints(0);
@@ -370,9 +444,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   }
 
   const redeemMessage = activeCouponCode
-    ? 'Your reward is ready — use it whenever you are ready to shop. ✨'
+    ? 'Your reward is ready and saved in Coupons. ✨'
     : pendingPoints
-      ? 'Making your reward now — your choices will unlock again in just a moment. ✨'
+      ? slowRequest
+        ? 'Your reward request is queued. Your points stay safe while JILL finishes it. ✨'
+        : 'Making your reward now — your choices will unlock again in just a moment. ✨'
       : points >= REWARD_TIERS[0].points
         ? 'You earned it — choose any reward you have unlocked. ✨'
         : 'Keep stacking points — your first reward is getting closer. ✨';
@@ -443,11 +519,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           </s-box>
         )}
 
-        {redeemError && (
-          <s-banner tone="critical">
-            {redeemError}
-          </s-banner>
-        )}
+        {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
 
         {!loading && activeCouponCode ? (
           <s-stack direction="block" gap="small-400">
@@ -460,18 +532,30 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
             <s-text color="subdued">
               This coupon is unique to your account, can be used once, and does not combine with other discounts.
             </s-text>
-            <s-button
-              variant="primary"
-              href={`${STORE}/discount/${encodeURIComponent(activeCouponCode)}?redirect=/`}
-            >
-              Use my reward
-            </s-button>
+            <s-stack direction="inline" gap="small-300">
+              <s-button
+                variant="primary"
+                href={`${STORE}/discount/${encodeURIComponent(activeCouponCode)}?redirect=/`}
+              >
+                Use my reward
+              </s-button>
+              <s-button
+                variant="secondary"
+                href="extension:jill-account-coupons/"
+              >
+                My Coupons
+              </s-button>
+            </s-stack>
           </s-stack>
         ) : !loading && pendingPoints ? (
           <s-stack direction="block" gap="small-400">
-            <s-text type="strong">Creating your unique reward… ✨</s-text>
+            <s-text type="strong">
+              {slowRequest ? 'Reward request queued ✨' : 'Creating your unique reward… ✨'}
+            </s-text>
             <s-text color="subdued">
-              Your {pendingPoints}-point redemption request was received. JILL is creating your coupon now.
+              {slowRequest
+                ? `Your ${pendingPoints}-point request is still queued. Your points have not been deducted unless a coupon is created.`
+                : `Your ${pendingPoints}-point redemption request was received. JILL is creating your coupon now.`}
             </s-text>
           </s-stack>
         ) : null}
