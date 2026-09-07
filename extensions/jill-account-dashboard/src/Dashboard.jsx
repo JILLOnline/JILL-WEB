@@ -305,6 +305,8 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   function rewardMilestone(tier, previousPoints) {
     const isUnlocked = points >= tier.points;
     const isNext = tier.points === nextTier?.points;
+    const tierProgress = Math.max(0, Math.min(points, tier.points));
+    const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
     const isPendingTier = pendingPoints === tier.points;
 
@@ -355,13 +357,16 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 <s-text color="subdued">${tier.minimum} minimum order</s-text>
               </s-stack>
 
-              {isNext && (
-                <s-box padding="small-300" background="subdued" borderRadius="base">
-                  <s-text type="strong">
-                    {points} / {tier.points} pts · {pointsRemaining} {pointsRemaining === 1 ? 'point' : 'points'} to unlock
-                  </s-text>
-                </s-box>
-              )}
+              <s-stack direction="block" gap="small-100">
+                <s-progress
+                  value={progressValue}
+                  max={tier.points}
+                  accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
+                />
+                <s-text type="strong">
+                  {tierProgress} / {tier.points} pts · {isUnlocked ? 'Unlocked' : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
+                </s-text>
+              </s-stack>
 
               {isUnlocked && !activeCouponCode && !pendingPoints && (
                 <s-button
