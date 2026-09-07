@@ -13,3 +13,4 @@ module = "./src/Dashboard.jsx"
 api_access = true
 
 # Rewards dashboard reads and writes Customer Account API data.
+# Reward status pills keep the original compact layout and only vary by semantic color/state.
