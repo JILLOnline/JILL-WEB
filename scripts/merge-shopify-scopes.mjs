@@ -4,6 +4,10 @@ const path = process.argv[2] || 'shopify.app.production.toml';
 const requiredScopes = [
   'read_customers',
   'write_customers',
+  'read_orders',
+  'write_orders',
+  'read_discounts',
+  'write_discounts',
   'customer_read_customers',
   'customer_write_customers',
   'customer_read_orders',
@@ -101,5 +105,5 @@ function ensureAuthRedirectUrls(input, requiredUrls) {
 source = ensureAuthRedirectUrls(source, requiredRedirectUrls);
 fs.writeFileSync(path, source);
 
-console.log(`Preserved ${currentScopes.length} existing scopes and ensured ${requiredScopes.length} JILL dashboard scopes.`);
+console.log(`Preserved ${currentScopes.length} existing scopes and ensured ${requiredScopes.length} JILL dashboard/rewards scopes.`);
 console.log(`Ensured JILL OAuth redirect URL while preserving existing redirect URLs.`);
