@@ -222,6 +222,32 @@ function SavedDetail({label, value}) {
   );
 }
 
+function RewardRailSegment({points, from, to}) {
+  const units = 6;
+  const span = Math.max(1, to - from);
+  const ratio = Math.max(0, Math.min(1, (points - from) / span));
+  const filledUnits = Math.round(ratio * units);
+  const complete = points >= to;
+
+  return (
+    <s-stack direction="block" gap="none" alignItems="center">
+      {Array.from({length: units}, (_, index) => {
+        const filled = index >= units - filledUnits;
+        return (
+          <s-text
+            key={`${from}-${to}-${index}`}
+            type="strong"
+            tone={filled ? (complete ? 'success' : 'info') : 'neutral'}
+            accessibilityVisibility="hidden"
+          >
+            ┃
+          </s-text>
+        );
+      })}
+    </s-stack>
+  );
+}
+
 function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [submittingPoints, setSubmittingPoints] = useState(0);
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
@@ -236,8 +262,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
   const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
-  const progressPoints = Math.max(0, Math.min(points, 50));
-  const renderedProgressPoints = progressPoints === 0 ? Number.EPSILON : progressPoints;
+  const displayTiers = [...REWARD_TIERS].reverse();
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -287,54 +312,66 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         {!loading && (
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-300">
-              <s-stack direction="block" gap="none">
-                <s-progress
-                  value={renderedProgressPoints}
-                  max={50}
-                  accessibilityLabel={`${progressPoints} of 50 points across Rewards`}
-                />
-                <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="none">
-                  {REWARD_TIERS.map((tier) => {
-                    const isUnlocked = points >= tier.points;
-                    const isNext = tier.points === nextTier?.points;
-                    return (
-                      <s-stack
-                        key={`marker-${tier.points}`}
-                        direction="inline"
-                        justifyContent="end"
-                        alignItems="center"
-                      >
+            <s-stack direction="block" gap="none">
+              {displayTiers.map((tier, index) => {
+                const lowerPoints = index < displayTiers.length - 1 ? displayTiers[index + 1].points : 0;
+                const isUnlocked = points >= tier.points;
+                const isNext = tier.points === nextTier?.points;
+
+                return (
+                  <s-stack key={`journey-${tier.points}`} direction="block" gap="none">
+                    <s-grid
+                      gridTemplateColumns="48px minmax(0, 1fr)"
+                      gap="base"
+                      blockAlignment="center"
+                    >
+                      <s-stack direction="inline" justifyContent="center" alignItems="center">
                         <s-icon
                           type={isUnlocked ? 'check-circle-filled' : 'circle'}
                           tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
                           size="small-200"
                         />
                       </s-stack>
-                    );
-                  })}
-                </s-grid>
-              </s-stack>
 
-              <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
-                {REWARD_TIERS.map((tier) => {
-                  const isUnlocked = points >= tier.points;
-                  const isNext = tier.points === nextTier?.points;
-                  return (
-                    <s-stack key={`tier-${tier.points}`} direction="block" gap="small-100" alignItems="center">
-                      <s-badge tone={isUnlocked || isNext ? 'info' : 'neutral'}>
-                        ${tier.value} OFF
-                      </s-badge>
-                      <s-text
-                        type={isNext ? 'strong' : 'small'}
-                        tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+                      <s-box
+                        padding="base"
+                        background={isUnlocked || isNext ? 'base' : 'subdued'}
+                        borderRadius="large"
+                        border="base base solid"
                       >
-                        {tier.points} pts · ${tier.minimum} min
-                      </s-text>
-                    </s-stack>
-                  );
-                })}
-              </s-grid>
+                        <s-stack direction="block" gap="small-200">
+                          <s-stack
+                            direction="inline"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <s-heading>${tier.value} OFF</s-heading>
+                            {isUnlocked ? (
+                              <s-badge tone="success">Unlocked</s-badge>
+                            ) : isNext ? (
+                              <s-badge tone="info">Next reward</s-badge>
+                            ) : (
+                              <s-badge tone="neutral">{tier.points} pts</s-badge>
+                            )}
+                          </s-stack>
+
+                          <s-stack direction="inline" gap="base">
+                            <s-text type="strong">{tier.points} points</s-text>
+                            <s-text color="subdued">${tier.minimum} minimum order</s-text>
+                          </s-stack>
+                        </s-stack>
+                      </s-box>
+                    </s-grid>
+
+                    <s-grid gridTemplateColumns="48px minmax(0, 1fr)" gap="base">
+                      <s-stack direction="inline" justifyContent="center">
+                        <RewardRailSegment points={points} from={lowerPoints} to={tier.points} />
+                      </s-stack>
+                      <s-box blockSize={20} />
+                    </s-grid>
+                  </s-stack>
+                );
+              })}
             </s-stack>
           </s-box>
         )}
