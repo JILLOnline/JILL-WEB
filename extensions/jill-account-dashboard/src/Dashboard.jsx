@@ -236,9 +236,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
   const unlockedTiers = REWARD_TIERS.filter((tier) => points >= tier.points);
   const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
-  const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
   const progressPoints = Math.max(0, Math.min(points, 50));
-  const renderedProgressPoints = progressPoints === 0 ? Number.EPSILON : progressPoints;
+  const rewardTrack = Array.from({length: 50}, (_, index) => {
+    const point = index + 1;
+    return {
+      point,
+      tier: REWARD_TIERS.find((item) => item.points === point) || null,
+    };
+  });
 
   async function handleRedeem(tier) {
     if (!customer?.id || pendingPoints || activeCouponCode) return;
@@ -280,40 +285,58 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
       <s-stack direction="block" gap="base">
         <s-stack direction="inline" justifyContent="space-between" alignItems="center">
           <s-stack direction="block" gap="small-100">
-            <s-heading>JILL Rewards ★</s-heading>
+            <s-heading>Rewards ★</s-heading>
             <s-text color="subdued">Earn 1 point for every $10 of eligible JILL merchandise spend.</s-text>
           </s-stack>
           <s-badge tone="info">{loading ? 'Loading…' : `${points} pts`}</s-badge>
         </s-stack>
 
         {!loading && (
-          <s-stack direction="block" gap="small-300">
-            <s-progress
-              value={renderedProgressPoints}
-              max={50}
-              accessibilityLabel={`${progressPoints} of 50 points across JILL Rewards`}
-            />
+          <s-box padding="base" background="subdued" borderRadius="large">
+            <s-stack direction="block" gap="small-300">
+              <s-grid gridTemplateColumns="repeat(50, minmax(0, 1fr))" gap="none" blockAlignment="center">
+                {rewardTrack.map((step) =>
+                  step.tier ? (
+                    <s-icon
+                      key={`marker-${step.point}`}
+                      type={points >= step.point ? 'check-circle-filled' : 'circle'}
+                      tone={points >= step.point ? 'success' : step.point === nextTier?.points ? 'info' : 'neutral'}
+                      size="small-200"
+                    />
+                  ) : (
+                    <s-text
+                      key={`track-${step.point}`}
+                      tone={step.point <= progressPoints ? 'info' : 'neutral'}
+                      type="strong"
+                      accessibilityVisibility="hidden"
+                    >
+                      ━
+                    </s-text>
+                  ),
+                )}
+              </s-grid>
 
-            <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
-              {REWARD_TIERS.map((tier) => (
-                <s-stack key={`tier-${tier.points}`} direction="block" gap="small-100" alignItems="center">
-                  <s-badge tone={points >= tier.points ? 'info' : 'neutral'}>${tier.value} OFF</s-badge>
-                  <s-text color="subdued">{tier.points} pts · ${tier.minimum} min</s-text>
-                </s-stack>
-              ))}
-            </s-grid>
-
-            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-              <s-text type="strong">
-                {nextTier ? `${points} / ${nextTier.points} pts` : `${points} pts`}
-              </s-text>
-              <s-text color="subdued">
-                {nextTier
-                  ? `${pointsToNext} ${pointsToNext === 1 ? 'point' : 'points'} until next reward`
-                  : 'Top reward unlocked 🎉'}
-              </s-text>
+              <s-grid gridTemplateColumns="10fr 10fr 15fr 15fr" gap="small-100">
+                {REWARD_TIERS.map((tier) => {
+                  const isUnlocked = points >= tier.points;
+                  const isNext = tier.points === nextTier?.points;
+                  return (
+                    <s-stack key={`tier-${tier.points}`} direction="block" gap="small-100" alignItems="center">
+                      <s-badge tone={isUnlocked || isNext ? 'info' : 'neutral'}>
+                        ${tier.value} OFF
+                      </s-badge>
+                      <s-text
+                        type={isNext ? 'strong' : 'small'}
+                        tone={isUnlocked ? 'success' : isNext ? 'info' : 'neutral'}
+                      >
+                        {tier.points} pts · ${tier.minimum} min
+                      </s-text>
+                    </s-stack>
+                  );
+                })}
+              </s-grid>
             </s-stack>
-          </s-stack>
+          </s-box>
         )}
 
         {redeemError && (
