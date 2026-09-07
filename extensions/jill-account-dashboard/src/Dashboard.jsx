@@ -5,7 +5,7 @@ import {useEffect, useState} from 'preact/hooks';
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
 
-const IDENTIFIERS = [
+const JILL_KEYS = [
   'last_custom_request_at',
   'preferred_contact',
   'event_date',
@@ -23,7 +23,22 @@ const IDENTIFIERS = [
   'next_event_reminder_date',
   'last_custom_request_id',
   'custom_request_status',
-].map((key) => `{namespace:"jill",key:"${key}"}`).join(',');
+];
+
+const REWARD_KEYS = [
+  'points_balance',
+  'eligible_spend_cents',
+  'points_earned_lifetime',
+  'points_redeemed_lifetime',
+  'active_coupon_code',
+  'active_coupon_value_cents',
+  'active_coupon_points',
+];
+
+const IDENTIFIERS = [
+  ...JILL_KEYS.map((key) => `{namespace:"jill",key:"${key}"}`),
+  ...REWARD_KEYS.map((key) => `{namespace:"jill_rewards",key:"${key}"}`),
+].join(',');
 
 const QUERY = `
   query JillDashboard {
@@ -67,6 +82,13 @@ const COLLECTIONS = [
   ['👕', 'Apparel & Gifts', '/collections/apparel-gifts-dtf-sublimation'],
 ];
 
+const REWARD_TIERS = [
+  {points: 10, value: 5, minimum: 25},
+  {points: 20, value: 12, minimum: 50},
+  {points: 35, value: 25, minimum: 100},
+  {points: 50, value: 40, minimum: 150},
+];
+
 async function loadData() {
   const response = await fetch(API, {
     method: 'POST',
@@ -86,6 +108,11 @@ function metaMap(customer) {
   );
 }
 
+function toInteger(value) {
+  const parsed = Number.parseInt(value || '0', 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatDate(value) {
   if (!value) return '';
   const parsed = new Date(`${value}`.length === 10 ? `${value}T12:00:00` : value);
@@ -103,6 +130,14 @@ function formatMoney(money) {
     style: 'currency',
     currency: money.currencyCode,
   }).format(Number(money.amount));
+}
+
+function formatDollarCents(cents) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(Math.max(0, cents) / 100);
 }
 
 function cleanStatus(value) {
@@ -128,6 +163,78 @@ function SavedDetail({label, value}) {
       <s-text color="subdued">{label}</s-text>
       <s-text type="strong">{value}</s-text>
     </s-stack>
+  );
+}
+
+function RewardsCard({meta, loading}) {
+  const points = toInteger(meta.points_balance);
+  const eligibleSpendCents = toInteger(meta.eligible_spend_cents);
+  const activeCouponCode = String(meta.active_coupon_code || '').trim();
+  const activeCouponValueCents = toInteger(meta.active_coupon_value_cents);
+
+  const unlocked = [...REWARD_TIERS].reverse().find((tier) => points >= tier.points) || null;
+  const nextTier = REWARD_TIERS.find((tier) => points < tier.points) || null;
+  const nextPointSpendCents = 1000 - (eligibleSpendCents % 1000 || 0);
+  const pointsToNext = nextTier ? Math.max(0, nextTier.points - points) : 0;
+
+  return (
+    <s-section>
+      <s-stack direction="block" gap="base">
+        <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+          <s-stack direction="block" gap="small-100">
+            <s-heading>JILL Rewards ★</s-heading>
+            <s-text color="subdued">Earn 1 point for every $10 of eligible JILL merchandise spend.</s-text>
+          </s-stack>
+          <s-badge tone="info">{loading ? 'Loading…' : `${points} pts`}</s-badge>
+        </s-stack>
+
+        {!loading && activeCouponCode ? (
+          <s-stack direction="block" gap="small-400">
+            <s-text type="strong">
+              Your {formatDollarCents(activeCouponValueCents)} reward is ready 🎉
+            </s-text>
+            <s-text>
+              Code: <s-text type="strong">{activeCouponCode}</s-text>
+            </s-text>
+            <s-button
+              variant="primary"
+              href={`${STORE}/discount/${encodeURIComponent(activeCouponCode)}?redirect=/`}
+            >
+              Use my reward
+            </s-button>
+          </s-stack>
+        ) : !loading && unlocked ? (
+          <s-stack direction="block" gap="small-400">
+            <s-text type="strong">Reward unlocked: ${unlocked.value} OFF 🎉</s-text>
+            <s-text color="subdued">
+              Your available reward can be redeemed from JILL Coupons once reward redemption is active.
+            </s-text>
+          </s-stack>
+        ) : !loading && nextTier ? (
+          <s-stack direction="block" gap="small-400">
+            <s-text type="strong">
+              {pointsToNext} {pointsToNext === 1 ? 'point' : 'points'} until ${nextTier.value} OFF
+            </s-text>
+            <s-text color="subdued">
+              {eligibleSpendCents > 0
+                ? `${formatDollarCents(nextPointSpendCents)} more eligible spend earns your next point.`
+                : 'Your points begin building with eligible paid orders.'}
+            </s-text>
+          </s-stack>
+        ) : null}
+
+        <s-divider />
+
+        <s-grid gridTemplateColumns="repeat(auto-fit, minmax(120px, 1fr))" gap="small-400">
+          {REWARD_TIERS.map((tier) => (
+            <s-stack key={tier.points} direction="block" gap="small-100">
+              <s-text type="strong">${tier.value} OFF</s-text>
+              <s-text color="subdued">{tier.points} points · ${tier.minimum} minimum</s-text>
+            </s-stack>
+          ))}
+        </s-grid>
+      </s-stack>
+    </s-section>
   );
 }
 
@@ -195,6 +302,8 @@ function Dashboard() {
             Some saved account details could not load right now. Your account pages still work normally.
           </s-banner>
         )}
+
+        <RewardsCard meta={meta} loading={loading} />
 
         <s-section>
           <s-stack direction="block" gap="base">
