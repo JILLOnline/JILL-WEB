@@ -31,7 +31,6 @@ const QUERY = `
       id
       displayName
       firstName
-      emailAddress { emailAddress marketingState }
       orders(first: 3, sortKey: PROCESSED_AT, reverse: true) {
         nodes {
           id
@@ -184,53 +183,24 @@ function Dashboard() {
   return (
     <s-page
       heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
-      subheading="Your JILL home for celebrations, custom requests, saved details, and orders."
+      subheading="Your celebrations, custom requests, saved details, and orders in one place."
     >
       <s-button slot="primary-action" variant="primary" href={STORE}>
         Back to JILL
       </s-button>
-      <s-button slot="secondary-actions" href={`${STORE}/pages/quote`}>
-        Create Custom Order
-      </s-button>
-      <s-button slot="secondary-actions" href={`${STORE}/collections/all`}>
-        Shop JILL
-      </s-button>
 
       <s-stack direction="block" gap="base">
-        <s-section>
-          <s-box padding="base" background="subdued" borderRadius="large-100">
-            <s-stack direction="block" gap="base">
-              <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                <s-stack direction="block" gap="small-200">
-                  <s-heading>My JILL</s-heading>
-                  <s-text color="subdued">
-                    Everything we know about your JILL journey, together in one place.
-                  </s-text>
-                </s-stack>
-                <s-badge tone="info">JILL ★</s-badge>
-              </s-stack>
-
-              <s-stack direction="inline" gap="small-400">
-                <s-button href="shopify:customer-account/orders">Orders</s-button>
-                <s-button href={`${STORE}/pages/coupons`}>Coupons</s-button>
-                <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
-                <s-button href="shopify:customer-account/profile">Settings</s-button>
-              </s-stack>
-            </s-stack>
-          </s-box>
-        </s-section>
-
         {loadError && (
           <s-banner tone="info">
-            Your JILL account is open, but some saved details could not load right now. Your shortcuts and account pages still work normally.
+            Some saved account details could not load right now. Your account pages still work normally.
           </s-banner>
         )}
 
         <s-section>
           <s-stack direction="block" gap="base">
             <s-stack direction="block" gap="small-100">
-              <s-heading>Shop your JILL favorites</s-heading>
-              <s-text color="subdued">Jump back into the same collections you see on the JILL storefront.</s-text>
+              <s-heading>Shop JILL</s-heading>
+              <s-text color="subdued">Jump straight into your favorite collections.</s-text>
             </s-stack>
             <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
               {COLLECTIONS.map(([emoji, label, path]) => (
@@ -247,9 +217,9 @@ function Dashboard() {
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
               <s-stack direction="block" gap="small-100">
                 <s-heading>Recent orders</s-heading>
-                <s-text color="subdued">Your latest JILL purchases and their current status.</s-text>
+                <s-text color="subdued">Your latest purchases and current status.</s-text>
               </s-stack>
-              <s-link href="shopify:customer-account/orders">View all orders</s-link>
+              {orders.length > 0 && <s-link href="shopify:customer-account/orders">View all orders</s-link>}
             </s-stack>
 
             {loading ? (
@@ -282,12 +252,9 @@ function Dashboard() {
                 </s-stack>
               ))
             ) : (
-              <s-stack direction="block" gap="small-400">
-                <s-text color="subdued">
-                  No account-linked orders yet. Orders placed while signed in will appear here automatically.
-                </s-text>
-                <s-button href={`${STORE}/collections/all`}>Browse JILL</s-button>
-              </s-stack>
+              <s-text color="subdued">
+                No account-linked orders yet. Orders placed while signed in will appear here automatically.
+              </s-text>
             )}
           </s-stack>
         </s-section>
@@ -314,10 +281,7 @@ function Dashboard() {
               <Detail label="Needed" value={formatDate(meta.date_needed)} />
               <Detail label="Fulfillment" value={meta.fulfillment_preference} />
 
-              <s-stack direction="inline" gap="base">
-                <s-button variant="primary" href={`${STORE}/pages/quote`}>Start another request</s-button>
-                <s-button href={`${STORE}/pages/contact`}>Ask JILL a question</s-button>
-              </s-stack>
+              <s-button variant="primary" href={`${STORE}/pages/quote`}>Start another request</s-button>
             </s-stack>
           </s-section>
         ) : (
@@ -326,7 +290,7 @@ function Dashboard() {
               <s-stack direction="block" gap="small-100">
                 <s-heading>Your custom creations</s-heading>
                 <s-text color="subdued">
-                  Once you send your first custom request, its event date, theme, colors, fulfillment details, and status can live here for your next visit.
+                  Send a custom request and its event date, theme, colors, fulfillment details, and status can live here for your next visit.
                 </s-text>
               </s-stack>
               <s-button variant="primary" href={`${STORE}/pages/quote`}>Start a Custom Order</s-button>
@@ -353,9 +317,7 @@ function Dashboard() {
             <s-stack direction="block" gap="base">
               <s-stack direction="block" gap="small-100">
                 <s-heading>Saved for you</s-heading>
-                <s-text color="subdued">
-                  Details from your latest JILL request, ready to make the next one faster.
-                </s-text>
+                <s-text color="subdued">Details from your latest JILL request, ready for next time.</s-text>
               </s-stack>
 
               <s-grid gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap="base">
@@ -370,20 +332,6 @@ function Dashboard() {
             </s-stack>
           </s-section>
         )}
-
-        <s-section>
-          <s-stack direction="block" gap="base">
-            <s-stack direction="block" gap="small-100">
-              <s-heading>Keep celebrating with JILL 🎉</s-heading>
-              <s-text color="subdued">Your account is part of the store, not a dead end.</s-text>
-            </s-stack>
-            <s-stack direction="inline" gap="base">
-              <s-button variant="primary" href={STORE}>Back to JILL</s-button>
-              <s-button href={`${STORE}/pages/quote`}>Custom Order</s-button>
-              <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
-            </s-stack>
-          </s-stack>
-        </s-section>
       </s-stack>
     </s-page>
   );
