@@ -2,11 +2,6 @@ name: Sync JILL storefront theme
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - jill/storefront-system
-    paths:
-      - '.github/workflows/sync-storefront-theme.yml'
 
 permissions:
   contents: write
@@ -23,8 +18,7 @@ jobs:
       SHOPIFY_STORE: jqtdgr-1y.myshopify.com
       SHOPIFY_THEME_ID: '165550686451'
       THEME_PATH: theme
-      DEDICATED_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
-      APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+      SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
 
     steps:
       - name: Checkout storefront branch
@@ -33,20 +27,13 @@ jobs:
           ref: jill/storefront-system
           fetch-depth: 0
 
-      - name: Resolve Shopify theme credential
-        id: auth
+      - name: Require dedicated Shopify theme credential
         shell: bash
         run: |
           set -euo pipefail
-          if [ -n "$DEDICATED_THEME_TOKEN" ]; then
-            echo "token=$DEDICATED_THEME_TOKEN" >> "$GITHUB_OUTPUT"
-            echo "source=SHOPIFY_THEME_TOKEN" >> "$GITHUB_OUTPUT"
-          elif [ -n "$APP_AUTOMATION_TOKEN" ]; then
-            echo "token=$APP_AUTOMATION_TOKEN" >> "$GITHUB_OUTPUT"
-            echo "source=SHOPIFY_APP_AUTOMATION_TOKEN" >> "$GITHUB_OUTPUT"
-          else
-            echo "No Shopify theme credential is configured." >&2
-            echo "Configure SHOPIFY_THEME_TOKEN with a Theme Access password or Admin API token." >&2
+          if [ -z "$SHOPIFY_CLI_THEME_TOKEN" ]; then
+            echo "SHOPIFY_THEME_TOKEN is required." >&2
+            echo "Use a Shopify Theme Access password or Admin API token authorized for theme files." >&2
             exit 1
           fi
 
@@ -59,12 +46,9 @@ jobs:
         run: npm install
 
       - name: Pull exact live JILL theme
-        env:
-          SHOPIFY_CLI_THEME_TOKEN: ${{ steps.auth.outputs.token }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "Using credential source: ${{ steps.auth.outputs.source }}"
           rm -rf "$THEME_PATH"
           mkdir -p "$THEME_PATH"
           npx shopify theme pull \
@@ -98,8 +82,6 @@ jobs:
           done
 
       - name: Run Shopify Theme Check
-        env:
-          SHOPIFY_CLI_THEME_TOKEN: ${{ steps.auth.outputs.token }}
         run: >-
           npx shopify theme check
           --path "$THEME_PATH"
@@ -136,5 +118,5 @@ jobs:
 # Source-control invariant:
 # - MAIN theme is read-only input to this workflow.
 # - Development/pushes target an unpublished theme in a separate workflow.
-# - SHOPIFY_THEME_TOKEN is preferred; the app automation token is only tried as
-#   an already-configured credential and is never persisted to the repository.
+# - Theme source sync requires a dedicated SHOPIFY_THEME_TOKEN; app deployment
+#   credentials are intentionally not accepted as a theme-access fallback.
