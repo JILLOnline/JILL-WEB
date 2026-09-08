@@ -4,6 +4,7 @@ import {useEffect, useState} from 'preact/hooks';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
+const REWARDS_REFRESH_MS = 25000;
 
 const JILL_KEYS = [
   'last_custom_request_at',
@@ -87,6 +88,8 @@ const COLLECTIONS = [
   ['👕', 'Apparel & Gifts', '/collections/apparel-gifts-dtf-sublimation'],
 ];
 
+// Customer Account rewards config. Keep this in exact parity with
+// JILL_REWARD_TIERS in the Apps Script backend.
 const REWARD_TIERS = [
   {points: 10, value: 5, minimum: 25},
   {points: 20, value: 12, minimum: 50},
@@ -194,6 +197,63 @@ function rewardRequestIsPending(meta) {
   return points > 0 && Boolean(nonce) && !nonce.startsWith('consumed:');
 }
 
+function buildRewardJourney(points, wallet, pendingPoints = 0) {
+  const activeCoupons = (Array.isArray(wallet) ? wallet : [])
+    .filter((coupon) => rewardCouponStatus(coupon) === 'active')
+    .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || ''));
+
+  function couponForTier(tierPoints) {
+    return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
+  }
+
+  const items = SORTED_REWARD_TIERS.map((tier) => {
+    const coupon = couponForTier(tier.points);
+    return {
+      tier,
+      coupon,
+      state: coupon ? 'redeemed' : points >= tier.points ? 'redeem' : 'locked',
+      pending: pendingPoints === tier.points,
+    };
+  });
+
+  // Exactly one not-yet-unlocked tier is the customer's next destination.
+  const next = items.find((item) => item.state === 'locked') || null;
+  if (next) next.state = 'next';
+
+  const redeemable = items.filter((item) => item.state === 'redeem');
+  const redeemed = items.filter((item) => item.state === 'redeemed');
+  const bestRedeemable = redeemable[redeemable.length - 1] || null;
+
+  // Expanded journey order is intentional, not tier-number order:
+  // creating -> next reward -> redeemable -> redeemed -> remaining locked.
+  const priority = {next: 1, redeem: 2, redeemed: 3, locked: 4};
+  const expanded = [...items].sort((a, b) => {
+    if (a.pending !== b.pending) return a.pending ? -1 : 1;
+    const stateDifference = priority[a.state] - priority[b.state];
+    if (stateDifference) return stateDifference;
+    if (a.state === 'redeem') return b.tier.points - a.tier.points;
+    return a.tier.points - b.tier.points;
+  });
+
+  // Collapsed mode always shows the most useful immediate action first.
+  const collapsed =
+    items.find((item) => item.pending) ||
+    bestRedeemable ||
+    next ||
+    redeemed[redeemed.length - 1] ||
+    items[items.length - 1];
+
+  return {
+    activeCoupons,
+    items,
+    expanded,
+    collapsed,
+    next,
+    redeemable,
+    couponForTier,
+  };
+}
+
 function formatDate(value) {
   if (!value) return '';
   const parsed = new Date(`${value}`.length === 10 ? `${value}T12:00:00` : value);
@@ -258,27 +318,20 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
   const points = toInteger(meta.points_balance);
   const wallet = rewardWallet(meta.coupons);
-  const activeCoupons = wallet
-    .filter((coupon) => rewardCouponStatus(coupon) === 'active')
-    .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || ''));
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
   const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
+  const journey = buildRewardJourney(points, wallet, pendingPoints);
+  const activeCoupons = journey.activeCoupons;
+  const availableTiers = journey.redeemable.map((item) => item.tier);
+  const nextTier = journey.next?.tier || null;
+  const collapsedTier = journey.collapsed.tier;
+  const visibleRewardItems = showAllRewards ? journey.expanded : [journey.collapsed];
 
   function activeCouponForTier(tierPoints) {
-    return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
+    return journey.couponForTier(tierPoints);
   }
-
-  const availableTiers = SORTED_REWARD_TIERS.filter(
-    (tier) => points >= tier.points && !activeCouponForTier(tier.points),
-  );
-  const nextTier = SORTED_REWARD_TIERS.find(
-    (tier) => points < tier.points && !activeCouponForTier(tier.points),
-  ) || null;
-  const bestAvailableTier = availableTiers[availableTiers.length - 1] || null;
-  const collapsedTier = bestAvailableTier || nextTier || SORTED_REWARD_TIERS[SORTED_REWARD_TIERS.length - 1];
-  const visibleRewardTiers = showAllRewards ? SORTED_REWARD_TIERS : [collapsedTier];
 
   async function handleRedeem(tier) {
     if (
@@ -411,11 +464,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     );
   }
 
-  function rewardMilestone(tier, showTopRail = false, showBottomRail = false) {
-    const coupon = activeCouponForTier(tier.points);
-    const isRedeemed = Boolean(coupon);
-    const isAvailable = !isRedeemed && points >= tier.points;
-    const isNext = !isRedeemed && !isAvailable && tier.points === nextTier?.points;
+  function rewardMilestone(item, showTopRail = false, showBottomRail = false) {
+    const tier = item.tier;
+    const coupon = item.coupon;
+    const isRedeemed = item.state === 'redeemed';
+    const isAvailable = item.state === 'redeem';
+    const isNext = item.state === 'next';
     const isThisPending = isGeneratingReward && pendingPoints === tier.points;
     const isThisConfirming = confirmTier?.points === tier.points && !pendingPoints;
     const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
@@ -502,7 +556,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     Redeem {tier.points} points for ${tier.value} OFF?
                   </s-text>
                   <s-text color="subdued">
-                    ${tier.minimum} minimum order · Expires 30 days after creation · Can combine with eligible storewide discounts.
+                    ${tier.minimum} minimum order · Expires 30 days after creation · Cannot be combined with other discounts.
                   </s-text>
                   <s-stack direction="inline" gap="small-300">
                     <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
@@ -557,14 +611,14 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 gridTemplateColumns="1fr"
                 gap="none"
               >
-                {visibleRewardTiers.map((tier, index) => (
-                  <s-grid key={`reward-group-${tier.points}`} gridTemplateColumns="1fr" gap="none">
+                {visibleRewardItems.map((item, index) => (
+                  <s-grid key={`reward-group-${item.tier.points}`} gridTemplateColumns="1fr" gap="none">
                     {rewardMilestone(
-                      tier,
+                      item,
                       showAllRewards && index > 0,
-                      showAllRewards && index < visibleRewardTiers.length - 1,
+                      showAllRewards && index < visibleRewardItems.length - 1,
                     )}
-                    {index < visibleRewardTiers.length - 1 && rewardConnector()}
+                    {index < visibleRewardItems.length - 1 && rewardConnector()}
                   </s-grid>
                 ))}
               </s-grid>
@@ -584,13 +638,13 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
             <s-stack direction="block" gap="small-300">
               <s-text type="strong">
-                Your {formatDollarCents(toInteger(freshCoupon.value_cents))} reward is ready 🎉
+                Your ${Number(freshCoupon.value || 0)} OFF reward is ready 🎉
               </s-text>
               <s-text>
                 Code: <s-text type="strong">{freshCoupon.code}</s-text>
               </s-text>
               <s-text color="subdued">
-                Expires {formatDate(freshCoupon.expires_at)} · Can combine with eligible storewide discounts.
+                Expires {formatDate(freshCoupon.expires_at)} · Cannot be combined with other discounts.
               </s-text>
               <s-stack direction="inline" gap="small-300">
                 <s-button variant="secondary" href="extension:jill-account-coupons/">
@@ -629,20 +683,33 @@ function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    loadData()
-      .then((data) => {
-        if (!active) return;
-        setCustomer(data);
-        setLoadError(false);
-      })
-      .catch((error) => {
-        console.warn('JILL dashboard data error', error);
-        if (active) setLoadError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+
+    const refreshCustomer = (initial = false) => {
+      loadData()
+        .then((data) => {
+          if (!active) return;
+          setCustomer(data);
+          setLoadError(false);
+        })
+        .catch((error) => {
+          console.warn('JILL dashboard data error', error);
+          if (active && initial) setLoadError(true);
+        })
+        .finally(() => {
+          if (active && initial) setLoading(false);
+        });
+    };
+
+    refreshCustomer(true);
+
+    // Live rewards heartbeat: if an admin deletes/repairs a reward coupon,
+    // the open Dashboard self-refreshes instead of waiting for a page reload.
+    const refreshTimer = setInterval(() => refreshCustomer(false), REWARDS_REFRESH_MS);
+
+    return () => {
+      active = false;
+      clearInterval(refreshTimer);
+    };
   }, []);
 
   const meta = metaMap(customer);
