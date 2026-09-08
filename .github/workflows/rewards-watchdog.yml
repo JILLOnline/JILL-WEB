@@ -31,16 +31,17 @@ jobs:
           raw = os.environ.get('RESPONSE', '').strip()
           try:
               data = json.loads(raw)
-          except Exception:
-              print('JILL Rewards watchdog endpoint is not active yet; waiting for the hardened Apps Script deployment.')
-              sys.exit(0)
+          except Exception as exc:
+              print('JILL Rewards watchdog returned invalid JSON:', repr(raw), file=sys.stderr)
+              print('Parse error:', exc, file=sys.stderr)
+              sys.exit(1)
 
-          if not data.get('watchdog'):
-              print('JILL Rewards watchdog endpoint is not active yet; waiting for the hardened Apps Script deployment.')
-              sys.exit(0)
+          if data.get('watchdog') is not True:
+              print('JILL Rewards watchdog marker is missing:', raw, file=sys.stderr)
+              sys.exit(1)
 
           if data.get('ok') is not True:
-              print('JILL Rewards watchdog reported a failure:', raw)
+              print('JILL Rewards watchdog reported a failure:', raw, file=sys.stderr)
               sys.exit(1)
 
           print('JILL Rewards watchdog OK:', raw)
