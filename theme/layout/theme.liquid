@@ -15,7 +15,7 @@
   </head>
 
   <body>
-    <a class="jill-skip-link" href="#MainContent">Skip to content</a>
+    <a class="jill-skip-link" href="#MainContent">{{ 'accessibility.skip_to_content' | t }}</a>
 
     {% sections 'header-group' %}
 
@@ -24,5 +24,11 @@
     </main>
 
     {% sections 'footer-group' %}
+
+    {% if request.page_type == 'product' %}
+      <script src="{{ 'jill-product-capabilities.js' | asset_url }}" defer></script>
+      <script src="{{ 'jill-form-engine.js' | asset_url }}" defer></script>
+      <script src="{{ 'jill-product.js' | asset_url }}" defer></script>
+    {% endif %}
   </body>
 </html>
