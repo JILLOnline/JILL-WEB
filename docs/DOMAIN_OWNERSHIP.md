@@ -23,6 +23,8 @@ This registry answers one question: **where does this behavior belong?**
 | Personalization state/allocation | one personalization module within the customization domain when introduced | selected quantities, capabilities, validation | product quantity mutation or DOM-derived business truth |
 | Reference/file upload browser adapter | one upload adapter owner when introduced | configured file constraints, backend/storage transport | independent upload systems per form |
 | Custom-order browser flow | `theme/assets/jill-custom-order.js` when introduced | shared validation/customization/upload contracts | a second customization/validation engine |
+| Custom-order API transport contract | `contracts/custom-order-api.schema.json` | Custom Order feature contract and normalized browser state | backend implementation details or rewards data |
+| Custom-order API contract guard | `scripts/check-custom-order-contract.mjs` | Custom Order API schema | theme or rewards validation |
 | Backend execution architecture | `docs/FUNCTIONAL_ARCHITECTURE.md` | feature contracts/platform boundaries | feature-specific business rules |
 | Backend HTTP routing | one web-app router/entry owner when extracted | command/query/event handlers | business logic for individual domains |
 | Backend boundary validation | one backend validation utility owner when extracted | request schemas/domain rules | browser-only presentation validation |
