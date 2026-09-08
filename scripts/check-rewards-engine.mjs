@@ -96,6 +96,14 @@ if (!watchdog.includes(`EXPECTED_ENGINE_VERSION: '${config.engineVersion}'`)) {
   throw new Error('Watchdog engine version does not match rewards.config.json.');
 }
 
+
+if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
+  throw new Error('Redemption completion must match the request nonce and cleared points.');
+}
+if (!/<s-clickable\b[^>]*borderRadius="max"[^>]*onClick=\{\(\) => handleRedeem\(tier\)\}[^>]*>[\s\S]*?tone="success"[^>]*>Generate coupon<\/s-text>\s*<\/s-clickable>/.test(dashboard)) {
+  throw new Error('Reward confirmation must use the supported success pill action.');
+}
+
 console.log('JILL Rewards v13 guard passed:', JSON.stringify({
   engineVersion: config.engineVersion,
   spendCentsPerPoint: config.earn.spendCentsPerPoint,

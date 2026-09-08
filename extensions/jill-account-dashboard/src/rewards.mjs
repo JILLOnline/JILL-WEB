@@ -53,7 +53,14 @@ export function rewardCouponStatus(coupon, now = Date.now()) {
 export function rewardRequestIsPending(meta) {
   const points = toRewardInteger(meta?.redeem_request_points);
   const nonce = String(meta?.redeem_request_nonce || '').trim();
-  return points > 0 && Boolean(nonce) && !nonce.startsWith('consumed:');
+  // A consumed nonce is the worker's claim, not completion. Points clear only
+  // when the wallet transaction commits or the worker rejects/rolls back.
+  return points > 0 && Boolean(nonce);
+}
+
+export function rewardRequestIsComplete(meta, nonce) {
+  return String(meta?.redeem_request_points ?? '').trim() === '0' &&
+    meta.redeem_request_nonce === `consumed:${nonce}`;
 }
 
 export function rewardAccounting(pointsEarned, wallet, now = Date.now()) {
@@ -157,6 +164,7 @@ export function buildRewardJourney(points, wallet, options = {}) {
 
   const collapsed =
     items.find((item) => item.transientState === REWARD_STATES.CREATING) ||
+    items.find((item) => item.transientState === REWARD_STATES.CONFIRMING) ||
     next ||
     bestRedeemable ||
     usable[0] ||

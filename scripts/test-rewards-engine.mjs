@@ -1,3 +1,4 @@
+import './test-rewards-redemption.mjs';
 import assert from 'node:assert/strict';
 import {
   REWARD_STATES,
