@@ -2,7 +2,17 @@
   "accessibility": {
     "skip_to_content": "Skip to content"
   },
+  "general": {
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
   "products": {
+    "card": {
+      "from": "From"
+    },
     "product": {
       "variant": "Options",
       "quantity": "Quantity",
@@ -19,6 +29,26 @@
         "planning": "Planning",
         "reference": "References"
       }
+    }
+  },
+  "collections": {
+    "sort_by": "Sort by",
+    "apply_sort": "Apply",
+    "empty": "There are no products in this collection yet."
+  },
+  "search": {
+    "title": "Search",
+    "label": "Search the store",
+    "submit": "Search",
+    "initial": "Search products, pages, and articles.",
+    "no_results": "No results matched your search.",
+    "result_count": {
+      "one": "{{ count }} result for “{{ terms }}”",
+      "other": "{{ count }} results for “{{ terms }}”"
+    },
+    "types": {
+      "article": "Article",
+      "page": "Page"
     }
   },
   "cart": {
