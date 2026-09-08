@@ -1,6 +1,0 @@
-node_modules/
-.shopify/
-.env
-.env.*
-.DS_Store
-*.log
