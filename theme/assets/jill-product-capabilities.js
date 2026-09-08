@@ -106,6 +106,21 @@
     for (const field of fields) visit(field.id, []);
   }
 
+  function validateCustomizationUnitsFeature(feature) {
+    if (!feature) return;
+    if (!Number.isInteger(feature.unitsPerQuantity) || feature.unitsPerQuantity < 1 || feature.unitsPerQuantity > 1000) {
+      fail('customizationUnits.unitsPerQuantity must be an integer from 1 to 1000');
+    }
+
+    for (const labelKey of ['singularLabel', 'pluralLabel']) {
+      const label = feature[labelKey];
+      if (label === undefined) continue;
+      if (typeof label !== 'string' || !label.trim() || label.length > 100) {
+        fail(`customizationUnits.${labelKey} must be a non-empty string up to 100 characters`);
+      }
+    }
+  }
+
   function validatePersonalizationFeature(feature, byId) {
     if (!feature) return;
     if (!Array.isArray(feature.fieldIds)) fail('personalizationAllocation.fieldIds must be an array');
@@ -138,6 +153,7 @@
       fail('features must be an object');
     }
 
+    validateCustomizationUnitsFeature(features.customizationUnits);
     validatePersonalizationFeature(features.personalizationAllocation, byId);
     validateDatePlanningFeature(features.datePlanning, byId);
     validateReferenceUploadFeature(features.referenceUpload, byId);
@@ -179,12 +195,17 @@
     return (resolvedProfile?.groups?.[group] || []).map((fieldId) => resolvedProfile.fieldsById[fieldId]);
   }
 
+  function getCustomizationUnitsPerQuantity(resolvedProfile) {
+    return resolvedProfile?.features?.customizationUnits?.unitsPerQuantity ?? 1;
+  }
+
   const api = Object.freeze({
     SUPPORTED_VERSION,
     GROUPS,
     resolve,
     getField,
     getFieldsForGroup,
+    getCustomizationUnitsPerQuantity,
   });
 
   Object.defineProperty(globalThis, 'JILLProductCapabilities', {
