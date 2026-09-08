@@ -86,6 +86,46 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Theme/account presentation consumes authoritative reward state only.
 
+## 2026-09-08 — Backend execution uses command/query/event boundaries
+
+**Decision:** Durable backend interactions are modeled explicitly as commands, queries or events. Retriable commands/events require idempotency and authoritative persistence/reconciliation semantics.
+
+**Why:** Browser click guards and webhook delivery alone are insufficient protection against duplicate writes, partial failures or missed events.
+
+**Consequence:** New backend operations define operation identity, authoritative owner, retry behavior and rollback/compensation before implementation.
+
+## 2026-09-08 — Shopify owns standard commerce truth
+
+**Decision:** Shopify remains canonical for catalog, variants, cart, checkout, orders, payments, refunds, customers and discount objects. JILL does not create a parallel commerce database without a concrete requirement.
+
+**Why:** Reimplementing Shopify commerce truth would increase failure modes and make Theme Core less compatible/reusable.
+
+**Consequence:** JILL browser/backend layers extend Shopify contracts rather than replacing them.
+
+## 2026-09-08 — Google Apps Script is current runtime, not architecture
+
+**Decision:** Keep the production Apps Script backend online while Theme Core is built, but treat its public contracts/behavior—not its current combined file layout—as canonical.
+
+**Why:** The current backend already contains proven Custom Order and Rewards behavior, but `JILL_Custom_Order_Automation_REWARDS.gs` combines unrelated domains in one large implementation file.
+
+**Consequence:** Future backend work progressively extracts one owner per domain behind stable command/query/event contracts. A runtime migration may happen later without requiring a storefront rewrite.
+
+## 2026-09-08 — Runtime migration requires evidence
+
+**Decision:** Do not migrate backend runtime merely because a more fashionable stack exists.
+
+**Why:** Migration carries operational risk while the current implementation works. The architectural goal is replaceability, not churn.
+
+**Consequence:** Move beyond Apps Script only when measured concurrency, latency, storage, observability, multi-merchant, quota or reliability requirements justify it.
+
+## 2026-09-08 — Events make state fast; reconciliation makes it correct
+
+**Decision:** Durable domains affected by external events use webhooks/events for timely updates plus reconciliation for missed, duplicated or partially failed processing.
+
+**Why:** Event delivery is not a complete correctness strategy by itself.
+
+**Consequence:** Rewards keeps its watchdog/reconciliation pattern, and future durable event-driven domains adopt the principle without cloning Rewards-specific code.
+
 ## 2026-09-08 — Certification is commit-specific
 
 **Decision:** A feature is `CERTIFIED` only after automated and manual gates pass on the implementation commit.
