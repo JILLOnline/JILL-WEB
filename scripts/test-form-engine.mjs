@@ -153,6 +153,8 @@ let progression = evaluateProgression(stages, validation);
 assert.equal(progression.byId.options.state, STATES.VALID);
 assert.equal(progression.byId.personalization.state, STATES.VALID);
 assert.equal(progression.complete, true);
+assert.equal(progression.firstIncompleteStageId, null);
+assert.equal(progression.firstActionableStageId, null);
 
 values = {style: '', pinata_number: 5, name: 'Mia'};
 validation = validateFields(fields, values);
@@ -163,6 +165,24 @@ assert.equal(progression.byId.options.state, STATES.EMPTY);
 assert.equal(progression.byId.personalization.state, STATES.UNAVAILABLE);
 assert.equal(progression.complete, false);
 assert.equal(progression.firstIncompleteStageId, 'options');
+assert.equal(progression.firstActionableStageId, 'options');
+
+const externalPrerequisite = {
+  id: 'entry_gate',
+  kind: 'checkbox',
+  group: 'planning',
+  label: 'Entry gate',
+  required: true,
+};
+const gatedValidation = validateFields([externalPrerequisite], {entry_gate: false});
+const gatedProgression = evaluateProgression(
+  [{id: 'gated', requiresFields: ['entry_gate'], fieldIds: []}],
+  gatedValidation,
+);
+assert.equal(gatedProgression.byId.gated.state, STATES.UNAVAILABLE);
+assert.equal(gatedProgression.complete, false);
+assert.equal(gatedProgression.firstIncompleteStageId, 'gated');
+assert.equal(gatedProgression.firstActionableStageId, null);
 
 const optionalInvalid = validateFields(
   [{...optionalText, minLength: 3}],
