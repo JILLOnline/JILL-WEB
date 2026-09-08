@@ -28,6 +28,19 @@
         "personalization": "Personalization",
         "planning": "Planning",
         "reference": "References"
+      },
+      "allocation": {
+        "title": "Split options by item",
+        "help": "Assign how many items use each option. The total must match the items in this order.",
+        "group": "Option",
+        "count": "How many",
+        "of": "of",
+        "assigned": "assigned",
+        "unassigned": "unassigned",
+        "add": "Add another option",
+        "remove": "Remove",
+        "item": "item",
+        "items": "items"
       }
     }
   },
