@@ -166,6 +166,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Product Options and Personalization consume the same resolved customization-unit multiplier and may never infer counts from product titles, collection names, or duplicated family logic. They cannot mutate Shopify quantity. Products without pack configuration behave as one customization unit per merchandise quantity.
 
+## 2026-09-08 — Product Options allocation scope is explicit capability data
+
+**Decision:** Product Option fields are singleton by default. A profile opts enumerated `select`/`radio` Product Option fields into per-customization-unit allocation through `features.productOptionsAllocation.fieldIds`. `theme/assets/jill-product-options.js` is the single owner for Product Options state, allocation, reconciliation and normalized payload; it consumes the universal form engine for field semantics.
+
+**Why:** Flavor and similar per-item operational choices need allocation, while piñata style/opening and other selection-wide choices do not. Treating every option as per-unit would create unnecessary state; inferring allocation from labels/products would recreate family branching; allowing free-form allocated Product Options would overlap Personalization.
+
+**Consequence:** Product Options groups one or more eligible customization units under the same enumerated option values, preserves unrelated completed state, and reconciles deterministically when quantity or dependencies change. Singleton Product Options may not depend on allocated per-unit fields because those fields have no singular value. Free-form per-unit customer content remains owned by Personalization.
+
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
