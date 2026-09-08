@@ -184,6 +184,52 @@ assert.equal(gatedProgression.complete, false);
 assert.equal(gatedProgression.firstIncompleteStageId, 'gated');
 assert.equal(gatedProgression.firstActionableStageId, null);
 
+const cascadeFields = [
+  {
+    id: 'opening',
+    kind: 'select',
+    group: 'product_options',
+    label: 'Opening',
+    required: true,
+    options: [
+      {value: 'traditional', label: 'Traditional'},
+      {value: 'pull_string', label: 'Pull string'},
+    ],
+  },
+  {
+    id: 'pull_string_color',
+    kind: 'text',
+    group: 'product_options',
+    label: 'Pull string color',
+    required: true,
+    visibleWhen: {
+      mode: 'all',
+      conditions: [{field: 'opening', operator: 'equals', value: 'pull_string'}],
+    },
+  },
+  {
+    id: 'color_note',
+    kind: 'text',
+    group: 'product_options',
+    label: 'Color note',
+    required: true,
+    visibleWhen: {
+      mode: 'all',
+      conditions: [{field: 'pull_string_color', operator: 'equals', value: 'red'}],
+    },
+  },
+];
+
+const staleCascade = validateFields(cascadeFields, {
+  opening: 'traditional',
+  pull_string_color: 'red',
+  color_note: 'keep this stale value hidden',
+});
+assert.equal(staleCascade.byId.opening.state, STATES.VALID);
+assert.equal(staleCascade.byId.pull_string_color.state, STATES.UNAVAILABLE);
+assert.equal(staleCascade.byId.color_note.state, STATES.UNAVAILABLE);
+assert.equal(staleCascade.valid, true);
+
 const optionalInvalid = validateFields(
   [{...optionalText, minLength: 3}],
   {notes: 'x'},
