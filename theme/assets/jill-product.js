@@ -27,6 +27,13 @@
     return controls[0]?.value ?? '';
   }
 
+  function clearFieldValue(field, wrapper) {
+    for (const control of controlsFor(wrapper)) {
+      if (field.kind === 'radio' || field.kind === 'checkbox') control.checked = false;
+      else control.value = '';
+    }
+  }
+
   function setFieldAvailability(wrapper, available) {
     wrapper.hidden = !available;
     wrapper.setAttribute('aria-hidden', available ? 'false' : 'true');
@@ -37,26 +44,27 @@
     if (!available) clearFieldError(wrapper);
   }
 
-  function fieldShell(wrapper) {
-    return wrapper.querySelector('.jill-field') || wrapper.querySelector('.jill-choice');
+  function errorShell(container) {
+    if (container?.matches?.('.jill-field, .jill-choice')) return container;
+    return container?.querySelector?.('.jill-field, .jill-choice') || null;
   }
 
-  function clearFieldError(wrapper) {
-    const shell = fieldShell(wrapper);
+  function clearFieldError(container) {
+    const shell = errorShell(container);
     if (shell?.dataset.state === 'error') delete shell.dataset.state;
-    for (const control of controlsFor(wrapper)) control.removeAttribute('aria-invalid');
+    for (const control of controlsFor(container)) control.removeAttribute('aria-invalid');
   }
 
-  function markFieldError(wrapper) {
-    const shell = fieldShell(wrapper);
+  function markFieldError(container) {
+    const shell = errorShell(container);
     if (shell) shell.dataset.state = 'error';
-    for (const control of controlsFor(wrapper)) {
+    for (const control of controlsFor(container)) {
       if (!control.disabled) control.setAttribute('aria-invalid', 'true');
     }
   }
 
-  function firstFocusableControl(wrapper) {
-    return controlsFor(wrapper).find((control) => !control.disabled && control.type !== 'hidden');
+  function firstFocusableControl(container) {
+    return controlsFor(container).find((control) => !control.disabled && control.type !== 'hidden');
   }
 
   function initializeProduct(root) {
@@ -70,9 +78,11 @@
     const status = root.querySelector('[data-jill-product-status]');
     const submitButton = form.querySelector('.jill-button[type="submit"]');
     const variantSelect = form.querySelector('[data-jill-variant-select]');
+    const quantityControl = form.querySelector('[name="quantity"]');
     const price = root.querySelector('[data-jill-product-price]');
     const profileNode = form.querySelector('[data-jill-product-capability-profile]');
     let profile = null;
+    let productOptionsState = null;
     let attemptedSubmit = false;
 
     function setStatus(message) {
@@ -129,43 +139,159 @@
       }
     }
 
-    function evaluateCustomization(showError) {
-      if (!profile) return null;
-
+    function readValues() {
       const values = Object.create(null);
-      for (const field of profile.fields) {
-        values[field.id] = readFieldValue(field, wrappers.get(field.id));
-      }
+      if (!profile) return values;
+      for (const field of profile.fields) values[field.id] = readFieldValue(field, wrappers.get(field.id));
+      return values;
+    }
 
-      let validation;
-      try {
-        validation = globalThis.JILLFormEngine.validateFields(profile.fields, values);
-      } catch (error) {
-        failConfiguration();
-        return null;
-      }
+    function readMerchandiseQuantity() {
+      if (!quantityControl) return 1;
+      const quantity = Number(quantityControl.value);
+      if (!quantityControl.validity.valid || !Number.isSafeInteger(quantity) || quantity < 1) return null;
+      return quantity;
+    }
+
+    function quantityContainer() {
+      return quantityControl?.closest('.jill-field') || null;
+    }
+
+    function allocationGroupsForRebuild() {
+      if (!productOptionsState) return [];
+      return productOptionsState.allocation.groups.map((group) => ({
+        id: group.id,
+        unitIds: [...group.unitIds],
+        values: {...group.values},
+      }));
+    }
+
+    function validateAndSyncFields() {
+      let values = readValues();
+      let validation = globalThis.JILLFormEngine.validateFields(profile.fields, values);
+      let clearedUnavailableValue = false;
 
       for (const result of validation.results) {
+        const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
         const wrapper = wrappers.get(result.id);
         setFieldAvailability(wrapper, result.available);
+        if (!result.available) {
+          clearFieldValue(field, wrapper);
+          clearedUnavailableValue = true;
+        }
         if (result.valid) clearFieldError(wrapper);
       }
 
-      if (showError) {
-        for (const wrapper of wrappers.values()) clearFieldError(wrapper);
+      if (clearedUnavailableValue) {
+        values = readValues();
+        validation = globalThis.JILLFormEngine.validateFields(profile.fields, values);
+      }
 
-        if (!validation.valid && validation.firstInvalidId) {
-          const field = globalThis.JILLProductCapabilities.getField(profile, validation.firstInvalidId);
-          const wrapper = wrappers.get(validation.firstInvalidId);
-          markFieldError(wrapper);
-          const prefix = status?.dataset.errorPrefix || 'Please complete:';
-          setStatus(`${prefix} ${field.label}`);
-        }
-      } else if (validation.valid) {
+      return {values, validation};
+    }
+
+    function buildProductOptions(values, merchandiseQuantity) {
+      if (!profile || merchandiseQuantity === null) return null;
+      const productId = root.dataset.jillProductId;
+      if (!productId || !globalThis.JILLProductOptions) return null;
+
+      try {
+        return globalThis.JILLProductOptions.createState({
+          itemId: `shopify-product:${productId}`,
+          merchandiseQuantity,
+          profile,
+          values,
+          allocationGroups: allocationGroupsForRebuild(),
+          nextGroupNumber: productOptionsState?.nextGroupNumber || 1,
+        });
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function firstOtherBlockingResult(validation) {
+      return validation.results.find((result) => {
+        const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
+        return field.group !== 'product_options' && result.available && !result.valid;
+      }) || null;
+    }
+
+    function optionIssueField() {
+      const fieldId = productOptionsState?.firstIssue?.fieldId
+        || productOptionsState?.allocation?.fieldIds?.[0]
+        || productOptionsState?.singleton?.firstInvalidFieldId;
+      return fieldId ? globalThis.JILLProductCapabilities.getField(profile, fieldId) : null;
+    }
+
+    function clearAllErrors() {
+      for (const wrapper of wrappers.values()) clearFieldError(wrapper);
+      const quantity = quantityContainer();
+      if (quantity) clearFieldError(quantity);
+    }
+
+    function showBlockingError(quantity, otherBlocking) {
+      clearAllErrors();
+      const prefix = status?.dataset.errorPrefix || 'Please complete:';
+
+      if (quantity === null) {
+        const container = quantityContainer();
+        if (container) markFieldError(container);
+        setStatus(`${prefix} ${status?.dataset.quantityLabel || 'Quantity'}`);
+        return firstFocusableControl(container);
+      }
+
+      if (productOptionsState && !productOptionsState.complete) {
+        const field = optionIssueField();
+        const wrapper = field ? wrappers.get(field.id) : null;
+        if (wrapper && !wrapper.hidden) markFieldError(wrapper);
+        setStatus(`${prefix} ${field?.label || 'Product options'}`);
+        return wrapper && !wrapper.hidden ? firstFocusableControl(wrapper) : null;
+      }
+
+      if (otherBlocking) {
+        const field = globalThis.JILLProductCapabilities.getField(profile, otherBlocking.id);
+        const wrapper = wrappers.get(otherBlocking.id);
+        markFieldError(wrapper);
+        setStatus(`${prefix} ${field.label}`);
+        return firstFocusableControl(wrapper);
+      }
+
+      setStatus('');
+      return null;
+    }
+
+    function evaluateCustomization(showError) {
+      if (!profile) return {valid: true, focusControl: null};
+
+      let synced;
+      try {
+        synced = validateAndSyncFields();
+      } catch (error) {
+        setStatus(status?.dataset.configError || 'This product is temporarily unavailable.');
+        return {valid: false, focusControl: null};
+      }
+
+      const merchandiseQuantity = readMerchandiseQuantity();
+      const nextProductOptionsState = buildProductOptions(synced.values, merchandiseQuantity);
+      if (merchandiseQuantity !== null && !nextProductOptionsState) {
+        setStatus(status?.dataset.configError || 'This product is temporarily unavailable.');
+        return {valid: false, focusControl: null};
+      }
+      productOptionsState = nextProductOptionsState;
+
+      const otherBlocking = firstOtherBlockingResult(synced.validation);
+      const valid = merchandiseQuantity !== null
+        && Boolean(productOptionsState?.complete)
+        && !otherBlocking;
+
+      let focusControl = null;
+      if (showError) focusControl = showBlockingError(merchandiseQuantity, otherBlocking);
+      else if (valid) {
+        clearAllErrors();
         setStatus('');
       }
 
-      return validation;
+      return {valid, focusControl};
     }
 
     if (variantSelect) {
@@ -175,12 +301,12 @@
 
     if (profile) {
       form.addEventListener('input', (event) => {
-        if (!event.target.closest('[data-jill-capability-field]')) return;
+        if (event.target !== quantityControl && !event.target.closest('[data-jill-capability-field]')) return;
         evaluateCustomization(attemptedSubmit);
       });
 
       form.addEventListener('change', (event) => {
-        if (!event.target.closest('[data-jill-capability-field]')) return;
+        if (event.target !== quantityControl && !event.target.closest('[data-jill-capability-field]')) return;
         evaluateCustomization(attemptedSubmit);
       });
 
@@ -197,13 +323,11 @@
       if (!profile) return;
 
       attemptedSubmit = true;
-      const validation = evaluateCustomization(true);
-      if (!validation || validation.valid) return;
+      const result = evaluateCustomization(true);
+      if (result.valid) return;
 
       event.preventDefault();
-      const wrapper = wrappers.get(validation.firstInvalidId);
-      const control = firstFocusableControl(wrapper);
-      control?.focus();
+      result.focusControl?.focus();
     });
   }
 
