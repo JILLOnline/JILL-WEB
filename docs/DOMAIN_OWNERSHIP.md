@@ -14,15 +14,15 @@ This registry answers one question: **where does this behavior belong?**
 | Product capability profile shape | `contracts/product-capability-profile.schema.json` | feature contract semantics | runtime state or merchant storage |
 | Shopify product capability adapter | one adapter owner when introduced | Shopify-native product metafields/metaobjects, capability schema | a second active capability authority |
 | Product capability resolution | one resolver owner when introduced | normalized Product Capability Profile | collection-name/product-family branches |
-| Global form validation / required-state semantics | validation engine owner when introduced | field/capability contracts | product-specific validation copies |
-| Cascading/progressive disclosure | progression engine owner when introduced | validation state/dependency config | separate product/custom-order cascade engines |
+| Universal browser state vocabulary, field validation and stage progression | `theme/assets/jill-form-engine.js` | Product Capability field contracts, normalized form values, declarative stage dependencies | product-specific validators, DOM-derived truth, separate product/custom-order cascade engines |
+| Universal form engine behavioral tests | `scripts/test-form-engine.mjs` | `jill-form-engine.js` public API | storefront implementation or business-specific behavior |
 | Product behavior | `theme/assets/jill-product.js` when introduced | Shopify product DOM/contracts, shared primitives | customization engine internals |
 | Cart behavior | `theme/assets/jill-cart.js` when introduced | Shopify cart routes | product/customization logic |
-| Product customization engine | `theme/assets/jill-customization.js` when introduced | product capabilities, validation/progression | duplicated per-product-family engines |
-| Product Options | one Product Options state/renderer owner when introduced | product capabilities, quantity owner, validation | collection-specific option implementations |
-| Personalization state/allocation | one personalization module within the customization domain when introduced | selected quantities, capabilities, validation | product quantity mutation or DOM-derived business truth |
+| Product customization engine | `theme/assets/jill-customization.js` when introduced | product capabilities, universal form engine | duplicated per-product-family engines |
+| Product Options | one Product Options state/renderer owner when introduced | product capabilities, quantity owner, universal form engine | collection-specific option implementations |
+| Personalization state/allocation | one personalization module within the customization domain when introduced | selected quantities, capabilities, universal form engine | product quantity mutation or DOM-derived business truth |
 | Reference/file upload browser adapter | one upload adapter owner when introduced | configured file constraints, backend/storage transport | independent upload systems per form |
-| Custom-order browser flow | `theme/assets/jill-custom-order.js` when introduced | shared validation/customization/upload contracts | a second customization/validation engine |
+| Custom-order browser flow | `theme/assets/jill-custom-order.js` when introduced | universal form engine/customization/upload contracts | a second customization/validation engine |
 | Custom-order API transport contract | `contracts/custom-order-api.schema.json` | Custom Order feature contract and normalized browser state | backend implementation details or rewards data |
 | Custom-order API contract guard | `scripts/check-custom-order-contract.mjs` | Custom Order API schema | theme or rewards validation |
 | Backend execution architecture | `docs/FUNCTIONAL_ARCHITECTURE.md` | feature contracts/platform boundaries | feature-specific business rules |
