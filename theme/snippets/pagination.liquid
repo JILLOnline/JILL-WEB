@@ -1,3 +1,7 @@
+{% liquid
+  assign current_page_title = paginate.current_page | append: ''
+%}
+
 {% if paginate.pages > 1 %}
   <nav class="jill-pagination" aria-label="{{ 'general.pagination.label' | t }}">
     {% if paginate.previous %}
@@ -14,7 +18,7 @@
           {% else %}
             <span
               class="jill-pagination__current"
-              {% if part.title == paginate.current_page %}aria-current="page"{% endif %}
+              {% if part.title == current_page_title %}aria-current="page"{% endif %}
             >{{ part.title }}</span>
           {% endif %}
         </li>
