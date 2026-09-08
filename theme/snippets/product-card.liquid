@@ -27,7 +27,7 @@
     <div class="jill-product-card__price">
       {% if price_varies %}<span>{{ 'products.card.from' | t }}</span>{% endif %}
       <span>{{ current_price | money }}</span>
-      {% if compare_price > current_price %}
+      {% if compare_price != blank and compare_price > current_price %}
         <s>{{ compare_price | money }}</s>
       {% endif %}
     </div>
