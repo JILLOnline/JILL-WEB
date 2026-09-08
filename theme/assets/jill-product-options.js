@@ -405,6 +405,26 @@
     });
   }
 
+  function setAllocationGroupCount(state, profile, groupId, count) {
+    assertState(state);
+    const group = findGroup(state, groupId);
+    if (!Number.isSafeInteger(count) || count < 1) {
+      fail('allocation group count must be a positive safe integer');
+    }
+
+    const maximum = group.unitIds.length + state.allocation.unallocatedUnitIds.length;
+    if (count > maximum) fail(`allocation group ${groupId} count may not exceed ${maximum}`);
+
+    let unitIds = [...group.unitIds];
+    if (count < unitIds.length) {
+      unitIds = unitIds.slice(0, count);
+    } else if (count > unitIds.length) {
+      unitIds.push(...state.allocation.unallocatedUnitIds.slice(0, count - unitIds.length));
+    }
+
+    return setAllocationGroupUnits(state, profile, groupId, unitIds);
+  }
+
   function setAllocationGroupValue(state, profile, groupId, fieldId, value) {
     assertState(state);
     findGroup(state, groupId);
@@ -466,6 +486,7 @@
     setSingletonValue,
     addAllocationGroup,
     setAllocationGroupUnits,
+    setAllocationGroupCount,
     setAllocationGroupValue,
     removeAllocationGroup,
     toPayload,
