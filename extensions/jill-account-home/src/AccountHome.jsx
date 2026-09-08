@@ -1,5 +1,6 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
+import {JillAction, JillStatusPill} from '../../../shared/customer-account-ui.jsx';
 
 const STORE = 'https://jillonlinestore.com';
 
@@ -18,13 +19,13 @@ function JillSettingsHeader() {
               Keep your contact information, addresses, marketing preferences, and account access up to date.
             </s-text>
           </s-stack>
-          <s-badge tone="info">JILL ★</s-badge>
+          <JillStatusPill tone="info" strong>JILL ★</JillStatusPill>
         </s-stack>
 
         <s-stack direction="inline" gap="base">
-          <s-button variant="primary" href="extension:jill-account-dashboard/">Dashboard</s-button>
-          <s-button href={STORE}>Back to JILL</s-button>
-          <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
+          <JillAction role="primary" href="extension:jill-account-dashboard/">Dashboard</JillAction>
+          <JillAction href={STORE}>Back to JILL</JillAction>
+          <JillAction href={`${STORE}/pages/contact`}>Contact JILL</JillAction>
         </s-stack>
       </s-stack>
     </s-section>
