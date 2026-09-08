@@ -241,6 +241,12 @@ const required = [
   'sections/footer.liquid',
   'sections/custom-liquid.liquid',
   'snippets/ui-button.liquid',
+  'snippets/ui-field.liquid',
+  'snippets/ui-textarea.liquid',
+  'snippets/ui-select.liquid',
+  'snippets/ui-choice.liquid',
+  'snippets/ui-quantity.liquid',
+  'snippets/ui-file.liquid',
   'snippets/meta-tags.liquid',
 ];
 
