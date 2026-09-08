@@ -170,6 +170,28 @@
         }
       }
     },
+    "customizationUnits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unitsPerQuantity"],
+      "properties": {
+        "unitsPerQuantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "singularLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "pluralLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    },
     "personalizationAllocation": {
       "type": "object",
       "additionalProperties": false,
@@ -245,6 +267,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "customizationUnits": {
+          "$ref": "#/$defs/customizationUnits"
+        },
         "personalizationAllocation": {
           "$ref": "#/$defs/personalizationAllocation"
         },
