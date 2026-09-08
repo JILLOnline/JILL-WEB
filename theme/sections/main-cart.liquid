@@ -1,6 +1,18 @@
+{% liquid
+  assign cart_title = 'cart.title' | t
+  assign empty_message = 'cart.empty' | t
+  assign continue_shopping_label = 'cart.continue_shopping' | t
+  assign quantity_label = 'cart.quantity' | t
+  assign remove_label = 'cart.remove' | t
+  assign subtotal_label = 'cart.subtotal' | t
+  assign checkout_note = 'cart.checkout_note' | t
+  assign update_label = 'cart.update' | t
+  assign checkout_label = 'cart.checkout' | t
+%}
+
 <section class="jill-cart jill-page-width">
   <div class="jill-cart__header">
-    <h1 class="jill-cart__title">{{ 'cart.title' | t }}</h1>
+    <h1 class="jill-cart__title">{{ cart_title }}</h1>
     {% unless cart.empty? %}
       <p class="jill-cart__count">{{ 'cart.item_count' | t: count: cart.item_count }}</p>
     {% endunless %}
@@ -8,10 +20,10 @@
 
   {% if cart.empty? %}
     <div class="jill-cart__empty">
-      <p>{{ 'cart.empty' | t }}</p>
+      <p>{{ empty_message }}</p>
       {% render 'ui-button',
         url: routes.all_products_collection_url,
-        label: 'cart.continue_shopping' | t
+        label: continue_shopping_label
       %}
     </div>
   {% else %}
@@ -76,13 +88,13 @@
                 {% render 'ui-quantity',
                   id: quantity_id,
                   name: 'updates[]',
-                  label: 'cart.quantity' | t,
+                  label: quantity_label,
                   value: item.quantity,
                   min: 0,
                   step: 1,
                   required: true
                 %}
-                <a class="jill-cart-item__remove" href="{{ item.url_to_remove }}">{{ 'cart.remove' | t }}</a>
+                <a class="jill-cart-item__remove" href="{{ item.url_to_remove }}">{{ remove_label }}</a>
               </div>
             </div>
 
@@ -101,23 +113,23 @@
         {% endif %}
 
         <div class="jill-cart__subtotal">
-          <span>{{ 'cart.subtotal' | t }}</span>
+          <span>{{ subtotal_label }}</span>
           <strong>{{ cart.total_price | money }}</strong>
         </div>
 
-        <p class="jill-cart__checkout-note">{{ 'cart.checkout_note' | t }}</p>
+        <p class="jill-cart__checkout-note">{{ checkout_note }}</p>
 
         <div class="jill-cart__actions">
           {% render 'ui-button',
             type: 'submit',
             name: 'update',
-            label: 'cart.update' | t,
+            label: update_label,
             variant: 'secondary'
           %}
           {% render 'ui-button',
             type: 'submit',
             name: 'checkout',
-            label: 'cart.checkout' | t
+            label: checkout_label
           %}
         </div>
       </div>
