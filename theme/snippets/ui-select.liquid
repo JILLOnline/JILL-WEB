@@ -22,7 +22,7 @@
     {% endif %}
     {% for option in options %}
       {% assign option_value = option.value | default: option %}
-      {% assign option_label = option.label | default: option %}
+      {% assign option_label = option.label | default: option.name | default: option %}
       <option value="{{ option_value | escape }}"{% if option_value == selected %} selected{% endif %}>{{ option_label }}</option>
     {% endfor %}
   </select>
