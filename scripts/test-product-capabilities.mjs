@@ -105,11 +105,29 @@ assert.deepEqual(
   capabilities.getFieldsForGroup(resolved, 'product_options').map((field) => field.id),
   ['style', 'pinata_number'],
 );
+assert.equal(capabilities.getCustomizationUnitsPerQuantity(resolved), 1);
 assert.equal(Object.isFrozen(resolved), true);
 assert.equal(Object.isFrozen(resolved.fields), true);
 assert.equal(Object.isFrozen(resolved.fields[1].visibleWhen), true);
 assert.equal(Object.isFrozen(profile), false, 'resolver must not freeze caller-owned profile');
 assert.equal(Object.isFrozen(profile.fields[1].visibleWhen), false, 'resolver must not freeze nested caller data');
+
+const packProfile = {
+  version: 1,
+  id: 'party_favor_pack',
+  fields: [],
+  features: {
+    customizationUnits: {
+      unitsPerQuantity: 12,
+      singularLabel: 'bag',
+      pluralLabel: 'bags',
+    },
+  },
+};
+const resolvedPack = capabilities.resolve(packProfile);
+assert.equal(capabilities.getCustomizationUnitsPerQuantity(resolvedPack), 12);
+assert.equal(resolvedPack.features.customizationUnits.singularLabel, 'bag');
+assert.equal(Object.isFrozen(resolvedPack.features.customizationUnits), true);
 
 const fromJson = capabilities.resolve(JSON.stringify(profile));
 assert.equal(fromJson.id, 'pinata');
@@ -226,6 +244,35 @@ assert.throws(
       },
     }),
   /must be a file field/,
+);
+
+for (const unitsPerQuantity of [0, 1.5, 1001]) {
+  assert.throws(
+    () =>
+      capabilities.resolve({
+        ...packProfile,
+        features: {
+          customizationUnits: {
+            unitsPerQuantity,
+          },
+        },
+      }),
+    /customizationUnits\.unitsPerQuantity must be an integer from 1 to 1000/,
+  );
+}
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...packProfile,
+      features: {
+        customizationUnits: {
+          unitsPerQuantity: 12,
+          singularLabel: '   ',
+        },
+      },
+    }),
+  /customizationUnits\.singularLabel must be a non-empty string up to 100 characters/,
 );
 
 assert.throws(
