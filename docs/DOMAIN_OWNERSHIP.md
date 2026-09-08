@@ -11,7 +11,9 @@ This registry answers one question: **where does this behavior belong?**
 | Page composition | `theme/templates/*.json` | Sections | CSS, JS, business logic |
 | Merchant-editable content units | `theme/blocks/*.liquid` | Internal snippets | duplicate primitive markup |
 | Internal reusable markup | `theme/snippets/*.liquid` | Shopify objects/settings | independent merchant configuration |
-| Product capability definitions/resolution | product-capabilities owner when introduced | Shopify product/collection configuration | duplicated product-family engines |
+| Product capability profile shape | `contracts/product-capability-profile.schema.json` | feature contract semantics | runtime state or merchant storage |
+| Shopify product capability adapter | one adapter owner when introduced | Shopify-native product metafields/metaobjects, capability schema | a second active capability authority |
+| Product capability resolution | one resolver owner when introduced | normalized Product Capability Profile | collection-name/product-family branches |
 | Global form validation / required-state semantics | validation engine owner when introduced | field/capability contracts | product-specific validation copies |
 | Cascading/progressive disclosure | progression engine owner when introduced | validation state/dependency config | separate product/custom-order cascade engines |
 | Product behavior | `theme/assets/jill-product.js` when introduced | Shopify product DOM/contracts, shared primitives | customization engine internals |
