@@ -7,7 +7,7 @@
     "extensions/*"
   ],
   "scripts": {
-    "postinstall": "node scripts/check-theme-core.mjs && node scripts/test-form-engine.mjs && node scripts/check-custom-order-contract.mjs && node scripts/check-rewards-engine.mjs && node scripts/test-rewards-engine.mjs",
+    "postinstall": "node scripts/check-theme-core.mjs && node scripts/test-form-engine.mjs && node scripts/test-product-capabilities.mjs && node scripts/check-custom-order-contract.mjs && node scripts/check-rewards-engine.mjs && node scripts/test-rewards-engine.mjs",
     "shopify": "shopify",
     "link": "shopify app config link",
     "build": "shopify app build",
@@ -16,6 +16,7 @@
     "deploy": "shopify app deploy",
     "check:theme": "node scripts/check-theme-core.mjs",
     "test:form-engine": "node scripts/test-form-engine.mjs",
+    "test:product-capabilities": "node scripts/test-product-capabilities.mjs",
     "check:custom-order": "node scripts/check-custom-order-contract.mjs",
     "check:rewards": "node scripts/check-rewards-engine.mjs",
     "test:rewards": "node scripts/test-rewards-engine.mjs"
