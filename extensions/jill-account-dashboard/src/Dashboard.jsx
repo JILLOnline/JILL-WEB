@@ -426,9 +426,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           background="subdued"
           padding="small-200"
           borderRadius="max"
-          accessibilityLabel={`Open your $${tier.value} OFF coupon`}
+          accessibilityLabel={`Use your $${tier.value} OFF coupon`}
         >
-          <s-text tone="info">Redeemed</s-text>
+          <s-text tone="custom">Use</s-text>
         </s-clickable>
       );
     }
@@ -589,7 +589,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   }
 
   const rewardMessage = activeCoupons.length || availableTiers.length
-    ? 'Tap Redeem on any unlocked reward. Redeemed rewards open your coupon wallet. ✨'
+    ? 'Tap Redeem on any unlocked reward. Tap Use on an active reward to open your coupon wallet. ✨'
     : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
