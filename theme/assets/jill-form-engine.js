@@ -344,12 +344,16 @@
     }
 
     const firstIncomplete = results.find((stage) => stage.state !== STATES.VALID);
+    const firstActionable = results.find(
+      (stage) => stage.available && stage.state !== STATES.VALID,
+    );
 
     return Object.freeze({
       results: Object.freeze(results),
       byId: Object.freeze(byId),
       complete: results.length === 0 || !firstIncomplete,
       firstIncompleteStageId: firstIncomplete ? firstIncomplete.id : null,
+      firstActionableStageId: firstActionable ? firstActionable.id : null,
     });
   }
 
