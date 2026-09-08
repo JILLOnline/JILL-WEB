@@ -1,0 +1,39 @@
+{% liquid
+  assign card_url = card_product.url
+  assign card_title = card_product.title
+  assign current_price = card_product.price
+  assign compare_price = card_product.compare_at_price
+  assign price_varies = card_product.price_varies
+%}
+
+<article class="jill-product-card">
+  <a class="jill-product-card__media" href="{{ card_url }}" aria-label="{{ card_title | escape }}">
+    {% if card_product.featured_image != blank %}
+      {{ card_product.featured_image | image_url: width: 900 | image_tag: class: 'jill-product-card__image', loading: 'lazy', widths: '320, 480, 640, 900', sizes: '(min-width: 70rem) 25vw, (min-width: 45rem) 33vw, 50vw' }}
+    {% else %}
+      <span class="jill-product-card__image-placeholder" aria-hidden="true"></span>
+    {% endif %}
+  </a>
+
+  <div class="jill-product-card__details">
+    {% if show_vendor and card_product.vendor != blank %}
+      <p class="jill-product-card__vendor">{{ card_product.vendor }}</p>
+    {% endif %}
+
+    <h2 class="jill-product-card__title">
+      <a href="{{ card_url }}">{{ card_title }}</a>
+    </h2>
+
+    <div class="jill-product-card__price">
+      {% if price_varies %}<span>{{ 'products.card.from' | t }}</span>{% endif %}
+      <span>{{ current_price | money }}</span>
+      {% if compare_price > current_price %}
+        <s>{{ compare_price | money }}</s>
+      {% endif %}
+    </div>
+
+    {% unless card_product.available %}
+      <span class="jill-pill" data-tone="muted">{{ 'products.product.sold_out' | t }}</span>
+    {% endunless %}
+  </div>
+</article>
