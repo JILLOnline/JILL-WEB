@@ -19,8 +19,11 @@
     value="{{ field_value | escape }}"
     {% if placeholder != blank %}placeholder="{{ placeholder | escape }}"{% endif %}
     {% if autocomplete != blank %}autocomplete="{{ autocomplete }}"{% endif %}
+    {% if inputmode != blank %}inputmode="{{ inputmode }}"{% endif %}
     {% if min != blank %}min="{{ min }}"{% endif %}
     {% if max != blank %}max="{{ max }}"{% endif %}
+    {% if step != blank %}step="{{ step }}"{% endif %}
+    {% if minlength != blank %}minlength="{{ minlength }}"{% endif %}
     {% if maxlength != blank %}maxlength="{{ maxlength }}"{% endif %}
     {% if required %}required{% endif %}
     {% if disabled %}disabled{% endif %}
