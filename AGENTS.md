@@ -17,6 +17,8 @@ Before editing `theme/`, read:
 9. `docs/QA_CERTIFICATION.md`
 10. `docs/DECISIONS.md`
 
+When migrating or comparing behavior from the current production JILL storefront, also read `docs/PLATFORM_AUDIT.md` before inspecting legacy theme code.
+
 ## Before writing code
 
 Answer:
