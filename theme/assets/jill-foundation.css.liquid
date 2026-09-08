@@ -1,0 +1,86 @@
+{{ settings.type_primary_font | font_face: font_display: 'swap' }}
+
+@layer foundation, ui, storefront;
+
+@layer foundation {
+  :root {
+    --jill-color-background: {{ settings.background_color }};
+    --jill-color-foreground: {{ settings.foreground_color }};
+    --jill-color-accent: {{ settings.accent_color }};
+    --jill-color-muted: {{ settings.muted_color }};
+    --jill-color-success: {{ settings.success_color }};
+    --jill-color-info: {{ settings.info_color }};
+    --jill-color-error: {{ settings.error_color }};
+    --jill-font-family: {{ settings.type_primary_font.family }}, {{ settings.type_primary_font.fallback_families }};
+    --jill-page-width: {{ settings.max_page_width }};
+    --jill-page-margin: {{ settings.min_page_margin }}px;
+    --jill-space-unit: {{ settings.space_unit }}px;
+    --jill-button-radius: {{ settings.button_radius }}px;
+    --jill-button-height: {{ settings.button_height }}px;
+    --jill-field-radius: {{ settings.field_radius }}px;
+    --jill-card-radius: {{ settings.card_radius }}px;
+    --jill-border-width: 1px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light;
+    font-family: var(--jill-font-family);
+    background: var(--jill-color-background);
+    color: var(--jill-color-foreground);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: inherit;
+    color: inherit;
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--jill-color-accent);
+    outline-offset: 3px;
+  }
+
+  .jill-page-width {
+    width: min(calc(100% - (var(--jill-page-margin) * 2)), var(--jill-page-width));
+    margin-inline: auto;
+  }
+
+  .jill-skip-link {
+    position: fixed;
+    inset-block-start: var(--jill-space-unit);
+    inset-inline-start: var(--jill-space-unit);
+    z-index: 1000;
+    transform: translateY(-200%);
+  }
+
+  .jill-skip-link:focus-visible {
+    transform: translateY(0);
+  }
+}

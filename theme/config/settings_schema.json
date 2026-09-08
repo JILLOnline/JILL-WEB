@@ -1,0 +1,60 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "JILL Theme Core",
+    "theme_version": "0.1.0",
+    "theme_author": "JILL Online",
+    "theme_documentation_url": "https://help.shopify.com/manual/online-store/themes",
+    "theme_support_url": "https://support.shopify.com/"
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      {
+        "type": "font_picker",
+        "id": "type_primary_font",
+        "default": "work_sans_n4",
+        "label": "Primary font"
+      }
+    ]
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {"type": "color", "id": "background_color", "default": "#FFFFFF", "label": "Background"},
+      {"type": "color", "id": "foreground_color", "default": "#171717", "label": "Text"},
+      {"type": "color", "id": "accent_color", "default": "#6B3FA0", "label": "Accent"},
+      {"type": "color", "id": "muted_color", "default": "#6B7280", "label": "Muted"},
+      {"type": "color", "id": "success_color", "default": "#167A3F", "label": "Success"},
+      {"type": "color", "id": "info_color", "default": "#245AA8", "label": "Information"},
+      {"type": "color", "id": "error_color", "default": "#B42318", "label": "Error"}
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      {
+        "type": "select",
+        "id": "max_page_width",
+        "label": "Page width",
+        "options": [
+          {"value": "80rem", "label": "Narrow"},
+          {"value": "90rem", "label": "Standard"},
+          {"value": "110rem", "label": "Wide"}
+        ],
+        "default": "90rem"
+      },
+      {"type": "range", "id": "min_page_margin", "min": 12, "max": 48, "step": 2, "unit": "px", "label": "Page margin", "default": 20},
+      {"type": "range", "id": "space_unit", "min": 4, "max": 10, "step": 1, "unit": "px", "label": "Spacing unit", "default": 6}
+    ]
+  },
+  {
+    "name": "Components",
+    "settings": [
+      {"type": "range", "id": "button_radius", "min": 0, "max": 32, "step": 2, "unit": "px", "label": "Button corner radius", "default": 24},
+      {"type": "range", "id": "button_height", "min": 40, "max": 64, "step": 2, "unit": "px", "label": "Button height", "default": 48},
+      {"type": "range", "id": "field_radius", "min": 0, "max": 24, "step": 2, "unit": "px", "label": "Field corner radius", "default": 12},
+      {"type": "range", "id": "card_radius", "min": 0, "max": 32, "step": 2, "unit": "px", "label": "Card corner radius", "default": 16}
+    ]
+  }
+]

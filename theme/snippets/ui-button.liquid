@@ -1,0 +1,10 @@
+{% liquid
+  assign button_variant = variant | default: 'primary'
+  assign button_label = label | default: 'Continue'
+%}
+
+{% if url != blank %}
+  <a class="jill-button" data-variant="{{ button_variant }}" href="{{ url }}">{{ button_label }}</a>
+{% else %}
+  <button class="jill-button" data-variant="{{ button_variant }}" type="{{ type | default: 'button' }}">{{ button_label }}</button>
+{% endif %}

@@ -1,0 +1,25 @@
+<header class="jill-site-header">
+  <div class="jill-site-header__inner jill-page-width">
+    <a class="jill-site-header__brand" href="{{ routes.root_url }}">{{ shop.name }}</a>
+
+    <nav class="jill-site-header__nav" aria-label="Primary navigation">
+      {% for link in section.settings.menu.links %}
+        <a class="jill-site-header__link" href="{{ link.url }}">{{ link.title }}</a>
+      {% endfor %}
+      <a class="jill-site-header__link" href="{{ routes.cart_url }}">Cart ({{ cart.item_count }})</a>
+    </nav>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu"
+    }
+  ]
+}
+{% endschema %}

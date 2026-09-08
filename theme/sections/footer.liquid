@@ -1,0 +1,25 @@
+<footer class="jill-site-footer">
+  <div class="jill-site-footer__inner jill-page-width">
+    <small>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}</small>
+    {% if section.settings.menu != blank %}
+      <nav aria-label="Footer navigation">
+        {% for link in section.settings.menu.links %}
+          <a href="{{ link.url }}">{{ link.title }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu"
+    }
+  ]
+}
+{% endschema %}
