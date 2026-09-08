@@ -106,6 +106,7 @@ assert.deepEqual(
   ['style', 'pinata_number'],
 );
 assert.equal(capabilities.getCustomizationUnitsPerQuantity(resolved), 1);
+assert.deepEqual(capabilities.getProductOptionsAllocationFieldIds(resolved), []);
 assert.equal(Object.isFrozen(resolved), true);
 assert.equal(Object.isFrozen(resolved.fields), true);
 assert.equal(Object.isFrozen(resolved.fields[1].visibleWhen), true);
@@ -128,6 +129,55 @@ const resolvedPack = capabilities.resolve(packProfile);
 assert.equal(capabilities.getCustomizationUnitsPerQuantity(resolvedPack), 12);
 assert.equal(resolvedPack.features.customizationUnits.singularLabel, 'bag');
 assert.equal(Object.isFrozen(resolvedPack.features.customizationUnits), true);
+
+const allocatedOptionsProfile = {
+  version: 1,
+  id: 'snack_pack',
+  fields: [
+    {
+      id: 'package_style',
+      kind: 'select',
+      group: 'product_options',
+      label: 'Package style',
+      required: true,
+      options: [
+        {value: 'standard', label: 'Standard'},
+        {value: 'premium', label: 'Premium'},
+      ],
+    },
+    {
+      id: 'flavor',
+      kind: 'select',
+      group: 'product_options',
+      label: 'Flavor',
+      required: true,
+      options: [
+        {value: 'chips', label: 'Chips'},
+        {value: 'gummies', label: 'Gummies'},
+      ],
+      visibleWhen: {
+        mode: 'all',
+        conditions: [{field: 'package_style', operator: 'equals', value: 'standard'}],
+      },
+    },
+  ],
+  features: {
+    customizationUnits: {
+      unitsPerQuantity: 12,
+      singularLabel: 'bag',
+      pluralLabel: 'bags',
+    },
+    productOptionsAllocation: {
+      fieldIds: ['flavor'],
+    },
+  },
+};
+const resolvedAllocatedOptions = capabilities.resolve(allocatedOptionsProfile);
+assert.deepEqual(
+  capabilities.getProductOptionsAllocationFieldIds(resolvedAllocatedOptions),
+  ['flavor'],
+);
+assert.equal(Object.isFrozen(capabilities.getProductOptionsAllocationFieldIds(resolvedAllocatedOptions)), true);
 
 const fromJson = capabilities.resolve(JSON.stringify(profile));
 assert.equal(fromJson.id, 'pinata');
@@ -273,6 +323,132 @@ assert.throws(
       },
     }),
   /customizationUnits\.singularLabel must be a non-empty string up to 100 characters/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      features: {
+        ...allocatedOptionsProfile.features,
+        productOptionsAllocation: {fieldIds: []},
+      },
+    }),
+  /productOptionsAllocation\.fieldIds must be a non-empty array/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      features: {
+        ...allocatedOptionsProfile.features,
+        productOptionsAllocation: {fieldIds: ['flavor', 'flavor']},
+      },
+    }),
+  /productOptionsAllocation contains duplicate field flavor/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      fields: [
+        ...allocatedOptionsProfile.fields,
+        {
+          id: 'name',
+          kind: 'text',
+          group: 'personalization',
+          label: 'Name',
+          required: false,
+        },
+      ],
+      features: {
+        ...allocatedOptionsProfile.features,
+        productOptionsAllocation: {fieldIds: ['name']},
+      },
+    }),
+  /must belong to product_options group/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      fields: allocatedOptionsProfile.fields.map((field) =>
+        field.id === 'flavor' ? {...field, kind: 'text', options: undefined} : field,
+      ),
+    }),
+  /must be a select or radio field/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      fields: allocatedOptionsProfile.fields.map((field) =>
+        field.id === 'flavor'
+          ? {
+              ...field,
+              options: [
+                {value: 'chips', label: 'Chips'},
+                {value: 'chips', label: 'More chips'},
+              ],
+            }
+          : field,
+      ),
+    }),
+  /has duplicate option values/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      ...allocatedOptionsProfile,
+      fields: allocatedOptionsProfile.fields.map((field) =>
+        field.id === 'package_style'
+          ? {
+              ...field,
+              visibleWhen: {
+                mode: 'all',
+                conditions: [{field: 'flavor', operator: 'equals', value: 'chips'}],
+              },
+            }
+          : field,
+      ),
+    }),
+  /singleton Product Options field package_style may not depend on allocated field flavor/,
+);
+
+assert.throws(
+  () =>
+    capabilities.resolve({
+      version: 1,
+      id: 'cross_group_dependency',
+      fields: [
+        {
+          id: 'name',
+          kind: 'text',
+          group: 'personalization',
+          label: 'Name',
+          required: false,
+        },
+        {
+          id: 'finish',
+          kind: 'select',
+          group: 'product_options',
+          label: 'Finish',
+          required: true,
+          options: [{value: 'matte', label: 'Matte'}],
+          visibleWhen: {
+            mode: 'all',
+            conditions: [{field: 'name', operator: 'equals', value: 'yes'}],
+          },
+        },
+      ],
+      features: {},
+    }),
+  /product_options field finish may only depend on product_options fields/,
 );
 
 assert.throws(
