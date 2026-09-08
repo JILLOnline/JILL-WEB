@@ -1,6 +1,6 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
-import {useEffect, useRef, useState} from 'preact/hooks';
+import {useEffect, useState} from 'preact/hooks';
 import {
   REWARD_STATES,
   buildRewardJourney,
@@ -227,7 +227,6 @@ function SavedDetail({label, value}) {
 }
 
 function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
-  const redemptionInFlight = useRef(false);
   const [submittingPoints, setSubmittingPoints] = useState(0);
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
   const [redeemError, setRedeemError] = useState('');
@@ -252,8 +251,8 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     return journey.couponForTier(tierPoints);
   }
 
-  async function handleRedeem(tier) {
-    if (redemptionInFlight.current) return;
+  async function handleRedeem(tier, trigger) {
+    if (trigger?.disabled) return;
     if (!customer?.id || pendingPoints || points < tier.points || activeCouponForTier(tier.points)) {
       setConfirmTier(null);
       setRedeemError(!customer?.id
@@ -263,7 +262,11 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           : 'Your rewards have changed. Review your balance and coupon wallet before redeeming.');
       return;
     }
-    redemptionInFlight.current = true;
+
+    if (trigger) {
+      trigger.disabled = true;
+      trigger.loading = true;
+    }
 
     setConfirmTier(null);
     setFreshCoupon(null);
@@ -325,7 +328,10 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
       setSlowRequest(false);
       setRedeemError(error?.message || 'Unable to request your reward right now.');
     } finally {
-      redemptionInFlight.current = false;
+      if (trigger) {
+        trigger.loading = false;
+        trigger.disabled = false;
+      }
       setSubmittingPoints(0);
     }
   }
@@ -491,7 +497,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     </s-button>
                     <s-button
                       variant="primary"
-                      onClick={() => handleRedeem(tier)}
+                      onClick={(event) => handleRedeem(tier, event.currentTarget)}
                     >
                       Generate coupon
                     </s-button>

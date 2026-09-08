@@ -99,8 +99,16 @@ if (!watchdog.includes(`EXPECTED_ENGINE_VERSION: '${config.engineVersion}'`)) {
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
   throw new Error('Redemption completion must match the request nonce and cleared points.');
 }
-if (!/<s-button\b[^>]*variant="primary"[^>]*onClick=\{\(\) => handleRedeem\(tier\)\}[^>]*>[\s\S]*?Generate coupon\s*<\/s-button>/.test(dashboard)) {
+if (!/<s-button\b[^>]*variant="primary"[^>]*onClick=\{\(event\) => handleRedeem\(tier, event\.currentTarget\)\}[^>]*>[\s\S]*?Generate coupon\s*<\/s-button>/.test(dashboard)) {
   throw new Error('Reward confirmation must use the Shopify primary button action.');
+}
+if (!dashboard.includes('if (trigger?.disabled) return;') ||
+    !dashboard.includes('trigger.disabled = true;') ||
+    !dashboard.includes('trigger.loading = true;')) {
+  throw new Error('Reward confirmation must lock the clicked control immediately to prevent duplicate submission.');
+}
+if (dashboard.includes('redemptionInFlight')) {
+  throw new Error('Reward confirmation must not use a hidden ref that can silently swallow clicks.');
 }
 
 console.log('JILL Rewards v13 guard passed:', JSON.stringify({

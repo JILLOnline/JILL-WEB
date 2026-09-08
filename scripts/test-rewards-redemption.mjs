@@ -18,7 +18,7 @@ function between(start, end) {
 }
 const transport = between('async function loadData()', 'function wait(');
 const mutation = between('const REQUEST_REWARD_MUTATION', 'const COLLECTIONS');
-const handler = between('  async function handleRedeem(tier)', '  function rewardStatusControl(');
+const handler = between('  async function handleRedeem(tier, trigger)', '  function rewardStatusControl(');
 const nonce = 'request-1';
 const tier = {points: 10, value: 5, minimum: 25};
 const coupon = {points: 10, request_nonce: nonce, code: 'JILL-TEST', status: 'active'};
@@ -46,7 +46,7 @@ function harness(overrides = {}) {
   const context = vm.createContext({
     console: {warn() {}},
     customer: customer({}), points: 30, pendingPoints: 0,
-    redemptionInFlight: {current: false}, activeCouponForTier: () => null,
+    activeCouponForTier: () => null,
     rewardRequestIsPending, rewardRequestIsComplete, rewardWallet, rewardCouponStatus,
     metaMap: (data) => Object.fromEntries((data?.metafields || []).map((f) => [f.key, f.value])),
     wait: async () => {}, onCustomerUpdate() {}, requestReward: async () => nonce,
@@ -55,10 +55,11 @@ function harness(overrides = {}) {
     ...overrides,
   });
   vm.runInContext(handler, context);
-  return {context, state, redeem: () => context.handleRedeem(tier)};
+  const trigger = {disabled: false, loading: false};
+  return {context, state, trigger, redeem: () => context.handleRedeem(tier, trigger)};
 }
 
-// Immediate feedback precedes the response; a second click cannot submit twice.
+// Immediate feedback precedes the response; the clicked control itself blocks a duplicate submission.
 {
   let resolveRequest;
   let writes = 0;
@@ -66,6 +67,8 @@ function harness(overrides = {}) {
     loadData: async () => customer(meta(0, `consumed:${nonce}`, [coupon])),
   });
   const result = h.redeem();
+  assert.equal(h.trigger.disabled, true);
+  assert.equal(h.trigger.loading, true);
   assert.equal(h.state.SubmittingPoints, 10);
   assert.equal(h.state.LocalPendingPoints, 10);
   assert.equal(h.state.ConfirmTier, null);
@@ -74,7 +77,8 @@ function harness(overrides = {}) {
   resolveRequest(nonce);
   await result;
   assert.equal(h.state.FreshCoupon.code, coupon.code);
-  assert.equal(h.context.redemptionInFlight.current, false);
+  assert.equal(h.trigger.disabled, false);
+  assert.equal(h.trigger.loading, false);
 }
 
 // Stale pre-write reads and the worker's intermediate claim must keep polling.
@@ -88,6 +92,8 @@ function harness(overrides = {}) {
   assert.equal(count, 5);
   assert.equal(h.state.FreshCoupon.code, coupon.code);
   assert.equal(h.state.RedeemError, '');
+  assert.equal(h.trigger.disabled, false);
+  assert.equal(h.trigger.loading, false);
 }
 
 for (const overrides of [{customer: null}, {pendingPoints: 10}, {points: 0}, {activeCouponForTier: () => coupon}]) {
@@ -96,6 +102,8 @@ for (const overrides of [{customer: null}, {pendingPoints: 10}, {points: 0}, {ac
   await h.redeem();
   assert.equal(writes, 0);
   assert.ok(h.state.RedeemError);
+  assert.equal(h.trigger.disabled, false);
+  assert.equal(h.trigger.loading, false);
 }
 for (const overrides of [
   {requestReward: async () => {throw new Error('Access denied');}},
@@ -107,7 +115,8 @@ for (const overrides of [
   await h.redeem();
   assert.ok(h.state.RedeemError);
   assert.equal(h.state.SubmittingPoints, 0);
-  assert.equal(h.context.redemptionInFlight.current, false);
+  assert.equal(h.trigger.disabled, false);
+  assert.equal(h.trigger.loading, false);
 }
 
 // Validate actual mutation variables and all error/acknowledgment branches.
