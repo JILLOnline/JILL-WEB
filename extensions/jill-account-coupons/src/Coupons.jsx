@@ -1,6 +1,7 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import {useEffect, useState} from 'preact/hooks';
+import {JillAction, JillStatusPill} from '../../../shared/customer-account-ui.jsx';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
@@ -84,6 +85,14 @@ function CouponCard({coupon, status}) {
   const expires = formatDateTime(coupon?.expires_at);
   const usedAt = formatDateTime(coupon?.used_at);
   const revokedAt = formatDateTime(coupon?.revoked_at);
+  const statusTone = status === 'active' ? 'success' : status === 'used' ? 'info' : 'neutral';
+  const statusLabel = status === 'active'
+    ? 'Active'
+    : status === 'used'
+      ? 'Used'
+      : status === 'revoked'
+        ? 'Revoked'
+        : 'Expired';
 
   return (
     <s-box
@@ -98,15 +107,7 @@ function CouponCard({coupon, status}) {
             <s-heading>${value} OFF</s-heading>
             <s-text color="subdued">${minimum} minimum order</s-text>
           </s-stack>
-          <s-badge tone={status === 'active' ? 'success' : status === 'used' ? 'info' : 'neutral'}>
-            {status === 'active'
-              ? 'Active'
-              : status === 'used'
-                ? 'Used'
-                : status === 'revoked'
-                  ? 'Revoked'
-                  : 'Expired'}
-          </s-badge>
+          <JillStatusPill tone={statusTone} strong>{statusLabel}</JillStatusPill>
         </s-stack>
 
         <s-box padding="small-300" background="subdued" borderRadius="base">
@@ -132,12 +133,12 @@ function CouponCard({coupon, status}) {
         )}
 
         {status === 'active' && code && (
-          <s-button
-            variant="primary"
+          <JillAction
+            role="primary"
             href={`${STORE}/discount/${encodeURIComponent(code)}?redirect=/cart`}
           >
             Use now
-          </s-button>
+          </JillAction>
         )}
       </s-stack>
     </s-box>
@@ -238,9 +239,9 @@ function Coupons() {
                   Keep earning JILL Rewards points. When you generate a reward coupon, it will live here for you until it is used or expires.
                 </s-text>
               </s-stack>
-              <s-button variant="primary" href="extension:jill-account-dashboard/">
+              <JillAction role="primary" href="extension:jill-account-dashboard/">
                 View Rewards
-              </s-button>
+              </JillAction>
             </s-stack>
           </s-section>
         ) : (
