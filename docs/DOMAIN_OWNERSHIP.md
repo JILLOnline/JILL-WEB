@@ -12,13 +12,14 @@ This registry answers one question: **where does this behavior belong?**
 | Merchant-editable content units | `theme/blocks/*.liquid` | Internal snippets | duplicate primitive markup |
 | Internal reusable markup | `theme/snippets/*.liquid` | Shopify objects/settings | independent merchant configuration |
 | Product capability profile shape | `contracts/product-capability-profile.schema.json` | feature contract semantics | runtime state or merchant storage |
-| Shopify product capability adapter | one adapter owner when introduced | Shopify-native product metafields/metaobjects, capability schema | a second active capability authority |
+| Shopify product capability adapter | `theme/sections/main-product.liquid` reads the initial `custom.jill_product_capabilities` JSON metafield | Shopify product metafields and normalized capability schema | capability resolution, collection-name/product-family branching, a second active capability authority |
 | Product capability resolution | `theme/assets/jill-product-capabilities.js` | normalized Product Capability Profile input | Shopify storage details, collection-name/product-family branches, form state |
 | Product capability resolver behavioral tests | `scripts/test-product-capabilities.mjs` | resolver public API and capability contract invariants | storefront rendering or Shopify storage integration |
 | Universal browser state vocabulary, field validation and stage progression | `theme/assets/jill-form-engine.js` | Product Capability field contracts, normalized form values, declarative stage dependencies | product-specific validators, DOM-derived truth, separate product/custom-order cascade engines |
 | Universal form engine behavioral tests | `scripts/test-form-engine.mjs` | `jill-form-engine.js` public API | storefront implementation or business-specific behavior |
-| Product behavior | `theme/assets/jill-product.js` when introduced | Shopify product DOM/contracts, shared primitives | customization engine internals |
-| Cart behavior | `theme/assets/jill-cart.js` when introduced | Shopify cart routes | product/customization logic |
+| Product behavior | `theme/assets/jill-product.js` | Shopify product DOM/contracts, capability resolver, universal form engine, shared primitives | duplicated validation rules, privileged business truth, Product Options/personalization internals |
+| Native cart rendering/mutation boundary | `theme/sections/main-cart.liquid` + Shopify cart routes/form contract | `cart`, `line_item`, canonical UI primitives | product/customization business logic, parallel cart database, unnecessary AJAX owner |
+| Cart enhancement behavior | `theme/assets/jill-cart.js` only if a future certified interaction requirement genuinely needs JavaScript | Shopify cart routes and native cart DOM | replacing Shopify cart truth or duplicating native form behavior |
 | Product customization engine | `theme/assets/jill-customization.js` when introduced | product capabilities, universal form engine | duplicated per-product-family engines |
 | Product Options | one Product Options state/renderer owner when introduced | product capabilities, quantity owner, universal form engine | collection-specific option implementations |
 | Personalization state/allocation | one personalization module within the customization domain when introduced | selected quantities, capabilities, universal form engine | product quantity mutation or DOM-derived business truth |
