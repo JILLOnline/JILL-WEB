@@ -134,6 +134,22 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Product Page, Product Options, Personalization and Custom Order configure/consume this engine. They may add domain-specific orchestration, but may not create another required-field validator or cascade engine.
 
+## 2026-09-08 — Shopify-native product capability storage begins with one JSON metafield adapter
+
+**Decision:** The first Theme Core Shopify adapter reads `product.metafields.custom.jill_product_capabilities` only when it is a JSON metafield, then passes that value through the canonical Product Capability resolver.
+
+**Why:** A Shopify-native structured source lets merchants attach product behavior without collection-name or product-title branching, while keeping the runtime profile independent from Shopify storage shape.
+
+**Consequence:** `main-product.liquid` owns this initial storage mapping. `jill-product-capabilities.js` remains storage-agnostic. A future move to metaobject references or another Shopify-native shape changes the adapter, not the validation/customization engines.
+
+## 2026-09-08 — Cart stays native until JavaScript has a real job
+
+**Decision:** The first certified cart uses Shopify's native cart form, `updates[]`, line-item `url_to_remove`, and checkout submit contract rather than introducing an AJAX cart controller.
+
+**Why:** Shopify already owns cart mutation and checkout state. Adding JavaScript before a distinct interaction requirement exists would create another failure surface and an empty/duplicate owner.
+
+**Consequence:** `main-cart.liquid` owns cart rendering and native form composition. `jill-cart.js` is introduced only if a later certified interaction requirement cannot be satisfied cleanly by the native contract.
+
 ## 2026-09-08 — Certification is commit-specific
 
 **Decision:** A feature is `CERTIFIED` only after automated and manual gates pass on the implementation commit.
