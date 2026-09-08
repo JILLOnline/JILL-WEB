@@ -479,13 +479,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
               />
               <s-text type="strong">
-                {tierProgress} / {tier.points} pts · {isThisPending
-                  ? 'Creating coupon…'
-                  : isRedeemed
-                    ? 'Redeemed'
-                    : isAvailable
-                      ? 'Redeem'
-                      : `${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`}
+                {tierProgress} / {tier.points} pts
+                {isThisPending
+                  ? ' · Creating coupon…'
+                  : !isRedeemed && !isAvailable
+                    ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`
+                    : ''}
               </s-text>
               {isThisPending && (
                 <s-text color="subdued">
