@@ -70,7 +70,11 @@ When complete, customization data that belongs to the line item travels through 
 
 ### Quantity ownership
 
-The product/order quantity owner is singular. Personalization and option allocation may consume or allocate that quantity but cannot independently change the total ordered quantity.
+Shopify product/cart quantity is the singular commerce quantity owner and counts sellable merchandise units. Personalization and option allocation consume that quantity but cannot independently change the total ordered merchandise quantity.
+
+A sellable merchandise unit may contain more than one physical item that can be customized independently. When that applies, the Product Capability Profile declares `features.customizationUnits.unitsPerQuantity`; absence means `1`. Eligible customization-unit count is derived as Shopify merchandise quantity multiplied by `unitsPerQuantity`.
+
+This derived customization-unit count is an input to allocation only. It is not a second commerce quantity, may not rewrite Shopify quantity, and may not be inferred from product titles, handles, collections or other presentation strings.
 
 ## 4. Piñata capability contract
 
@@ -97,7 +101,8 @@ Supported JILL defaults:
 - Name/Text Yes/No with 12-character default limit
 - Number/Age Yes/No with 1–9 default range when applicable
 - product-specific option allocation where required
-- multi-item personalization only when more than one eligible unit/item exists
+- multi-item personalization only when more than one eligible customization unit exists
+- pack products declare their physical customization-unit count through capability configuration rather than title parsing
 
 The feature must not render irrelevant questions for products that do not declare the capability.
 
@@ -123,7 +128,8 @@ Required behavior:
 - status communicates incomplete/complete clearly
 - completion does not collapse/reopen unpredictably when unrelated selections change
 - removing/changing a prerequisite reconciles affected option state only
-- allocation totals reconcile to the product quantity owner
+- allocation totals reconcile to the eligible customization-unit count derived from Shopify quantity and capability configuration
+- options never become an independent commerce quantity owner
 - options do not create a second personalization engine
 - a completed option remains stable unless one of its own dependencies changes
 
@@ -139,17 +145,17 @@ The canonical modes are:
 - same for all selected eligible items
 - different by item/unit
 
-`different` is disabled or absent when fewer than two eligible units/items exist.
+`different` is disabled or absent when fewer than two eligible customization units exist.
 
 ### Same mode
 
-One personalization data set applies to all eligible selected units.
+One personalization data set applies to all eligible selected customization units.
 
 ### Different mode
 
-- existing product quantities are inputs to the allocator
-- personalization may not increase or decrease total ordered quantity
-- groups can target one or multiple eligible items/units
+- the eligible customization-unit count derived from Shopify quantity and capability configuration is the allocator input
+- personalization may not increase or decrease total ordered merchandise quantity
+- groups can target one or multiple eligible customization units
 - one unit cannot belong to multiple groups
 - allocations unavailable in one group are unavailable in other groups
 - unallocated availability updates immediately
@@ -157,7 +163,7 @@ One personalization data set applies to all eligible selected units.
 - Name/Text, Number/Age and Notes/Theme fields appear only when supported by the selected products
 - adding another personalization is possible only while eligible unallocated units remain
 - Finish Personalization is available only when allocation and required fields are complete
-- deleting or reducing upstream quantities reconciles allocations deterministically without leaving impossible state
+- deleting or reducing upstream Shopify quantity, or changing the configured customization-unit model, reconciles allocations deterministically without leaving impossible state
 
 ### Rendering
 
