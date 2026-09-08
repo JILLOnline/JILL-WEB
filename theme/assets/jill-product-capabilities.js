@@ -217,8 +217,8 @@
 
     const {byId, byGroup} = collectFields(profile);
     assertConditionReferences(profile.fields, byId);
-    assertNoVisibilityCycles(profile.fields, byId);
     validateFeatures(profile.features, profile.fields, byId);
+    assertNoVisibilityCycles(profile.fields, byId);
 
     const normalizedFields = profile.fields.map((field) => ({...field}));
     const normalizedById = Object.fromEntries(normalizedFields.map((field) => [field.id, field]));
