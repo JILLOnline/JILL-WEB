@@ -1,0 +1,89 @@
+{% liquid
+  assign search_input_id = 'JillSearch-' | append: section.id
+  assign search_label = 'search.label' | t
+  assign search_button_label = 'search.submit' | t
+  assign empty_label = 'search.no_results' | t
+  assign initial_label = 'search.initial' | t
+%}
+
+<section class="jill-search jill-page-width">
+  <header class="jill-search__header">
+    <h1 class="jill-search__title">{{ 'search.title' | t }}</h1>
+
+    <form class="jill-search__form" action="{{ routes.search_url }}" method="get" role="search">
+      {% render 'ui-field',
+        id: search_input_id,
+        name: 'q',
+        label: search_label,
+        type: 'search',
+        value: search.terms,
+        required: true,
+        autocomplete: 'off'
+      %}
+      {% render 'ui-button', type: 'submit', label: search_button_label %}
+    </form>
+  </header>
+
+  {% if search.performed %}
+    <div class="jill-search__summary">
+      <p>{{ 'search.result_count' | t: count: search.results_count, terms: search.terms }}</p>
+    </div>
+
+    {% paginate search.results by section.settings.results_per_page %}
+      {% if search.results_count == 0 %}
+        <p class="jill-search__empty">{{ empty_label }}</p>
+      {% else %}
+        <div class="jill-search-results">
+          {% for item in search.results %}
+            {% if item.object_type == 'product' %}
+              {% render 'product-card', card_product: item, show_vendor: section.settings.show_vendor %}
+            {% else %}
+              <article class="jill-search-result">
+                <p class="jill-search-result__type">
+                  {% if item.object_type == 'article' %}
+                    {{ 'search.types.article' | t }}
+                  {% else %}
+                    {{ 'search.types.page' | t }}
+                  {% endif %}
+                </p>
+                <h2 class="jill-search-result__title"><a href="{{ item.url }}">{{ item.title }}</a></h2>
+                {% if item.content != blank %}
+                  <p class="jill-search-result__excerpt">
+                    {{ item.content | strip_html | truncatewords: 32 | highlight: search.terms }}
+                  </p>
+                {% endif %}
+              </article>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% render 'pagination', paginate: paginate %}
+      {% endif %}
+    {% endpaginate %}
+  {% else %}
+    <p class="jill-search__empty">{{ initial_label }}</p>
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Main search",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show product vendor",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "results_per_page",
+      "label": "Results per page",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    }
+  ]
+}
+{% endschema %}
