@@ -491,7 +491,6 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     </s-button>
                     <s-button
                       variant="primary"
-                      disabled={Boolean(pendingPoints)}
                       onClick={() => handleRedeem(tier)}
                     >
                       Generate coupon
