@@ -300,15 +300,16 @@
       results.push(evaluated);
     }
 
-    const firstIncomplete = results.find(
-      (stage) => stage.state !== STATES.VALID && stage.state !== STATES.UNAVAILABLE,
-    );
+    const firstIncomplete = results.find((stage) => stage.state !== STATES.VALID) || null;
+    const firstActionable =
+      results.find((stage) => stage.available && stage.state !== STATES.VALID) || null;
 
     return Object.freeze({
       results: Object.freeze(results),
       byId: Object.freeze(byId),
-      complete: !firstIncomplete,
+      complete: firstIncomplete === null,
       firstIncompleteStageId: firstIncomplete ? firstIncomplete.id : null,
+      firstActionableStageId: firstActionable ? firstActionable.id : null,
     });
   }
 
