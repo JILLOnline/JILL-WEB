@@ -149,6 +149,9 @@ for (const filePath of files) {
   }
 
   if (isLiquid) {
+    if (/["'][^"']+\.css\.liquid["']\s*\|\s*asset_url\b/i.test(text)) {
+      fail(`compiled Liquid CSS assets must be referenced without the .liquid suffix: ${filePath}`);
+    }
     const withoutAllowedScripts = stripAllowedScriptTags(text);
     if (/<script\b/i.test(withoutAllowedScripts)) {
       fail(`inline executable script blocks are forbidden: ${filePath}`);
