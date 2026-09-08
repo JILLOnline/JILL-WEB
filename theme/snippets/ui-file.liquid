@@ -12,7 +12,7 @@
   <input
     class="jill-field__control jill-field__control--file"
     id="{{ field_id }}"
-    name="{{ name }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
     type="file"
     {% if accept != blank %}accept="{{ accept }}"{% endif %}
     {% if multiple %}multiple{% endif %}
