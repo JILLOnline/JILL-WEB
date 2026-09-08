@@ -428,7 +428,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           borderRadius="max"
           accessibilityLabel={`Use your $${tier.value} OFF coupon`}
         >
-          <s-text tone="custom">Use</s-text>
+          <s-text tone="custom">Use Coupon</s-text>
         </s-clickable>
       );
     }
@@ -534,14 +534,16 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 max={tier.points}
                 accessibilityLabel={`${tierProgress} of ${tier.points} points toward $${tier.value} OFF`}
               />
-              <s-text type="strong">
-                {tierProgress} / {tier.points} pts
-                {isThisPending
-                  ? ' · Creating coupon…'
-                  : !isRedeemed && !isAvailable
-                    ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`
-                    : ''}
-              </s-text>
+              {!isRedeemed && (
+                <s-text type="strong">
+                  {tierProgress} / {tier.points} pts
+                  {isThisPending
+                    ? ' · Creating coupon…'
+                    : !isAvailable
+                      ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`
+                      : ''}
+                </s-text>
+              )}
               {isThisPending && (
                 <s-text color="subdued">
                   {slowRequest
@@ -589,7 +591,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   }
 
   const rewardMessage = activeCoupons.length || availableTiers.length
-    ? 'Tap Redeem on any unlocked reward. Tap Use on an active reward to open your coupon wallet. ✨'
+    ? 'Tap Redeem on any unlocked reward. Tap Use Coupon on a ready reward to open your coupon wallet. ✨'
     : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
