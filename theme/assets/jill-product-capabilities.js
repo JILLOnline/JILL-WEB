@@ -21,6 +21,14 @@
     return value;
   }
 
+  function cloneJson(value, label) {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      fail(`${label} must be JSON-compatible: ${error.message}`);
+    }
+  }
+
   function parseProfile(input) {
     if (typeof input === 'string') {
       try {
@@ -29,7 +37,7 @@
         fail(`profile JSON is invalid: ${error.message}`);
       }
     }
-    return input;
+    return cloneJson(input, 'profile');
   }
 
   function assertIdentifier(value, label) {
@@ -146,15 +154,17 @@
     assertNoVisibilityCycles(profile.fields, byId);
     validateFeatures(profile.features, byId);
 
+    const normalizedFields = profile.fields.map((field) => ({...field}));
+    const normalizedById = Object.fromEntries(normalizedFields.map((field) => [field.id, field]));
     const normalized = {
       version: profile.version,
       id: profile.id,
-      fields: profile.fields.map((field) => ({...field})),
-      fieldsById: Object.fromEntries(Object.entries(byId).map(([id, field]) => [id, {...field}])),
+      fields: normalizedFields,
+      fieldsById: normalizedById,
       groups: Object.fromEntries(
         GROUPS.map((group) => [group, byGroup[group].map((field) => field.id)]),
       ),
-      features: {...profile.features},
+      features: profile.features,
     };
 
     return deepFreeze(normalized);
