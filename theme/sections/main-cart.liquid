@@ -1,0 +1,133 @@
+<section class="jill-cart jill-page-width">
+  <div class="jill-cart__header">
+    <h1 class="jill-cart__title">{{ 'cart.title' | t }}</h1>
+    {% unless cart.empty? %}
+      <p class="jill-cart__count">{{ 'cart.item_count' | t: count: cart.item_count }}</p>
+    {% endunless %}
+  </div>
+
+  {% if cart.empty? %}
+    <div class="jill-cart__empty">
+      <p>{{ 'cart.empty' | t }}</p>
+      {% render 'ui-button',
+        url: routes.all_products_collection_url,
+        label: 'cart.continue_shopping' | t
+      %}
+    </div>
+  {% else %}
+    <form class="jill-cart__form" action="{{ routes.cart_url }}" method="post">
+      <div class="jill-cart__items">
+        {% for item in cart.items %}
+          {% assign quantity_id = 'JillCartQuantity-' | append: forloop.index %}
+          <article class="jill-cart-item">
+            <div class="jill-cart-item__media">
+              {% if item.image != blank %}
+                <a href="{{ item.url }}" aria-label="{{ item.product.title | escape }}">
+                  {{ item.image | image_url: width: 320 | image_tag: class: 'jill-cart-item__image', loading: 'lazy', widths: '120, 180, 240, 320', sizes: '120px' }}
+                </a>
+              {% endif %}
+            </div>
+
+            <div class="jill-cart-item__details">
+              <a class="jill-cart-item__title" href="{{ item.url }}">{{ item.product.title }}</a>
+
+              {% unless item.product.has_only_default_variant %}
+                <dl class="jill-cart-item__options">
+                  {% for option in item.options_with_values %}
+                    <div class="jill-cart-item__option">
+                      <dt>{{ option.name }}</dt>
+                      <dd>{{ option.value }}</dd>
+                    </div>
+                  {% endfor %}
+                </dl>
+              {% endunless %}
+
+              {% unless item.properties == empty %}
+                <dl class="jill-cart-item__properties">
+                  {% for property in item.properties %}
+                    {% assign property_name = property.first %}
+                    {% assign property_value = property.last %}
+                    {% assign first_character = property_name | slice: 0 %}
+                    {% if property_value != blank and first_character != '_' %}
+                      <div class="jill-cart-item__property">
+                        <dt>{{ property_name | replace: '_', ' ' | capitalize }}</dt>
+                        <dd>
+                          {% if property_value contains '/uploads/' %}
+                            <a href="{{ property_value }}" target="_blank" rel="noopener">{{ property_value | split: '/' | last }}</a>
+                          {% else %}
+                            {{ property_value }}
+                          {% endif %}
+                        </dd>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </dl>
+              {% endunless %}
+
+              {% if item.line_level_discount_allocations.size > 0 %}
+                <ul class="jill-cart-item__discounts" role="list">
+                  {% for allocation in item.line_level_discount_allocations %}
+                    <li>{{ allocation.discount_application.title }} (−{{ allocation.amount | money }})</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+
+              <div class="jill-cart-item__controls">
+                {% render 'ui-quantity',
+                  id: quantity_id,
+                  name: 'updates[]',
+                  label: 'cart.quantity' | t,
+                  value: item.quantity,
+                  min: 0,
+                  step: 1,
+                  required: true
+                %}
+                <a class="jill-cart-item__remove" href="{{ item.url_to_remove }}">{{ 'cart.remove' | t }}</a>
+              </div>
+            </div>
+
+            <p class="jill-cart-item__price">{{ item.final_line_price | money }}</p>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="jill-cart__summary">
+        {% if cart.cart_level_discount_applications.size > 0 %}
+          <ul class="jill-cart__discounts" role="list">
+            {% for discount in cart.cart_level_discount_applications %}
+              <li>{{ discount.title }} (−{{ discount.total_allocated_amount | money }})</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="jill-cart__subtotal">
+          <span>{{ 'cart.subtotal' | t }}</span>
+          <strong>{{ cart.total_price | money }}</strong>
+        </div>
+
+        <p class="jill-cart__checkout-note">{{ 'cart.checkout_note' | t }}</p>
+
+        <div class="jill-cart__actions">
+          {% render 'ui-button',
+            type: 'submit',
+            name: 'update',
+            label: 'cart.update' | t,
+            variant: 'secondary'
+          %}
+          {% render 'ui-button',
+            type: 'submit',
+            name: 'checkout',
+            label: 'cart.checkout' | t
+          %}
+        </div>
+      </div>
+    </form>
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Main cart",
+  "settings": []
+}
+{% endschema %}
