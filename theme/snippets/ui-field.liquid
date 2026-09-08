@@ -14,7 +14,7 @@
   <input
     class="jill-field__control"
     id="{{ field_id }}"
-    name="{{ name }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
     type="{{ field_type }}"
     value="{{ field_value | escape }}"
     {% if placeholder != blank %}placeholder="{{ placeholder | escape }}"{% endif %}
