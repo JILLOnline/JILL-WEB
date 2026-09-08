@@ -1,0 +1,35 @@
+{% liquid
+  assign group_id = id | default: name
+  assign group_label = label | default: name
+%}
+
+<fieldset class="jill-field"{% if error != blank %} data-state="error"{% endif %}>
+  <legend class="jill-field__label">
+    {{ group_label }}
+    {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+  </legend>
+
+  <div class="jill-choice-group">
+    {% for option in options %}
+      {% assign option_value = option.value | default: option %}
+      {% assign option_label = option.label | default: option %}
+      {% assign option_id = group_id | append: '-' | append: forloop.index %}
+      {% render 'ui-choice',
+        type: 'radio',
+        id: option_id,
+        name: name,
+        value: option_value,
+        label: option_label,
+        checked: option_value == selected,
+        required: required,
+        disabled: disabled
+      %}
+    {% endfor %}
+  </div>
+
+  {% if error != blank %}
+    <p class="jill-field__message" id="{{ group_id }}-error" data-tone="error">{{ error }}</p>
+  {% elsif help != blank %}
+    <p class="jill-field__message" id="{{ group_id }}-help">{{ help }}</p>
+  {% endif %}
+</fieldset>
