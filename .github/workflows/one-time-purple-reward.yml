@@ -1,0 +1,50 @@
+name: One-time reward accent patch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/one-time-purple-reward.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch reward accent tones
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          text = path.read_text()
+
+          replacements = {
+              '<s-text tone="custom">Use Coupon</s-text>': '<s-text tone="accent">Use Coupon</s-text>',
+              '<s-text tone="custom">Next Reward ★</s-text>': '<s-text tone="accent">Next Reward ★</s-text>',
+          }
+
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Expected reward markup not found: {old}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Remove one-time workflow and commit patch
+        shell: bash
+        run: |
+          rm .github/workflows/one-time-purple-reward.yml
+          git config user.name "JILL Rewards Housekeeping"
+          git config user.email "info@jillonlinestore.com"
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx .github/workflows/one-time-purple-reward.yml
+          git commit -m "Use accent tone for Next Reward and Use Coupon"
+          git push
