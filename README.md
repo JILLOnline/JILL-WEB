@@ -26,6 +26,7 @@ The canonical product-system documents live in `docs/`:
 - `MIGRATION_BLUEPRINT.md` — production JILL → Theme Core migration procedure
 - `QA_CERTIFICATION.md` — proof-of-done gates
 - `DECISIONS.md` — dated architecture decisions and rationale
+- `PLATFORM_AUDIT.md` — current production JILL evidence/debt map for migration work
 
 ## Rule 1
 
