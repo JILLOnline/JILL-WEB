@@ -1,0 +1,107 @@
+name: Validate JILL product system
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - jill/storefront-system
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jill-product-system-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate app and storefront contracts
+    runs-on: ubuntu-latest
+    env:
+      SHOPIFY_CLIENT_ID: ebf1a69d82f46619d2f2945faab78afa
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install and run repository guards
+        run: npm install
+
+      - name: Run JILL Product System guard explicitly
+        run: npm run check:system
+
+      - name: Run Rewards guard explicitly
+        run: npm run check:rewards
+
+      - name: Run Rewards state/accounting tests explicitly
+        run: npm run test:rewards
+
+      - name: Check Shopify validation credential
+        id: auth
+        env:
+          TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        shell: bash
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "SHOPIFY_APP_AUTOMATION_TOKEN is not configured; Shopify app validation will be skipped." >&2
+          fi
+
+      - name: Pull current Shopify app configuration
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: >-
+          npx shopify app config link
+          --client-id "$SHOPIFY_CLIENT_ID"
+          --file-name validation
+          --force
+
+      - name: Preserve current scopes and Customer Account scopes
+        if: steps.auth.outputs.ready == 'true'
+        run: node scripts/merge-shopify-scopes.mjs shopify.app.validation.toml
+
+      - name: Validate Shopify app configuration and extensions
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: npx shopify app config validate --config validation
+
+      - name: Build Shopify app extensions without deployment
+        if: steps.auth.outputs.ready == 'true'
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: npx shopify app build --config validation
+
+      - name: Theme Check storefront snapshot when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f theme/layout/theme.liquid ]; then
+            npx shopify theme check --path theme
+          else
+            echo "theme/ snapshot not present yet; Theme Check will become mandatory automatically after import."
+          fi
+
+      - name: Ensure validation generated no tracked junk
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "Validation modified tracked repository files." >&2
+            git diff --exit-code
+            exit 1
+          fi
+
+# This workflow validates only. It never deploys an app or pushes a theme.
