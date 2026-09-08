@@ -4,7 +4,17 @@
 %}
 
 {% if url != blank %}
-  <a class="jill-button" data-variant="{{ button_variant }}" href="{{ url }}">{{ button_label }}</a>
+  <a
+    class="jill-button"
+    data-variant="{{ button_variant }}"
+    href="{{ url }}"
+    {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+  >{{ button_label }}</a>
 {% else %}
-  <button class="jill-button" data-variant="{{ button_variant }}" type="{{ type | default: 'button' }}">{{ button_label }}</button>
+  <button
+    class="jill-button"
+    data-variant="{{ button_variant }}"
+    type="{{ type | default: 'button' }}"
+    {% if disabled %}disabled aria-disabled="true"{% endif %}
+  >{{ button_label }}</button>
 {% endif %}
