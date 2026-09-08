@@ -15,9 +15,6 @@ jobs:
     name: Snapshot live storefront into Git
     runs-on: ubuntu-latest
     env:
-      SHOPIFY_STORE: jqtdgr-1y.myshopify.com
-      SHOPIFY_THEME_ID: '165550686451'
-      THEME_PATH: theme
       SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
 
     steps:
@@ -26,6 +23,19 @@ jobs:
         with:
           ref: jill/storefront-system
           fetch-depth: 0
+
+      - name: Read canonical storefront targets
+        id: storefront
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require('node:fs');
+          const config = JSON.parse(fs.readFileSync('storefront.config.json', 'utf8'));
+          console.log(`store=${config.store}`);
+          console.log(`theme_id=${config.themes.source.id}`);
+          console.log(`theme_path=${config.themePath}`);
+          NODE
 
       - name: Require dedicated Shopify theme credential
         shell: bash
@@ -46,6 +56,10 @@ jobs:
         run: npm install
 
       - name: Pull exact live JILL theme
+        env:
+          SHOPIFY_STORE: ${{ steps.storefront.outputs.store }}
+          SHOPIFY_THEME_ID: ${{ steps.storefront.outputs.theme_id }}
+          THEME_PATH: ${{ steps.storefront.outputs.theme_path }}
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +72,8 @@ jobs:
             --password "$SHOPIFY_CLI_THEME_TOKEN"
 
       - name: Verify complete Shopify theme structure
+        env:
+          THEME_PATH: ${{ steps.storefront.outputs.theme_path }}
         shell: bash
         run: |
           set -euo pipefail
@@ -82,11 +98,13 @@ jobs:
           done
 
       - name: Run Shopify Theme Check
-        run: >-
-          npx shopify theme check
-          --path "$THEME_PATH"
+        env:
+          THEME_PATH: ${{ steps.storefront.outputs.theme_path }}
+        run: npx shopify theme check --path "$THEME_PATH"
 
       - name: Guard source-control hygiene
+        env:
+          THEME_PATH: ${{ steps.storefront.outputs.theme_path }}
         shell: bash
         run: |
           set -euo pipefail
@@ -100,6 +118,8 @@ jobs:
           fi
 
       - name: Commit exact storefront snapshot
+        env:
+          THEME_PATH: ${{ steps.storefront.outputs.theme_path }}
         shell: bash
         run: |
           set -euo pipefail
