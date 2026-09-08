@@ -27,11 +27,13 @@ function stripLiquidForCss(source) {
     .replace(/\{%[\s\S]*?%\}/g, '');
 }
 
-function stripStructuredDataScripts(source) {
-  return source.replace(
-    /<script\b[^>]*\btype\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
-    '',
-  );
+function stripAllowedScriptTags(source) {
+  return source
+    .replace(
+      /<script\b[^>]*\btype\s*=\s*["']application\/(?:ld\+json|json)["'][^>]*>[\s\S]*?<\/script>/gi,
+      '',
+    )
+    .replace(/<script\b(?=[^>]*\bsrc\s*=)[^>]*>\s*<\/script>/gi, '');
 }
 
 function assertUniqueSettingIds(settings, owner) {
@@ -147,9 +149,9 @@ for (const filePath of files) {
   }
 
   if (isLiquid) {
-    const withoutStructuredData = stripStructuredDataScripts(text);
-    if (/<script\b/i.test(withoutStructuredData)) {
-      fail(`executable inline script blocks are forbidden: ${filePath}`);
+    const withoutAllowedScripts = stripAllowedScriptTags(text);
+    if (/<script\b/i.test(withoutAllowedScripts)) {
+      fail(`inline executable script blocks are forbidden: ${filePath}`);
     }
     if (/\son[a-z]+\s*=\s*["']/i.test(text)) {
       fail(`inline event handlers are forbidden: ${filePath}`);
@@ -235,6 +237,7 @@ const required = [
   'assets/jill-storefront.css',
   'assets/jill-form-engine.js',
   'assets/jill-product-capabilities.js',
+  'assets/jill-product.js',
   'config/settings_schema.json',
   'config/settings_data.json',
   'sections/header-group.json',
@@ -242,18 +245,22 @@ const required = [
   'sections/header.liquid',
   'sections/footer.liquid',
   'sections/custom-liquid.liquid',
+  'sections/main-product.liquid',
   'snippets/ui-button.liquid',
   'snippets/ui-field.liquid',
   'snippets/ui-textarea.liquid',
   'snippets/ui-select.liquid',
   'snippets/ui-choice.liquid',
+  'snippets/ui-choice-group.liquid',
   'snippets/ui-quantity.liquid',
   'snippets/ui-file.liquid',
+  'snippets/product-capability-fields.liquid',
   'snippets/meta-tags.liquid',
+  'templates/product.json',
 ];
 
 for (const relativePath of required) {
   if (!fs.existsSync(path.join(THEME_ROOT, relativePath))) fail(`required canonical owner is missing: theme/${relativePath}`);
 }
 
-console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine and capability resolver owners present.`);
+console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine, capability resolver and product commerce owners present.`);
