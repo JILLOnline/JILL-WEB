@@ -13,7 +13,7 @@
     {% if checked %}checked{% endif %}
     {% if required %}required{% endif %}
     {% if disabled %}disabled{% endif %}
-    {% if error != blank %}aria-invalid="true" aria-describedby="{{ choice_id }}-error"{% endif %}
+    {% if error != blank %}aria-invalid="true" aria-describedby="{{ choice_id }}-error"{% elsif help != blank %}aria-describedby="{{ choice_id }}-help"{% endif %}
   >
   <span class="jill-choice__label">{{ label }}</span>
   {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
@@ -21,4 +21,6 @@
 
 {% if error != blank %}
   <p class="jill-field__message" id="{{ choice_id }}-error" data-tone="error">{{ error }}</p>
+{% elsif help != blank %}
+  <p class="jill-field__message" id="{{ choice_id }}-help">{{ help }}</p>
 {% endif %}
