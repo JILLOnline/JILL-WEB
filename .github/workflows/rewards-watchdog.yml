@@ -4,6 +4,15 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/google-apps-script/**'
+      - 'extensions/jill-account-dashboard/**'
+      - 'extensions/jill-account-coupons/**'
+      - 'scripts/check-rewards-engine.mjs'
+      - '.github/workflows/rewards-watchdog.yml'
 
 permissions:
   contents: read
