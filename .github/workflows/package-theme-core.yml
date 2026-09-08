@@ -54,7 +54,7 @@ jobs:
         run: |
           set -euo pipefail
           artifact_dir="$(mktemp -d)"
-          cp jill-theme-core.zip "$artifact_dir/jill-theme-core.zip"
+          mv jill-theme-core.zip "$artifact_dir/jill-theme-core.zip"
           printf '%s\n' "$GITHUB_SHA" > "$artifact_dir/source-commit.txt"
 
           git config user.name 'github-actions[bot]'
