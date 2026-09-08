@@ -1,0 +1,35 @@
+{% liquid
+  assign field_id = id | default: name
+  assign field_label = label | default: name
+%}
+
+<div class="jill-field"{% if error != blank %} data-state="error"{% endif %}>
+  <label class="jill-field__label" for="{{ field_id }}">
+    {{ field_label }}
+    {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+  </label>
+
+  <select
+    class="jill-field__control"
+    id="{{ field_id }}"
+    name="{{ name }}"
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if error != blank %}aria-invalid="true" aria-describedby="{{ field_id }}-error"{% elsif help != blank %}aria-describedby="{{ field_id }}-help"{% endif %}
+  >
+    {% if placeholder != blank %}
+      <option value=""{% if selected == blank %} selected{% endif %} disabled>{{ placeholder }}</option>
+    {% endif %}
+    {% for option in options %}
+      {% assign option_value = option.value | default: option %}
+      {% assign option_label = option.label | default: option %}
+      <option value="{{ option_value | escape }}"{% if option_value == selected %} selected{% endif %}>{{ option_label }}</option>
+    {% endfor %}
+  </select>
+
+  {% if error != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-error" data-tone="error">{{ error }}</p>
+  {% elsif help != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-help">{{ help }}</p>
+  {% endif %}
+</div>
