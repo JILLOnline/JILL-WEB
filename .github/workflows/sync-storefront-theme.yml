@@ -1,0 +1,140 @@
+name: Sync JILL storefront theme
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - jill/storefront-system
+    paths:
+      - '.github/workflows/sync-storefront-theme.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jill-storefront-theme-sync
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: Snapshot live storefront into Git
+    runs-on: ubuntu-latest
+    env:
+      SHOPIFY_STORE: jqtdgr-1y.myshopify.com
+      SHOPIFY_THEME_ID: '165550686451'
+      THEME_PATH: theme
+      DEDICATED_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
+      APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+
+    steps:
+      - name: Checkout storefront branch
+        uses: actions/checkout@v4
+        with:
+          ref: jill/storefront-system
+          fetch-depth: 0
+
+      - name: Resolve Shopify theme credential
+        id: auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$DEDICATED_THEME_TOKEN" ]; then
+            echo "token=$DEDICATED_THEME_TOKEN" >> "$GITHUB_OUTPUT"
+            echo "source=SHOPIFY_THEME_TOKEN" >> "$GITHUB_OUTPUT"
+          elif [ -n "$APP_AUTOMATION_TOKEN" ]; then
+            echo "token=$APP_AUTOMATION_TOKEN" >> "$GITHUB_OUTPUT"
+            echo "source=SHOPIFY_APP_AUTOMATION_TOKEN" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Shopify theme credential is configured." >&2
+            echo "Configure SHOPIFY_THEME_TOKEN with a Theme Access password or Admin API token." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install repository dependencies
+        run: npm install
+
+      - name: Pull exact live JILL theme
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ steps.auth.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Using credential source: ${{ steps.auth.outputs.source }}"
+          rm -rf "$THEME_PATH"
+          mkdir -p "$THEME_PATH"
+          npx shopify theme pull \
+            --store "$SHOPIFY_STORE" \
+            --theme "$SHOPIFY_THEME_ID" \
+            --path "$THEME_PATH" \
+            --password "$SHOPIFY_CLI_THEME_TOKEN"
+
+      - name: Verify complete Shopify theme structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            layout/theme.liquid
+            config/settings_schema.json
+            config/settings_data.json
+            templates/index.json
+          )
+          for path in "${required[@]}"; do
+            test -f "$THEME_PATH/$path" || {
+              echo "Theme snapshot is incomplete: missing $path" >&2
+              exit 1
+            }
+          done
+
+          for dir in assets blocks config layout locales sections snippets templates; do
+            test -d "$THEME_PATH/$dir" || {
+              echo "Theme snapshot is incomplete: missing $dir/" >&2
+              exit 1
+            }
+          done
+
+      - name: Run Shopify Theme Check
+        env:
+          SHOPIFY_CLI_THEME_TOKEN: ${{ steps.auth.outputs.token }}
+        run: >-
+          npx shopify theme check
+          --path "$THEME_PATH"
+
+      - name: Guard source-control hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find "$THEME_PATH" -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*token*' \) -print -quit | grep -q .; then
+            echo "Refusing to commit a possible secret-bearing file." >&2
+            exit 1
+          fi
+          if find "$THEME_PATH" -type d -name '.shopify' -print -quit | grep -q .; then
+            echo "Refusing to commit Shopify CLI state." >&2
+            exit 1
+          fi
+
+      - name: Commit exact storefront snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'JILL Storefront Bot'
+          git config user.email 'info@jillonlinestore.com'
+          git add --all "$THEME_PATH"
+
+          if git diff --cached --quiet; then
+            echo "Live storefront already matches the Git snapshot."
+            exit 0
+          fi
+
+          git commit -m 'Snapshot live JILL storefront theme'
+          git push origin HEAD:jill/storefront-system
+
+# Source-control invariant:
+# - MAIN theme is read-only input to this workflow.
+# - Development/pushes target an unpublished theme in a separate workflow.
+# - SHOPIFY_THEME_TOKEN is preferred; the app automation token is only tried as
+#   an already-configured credential and is never persisted to the repository.
