@@ -60,17 +60,29 @@
     return condition.operator === 'in' ? contains : !contains;
   }
 
-  function isFieldAvailable(field, values) {
+  function evaluateVisibility(field, values, dependencyResults = null) {
     const visibility = field.visibleWhen;
     if (!visibility) return true;
     if (!Array.isArray(visibility.conditions) || visibility.conditions.length === 0) {
       fail(`field ${field.id} has an empty visibility condition set`);
     }
 
-    const matches = visibility.conditions.map((condition) => evaluateCondition(condition, values));
+    const matches = visibility.conditions.map((condition) => {
+      if (dependencyResults) {
+        const dependency = dependencyResults[condition.field];
+        if (!dependency) fail(`field ${field.id} references unknown visibility field ${condition.field}`);
+        if (dependency.state !== STATES.VALID) return false;
+      }
+      return evaluateCondition(condition, values);
+    });
+
     if (visibility.mode === 'all') return matches.every(Boolean);
     if (visibility.mode === 'any') return matches.some(Boolean);
     fail(`field ${field.id} has unsupported visibility mode ${visibility.mode}`);
+  }
+
+  function isFieldAvailable(field, values) {
+    return evaluateVisibility(field, values);
   }
 
   function optionValues(field) {
@@ -160,12 +172,7 @@
     fail(`field ${field.id} has unsupported kind ${field.kind}`);
   }
 
-  function validateField(field, value, values = {}) {
-    if (!field || typeof field !== 'object') fail('field must be an object');
-    if (!field.id) fail('field id is required');
-    if (!FIELD_KINDS.has(field.kind)) fail(`field ${field.id} has unsupported kind ${field.kind}`);
-
-    const available = isFieldAvailable(field, values);
+  function fieldResult(field, value, available) {
     if (!available) {
       return Object.freeze({
         id: field.id,
@@ -211,17 +218,53 @@
     });
   }
 
+  function validateField(field, value, values = {}) {
+    if (!field || typeof field !== 'object') fail('field must be an object');
+    if (!field.id) fail('field id is required');
+    if (!FIELD_KINDS.has(field.kind)) fail(`field ${field.id} has unsupported kind ${field.kind}`);
+
+    return fieldResult(field, value, isFieldAvailable(field, values));
+  }
+
   function validateFields(fields, values = {}) {
     if (!Array.isArray(fields)) fail('fields must be an array');
 
+    const fieldsById = Object.create(null);
+    for (const field of fields) {
+      if (!field || typeof field !== 'object') fail('every field must be an object');
+      if (!field.id) fail('field id is required');
+      if (!FIELD_KINDS.has(field.kind)) fail(`field ${field.id} has unsupported kind ${field.kind}`);
+      if (hasOwn(fieldsById, field.id)) fail(`duplicate field id ${field.id}`);
+      fieldsById[field.id] = field;
+    }
+
     const byId = Object.create(null);
-    const results = fields.map((field) => {
-      if (hasOwn(byId, field.id)) fail(`duplicate field id ${field.id}`);
-      const result = validateField(field, values[field.id], values);
+    const visiting = new Set();
+
+    function evaluateField(fieldId) {
+      if (hasOwn(byId, fieldId)) return byId[fieldId];
+      if (visiting.has(fieldId)) fail(`visibility dependency cycle includes ${fieldId}`);
+
+      const field = fieldsById[fieldId];
+      if (!field) fail(`unknown field ${fieldId}`);
+      visiting.add(fieldId);
+
+      const dependencyResults = Object.create(null);
+      for (const condition of field.visibleWhen?.conditions || []) {
+        if (!fieldsById[condition.field]) {
+          fail(`field ${field.id} references unknown visibility field ${condition.field}`);
+        }
+        dependencyResults[condition.field] = evaluateField(condition.field);
+      }
+
+      const available = evaluateVisibility(field, values, dependencyResults);
+      const result = fieldResult(field, values[field.id], available);
+      visiting.delete(fieldId);
       byId[field.id] = result;
       return result;
-    });
+    }
 
+    const results = fields.map((field) => evaluateField(field.id));
     const blocking = results.filter((result) => result.available && !result.valid);
 
     return Object.freeze({
@@ -300,16 +343,13 @@
       results.push(evaluated);
     }
 
-    const firstIncomplete = results.find((stage) => stage.state !== STATES.VALID) || null;
-    const firstActionable =
-      results.find((stage) => stage.available && stage.state !== STATES.VALID) || null;
+    const firstIncomplete = results.find((stage) => stage.state !== STATES.VALID);
 
     return Object.freeze({
       results: Object.freeze(results),
       byId: Object.freeze(byId),
-      complete: firstIncomplete === null,
+      complete: results.length === 0 || !firstIncomplete,
       firstIncompleteStageId: firstIncomplete ? firstIncomplete.id : null,
-      firstActionableStageId: firstActionable ? firstActionable.id : null,
     });
   }
 
