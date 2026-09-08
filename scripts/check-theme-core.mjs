@@ -240,6 +240,7 @@ const required = [
   'assets/jill-storefront.css',
   'assets/jill-form-engine.js',
   'assets/jill-product-capabilities.js',
+  'assets/jill-product-options.js',
   'assets/jill-product.js',
   'config/settings_schema.json',
   'config/settings_data.json',
@@ -274,4 +275,4 @@ for (const relativePath of required) {
   if (!fs.existsSync(path.join(THEME_ROOT, relativePath))) fail(`required canonical owner is missing: theme/${relativePath}`);
 }
 
-console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine, capability resolver, product commerce, native cart and discovery owners present.`);
+console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine, capability resolver, Product Options, product commerce, native cart and discovery owners present.`);
