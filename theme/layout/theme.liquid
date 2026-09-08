@@ -9,7 +9,7 @@
 
     {{ content_for_header }}
 
-    {{ 'jill-foundation.css.liquid' | asset_url | stylesheet_tag: preload: true }}
+    {{ 'jill-foundation.css' | asset_url | stylesheet_tag: preload: true }}
     {{ 'jill-ui.css' | asset_url | stylesheet_tag }}
     {{ 'jill-storefront.css' | asset_url | stylesheet_tag }}
   </head>
