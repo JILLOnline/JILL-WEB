@@ -4,6 +4,7 @@ import postcss from 'postcss';
 
 const THEME_ROOT = 'theme';
 const FOUNDATION_CSS = path.join(THEME_ROOT, 'assets', 'jill-foundation.css.liquid');
+const PRODUCT_CAPABILITY_SCHEMA = path.join('contracts', 'product-capability-profile.schema.json');
 
 function fail(message) {
   throw new Error(`JILL Theme Core guard failed: ${message}`);
@@ -66,9 +67,60 @@ function validateLiquidSchema(filePath, source) {
   }
 }
 
+function assertUniqueEnumValues(node, location = '$') {
+  if (!node || typeof node !== 'object') return;
+
+  if (Array.isArray(node.enum)) {
+    const serialized = node.enum.map((value) => JSON.stringify(value));
+    if (new Set(serialized).size !== serialized.length) fail(`duplicate enum value in ${PRODUCT_CAPABILITY_SCHEMA} at ${location}`);
+  }
+
+  if (Array.isArray(node)) {
+    node.forEach((value, index) => assertUniqueEnumValues(value, `${location}[${index}]`));
+    return;
+  }
+
+  for (const [key, value] of Object.entries(node)) {
+    assertUniqueEnumValues(value, `${location}.${key}`);
+  }
+}
+
+function validateProductCapabilityContract() {
+  if (!fs.existsSync(PRODUCT_CAPABILITY_SCHEMA)) fail(`${PRODUCT_CAPABILITY_SCHEMA} is missing`);
+
+  let schema;
+  try {
+    schema = JSON.parse(fs.readFileSync(PRODUCT_CAPABILITY_SCHEMA, 'utf8'));
+  } catch (error) {
+    fail(`invalid JSON in ${PRODUCT_CAPABILITY_SCHEMA}: ${error.message}`);
+  }
+
+  if (schema.type !== 'object' || schema.additionalProperties !== false) {
+    fail(`${PRODUCT_CAPABILITY_SCHEMA} root must be a closed object schema`);
+  }
+  if (schema.properties?.version?.const !== 1) {
+    fail(`${PRODUCT_CAPABILITY_SCHEMA} must own contract version 1`);
+  }
+  if (schema.$defs?.field?.additionalProperties !== false) {
+    fail(`${PRODUCT_CAPABILITY_SCHEMA} field definition must reject unknown properties`);
+  }
+  if (schema.$defs?.features?.additionalProperties !== false) {
+    fail(`${PRODUCT_CAPABILITY_SCHEMA} features definition must reject unknown properties`);
+  }
+
+  const fieldKinds = schema.$defs?.field?.properties?.kind?.enum;
+  const fieldGroups = schema.$defs?.field?.properties?.group?.enum;
+  if (!Array.isArray(fieldKinds) || !fieldKinds.length) fail(`${PRODUCT_CAPABILITY_SCHEMA} must define field kinds`);
+  if (!Array.isArray(fieldGroups) || !fieldGroups.length) fail(`${PRODUCT_CAPABILITY_SCHEMA} must define field groups`);
+
+  assertUniqueEnumValues(schema);
+}
+
 if (!fs.existsSync(THEME_ROOT) || !fs.statSync(THEME_ROOT).isDirectory()) {
   fail('theme/ is missing');
 }
+
+validateProductCapabilityContract();
 
 const files = walk(THEME_ROOT);
 const forbiddenName = /(?:^|[-_.])(final|fix|fixes|cleanup|polish|override|patch|temp|temporary|backup|copy|old|legacy|v\d+)(?:[-_.]|$)/i;
@@ -196,4 +248,4 @@ for (const relativePath of required) {
   if (!fs.existsSync(path.join(THEME_ROOT, relativePath))) fail(`required canonical owner is missing: theme/${relativePath}`);
 }
 
-console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets.`);
+console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1.`);
