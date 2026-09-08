@@ -428,7 +428,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           borderRadius="max"
           accessibilityLabel={`Use your $${tier.value} OFF coupon`}
         >
-          <s-text tone="custom">Use Coupon</s-text>
+          <s-text tone="accent">Use Coupon</s-text>
         </s-clickable>
       );
     }
@@ -454,7 +454,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
     if (isNext) {
       return (
         <s-box background="subdued" padding="small-200" borderRadius="max">
-          <s-text tone="custom">Next Reward ★</s-text>
+          <s-text tone="accent">Next Reward ★</s-text>
         </s-box>
       );
     }
