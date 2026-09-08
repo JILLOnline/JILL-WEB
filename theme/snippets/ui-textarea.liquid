@@ -1,0 +1,30 @@
+{% liquid
+  assign field_id = id | default: name
+  assign field_label = label | default: name
+  assign field_value = value | default: ''
+%}
+
+<div class="jill-field"{% if error != blank %} data-state="error"{% endif %}>
+  <label class="jill-field__label" for="{{ field_id }}">
+    {{ field_label }}
+    {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+  </label>
+
+  <textarea
+    class="jill-field__control jill-field__control--textarea"
+    id="{{ field_id }}"
+    name="{{ name }}"
+    {% if placeholder != blank %}placeholder="{{ placeholder | escape }}"{% endif %}
+    {% if maxlength != blank %}maxlength="{{ maxlength }}"{% endif %}
+    {% if rows != blank %}rows="{{ rows }}"{% endif %}
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if error != blank %}aria-invalid="true" aria-describedby="{{ field_id }}-error"{% elsif help != blank %}aria-describedby="{{ field_id }}-help"{% endif %}
+  >{{ field_value | escape }}</textarea>
+
+  {% if error != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-error" data-tone="error">{{ error }}</p>
+  {% elsif help != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-help">{{ help }}</p>
+  {% endif %}
+</div>
