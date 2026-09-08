@@ -133,6 +133,10 @@ Required behavior:
 - options do not create a second personalization engine
 - a completed option remains stable unless one of its own dependencies changes
 
+Product Option fields are singleton by default: one value applies to the merchandise selection. A capability profile opts specific fields into unit allocation through `features.productOptionsAllocation.fieldIds`. Unit-allocated Product Option fields in v1 are enumerated `select` or `radio` choices; free-form per-unit content belongs to Personalization rather than becoming a second personalization engine.
+
+When allocation is enabled, groups may assign the same Product Option values to one or more eligible customization units. A customization unit may belong to at most one Product Options allocation group, and every eligible required unit must be allocated exactly once before Product Options can be complete.
+
 Future Theme Core implementation must reproduce the behavior through one option engine, not collection-specific scripts.
 
 ## 8. Personalization contract
