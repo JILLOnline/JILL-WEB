@@ -489,16 +489,13 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
                       Cancel
                     </s-button>
-                    <s-clickable
-                      background="base"
-                      padding="small-200"
-                      borderRadius="max"
+                    <s-button
+                      variant="primary"
                       disabled={Boolean(pendingPoints)}
-                      accessibilityLabel={`Generate $${tier.value} OFF coupon for ${tier.points} points`}
                       onClick={() => handleRedeem(tier)}
                     >
-                      <s-text tone="success" type="strong">Generate coupon</s-text>
-                    </s-clickable>
+                      Generate coupon
+                    </s-button>
                   </s-stack>
                 </s-stack>
               </s-box>
