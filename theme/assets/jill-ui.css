@@ -201,14 +201,77 @@
   .jill-quantity {
     display: grid;
     gap: var(--jill-space-unit);
-    width: min(100%, 10rem);
+    width: min(100%, 12rem);
+  }
+
+  .jill-quantity__stepper {
+    display: grid;
+    grid-template-columns: minmax(2.75rem, auto) minmax(3rem, 1fr) minmax(2.75rem, auto);
+    min-height: max(var(--jill-button-height), 2.75rem);
+    overflow: hidden;
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 32%, transparent);
+    border-radius: var(--jill-field-radius);
+    background: var(--jill-color-background);
+  }
+
+  .jill-quantity__stepper:focus-within {
+    border-color: var(--jill-color-accent);
+    outline: 2px solid color-mix(in srgb, var(--jill-color-accent) 35%, transparent);
+    outline-offset: 2px;
+  }
+
+  .jill-quantity__button {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--jill-color-foreground);
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .jill-quantity__button:hover {
+    background: color-mix(in srgb, var(--jill-color-foreground) 7%, transparent);
+  }
+
+  .jill-quantity__button:active {
+    background: color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
+  }
+
+  .jill-quantity__button:disabled {
+    color: var(--jill-color-muted);
+    cursor: not-allowed;
+    opacity: 0.45;
   }
 
   .jill-quantity__control {
+    min-width: 0;
+    min-height: max(var(--jill-button-height), 2.75rem);
+    padding-inline: var(--jill-space-unit);
+    border-block: 0;
+    border-inline: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 18%, transparent);
+    border-radius: 0;
     text-align: center;
+    appearance: textfield;
   }
 
-  .jill-quantity[data-state='error'] .jill-quantity__control {
+  .jill-quantity__control:focus-visible {
+    outline: 0;
+  }
+
+  .jill-quantity__control::-webkit-inner-spin-button,
+  .jill-quantity__control::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  .jill-quantity[data-state='error'] .jill-quantity__stepper {
     border-color: var(--jill-color-error);
   }
 }

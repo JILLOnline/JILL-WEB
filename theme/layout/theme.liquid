@@ -25,6 +25,7 @@
 
     {% sections 'footer-group' %}
 
+    <script src="{{ 'jill-quantity.js' | asset_url }}" defer></script>
     {% if request.page_type == 'product' %}
       <script src="{{ 'jill-product-capabilities.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-form-engine.js' | asset_url }}" defer></script>

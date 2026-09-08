@@ -7,6 +7,10 @@
       "label": "Pagination",
       "previous": "Previous",
       "next": "Next"
+    },
+    "quantity": {
+      "decrease": "Decrease",
+      "increase": "Increase"
     }
   },
   "products": {

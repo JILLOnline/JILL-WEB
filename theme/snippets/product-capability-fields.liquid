@@ -1,5 +1,6 @@
 {% liquid
   assign choose_option_label = 'products.product.choose_option' | t
+  assign allocation_count_label = 'products.product.allocation.count' | t
   assign group_names = 'product_options,personalization,planning,reference' | split: ','
   assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
   assign allocation_initially_available = false
@@ -202,7 +203,7 @@
             class="jill-product-customization__field"
             data-jill-product-options-allocation
             data-group-label="{{ 'products.product.allocation.group' | t | escape }}"
-            data-count-label="{{ 'products.product.allocation.count' | t | escape }}"
+            data-count-label="{{ allocation_count_label | escape }}"
             data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
             data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
             data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
@@ -214,6 +215,17 @@
           >
             <h4 class="jill-product-customization__group-title">{{ 'products.product.allocation.title' | t }}</h4>
             <p class="jill-product-customization__help">{{ 'products.product.allocation.help' | t }}</p>
+            <template data-jill-allocation-quantity-template>
+              {% render 'ui-quantity',
+                id: 'JillAllocationQuantityTemplate',
+                name: blank,
+                label: allocation_count_label,
+                value: 1,
+                min: 1,
+                step: 1,
+                required: true
+              %}
+            </template>
             <div data-jill-product-options-groups></div>
             <p class="jill-product-customization__help" role="status" aria-live="polite" data-jill-product-options-summary></p>
             <button

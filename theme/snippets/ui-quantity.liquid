@@ -1,28 +1,85 @@
 {% liquid
   assign quantity_id = id | default: name
+  assign quantity_label = label | default: 'Quantity'
   assign quantity_value = value | default: 1
+  assign quantity_min = min | default: 1
+  assign quantity_step = step | default: 1
+  assign decrease_text = 'general.quantity.decrease' | t
+  assign increase_text = 'general.quantity.increase' | t
+  assign decrement_disabled = false
+  assign increment_disabled = false
+
+  if disabled
+    assign decrement_disabled = true
+    assign increment_disabled = true
+  else
+    if quantity_value <= quantity_min
+      assign decrement_disabled = true
+    endif
+    if max != blank and quantity_value >= max
+      assign increment_disabled = true
+    endif
+  endif
 %}
 
-<div class="jill-quantity"{% if error != blank %} data-state="error"{% endif %}>
+<div
+  class="jill-quantity"
+  data-jill-quantity
+  data-jill-quantity-decrease-text="{{ decrease_text | escape }}"
+  data-jill-quantity-increase-text="{{ increase_text | escape }}"
+  data-jill-quantity-accessible-label="{{ quantity_label | escape }}"
+  {% if error != blank %}data-state="error"{% endif %}
+>
   <label class="jill-field__label" for="{{ quantity_id }}">
-    {{ label | default: 'Quantity' }}
-    {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+    <span data-jill-quantity-label-text>{{ quantity_label }}</span>
+    <span class="jill-field__required" aria-hidden="true"{% unless required %} hidden{% endunless %}>*</span>
   </label>
 
-  <input
-    class="jill-field__control jill-quantity__control"
-    id="{{ quantity_id }}"
-    name="{{ name }}"
-    type="number"
-    inputmode="numeric"
-    value="{{ quantity_value }}"
-    min="{{ min | default: 1 }}"
-    {% if max != blank %}max="{{ max }}"{% endif %}
-    step="{{ step | default: 1 }}"
-    {% if required %}required{% endif %}
-    {% if disabled %}disabled{% endif %}
-    {% if error != blank %}aria-invalid="true" aria-describedby="{{ quantity_id }}-error"{% endif %}
-  >
+  <div class="jill-quantity__stepper">
+    <button
+      class="jill-quantity__button"
+      type="button"
+      data-jill-quantity-action="decrement"
+      aria-label="{{ decrease_text | escape }} {{ quantity_label | escape }}"
+      title="{{ decrease_text | escape }} {{ quantity_label | escape }}"
+      aria-controls="{{ quantity_id }}"
+      aria-disabled="{% if decrement_disabled %}true{% else %}false{% endif %}"
+      tabindex="-1"
+      {% if decrement_disabled %}disabled{% endif %}
+    >
+      <span aria-hidden="true">−</span>
+    </button>
+
+    <input
+      class="jill-field__control jill-quantity__control"
+      id="{{ quantity_id }}"
+      {% if name != blank %}name="{{ name }}"{% endif %}
+      type="number"
+      inputmode="numeric"
+      value="{{ quantity_value }}"
+      min="{{ quantity_min }}"
+      {% if max != blank %}max="{{ max }}"{% endif %}
+      step="{{ quantity_step }}"
+      data-jill-quantity-input
+      {% if required %}required{% endif %}
+      {% if disabled %}disabled{% endif %}
+      {% if error != blank %}aria-invalid="true" aria-describedby="{{ quantity_id }}-error"{% endif %}
+    >
+
+    <button
+      class="jill-quantity__button"
+      type="button"
+      data-jill-quantity-action="increment"
+      aria-label="{{ increase_text | escape }} {{ quantity_label | escape }}"
+      title="{{ increase_text | escape }} {{ quantity_label | escape }}"
+      aria-controls="{{ quantity_id }}"
+      aria-disabled="{% if increment_disabled %}true{% else %}false{% endif %}"
+      tabindex="-1"
+      {% if increment_disabled %}disabled{% endif %}
+    >
+      <span aria-hidden="true">+</span>
+    </button>
+  </div>
 
   {% if error != blank %}
     <p class="jill-field__message" id="{{ quantity_id }}-error" data-tone="error">{{ error }}</p>
