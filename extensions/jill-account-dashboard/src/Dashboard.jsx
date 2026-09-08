@@ -1,6 +1,14 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import {useEffect, useState} from 'preact/hooks';
+import {
+  REWARD_STATES,
+  buildRewardJourney,
+  rewardCouponStatus,
+  rewardRequestIsPending,
+  rewardWallet,
+  toRewardInteger,
+} from './rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
@@ -88,16 +96,7 @@ const COLLECTIONS = [
   ['👕', 'Apparel & Gifts', '/collections/apparel-gifts-dtf-sublimation'],
 ];
 
-// Customer Account rewards config. Keep this in exact parity with
-// JILL_REWARD_TIERS in the Apps Script backend.
-const REWARD_TIERS = [
-  {points: 10, value: 5, minimum: 25},
-  {points: 20, value: 12, minimum: 50},
-  {points: 35, value: 25, minimum: 100},
-  {points: 50, value: 40, minimum: 150},
-];
 
-const SORTED_REWARD_TIERS = [...REWARD_TIERS].sort((a, b) => a.points - b.points);
 
 async function loadData() {
   const response = await fetch(API, {
@@ -166,95 +165,7 @@ function metaMap(customer) {
   );
 }
 
-function toInteger(value) {
-  const parsed = Number.parseInt(value || '0', 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
-function rewardWallet(value) {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    if (Array.isArray(parsed)) return parsed.filter(Boolean);
-    if (Array.isArray(parsed?.coupons)) return parsed.coupons.filter(Boolean);
-  } catch (error) {
-    console.warn('JILL rewards wallet parse error', error);
-  }
-  return [];
-}
-
-function rewardCouponStatus(coupon) {
-  const status = String(coupon?.status || 'active').toLowerCase();
-  if (status === 'used' || status === 'expired') return status;
-  const expiresAt = Date.parse(coupon?.expires_at || '');
-  if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) return 'expired';
-  return 'active';
-}
-
-function rewardRequestIsPending(meta) {
-  const points = toInteger(meta.redeem_request_points);
-  const nonce = String(meta.redeem_request_nonce || '').trim();
-  return points > 0 && Boolean(nonce) && !nonce.startsWith('consumed:');
-}
-
-function buildRewardJourney(points, wallet, pendingPoints = 0) {
-  const activeCoupons = (Array.isArray(wallet) ? wallet : [])
-    .filter((coupon) => rewardCouponStatus(coupon) === 'active')
-    .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || ''));
-
-  function couponForTier(tierPoints) {
-    return activeCoupons.find((coupon) => Number(coupon?.points) === tierPoints) || null;
-  }
-
-  const items = SORTED_REWARD_TIERS.map((tier) => {
-    const coupon = couponForTier(tier.points);
-    return {
-      tier,
-      coupon,
-      state: coupon ? 'redeemed' : points >= tier.points ? 'redeem' : 'locked',
-      pending: pendingPoints === tier.points,
-    };
-  });
-
-  // Exactly one not-yet-unlocked tier is the customer's next destination.
-  const next = items.find((item) => item.state === 'locked') || null;
-  if (next) next.state = 'next';
-
-  const redeemable = items.filter((item) => item.state === 'redeem');
-  const redeemed = items.filter((item) => item.state === 'redeemed');
-  const bestRedeemable = redeemable[redeemable.length - 1] || null;
-
-  // Expanded journey order is intentional, not tier-number order:
-  // creating -> next reward -> redeemable -> redeemed -> remaining locked.
-  const priority = {next: 1, redeem: 2, redeemed: 3, locked: 4};
-  const expanded = [...items].sort((a, b) => {
-    if (a.pending !== b.pending) return a.pending ? -1 : 1;
-    const stateDifference = priority[a.state] - priority[b.state];
-    if (stateDifference) return stateDifference;
-    if (a.state === 'redeem') return b.tier.points - a.tier.points;
-    return a.tier.points - b.tier.points;
-  });
-
-  // Collapsed mode keeps the customer's next destination front and center.
-  // A reward being created temporarily takes over; if every tier is unlocked,
-  // fall back to the best redeemable or most recently redeemed milestone.
-  const collapsed =
-    items.find((item) => item.pending) ||
-    next ||
-    bestRedeemable ||
-    redeemed[redeemed.length - 1] ||
-    items[items.length - 1];
-
-  return {
-    activeCoupons,
-    items,
-    expanded,
-    collapsed,
-    next,
-    redeemable,
-    couponForTier,
-  };
-}
 
 function formatDate(value) {
   if (!value) return '';
@@ -318,13 +229,13 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [confirmTier, setConfirmTier] = useState(null);
   const [freshCoupon, setFreshCoupon] = useState(null);
 
-  const points = toInteger(meta.points_balance);
+  const points = toRewardInteger(meta.points_balance);
   const wallet = rewardWallet(meta.coupons);
   const persistedPending = rewardRequestIsPending(meta);
-  const requestedPoints = persistedPending ? toInteger(meta.redeem_request_points) : 0;
+  const requestedPoints = persistedPending ? toRewardInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
   const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
-  const journey = buildRewardJourney(points, wallet, pendingPoints);
+  const journey = buildRewardJourney(points, wallet, {pendingPoints});
   const activeCoupons = journey.activeCoupons;
   const availableTiers = journey.redeemable.map((item) => item.tier);
   const nextTier = journey.next?.tier || null;
@@ -469,9 +380,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   function rewardMilestone(item, showTopRail = false, showBottomRail = false) {
     const tier = item.tier;
     const coupon = item.coupon;
-    const isRedeemed = item.state === 'redeemed';
-    const isAvailable = item.state === 'redeem';
-    const isNext = item.state === 'next';
+    const isRedeemed = item.state === REWARD_STATES.USE_COUPON;
+    const isAvailable = item.state === REWARD_STATES.REDEEM;
+    const isNext = item.state === REWARD_STATES.NEXT_REWARD;
     const isThisPending = isGeneratingReward && pendingPoints === tier.points;
     const isThisConfirming = confirmTier?.points === tier.points && !pendingPoints;
     const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
@@ -539,7 +450,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                   {tierProgress} / {tier.points} pts
                   {isThisPending
                     ? ' · Creating coupon…'
-                    : !isAvailable
+                    : isNext
                       ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'pt' : 'pts'} left`
                       : ''}
                 </s-text>

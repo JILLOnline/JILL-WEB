@@ -86,6 +86,7 @@ function doGet(e) {
       return json_({
         ok: false,
         watchdog: true,
+        engine_version: JILL_REWARDS_ENGINE_VERSION,
         error: String(err)
       });
     }
@@ -215,6 +216,8 @@ const JILL_REWARD_TIERS = {
   50: { value: 40, minimum: 150 }
 };
 
+const JILL_REWARDS_ENGINE_VERSION = '13';
+const JILL_REWARD_SPEND_CENTS_PER_POINT = 1000;
 const JILL_REWARD_COUPON_DAYS = 30;
 const JILL_REWARDS_SWEEP_HANDLER = 'processPendingJillRewardRequests';
 const JILL_REWARDS_INFRA_CHECK_PROPERTY = 'JILL_REWARDS_INFRA_CHECK_AT';
@@ -229,14 +232,12 @@ const JILL_REWARD_SUBSCRIPTIONS = [
 ];
 
 function setupJillRewards() {
-  // Full setup remains available as a manual recovery button, but it is no
-  // longer the only thing keeping Rewards alive. The minute worker and the
-  // public watchdog both re-check this infrastructure automatically.
   const infrastructure = ensureJillRewardsInfrastructure_(true);
   const reconciliation = processPendingJillRewardRequests();
 
   const result = {
     ok: true,
+    engine_version: JILL_REWARDS_ENGINE_VERSION,
     created: infrastructure.created,
     updated: infrastructure.updated,
     existing: infrastructure.existing,
@@ -386,6 +387,7 @@ function runJillRewardsWatchdog_() {
   return {
     ok: true,
     watchdog: true,
+    engine_version: JILL_REWARDS_ENGINE_VERSION,
     checked: infrastructure.checked,
     throttled: infrastructure.throttled,
     created: infrastructure.created,
@@ -429,6 +431,13 @@ function processPendingJillRewardRequests() {
               pointsBalance: metafield(
                 namespace: "jill_rewards",
                 key: "points_balance"
+              ) {
+                value
+                compareDigest
+              }
+              pointsEarned: metafield(
+                namespace: "jill_rewards",
+                key: "points_earned_lifetime"
               ) {
                 value
                 compareDigest
@@ -771,9 +780,8 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
           ) { value compareDigest }
           lineItems(first: 250) {
             nodes {
-              currentQuantity
               isGiftCard
-              discountedUnitPriceAfterAllDiscountsSet {
+              priceAfterAllDiscountsBeforeTaxesSet {
                 shopMoney { amount currencyCode }
               }
             }
@@ -798,8 +806,8 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
 
   const previousCreditedCents = rewardInt_(order.creditedCents);
 
-  // Never pull a pre-program historical order into Rewards because of a later
-  // refund/edit/cancellation. Only orders/paid can establish initial credit.
+  // Only orders/paid can establish initial program credit. Refund/edit events
+  // for historical pre-program orders must never pull those orders into Rewards.
   if (!allowInitialCredit && previousCreditedCents <= 0) {
     return { ok: true, skipped: 'Order was never credited' };
   }
@@ -815,15 +823,15 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
     lines.forEach(function(line) {
       if (!line || line.isGiftCard) return;
 
-      const quantity = Math.max(0, Number(line.currentQuantity || 0));
       const money =
-        line.discountedUnitPriceAfterAllDiscountsSet &&
-        line.discountedUnitPriceAfterAllDiscountsSet.shopMoney;
+        line.priceAfterAllDiscountsBeforeTaxesSet &&
+        line.priceAfterAllDiscountsBeforeTaxesSet.shopMoney;
 
       if (!money || money.currencyCode !== 'USD') return;
 
-      eligibleCents +=
-        Math.round(Number(money.amount || 0) * 100) * quantity;
+      // Shopify 2026-07: this is the post-discount, pre-tax line subtotal and
+      // already excludes refunded and removed quantities. Shipping is not a line.
+      eligibleCents += Math.round(Number(money.amount || 0) * 100);
     });
   }
 
@@ -832,31 +840,60 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
   const deltaCents = eligibleCents - previousCreditedCents;
   const customer = order.customer;
   const priorSpend = rewardInt_(customer.eligibleSpend);
-  const redeemed = rewardInt_(customer.pointsRedeemed);
-
   const newSpend = Math.max(0, priorSpend + deltaCents);
-  const newEarned = Math.floor(newSpend / 1000);
-  const newBalance = Math.max(0, newEarned - redeemed);
+  const newEarned = Math.floor(
+    newSpend / JILL_REWARD_SPEND_CENTS_PER_POINT
+  );
 
-  if (deltaCents !== 0 || previousCreditedCents !== eligibleCents) {
+  const now = new Date();
+  const originalWallet = rewardWallet_(customer.coupons);
+  const wallet = normalizeRewardCoupons_(originalWallet, now);
+  let walletChanged =
+    JSON.stringify(originalWallet) !== JSON.stringify(wallet);
+
+  if (markRewardCouponsUsedInWallet_(wallet, order, now)) {
+    walletChanged = true;
+  }
+
+  const solvency = revokeActiveRewardsForSolvency_(wallet, newEarned, now);
+  if (solvency.revoked_points > 0) {
+    walletChanged = true;
+  }
+
+  const newRedeemed = rewardCommittedPoints_(wallet, now);
+  const newBalance = Math.max(0, newEarned - newRedeemed);
+
+  const ledgerChanged =
+    deltaCents !== 0 ||
+    previousCreditedCents !== eligibleCents ||
+    rewardInt_(customer.pointsEarned) !== newEarned ||
+    rewardInt_(customer.pointsRedeemed) !== newRedeemed ||
+    rewardInt_(customer.pointsBalance) !== newBalance ||
+    walletChanged;
+
+  if (ledgerChanged) {
     setRewardLedger_(
       customer,
       order,
       newSpend,
       newEarned,
+      newRedeemed,
       newBalance,
-      eligibleCents
+      eligibleCents,
+      wallet
     );
   }
 
-  markUsedRewardCoupons_(customer, order);
-
   return {
     ok: true,
+    engine_version: JILL_REWARDS_ENGINE_VERSION,
     order_id: order.id,
     eligible_cents: eligibleCents,
     delta_cents: deltaCents,
-    points_balance: newBalance
+    points_earned: newEarned,
+    points_committed: newRedeemed,
+    points_balance: newBalance,
+    revoked_points: solvency.revoked_points
   };
 }
 
@@ -865,8 +902,10 @@ function setRewardLedger_(
   order,
   newSpend,
   newEarned,
+  newRedeemed,
   newBalance,
-  eligibleCents
+  eligibleCents,
+  wallet
 ) {
   const metafields = [
     rewardMetafieldInput_(
@@ -891,6 +930,20 @@ function setRewardLedger_(
       customer.pointsEarned
     ),
     rewardMetafieldInput_(
+      customer.id,
+      'points_redeemed_lifetime',
+      'number_integer',
+      newRedeemed,
+      customer.pointsRedeemed
+    ),
+    rewardMetafieldInput_(
+      customer.id,
+      'coupons',
+      'json',
+      JSON.stringify(wallet || []),
+      customer.coupons
+    ),
+    rewardMetafieldInput_(
       order.id,
       'credited_cents',
       'number_integer',
@@ -903,7 +956,7 @@ function setRewardLedger_(
 }
 
 function processRewardRequest_(customerId, expectedNonce) {
-  const customer = getRewardsCustomer_(customerId);
+  let customer = getRewardsCustomer_(customerId);
 
   if (!customer || !customer.id) return null;
 
@@ -916,9 +969,6 @@ function processRewardRequest_(customerId, expectedNonce) {
     return null;
   }
 
-  // A request is only valid when points + nonce were written together by the
-  // Customer Account extension. Clean up legacy/malformed states instead of
-  // leaving the Dashboard locked forever.
   if (!nonce || nonce.indexOf('consumed:') === 0) {
     clearRewardRequest_(customer);
     return { ok: true, skipped: 'Malformed or already-consumed reward request' };
@@ -934,19 +984,33 @@ function processRewardRequest_(customerId, expectedNonce) {
     return { ok: true, skipped: 'Unsupported reward tier' };
   }
 
+  // Reconcile Shopify coupon truth before approving a new spend of points.
+  normalizeRewardWalletForCustomer_(customer);
+  customer = getRewardsCustomer_(customerId);
+
+  const latestRequestedPoints = rewardInt_(customer.redeemRequestPoints);
+  const latestNonce = clean_(
+    customer.redeemRequestNonce && customer.redeemRequestNonce.value
+  );
+
+  if (latestRequestedPoints !== requestedPoints || latestNonce !== nonce) {
+    return { ok: true, skipped: 'Reward request changed during reconciliation' };
+  }
+
   const balance = rewardInt_(customer.pointsBalance);
   if (balance < requestedPoints) {
     clearRewardRequest_(customer);
     return { ok: true, skipped: 'Insufficient points' };
   }
 
+  const now = new Date();
   const wallet = normalizeRewardCoupons_(
     rewardWallet_(customer.coupons),
-    new Date()
+    now
   );
   const existingTierCoupon = wallet.find(function(coupon) {
     return (
-      rewardCouponIsActive_(coupon, new Date()) &&
+      rewardCouponIsActive_(coupon, now) &&
       Number(coupon.points) === requestedPoints
     );
   });
@@ -960,6 +1024,8 @@ function processRewardRequest_(customerId, expectedNonce) {
     };
   }
 
+  // Claim the nonce first. The final transaction deliberately does NOT write
+  // this metafield again, avoiding a stale compareDigest after the claim.
   consumeRewardRequest_(customer, nonce);
 
   let discount = null;
@@ -969,6 +1035,7 @@ function processRewardRequest_(customerId, expectedNonce) {
 
     const createdAt = new Date();
     const coupon = {
+      engine_version: JILL_REWARDS_ENGINE_VERSION,
       points: requestedPoints,
       value: tier.value,
       minimum: tier.minimum,
@@ -983,21 +1050,23 @@ function processRewardRequest_(customerId, expectedNonce) {
     };
 
     const updatedWallet = wallet.concat([coupon]);
-    const redeemed = rewardInt_(customer.pointsRedeemed);
+    const committed = rewardCommittedPoints_(updatedWallet, createdAt);
+    const earned = rewardInt_(customer.pointsEarned);
+    const expectedBalance = Math.max(0, earned - committed);
 
     setRewardMetafields_([
       rewardMetafieldInput_(
         customer.id,
         'points_balance',
         'number_integer',
-        balance - requestedPoints,
+        expectedBalance,
         customer.pointsBalance
       ),
       rewardMetafieldInput_(
         customer.id,
         'points_redeemed_lifetime',
         'number_integer',
-        redeemed + requestedPoints,
+        committed,
         customer.pointsRedeemed
       ),
       rewardMetafieldInput_(
@@ -1013,25 +1082,19 @@ function processRewardRequest_(customerId, expectedNonce) {
         'number_integer',
         0,
         customer.redeemRequestPoints
-      ),
-      rewardMetafieldInput_(
-        customer.id,
-        'redeem_request_nonce',
-        'single_line_text_field',
-        'consumed:' + nonce,
-        customer.redeemRequestNonce
       )
     ]);
 
     return {
       ok: true,
+      engine_version: JILL_REWARDS_ENGINE_VERSION,
       coupon: coupon,
-      points_balance: balance - requestedPoints
+      points_balance: expectedBalance
     };
   } catch (err) {
     if (discount && discount.id) {
       try {
-        deleteRewardDiscount_(discount.id);
+        deleteRewardDiscountIfPresent_(discount.id);
       } catch (rollbackErr) {
         console.error(
           'JILL Rewards discount rollback failed ' + discount.id + ': ' +
@@ -1065,6 +1128,10 @@ function getRewardsCustomer_(customerId) {
           pointsBalance: metafield(
             namespace: "jill_rewards",
             key: "points_balance"
+          ) { value compareDigest }
+          pointsEarned: metafield(
+            namespace: "jill_rewards",
+            key: "points_earned_lifetime"
           ) { value compareDigest }
           pointsRedeemed: metafield(
             namespace: "jill_rewards",
@@ -1181,20 +1248,20 @@ function createRewardDiscount_(customer, points, tier) {
     code: code,
     startsAt: startsAt,
     endsAt: endsAt,
-    customerSelection: {
+    context: {
       customers: { add: [customer.id] }
     },
     customerGets: {
       value: {
         discountAmount: {
-          amount: Number(tier.value),
+          amount: String(tier.value),
           appliesOnEachItem: false
         }
       },
       items: { all: true }
     },
     minimumRequirement: {
-      subtotal: { greaterThanOrEqualToSubtotal: Number(tier.minimum) }
+      subtotal: { greaterThanOrEqualToSubtotal: String(tier.minimum) }
     },
     usageLimit: 1,
     appliesOncePerCustomer: true,
@@ -1202,7 +1269,12 @@ function createRewardDiscount_(customer, points, tier) {
       orderDiscounts: false,
       productDiscounts: false,
       shippingDiscounts: false
-    }
+    },
+    tags: [
+      'JILL_REWARDS',
+      'JILL_REWARDS_V' + JILL_REWARDS_ENGINE_VERSION,
+      'JILL_REWARD_' + points + '_POINTS'
+    ]
   };
 
   const data = shopifyGraphQL_(mutation, { input: input });
@@ -1264,7 +1336,9 @@ function rewardWallet_(metafield) {
     const parsed = JSON.parse(metafield.value);
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    return [];
+    throw new Error(
+      'Invalid JILL Rewards coupon wallet JSON: ' + String(err)
+    );
   }
 }
 
@@ -1278,27 +1352,286 @@ function normalizeRewardCoupons_(wallet, now) {
     if (!status) coupon.status = 'active';
 
     if (
-      coupon.status === 'active' &&
+      clean_(coupon.status).toLowerCase() === 'active' &&
       coupon.expires_at &&
       Date.parse(coupon.expires_at) <= currentTime
     ) {
       coupon.status = 'expired';
+      coupon.expired_at = coupon.expired_at || new Date(currentTime).toISOString();
     }
 
     return coupon;
   });
 }
 
-function rewardCouponIsActive_(coupon, now) {
-  if (!coupon) return false;
+function rewardCouponStatus_(coupon, now) {
+  if (!coupon) return 'revoked';
 
-  const status = clean_(coupon.status).toLowerCase() || 'active';
-  if (status !== 'active') return false;
+  const raw = clean_(coupon.status).toLowerCase() || 'active';
+  if (raw === 'used' || raw === 'expired' || raw === 'revoked') return raw;
 
   const expiresAt = Date.parse(coupon.expires_at || '');
-  if (!Number.isFinite(expiresAt)) return true;
+  if (Number.isFinite(expiresAt) && expiresAt <= (now || new Date()).getTime()) {
+    return 'expired';
+  }
 
-  return expiresAt > (now || new Date()).getTime();
+  return 'active';
+}
+
+function rewardCouponIsActive_(coupon, now) {
+  return rewardCouponStatus_(coupon, now) === 'active';
+}
+
+function rewardCommittedPoints_(wallet, now) {
+  return (Array.isArray(wallet) ? wallet : []).reduce(function(total, coupon) {
+    const status = rewardCouponStatus_(coupon, now || new Date());
+    if (status === 'revoked') return total;
+    if (status !== 'active' && status !== 'used' && status !== 'expired') {
+      return total;
+    }
+    return total + Math.max(0, Number(coupon && coupon.points) || 0);
+  }, 0);
+}
+
+function rewardDiscountSnapshots_(discountIds) {
+  const ids = (Array.isArray(discountIds) ? discountIds : [])
+    .map(function(id) { return clean_(id); })
+    .filter(Boolean);
+
+  if (!ids.length) return {};
+
+  const query = `
+    query JillRewardDiscountIntegrity($ids: [ID!]!) {
+      nodes(ids: $ids) {
+        id
+        ... on DiscountCodeNode {
+          codeDiscount {
+            __typename
+            ... on DiscountCodeBasic {
+              status
+              endsAt
+              usageLimit
+              appliesOncePerCustomer
+              asyncUsageCount
+              combinesWith {
+                orderDiscounts
+                productDiscounts
+                shippingDiscounts
+              }
+              context {
+                __typename
+                ... on DiscountCustomers {
+                  customers { id }
+                }
+              }
+              customerGets {
+                items {
+                  __typename
+                  ... on AllDiscountItems { allItems }
+                }
+                value {
+                  __typename
+                  ... on DiscountAmount {
+                    amount { amount currencyCode }
+                    appliesOnEachItem
+                  }
+                }
+              }
+              minimumRequirement {
+                __typename
+                ... on DiscountMinimumSubtotal {
+                  greaterThanOrEqualToSubtotal {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+              codes(first: 5) { nodes { code } }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const data = shopifyGraphQL_(query, { ids: ids });
+  const snapshots = {};
+
+  (data.nodes || []).forEach(function(node) {
+    if (!node || !node.id || !node.codeDiscount) return;
+    snapshots[node.id] = node.codeDiscount;
+  });
+
+  return snapshots;
+}
+
+function rewardDiscountIntegrity_(snapshot, coupon, customerId, now) {
+  if (!snapshot) return { ok: false, reason: 'missing' };
+  if (snapshot.__typename !== 'DiscountCodeBasic') {
+    return { ok: false, reason: 'wrong_discount_type' };
+  }
+
+  if (Number(snapshot.asyncUsageCount || 0) > 0) {
+    return { ok: true, used: true };
+  }
+
+  const currentTime = (now || new Date()).getTime();
+  const endsAt = Date.parse(snapshot.endsAt || '');
+  const expectedEndsAt = Date.parse(coupon.expires_at || '');
+  const expirationGraceMs = 2 * 60 * 1000;
+  const expirationAligned =
+    Number.isFinite(endsAt) &&
+    Number.isFinite(expectedEndsAt) &&
+    Math.abs(endsAt - expectedEndsAt) <= expirationGraceMs;
+
+  // A normal 30-day expiry consumes the points. If Shopify says the reward
+  // expired materially earlier than the wallet's canonical expiry, treat it
+  // as an altered unusable coupon so reconciliation revokes it and releases
+  // the reserved points instead of making the customer pay for admin damage.
+  if (
+    snapshot.status === 'EXPIRED' ||
+    (Number.isFinite(endsAt) && endsAt <= currentTime)
+  ) {
+    if (
+      Number.isFinite(expectedEndsAt) &&
+      expectedEndsAt > currentTime + expirationGraceMs
+    ) {
+      return { ok: false, reason: 'premature_expiration' };
+    }
+
+    if (!expirationAligned) {
+      return { ok: false, reason: 'expiration_policy' };
+    }
+
+    return { ok: true, expired: true };
+  }
+
+  if (snapshot.status !== 'ACTIVE') {
+    return { ok: false, reason: 'status_' + clean_(snapshot.status).toLowerCase() };
+  }
+
+  const tier = JILL_REWARD_TIERS[Math.max(0, Number(coupon && coupon.points) || 0)];
+  if (!tier) return { ok: false, reason: 'unsupported_tier' };
+
+  const codes = snapshot.codes && snapshot.codes.nodes ? snapshot.codes.nodes : [];
+  if (!codes.some(function(item) { return clean_(item && item.code) === clean_(coupon.code); })) {
+    return { ok: false, reason: 'code_mismatch' };
+  }
+
+  if (Number(snapshot.usageLimit) !== 1 || snapshot.appliesOncePerCustomer !== true) {
+    return { ok: false, reason: 'usage_policy' };
+  }
+
+  const combines = snapshot.combinesWith || {};
+  if (combines.orderDiscounts || combines.productDiscounts || combines.shippingDiscounts) {
+    return { ok: false, reason: 'stacking_policy' };
+  }
+
+  const context = snapshot.context || {};
+  const customers = context.customers || [];
+  if (
+    context.__typename !== 'DiscountCustomers' ||
+    !customers.some(function(item) { return item && item.id === customerId; })
+  ) {
+    return { ok: false, reason: 'customer_targeting' };
+  }
+
+  const gets = snapshot.customerGets || {};
+  const value = gets.value || {};
+  const amount = value.amount || {};
+  const items = gets.items || {};
+  if (
+    value.__typename !== 'DiscountAmount' ||
+    amount.currencyCode !== 'USD' ||
+    Number(amount.amount) !== Number(tier.value) ||
+    value.appliesOnEachItem !== false ||
+    items.__typename !== 'AllDiscountItems' ||
+    items.allItems !== true
+  ) {
+    return { ok: false, reason: 'discount_value' };
+  }
+
+  const minimum = snapshot.minimumRequirement || {};
+  const subtotal = minimum.greaterThanOrEqualToSubtotal || {};
+  if (
+    minimum.__typename !== 'DiscountMinimumSubtotal' ||
+    subtotal.currencyCode !== 'USD' ||
+    Number(subtotal.amount) !== Number(tier.minimum)
+  ) {
+    return { ok: false, reason: 'minimum_order' };
+  }
+
+  if (!expirationAligned) {
+    return { ok: false, reason: 'expiration_policy' };
+  }
+
+  return { ok: true };
+}
+
+function deleteRewardDiscountIfPresent_(discountId) {
+  const targetId = clean_(discountId);
+  if (!targetId) return null;
+  const snapshots = rewardDiscountSnapshots_([targetId]);
+  if (!snapshots[targetId]) return null;
+  return deleteRewardDiscount_(targetId);
+}
+
+function markRewardCouponsUsedInWallet_(wallet, order, now) {
+  const codes = orderDiscountCodes_(order);
+  if (!codes.length) return false;
+
+  const usedAt = (now || new Date()).toISOString();
+  let changed = false;
+
+  (wallet || []).forEach(function(coupon) {
+    if (!rewardCouponIsActive_(coupon, now || new Date())) return;
+    const code = clean_(coupon.code);
+    if (!code || codes.indexOf(code) === -1) return;
+
+    coupon.status = 'used';
+    coupon.used_at = coupon.used_at || usedAt;
+    coupon.order_id = order.id;
+    changed = true;
+  });
+
+  return changed;
+}
+
+function revokeActiveRewardsForSolvency_(wallet, earnedPoints, now) {
+  const currentTime = now || new Date();
+  let committed = rewardCommittedPoints_(wallet, currentTime);
+  const earned = Math.max(0, Number(earnedPoints) || 0);
+  let revokedPoints = 0;
+
+  if (committed <= earned) {
+    return { revoked_points: 0, committed_points: committed };
+  }
+
+  const candidates = (wallet || [])
+    .filter(function(coupon) { return rewardCouponIsActive_(coupon, currentTime); })
+    .sort(function(a, b) {
+      return Date.parse(b.created_at || '') - Date.parse(a.created_at || '');
+    });
+
+  for (let i = 0; i < candidates.length && committed > earned; i++) {
+    const coupon = candidates[i];
+    const points = Math.max(0, Number(coupon.points) || 0);
+
+    if (coupon.discount_id) {
+      deleteRewardDiscountIfPresent_(coupon.discount_id);
+    }
+
+    coupon.status = 'revoked';
+    coupon.revoked_at = currentTime.toISOString();
+    coupon.revoked_reason = 'refund_solvency';
+    revokedPoints += points;
+    committed = Math.max(0, committed - points);
+  }
+
+  return {
+    revoked_points: revokedPoints,
+    committed_points: committed
+  };
 }
 
 function reconcileDeletedRewardDiscount_(discountId) {
@@ -1308,9 +1641,7 @@ function reconcileDeletedRewardDiscount_(discountId) {
     return { reconciled_customers: 0, restored_points: 0 };
   }
 
-  // Never trust a delete notification blindly. Confirm against Shopify first.
-  // This also makes retries and watchdog-driven cleanup idempotent.
-  const stillExists = rewardDiscountIdsThatStillExist_([targetId]);
+  const stillExists = rewardDiscountSnapshots_([targetId]);
   if (stillExists[targetId]) {
     return {
       reconciled_customers: 0,
@@ -1334,24 +1665,19 @@ function reconcileDeletedRewardDiscount_(discountId) {
             pointsBalance: metafield(
               namespace: "jill_rewards",
               key: "points_balance"
-            ) {
-              value
-              compareDigest
-            }
+            ) { value compareDigest }
+            pointsEarned: metafield(
+              namespace: "jill_rewards",
+              key: "points_earned_lifetime"
+            ) { value compareDigest }
             pointsRedeemed: metafield(
               namespace: "jill_rewards",
               key: "points_redeemed_lifetime"
-            ) {
-              value
-              compareDigest
-            }
+            ) { value compareDigest }
             coupons: metafield(
               namespace: "jill_rewards",
               key: "coupons"
-            ) {
-              value
-              compareDigest
-            }
+            ) { value compareDigest }
           }
           pageInfo {
             hasNextPage
@@ -1373,56 +1699,56 @@ function reconcileDeletedRewardDiscount_(discountId) {
       if (!customer || !customer.id || !customer.coupons) return;
 
       const now = new Date();
-      const wallet = rewardWallet_(customer.coupons);
-      let pointsToRestore = 0;
-      let foundActiveDeletedCoupon = false;
+      const original = rewardWallet_(customer.coupons);
+      const wallet = normalizeRewardCoupons_(original, now);
+      let changed = JSON.stringify(original) !== JSON.stringify(wallet);
+      let released = 0;
 
-      const reconciled = wallet.filter(function(coupon) {
-        if (!coupon) return false;
-
+      wallet.forEach(function(coupon) {
         if (
-          clean_(coupon.discount_id) === targetId &&
+          clean_(coupon && coupon.discount_id) === targetId &&
           rewardCouponIsActive_(coupon, now)
         ) {
-          pointsToRestore += Math.max(0, Number(coupon.points) || 0);
-          foundActiveDeletedCoupon = true;
-          return false;
+          released += Math.max(0, Number(coupon.points) || 0);
+          coupon.status = 'revoked';
+          coupon.revoked_at = now.toISOString();
+          coupon.revoked_reason = 'admin_deleted';
+          changed = true;
         }
-
-        return true;
       });
 
-      if (!foundActiveDeletedCoupon) return;
+      if (!changed || released <= 0) return;
 
-      const balance = rewardInt_(customer.pointsBalance);
-      const redeemed = rewardInt_(customer.pointsRedeemed);
+      const committed = rewardCommittedPoints_(wallet, now);
+      const earned = rewardInt_(customer.pointsEarned);
+      const balance = Math.max(0, earned - committed);
 
       setRewardMetafields_([
         rewardMetafieldInput_(
           customer.id,
           'coupons',
           'json',
-          JSON.stringify(reconciled),
+          JSON.stringify(wallet),
           customer.coupons
         ),
         rewardMetafieldInput_(
           customer.id,
           'points_balance',
           'number_integer',
-          balance + pointsToRestore,
+          balance,
           customer.pointsBalance
         ),
         rewardMetafieldInput_(
           customer.id,
           'points_redeemed_lifetime',
           'number_integer',
-          Math.max(0, redeemed - pointsToRestore),
+          committed,
           customer.pointsRedeemed
         )
       ]);
 
       reconciledCustomers += 1;
-      restoredPoints += pointsToRestore;
+      restoredPoints += released;
     });
 
     const pageInfo = connection.pageInfo || {};
@@ -1444,127 +1770,102 @@ function reconcileDeletedRewardDiscount_(discountId) {
   return result;
 }
 
-function rewardDiscountIdsThatStillExist_(discountIds) {
-  const ids = (Array.isArray(discountIds) ? discountIds : [])
-    .map(function(id) { return clean_(id); })
-    .filter(Boolean);
-
-  if (!ids.length) return {};
-
-  const query = `
-    query JillRewardDiscountsExist($ids: [ID!]!) {
-      nodes(ids: $ids) { id }
-    }
-  `;
-
-  const data = shopifyGraphQL_(query, { ids: ids });
-  const existing = {};
-
-  (data.nodes || []).forEach(function(node) {
-    if (node && node.id) existing[node.id] = true;
-  });
-
-  return existing;
-}
-
 function normalizeRewardWalletForCustomer_(customer) {
-  if (!customer || !customer.id || !customer.coupons) return false;
+  if (!customer || !customer.id) return false;
 
   const now = new Date();
-  const wallet = rewardWallet_(customer.coupons);
-  const normalized = normalizeRewardCoupons_(wallet, now);
-  const activeDiscountIds = normalized
-    .filter(function(coupon) { return rewardCouponIsActive_(coupon, now); })
+  const original = rewardWallet_(customer.coupons);
+  const wallet = normalizeRewardCoupons_(original, now);
+  let changed = JSON.stringify(original) !== JSON.stringify(wallet);
+
+  const active = wallet.filter(function(coupon) {
+    return rewardCouponIsActive_(coupon, now);
+  });
+  const ids = active
     .map(function(coupon) { return clean_(coupon.discount_id); })
     .filter(Boolean);
-  const existingDiscounts = rewardDiscountIdsThatStillExist_(activeDiscountIds);
-  let pointsToRestore = 0;
+  const snapshots = rewardDiscountSnapshots_(ids);
 
-  const reconciled = normalized.filter(function(coupon) {
-    if (!rewardCouponIsActive_(coupon, now)) return true;
-
+  active.forEach(function(coupon) {
     const discountId = clean_(coupon.discount_id);
-    if (!discountId || existingDiscounts[discountId]) return true;
+    const integrity = rewardDiscountIntegrity_(
+      discountId ? snapshots[discountId] : null,
+      coupon,
+      customer.id,
+      now
+    );
 
-    // A merchant/admin deleted this unused Shopify reward coupon. Remove it
-    // from the customer-facing wallet and return the points because the
-    // customer can no longer use what they paid points for.
-    pointsToRestore += Math.max(0, Number(coupon.points) || 0);
-    return false;
+    if (integrity.used) {
+      coupon.status = 'used';
+      coupon.used_at = coupon.used_at || now.toISOString();
+      coupon.usage_verified_at = now.toISOString();
+      changed = true;
+      return;
+    }
+
+    if (integrity.expired) {
+      coupon.status = 'expired';
+      coupon.expired_at = coupon.expired_at || now.toISOString();
+      changed = true;
+      return;
+    }
+
+    if (integrity.ok) return;
+
+    if (discountId && snapshots[discountId]) {
+      deleteRewardDiscountIfPresent_(discountId);
+    }
+
+    coupon.status = 'revoked';
+    coupon.revoked_at = now.toISOString();
+    coupon.revoked_reason = 'integrity_' + integrity.reason;
+    changed = true;
   });
 
-  const walletChanged = JSON.stringify(wallet) !== JSON.stringify(reconciled);
-  if (!walletChanged && pointsToRestore <= 0) return false;
+  const committed = rewardCommittedPoints_(wallet, now);
+  const earned = rewardInt_(customer.pointsEarned);
+  const balance = Math.max(0, earned - committed);
+  const metafields = [];
 
-  const metafields = [
-    rewardMetafieldInput_(
-      customer.id,
-      'coupons',
-      'json',
-      JSON.stringify(reconciled),
-      customer.coupons
-    )
-  ];
-
-  if (pointsToRestore > 0) {
-    const balance = rewardInt_(customer.pointsBalance);
-    const redeemed = rewardInt_(customer.pointsRedeemed);
-
+  if (changed) {
     metafields.push(
       rewardMetafieldInput_(
         customer.id,
-        'points_balance',
-        'number_integer',
-        balance + pointsToRestore,
-        customer.pointsBalance
-      ),
+        'coupons',
+        'json',
+        JSON.stringify(wallet),
+        customer.coupons
+      )
+    );
+  }
+
+  if (rewardInt_(customer.pointsRedeemed) !== committed) {
+    metafields.push(
       rewardMetafieldInput_(
         customer.id,
         'points_redeemed_lifetime',
         'number_integer',
-        Math.max(0, redeemed - pointsToRestore),
+        committed,
         customer.pointsRedeemed
       )
     );
   }
 
+  if (rewardInt_(customer.pointsBalance) !== balance) {
+    metafields.push(
+      rewardMetafieldInput_(
+        customer.id,
+        'points_balance',
+        'number_integer',
+        balance,
+        customer.pointsBalance
+      )
+    );
+  }
+
+  if (!metafields.length) return false;
+
   setRewardMetafields_(metafields);
-  return true;
-}
-
-function markUsedRewardCoupons_(customer, order) {
-  if (!customer || !customer.id) return false;
-
-  const original = rewardWallet_(customer.coupons);
-  const wallet = normalizeRewardCoupons_(original, new Date());
-  const codes = orderDiscountCodes_(order);
-  const usedAt = new Date().toISOString();
-  let changed = JSON.stringify(original) !== JSON.stringify(wallet);
-
-  wallet.forEach(function(coupon) {
-    if (!rewardCouponIsActive_(coupon, new Date())) return;
-
-    const code = clean_(coupon.code);
-    if (code && codes.indexOf(code) !== -1) {
-      coupon.status = 'used';
-      coupon.used_at = usedAt;
-      coupon.order_id = order.id;
-      changed = true;
-    }
-  });
-
-  if (!changed) return false;
-
-  setRewardMetafields_([
-    rewardMetafieldInput_(
-      customer.id,
-      'coupons',
-      'json',
-      JSON.stringify(wallet),
-      customer.coupons
-    )
-  ]);
-
   return true;
 }
 

@@ -7,13 +7,15 @@
     "extensions/*"
   ],
   "scripts": {
-    "postinstall": "node scripts/check-rewards-engine.mjs",
+    "postinstall": "node scripts/check-rewards-engine.mjs && node scripts/test-rewards-engine.mjs",
     "shopify": "shopify",
     "link": "shopify app config link",
     "build": "shopify app build",
     "dev": "shopify app dev",
     "info": "shopify app info",
-    "deploy": "shopify app deploy"
+    "deploy": "shopify app deploy",
+    "check:rewards": "node scripts/check-rewards-engine.mjs",
+    "test:rewards": "node scripts/test-rewards-engine.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1"

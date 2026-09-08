@@ -53,7 +53,7 @@ function parseCoupons(value) {
 
 function effectiveStatus(coupon) {
   const status = String(coupon?.status || 'active').toLowerCase();
-  if (status === 'used' || status === 'expired') return status;
+  if (status === 'used' || status === 'expired' || status === 'revoked') return status;
 
   const expiresAt = Date.parse(coupon?.expires_at || '');
   if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) return 'expired';
@@ -83,6 +83,7 @@ function CouponCard({coupon, status}) {
   const code = String(coupon?.code || '').trim();
   const expires = formatDateTime(coupon?.expires_at);
   const usedAt = formatDateTime(coupon?.used_at);
+  const revokedAt = formatDateTime(coupon?.revoked_at);
 
   return (
     <s-box
@@ -98,7 +99,13 @@ function CouponCard({coupon, status}) {
             <s-text color="subdued">${minimum} minimum order</s-text>
           </s-stack>
           <s-badge tone={status === 'active' ? 'success' : status === 'used' ? 'info' : 'neutral'}>
-            {status === 'active' ? 'Active' : status === 'used' ? 'Used' : 'Expired'}
+            {status === 'active'
+              ? 'Active'
+              : status === 'used'
+                ? 'Used'
+                : status === 'revoked'
+                  ? 'Revoked'
+                  : 'Expired'}
           </s-badge>
         </s-stack>
 
@@ -117,6 +124,11 @@ function CouponCard({coupon, status}) {
         )}
         {status === 'expired' && expires && (
           <s-text color="subdued">Expired {expires}</s-text>
+        )}
+        {status === 'revoked' && (
+          <s-text color="subdued">
+            {revokedAt ? `Revoked ${revokedAt}` : 'Revoked'} · No longer usable.
+          </s-text>
         )}
 
         {status === 'active' && code && (
@@ -203,6 +215,7 @@ function Coupons() {
   const activeCoupons = normalized.filter((coupon) => coupon.effective_status === 'active');
   const usedCoupons = normalized.filter((coupon) => coupon.effective_status === 'used');
   const expiredCoupons = normalized.filter((coupon) => coupon.effective_status === 'expired');
+  const revokedCoupons = normalized.filter((coupon) => coupon.effective_status === 'revoked');
 
   return (
     <s-page
@@ -249,6 +262,12 @@ function Coupons() {
               description="Expired reward coupons stay here for your history."
               coupons={expiredCoupons}
               status="expired"
+            />
+            <CouponGroup
+              heading="Revoked"
+              description="Rewards that were reconciled after a refund, cancellation, admin deletion, or coupon integrity repair."
+              coupons={revokedCoupons}
+              status="revoked"
             />
           </>
         )}
