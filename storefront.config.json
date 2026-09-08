@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "store": "jqtdgr-1y.myshopify.com",
+  "themePath": "theme",
+  "themes": {
+    "source": {
+      "id": "165550686451",
+      "name": "JILL",
+      "role": "MAIN",
+      "access": "read_only"
+    },
+    "development": {
+      "id": "165562941683",
+      "name": "Copy of JILL",
+      "role": "UNPUBLISHED",
+      "access": "read_write"
+    },
+    "backup": {
+      "id": "165562876147",
+      "name": "JILL - KEEP",
+      "role": "UNPUBLISHED",
+      "access": "do_not_modify"
+    }
+  },
+  "productSystem": {
+    "name": "JILL Product System",
+    "principles": [
+      "system_over_one_offs",
+      "single_owner_per_behavior",
+      "semantic_primitives",
+      "centralized_state",
+      "platform_contracts_are_boundaries",
+      "deterministic_rendering_no_ghost_ui",
+      "accessibility_and_responsiveness_by_default",
+      "housekeeping_is_part_of_every_change"
+    ],
+    "storefront": {
+      "requiredDirectories": [
+        "assets",
+        "blocks",
+        "config",
+        "layout",
+        "locales",
+        "sections",
+        "snippets",
+        "templates"
+      ],
+      "canonicalLayers": [
+        "shopify_contract",
+        "jill_design_system",
+        "jill_business_modules"
+      ],
+      "migrationState": "awaiting_exact_snapshot"
+    },
+    "customerAccount": {
+      "platform": "Shopify Customer Account UI extensions",
+      "sharedPresentationOwner": "shared/customer-account-ui",
+      "businessStateOwner": "feature_state_modules",
+      "rules": [
+        "platform_semantics_first",
+        "shared_action_and_status_primitives",
+        "no_reward_accounting_in_presentational_components",
+        "consistent_loading_disabled_error_confirmation_states"
+      ]
+    }
+  }
+}
