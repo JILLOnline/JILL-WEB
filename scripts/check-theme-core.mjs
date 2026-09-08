@@ -20,7 +20,8 @@ function walk(directory) {
 
 function stripLiquidForCss(source) {
   return source
-    .replace(/\{\{[\s\S]*?\}\}/g, '__JILL_LIQUID_VALUE__')
+    .replace(/^\s*\{\{[\s\S]*?\}\}\s*$/gm, '')
+    .replace(/\{\{[\s\S]*?\}\}/g, '0')
     .replace(/\{%[\s\S]*?%\}/g, '');
 }
 
