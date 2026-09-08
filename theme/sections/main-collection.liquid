@@ -3,6 +3,7 @@
   assign sort_label = 'collections.sort_by' | t
   assign sort_button_label = 'collections.apply_sort' | t
   assign empty_label = 'collections.empty' | t
+  assign sort_id = 'JillCollectionSort-' | append: section.id
 %}
 
 <section class="jill-collection jill-page-width">
@@ -17,7 +18,7 @@
     {% if collection.sort_options.size > 1 %}
       <form class="jill-collection__sort" action="{{ collection.url }}" method="get">
         {% render 'ui-select',
-          id: 'JillCollectionSort-' | append: section.id,
+          id: sort_id,
           name: 'sort_by',
           label: sort_label,
           selected: sort_by,
