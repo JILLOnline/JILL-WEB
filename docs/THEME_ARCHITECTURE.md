@@ -8,12 +8,25 @@
 JILL-WEB/
 ├── .github/                 CI and deployment only
 ├── backend/                 privileged/server-side business authority
+├── contracts/               machine-readable cross-layer product contracts
 ├── docs/                    constitutions, contracts, decisions, QA
 ├── extensions/              Shopify app/customer-account extensions
 ├── scripts/                 guards, tests, build/release tooling
 ├── shared/                  cross-extension code with an explicit owner
 └── theme/                   sellable Shopify Theme Core
 ```
+
+### `contracts/` — normalized machine contracts
+
+`contracts/` owns data shapes that must be shared conceptually across storefront features, migration tooling and future adapters without hard-coding a product family into an engine.
+
+Current owner:
+
+- `product-capability-profile.schema.json` — versioned normalized contract describing configurable product fields, field dependencies and shared behavior features such as personalization allocation, date planning and reference upload.
+
+A contract defines shape and semantics; it does not become a second runtime state owner. Shopify-specific storage/adapters normalize merchant data into the contract, and runtime feature engines consume the normalized result.
+
+No product family such as piñata, apparel, favor or gift receives its own schema. Those are profile configurations of the same contract.
 
 ## Shopify theme boundary
 
@@ -113,6 +126,16 @@ Visual settings are global tokens. Sections may choose a semantic variant or col
 ### `layout/` — document shell
 
 `theme.liquid` owns the HTML document, global asset loading, header/footer section groups, main landmark and Shopify platform hooks. It does not contain visual CSS or executable inline JavaScript.
+
+## Product capability data path
+
+The normalized direction is:
+
+`Shopify merchant data → one Shopify capability adapter → Product Capability Profile v1 → shared validation/progression/customization engines → UI primitives`
+
+The adapter may use Shopify-native custom data such as product metafields/metaobject references, but only one active authority may produce the normalized profile for a merchant implementation. Collection-name inference and product-family conditionals are not capability authorities.
+
+Theme Core remains fully functional for standard Shopify products when no custom capability profile is present.
 
 ## CSS cascade
 
