@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jill.local/contracts/custom-order-api.schema.json",
+  "title": "JILL Custom Order API",
+  "description": "Canonical transport contract for JILL Custom Order submission. The browser builds normalized request state; the backend validates, persists, deduplicates, notifies, and synchronizes privileged integrations.",
+  "oneOf": [
+    { "$ref": "#/$defs/submitRequest" },
+    { "$ref": "#/$defs/submitSuccess" },
+    { "$ref": "#/$defs/submitFailure" }
+  ],
+  "$defs": {
+    "scalar": {
+      "oneOf": [
+        { "type": "string", "maxLength": 5000 },
+        { "type": "number" },
+        { "type": "boolean" }
+      ]
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "value"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "value": {
+          "oneOf": [
+            { "$ref": "#/$defs/scalar" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": { "$ref": "#/$defs/scalar" }
+            }
+          ]
+        }
+      }
+    },
+    "customer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 320
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "preferred_contact": {
+          "enum": ["email", "phone", "text"]
+        }
+      }
+    },
+    "address": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "city": { "type": "string", "maxLength": 120 },
+        "state": { "type": "string", "maxLength": 120 },
+        "postal_code": { "type": "string", "maxLength": 32 },
+        "country_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    },
+    "planning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "event_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "date_needed": {
+          "type": "string",
+          "format": "date"
+        },
+        "fulfillment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "address": { "$ref": "#/$defs/address" },
+        "attributes": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/attribute" }
+        }
+      }
+    },
+    "allocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit_id"],
+      "properties": {
+        "unit_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "personalizationGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "allocations", "attributes"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "allocations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/allocation" }
+        },
+        "attributes": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/attribute" }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "product_id", "quantity", "attributes", "personalization_groups", "reference_ids"],
+      "properties": {
+        "item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "variant_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "collection_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "attributes": {
+          "type": "array",
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/attribute" }
+        },
+        "personalization_groups": {
+          "type": "array",
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/personalizationGroup" }
+        },
+        "reference_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "marketingConsent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["granted"],
+      "properties": {
+        "granted": { "type": "boolean" },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "submitRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "submission_id", "submitted_at", "customer", "planning", "items", "request_attributes", "reference_ids", "marketing_consent"],
+      "properties": {
+        "version": { "const": 1 },
+        "operation": { "const": "custom_order.submit" },
+        "submission_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "customer": { "$ref": "#/$defs/customer" },
+        "planning": { "$ref": "#/$defs/planning" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/item" }
+        },
+        "request_attributes": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/attribute" }
+        },
+        "reference_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "marketing_consent": { "$ref": "#/$defs/marketingConsent" }
+      }
+    },
+    "submitSuccess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "ok", "submission_id", "duplicate", "status"],
+      "properties": {
+        "version": { "const": 1 },
+        "operation": { "const": "custom_order.submit.result" },
+        "ok": { "const": true },
+        "submission_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+        },
+        "duplicate": { "type": "boolean" },
+        "status": { "const": "received" }
+      }
+    },
+    "submitFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "ok", "error"],
+      "properties": {
+        "version": { "const": 1 },
+        "operation": { "const": "custom_order.submit.result" },
+        "ok": { "const": false },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "retryable"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "retryable": { "type": "boolean" },
+            "field_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            }
+          }
+        }
+      }
+    }
+  }
+}
