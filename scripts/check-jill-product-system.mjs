@@ -4,6 +4,7 @@ import path from 'node:path';
 const configPath = 'storefront.config.json';
 const constitutionPath = 'docs/JILL_PRODUCT_SYSTEM.md';
 const syncWorkflowPath = '.github/workflows/sync-storefront-theme.yml';
+const customerAccountUiPath = 'shared/customer-account-ui.jsx';
 
 function fail(message) {
   throw new Error(`JILL Product System guard failed: ${message}`);
@@ -22,9 +23,26 @@ function requireDirectory(directoryPath) {
   }
 }
 
+function filesUnder(directoryPath, predicate) {
+  const files = [];
+  if (!fs.existsSync(directoryPath)) return files;
+
+  const stack = [directoryPath];
+  while (stack.length) {
+    const current = stack.pop();
+    for (const entry of fs.readdirSync(current, {withFileTypes: true})) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) stack.push(fullPath);
+      else if (!predicate || predicate(fullPath)) files.push(fullPath);
+    }
+  }
+  return files;
+}
+
 const config = JSON.parse(requireFile(configPath));
 const constitution = requireFile(constitutionPath);
 const syncWorkflow = requireFile(syncWorkflowPath);
+const customerAccountUi = requireFile(customerAccountUiPath);
 
 if (config.version !== 1) fail(`unsupported storefront config version ${config.version}`);
 if (config.store !== 'jqtdgr-1y.myshopify.com') fail('canonical Shopify store domain drifted');
@@ -71,6 +89,25 @@ for (const statement of [
   'Copy of JILL',
 ]) {
   if (!constitution.includes(statement)) fail(`constitution drifted: ${statement}`);
+}
+
+for (const primitive of ['JillAction', 'JillPillAction', 'JillStatusPill', 'JillPendingPill']) {
+  if (!customerAccountUi.includes(`export function ${primitive}`)) {
+    fail(`shared Customer Account UI is missing ${primitive}`);
+  }
+}
+
+const customerAccountSources = filesUnder('extensions', (filePath) =>
+  /extensions[\\/]jill-account-[^\\/]+[\\/]src[\\/].+\.jsx$/.test(filePath),
+);
+const directActionViolations = customerAccountSources.filter((filePath) => {
+  const sourceText = fs.readFileSync(filePath, 'utf8');
+  return /<s-(?:button|clickable)\b/.test(sourceText);
+});
+if (directActionViolations.length) {
+  fail(
+    `Customer Account actions must use shared JILL primitives, not raw s-button/s-clickable: ${directActionViolations.join(', ')}`,
+  );
 }
 
 if (!syncWorkflow.includes('SHOPIFY_THEME_TOKEN')) {
@@ -124,4 +161,6 @@ console.log('JILL Product System guard passed:', JSON.stringify({
   backupTheme: backup.id,
   migrationState: config.productSystem.storefront.migrationState,
   themeSnapshotPresent: themeExists,
+  customerAccountActionOwner: customerAccountUiPath,
+  customerAccountSourcesChecked: customerAccountSources.length,
 }));
