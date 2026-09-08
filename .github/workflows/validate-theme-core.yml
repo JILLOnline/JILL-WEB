@@ -10,6 +10,7 @@ on:
       - 'contracts/**'
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
+      - 'scripts/test-form-engine.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -19,6 +20,7 @@ on:
       - 'contracts/**'
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
+      - 'scripts/test-form-engine.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -49,6 +51,9 @@ jobs:
 
       - name: Run Theme Core architecture guard explicitly
         run: npm run check:theme
+
+      - name: Run universal form engine tests explicitly
+        run: npm run test:form-engine
 
       - name: Run Custom Order contract guard explicitly
         run: npm run check:custom-order
