@@ -1,5 +1,6 @@
 {% liquid
   assign active_group = ''
+  assign choose_option_label = 'products.product.choose_option' | t
 %}
 
 <div class="jill-product-customization" data-jill-product-customization>
@@ -88,7 +89,7 @@
             help: field.help,
             required: field.required,
             disabled: field_disabled,
-            placeholder: 'products.product.choose_option' | t,
+            placeholder: choose_option_label,
             options: field.options
           %}
 
