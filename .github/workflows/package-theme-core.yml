@@ -63,12 +63,11 @@ jobs:
           if git ls-remote --exit-code --heads origin "$ARTIFACT_BRANCH" >/dev/null 2>&1; then
             git fetch origin "$ARTIFACT_BRANCH:$ARTIFACT_BRANCH"
             git switch "$ARTIFACT_BRANCH"
-            git rm -rf .
           else
             git switch --orphan "$ARTIFACT_BRANCH"
-            git rm -rf .
           fi
 
+          git rm -rf . || true
           cp "$artifact_dir/jill-theme-core.zip" ./jill-theme-core.zip
           cp "$artifact_dir/source-commit.txt" ./source-commit.txt
           git add jill-theme-core.zip source-commit.txt
