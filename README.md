@@ -1,71 +1,76 @@
-# JILL-WEB — Customer Account Dashboard
+# JILL-WEB
 
-JILL's Shopify **New Customer Accounts** dashboard, built as Customer Account UI extensions on API version **2026-07**.
+JILL-WEB is the product repository for JILL's Shopify storefront platform.
 
-## What this repo adds
+It now has three explicit boundaries:
 
-### My JILL Dashboard
-Full-page extension (`customer-account.page.render`) with:
-- personalized greeting
-- `Subscribed ★` recognition
-- current custom-request status and dates
-- next celebration/reminder
-- saved theme, colors, products, preferences, contact method, and location
-- recent orders and statuses
-- quick links to Custom Order, Shop JILL, and Contact JILL
+- `theme/` — clean, reusable JILL Theme Core intended to become a merchant-customizable Shopify theme product
+- `extensions/` + `shared/` — JILL Shopify Customer Account/app presentation
+- `backend/` + rewards modules — JILL-specific privileged business authority and integrations
 
-### JILL Account Home
-Orders-index block (`customer-account.order-index.block.render`) that turns the default account landing area into a useful JILL home with:
-- greeting + subscriber badge
-- custom-request snapshot
-- next celebration
-- latest order
-- direct link to the full dashboard
+The current live Dawn-derived JILL storefront is a production/reference implementation. It is not the source code for Theme Core.
 
-## Shopify app
-This project is intended to attach to the already-installed **JILL Custom Form** app.
+## Start here
 
-- App handle: `jill-custom-form`
-- Client ID: `ebf1a69d82f46619d2f2945faab78afa`
-- Existing Admin scopes: `read_customers,write_customers`
+Before changing Theme Core, read `AGENTS.md`.
 
-Do not replace the app's existing configuration manually. Use Shopify CLI `app config link` to pull the current configuration first, then add the required Customer Account scopes.
+The canonical product-system documents live in `docs/`:
 
-## Required scopes
+- `JILL_THEME_CONSTITUTION.md` — permanent laws
+- `DOMAIN_OWNERSHIP.md` — one canonical owner per domain
+- `THEME_ARCHITECTURE.md` — file/layer structure
+- `FEATURE_CONTRACTS.md` — required storefront/form/account behavior
+- `DESIGN_SYSTEM.md` — shared visual language
+- `THEME_EDITOR_CONTRACT.md` — safe merchant customization boundary
+- `PROJECT_CONTEXT.md` — durable JILL history and proven requirements
+- `MIGRATION_BLUEPRINT.md` — production JILL → Theme Core migration procedure
+- `QA_CERTIFICATION.md` — proof-of-done gates
+- `DECISIONS.md` — dated architecture decisions and rationale
 
-The deployed app configuration must preserve the current Admin scopes and add:
+## Rule 1
 
-```toml
-[access_scopes]
-scopes = "read_customers,write_customers,customer_read_customers,customer_read_orders"
-```
+**No duplicates.**
 
-## Store-side data already prepared
+One behavior, visual rule, selector owner, state machine, helper, setting, component, integration adapter or business rule gets one canonical owner.
 
-The JILL store already has structured `jill.*` CUSTOMER metafield definitions with Customer Account API read access for the dashboard fields. The customer-account navigation has also been expanded to Orders, Profile, Custom Orders, Shop, and Contact JILL.
+Theme Core also rejects `!important`, styling outside canonical CSS assets, executable inline JavaScript, patch-style filenames, ghost UI and other architecture violations through `scripts/check-theme-core.mjs`.
 
-## Development
+## Development checks
+
+Install dependencies and run all repository postinstall guards:
 
 ```bash
 npm install
-npm run link -- --client-id ebf1a69d82f46619d2f2945faab78afa
-npm run validate
-npm run dev
 ```
 
-## Deploy
-
-After linking and merging the required scopes:
+Run Theme Core architecture guard directly:
 
 ```bash
-npm run deploy
+npm run check:theme
 ```
 
-After deployment:
-1. Approve any newly requested customer-account scopes on the store.
-2. Add **JILL Account Home** to the Orders page in the Checkout and accounts editor.
-3. Add **My JILL Dashboard** to the customer account navigation.
+Run Shopify Theme Check:
 
-## Important
+```bash
+npx shopify theme check --path theme
+```
 
-Customer Account UI extensions render through Shopify Polaris web components. They intentionally do not inject arbitrary CSS into `account.jillonlinestore.com`; the JILL logo, pink account branding, typography, and global account colors remain controlled by Shopify's Checkout and accounts branding editor.
+GitHub Actions runs Theme Core architecture validation and Shopify Theme Check for Theme Core changes.
+
+## Current Theme Core branch
+
+Active clean-build branch:
+
+`jill/theme-core`
+
+Production JILL should not be modified as a shortcut while Theme Core is being built. Migration happens feature-by-feature after contract and QA certification.
+
+## Existing JILL app/account systems
+
+Customer Account extensions remain in `extensions/`, with shared presentation primitives in `shared/customer-account-ui.jsx`. Shopify Customer Account platform restrictions remain authoritative; arbitrary storefront CSS is not injected into account surfaces.
+
+Rewards accounting/reconciliation/coupon creation remains outside the sellable theme. Storefront/account UI consumes authoritative reward state rather than reproducing the accounting engine.
+
+## Working loop
+
+`architecture check → canonical owner → implementation → housekeeping → automated guards → interaction/visual certification → clean commit`
