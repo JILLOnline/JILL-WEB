@@ -171,8 +171,9 @@ pack = productOptions.addAllocationGroup(pack, packProfile);
 assert.equal(pack.allocation.groups[0].id, 'group_1');
 assert.deepEqual(pack.firstIssue, {scope: 'allocation_group', reason: 'units', groupId: 'group_1'});
 
-const firstSix = pack.allocation.unallocatedUnitIds.slice(0, 6);
-pack = productOptions.setAllocationGroupUnits(pack, packProfile, 'group_1', firstSix);
+pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_1', 12);
+assert.equal(pack.allocation.groups[0].unitIds.length, 12);
+assert.equal(pack.allocation.unallocatedUnitIds.length, 0);
 assert.deepEqual(pack.firstIssue, {
   scope: 'allocation_group',
   reason: 'field',
@@ -180,23 +181,51 @@ assert.deepEqual(pack.firstIssue, {
   fieldId: 'flavor',
 });
 
+pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_1', 6);
+const firstSix = [...pack.allocation.groups[0].unitIds];
+assert.deepEqual(firstSix, [
+  'product:snacks::1',
+  'product:snacks::2',
+  'product:snacks::3',
+  'product:snacks::4',
+  'product:snacks::5',
+  'product:snacks::6',
+]);
+assert.equal(pack.allocation.unallocatedUnitIds.length, 6);
+
 pack = productOptions.setAllocationGroupValue(pack, packProfile, 'group_1', 'flavor', 'chips');
 assert.equal(pack.allocation.groups[0].complete, true);
-assert.equal(pack.allocation.unallocatedUnitIds.length, 6);
 assert.deepEqual(pack.firstIssue, {scope: 'allocation', reason: 'unallocated'});
 
 pack = productOptions.addAllocationGroup(pack, packProfile);
-const remainingSix = [...pack.allocation.unallocatedUnitIds];
-pack = productOptions.setAllocationGroupUnits(pack, packProfile, 'group_2', remainingSix);
+pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_2', 6);
 pack = productOptions.setAllocationGroupValue(pack, packProfile, 'group_2', 'flavor', 'gummies');
 assert.equal(pack.complete, true);
 assert.equal(pack.allocation.unallocatedUnitIds.length, 0);
 assert.deepEqual(pack.allocation.groups.map((group) => group.id), ['group_1', 'group_2']);
+assert.deepEqual(pack.allocation.groups[1].unitIds, [
+  'product:snacks::7',
+  'product:snacks::8',
+  'product:snacks::9',
+  'product:snacks::10',
+  'product:snacks::11',
+  'product:snacks::12',
+]);
 
 assert.throws(
   () => productOptions.setAllocationGroupUnits(pack, packProfile, 'group_2', ['product:snacks::1']),
   /unit product:snacks::1 is not available to group group_2/,
   'one customization unit may not be stolen from another group',
+);
+
+assert.throws(
+  () => productOptions.setAllocationGroupCount(pack, packProfile, 'group_1', 0),
+  /allocation group count must be a positive safe integer/,
+);
+assert.throws(
+  () => productOptions.setAllocationGroupCount(pack, packProfile, 'group_1', 7),
+  /allocation group group_1 count may not exceed 6/,
+  'a group count cannot claim units already owned by another group',
 );
 
 const completePayload = productOptions.toPayload(pack);
@@ -219,13 +248,10 @@ assert.equal(pack.allocation.groups[0].values.flavor, 'chips');
 assert.equal(pack.allocation.groups[1].values.flavor, 'gummies');
 assert.equal(pack.complete, false);
 
-const groupTwoExpanded = [
-  ...pack.allocation.groups[1].unitIds,
-  ...pack.allocation.unallocatedUnitIds,
-];
-pack = productOptions.setAllocationGroupUnits(pack, packProfile, 'group_2', groupTwoExpanded);
+pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_2', 18);
 assert.equal(pack.complete, true);
 assert.equal(pack.allocation.groups[1].unitIds.length, 18);
+assert.equal(pack.allocation.groups[1].unitIds[17], 'product:snacks::24');
 
 pack = productOptions.reconcile(pack, packProfile, 1);
 assert.equal(pack.eligibleUnitCount, 12);
