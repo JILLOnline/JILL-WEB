@@ -1,0 +1,77 @@
+{% liquid
+  assign sort_by = collection.sort_by | default: collection.default_sort_by
+  assign sort_label = 'collections.sort_by' | t
+  assign sort_button_label = 'collections.apply_sort' | t
+  assign empty_label = 'collections.empty' | t
+%}
+
+<section class="jill-collection jill-page-width">
+  <header class="jill-collection__header">
+    <div class="jill-collection__intro">
+      <h1 class="jill-collection__title">{{ collection.title }}</h1>
+      {% if section.settings.show_description and collection.description != blank %}
+        <div class="jill-collection__description rte">{{ collection.description }}</div>
+      {% endif %}
+    </div>
+
+    {% if collection.sort_options.size > 1 %}
+      <form class="jill-collection__sort" action="{{ collection.url }}" method="get">
+        {% render 'ui-select',
+          id: 'JillCollectionSort-' | append: section.id,
+          name: 'sort_by',
+          label: sort_label,
+          selected: sort_by,
+          options: collection.sort_options
+        %}
+        {% render 'ui-button',
+          type: 'submit',
+          label: sort_button_label,
+          variant: 'secondary'
+        %}
+      </form>
+    {% endif %}
+  </header>
+
+  {% paginate collection.products by section.settings.products_per_page %}
+    {% if collection.products_count == 0 %}
+      <p class="jill-collection__empty">{{ empty_label }}</p>
+    {% else %}
+      <div class="jill-product-grid">
+        {% for card_product in collection.products %}
+          {% render 'product-card', card_product: card_product, show_vendor: section.settings.show_vendor %}
+        {% endfor %}
+      </div>
+
+      {% render 'pagination', paginate: paginate %}
+    {% endif %}
+  {% endpaginate %}
+</section>
+
+{% schema %}
+{
+  "name": "Main collection",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show collection description",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show product vendor",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products per page",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    }
+  ]
+}
+{% endschema %}
