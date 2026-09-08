@@ -13,7 +13,7 @@
   <textarea
     class="jill-field__control jill-field__control--textarea"
     id="{{ field_id }}"
-    name="{{ name }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
     {% if placeholder != blank %}placeholder="{{ placeholder | escape }}"{% endif %}
     {% if maxlength != blank %}maxlength="{{ maxlength }}"{% endif %}
     {% if rows != blank %}rows="{{ rows }}"{% endif %}
