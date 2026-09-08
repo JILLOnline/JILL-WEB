@@ -14,13 +14,17 @@
       {% assign option_value = option.value | default: option %}
       {% assign option_label = option.label | default: option %}
       {% assign option_id = group_id | append: '-' | append: forloop.index %}
+      {% assign option_checked = false %}
+      {% if option_value == selected %}
+        {% assign option_checked = true %}
+      {% endif %}
       {% render 'ui-choice',
         type: 'radio',
         id: option_id,
         name: name,
         value: option_value,
         label: option_label,
-        checked: option_value == selected,
+        checked: option_checked,
         required: required,
         disabled: disabled
       %}
