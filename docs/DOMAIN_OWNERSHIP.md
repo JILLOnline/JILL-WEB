@@ -13,7 +13,8 @@ This registry answers one question: **where does this behavior belong?**
 | Internal reusable markup | `theme/snippets/*.liquid` | Shopify objects/settings | independent merchant configuration |
 | Product capability profile shape | `contracts/product-capability-profile.schema.json` | feature contract semantics | runtime state or merchant storage |
 | Shopify product capability adapter | one adapter owner when introduced | Shopify-native product metafields/metaobjects, capability schema | a second active capability authority |
-| Product capability resolution | one resolver owner when introduced | normalized Product Capability Profile | collection-name/product-family branches |
+| Product capability resolution | `theme/assets/jill-product-capabilities.js` | normalized Product Capability Profile input | Shopify storage details, collection-name/product-family branches, form state |
+| Product capability resolver behavioral tests | `scripts/test-product-capabilities.mjs` | resolver public API and capability contract invariants | storefront rendering or Shopify storage integration |
 | Universal browser state vocabulary, field validation and stage progression | `theme/assets/jill-form-engine.js` | Product Capability field contracts, normalized form values, declarative stage dependencies | product-specific validators, DOM-derived truth, separate product/custom-order cascade engines |
 | Universal form engine behavioral tests | `scripts/test-form-engine.mjs` | `jill-form-engine.js` public API | storefront implementation or business-specific behavior |
 | Product behavior | `theme/assets/jill-product.js` when introduced | Shopify product DOM/contracts, shared primitives | customization engine internals |
