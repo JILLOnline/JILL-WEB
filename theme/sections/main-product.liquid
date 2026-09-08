@@ -12,6 +12,12 @@
 
   assign product_form_id = 'JillProductForm-' | append: section.id
   assign quantity_id = 'JillProductQuantity-' | append: section.id
+  assign quantity_label = 'products.product.quantity' | t
+  assign add_to_cart_label = 'products.product.add_to_cart' | t
+  assign add_to_cart_disabled = false
+  unless current_variant.available
+    assign add_to_cart_disabled = true
+  endunless
 %}
 
 <section class="jill-product jill-page-width" data-jill-product>
@@ -68,7 +74,7 @@
       {% render 'ui-quantity',
         id: quantity_id,
         name: 'quantity',
-        label: 'products.product.quantity' | t,
+        label: quantity_label,
         value: 1,
         min: 1,
         step: 1,
@@ -97,8 +103,8 @@
       <div class="jill-product-form__actions">
         {% render 'ui-button',
           type: 'submit',
-          label: 'products.product.add_to_cart' | t,
-          disabled: current_variant.available == false
+          label: add_to_cart_label,
+          disabled: add_to_cart_disabled
         %}
       </div>
 
