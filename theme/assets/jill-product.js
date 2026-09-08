@@ -2,7 +2,7 @@
   'use strict';
 
   function controlsFor(wrapper) {
-    return Array.from(wrapper.querySelectorAll('input, select, textarea'));
+    return wrapper ? Array.from(wrapper.querySelectorAll('input, select, textarea')) : [];
   }
 
   function readFieldValue(field, wrapper) {
@@ -35,12 +35,10 @@
   }
 
   function setFieldAvailability(wrapper, available) {
+    if (!wrapper) return;
     wrapper.hidden = !available;
     wrapper.setAttribute('aria-hidden', available ? 'false' : 'true');
-    for (const control of controlsFor(wrapper)) {
-      control.disabled = !available;
-    }
-
+    for (const control of controlsFor(wrapper)) control.disabled = !available;
     if (!available) clearFieldError(wrapper);
   }
 
@@ -64,7 +62,17 @@
   }
 
   function firstFocusableControl(container) {
-    return controlsFor(container).find((control) => !control.disabled && control.type !== 'hidden');
+    if (!container) return null;
+    return Array.from(container.querySelectorAll('input, select, textarea, button, a[href]'))
+      .find((control) => !control.disabled && !control.hidden && control.type !== 'hidden') || null;
+  }
+
+  function appendRequiredMark(label) {
+    const mark = document.createElement('span');
+    mark.className = 'jill-field__required';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '*';
+    label.append(' ', mark);
   }
 
   function initializeProduct(root) {
@@ -81,7 +89,13 @@
     const quantityControl = form.querySelector('[name="quantity"]');
     const price = root.querySelector('[data-jill-product-price]');
     const profileNode = form.querySelector('[data-jill-product-capability-profile]');
+    const allocationMount = form.querySelector('[data-jill-product-options-allocation]');
+    const allocationGroupsNode = allocationMount?.querySelector('[data-jill-product-options-groups]') || null;
+    const allocationSummary = allocationMount?.querySelector('[data-jill-product-options-summary]') || null;
+    const allocationAddButton = allocationMount?.querySelector('[data-jill-product-options-add]') || null;
+    const productOptionsPayload = form.querySelector('[data-jill-product-options-payload]');
     let profile = null;
+    let allocatedOptionFieldIds = new Set();
     let productOptionsState = null;
     let attemptedSubmit = false;
 
@@ -121,6 +135,9 @@
       try {
         const source = profileNode.textContent.trim();
         profile = globalThis.JILLProductCapabilities.resolve(source);
+        allocatedOptionFieldIds = new Set(
+          globalThis.JILLProductCapabilities.getProductOptionsAllocationFieldIds(profile),
+        );
       } catch (error) {
         failConfiguration();
         return;
@@ -130,6 +147,7 @@
     const wrappers = new Map();
     if (profile) {
       for (const field of profile.fields) {
+        if (allocatedOptionFieldIds.has(field.id)) continue;
         const wrapper = form.querySelector(`[data-jill-capability-field="${field.id}"]`);
         if (!wrapper) {
           failConfiguration();
@@ -137,12 +155,24 @@
         }
         wrappers.set(field.id, wrapper);
       }
+
+      if (profile.groups.product_options.length > 0 && !productOptionsPayload) {
+        failConfiguration();
+        return;
+      }
+      if (allocatedOptionFieldIds.size > 0 && (!allocationMount || !allocationGroupsNode || !allocationAddButton)) {
+        failConfiguration();
+        return;
+      }
     }
 
     function readValues() {
       const values = Object.create(null);
       if (!profile) return values;
-      for (const field of profile.fields) values[field.id] = readFieldValue(field, wrappers.get(field.id));
+      for (const field of profile.fields) {
+        const wrapper = wrappers.get(field.id);
+        if (wrapper) values[field.id] = readFieldValue(field, wrapper);
+      }
       return values;
     }
 
@@ -172,8 +202,9 @@
       let clearedUnavailableValue = false;
 
       for (const result of validation.results) {
-        const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
         const wrapper = wrappers.get(result.id);
+        if (!wrapper) continue;
+        const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
         setFieldAvailability(wrapper, result.available);
         if (!result.available) {
           clearFieldValue(field, wrapper);
@@ -209,6 +240,266 @@
       }
     }
 
+    function ensureDefaultAllocationGroup(state) {
+      if (!state?.allocation.available || state.eligibleUnitCount < 1) return state;
+      if (state.allocation.groups.length > 0 || state.allocation.unallocatedUnitIds.length === 0) return state;
+
+      let next = globalThis.JILLProductOptions.addAllocationGroup(state, profile);
+      const group = next.allocation.groups[next.allocation.groups.length - 1];
+      return globalThis.JILLProductOptions.setAllocationGroupCount(
+        next,
+        profile,
+        group.id,
+        next.allocation.unallocatedUnitIds.length,
+      );
+    }
+
+    function allocationUnitLabel(count) {
+      const configured = profile?.features?.customizationUnits;
+      if (count === 1) return configured?.singularLabel || allocationMount?.dataset.itemLabel || 'item';
+      return configured?.pluralLabel || allocationMount?.dataset.itemsLabel || 'items';
+    }
+
+    function allocationGroupElement(groupId) {
+      if (!allocationGroupsNode) return null;
+      return Array.from(allocationGroupsNode.querySelectorAll('[data-jill-product-options-group]'))
+        .find((node) => node.dataset.jillProductOptionsGroup === groupId) || null;
+    }
+
+    function allocationFieldElement(groupId, fieldId) {
+      const group = allocationGroupElement(groupId);
+      if (!group) return null;
+      return Array.from(group.querySelectorAll('[data-jill-product-options-field]'))
+        .find((node) => node.dataset.jillProductOptionsField === fieldId) || null;
+    }
+
+    function allocationCountElement(groupId) {
+      return allocationGroupElement(groupId)?.querySelector('[data-jill-product-options-count]') || null;
+    }
+
+    function commitProductOptions(nextState) {
+      productOptionsState = nextState;
+      evaluateCustomization(attemptedSubmit);
+    }
+
+    function createAllocationCountField(group, groupIndex) {
+      const shell = document.createElement('div');
+      shell.className = 'jill-field';
+      shell.dataset.jillProductOptionsCountField = group.id;
+
+      const id = `JillProductOptionCount-${root.dataset.jillProductId}-${group.id}`;
+      const label = document.createElement('label');
+      label.className = 'jill-field__label';
+      label.htmlFor = id;
+      label.textContent = `${allocationMount.dataset.countLabel} ${allocationUnitLabel(group.unitIds.length)}`;
+      appendRequiredMark(label);
+
+      const input = document.createElement('input');
+      input.className = 'jill-field__control';
+      input.id = id;
+      input.type = 'number';
+      input.inputMode = 'numeric';
+      input.min = '1';
+      input.max = String(group.unitIds.length + productOptionsState.allocation.unallocatedUnitIds.length);
+      input.step = '1';
+      input.value = String(group.unitIds.length);
+      input.required = true;
+      input.dataset.jillProductOptionsCount = group.id;
+      input.setAttribute('aria-label', `${allocationMount.dataset.groupLabel} ${groupIndex + 1}: ${allocationMount.dataset.countLabel}`);
+      input.addEventListener('change', () => {
+        const count = Number(input.value);
+        try {
+          commitProductOptions(
+            globalThis.JILLProductOptions.setAllocationGroupCount(
+              productOptionsState,
+              profile,
+              group.id,
+              count,
+            ),
+          );
+        } catch (error) {
+          renderProductOptions();
+        }
+      });
+
+      shell.append(label, input);
+      return shell;
+    }
+
+    function createAllocationSelect(field, group) {
+      const shell = document.createElement('div');
+      shell.className = 'jill-field';
+      shell.dataset.jillProductOptionsField = field.id;
+
+      const id = `JillProductOption-${root.dataset.jillProductId}-${group.id}-${field.id}`;
+      const label = document.createElement('label');
+      label.className = 'jill-field__label';
+      label.htmlFor = id;
+      label.textContent = field.label;
+      if (field.required) appendRequiredMark(label);
+
+      const select = document.createElement('select');
+      select.className = 'jill-field__control';
+      select.id = id;
+      if (field.required) select.required = true;
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.disabled = true;
+      placeholder.textContent = status?.dataset.chooseOptionLabel || 'Choose an option';
+      select.append(placeholder);
+
+      for (const option of field.options || []) {
+        const optionNode = document.createElement('option');
+        optionNode.value = option.value;
+        optionNode.textContent = option.label;
+        select.append(optionNode);
+      }
+
+      select.value = group.values[field.id] || '';
+      if (!select.value) placeholder.selected = true;
+      select.addEventListener('change', () => {
+        commitProductOptions(
+          globalThis.JILLProductOptions.setAllocationGroupValue(
+            productOptionsState,
+            profile,
+            group.id,
+            field.id,
+            select.value,
+          ),
+        );
+      });
+
+      shell.append(label, select);
+      return shell;
+    }
+
+    function createAllocationRadio(field, group) {
+      const shell = document.createElement('fieldset');
+      shell.className = 'jill-field';
+      shell.dataset.jillProductOptionsField = field.id;
+
+      const legend = document.createElement('legend');
+      legend.className = 'jill-field__label';
+      legend.textContent = field.label;
+      if (field.required) appendRequiredMark(legend);
+      shell.append(legend);
+
+      const choices = document.createElement('div');
+      choices.className = 'jill-choice-group';
+
+      for (const [index, option] of (field.options || []).entries()) {
+        const id = `JillProductOption-${root.dataset.jillProductId}-${group.id}-${field.id}-${index + 1}`;
+        const label = document.createElement('label');
+        label.className = 'jill-choice';
+        label.htmlFor = id;
+
+        const input = document.createElement('input');
+        input.className = 'jill-choice__control';
+        input.id = id;
+        input.type = 'radio';
+        input.value = option.value;
+        input.checked = group.values[field.id] === option.value;
+        input.addEventListener('change', () => {
+          if (!input.checked) return;
+          commitProductOptions(
+            globalThis.JILLProductOptions.setAllocationGroupValue(
+              productOptionsState,
+              profile,
+              group.id,
+              field.id,
+              input.value,
+            ),
+          );
+        });
+
+        const text = document.createElement('span');
+        text.className = 'jill-choice__label';
+        text.textContent = option.label;
+        label.append(input, text);
+        choices.append(label);
+      }
+
+      shell.append(choices);
+      return shell;
+    }
+
+    function renderAllocationGroup(group, groupIndex) {
+      const container = document.createElement('div');
+      container.className = 'jill-product-customization__group';
+      container.dataset.jillProductOptionsGroup = group.id;
+
+      const heading = document.createElement('h5');
+      heading.className = 'jill-product-customization__group-title';
+      heading.textContent = `${allocationMount.dataset.groupLabel} ${groupIndex + 1}`;
+      container.append(heading, createAllocationCountField(group, groupIndex));
+
+      const results = Object.fromEntries(group.results.map((result) => [result.id, result]));
+      for (const fieldId of productOptionsState.allocation.fieldIds) {
+        const result = results[fieldId];
+        if (!result?.available) continue;
+        const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
+        const fieldNode = field.kind === 'radio'
+          ? createAllocationRadio(field, group)
+          : createAllocationSelect(field, group);
+        container.append(fieldNode);
+      }
+
+      if (productOptionsState.allocation.groups.length > 1) {
+        const remove = document.createElement('button');
+        remove.className = 'jill-button';
+        remove.dataset.variant = 'secondary';
+        remove.type = 'button';
+        remove.textContent = allocationMount.dataset.removeLabel;
+        remove.addEventListener('click', () => {
+          commitProductOptions(
+            globalThis.JILLProductOptions.removeAllocationGroup(
+              productOptionsState,
+              profile,
+              group.id,
+            ),
+          );
+        });
+        container.append(remove);
+      }
+
+      return container;
+    }
+
+    function syncProductOptionsPayload() {
+      if (!productOptionsPayload) return;
+      productOptionsPayload.value = productOptionsState
+        ? JSON.stringify(globalThis.JILLProductOptions.toPayload(productOptionsState))
+        : '';
+    }
+
+    function renderProductOptions() {
+      syncProductOptionsPayload();
+      if (!allocationMount || !allocationGroupsNode || !allocationAddButton) return;
+
+      const available = Boolean(productOptionsState?.allocation.available);
+      allocationMount.hidden = !available;
+      allocationMount.setAttribute('aria-hidden', available ? 'false' : 'true');
+      if (!available) {
+        allocationGroupsNode.replaceChildren();
+        if (allocationSummary) allocationSummary.textContent = '';
+        allocationAddButton.hidden = true;
+        return;
+      }
+
+      allocationGroupsNode.replaceChildren(
+        ...productOptionsState.allocation.groups.map(renderAllocationGroup),
+      );
+
+      const unallocated = productOptionsState.allocation.unallocatedUnitIds.length;
+      const assigned = productOptionsState.eligibleUnitCount - unallocated;
+      const unitLabel = allocationUnitLabel(productOptionsState.eligibleUnitCount);
+      if (allocationSummary) {
+        allocationSummary.textContent = `${assigned} ${allocationMount.dataset.ofLabel} ${productOptionsState.eligibleUnitCount} ${unitLabel} ${allocationMount.dataset.assignedLabel}${unallocated ? ` — ${unallocated} ${allocationMount.dataset.unassignedLabel}` : ''}`;
+      }
+      allocationAddButton.hidden = unallocated === 0;
+    }
+
     function firstOtherBlockingResult(validation) {
       return validation.results.find((result) => {
         const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
@@ -225,8 +516,25 @@
 
     function clearAllErrors() {
       for (const wrapper of wrappers.values()) clearFieldError(wrapper);
+      for (const node of allocationGroupsNode?.querySelectorAll('[data-jill-product-options-field], [data-jill-product-options-count-field]') || []) {
+        clearFieldError(node);
+      }
       const quantity = quantityContainer();
       if (quantity) clearFieldError(quantity);
+    }
+
+    function optionIssueTarget() {
+      const issue = productOptionsState?.firstIssue;
+      if (!issue) return null;
+      if (issue.scope === 'singleton' && issue.fieldId) return wrappers.get(issue.fieldId) || null;
+      if (issue.scope === 'allocation_group' && issue.reason === 'field') {
+        return allocationFieldElement(issue.groupId, issue.fieldId);
+      }
+      if (issue.scope === 'allocation_group' && issue.reason === 'units') {
+        return allocationCountElement(issue.groupId)?.closest('.jill-field') || null;
+      }
+      if (issue.scope === 'allocation' && issue.reason === 'unallocated') return allocationAddButton;
+      return allocationMount;
     }
 
     function showBlockingError(quantity, otherBlocking) {
@@ -242,10 +550,11 @@
 
       if (productOptionsState && !productOptionsState.complete) {
         const field = optionIssueField();
-        const wrapper = field ? wrappers.get(field.id) : null;
-        if (wrapper && !wrapper.hidden) markFieldError(wrapper);
-        setStatus(`${prefix} ${field?.label || 'Product options'}`);
-        return wrapper && !wrapper.hidden ? firstFocusableControl(wrapper) : null;
+        const target = optionIssueTarget();
+        if (target?.matches?.('.jill-field') || target?.querySelector?.('.jill-field')) markFieldError(target);
+        const allocationTitle = allocationMount?.querySelector('.jill-product-customization__group-title')?.textContent;
+        setStatus(`${prefix} ${field?.label || allocationTitle || 'Product options'}`);
+        return firstFocusableControl(target) || (target?.focus ? target : null);
       }
 
       if (otherBlocking) {
@@ -272,12 +581,20 @@
       }
 
       const merchandiseQuantity = readMerchandiseQuantity();
-      const nextProductOptionsState = buildProductOptions(synced.values, merchandiseQuantity);
+      let nextProductOptionsState = buildProductOptions(synced.values, merchandiseQuantity);
       if (merchandiseQuantity !== null && !nextProductOptionsState) {
         setStatus(status?.dataset.configError || 'This product is temporarily unavailable.');
         return {valid: false, focusControl: null};
       }
+
+      try {
+        nextProductOptionsState = ensureDefaultAllocationGroup(nextProductOptionsState);
+      } catch (error) {
+        setStatus(status?.dataset.configError || 'This product is temporarily unavailable.');
+        return {valid: false, focusControl: null};
+      }
       productOptionsState = nextProductOptionsState;
+      renderProductOptions();
 
       const otherBlocking = firstOtherBlockingResult(synced.validation);
       const valid = merchandiseQuantity !== null
@@ -309,6 +626,25 @@
         if (event.target !== quantityControl && !event.target.closest('[data-jill-capability-field]')) return;
         evaluateCustomization(attemptedSubmit);
       });
+
+      if (allocationAddButton) {
+        allocationAddButton.addEventListener('click', () => {
+          if (!productOptionsState?.allocation.available || productOptionsState.allocation.unallocatedUnitIds.length === 0) return;
+          try {
+            let next = globalThis.JILLProductOptions.addAllocationGroup(productOptionsState, profile);
+            const group = next.allocation.groups[next.allocation.groups.length - 1];
+            next = globalThis.JILLProductOptions.setAllocationGroupCount(
+              next,
+              profile,
+              group.id,
+              next.allocation.unallocatedUnitIds.length,
+            );
+            commitProductOptions(next);
+          } catch (error) {
+            failConfiguration();
+          }
+        });
+      }
 
       evaluateCustomization(false);
     }
