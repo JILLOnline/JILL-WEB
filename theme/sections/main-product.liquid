@@ -20,7 +20,11 @@
   endunless
 %}
 
-<section class="jill-product jill-page-width" data-jill-product>
+<section
+  class="jill-product jill-page-width"
+  data-jill-product
+  data-jill-product-id="{{ product.id }}"
+>
   <div class="jill-product__media">
     {% if product.featured_image != blank %}
       {{ product.featured_image | image_url: width: 1400 | image_tag: class: 'jill-product__image', loading: 'eager', fetchpriority: 'high', widths: '480, 720, 960, 1200, 1400', sizes: '(min-width: 900px) 50vw, 100vw' }}
@@ -97,6 +101,7 @@
         aria-live="polite"
         data-jill-product-status
         data-error-prefix="{{ 'products.product.complete_field' | t | escape }}"
+        data-quantity-label="{{ quantity_label | escape }}"
         data-config-error="{{ 'products.product.configuration_error' | t | escape }}"
       ></p>
 
