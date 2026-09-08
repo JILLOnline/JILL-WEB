@@ -9,6 +9,8 @@
     'reference',
   ]);
   const GROUP_SET = new Set(GROUPS);
+  const ALLOCATED_OPTION_KINDS = new Set(['select', 'radio']);
+  const EMPTY_FIELD_IDS = Object.freeze([]);
 
   function fail(message) {
     throw new Error(`JILL product capabilities: ${message}`);
@@ -121,6 +123,52 @@
     }
   }
 
+  function validateProductOptionsAllocationFeature(feature, byId) {
+    if (!feature) return new Set();
+    if (!Array.isArray(feature.fieldIds) || feature.fieldIds.length === 0) {
+      fail('productOptionsAllocation.fieldIds must be a non-empty array');
+    }
+
+    const allocated = new Set();
+    for (const fieldId of feature.fieldIds) {
+      if (allocated.has(fieldId)) fail(`productOptionsAllocation contains duplicate field ${fieldId}`);
+      const field = assertFieldReference(byId, fieldId, 'productOptionsAllocation');
+      if (field.group !== 'product_options') {
+        fail(`productOptionsAllocation field ${fieldId} must belong to product_options group`);
+      }
+      if (!ALLOCATED_OPTION_KINDS.has(field.kind)) {
+        fail(`productOptionsAllocation field ${fieldId} must be a select or radio field`);
+      }
+      if (!Array.isArray(field.options) || field.options.length === 0) {
+        fail(`productOptionsAllocation field ${fieldId} must define options`);
+      }
+
+      const optionValues = field.options.map((option) => option?.value);
+      if (new Set(optionValues).size !== optionValues.length) {
+        fail(`productOptionsAllocation field ${fieldId} has duplicate option values`);
+      }
+      allocated.add(fieldId);
+    }
+
+    return allocated;
+  }
+
+  function validateProductOptionsDependencies(fields, byId, allocatedFieldIds) {
+    for (const field of fields) {
+      if (field.group !== 'product_options') continue;
+
+      for (const condition of field.visibleWhen?.conditions || []) {
+        const dependency = byId[condition.field];
+        if (dependency.group !== 'product_options') {
+          fail(`product_options field ${field.id} may only depend on product_options fields`);
+        }
+        if (!allocatedFieldIds.has(field.id) && allocatedFieldIds.has(dependency.id)) {
+          fail(`singleton Product Options field ${field.id} may not depend on allocated field ${dependency.id}`);
+        }
+      }
+    }
+  }
+
   function validatePersonalizationFeature(feature, byId) {
     if (!feature) return;
     if (!Array.isArray(feature.fieldIds)) fail('personalizationAllocation.fieldIds must be an array');
@@ -148,12 +196,14 @@
     if (field.kind !== 'file') fail(`referenceUpload field ${feature.fieldId} must be a file field`);
   }
 
-  function validateFeatures(features, byId) {
+  function validateFeatures(features, fields, byId) {
     if (!features || typeof features !== 'object' || Array.isArray(features)) {
       fail('features must be an object');
     }
 
     validateCustomizationUnitsFeature(features.customizationUnits);
+    const allocatedFieldIds = validateProductOptionsAllocationFeature(features.productOptionsAllocation, byId);
+    validateProductOptionsDependencies(fields, byId, allocatedFieldIds);
     validatePersonalizationFeature(features.personalizationAllocation, byId);
     validateDatePlanningFeature(features.datePlanning, byId);
     validateReferenceUploadFeature(features.referenceUpload, byId);
@@ -168,7 +218,7 @@
     const {byId, byGroup} = collectFields(profile);
     assertConditionReferences(profile.fields, byId);
     assertNoVisibilityCycles(profile.fields, byId);
-    validateFeatures(profile.features, byId);
+    validateFeatures(profile.features, profile.fields, byId);
 
     const normalizedFields = profile.fields.map((field) => ({...field}));
     const normalizedById = Object.fromEntries(normalizedFields.map((field) => [field.id, field]));
@@ -199,6 +249,10 @@
     return resolvedProfile?.features?.customizationUnits?.unitsPerQuantity ?? 1;
   }
 
+  function getProductOptionsAllocationFieldIds(resolvedProfile) {
+    return resolvedProfile?.features?.productOptionsAllocation?.fieldIds || EMPTY_FIELD_IDS;
+  }
+
   const api = Object.freeze({
     SUPPORTED_VERSION,
     GROUPS,
@@ -206,6 +260,7 @@
     getField,
     getFieldsForGroup,
     getCustomizationUnitsPerQuantity,
+    getProductOptionsAllocationFieldIds,
   });
 
   Object.defineProperty(globalThis, 'JILLProductCapabilities', {
