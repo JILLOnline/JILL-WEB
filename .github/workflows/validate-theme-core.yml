@@ -12,6 +12,7 @@ on:
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
       - 'scripts/test-product-capabilities.mjs'
+      - 'scripts/test-product-options.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -23,6 +24,7 @@ on:
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
       - 'scripts/test-product-capabilities.mjs'
+      - 'scripts/test-product-options.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -59,6 +61,9 @@ jobs:
 
       - name: Run product capability resolver tests explicitly
         run: npm run test:product-capabilities
+
+      - name: Run Product Options tests explicitly
+        run: npm run test:product-options
 
       - name: Run Custom Order contract guard explicitly
         run: npm run check:custom-order
