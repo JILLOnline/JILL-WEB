@@ -1,0 +1,130 @@
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant
+  if current_variant == blank
+    assign current_variant = product.variants.first
+  endif
+
+  assign capability_profile = blank
+  assign capability_metafield = product.metafields.custom.jill_product_capabilities
+  if capability_metafield != blank and capability_metafield.type == 'json'
+    assign capability_profile = capability_metafield.value
+  endif
+
+  assign product_form_id = 'JillProductForm-' | append: section.id
+  assign quantity_id = 'JillProductQuantity-' | append: section.id
+%}
+
+<section class="jill-product jill-page-width" data-jill-product>
+  <div class="jill-product__media">
+    {% if product.featured_image != blank %}
+      {{ product.featured_image | image_url: width: 1400 | image_tag: class: 'jill-product__image', loading: 'eager', fetchpriority: 'high', widths: '480, 720, 960, 1200, 1400', sizes: '(min-width: 900px) 50vw, 100vw' }}
+    {% endif %}
+  </div>
+
+  <div class="jill-product__details">
+    {% if section.settings.show_vendor and product.vendor != blank %}
+      <p class="jill-product__vendor">{{ product.vendor }}</p>
+    {% endif %}
+
+    <h1 class="jill-product__title">{{ product.title }}</h1>
+
+    <p class="jill-product__price" data-jill-product-price>
+      {{ current_variant.price | money }}
+    </p>
+
+    {% if section.settings.show_description and product.description != blank %}
+      <div class="jill-product__description rte">{{ product.description }}</div>
+    {% endif %}
+
+    {% form 'product', product, id: product_form_id, class: 'jill-product-form', novalidate: 'novalidate' %}
+      {% if product.has_only_default_variant %}
+        <input type="hidden" name="id" value="{{ current_variant.id }}">
+      {% else %}
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillProductVariant-{{ section.id }}">
+            {{ 'products.product.variant' | t }}
+          </label>
+          <select
+            class="jill-field__control"
+            id="JillProductVariant-{{ section.id }}"
+            name="id"
+            data-jill-variant-select
+          >
+            {% for variant in product.variants %}
+              <option
+                value="{{ variant.id }}"
+                data-price-label="{{ variant.price | money | escape }}"
+                data-available="{{ variant.available }}"
+                {% if variant.id == current_variant.id %}selected{% endif %}
+                {% unless variant.available %}disabled{% endunless %}
+              >
+                {{ variant.title }}{% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      {% render 'ui-quantity',
+        id: quantity_id,
+        name: 'quantity',
+        label: 'products.product.quantity' | t,
+        value: 1,
+        min: 1,
+        step: 1,
+        required: true
+      %}
+
+      {% if capability_profile != blank %}
+        <input
+          type="hidden"
+          name="properties[_jill_profile]"
+          value="{{ capability_profile.id }}@{{ capability_profile.version }}"
+        >
+        {% render 'product-capability-fields', capability_profile: capability_profile, section_id: section.id %}
+        <script type="application/json" data-jill-product-capability-profile>{{ capability_profile | json }}</script>
+      {% endif %}
+
+      <p
+        class="jill-product-form__status"
+        role="status"
+        aria-live="polite"
+        data-jill-product-status
+        data-error-prefix="{{ 'products.product.complete_field' | t | escape }}"
+        data-config-error="{{ 'products.product.configuration_error' | t | escape }}"
+      ></p>
+
+      <div class="jill-product-form__actions">
+        {% render 'ui-button',
+          type: 'submit',
+          label: 'products.product.add_to_cart' | t,
+          disabled: current_variant.available == false
+        %}
+      </div>
+
+      {% if capability_profile == blank and current_variant.available %}
+        <div class="jill-product-form__accelerated">{{ form | payment_button }}</div>
+      {% endif %}
+    {% endform %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Main product",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "Show description",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
