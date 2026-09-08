@@ -11,6 +11,7 @@ on:
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
+      - 'scripts/test-product-capabilities.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -21,6 +22,7 @@ on:
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
+      - 'scripts/test-product-capabilities.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -54,6 +56,9 @@ jobs:
 
       - name: Run universal form engine tests explicitly
         run: npm run test:form-engine
+
+      - name: Run product capability resolver tests explicitly
+        run: npm run test:product-capabilities
 
       - name: Run Custom Order contract guard explicitly
         run: npm run check:custom-order
