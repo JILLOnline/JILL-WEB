@@ -12,7 +12,7 @@
   <select
     class="jill-field__control"
     id="{{ field_id }}"
-    name="{{ name }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
     {% if required %}required{% endif %}
     {% if disabled %}disabled{% endif %}
     {% if error != blank %}aria-invalid="true" aria-describedby="{{ field_id }}-error"{% elsif help != blank %}aria-describedby="{{ field_id }}-help"{% endif %}
