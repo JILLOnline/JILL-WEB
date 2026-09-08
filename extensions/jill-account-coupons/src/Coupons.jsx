@@ -4,6 +4,7 @@ import {useEffect, useState} from 'preact/hooks';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
+const COUPONS_REFRESH_MS = 25000;
 
 const QUERY = `
   query JillCoupons {
@@ -167,22 +168,32 @@ function Coupons() {
   useEffect(() => {
     let active = true;
 
-    loadCoupons()
-      .then((nextCoupons) => {
-        if (!active) return;
-        setCoupons(nextCoupons);
-        setError('');
-      })
-      .catch((loadError) => {
-        console.warn('JILL coupons load error', loadError);
-        if (active) setError(loadError?.message || 'Unable to load your coupons right now.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    const refreshCoupons = (initial = false) => {
+      loadCoupons()
+        .then((nextCoupons) => {
+          if (!active) return;
+          setCoupons(nextCoupons);
+          setError('');
+        })
+        .catch((loadError) => {
+          console.warn('JILL coupons load error', loadError);
+          if (active && initial) {
+            setError(loadError?.message || 'Unable to load your coupons right now.');
+          }
+        })
+        .finally(() => {
+          if (active && initial) setLoading(false);
+        });
+    };
+
+    refreshCoupons(true);
+
+    // Keep an already-open wallet synchronized with backend reconciliation.
+    const refreshTimer = setInterval(() => refreshCoupons(false), COUPONS_REFRESH_MS);
 
     return () => {
       active = false;
+      clearInterval(refreshTimer);
     };
   }, []);
 
