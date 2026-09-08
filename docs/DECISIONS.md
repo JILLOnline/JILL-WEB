@@ -158,6 +158,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Later owner changes rerun relevant architecture, behavior, visual, accessibility and Theme Editor gates.
 
+## 2026-09-08 — Commerce quantity and customization units are distinct
+
+**Decision:** Shopify merchandise quantity remains the sole commerce quantity owner. A Product Capability Profile may optionally declare `features.customizationUnits.unitsPerQuantity`; the capability resolver owns the default value of `1` when that feature is absent. Customization engines derive eligible physical customization units from merchandise quantity and the resolved multiplier.
+
+**Why:** Some JILL products are sold as packs. One Shopify quantity of a 12-count favor is one merchandise unit but twelve physical units that may need Product Options or Personalization allocation. Inferring this from product titles or letting each feature invent its own pack math would create brittle duplicate quantity systems.
+
+**Consequence:** Product Options and Personalization consume the same resolved customization-unit multiplier and may never infer counts from product titles, collection names, or duplicated family logic. They cannot mutate Shopify quantity. Products without pack configuration behave as one customization unit per merchandise quantity.
+
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
