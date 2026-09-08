@@ -7,15 +7,19 @@ on:
       - jill/theme-core
     paths:
       - 'theme/**'
+      - 'contracts/**'
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
+      - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
   pull_request:
     paths:
       - 'theme/**'
+      - 'contracts/**'
       - 'docs/**'
       - 'scripts/check-theme-core.mjs'
+      - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
 
@@ -45,6 +49,9 @@ jobs:
 
       - name: Run Theme Core architecture guard explicitly
         run: npm run check:theme
+
+      - name: Run Custom Order contract guard explicitly
+        run: npm run check:custom-order
 
       - name: Run Shopify Theme Check
         run: npx shopify theme check --path theme
