@@ -118,8 +118,7 @@
     gap: var(--jill-space-unit);
   }
 
-  .jill-product-customization__title,
-  .jill-product-customization__group-title {
+  .jill-product-customization__title {
     margin: 0;
   }
 
@@ -135,6 +134,7 @@
   }
 
   .jill-product-customization__group-title {
+    margin: 0;
     font-size: 1rem;
   }
 
