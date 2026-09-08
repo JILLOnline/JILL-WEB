@@ -15,12 +15,14 @@ export function JillAction({
   onClick,
   disabled = false,
   accessibilityLabel,
+  slot,
   children,
 }) {
   const variant = role === 'primary' ? 'primary' : 'secondary';
 
   return (
     <s-button
+      slot={slot}
       variant={variant}
       href={href}
       disabled={disabled}
