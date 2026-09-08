@@ -247,6 +247,8 @@ const required = [
   'sections/custom-liquid.liquid',
   'sections/main-product.liquid',
   'sections/main-cart.liquid',
+  'sections/main-collection.liquid',
+  'sections/main-search.liquid',
   'snippets/ui-button.liquid',
   'snippets/ui-field.liquid',
   'snippets/ui-textarea.liquid',
@@ -256,13 +258,17 @@ const required = [
   'snippets/ui-quantity.liquid',
   'snippets/ui-file.liquid',
   'snippets/product-capability-fields.liquid',
+  'snippets/product-card.liquid',
+  'snippets/pagination.liquid',
   'snippets/meta-tags.liquid',
   'templates/product.json',
   'templates/cart.json',
+  'templates/collection.json',
+  'templates/search.json',
 ];
 
 for (const relativePath of required) {
   if (!fs.existsSync(path.join(THEME_ROOT, relativePath))) fail(`required canonical owner is missing: theme/${relativePath}`);
 }
 
-console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine, capability resolver, product commerce and native cart owners present.`);
+console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, universal form engine, capability resolver, product commerce, native cart and discovery owners present.`);
