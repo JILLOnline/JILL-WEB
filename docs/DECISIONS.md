@@ -126,6 +126,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Rewards keeps its watchdog/reconciliation pattern, and future durable event-driven domains adopt the principle without cloning Rewards-specific code.
 
+## 2026-09-08 — One universal form engine owns state, validation and progression
+
+**Decision:** `theme/assets/jill-form-engine.js` is the single runtime owner for the common browser state vocabulary, field validation, conditional availability and stage progression used by product customization and Custom Order flows.
+
+**Why:** Validation and cascading progression are tightly coupled through the same field state. Splitting them into page-specific or product-specific engines would recreate the duplicate-logic problem that Theme Core is intended to eliminate.
+
+**Consequence:** Product Page, Product Options, Personalization and Custom Order configure/consume this engine. They may add domain-specific orchestration, but may not create another required-field validator or cascade engine.
+
 ## 2026-09-08 — Certification is commit-specific
 
 **Decision:** A feature is `CERTIFIED` only after automated and manual gates pass on the implementation commit.
