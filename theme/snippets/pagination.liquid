@@ -1,0 +1,30 @@
+{% if paginate.pages > 1 %}
+  <nav class="jill-pagination" aria-label="{{ 'general.pagination.label' | t }}">
+    {% if paginate.previous %}
+      <a class="jill-pagination__link" href="{{ paginate.previous.url }}" rel="prev">
+        {{ 'general.pagination.previous' | t }}
+      </a>
+    {% endif %}
+
+    <ol class="jill-pagination__pages" role="list">
+      {% for part in paginate.parts %}
+        <li>
+          {% if part.is_link %}
+            <a class="jill-pagination__link" href="{{ part.url }}">{{ part.title }}</a>
+          {% else %}
+            <span
+              class="jill-pagination__current"
+              {% if part.title == paginate.current_page %}aria-current="page"{% endif %}
+            >{{ part.title }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+
+    {% if paginate.next %}
+      <a class="jill-pagination__link" href="{{ paginate.next.url }}" rel="next">
+        {{ 'general.pagination.next' | t }}
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}
