@@ -540,7 +540,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                   {isThisPending
                     ? ' · Creating coupon…'
                     : !isAvailable
-                      ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'point' : 'points'} to unlock`
+                      ? ` · ${pointsRemaining} ${pointsRemaining === 1 ? 'pt' : 'pts'} left`
                       : ''}
                 </s-text>
               )}
