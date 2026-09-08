@@ -7,7 +7,7 @@
   <input
     class="jill-choice__control"
     id="{{ choice_id }}"
-    name="{{ name }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
     type="{{ choice_type }}"
     value="{{ value | default: '1' | escape }}"
     {% if checked %}checked{% endif %}
