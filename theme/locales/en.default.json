@@ -20,5 +20,20 @@
         "reference": "References"
       }
     }
+  },
+  "cart": {
+    "title": "Your cart",
+    "item_count": {
+      "one": "{{ count }} item",
+      "other": "{{ count }} items"
+    },
+    "empty": "Your cart is empty.",
+    "continue_shopping": "Continue shopping",
+    "quantity": "Quantity",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "checkout_note": "Taxes, shipping, and discounts are calculated at checkout.",
+    "update": "Update cart",
+    "checkout": "Checkout"
   }
 }
