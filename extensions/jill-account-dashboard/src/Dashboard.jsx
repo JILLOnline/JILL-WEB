@@ -2,6 +2,12 @@ import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import {useEffect, useRef, useState} from 'preact/hooks';
 import {
+  JillAction,
+  JillPendingPill,
+  JillPillAction,
+  JillStatusPill,
+} from '../../../shared/customer-account-ui.jsx';
+import {
   REWARD_STATES,
   buildRewardJourney,
   rewardCouponStatus,
@@ -333,60 +339,53 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   function rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending) {
     if (isThisPending) {
       return (
-        <s-stack direction="inline" gap="small-200" alignItems="center">
-          <s-spinner size="small" />
-          <s-text tone="info">
-            {slowRequest ? 'Still creating…' : 'Creating…'}
-          </s-text>
-        </s-stack>
+        <JillPendingPill>
+          {slowRequest ? 'Still creating…' : 'Creating…'}
+        </JillPendingPill>
       );
     }
 
     if (coupon) {
       return (
-        <s-clickable
+        <JillPillAction
+          tone="info"
           href="extension:jill-account-coupons/"
-          background="subdued"
-          padding="small-200"
-          borderRadius="max"
           accessibilityLabel={`Use your $${tier.value} OFF coupon`}
         >
-          <s-text tone="info">Use Coupon</s-text>
-        </s-clickable>
+          Use Coupon
+        </JillPillAction>
       );
     }
 
     if (isAvailable) {
       return (
-        <s-clickable
+        <JillPillAction
+          tone="success"
           disabled={Boolean(pendingPoints)}
-          background="subdued"
-          padding="small-200"
-          borderRadius="max"
           accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF`}
           onClick={() => {
             setRedeemError('');
             setConfirmTier(tier);
           }}
         >
-          <s-text tone="success">Redeem</s-text>
-        </s-clickable>
+          Redeem
+        </JillPillAction>
       );
     }
 
     if (isNext) {
       return (
-        <s-box background="subdued" padding="small-200" borderRadius="max">
-          <s-link onClick={() => setShowAllRewards((current) => !current)}>Next Reward ★</s-link>
-        </s-box>
+        <JillPillAction
+          tone="info"
+          accessibilityLabel={showAllRewards ? 'Collapse rewards' : 'View all rewards'}
+          onClick={() => setShowAllRewards((current) => !current)}
+        >
+          Next Reward ★
+        </JillPillAction>
       );
     }
 
-    return (
-      <s-box background="subdued" padding="small-200" borderRadius="max">
-        <s-text type="strong" tone="neutral">Locked</s-text>
-      </s-box>
-    );
+    return <JillStatusPill strong>Locked</JillStatusPill>;
   }
 
   function rewardMilestone(item, showTopRail = false, showBottomRail = false) {
@@ -486,19 +485,20 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     ${tier.minimum} minimum order · Expires 30 days after creation · Cannot be combined with other discounts.
                   </s-text>
                   <s-stack direction="inline" gap="small-300">
-                    <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
+                    <JillPillAction
+                      accessibilityLabel="Cancel reward redemption"
+                      onClick={() => setConfirmTier(null)}
+                    >
                       Cancel
-                    </s-button>
-                    <s-clickable
-                      background="base"
-                      padding="small-200"
-                      borderRadius="max"
+                    </JillPillAction>
+                    <JillPillAction
+                      tone="success"
                       disabled={Boolean(pendingPoints)}
                       accessibilityLabel={`Generate $${tier.value} OFF coupon for ${tier.points} points`}
                       onClick={() => handleRedeem(tier)}
                     >
-                      <s-text tone="success" type="strong">Generate coupon</s-text>
-                    </s-clickable>
+                      Generate coupon · {tier.points} pts
+                    </JillPillAction>
                   </s-stack>
                 </s-stack>
               </s-box>
@@ -558,9 +558,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
               </s-grid>
 
               <s-stack direction="inline" justifyContent="center">
-                <s-button variant="secondary" onClick={() => setShowAllRewards((current) => !current)}>
+                <JillAction onClick={() => setShowAllRewards((current) => !current)}>
                   {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
-                </s-button>
+                </JillAction>
               </s-stack>
             </s-stack>
           </s-box>
@@ -581,15 +581,15 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                 Expires {formatDate(freshCoupon.expires_at)} · Cannot be combined with other discounts.
               </s-text>
               <s-stack direction="inline" gap="small-300">
-                <s-button variant="secondary" href="extension:jill-account-coupons/">
+                <JillAction href="extension:jill-account-coupons/">
                   View coupon
-                </s-button>
-                <s-button
-                  variant="primary"
+                </JillAction>
+                <JillAction
+                  role="primary"
                   href={`${STORE}/discount/${encodeURIComponent(freshCoupon.code)}?redirect=/cart`}
                 >
                   Use now
-                </s-button>
+                </JillAction>
               </s-stack>
             </s-stack>
           </s-box>
@@ -597,9 +597,9 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         <s-divider />
         <s-stack direction="inline" justifyContent="center">
-          <s-button variant="secondary" href="extension:jill-account-coupons/">
+          <JillAction href="extension:jill-account-coupons/">
             My Coupons
-          </s-button>
+          </JillAction>
         </s-stack>
       </s-stack>
     </s-section>
@@ -669,7 +669,7 @@ function Dashboard() {
       heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
       subheading="Your celebrations, custom requests, saved details, and orders in one place."
     >
-      <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>
+      <JillAction slot="primary-action" role="primary" href={STORE}>Back to JILL</JillAction>
 
       <s-stack direction="block" gap="base">
         {loadError && (
@@ -688,7 +688,7 @@ function Dashboard() {
             </s-stack>
             <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
               {COLLECTIONS.map(([emoji, label, path]) => (
-                <s-button key={path} href={`${STORE}${path}`}>{emoji} {label}</s-button>
+                <JillAction key={path} href={`${STORE}${path}`}>{emoji} {label}</JillAction>
               ))}
             </s-grid>
           </s-stack>
@@ -755,7 +755,7 @@ function Dashboard() {
               <Detail label="Event" value={formatDate(meta.event_date)} />
               <Detail label="Needed" value={formatDate(meta.date_needed)} />
               <Detail label="Fulfillment" value={meta.fulfillment_preference} />
-              <s-button variant="primary" href={`${STORE}/pages/quote`}>Start another request</s-button>
+              <JillAction role="primary" href={`${STORE}/pages/quote`}>Start another request</JillAction>
             </s-stack>
           </s-section>
         ) : (
@@ -767,7 +767,7 @@ function Dashboard() {
                   Send a custom request and its event date, theme, colors, fulfillment details, and status can live here for your next visit.
                 </s-text>
               </s-stack>
-              <s-button variant="primary" href={`${STORE}/pages/quote`}>Start a Custom Order</s-button>
+              <JillAction role="primary" href={`${STORE}/pages/quote`}>Start a Custom Order</JillAction>
             </s-stack>
           </s-section>
         )}
