@@ -12,13 +12,14 @@ The current live Dawn-derived JILL storefront is a production/reference implemen
 
 ## Start here
 
-Before changing Theme Core, read `AGENTS.md`.
+Before changing Theme Core or backend functionality, read `AGENTS.md`.
 
 The canonical product-system documents live in `docs/`:
 
 - `JILL_THEME_CONSTITUTION.md` — permanent laws
 - `DOMAIN_OWNERSHIP.md` — one canonical owner per domain
 - `THEME_ARCHITECTURE.md` — file/layer structure
+- `FUNCTIONAL_ARCHITECTURE.md` — browser/Shopify/backend execution, commands/events/queries, persistence, retries and reconciliation
 - `FEATURE_CONTRACTS.md` — required storefront/form/account behavior
 - `DESIGN_SYSTEM.md` — shared visual language
 - `THEME_EDITOR_CONTRACT.md` — safe merchant customization boundary
@@ -35,6 +36,28 @@ The canonical product-system documents live in `docs/`:
 One behavior, visual rule, selector owner, state machine, helper, setting, component, integration adapter or business rule gets one canonical owner.
 
 Theme Core also rejects `!important`, styling outside canonical CSS assets, executable inline JavaScript, patch-style filenames, ghost UI and other architecture violations through `scripts/check-theme-core.mjs`.
+
+Backend work follows the same ownership rule: durable commands must be retry-safe/idempotent, privileged execution stays outside browser/theme code, and webhook-driven domains use reconciliation rather than assuming event delivery is perfect.
+
+## Functional boundary
+
+```text
+Customer
+  ↓
+Theme / Customer Account UI
+  ↓
+Browser feature state
+  ↓
+Shopify platform OR JILL backend adapter
+  ↓
+Authoritative persistence / privileged execution
+  ↓
+Events + reconciliation
+  ↓
+Authoritative state returned to UI
+```
+
+Shopify owns ordinary commerce. Theme Core owns presentation and ephemeral interaction state. JILL backend code owns secrets, durable custom-order workflows, rewards integrity, privileged Shopify operations, integrations and reconciliation.
 
 ## Development checks
 
@@ -56,7 +79,7 @@ Run Shopify Theme Check:
 npx shopify theme check --path theme
 ```
 
-GitHub Actions runs Theme Core architecture validation and Shopify Theme Check for Theme Core changes.
+GitHub Actions runs Theme Core architecture validation and Shopify Theme Check for Theme Core changes. Existing rewards guards/tests remain part of repository postinstall validation.
 
 ## Current Theme Core branch
 
@@ -72,6 +95,8 @@ Customer Account extensions remain in `extensions/`, with shared presentation pr
 
 Rewards accounting/reconciliation/coupon creation remains outside the sellable theme. Storefront/account UI consumes authoritative reward state rather than reproducing the accounting engine.
 
+The current Google Apps Script backend remains operational during migration. Its public behavior is preserved while Custom Order and Rewards ownership are progressively decomposed behind stable contracts.
+
 ## Working loop
 
-`architecture check → canonical owner → implementation → housekeeping → automated guards → interaction/visual certification → clean commit`
+`architecture check → canonical owner → implementation → housekeeping → automated guards/tests → failure/retry certification → interaction/visual certification where applicable → clean commit`
