@@ -1,7 +1,27 @@
 {% liquid
-  assign active_group = ''
   assign choose_option_label = 'products.product.choose_option' | t
+  assign group_names = 'product_options,personalization,planning,reference' | split: ','
+  assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
+  assign allocation_initially_available = false
+  assign has_product_options = false
+
+  for candidate in capability_profile.fields
+    if candidate.group == 'product_options'
+      assign has_product_options = true
+    endif
+    if allocated_option_field_ids contains candidate.id and candidate.visibleWhen == blank
+      assign allocation_initially_available = true
+    endif
+  endfor
 %}
+
+{% if has_product_options %}
+  <input
+    type="hidden"
+    name="properties[_jill_product_options]"
+    data-jill-product-options-payload
+  >
+{% endif %}
 
 <div class="jill-product-customization" data-jill-product-customization>
   <div class="jill-product-customization__intro">
@@ -9,144 +29,203 @@
     <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
   </div>
 
-  {% for field in capability_profile.fields %}
-    {% if field.group != active_group %}
-      {% if active_group != blank %}</div>{% endif %}
-      {% assign active_group = field.group %}
-      <div class="jill-product-customization__group" data-jill-capability-group="{{ active_group }}">
+  {% for group_name in group_names %}
+    {% liquid
+      assign group_has_fields = false
+      assign group_has_allocation = false
+
+      for candidate in capability_profile.fields
+        assign candidate_is_allocated = false
+        if group_name == 'product_options' and allocated_option_field_ids contains candidate.id
+          assign candidate_is_allocated = true
+        endif
+        if candidate.group == group_name and candidate_is_allocated == false
+          assign group_has_fields = true
+        endif
+      endfor
+
+      if group_name == 'product_options' and allocated_option_field_ids != blank
+        assign group_has_allocation = true
+      endif
+    %}
+
+    {% if group_has_fields or group_has_allocation %}
+      <div class="jill-product-customization__group" data-jill-capability-group="{{ group_name }}">
         <h3 class="jill-product-customization__group-title">
-          {% case active_group %}
+          {% case group_name %}
             {% when 'product_options' %}{{ 'products.product.groups.product_options' | t }}
             {% when 'personalization' %}{{ 'products.product.groups.personalization' | t }}
             {% when 'planning' %}{{ 'products.product.groups.planning' | t }}
             {% when 'reference' %}{{ 'products.product.groups.reference' | t }}
           {% endcase %}
         </h3>
-    {% endif %}
 
-    {% liquid
-      assign field_name = 'properties[' | append: field.id | append: ']'
-      assign field_dom_id = 'JillProduct-' | append: section_id | append: '-' | append: field.id
-      assign field_disabled = false
-      assign field_hidden = false
-      if field.visibleWhen != blank
-        assign field_disabled = true
-        assign field_hidden = true
-      endif
-    %}
-
-    <div
-      class="jill-product-customization__field"
-      data-jill-capability-field="{{ field.id }}"
-      {% if field_hidden %}hidden{% endif %}
-    >
-      {% case field.kind %}
-        {% when 'text' %}
-          {% render 'ui-field',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            type: 'text',
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            minlength: field.minLength,
-            maxlength: field.maxLength
-          %}
-
-        {% when 'textarea' %}
-          {% render 'ui-textarea',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            maxlength: field.maxLength,
-            rows: 4
-          %}
-
-        {% when 'number' %}
-          {% render 'ui-field',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            type: 'number',
-            inputmode: 'decimal',
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            min: field.min,
-            max: field.max,
-            step: field.step
-          %}
-
-        {% when 'select' %}
-          {% render 'ui-select',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            placeholder: choose_option_label,
-            options: field.options
-          %}
-
-        {% when 'radio' %}
-          {% render 'ui-choice-group',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            options: field.options
-          %}
-
-        {% when 'checkbox' %}
-          {% render 'ui-choice',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            value: 'Yes',
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled
-          %}
-
-        {% when 'date' %}
-          {% render 'ui-field',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            type: 'date',
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled
-          %}
-
-        {% when 'file' %}
+        {% for field in capability_profile.fields %}
           {% liquid
-            assign file_accept = field.accept | join: ','
-            assign file_multiple = false
-            if field.maxFiles > 1
-              assign file_multiple = true
+            assign field_is_allocated = false
+            if group_name == 'product_options' and allocated_option_field_ids contains field.id
+              assign field_is_allocated = true
             endif
           %}
-          {% render 'ui-file',
-            id: field_dom_id,
-            name: field_name,
-            label: field.label,
-            help: field.help,
-            required: field.required,
-            disabled: field_disabled,
-            accept: file_accept,
-            multiple: file_multiple
-          %}
-      {% endcase %}
-    </div>
-  {% endfor %}
 
-  {% if active_group != blank %}</div>{% endif %}
+          {% if field.group == group_name and field_is_allocated == false %}
+            {% liquid
+              assign field_name = 'properties[' | append: field.id | append: ']'
+              if field.group == 'product_options'
+                assign field_name = blank
+              endif
+              assign field_dom_id = 'JillProduct-' | append: section_id | append: '-' | append: field.id
+              assign field_disabled = false
+              assign field_hidden = false
+              if field.visibleWhen != blank
+                assign field_disabled = true
+                assign field_hidden = true
+              endif
+            %}
+
+            <div
+              class="jill-product-customization__field"
+              data-jill-capability-field="{{ field.id }}"
+              {% if field_hidden %}hidden{% endif %}
+            >
+              {% case field.kind %}
+                {% when 'text' %}
+                  {% render 'ui-field',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    type: 'text',
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    minlength: field.minLength,
+                    maxlength: field.maxLength
+                  %}
+
+                {% when 'textarea' %}
+                  {% render 'ui-textarea',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    maxlength: field.maxLength,
+                    rows: 4
+                  %}
+
+                {% when 'number' %}
+                  {% render 'ui-field',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    type: 'number',
+                    inputmode: 'decimal',
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    min: field.min,
+                    max: field.max,
+                    step: field.step
+                  %}
+
+                {% when 'select' %}
+                  {% render 'ui-select',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    placeholder: choose_option_label,
+                    options: field.options
+                  %}
+
+                {% when 'radio' %}
+                  {% render 'ui-choice-group',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    options: field.options
+                  %}
+
+                {% when 'checkbox' %}
+                  {% render 'ui-choice',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    value: 'Yes',
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled
+                  %}
+
+                {% when 'date' %}
+                  {% render 'ui-field',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    type: 'date',
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled
+                  %}
+
+                {% when 'file' %}
+                  {% liquid
+                    assign file_accept = field.accept | join: ','
+                    assign file_multiple = false
+                    if field.maxFiles > 1
+                      assign file_multiple = true
+                    endif
+                  %}
+                  {% render 'ui-file',
+                    id: field_dom_id,
+                    name: field_name,
+                    label: field.label,
+                    help: field.help,
+                    required: field.required,
+                    disabled: field_disabled,
+                    accept: file_accept,
+                    multiple: file_multiple
+                  %}
+              {% endcase %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if group_has_allocation %}
+          <div
+            class="jill-product-customization__field"
+            data-jill-product-options-allocation
+            data-group-label="{{ 'products.product.allocation.group' | t | escape }}"
+            data-count-label="{{ 'products.product.allocation.count' | t | escape }}"
+            data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
+            data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+            data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+            data-add-label="{{ 'products.product.allocation.add' | t | escape }}"
+            data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+            data-item-label="{{ 'products.product.allocation.item' | t | escape }}"
+            data-items-label="{{ 'products.product.allocation.items' | t | escape }}"
+            {% unless allocation_initially_available %}hidden aria-hidden="true"{% else %}aria-hidden="false"{% endunless %}
+          >
+            <h4 class="jill-product-customization__group-title">{{ 'products.product.allocation.title' | t }}</h4>
+            <p class="jill-product-customization__help">{{ 'products.product.allocation.help' | t }}</p>
+            <div data-jill-product-options-groups></div>
+            <p class="jill-product-customization__help" role="status" aria-live="polite" data-jill-product-options-summary></p>
+            <button
+              class="jill-button"
+              data-variant="secondary"
+              type="button"
+              data-jill-product-options-add
+              hidden
+            >{{ 'products.product.allocation.add' | t }}</button>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
 </div>
