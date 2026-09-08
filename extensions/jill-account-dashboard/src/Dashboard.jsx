@@ -235,11 +235,13 @@ function buildRewardJourney(points, wallet, pendingPoints = 0) {
     return a.tier.points - b.tier.points;
   });
 
-  // Collapsed mode always shows the most useful immediate action first.
+  // Collapsed mode keeps the customer's next destination front and center.
+  // A reward being created temporarily takes over; if every tier is unlocked,
+  // fall back to the best redeemable or most recently redeemed milestone.
   const collapsed =
     items.find((item) => item.pending) ||
-    bestRedeemable ||
     next ||
+    bestRedeemable ||
     redeemed[redeemed.length - 1] ||
     items[items.length - 1];
 
