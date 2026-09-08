@@ -1,5 +1,24 @@
 {
   "accessibility": {
     "skip_to_content": "Skip to content"
+  },
+  "products": {
+    "product": {
+      "variant": "Options",
+      "quantity": "Quantity",
+      "add_to_cart": "Add to cart",
+      "sold_out": "Sold out",
+      "choose_option": "Choose an option",
+      "customize_title": "Customize your order",
+      "customize_help": "Complete the required details before adding this item to your cart.",
+      "complete_field": "Please complete:",
+      "configuration_error": "This product is temporarily unavailable while its customization settings are being checked.",
+      "groups": {
+        "product_options": "Options",
+        "personalization": "Personalization",
+        "planning": "Planning",
+        "reference": "References"
+      }
+    }
   }
 }
