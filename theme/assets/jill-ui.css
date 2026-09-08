@@ -149,6 +149,10 @@
     border-color: var(--jill-color-error);
   }
 
+  .jill-field[data-state='error'] .jill-field__label {
+    color: var(--jill-color-error);
+  }
+
   .jill-choice {
     display: inline-flex;
     align-items: flex-start;
@@ -182,6 +186,16 @@
 
   .jill-choice[data-state='error'] {
     color: var(--jill-color-error);
+  }
+
+  .jill-choice-group {
+    display: grid;
+    gap: calc(var(--jill-space-unit) * 1.5);
+  }
+
+  .jill-field[data-state='error'] .jill-choice__control {
+    outline: 2px solid var(--jill-color-error);
+    outline-offset: 2px;
   }
 
   .jill-quantity {
