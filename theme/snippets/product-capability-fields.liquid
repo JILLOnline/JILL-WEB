@@ -1,0 +1,151 @@
+{% liquid
+  assign active_group = ''
+%}
+
+<div class="jill-product-customization" data-jill-product-customization>
+  <div class="jill-product-customization__intro">
+    <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
+    <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
+  </div>
+
+  {% for field in capability_profile.fields %}
+    {% if field.group != active_group %}
+      {% if active_group != blank %}</div>{% endif %}
+      {% assign active_group = field.group %}
+      <div class="jill-product-customization__group" data-jill-capability-group="{{ active_group }}">
+        <h3 class="jill-product-customization__group-title">
+          {% case active_group %}
+            {% when 'product_options' %}{{ 'products.product.groups.product_options' | t }}
+            {% when 'personalization' %}{{ 'products.product.groups.personalization' | t }}
+            {% when 'planning' %}{{ 'products.product.groups.planning' | t }}
+            {% when 'reference' %}{{ 'products.product.groups.reference' | t }}
+          {% endcase %}
+        </h3>
+    {% endif %}
+
+    {% liquid
+      assign field_name = 'properties[' | append: field.id | append: ']'
+      assign field_dom_id = 'JillProduct-' | append: section_id | append: '-' | append: field.id
+      assign field_disabled = false
+      assign field_hidden = false
+      if field.visibleWhen != blank
+        assign field_disabled = true
+        assign field_hidden = true
+      endif
+    %}
+
+    <div
+      class="jill-product-customization__field"
+      data-jill-capability-field="{{ field.id }}"
+      {% if field_hidden %}hidden{% endif %}
+    >
+      {% case field.kind %}
+        {% when 'text' %}
+          {% render 'ui-field',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            type: 'text',
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            minlength: field.minLength,
+            maxlength: field.maxLength
+          %}
+
+        {% when 'textarea' %}
+          {% render 'ui-textarea',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            maxlength: field.maxLength,
+            rows: 4
+          %}
+
+        {% when 'number' %}
+          {% render 'ui-field',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            type: 'number',
+            inputmode: 'decimal',
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            min: field.min,
+            max: field.max,
+            step: field.step
+          %}
+
+        {% when 'select' %}
+          {% render 'ui-select',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            placeholder: 'products.product.choose_option' | t,
+            options: field.options
+          %}
+
+        {% when 'radio' %}
+          {% render 'ui-choice-group',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            options: field.options
+          %}
+
+        {% when 'checkbox' %}
+          {% render 'ui-choice',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            value: 'Yes',
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled
+          %}
+
+        {% when 'date' %}
+          {% render 'ui-field',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            type: 'date',
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled
+          %}
+
+        {% when 'file' %}
+          {% liquid
+            assign file_accept = field.accept | join: ','
+            assign file_multiple = false
+            if field.maxFiles > 1
+              assign file_multiple = true
+            endif
+          %}
+          {% render 'ui-file',
+            id: field_dom_id,
+            name: field_name,
+            label: field.label,
+            help: field.help,
+            required: field.required,
+            disabled: field_disabled,
+            accept: file_accept,
+            multiple: file_multiple
+          %}
+      {% endcase %}
+    </div>
+  {% endfor %}
+
+  {% if active_group != blank %}</div>{% endif %}
+</div>
