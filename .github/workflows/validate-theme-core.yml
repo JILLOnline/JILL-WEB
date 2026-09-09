@@ -14,10 +14,12 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
+      - 'scripts/test-personalization.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
       - 'scripts/test-commerce-cart.mjs'
       - 'scripts/test-product-commerce.mjs'
+      - 'scripts/test-custom-order-integration.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -31,10 +33,12 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
+      - 'scripts/test-personalization.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
       - 'scripts/test-commerce-cart.mjs'
       - 'scripts/test-product-commerce.mjs'
+      - 'scripts/test-custom-order-integration.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -78,6 +82,9 @@ jobs:
       - name: Run Product Options tests explicitly
         run: npm run test:product-options
 
+      - name: Run personalization tests explicitly
+        run: npm run test:personalization
+
       - name: Run quantity stepper tests explicitly
         run: npm run test:quantity
 
@@ -89,6 +96,9 @@ jobs:
 
       - name: Run paid product commerce tests explicitly
         run: npm run test:product-commerce
+
+      - name: Run Custom Order integration tests explicitly
+        run: npm run test:custom-order-integration
 
       - name: Run Custom Order contract guard explicitly
         run: npm run check:custom-order
