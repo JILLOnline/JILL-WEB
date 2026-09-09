@@ -9,12 +9,25 @@
   assign customize_label = 'catalog.card.customize' | t
   assign is_catalog = false
   assign card_heading_tag = heading_tag | default: 'h2'
+  assign catalog_teaser = blank
 
   if card_mode == 'catalog'
     assign is_catalog = true
     if heading_tag == blank
       assign card_heading_tag = 'h3'
     endif
+
+    assign teaser_variant = card_product.id | modulo: 4
+    case teaser_variant
+      when 0
+        assign catalog_teaser = 'catalog.card.teaser_1' | t
+      when 1
+        assign catalog_teaser = 'catalog.card.teaser_2' | t
+      when 2
+        assign catalog_teaser = 'catalog.card.teaser_3' | t
+      else
+        assign catalog_teaser = 'catalog.card.teaser_4' | t
+    endcase
   endif
 
   assign custom_order_link = blank
@@ -55,12 +68,8 @@
       <a href="{{ card_url }}">{{ card_title }}</a>
     </{{ card_heading_tag }}>
 
-    {% if is_catalog and card_product.description != blank %}
-      <p class="jill-product-card__excerpt">{{ card_product.description | replace: '</p>', '</p> ' | replace: '</li>', '</li> ' | replace: '</h2>', '</h2> ' | replace: '</h3>', '</h3> ' | strip_html | truncatewords: 34 }}</p>
-    {% endif %}
-
-    {% if is_catalog %}
-      {% render 'catalog-product-summary', card_product: card_product %}
+    {% if is_catalog and catalog_teaser != blank %}
+      <p class="jill-product-card__excerpt jill-product-card__teaser">{{ catalog_teaser }}</p>
     {% endif %}
 
     <div class="jill-product-card__price">
