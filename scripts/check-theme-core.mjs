@@ -5,6 +5,7 @@ import postcss from 'postcss';
 const THEME_ROOT = 'theme';
 const FOUNDATION_CSS = path.join(THEME_ROOT, 'assets', 'jill-foundation.css.liquid');
 const PRODUCT_CAPABILITY_SCHEMA = path.join('contracts', 'product-capability-profile.schema.json');
+const PRODUCT_CAPABILITY_FIELDS = path.join(THEME_ROOT, 'snippets', 'product-capability-fields.liquid');
 
 function fail(message) {
   throw new Error(`JILL Theme Core guard failed: ${message}`);
@@ -118,11 +119,38 @@ function validateProductCapabilityContract() {
   assertUniqueEnumValues(schema);
 }
 
+function assertMarkerOrder(source, markers, owner) {
+  let previousIndex = -1;
+  for (const marker of markers) {
+    const index = source.indexOf(marker);
+    if (index === -1) fail(`${owner} is missing ${marker}`);
+    if (index <= previousIndex) fail(`${owner} must preserve the shared allocation composition order`);
+    previousIndex = index;
+  }
+}
+
+function validateCustomizationAllocationComposition() {
+  if (!fs.existsSync(PRODUCT_CAPABILITY_FIELDS)) fail(`${PRODUCT_CAPABILITY_FIELDS} is missing`);
+  const source = fs.readFileSync(PRODUCT_CAPABILITY_FIELDS, 'utf8');
+
+  assertMarkerOrder(
+    source,
+    ['data-jill-product-options-groups', 'data-jill-product-options-add', 'data-jill-product-options-summary'],
+    'Product Options allocation footer',
+  );
+  assertMarkerOrder(
+    source,
+    ['data-jill-personalization-groups', 'data-jill-personalization-add', 'data-jill-personalization-summary'],
+    'Personalization allocation footer',
+  );
+}
+
 if (!fs.existsSync(THEME_ROOT) || !fs.statSync(THEME_ROOT).isDirectory()) {
   fail('theme/ is missing');
 }
 
 validateProductCapabilityContract();
+validateCustomizationAllocationComposition();
 
 const files = walk(THEME_ROOT);
 const forbiddenName = /(?:^|[-_.])(final|fix|fixes|cleanup|polish|override|patch|temp|temporary|backup|copy|old|legacy|v\d+)(?:[-_.]|$)/i;
