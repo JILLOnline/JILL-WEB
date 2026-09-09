@@ -41,6 +41,7 @@
           <a
             class="jill-category-dock__item{% if is_active %} is-active{% endif %}"
             href="{{ dock_url }}"
+            aria-label="{{ dock_collection.title | escape }}"
             {% if is_active %}aria-current="page"{% endif %}
           >
             <span class="jill-category-dock__media" aria-hidden="true">
@@ -50,7 +51,6 @@
                 <span class="jill-category-dock__placeholder">{{ dock_collection.title | slice: 0 }}</span>
               {% endif %}
             </span>
-            <span class="jill-category-dock__label">{{ dock_collection.title }}</span>
           </a>
         {% endif %}
       {% endif %}
