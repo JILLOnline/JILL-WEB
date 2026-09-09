@@ -17,6 +17,10 @@
     transition: opacity 160ms ease, transform 160ms ease;
   }
 
+  .jill-button[hidden] {
+    display: none;
+  }
+
   .jill-button:hover {
     opacity: 0.88;
   }
