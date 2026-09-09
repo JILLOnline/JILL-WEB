@@ -36,8 +36,8 @@
         "reference": "References"
       },
       "allocation": {
-        "title": "Split options by item",
-        "help": "Assign how many items use each option. The total must match the items in this order.",
+        "title": "Options by item",
+        "help": "Choose how many customizable items use each option. Add another option only when you want to split the total.",
         "group": "Option",
         "count": "How many",
         "of": "of",
