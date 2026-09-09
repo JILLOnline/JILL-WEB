@@ -46,7 +46,7 @@
           >
             <span class="jill-category-dock__media" aria-hidden="true">
               {% if dock_image != blank %}
-                {{ dock_image | image_url: width: 180 | image_tag: class: 'jill-category-dock__image', loading: 'eager', widths: '80, 120, 180', sizes: '72px' }}
+                {{ dock_image | image_url: width: 640 | image_tag: class: 'jill-category-dock__image', loading: 'eager', widths: '160, 240, 320, 480, 640', sizes: '(max-width: 749px) 80px, 100px' }}
               {% else %}
                 <span class="jill-category-dock__placeholder">{{ dock_collection.title | slice: 0 }}</span>
               {% endif %}
