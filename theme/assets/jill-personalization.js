@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  const PERSONALIZATION_MODES = new Set(['none', 'same', 'different']);
+
   function fail(message) {
     throw new Error(`JILL personalization: ${message}`);
   }
@@ -36,8 +38,10 @@
   function allowedModes(profile, eligibleUnitCount) {
     const configured = profile?.features?.personalizationAllocation;
     if (!configured || configured.enabled === false) return [];
-    const modes = Array.isArray(configured.allowedModes) ? configured.allowedModes : [];
-    if (eligibleUnitCount < 2) return modes.includes('same') ? ['same'] : [];
+    const modes = Array.isArray(configured.allowedModes)
+      ? configured.allowedModes.filter((mode) => PERSONALIZATION_MODES.has(mode))
+      : [];
+    if (eligibleUnitCount < 2) return modes.filter((mode) => mode !== 'different');
     return modes;
   }
 
@@ -156,7 +160,45 @@
       });
     }
 
-    const normalizedMode = modes.includes(mode) ? mode : modes[0];
+    const requestedMode = modes.includes(mode) ? mode : null;
+    const normalizedMode = requestedMode || (modes.length === 1 ? modes[0] : null);
+
+    if (normalizedMode === null) {
+      return deepFreeze({
+        itemId,
+        merchandiseQuantity,
+        eligibleUnitCount,
+        eligibleUnitIds,
+        available: true,
+        allowedModes: [...modes],
+        mode: null,
+        fieldIds: fields.map((field) => field.id),
+        groups: [],
+        unallocatedUnitIds: [...eligibleUnitIds],
+        nextGroupNumber: 1,
+        complete: false,
+        firstIssue: {scope: 'mode', reason: 'required'},
+      });
+    }
+
+    if (normalizedMode === 'none') {
+      return deepFreeze({
+        itemId,
+        merchandiseQuantity,
+        eligibleUnitCount,
+        eligibleUnitIds,
+        available: true,
+        allowedModes: [...modes],
+        mode: 'none',
+        fieldIds: fields.map((field) => field.id),
+        groups: [],
+        unallocatedUnitIds: [],
+        nextGroupNumber: 1,
+        complete: true,
+        firstIssue: null,
+      });
+    }
+
     const normalized = normalizeGroups({
       groups,
       eligibleIds: eligibleUnitIds,
@@ -209,7 +251,7 @@
       itemId: state.itemId,
       merchandiseQuantity: changes.merchandiseQuantity ?? state.merchandiseQuantity,
       profile,
-      mode: changes.mode ?? state.mode,
+      mode: Object.prototype.hasOwnProperty.call(changes, 'mode') ? changes.mode : state.mode,
       groups: changes.groups ?? state.groups,
       nextGroupNumber: changes.nextGroupNumber ?? state.nextGroupNumber,
     });
@@ -217,6 +259,8 @@
 
   function setMode(state, profile, mode) {
     if (!state.allowedModes.includes(mode)) fail(`mode ${mode} is unavailable`);
+    if (mode === 'none') return rebuild(state, profile, {mode, groups: [], nextGroupNumber: 1});
+
     let groups = state.groups;
     if (mode === 'different' && state.mode !== 'different') {
       const first = state.groups[0];

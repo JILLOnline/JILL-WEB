@@ -161,6 +161,12 @@
       else announce();
     }
 
+    function modeLabel(mode) {
+      if (mode === 'none') return mount.dataset.noneLabel;
+      if (mode === 'different') return mount.dataset.differentLabel;
+      return mount.dataset.sameLabel;
+    }
+
     function createModeSelector() {
       if (!state?.available || state.allowedModes.length < 2) return null;
       const fieldset = document.createElement('fieldset');
@@ -180,7 +186,7 @@
         input.checked = state.mode === mode;
         const text = document.createElement('span');
         text.className = 'jill-choice__label';
-        text.textContent = mode === 'different' ? mount.dataset.differentLabel : mount.dataset.sameLabel;
+        text.textContent = modeLabel(mode);
         input.addEventListener('change', () => {
           if (!input.checked) return;
           try {

@@ -49,11 +49,12 @@
         "items": "items"
       },
       "personalization": {
+        "none": "No personalization",
         "same": "Same for all",
         "different": "Different by item",
         "group": "Personalization",
         "add": "Add another personalization",
-        "help": "Choose whether the same personalization applies to every item or split personalization across the items in this order."
+        "help": "Choose no personalization, use the same personalization for every item, or split personalization across the items in this order."
       }
     }
   },

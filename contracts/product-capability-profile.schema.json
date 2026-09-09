@@ -124,7 +124,7 @@
       "required": ["enabled", "allowedModes", "fieldIds"],
       "properties": {
         "enabled": {"type": "boolean"},
-        "allowedModes": {"type": "array", "uniqueItems": true, "items": {"enum": ["same", "different"]}},
+        "allowedModes": {"type": "array", "uniqueItems": true, "items": {"enum": ["none", "same", "different"]}},
         "fieldIds": {
           "type": "array",
           "uniqueItems": true,

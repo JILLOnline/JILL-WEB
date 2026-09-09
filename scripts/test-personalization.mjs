@@ -51,8 +51,15 @@ let state = personalization.createState({
   profile,
 });
 assert.equal(state.available, true);
-assert.equal(state.mode, 'same');
+assert.equal(state.mode, null, 'multi-mode personalization must begin unresolved');
 assert.equal(state.eligibleUnitCount, 12);
+assert.equal(state.groups.length, 0);
+assert.equal(state.unallocatedUnitIds.length, 12);
+assert.equal(state.complete, false);
+assert.equal(state.firstIssue.reason, 'required');
+
+state = personalization.setMode(state, profile, 'same');
+assert.equal(state.mode, 'same');
 assert.equal(state.groups.length, 1);
 assert.equal(state.groups[0].unitIds.length, 12);
 assert.equal(state.complete, false);
@@ -125,6 +132,7 @@ const oneUnitProfile = capabilities.resolve({
 });
 const single = personalization.createState({itemId: 'one', merchandiseQuantity: 1, profile: oneUnitProfile});
 assert.deepEqual(single.allowedModes, ['same']);
+assert.equal(single.mode, 'same');
 assert.equal(single.groups[0].unitIds.length, 1);
 
 const differentOnlyProfile = capabilities.resolve({
@@ -271,7 +279,7 @@ function resolvePartyPack(unitsPerQuantity, id) {
       },
       personalizationAllocation: {
         enabled: true,
-        allowedModes: ['same', 'different'],
+        allowedModes: ['none', 'same', 'different'],
         fieldIds: ['add_name', 'name_text', 'add_age', 'age_number', 'theme', 'colors'],
       },
     },
@@ -280,11 +288,19 @@ function resolvePartyPack(unitsPerQuantity, id) {
 
 const partyPack12 = resolvePartyPack(12, 'party_pack_12');
 let party = personalization.createState({itemId: 'party-pack', merchandiseQuantity: 1, profile: partyPack12});
-assert.equal(party.mode, 'same');
+assert.equal(party.mode, null, 'none/same/different must require an explicit mode choice');
 assert.equal(party.eligibleUnitCount, 12);
-assert.equal(party.groups[0].unitIds.length, 12);
+assert.equal(party.groups.length, 0);
 assert.equal(party.complete, false);
 
+party = personalization.setMode(party, partyPack12, 'none');
+assert.equal(party.complete, true);
+assert.equal(party.groups.length, 0);
+assert.deepEqual(personalization.toPayload(party), {complete: true, mode: 'none', allocations: []});
+
+party = personalization.setMode(party, partyPack12, 'same');
+assert.equal(party.groups[0].unitIds.length, 12);
+assert.equal(party.complete, false);
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'add_name', 'yes');
 assert.equal(party.firstIssue.fieldId, 'name_text', 'Name/Text must become required only when Yes is active');
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'name_text', 'Mia');
@@ -323,8 +339,16 @@ const secondPartyAllocation = partyPayload.allocations.find((allocation) => allo
 assert.equal(secondPartyAllocation.values.age_number, '', 'inactive dependent detail must not contribute a stale value to payload');
 assert.equal(secondPartyAllocation.values.name_text, '', 'inactive Name/Text detail must remain blank in payload');
 
+party = personalization.setMode(party, partyPack12, 'none');
+assert.equal(party.groups.length, 0, 'No personalization must clear inactive group state');
+party = personalization.setMode(party, partyPack12, 'same');
+assert.equal(party.groups[0].values.name_text, '', 'returning from No personalization must not restore stale hidden values');
+assert.equal(party.complete, false);
+
 const partyPack8 = resolvePartyPack(8, 'party_pack_8');
-const activityKit = personalization.createState({itemId: 'activity-kit', merchandiseQuantity: 2, profile: partyPack8});
+let activityKit = personalization.createState({itemId: 'activity-kit', merchandiseQuantity: 2, profile: partyPack8});
+assert.equal(activityKit.mode, null);
+activityKit = personalization.setMode(activityKit, partyPack8, 'same');
 assert.equal(activityKit.eligibleUnitCount, 16, '8-count products must derive physical personalization units from capability data');
 assert.equal(activityKit.groups[0].unitIds.length, 16);
 
