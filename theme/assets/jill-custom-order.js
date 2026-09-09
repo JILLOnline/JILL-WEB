@@ -66,11 +66,6 @@
     return controls[0]?.value ?? '';
   }
 
-  function optionLabel(field, value) {
-    const option = (field?.options || []).find((candidate) => candidate.value === value);
-    return option?.label || String(value);
-  }
-
   function attribute(field, value) {
     return {id: field.id, label: field.label, value};
   }
@@ -81,6 +76,60 @@
       : 1;
     const count = quantity * multiplier;
     return Array.from({length: count}, (_, index) => `${itemId}::${index + 1}`);
+  }
+
+  function readAllocatedPersonalization(form, profile, itemId, quantity) {
+    const node = form.querySelector('[data-jill-personalization-payload]');
+    if (node?.value) {
+      try {
+        return JSON.parse(node.value);
+      } catch (error) {
+        fail('personalization payload is invalid');
+      }
+    }
+
+    const allocatedIds = globalThis.JILLProductCapabilities.getPersonalizationAllocationFieldIds(profile);
+    if (!allocatedIds.length) return null;
+    if (!globalThis.JILLPersonalization) fail('personalization engine is unavailable');
+
+    let state = globalThis.JILLPersonalization.createState({
+      itemId,
+      merchandiseQuantity: quantity,
+      profile,
+    });
+    if (!state.available) return null;
+    if (state.mode !== 'same') {
+      fail('this product requires different-by-item personalization before review');
+    }
+
+    const groupId = state.groups[0]?.id;
+    if (!groupId) fail('personalization group is unavailable');
+    for (const fieldId of allocatedIds) {
+      const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
+      state = globalThis.JILLPersonalization.setGroupValue(
+        state,
+        profile,
+        groupId,
+        fieldId,
+        fieldValue(form, field),
+      );
+    }
+    if (!state.complete) fail('required personalization is incomplete');
+    return globalThis.JILLPersonalization.toPayload(state);
+  }
+
+  function appendPersonalizationGroups(target, payload, profile) {
+    if (!payload) return;
+    for (const group of payload.allocations || []) {
+      target.push({
+        id: group.id,
+        allocations: (group.unitIds || []).map((unitId) => ({unit_id: unitId})),
+        attributes: Object.entries(group.values || {}).map(([fieldId, value]) => {
+          const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
+          return {id: fieldId, label: field?.label || fieldId, value};
+        }),
+      });
+    }
   }
 
   function itemRequest(item) {
@@ -131,20 +180,11 @@
         });
       }
 
-      const personalizationNode = form.querySelector('[data-jill-personalization-payload]');
-      if (personalizationNode?.value) {
-        const payload = JSON.parse(personalizationNode.value);
-        for (const group of payload.allocations || []) {
-          personalizationGroups.push({
-            id: group.id,
-            allocations: (group.unitIds || []).map((unitId) => ({unit_id: unitId})),
-            attributes: Object.entries(group.values || {}).map(([fieldId, value]) => {
-              const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
-              return {id: fieldId, label: field?.label || fieldId, value};
-            }),
-          });
-        }
-      }
+      appendPersonalizationGroups(
+        personalizationGroups,
+        readAllocatedPersonalization(form, profile, itemId, quantity),
+        profile,
+      );
     }
 
     return {
