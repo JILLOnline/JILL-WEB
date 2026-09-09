@@ -129,13 +129,20 @@ Required behavior:
 - completion does not collapse/reopen unpredictably when unrelated selections change
 - removing/changing a prerequisite reconciles affected option state only
 - allocation totals reconcile to the eligible customization-unit count derived from Shopify quantity and capability configuration
+- assignment progress and `Add another option` are shown only while eligible customization units remain unallocated
+- when every eligible customization unit is assigned, assignment progress and `Add another option` are hidden immediately
+- each completed allocation group represents one unique active Product Option combination
+- choices that would reproduce a completed combination owned by another group are unavailable in later groups
+- an upstream choice may remain available in multiple groups while it still leads to at least one unused valid dependent combination
+- another allocation group may be created only when unallocated units remain and at least one unused valid Product Option combination remains
+- stale or externally supplied duplicate combinations fail incomplete rather than being accepted as valid state
 - options never become an independent commerce quantity owner
 - options do not create a second personalization engine
 - a completed option remains stable unless one of its own dependencies changes
 
 Product Option fields are singleton by default: one value applies to the merchandise selection. A capability profile opts specific fields into unit allocation through `features.productOptionsAllocation.fieldIds`. Unit-allocated Product Option fields in v1 are enumerated `select` or `radio` choices; free-form per-unit content belongs to Personalization rather than becoming a second personalization engine.
 
-When allocation is enabled, groups may assign the same Product Option values to one or more eligible customization units. A customization unit may belong to at most one Product Options allocation group, and every eligible required unit must be allocated exactly once before Product Options can be complete.
+When allocation is enabled, groups may assign the same Product Option values to one or more eligible customization units. A customization unit may belong to at most one Product Options allocation group, and every eligible required unit must be allocated exactly once before Product Options can be complete. Combination uniqueness is based only on fields that are active for that group; values belonging to hidden dependent fields do not create a different combination.
 
 Future Theme Core implementation must reproduce the behavior through one option engine, not collection-specific scripts.
 
