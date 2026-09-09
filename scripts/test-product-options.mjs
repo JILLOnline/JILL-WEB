@@ -199,6 +199,11 @@ assert.deepEqual(pack.firstIssue, {scope: 'allocation', reason: 'unallocated'});
 
 pack = productOptions.addAllocationGroup(pack, packProfile);
 pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_2', 6);
+assert.deepEqual(
+  productOptions.getAvailableAllocationFieldOptions(pack, packProfile, 'group_2', 'flavor').map((option) => option.value),
+  ['gummies'],
+  'completed allocated option values must not be offered to a later group',
+);
 pack = productOptions.setAllocationGroupValue(pack, packProfile, 'group_2', 'flavor', 'gummies');
 assert.equal(pack.complete, true);
 assert.equal(pack.allocation.unallocatedUnitIds.length, 0);
@@ -247,6 +252,7 @@ assert.deepEqual(pack.allocation.groups[0].unitIds, firstSix, 'existing stable u
 assert.equal(pack.allocation.groups[0].values.flavor, 'chips');
 assert.equal(pack.allocation.groups[1].values.flavor, 'gummies');
 assert.equal(pack.complete, false);
+assert.equal(productOptions.canAddAllocationGroup(pack, packProfile), false, 'no duplicate flavor group may be created when all combinations are used');
 
 pack = productOptions.setAllocationGroupCount(pack, packProfile, 'group_2', 18);
 assert.equal(pack.complete, true);
@@ -292,6 +298,138 @@ assert.throws(
 assert.throws(
   () => productOptions.setAllocationGroupValue(pack, packProfile, 'missing', 'flavor', 'chips'),
   /unknown allocation group missing/,
+);
+
+const uniquenessProfile = capabilities.resolve({
+  version: 1,
+  id: 'filled_snack_options',
+  fields: [
+    {
+      id: 'fill_state',
+      kind: 'radio',
+      group: 'product_options',
+      label: 'Filled or Empty',
+      required: true,
+      options: [
+        {value: 'empty', label: 'Empty'},
+        {value: 'filled', label: 'Filled'},
+      ],
+    },
+    {
+      id: 'snack_choice',
+      kind: 'select',
+      group: 'product_options',
+      label: 'Snack choice',
+      required: true,
+      options: [
+        {value: 'cheetos', label: 'Cheetos'},
+        {value: 'doritos', label: 'Doritos'},
+        {value: 'mixed', label: 'Mixed'},
+        {value: 'other', label: 'Other'},
+      ],
+      visibleWhen: {
+        mode: 'all',
+        conditions: [{field: 'fill_state', operator: 'equals', value: 'filled'}],
+      },
+    },
+  ],
+  features: {
+    customizationUnits: {
+      unitsPerQuantity: 6,
+      singularLabel: 'bag',
+      pluralLabel: 'bags',
+    },
+    productOptionsAllocation: {
+      fieldIds: ['fill_state', 'snack_choice'],
+    },
+  },
+});
+
+let unique = productOptions.createState({
+  itemId: 'product:unique-snacks',
+  merchandiseQuantity: 1,
+  profile: uniquenessProfile,
+});
+unique = productOptions.addAllocationGroup(unique, uniquenessProfile);
+unique = productOptions.setAllocationGroupCount(unique, uniquenessProfile, 'group_1', 1);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_1', 'fill_state', 'empty');
+assert.equal(unique.allocation.groups[0].complete, true);
+assert.deepEqual(unique.allocation.groups[0].values, {fill_state: 'empty'}, 'unavailable dependent choices must not be part of the Empty signature');
+
+unique = productOptions.addAllocationGroup(unique, uniquenessProfile);
+unique = productOptions.setAllocationGroupCount(unique, uniquenessProfile, 'group_2', 1);
+assert.deepEqual(
+  productOptions.getAvailableAllocationFieldOptions(unique, uniquenessProfile, 'group_2', 'fill_state').map((option) => option.value),
+  ['filled'],
+  'Empty must disappear after another group already owns the Empty combination',
+);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_2', 'fill_state', 'filled');
+assert.deepEqual(
+  productOptions.getAvailableAllocationFieldOptions(unique, uniquenessProfile, 'group_2', 'snack_choice').map((option) => option.value),
+  ['cheetos', 'doritos', 'mixed', 'other'],
+);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_2', 'snack_choice', 'cheetos');
+
+unique = productOptions.addAllocationGroup(unique, uniquenessProfile);
+unique = productOptions.setAllocationGroupCount(unique, uniquenessProfile, 'group_3', 1);
+assert.deepEqual(
+  productOptions.getAvailableAllocationFieldOptions(unique, uniquenessProfile, 'group_3', 'fill_state').map((option) => option.value),
+  ['filled'],
+  'Filled remains available while another unused filling combination exists',
+);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_3', 'fill_state', 'filled');
+assert.deepEqual(
+  productOptions.getAvailableAllocationFieldOptions(unique, uniquenessProfile, 'group_3', 'snack_choice').map((option) => option.value),
+  ['doritos', 'mixed', 'other'],
+  'a used Filled + snack combination must disappear while unused filling choices remain',
+);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_3', 'snack_choice', 'doritos');
+
+unique = productOptions.addAllocationGroup(unique, uniquenessProfile);
+unique = productOptions.setAllocationGroupCount(unique, uniquenessProfile, 'group_4', 1);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_4', 'fill_state', 'filled');
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_4', 'snack_choice', 'mixed');
+
+unique = productOptions.addAllocationGroup(unique, uniquenessProfile);
+unique = productOptions.setAllocationGroupCount(unique, uniquenessProfile, 'group_5', 1);
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_5', 'fill_state', 'filled');
+unique = productOptions.setAllocationGroupValue(unique, uniquenessProfile, 'group_5', 'snack_choice', 'other');
+assert.equal(unique.allocation.unallocatedUnitIds.length, 1);
+assert.equal(productOptions.canAddAllocationGroup(unique, uniquenessProfile), false, 'Add another option must stop when every unique combination has been consumed');
+assert.throws(
+  () => productOptions.addAllocationGroup(unique, uniquenessProfile),
+  /no unused Product Options combination remains/,
+);
+
+const duplicateRaw = productOptions.createState({
+  itemId: 'product:duplicate-snacks',
+  merchandiseQuantity: 1,
+  profile: uniquenessProfile,
+  allocationGroups: [
+    {id: 'group_1', unitIds: ['product:duplicate-snacks::1'], values: {fill_state: 'empty'}},
+    {id: 'group_2', unitIds: ['product:duplicate-snacks::2'], values: {fill_state: 'empty', snack_choice: 'cheetos'}},
+  ],
+});
+assert.equal(duplicateRaw.allocation.groups[0].complete, true);
+assert.equal(duplicateRaw.allocation.groups[1].duplicate, true);
+assert.equal(duplicateRaw.allocation.groups[1].complete, false);
+assert.deepEqual(duplicateRaw.allocation.groups[1].values, {fill_state: 'empty'}, 'stale hidden snack values may not alter the Empty signature');
+assert.deepEqual(duplicateRaw.firstIssue, {scope: 'allocation_group', reason: 'duplicate', groupId: 'group_2'});
+
+let duplicateAttempt = productOptions.createState({
+  itemId: 'product:duplicate-attempt',
+  merchandiseQuantity: 1,
+  profile: uniquenessProfile,
+});
+duplicateAttempt = productOptions.addAllocationGroup(duplicateAttempt, uniquenessProfile);
+duplicateAttempt = productOptions.setAllocationGroupCount(duplicateAttempt, uniquenessProfile, 'group_1', 1);
+duplicateAttempt = productOptions.setAllocationGroupValue(duplicateAttempt, uniquenessProfile, 'group_1', 'fill_state', 'empty');
+duplicateAttempt = productOptions.addAllocationGroup(duplicateAttempt, uniquenessProfile);
+duplicateAttempt = productOptions.setAllocationGroupCount(duplicateAttempt, uniquenessProfile, 'group_2', 1);
+assert.throws(
+  () => productOptions.setAllocationGroupValue(duplicateAttempt, uniquenessProfile, 'group_2', 'fill_state', 'empty'),
+  /allocation group group_2 duplicates another option combination/,
+  'the reducer must reject duplicate combinations even if UI filtering is bypassed',
 );
 
 const noOptionsProfile = capabilities.resolve({
