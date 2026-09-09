@@ -2,10 +2,10 @@
 
 JILL-WEB is the product repository for JILL's Shopify storefront platform.
 
-It now has three explicit boundaries:
+It has three explicit boundaries:
 
 - `theme/` — clean, reusable JILL Theme Core intended to become a merchant-customizable Shopify theme product
-- `extensions/` + `shared/` — JILL Shopify Customer Account/app presentation
+- `extensions/` + shared account presentation — JILL Shopify Customer Account/app presentation
 - `backend/` + rewards modules — JILL-specific privileged business authority and integrations
 
 The current live Dawn-derived JILL storefront is a production/reference implementation. It is not the source code for Theme Core.
@@ -59,6 +59,32 @@ Authoritative state returned to UI
 
 Shopify owns ordinary commerce. Theme Core owns presentation and ephemeral interaction state. JILL backend code owns secrets, durable custom-order workflows, rewards integrity, privileged Shopify operations, integrations and reconciliation.
 
+## Canonical Theme Core delivery lane
+
+There is one storefront source and one Shopify development target:
+
+```text
+jill/theme-core
+  ↓
+.github/workflows/theme-core.yml
+  ↓
+validate
+  ↓
+package as a GitHub Actions artifact
+  ↓
+verify exact Shopify target
+  ↓
+preserve config/settings_data.json
+  ↓
+strict full-source push
+  ↓
+JILL Theme Core DEV — theme 165639192819 — DEVELOPMENT
+```
+
+The workflow refuses to write if the target ID, name or DEVELOPMENT role does not match. It never uses Shopify CLI `--allow-live`. The live JILL theme is not a deployment target.
+
+`jill/theme-core-package`, `jill/theme-core-artifacts`, and `jill/storefront-system` are historical branches, not sources of truth. They must not receive new storefront work. Certified ZIPs now live on the workflow run itself instead of a generated branch.
+
 ## Development checks
 
 Install dependencies and run all repository postinstall guards:
@@ -79,7 +105,7 @@ Run Shopify Theme Check:
 npx shopify theme check --path theme
 ```
 
-GitHub Actions runs Theme Core architecture validation and Shopify Theme Check for Theme Core changes. Existing rewards guards/tests remain part of repository postinstall validation.
+GitHub Actions runs the same certification before packaging or deploying Theme Core. Existing rewards guards/tests remain part of repository postinstall validation.
 
 ## Current Theme Core branch
 
@@ -91,7 +117,7 @@ Production JILL should not be modified as a shortcut while Theme Core is being b
 
 ## Existing JILL app/account systems
 
-Customer Account extensions remain in `extensions/`, with shared presentation primitives in `shared/customer-account-ui.jsx`. Shopify Customer Account platform restrictions remain authoritative; arbitrary storefront CSS is not injected into account surfaces.
+Customer Account extensions remain in `extensions/`. Shopify Customer Account platform restrictions remain authoritative; arbitrary storefront CSS is not injected into account surfaces.
 
 Rewards accounting/reconciliation/coupon creation remains outside the sellable theme. Storefront/account UI consumes authoritative reward state rather than reproducing the accounting engine.
 
@@ -99,4 +125,4 @@ The current Google Apps Script backend remains operational during migration. Its
 
 ## Working loop
 
-`architecture check → canonical owner → implementation → housekeeping → automated guards/tests → failure/retry certification → interaction/visual certification where applicable → clean commit`
+`architecture check → canonical owner → implementation → housekeeping → automated guards/tests → failure/retry certification → interaction/visual certification where applicable → clean commit → canonical DEVELOPMENT deploy`

@@ -1,0 +1,219 @@
+name: JILL Theme Core Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - jill/theme-core
+  pull_request:
+    branches:
+      - jill/theme-core
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jill-theme-core-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SHOPIFY_STORE: jqtdgr-1y.myshopify.com
+  SHOPIFY_THEME_ID: '165639192819'
+  SHOPIFY_THEME_NAME: JILL Theme Core DEV
+  SHOPIFY_THEME_ROLE: development
+
+jobs:
+  validate:
+    name: Validate Theme Core
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies and run repository guards
+        run: npm install
+
+      - name: Run Theme Core architecture guard
+        run: npm run check:theme
+
+      - name: Run universal form engine tests
+        run: npm run test:form-engine
+
+      - name: Run product capability resolver tests
+        run: npm run test:product-capabilities
+
+      - name: Run product surface projection tests
+        run: npm run test:product-surface
+
+      - name: Run paid capability failure tests
+        run: npm run test:commerce-capabilities
+
+      - name: Run Product Options tests
+        run: npm run test:product-options
+
+      - name: Run conditional Product Options detail tests
+        run: npm run test:product-option-details
+
+      - name: Run personalization tests
+        run: npm run test:personalization
+
+      - name: Run quantity stepper tests
+        run: npm run test:quantity
+
+      - name: Run commerce adjustment tests
+        run: npm run test:commerce-adjustments
+
+      - name: Run commerce cart tests
+        run: npm run test:commerce-cart
+
+      - name: Run paid product commerce tests
+        run: npm run test:product-commerce
+
+      - name: Run Custom Order integration tests
+        run: npm run test:custom-order-integration
+
+      - name: Run Custom Order contract guard
+        run: npm run check:custom-order
+
+      - name: Run Shopify Theme Check
+        run: npx shopify theme check --path theme
+
+      - name: Require a clean tracked worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "Validation modified tracked source." >&2
+            git status --short
+            git diff
+            exit 1
+          fi
+
+  package:
+    name: Package certified theme
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout certified source
+        uses: actions/checkout@v4
+
+      - name: Build root-level Shopify ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd theme
+          zip -q -r ../jill-theme-core.zip \
+            assets \
+            config \
+            layout \
+            locales \
+            sections \
+            snippets \
+            templates
+          cd ..
+          test -s jill-theme-core.zip
+          unzip -Z1 jill-theme-core.zip | grep -qx 'layout/theme.liquid'
+          unzip -Z1 jill-theme-core.zip | grep -qx 'config/settings_schema.json'
+          if unzip -Z1 jill-theme-core.zip | grep -Eq '^theme/|^\.theme-check\.yml$'; then
+            echo 'Package contains a forbidden wrapper/tooling path.' >&2
+            exit 1
+          fi
+          printf '%s\n' "$GITHUB_SHA" > source-commit.txt
+
+      - name: Upload certified package
+        uses: actions/upload-artifact@v4
+        with:
+          name: jill-theme-core-${{ github.sha }}
+          path: |
+            jill-theme-core.zip
+            source-commit.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy:
+    name: Deploy canonical Shopify development theme
+    needs:
+      - validate
+      - package
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
+
+    steps:
+      - name: Checkout certified source
+        uses: actions/checkout@v4
+
+      - name: Require dedicated Shopify theme credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$SHOPIFY_CLI_THEME_TOKEN" ]; then
+            echo 'SHOPIFY_THEME_TOKEN is required for the canonical Theme Core deployment lane.' >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Shopify CLI without rerunning repository postinstall
+        run: npm install --ignore-scripts
+
+      - name: Verify canonical DEVELOPMENT target before write
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx shopify theme list \
+            --store "$SHOPIFY_STORE" \
+            --password "$SHOPIFY_CLI_THEME_TOKEN" \
+            --json > "$RUNNER_TEMP/jill-themes-before.json"
+          node scripts/verify-shopify-theme-target.mjs "$RUNNER_TEMP/jill-themes-before.json"
+
+      - name: Preserve merchant Theme Editor state
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx shopify theme pull \
+            --store "$SHOPIFY_STORE" \
+            --theme "$SHOPIFY_THEME_ID" \
+            --path theme \
+            --only config/settings_data.json \
+            --nodelete \
+            --password "$SHOPIFY_CLI_THEME_TOKEN"
+
+      - name: Push exact certified Theme Core source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx shopify theme push \
+            --store "$SHOPIFY_STORE" \
+            --theme "$SHOPIFY_THEME_ID" \
+            --path theme \
+            --strict \
+            --password "$SHOPIFY_CLI_THEME_TOKEN" \
+            --json > "$RUNNER_TEMP/jill-theme-push.json"
+          cat "$RUNNER_TEMP/jill-theme-push.json"
+
+      - name: Reverify DEVELOPMENT target after write
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx shopify theme list \
+            --store "$SHOPIFY_STORE" \
+            --password "$SHOPIFY_CLI_THEME_TOKEN" \
+            --json > "$RUNNER_TEMP/jill-themes-after.json"
+          node scripts/verify-shopify-theme-target.mjs "$RUNNER_TEMP/jill-themes-after.json"
+
+# Canonical delivery invariant:
+# jill/theme-core -> validate -> package -> JILL Theme Core DEV (DEVELOPMENT only).
+# This workflow never uses --allow-live and refuses a target name/role mismatch.
