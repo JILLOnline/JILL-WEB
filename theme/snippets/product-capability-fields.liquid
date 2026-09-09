@@ -3,6 +3,7 @@
   assign allocation_count_label = 'products.product.allocation.count' | t
   assign group_names = 'product_options,personalization,planning,reference' | split: ','
   assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
+  assign allocated_personalization_field_ids = capability_profile.features.personalizationAllocation.fieldIds
   assign allocation_initially_available = false
   assign has_product_options = false
 
@@ -24,6 +25,14 @@
   >
 {% endif %}
 
+{% if allocated_personalization_field_ids != blank %}
+  <input
+    type="hidden"
+    name="properties[_jill_personalization]"
+    data-jill-personalization-payload
+  >
+{% endif %}
+
 <div class="jill-product-customization" data-jill-product-customization>
   <div class="jill-product-customization__intro">
     <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
@@ -40,12 +49,18 @@
         if group_name == 'product_options' and allocated_option_field_ids contains candidate.id
           assign candidate_is_allocated = true
         endif
+        if group_name == 'personalization' and allocated_personalization_field_ids contains candidate.id
+          assign candidate_is_allocated = true
+        endif
         if candidate.group == group_name and candidate_is_allocated == false
           assign group_has_fields = true
         endif
       endfor
 
       if group_name == 'product_options' and allocated_option_field_ids != blank
+        assign group_has_allocation = true
+      endif
+      if group_name == 'personalization' and allocated_personalization_field_ids != blank
         assign group_has_allocation = true
       endif
     %}
@@ -65,6 +80,9 @@
           {% liquid
             assign field_is_allocated = false
             if group_name == 'product_options' and allocated_option_field_ids contains field.id
+              assign field_is_allocated = true
+            endif
+            if group_name == 'personalization' and allocated_personalization_field_ids contains field.id
               assign field_is_allocated = true
             endif
           %}
@@ -198,7 +216,7 @@
           {% endif %}
         {% endfor %}
 
-        {% if group_has_allocation %}
+        {% if group_name == 'product_options' and allocated_option_field_ids != blank %}
           <div
             class="jill-product-customization__field"
             data-jill-product-options-allocation
@@ -235,6 +253,46 @@
               data-jill-product-options-add
               hidden
             >{{ 'products.product.allocation.add' | t }}</button>
+          </div>
+        {% endif %}
+
+        {% if group_name == 'personalization' and allocated_personalization_field_ids != blank %}
+          <div
+            class="jill-product-customization__field"
+            data-jill-personalization-allocation
+            data-same-label="{{ 'products.product.personalization.same' | t | escape }}"
+            data-different-label="{{ 'products.product.personalization.different' | t | escape }}"
+            data-group-label="{{ 'products.product.personalization.group' | t | escape }}"
+            data-count-label="{{ allocation_count_label | escape }}"
+            data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+            data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+            data-add-label="{{ 'products.product.personalization.add' | t | escape }}"
+            data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+            data-item-label="{{ 'products.product.allocation.item' | t | escape }}"
+            data-items-label="{{ 'products.product.allocation.items' | t | escape }}"
+          >
+            <p class="jill-product-customization__help">{{ 'products.product.personalization.help' | t }}</p>
+            <div data-jill-personalization-modes></div>
+            <template data-jill-personalization-quantity-template>
+              {% render 'ui-quantity',
+                id: 'JillPersonalizationQuantityTemplate',
+                name: blank,
+                label: allocation_count_label,
+                value: 1,
+                min: 1,
+                step: 1,
+                required: true
+              %}
+            </template>
+            <div data-jill-personalization-groups></div>
+            <p class="jill-product-customization__help" role="status" aria-live="polite" data-jill-personalization-summary></p>
+            <button
+              class="jill-button"
+              data-variant="secondary"
+              type="button"
+              data-jill-personalization-add
+              hidden
+            >{{ 'products.product.personalization.add' | t }}</button>
           </div>
         {% endif %}
       </div>
