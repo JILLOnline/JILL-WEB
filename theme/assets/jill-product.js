@@ -293,7 +293,7 @@
       shell.dataset.jillProductOptionsCountField = group.id;
 
       const id = `JillProductOptionCount-${root.dataset.jillProductId}-${group.id}`;
-      const visibleLabel = `${allocationMount.dataset.countLabel} ${allocationUnitLabel(group.unitIds.length)}`;
+      const visibleLabel = `${allocationMount.dataset.countLabel} ${allocationUnitLabel(2)}`;
       const accessibleLabel = `${allocationMount.dataset.groupLabel} ${groupIndex + 1}: ${visibleLabel}`;
       const input = globalThis.JILLQuantity.configure(shell, {
         id,
@@ -326,6 +326,15 @@
       return shell;
     }
 
+    function availableAllocationOptions(group, field) {
+      return globalThis.JILLProductOptions.getAvailableAllocationFieldOptions(
+        productOptionsState,
+        profile,
+        group.id,
+        field.id,
+      );
+    }
+
     function createAllocationSelect(field, group) {
       const shell = document.createElement('div');
       shell.className = 'jill-field';
@@ -349,7 +358,7 @@
       placeholder.textContent = status?.dataset.chooseOptionLabel || 'Choose an option';
       select.append(placeholder);
 
-      for (const option of field.options || []) {
+      for (const option of availableAllocationOptions(group, field)) {
         const optionNode = document.createElement('option');
         optionNode.value = option.value;
         optionNode.textContent = option.label;
@@ -359,15 +368,19 @@
       select.value = group.values[field.id] || '';
       if (!select.value) placeholder.selected = true;
       select.addEventListener('change', () => {
-        commitProductOptions(
-          globalThis.JILLProductOptions.setAllocationGroupValue(
-            productOptionsState,
-            profile,
-            group.id,
-            field.id,
-            select.value,
-          ),
-        );
+        try {
+          commitProductOptions(
+            globalThis.JILLProductOptions.setAllocationGroupValue(
+              productOptionsState,
+              profile,
+              group.id,
+              field.id,
+              select.value,
+            ),
+          );
+        } catch (error) {
+          renderProductOptions();
+        }
       });
 
       shell.append(label, select);
@@ -388,7 +401,7 @@
       const choices = document.createElement('div');
       choices.className = 'jill-choice-group';
 
-      for (const [index, option] of (field.options || []).entries()) {
+      for (const [index, option] of availableAllocationOptions(group, field).entries()) {
         const id = `JillProductOption-${root.dataset.jillProductId}-${group.id}-${field.id}-${index + 1}`;
         const label = document.createElement('label');
         label.className = 'jill-choice';
@@ -402,15 +415,19 @@
         input.checked = group.values[field.id] === option.value;
         input.addEventListener('change', () => {
           if (!input.checked) return;
-          commitProductOptions(
-            globalThis.JILLProductOptions.setAllocationGroupValue(
-              productOptionsState,
-              profile,
-              group.id,
-              field.id,
-              input.value,
-            ),
-          );
+          try {
+            commitProductOptions(
+              globalThis.JILLProductOptions.setAllocationGroupValue(
+                productOptionsState,
+                profile,
+                group.id,
+                field.id,
+                input.value,
+              ),
+            );
+          } catch (error) {
+            renderProductOptions();
+          }
         });
 
         const text = document.createElement('span');
@@ -498,13 +515,14 @@
       const assigned = productOptionsState.eligibleUnitCount - unallocated;
       const unitLabel = allocationUnitLabel(productOptionsState.eligibleUnitCount);
       const hasUnallocated = unallocated > 0;
+      const canAdd = hasUnallocated && globalThis.JILLProductOptions.canAddAllocationGroup(productOptionsState, profile);
       if (allocationSummary) {
         allocationSummary.hidden = !hasUnallocated;
         allocationSummary.textContent = hasUnallocated
-          ? `${assigned} ${allocationMount.dataset.ofLabel} ${productOptionsState.eligibleUnitCount} ${unitLabel} ${allocationMount.dataset.assignedLabel}${unallocated ? ` — ${unallocated} ${allocationMount.dataset.unassignedLabel}` : ''}`
+          ? `${assigned} ${allocationMount.dataset.ofLabel} ${productOptionsState.eligibleUnitCount} ${unitLabel} ${allocationMount.dataset.assignedLabel} — ${unallocated} ${allocationMount.dataset.unassignedLabel}`
           : '';
       }
-      allocationAddButton.hidden = !hasUnallocated;
+      allocationAddButton.hidden = !canAdd;
     }
 
     function firstOtherBlockingResult(validation) {
@@ -539,6 +557,9 @@
       }
       if (issue.scope === 'allocation_group' && issue.reason === 'units') {
         return allocationCountElement(issue.groupId)?.closest('.jill-quantity') || null;
+      }
+      if (issue.scope === 'allocation_group' && issue.reason === 'duplicate') {
+        return allocationGroupElement(issue.groupId);
       }
       if (issue.scope === 'allocation' && issue.reason === 'unallocated') return allocationAddButton;
       return allocationMount;
@@ -636,7 +657,7 @@
 
       if (allocationAddButton) {
         allocationAddButton.addEventListener('click', () => {
-          if (!productOptionsState?.allocation.available || productOptionsState.allocation.unallocatedUnitIds.length === 0) return;
+          if (!productOptionsState?.allocation.available || !globalThis.JILLProductOptions.canAddAllocationGroup(productOptionsState, profile)) return;
           try {
             let next = globalThis.JILLProductOptions.addAllocationGroup(productOptionsState, profile);
             const group = next.allocation.groups[next.allocation.groups.length - 1];
