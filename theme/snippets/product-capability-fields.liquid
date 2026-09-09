@@ -33,7 +33,7 @@
   >
 {% endif %}
 
-<div class="jill-product-customization" data-jill-product-customization>
+<div class="jill-product-customization jill-card" data-jill-product-customization>
   <div class="jill-product-customization__intro">
     <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
     <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
@@ -146,15 +146,18 @@
                 required: true
               %}
             </template>
-            <div data-jill-product-options-groups></div>
-            <p class="jill-product-customization__help" role="status" aria-live="polite" data-jill-product-options-summary></p>
+            <div class="jill-card" data-jill-product-options-groups></div>
+            <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-product-options-summary></p>
             <button
               class="jill-button"
               data-variant="secondary"
               type="button"
               data-jill-product-options-add
               hidden
-            >{{ 'products.product.allocation.add' | t }}</button>
+            >
+              <span aria-hidden="true">+</span>
+              <span>{{ 'products.product.allocation.add' | t }}</span>
+            </button>
           </div>
         {% endif %}
 
@@ -205,14 +208,17 @@
               {% endfor %}
             </div>
             <div data-jill-personalization-groups></div>
-            <p class="jill-product-customization__help" role="status" aria-live="polite" data-jill-personalization-summary hidden></p>
+            <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-personalization-summary hidden></p>
             <button
               class="jill-button"
               data-variant="secondary"
               type="button"
               data-jill-personalization-add
               hidden
-            >{{ 'products.product.personalization.add' | t }}</button>
+            >
+              <span aria-hidden="true">+</span>
+              <span>{{ 'products.product.personalization.add' | t }}</span>
+            </button>
           </div>
         {% endif %}
       </div>
