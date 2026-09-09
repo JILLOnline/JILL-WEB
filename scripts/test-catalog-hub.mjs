@@ -66,10 +66,16 @@ assert.doesNotMatch(storefrontStyles, /jill-catalog__filters/, 'removed Catalog 
 assert.doesNotMatch(storefrontStyles, /jill-product-card__thumbnails|jill-product-card__thumbnail/, 'removed Catalog secondary thumbnails must not leave dead style owners behind');
 assert.doesNotMatch(storefrontStyles, /jill-catalog__hero(?:-title|-text|-actions)?/, 'removed Catalog hero must not leave dead style owners behind');
 assert.match(storefrontStyles, /jill-catalog__section-heading--centered/, 'Catalog must own one centered heading composition');
-assert.match(storefrontStyles, /jill-catalog__featured-grid \.jill-product-card__actions/, 'featured Catalog shelf must own its compact card action layout');
 assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
-assert.match(storefrontStyles, /minmax\(min\(100%, 21rem\), 1fr\)/, 'Catalog cards must remain broad enough for product-led discovery');
-assert.match(uiStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__image\s*\{[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/s, 'Catalog thumbnails must show the full product instead of cropping it');
+assert.match(storefrontStyles, /\.jill-product-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'all product grids must use the same centered reference width');
+assert.match(storefrontStyles, /\.jill-catalog__featured-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'featured products must use the canonical reference width');
+assert.match(storefrontStyles, /\.jill-catalog__product-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'catalog collection groups must use the canonical reference width');
+assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\]\s*\{[^}]*max-width:\s*18rem;[^}]*padding:\s*calc\(var\(--jill-space-unit\) \* 2\);/s, 'catalog cards must hug the thumbnail frame at one canonical width');
+assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__media\s*\{[^}]*aspect-ratio:\s*1;/s, 'catalog thumbnails must share one square reference frame');
+assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__image\s*\{[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/s, 'Catalog thumbnails must show the full product instead of cropping it');
+assert.match(storefrontStyles, /\.jill-product-card__actions\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s, 'catalog product actions must use one compact two-button layout');
+assert.doesNotMatch(storefrontStyles, /\.jill-catalog__featured-grid \.jill-product-card/, 'featured merchandising must not fork canonical product-card sizing');
+assert.doesNotMatch(uiStyles, /jill-product-card\[data-display='catalog'\]/, 'Catalog product-card visuals belong to the storefront owner, not the generic UI layer');
 
 assert.match(customOrderSection, /data-product-handle=/, 'Custom Order items must expose stable product handles for catalog handoff');
 assert.match(customOrderRuntime, /URLSearchParams/, 'Custom Order must read contextual catalog intent from the URL');
