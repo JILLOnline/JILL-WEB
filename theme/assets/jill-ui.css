@@ -71,6 +71,10 @@
     line-height: 1;
   }
 
+  .jill-pill[hidden] {
+    display: none;
+  }
+
   .jill-field {
     display: grid;
     gap: var(--jill-space-unit);
