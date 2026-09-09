@@ -9,6 +9,7 @@
   assign state_label = 'custom_order.planning.state' | t
   assign postal_code_label = 'custom_order.planning.postal_code' | t
   assign quantity_label = 'products.product.quantity' | t
+  assign allocation_count_label = 'products.product.allocation.count' | t
   assign review_label = 'custom_order.actions.review' | t
 %}
 
@@ -101,26 +102,6 @@
               <form class="jill-product-form" data-jill-custom-order-item-form novalidate>
                 {% if catalog_product.has_only_default_variant %}
                   <input type="hidden" name="id" value="{{ current_variant.id }}">
-                {% else %}
-                  <div class="jill-field">
-                    <label class="jill-field__label" for="JillCustomOrderVariant-{{ item_key }}">{{ 'products.product.variant' | t }}</label>
-                    <select
-                      class="jill-field__control"
-                      id="JillCustomOrderVariant-{{ item_key }}"
-                      name="id"
-                      data-jill-variant-select
-                    >
-                      {% for variant in catalog_product.variants %}
-                        <option
-                          value="{{ variant.id }}"
-                          data-price-label="{{ variant.price | money | escape }}"
-                          data-available="{{ variant.available }}"
-                          {% if variant.id == current_variant.id %}selected{% endif %}
-                          {% unless variant.available %}disabled{% endunless %}
-                        >{{ variant.title }}{% unless variant.available %} — {{ 'products.product.sold_out' | t }}{% endunless %}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
                 {% endif %}
 
                 {% render 'ui-quantity',
@@ -132,6 +113,56 @@
                   step: 1,
                   required: true
                 %}
+
+                {% unless catalog_product.has_only_default_variant %}
+                  <input type="hidden" data-jill-variant-allocation-payload>
+                  <div
+                    class="jill-product-customization__group"
+                    data-jill-variant-allocation
+                    data-group-label="{{ 'custom_order.variants.group' | t | escape }}"
+                    data-select-label="{{ 'custom_order.variants.select' | t | escape }}"
+                    data-count-label="{{ allocation_count_label | escape }}"
+                    data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
+                    data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+                    data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+                    data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+                    data-incomplete-label="{{ 'custom_order.variants.incomplete' | t | escape }}"
+                    hidden
+                    aria-hidden="true"
+                  >
+                    <h3 class="jill-product-customization__group-title">{{ 'custom_order.variants.title' | t }}</h3>
+                    <p class="jill-product-customization__help">{{ 'custom_order.variants.help' | t }}</p>
+                    <template data-jill-variant-quantity-template>
+                      {% render 'ui-quantity',
+                        id: 'JillCustomOrderVariantQuantityTemplate',
+                        name: blank,
+                        label: allocation_count_label,
+                        value: 1,
+                        min: 1,
+                        step: 1,
+                        required: true
+                      %}
+                    </template>
+                    <div class="jill-card" data-jill-variant-allocation-groups></div>
+                    <button class="jill-button" data-variant="secondary" type="button" data-jill-variant-allocation-add hidden>
+                      <span aria-hidden="true">+</span>
+                      <span>{{ 'custom_order.variants.add' | t }}</span>
+                    </button>
+                    <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-variant-allocation-summary hidden></p>
+                    <script type="application/json" data-jill-variant-catalog>
+                      [
+                        {% for variant in catalog_product.variants %}
+                          {
+                            "id": "{{ variant.id }}",
+                            "title": {{ variant.title | json }},
+                            "available": {{ variant.available | json }},
+                            "priceLabel": {{ variant.price | money | json }}
+                          }{% unless forloop.last %},{% endunless %}
+                        {% endfor %}
+                      ]
+                    </script>
+                  </div>
+                {% endunless %}
 
                 {% if capability_profile != blank %}
                   <input type="hidden" name="properties[_jill_profile]" value="{{ capability_profile.id }}@{{ capability_profile.version }}">
