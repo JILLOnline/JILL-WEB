@@ -242,13 +242,21 @@ function resolvePartyPack(unitsPerQuantity, id) {
       },
       {
         id: 'age_number',
-        kind: 'number',
+        kind: 'select',
         group: 'personalization',
         label: 'Number or age',
         required: true,
-        min: 1,
-        max: 9,
-        step: 1,
+        options: [
+          {value: '1', label: '1'},
+          {value: '2', label: '2'},
+          {value: '3', label: '3'},
+          {value: '4', label: '4'},
+          {value: '5', label: '5'},
+          {value: '6', label: '6'},
+          {value: '7', label: '7'},
+          {value: '8', label: '8'},
+          {value: '9', label: '9'},
+        ],
         visibleWhen: {
           mode: 'all',
           conditions: [{field: 'add_age', operator: 'equals', value: 'yes'}],
@@ -287,6 +295,12 @@ function resolvePartyPack(unitsPerQuantity, id) {
 }
 
 const partyPack12 = resolvePartyPack(12, 'party_pack_12');
+assert.deepEqual(
+  capabilities.getField(partyPack12, 'age_number').options.map((option) => option.value),
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+  'party Number/Age must remain a 1–9 dropdown',
+);
+assert.equal(capabilities.getField(partyPack12, 'age_number').kind, 'select');
 let party = personalization.createState({itemId: 'party-pack', merchandiseQuantity: 1, profile: partyPack12});
 assert.equal(party.mode, null, 'none/same/different must require an explicit mode choice');
 assert.equal(party.eligibleUnitCount, 12);
@@ -306,7 +320,7 @@ assert.equal(party.firstIssue.fieldId, 'name_text', 'Name/Text must become requi
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'name_text', 'Mia');
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'add_age', 'yes');
 assert.equal(party.firstIssue.fieldId, 'age_number', 'Number/Age must become required only when Yes is active');
-party = personalization.setGroupValue(party, partyPack12, 'group_1', 'age_number', 5);
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'age_number', '5');
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'theme', 'Princess');
 party = personalization.setGroupValue(party, partyPack12, 'group_1', 'colors', 'Lavender and white');
 assert.equal(party.complete, true);
@@ -319,7 +333,7 @@ const partySecondId = party.groups[1].id;
 party = personalization.setGroupCount(party, partyPack12, partySecondId, 6);
 party = personalization.setGroupValue(party, partyPack12, partySecondId, 'add_name', 'no');
 party = personalization.setGroupValue(party, partyPack12, partySecondId, 'add_age', 'yes');
-party = personalization.setGroupValue(party, partyPack12, partySecondId, 'age_number', 7);
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'age_number', '7');
 party = personalization.setGroupValue(party, partyPack12, partySecondId, 'theme', 'Space');
 party = personalization.setGroupValue(party, partyPack12, partySecondId, 'colors', 'Blue and silver');
 assert.equal(party.complete, true);
