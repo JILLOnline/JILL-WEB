@@ -8,6 +8,7 @@ const template = JSON.parse(fs.readFileSync('theme/templates/collection.json', '
 const productCard = fs.readFileSync('theme/snippets/product-card.liquid', 'utf8');
 const summary = fs.readFileSync('theme/snippets/catalog-product-summary.liquid', 'utf8');
 const catalogRuntime = fs.readFileSync('theme/assets/jill-catalog.js', 'utf8');
+const storefrontStyles = fs.readFileSync('theme/assets/jill-storefront.css', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
 const customOrderSection = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const customOrderRuntime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
@@ -51,6 +52,12 @@ assert.match(productCard, /product=/, 'contextual handoff must preserve the sele
 assert.match(productCard, /truncatewords: 34/, 'catalog cards must provide enough product context to invite exploration');
 assert.match(productCard, /heading_tag/, 'canonical Product Card must accept the semantic heading level from its composition owner');
 assert.doesNotMatch(productCard, /card_product\.images/, 'catalog cards must keep one strong thumbnail instead of a secondary gallery');
+
+assert.doesNotMatch(storefrontStyles, /jill-catalog__collection-grid|jill-catalog-collection__/, 'removed Catalog discovery cards must not leave dead style owners behind');
+assert.doesNotMatch(storefrontStyles, /jill-catalog__filters/, 'removed Catalog filter pills must not leave dead style owners behind');
+assert.doesNotMatch(storefrontStyles, /jill-product-card__thumbnails|jill-product-card__thumbnail/, 'removed Catalog secondary thumbnails must not leave dead style owners behind');
+assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
+assert.match(storefrontStyles, /minmax\(min\(100%, 21rem\), 1fr\)/, 'Catalog cards must remain broad enough for product-led discovery');
 
 assert.match(summary, /jill_product_capabilities/, 'catalog summary must consume the canonical capability metafield');
 assert.match(summary, /jill_product_page_capability_override/, 'catalog summary must respect listing-surface projection');
