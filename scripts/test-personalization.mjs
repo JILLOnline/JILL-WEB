@@ -193,6 +193,141 @@ dependent = personalization.setGroupValue(dependent, dependentProfile, 'group_1'
 assert.equal(dependent.groups[0].values.age, '', 'hidden dependent personalization value must be pruned');
 assert.equal(dependent.complete, true);
 
+function resolvePartyPack(unitsPerQuantity, id) {
+  return capabilities.resolve({
+    version: 1,
+    id,
+    fields: [
+      {
+        id: 'add_name',
+        kind: 'radio',
+        group: 'personalization',
+        label: 'Would you like to add a name or text?',
+        required: true,
+        options: [
+          {value: 'yes', label: 'Yes'},
+          {value: 'no', label: 'No'},
+        ],
+      },
+      {
+        id: 'name_text',
+        kind: 'text',
+        group: 'personalization',
+        label: 'Name or text',
+        required: true,
+        maxLength: 12,
+        visibleWhen: {
+          mode: 'all',
+          conditions: [{field: 'add_name', operator: 'equals', value: 'yes'}],
+        },
+      },
+      {
+        id: 'add_age',
+        kind: 'radio',
+        group: 'personalization',
+        label: 'Would you like to add a number or age?',
+        required: true,
+        options: [
+          {value: 'yes', label: 'Yes'},
+          {value: 'no', label: 'No'},
+        ],
+      },
+      {
+        id: 'age_number',
+        kind: 'number',
+        group: 'personalization',
+        label: 'Number or age',
+        required: true,
+        min: 1,
+        max: 9,
+        step: 1,
+        visibleWhen: {
+          mode: 'all',
+          conditions: [{field: 'add_age', operator: 'equals', value: 'yes'}],
+        },
+      },
+      {
+        id: 'theme',
+        kind: 'textarea',
+        group: 'personalization',
+        label: 'Tell us about your theme',
+        required: true,
+        maxLength: 500,
+      },
+      {
+        id: 'colors',
+        kind: 'text',
+        group: 'personalization',
+        label: 'Preferred colors',
+        required: false,
+        maxLength: 200,
+      },
+    ],
+    features: {
+      customizationUnits: {
+        unitsPerQuantity,
+        singularLabel: 'item',
+        pluralLabel: 'items',
+      },
+      personalizationAllocation: {
+        enabled: true,
+        allowedModes: ['same', 'different'],
+        fieldIds: ['add_name', 'name_text', 'add_age', 'age_number', 'theme', 'colors'],
+      },
+    },
+  });
+}
+
+const partyPack12 = resolvePartyPack(12, 'party_pack_12');
+let party = personalization.createState({itemId: 'party-pack', merchandiseQuantity: 1, profile: partyPack12});
+assert.equal(party.mode, 'same');
+assert.equal(party.eligibleUnitCount, 12);
+assert.equal(party.groups[0].unitIds.length, 12);
+assert.equal(party.complete, false);
+
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'add_name', 'yes');
+assert.equal(party.firstIssue.fieldId, 'name_text', 'Name/Text must become required only when Yes is active');
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'name_text', 'Mia');
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'add_age', 'yes');
+assert.equal(party.firstIssue.fieldId, 'age_number', 'Number/Age must become required only when Yes is active');
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'age_number', 5);
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'theme', 'Princess');
+party = personalization.setGroupValue(party, partyPack12, 'group_1', 'colors', 'Lavender and white');
+assert.equal(party.complete, true);
+assert.equal(personalization.toPayload(party).allocations[0].unitIds.length, 12);
+
+party = personalization.setMode(party, partyPack12, 'different');
+party = personalization.setGroupCount(party, partyPack12, 'group_1', 6);
+party = personalization.addGroup(party, partyPack12);
+const partySecondId = party.groups[1].id;
+party = personalization.setGroupCount(party, partyPack12, partySecondId, 6);
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'add_name', 'no');
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'add_age', 'yes');
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'age_number', 7);
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'theme', 'Space');
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'colors', 'Blue and silver');
+assert.equal(party.complete, true);
+assert.equal(party.unallocatedUnitIds.length, 0);
+assert.equal(new Set(party.groups.flatMap((group) => group.unitIds)).size, 12);
+
+party = personalization.setGroupValue(party, partyPack12, partySecondId, 'add_age', 'no');
+assert.equal(
+  party.groups.find((group) => group.id === partySecondId).values.age_number,
+  '',
+  'inactive party-pack Number/Age detail must be pruned from normalized personalization state',
+);
+assert.equal(party.complete, true);
+
+const partyPayload = personalization.toPayload(party);
+const secondPartyAllocation = partyPayload.allocations.find((allocation) => allocation.id === partySecondId);
+assert.equal(secondPartyAllocation.values.age_number, '', 'inactive dependent detail must not contribute a stale value to payload');
+assert.equal(secondPartyAllocation.values.name_text, '', 'inactive Name/Text detail must remain blank in payload');
+
+const partyPack8 = resolvePartyPack(8, 'party_pack_8');
+const activityKit = personalization.createState({itemId: 'activity-kit', merchandiseQuantity: 2, profile: partyPack8});
+assert.equal(activityKit.eligibleUnitCount, 16, '8-count products must derive physical personalization units from capability data');
+assert.equal(activityKit.groups[0].unitIds.length, 16);
+
 const unavailable = personalization.createState({
   itemId: 'plain',
   merchandiseQuantity: 3,
