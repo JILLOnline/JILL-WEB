@@ -1,0 +1,43 @@
+{% liquid
+  assign localization_context = context | default: 'header'
+  assign country_form_id = 'JillHeaderCountry-' | append: localization_context
+  assign language_form_id = 'JillHeaderLanguage-' | append: localization_context
+%}
+
+{% if localization.available_countries.size > 1 or localization.available_languages.size > 1 %}
+  <div class="jill-site-header__localization">
+    {% if localization.available_countries.size > 1 %}
+      {% form 'localization', id: country_form_id, class: 'jill-site-header__localization-form' %}
+        <select
+          class="jill-site-header__localization-select"
+          name="country_code"
+          aria-label="Country"
+          data-jill-header-localization
+        >
+          {% for country in localization.available_countries %}
+            <option value="{{ country.iso_code }}"{% if country.iso_code == localization.country.iso_code %} selected{% endif %}>
+              {{ country.iso_code }}
+            </option>
+          {% endfor %}
+        </select>
+      {% endform %}
+    {% endif %}
+
+    {% if localization.available_languages.size > 1 %}
+      {% form 'localization', id: language_form_id, class: 'jill-site-header__localization-form' %}
+        <select
+          class="jill-site-header__localization-select"
+          name="locale_code"
+          aria-label="Language"
+          data-jill-header-localization
+        >
+          {% for language in localization.available_languages %}
+            <option value="{{ language.iso_code }}"{% if language.iso_code == localization.language.iso_code %} selected{% endif %}>
+              {{ language.iso_code | upcase }}
+            </option>
+          {% endfor %}
+        </select>
+      {% endform %}
+    {% endif %}
+  </div>
+{% endif %}

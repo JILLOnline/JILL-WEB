@@ -1,49 +1,143 @@
 {% liquid
   assign custom_order_url = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
+  assign custom_order_in_menu = false
+
+  if section.settings.menu != blank
+    for link in section.settings.menu.links
+      assign link_title_downcase = link.title | downcase
+      if link.url contains '/pages/quote' or link_title_downcase contains 'custom order'
+        assign custom_order_in_menu = true
+      endif
+    endfor
+  endif
 %}
 
-<header class="jill-site-header">
+<header
+  class="jill-site-header{% if section.settings.sticky_header %} jill-site-header--sticky{% endif %}"
+  data-jill-site-header
+>
   <div class="jill-site-header__inner jill-page-width">
-    <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
-      {% if section.settings.logo != blank %}
-        {{ section.settings.logo | image_url: width: section.settings.logo_width | image_tag: alt: shop.name, width: section.settings.logo_width, loading: 'eager' }}
-      {% else %}
-        {{ shop.name }}
-      {% endif %}
-    </a>
+    <div class="jill-site-header__layout" data-header-layout="core">
+      <div class="jill-site-header__left">
+        <details class="jill-site-header__drawer" data-jill-header-drawer>
+          <summary class="jill-site-header__icon-button" aria-label="{{ 'header.navigation' | t }}">
+            {% render 'ui-icon', name: 'menu' %}
+          </summary>
 
-    <nav class="jill-site-header__nav" aria-label="{{ 'header.navigation' | t }}">
-      {% if section.settings.menu != blank and section.settings.menu.links.size > 0 %}
-        {% for link in section.settings.menu.links %}
+          <div class="jill-site-header__drawer-panel" data-drawer-panel="core">
+            <nav class="jill-site-header__nav" aria-label="{{ 'header.navigation' | t }}">
+              {% if section.settings.menu != blank and section.settings.menu.links.size > 0 %}
+                {% for link in section.settings.menu.links %}
+                  {% assign link_title_downcase = link.title | downcase %}
+                  {% assign is_custom_order_link = false %}
+                  {% if link.url contains '/pages/quote' or link_title_downcase contains 'custom order' %}
+                    {% assign is_custom_order_link = true %}
+                  {% endif %}
+
+                  {% if link.links != blank %}
+                    <details class="jill-site-header__drawer-group">
+                      <summary class="jill-site-header__drawer-link">
+                        <span>{{ link.title }}</span>
+                        {% render 'ui-icon', name: 'chevron-down' %}
+                      </summary>
+                      <div class="jill-site-header__drawer-subnav">
+                        {% for child_link in link.links %}
+                          <a
+                            class="jill-site-header__drawer-link"
+                            href="{{ child_link.url }}"
+                            {% if child_link.current %}aria-current="page"{% endif %}
+                          >
+                            {{ child_link.title }}
+                          </a>
+                        {% endfor %}
+                      </div>
+                    </details>
+                  {% else %}
+                    <a
+                      class="jill-site-header__drawer-link{% if is_custom_order_link %} jill-site-header__drawer-link--cta{% endif %}"
+                      href="{{ link.url }}"
+                      {% if link.current %}aria-current="page"{% endif %}
+                    >
+                      {{ link.title }}
+                    </a>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
+                <a class="jill-site-header__drawer-link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
+              {% endif %}
+
+              {% if section.settings.show_custom_order and custom_order_in_menu == false %}
+                <a class="jill-button" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
+              {% endif %}
+            </nav>
+
+            <div class="jill-site-header__drawer-utilities" data-drawer-utilities="core">
+              {% if section.settings.show_socials %}
+                {% render 'header-socials' %}
+              {% endif %}
+              {% if section.settings.show_localization %}
+                {% render 'header-localization', context: 'drawer' %}
+              {% endif %}
+            </div>
+          </div>
+        </details>
+
+        {% if section.settings.show_search %}
           <a
-            class="jill-site-header__link"
-            href="{{ link.url }}"
-            {% if link.current %}aria-current="page"{% endif %}
+            class="jill-site-header__icon-button"
+            href="{{ routes.search_url }}"
+            aria-label="{{ 'header.search' | t }}"
           >
-            {{ link.title }}
+            {% render 'ui-icon', name: 'search' %}
           </a>
-        {% endfor %}
-      {% else %}
-        <a class="jill-site-header__link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
-        <a class="jill-site-header__link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
-      {% endif %}
+        {% endif %}
+      </div>
 
-      {% if section.settings.show_custom_order %}
-        <a class="jill-button" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
-      {% endif %}
+      <div class="jill-site-header__brand-stage" data-brand-stage="core">
+        <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+          {% if settings.brand_logo != blank %}
+            {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: shop.name, width: settings.brand_logo_width, loading: 'eager' }}
+          {% else %}
+            {{ shop.name }}
+          {% endif %}
+        </a>
+      </div>
 
-      {% if section.settings.show_search %}
-        <a class="jill-site-header__link" href="{{ routes.search_url }}">{{ 'header.search' | t }}</a>
-      {% endif %}
+      <div class="jill-site-header__utilities" data-header-utilities="core">
+        <div class="jill-site-header__utility-primary">
+          {% if section.settings.show_account and shop.customer_accounts_enabled %}
+            <a
+              class="jill-site-header__icon-button"
+              href="{{ routes.account_url }}"
+              aria-label="{{ 'header.account' | t }}"
+              rel="nofollow"
+            >
+              {% render 'ui-icon', name: 'account' %}
+            </a>
+          {% endif %}
 
-      {% if section.settings.show_account and shop.customer_accounts_enabled %}
-        <a class="jill-site-header__link" href="{{ routes.account_url }}">{{ 'header.account' | t }}</a>
-      {% endif %}
+          <a
+            class="jill-site-header__icon-button jill-site-header__cart"
+            href="{{ routes.cart_url }}"
+            aria-label="{{ 'header.cart' | t }}"
+          >
+            {% render 'ui-icon', name: 'cart' %}
+            {% if cart.item_count > 0 %}
+              <span class="jill-site-header__cart-count" aria-hidden="true">{{ cart.item_count }}</span>
+            {% endif %}
+          </a>
+        </div>
 
-      <a class="jill-site-header__link" href="{{ routes.cart_url }}">
-        {{ 'header.cart' | t }} ({{ cart.item_count }})
-      </a>
-    </nav>
+        {% if section.settings.show_socials %}
+          {% render 'header-socials' %}
+        {% endif %}
+
+        {% if section.settings.show_localization %}
+          {% render 'header-localization', context: 'desktop' %}
+        {% endif %}
+      </div>
+    </div>
   </div>
 </header>
 
@@ -52,21 +146,6 @@
   "name": "Header",
   "settings": [
     {
-      "type": "image_picker",
-      "id": "logo",
-      "label": "Logo"
-    },
-    {
-      "type": "range",
-      "id": "logo_width",
-      "min": 80,
-      "max": 240,
-      "step": 10,
-      "unit": "px",
-      "label": "Logo width",
-      "default": 140
-    },
-    {
       "type": "link_list",
       "id": "menu",
       "label": "Menu",
@@ -74,20 +153,9 @@
     },
     {
       "type": "checkbox",
-      "id": "show_custom_order",
-      "label": "Show custom order button",
+      "id": "sticky_header",
+      "label": "Keep header visible while scrolling",
       "default": true
-    },
-    {
-      "type": "text",
-      "id": "custom_order_label",
-      "label": "Custom order button label",
-      "default": "Custom Order"
-    },
-    {
-      "type": "url",
-      "id": "custom_order_link",
-      "label": "Custom order link"
     },
     {
       "type": "checkbox",
@@ -100,6 +168,35 @@
       "id": "show_account",
       "label": "Show customer account",
       "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_socials",
+      "label": "Show social links",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_localization",
+      "label": "Show country and language selectors",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_custom_order",
+      "label": "Show custom order action when it is not already in the menu",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "custom_order_label",
+      "label": "Custom order action label",
+      "default": "Custom Order"
+    },
+    {
+      "type": "url",
+      "id": "custom_order_link",
+      "label": "Custom order link"
     }
   ]
 }

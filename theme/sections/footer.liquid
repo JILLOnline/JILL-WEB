@@ -15,14 +15,17 @@
         {% endfor %}
       {% endif %}
 
-      {% if section.settings.instagram_url != blank %}
-        <a href="{{ section.settings.instagram_url }}" target="_blank" rel="noopener">{{ 'footer.instagram' | t }}</a>
+      {% if settings.social_instagram_url != blank %}
+        <a href="{{ settings.social_instagram_url }}" target="_blank" rel="noopener noreferrer">{{ 'footer.instagram' | t }}</a>
       {% endif %}
-      {% if section.settings.facebook_url != blank %}
-        <a href="{{ section.settings.facebook_url }}" target="_blank" rel="noopener">{{ 'footer.facebook' | t }}</a>
+      {% if settings.social_facebook_url != blank %}
+        <a href="{{ settings.social_facebook_url }}" target="_blank" rel="noopener noreferrer">{{ 'footer.facebook' | t }}</a>
       {% endif %}
-      {% if section.settings.tiktok_url != blank %}
-        <a href="{{ section.settings.tiktok_url }}" target="_blank" rel="noopener">{{ 'footer.tiktok' | t }}</a>
+      {% if settings.social_tiktok_url != blank %}
+        <a href="{{ settings.social_tiktok_url }}" target="_blank" rel="noopener noreferrer">{{ 'footer.tiktok' | t }}</a>
+      {% endif %}
+      {% if settings.social_youtube_url != blank %}
+        <a href="{{ settings.social_youtube_url }}" target="_blank" rel="noopener noreferrer">YouTube</a>
       {% endif %}
     </nav>
   </div>
@@ -43,21 +46,6 @@
       "id": "menu",
       "label": "Menu",
       "default": "footer"
-    },
-    {
-      "type": "url",
-      "id": "instagram_url",
-      "label": "Instagram URL"
-    },
-    {
-      "type": "url",
-      "id": "facebook_url",
-      "label": "Facebook URL"
-    },
-    {
-      "type": "url",
-      "id": "tiktok_url",
-      "label": "TikTok URL"
     }
   ]
 }

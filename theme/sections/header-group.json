@@ -4,7 +4,16 @@
   "sections": {
     "header": {
       "type": "header",
-      "settings": {}
+      "settings": {
+        "menu": "main-menu",
+        "sticky_header": true,
+        "show_search": true,
+        "show_account": true,
+        "show_socials": true,
+        "show_localization": true,
+        "show_custom_order": true,
+        "custom_order_label": "Custom Order"
+      }
     }
   },
   "order": ["header"]

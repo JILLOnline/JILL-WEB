@@ -8,6 +8,17 @@
     "theme_support_url": "https://support.shopify.com/"
   },
   {
+    "name": "Brand & social",
+    "settings": [
+      {"type": "image_picker", "id": "brand_logo", "label": "Logo"},
+      {"type": "range", "id": "brand_logo_width", "min": 100, "max": 240, "step": 10, "unit": "px", "label": "Logo width", "default": 160},
+      {"type": "url", "id": "social_instagram_url", "label": "Instagram URL"},
+      {"type": "url", "id": "social_facebook_url", "label": "Facebook URL"},
+      {"type": "url", "id": "social_tiktok_url", "label": "TikTok URL"},
+      {"type": "url", "id": "social_youtube_url", "label": "YouTube URL"}
+    ]
+  },
+  {
     "name": "Typography",
     "settings": [
       {
