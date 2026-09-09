@@ -32,6 +32,9 @@
       <script src="{{ 'jill-product-options.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-personalization.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-personalization-ui.js' | asset_url }}" defer></script>
+      {% if request.page_type == 'product' %}
+        <script src="{{ 'jill-product-surface.js' | asset_url }}" defer></script>
+      {% endif %}
       <script src="{{ 'jill-product.js' | asset_url }}" defer></script>
     {% endif %}
     {% if request.page_type == 'product' %}

@@ -4,15 +4,23 @@
   assign group_names = 'product_options,personalization,planning,reference' | split: ','
   assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
   assign allocated_personalization_field_ids = capability_profile.features.personalizationAllocation.fieldIds
+  assign excluded_field_ids = surface_override.excludeFieldIds
+  assign always_available_field_ids = surface_override.alwaysAvailableFieldIds
   assign allocation_initially_available = false
   assign has_product_options = false
 
   for candidate in capability_profile.fields
-    if candidate.group == 'product_options'
-      assign has_product_options = true
+    assign candidate_excluded = false
+    if excluded_field_ids != blank and excluded_field_ids contains candidate.id
+      assign candidate_excluded = true
     endif
-    if allocated_option_field_ids contains candidate.id and candidate.visibleWhen == blank
-      assign allocation_initially_available = true
+    if candidate_excluded == false
+      if candidate.group == 'product_options'
+        assign has_product_options = true
+      endif
+      if allocated_option_field_ids contains candidate.id and candidate.visibleWhen == blank
+        assign allocation_initially_available = true
+      endif
     endif
   endfor
 %}
@@ -45,6 +53,10 @@
       assign group_has_allocation = false
 
       for candidate in capability_profile.fields
+        assign candidate_excluded = false
+        if excluded_field_ids != blank and excluded_field_ids contains candidate.id
+          assign candidate_excluded = true
+        endif
         assign candidate_is_allocated = false
         if group_name == 'product_options' and allocated_option_field_ids contains candidate.id
           assign candidate_is_allocated = true
@@ -52,7 +64,7 @@
         if group_name == 'personalization' and allocated_personalization_field_ids contains candidate.id
           assign candidate_is_allocated = true
         endif
-        if candidate.group == group_name and candidate_is_allocated == false
+        if candidate_excluded == false and candidate.group == group_name and candidate_is_allocated == false
           assign group_has_fields = true
         endif
       endfor
@@ -78,6 +90,10 @@
 
         {% for field in capability_profile.fields %}
           {% liquid
+            assign field_excluded = false
+            if excluded_field_ids != blank and excluded_field_ids contains field.id
+              assign field_excluded = true
+            endif
             assign field_is_allocated = false
             if group_name == 'product_options' and allocated_option_field_ids contains field.id
               assign field_is_allocated = true
@@ -87,7 +103,7 @@
             endif
           %}
 
-          {% if field.group == group_name and field_is_allocated == false %}
+          {% if field_excluded == false and field.group == group_name and field_is_allocated == false %}
             {% liquid
               assign field_name = 'properties[' | append: field.id | append: ']'
               if field.group == 'product_options'
@@ -96,7 +112,11 @@
               assign field_dom_id = 'JillProduct-' | append: section_id | append: '-' | append: field.id
               assign field_disabled = false
               assign field_hidden = false
-              if field.visibleWhen != blank
+              assign field_always_available = false
+              if always_available_field_ids != blank and always_available_field_ids contains field.id
+                assign field_always_available = true
+              endif
+              if field.visibleWhen != blank and field_always_available == false
                 assign field_disabled = true
                 assign field_hidden = true
               endif

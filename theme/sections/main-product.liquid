@@ -10,6 +10,12 @@
     assign capability_profile = capability_metafield.value
   endif
 
+  assign capability_surface_override = blank
+  assign capability_surface_metafield = product.metafields.custom.jill_product_page_capability_override
+  if capability_surface_metafield != blank and capability_surface_metafield.type == 'json'
+    assign capability_surface_override = capability_surface_metafield.value
+  endif
+
   assign product_form_id = 'JillProductForm-' | append: section.id
   assign quantity_id = 'JillProductQuantity-' | append: section.id
   assign quantity_label = 'products.product.quantity' | t
@@ -24,6 +30,7 @@
   class="jill-product jill-page-width"
   data-jill-product
   data-jill-product-id="{{ product.id }}"
+  data-jill-capability-surface="product_page"
 >
   <div class="jill-product__media">
     {% if product.featured_image != blank %}
@@ -91,8 +98,15 @@
           name="properties[_jill_profile]"
           value="{{ capability_profile.id }}@{{ capability_profile.version }}"
         >
-        {% render 'product-capability-fields', capability_profile: capability_profile, section_id: section.id %}
+        {% render 'product-capability-fields',
+          capability_profile: capability_profile,
+          section_id: section.id,
+          surface_override: capability_surface_override
+        %}
         <script type="application/json" data-jill-product-capability-profile>{{ capability_profile | json }}</script>
+        {% if capability_surface_override != blank %}
+          <script type="application/json" data-jill-product-capability-surface-override>{{ capability_surface_override | json }}</script>
+        {% endif %}
       {% endif %}
 
       <p
