@@ -10,7 +10,6 @@ function fail(message) {
 
 function readSchema() {
   if (!fs.existsSync(CONTRACT_PATH)) fail(`${CONTRACT_PATH} is missing`);
-
   try {
     return JSON.parse(fs.readFileSync(CONTRACT_PATH, 'utf8'));
   } catch (error) {
@@ -25,16 +24,13 @@ function assertUniqueValues(values, owner) {
 
 function inspectNode(node, location = '$') {
   if (!node || typeof node !== 'object') return;
-
   if (Array.isArray(node)) {
     node.forEach((value, index) => inspectNode(value, `${location}[${index}]`));
     return;
   }
-
   if (node.type === 'object' && node.additionalProperties !== false) {
     fail(`object schema must be closed at ${location}`);
   }
-
   if (Array.isArray(node.required)) {
     assertUniqueValues(node.required, `${location}.required`);
     for (const key of node.required) {
@@ -43,16 +39,11 @@ function inspectNode(node, location = '$') {
       }
     }
   }
-
   if (Array.isArray(node.enum)) assertUniqueValues(node.enum, `${location}.enum`);
-
-  for (const [key, value] of Object.entries(node)) {
-    inspectNode(value, `${location}.${key}`);
-  }
+  for (const [key, value] of Object.entries(node)) inspectNode(value, `${location}.${key}`);
 }
 
 const schema = readSchema();
-
 if (schema.$schema !== EXPECTED_DRAFT) fail('must use JSON Schema draft 2020-12');
 if (schema.$id !== 'https://jill.local/contracts/custom-order-api.schema.json') fail('unexpected $id');
 if (schema.title !== 'JILL Custom Order API') fail('unexpected title');
@@ -63,8 +54,8 @@ const request = defs.submitRequest;
 const success = defs.submitSuccess;
 const failure = defs.submitFailure;
 const item = defs.item;
-
-if (!request || !success || !failure || !item) fail('required API definitions are missing');
+const variantAllocation = defs.variantAllocation;
+if (!request || !success || !failure || !item || !variantAllocation) fail('required API definitions are missing');
 if (request.properties?.version?.const !== 1) fail('submit request must own contract version 1');
 if (request.properties?.operation?.const !== 'custom_order.submit') fail('submit request operation must be custom_order.submit');
 if (success.properties?.operation?.const !== 'custom_order.submit.result') fail('success operation must be custom_order.submit.result');
@@ -77,7 +68,12 @@ if (!item.required?.includes('quantity')) fail('item contract must require canon
 if (item.properties?.quantity?.minimum !== 1) fail('item quantity must be positive');
 if (!item.required?.includes('personalization_groups')) fail('item contract must explicitly carry personalization_groups');
 if (!item.required?.includes('reference_ids')) fail('item contract must explicitly carry reference_ids');
+if (!item.properties?.variant_allocations) fail('item contract must support native Shopify variant allocations');
+if (!variantAllocation.required?.includes('variant_id')) fail('variant allocation must require variant_id');
+if (!variantAllocation.required?.includes('quantity')) fail('variant allocation must require quantity');
+if (!variantAllocation.required?.includes('unit_ids')) fail('variant allocation must carry stable unit ids for correlation');
+if (variantAllocation.properties?.quantity?.minimum !== 1) fail('variant allocation quantity must be positive');
+if (variantAllocation.properties?.unit_ids?.uniqueItems !== true) fail('variant allocation unit ids must be unique within an allocation');
 
 inspectNode(schema);
-
-console.log('JILL Custom Order contract guard passed: API v1, idempotent submit request, closed request/response schemas.');
+console.log('JILL Custom Order contract guard passed: API v1 supports stable native-variant allocation and closed request/response schemas.');
