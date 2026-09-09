@@ -198,6 +198,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** `jill-variant-allocation.js` owns variant uniqueness, availability, quantity reconciliation and normalized allocation payload. `main-custom-order.liquid` emits Shopify variant truth and the canonical quantity primitive; `jill-custom-order.js` renders/consumes the allocator and re-normalizes its serialized payload before Review. Product Pages keep Shopify's normal single-selected-variant purchase flow. The Custom Order API may carry structured `variant_allocations` with variant ID, quantity and stable unit IDs while retaining `variant_id` for single-variant items.
 
+## 2026-09-09 — Product listings may project a narrower capability surface without cloning profiles
+
+**Decision:** `custom.jill_product_capabilities` remains the canonical full product capability profile. A product page may optionally apply a compact `custom.jill_product_page_capability_override` JSON delta that can only exclude canonical fields or make retained canonical fields directly available. CLEAN Custom Order ignores this listing-only projection and continues consuming the complete canonical profile.
+
+**Why:** A merchandised listing can intentionally represent a narrower sellable product than the broader Custom Order service. Current 18-inch and 36-inch number-piñata listings are number molds only, while Custom Order must still offer Number, Shape and Character. Duplicating the whole capability profile per surface would create two configuration owners and future drift; deleting the broader choices from the canonical profile would incorrectly remove Custom Order capability.
+
+**Consequence:** `main-product.liquid` owns the Shopify product-page override adapter, `jill-product-surface.js` owns strict projection semantics, and all validation/customization behavior after projection continues through the shared capability and form engines. Surface overrides cannot invent new fields or product-family logic. If a retained field still depends on an excluded field, the projection fails unless that retained field is explicitly made directly available. This pattern is for merchandising scope only, not a second capability system.
+
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
