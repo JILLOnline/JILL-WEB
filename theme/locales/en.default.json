@@ -47,6 +47,13 @@
         "remove": "Remove",
         "item": "item",
         "items": "items"
+      },
+      "personalization": {
+        "same": "Same for all",
+        "different": "Different by item",
+        "group": "Personalization",
+        "add": "Add another personalization",
+        "help": "Choose whether the same personalization applies to every item or split personalization across the items in this order."
       }
     }
   },
