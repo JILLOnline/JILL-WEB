@@ -40,6 +40,8 @@ assert.match(section, /category_collection\.products/, 'each catalog collection 
 assert.match(section, /jill-catalog__product-grid/, 'each collection group must use the canonical product grid');
 assert.match(section, /render 'product-card'/, 'Catalog Hub must reuse the canonical Product Card');
 assert.match(section, /featured_collection\.products/, 'featured merchandising must come from the configured Shopify collection');
+assert.match(section, /jill-catalog__section-heading--centered/, 'featured Catalog heading must use the centered composition owner');
+assert.doesNotMatch(section, /featured_eyebrow|FEATURED RIGHT NOW/i, 'featured Catalog shelf must not render or configure an eyebrow label');
 assert.match(section, /block\.type == 'creation'/, 'real-work gallery must be merchant configurable');
 assert.match(section, /block\.type == 'testimonial'/, 'testimonials must be merchant supplied');
 assert.doesNotMatch(section, /Add to cart|name="id"|\/cart\/add/i, 'Catalog Hub must not become another product configurator');
@@ -61,6 +63,9 @@ assert.doesNotMatch(productCard, /data-search|data-jill-catalog-product|assign c
 assert.doesNotMatch(storefrontStyles, /jill-catalog__collection-grid|jill-catalog-collection__/, 'removed Catalog discovery cards must not leave dead style owners behind');
 assert.doesNotMatch(storefrontStyles, /jill-catalog__filters/, 'removed Catalog filter pills must not leave dead style owners behind');
 assert.doesNotMatch(storefrontStyles, /jill-product-card__thumbnails|jill-product-card__thumbnail/, 'removed Catalog secondary thumbnails must not leave dead style owners behind');
+assert.doesNotMatch(storefrontStyles, /jill-catalog__hero(?:-title|-text|-actions)?/, 'removed Catalog hero must not leave dead style owners behind');
+assert.match(storefrontStyles, /jill-catalog__section-heading--centered/, 'Catalog must own one centered heading composition');
+assert.match(storefrontStyles, /jill-catalog__featured-grid \.jill-product-card__actions/, 'featured Catalog shelf must own its compact card action layout');
 assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
 assert.match(storefrontStyles, /minmax\(min\(100%, 21rem\), 1fr\)/, 'Catalog cards must remain broad enough for product-led discovery');
 
