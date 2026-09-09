@@ -131,18 +131,22 @@ Required behavior:
 - allocation totals reconcile to the eligible customization-unit count derived from Shopify quantity and capability configuration
 - assignment progress and `Add another option` are shown only while eligible customization units remain unallocated
 - when every eligible customization unit is assigned, assignment progress and `Add another option` are hidden immediately
-- each completed allocation group represents one unique active Product Option combination
-- choices that would reproduce a completed combination owned by another group are unavailable in later groups
-- an upstream choice may remain available in multiple groups while it still leads to at least one unused valid dependent combination
-- another allocation group may be created only when unallocated units remain and at least one unused valid Product Option combination remains
+- each allocation group represents one unique active Product Option choice combination once its active choice fields are valid
+- choices that would reproduce a choice combination owned by another group are unavailable in later groups, even if that earlier group's required detail field is still incomplete
+- an upstream choice may remain available in multiple groups while it still leads to at least one unused valid dependent choice combination
+- another allocation group may be created only when unallocated units remain and at least one unused valid Product Option choice combination remains
 - stale or externally supplied duplicate combinations fail incomplete rather than being accepted as valid state
 - options never become an independent commerce quantity owner
 - options do not create a second personalization engine
 - a completed option remains stable unless one of its own dependencies changes
 
-Product Option fields are singleton by default: one value applies to the merchandise selection. A capability profile opts specific fields into unit allocation through `features.productOptionsAllocation.fieldIds`. Unit-allocated Product Option fields in v1 are enumerated `select` or `radio` choices; free-form per-unit content belongs to Personalization rather than becoming a second personalization engine.
+Product Option fields are singleton by default: one value applies to the merchandise selection. A capability profile opts specific fields into unit allocation through `features.productOptionsAllocation.fieldIds`.
 
-When allocation is enabled, groups may assign the same Product Option values to one or more eligible customization units. A customization unit may belong to at most one Product Options allocation group, and every eligible required unit must be allocated exactly once before Product Options can be complete. Combination uniqueness is based only on fields that are active for that group; values belonging to hidden dependent fields do not create a different combination.
+Allocated `select` and `radio` fields are the enumerated choice fields that define allocation-combination identity. An allocation may also include conditional `text` or `textarea` detail fields when they are leaf dependencies driven by an allocated choice field, such as `Other → required detail`. These detail fields belong to the same Product Options allocation group; they do not create additional unique combinations and do not become a second personalization engine. Arbitrary free-form per-unit content that is not a conditional Product Option detail belongs to Personalization.
+
+When an allocated conditional detail field is unavailable, its stale value is pruned from canonical state and normalized payload. JILL's dependency policy is clear-on-deactivate: if the choice later makes the detail active again, the required detail must be entered again. Required detail blocks Add to Cart and Custom Order Review only while it is active.
+
+When allocation is enabled, groups may assign the same Product Option values to one or more eligible customization units. A customization unit may belong to at most one Product Options allocation group, and every eligible required unit must be allocated exactly once before Product Options can be complete. Combination uniqueness is based only on active allocated choice fields; values belonging to hidden dependent fields and free-text detail fields do not create a different combination.
 
 Future Theme Core implementation must reproduce the behavior through one option engine, not collection-specific scripts.
 

@@ -61,7 +61,16 @@
     const allocatedSet = new Set(allocatedFieldIds);
     const singletonFields = fields.filter((field) => !allocatedSet.has(field.id));
     const allocatedFields = allocatedFieldIds.map((fieldId) => capabilities.getField(profile, fieldId));
-    return {fields, singletonFields, allocatedFields, allocatedFieldIds};
+    const choiceFieldIds = capabilities.getProductOptionsAllocationChoiceFieldIds(profile);
+    const choiceFields = choiceFieldIds.map((fieldId) => capabilities.getField(profile, fieldId));
+    return {
+      fields,
+      singletonFields,
+      allocatedFields,
+      allocatedFieldIds,
+      choiceFields,
+      choiceFieldIds,
+    };
   }
 
   function copyKnownValues(source, fields) {
@@ -139,10 +148,10 @@
     });
   }
 
-  function allocationSignature(allocatedFields, values, results) {
+  function allocationSignature(choiceFields, values, results) {
     const byId = Object.fromEntries(results.map((result) => [result.id, result]));
     return JSON.stringify(
-      allocatedFields
+      choiceFields
         .filter((field) => byId[field.id]?.available && hasOwn(values, field.id))
         .map((field) => [field.id, values[field.id]]),
     );
@@ -152,11 +161,11 @@
     return [MISSING, ...(field.options || []).map((option) => option.value)];
   }
 
-  function enumerateAllocationCombinations({fields, allocatedFields, singletonValues, formEngine}) {
-    if (allocatedFields.length === 0) return EMPTY;
+  function enumerateAllocationCombinations({fields, choiceFields, singletonValues, formEngine}) {
+    if (choiceFields.length === 0) return EMPTY;
 
     let possibleCount = 1;
-    for (const field of allocatedFields) {
+    for (const field of choiceFields) {
       possibleCount *= combinationChoices(field).length;
       if (!Number.isSafeInteger(possibleCount) || possibleCount > MAX_OPTION_COMBINATIONS) {
         fail(`Product Options allocation may not exceed ${MAX_OPTION_COMBINATIONS} possible option combinations`);
@@ -167,17 +176,17 @@
     const rawValues = Object.create(null);
 
     function visit(index) {
-      if (index === allocatedFields.length) {
+      if (index === choiceFields.length) {
         const validation = formEngine.validateFields(fields, {...singletonValues, ...rawValues});
-        const results = scopedResults(allocatedFields, validation);
+        const results = scopedResults(choiceFields, validation);
         if (!scopeComplete(results)) return;
 
-        const values = canonicalValues(allocatedFields, rawValues, validation);
+        const values = canonicalValues(choiceFields, rawValues, validation);
         const canonicalValidation = formEngine.validateFields(fields, {...singletonValues, ...values});
-        const canonicalResults = scopedResults(allocatedFields, canonicalValidation);
+        const canonicalResults = scopedResults(choiceFields, canonicalValidation);
         if (!scopeComplete(canonicalResults)) return;
 
-        const signature = allocationSignature(allocatedFields, values, canonicalResults);
+        const signature = allocationSignature(choiceFields, values, canonicalResults);
         if (!combinations.has(signature)) {
           combinations.set(signature, Object.freeze({
             signature,
@@ -187,7 +196,7 @@
         return;
       }
 
-      const field = allocatedFields[index];
+      const field = choiceFields[index];
       for (const choice of combinationChoices(field)) {
         if (choice === MISSING) delete rawValues[field.id];
         else rawValues[field.id] = choice;
@@ -204,6 +213,7 @@
     rawGroups,
     fields,
     allocatedFields,
+    choiceFields,
     singletonValues,
     eligibleUnitIds,
     formEngine,
@@ -243,15 +253,17 @@
       const values = canonicalValues(allocatedFields, rawValues, validation);
       const canonicalValidation = formEngine.validateFields(fields, {...singletonValues, ...values});
       const results = scopedResults(allocatedFields, canonicalValidation);
+      const choiceResults = scopedResults(choiceFields, canonicalValidation);
       const firstInvalidFieldId = firstBlockingFieldId(results);
       const fieldsComplete = scopeComplete(results);
-      const signature = unitIds.length > 0 && fieldsComplete
-        ? allocationSignature(allocatedFields, values, results)
+      const choicesComplete = scopeComplete(choiceResults);
+      const signature = unitIds.length > 0 && choicesComplete
+        ? allocationSignature(choiceFields, values, choiceResults)
         : null;
       const duplicate = signature !== null && usedSignatures.has(signature);
       const complete = unitIds.length > 0 && fieldsComplete && !duplicate;
 
-      if (complete) usedSignatures.add(signature);
+      if (signature !== null) usedSignatures.add(signature);
       for (const unitId of unitIds) claimed.add(unitId);
       groups.push(freezeGroup({
         id: rawGroup.id,
@@ -320,7 +332,14 @@
     assertResolvedProfile(profile);
 
     const {capabilities, formEngine} = dependencies();
-    const {fields, singletonFields, allocatedFields, allocatedFieldIds} = partitionFields(profile, capabilities);
+    const {
+      fields,
+      singletonFields,
+      allocatedFields,
+      allocatedFieldIds,
+      choiceFields,
+      choiceFieldIds,
+    } = partitionFields(profile, capabilities);
     const rawSingletonValues = copyKnownValues(values, singletonFields);
     const initialValidation = formEngine.validateFields(fields, rawSingletonValues);
     const singletonValues = canonicalValues(singletonFields, rawSingletonValues, initialValidation);
@@ -336,7 +355,7 @@
 
     const unitsPerQuantity = capabilities.getCustomizationUnitsPerQuantity(profile);
     const eligibleUnitCount = customizationUnitCount(merchandiseQuantity, unitsPerQuantity);
-    const allocationEnabled = allocatedFields.length > 0;
+    const allocationEnabled = choiceFields.length > 0;
     let allocationAvailable = false;
     let eligibleUnitIds = EMPTY;
     let groups = Object.freeze([]);
@@ -344,7 +363,7 @@
 
     if (allocationEnabled) {
       const baseValidation = formEngine.validateFields(fields, singletonValues);
-      allocationAvailable = allocatedFields.some((field) => baseValidation.byId[field.id].available);
+      allocationAvailable = choiceFields.some((field) => baseValidation.byId[field.id].available);
 
       if (allocationAvailable && eligibleUnitCount > 0) {
         eligibleUnitIds = Object.freeze(buildUnitIds(itemId, eligibleUnitCount));
@@ -352,6 +371,7 @@
           rawGroups: allocationGroups,
           fields,
           allocatedFields,
+          choiceFields,
           singletonValues,
           eligibleUnitIds,
           formEngine,
@@ -369,6 +389,7 @@
       enabled: allocationEnabled,
       available: allocationAvailable,
       fieldIds: Object.freeze([...allocatedFieldIds]),
+      choiceFieldIds: Object.freeze([...choiceFieldIds]),
       eligibleUnitIds,
       groups,
       unallocatedUnitIds,
@@ -409,7 +430,7 @@
   function usedAllocationSignatures(state, excludedGroupId = null) {
     return new Set(
       state.allocation.groups
-        .filter((group) => group.id !== excludedGroupId && group.complete && group.signature !== null)
+        .filter((group) => group.id !== excludedGroupId && group.signature !== null)
         .map((group) => group.signature),
     );
   }
@@ -418,18 +439,18 @@
     assertState(state);
     assertResolvedProfile(profile);
     const {capabilities, formEngine} = dependencies();
-    const {fields, allocatedFields} = partitionFields(profile, capabilities);
+    const {fields, choiceFields} = partitionFields(profile, capabilities);
     return enumerateAllocationCombinations({
       fields,
-      allocatedFields,
+      choiceFields,
       singletonValues: state.singleton.values,
       formEngine,
     });
   }
 
-  function combinationMatchesGroup(combination, group, targetFieldId, targetValue, allocatedFieldIds) {
+  function combinationMatchesGroup(combination, group, targetFieldId, targetValue, choiceFieldIds) {
     if (combination.values[targetFieldId] !== targetValue) return false;
-    for (const fieldId of allocatedFieldIds) {
+    for (const fieldId of choiceFieldIds) {
       if (fieldId === targetFieldId || !hasOwn(group.values, fieldId)) continue;
       if (hasOwn(combination.values, fieldId) && combination.values[fieldId] !== group.values[fieldId]) return false;
     }
@@ -439,7 +460,9 @@
   function getAvailableAllocationFieldOptions(state, profile, groupId, fieldId) {
     assertState(state);
     const group = findGroup(state, groupId);
-    if (!state.allocation.fieldIds.includes(fieldId)) fail(`field ${fieldId} is not an allocated Product Options field`);
+    if (!state.allocation.choiceFieldIds.includes(fieldId)) {
+      fail(`field ${fieldId} is not an allocated Product Options choice field`);
+    }
 
     const {capabilities} = dependencies();
     const field = capabilities.getField(profile, fieldId);
@@ -454,7 +477,7 @@
           group,
           fieldId,
           option.value,
-          state.allocation.fieldIds,
+          state.allocation.choiceFieldIds,
         ),
       )),
     );

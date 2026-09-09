@@ -14,6 +14,7 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
+      - 'scripts/test-product-option-details.mjs'
       - 'scripts/test-personalization.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
@@ -33,6 +34,7 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
+      - 'scripts/test-product-option-details.mjs'
       - 'scripts/test-personalization.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
@@ -81,6 +83,9 @@ jobs:
 
       - name: Run Product Options tests explicitly
         run: npm run test:product-options
+
+      - name: Run conditional Product Options detail tests explicitly
+        run: npm run test:product-option-details
 
       - name: Run personalization tests explicitly
         run: npm run test:personalization

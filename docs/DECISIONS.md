@@ -168,11 +168,11 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 ## 2026-09-08 — Product Options allocation scope is explicit capability data
 
-**Decision:** Product Option fields are singleton by default. A profile opts enumerated `select`/`radio` Product Option fields into per-customization-unit allocation through `features.productOptionsAllocation.fieldIds`. `theme/assets/jill-product-options.js` is the single owner for Product Options state, allocation, reconciliation and normalized payload; it consumes the universal form engine for field semantics.
+**Decision:** Product Option fields are singleton by default. A profile opts allocated Product Option fields into per-customization-unit allocation through `features.productOptionsAllocation.fieldIds`. `theme/assets/jill-product-options.js` is the single owner for Product Options state, allocation, reconciliation and normalized payload; it consumes the universal form engine for field semantics.
 
-**Why:** Flavor and similar per-item operational choices need allocation, while piñata style/opening and other selection-wide choices do not. Treating every option as per-unit would create unnecessary state; inferring allocation from labels/products would recreate family branching; allowing free-form allocated Product Options would overlap Personalization.
+**Why:** Flavor and similar per-item operational choices need allocation, while piñata style/opening and other selection-wide choices do not. Treating every option as per-unit would create unnecessary state; inferring allocation from labels/products would recreate family branching.
 
-**Consequence:** Product Options groups one or more eligible customization units under the same enumerated option values, preserves unrelated completed state, and reconciles deterministically when quantity or dependencies change. Singleton Product Options may not depend on allocated per-unit fields because those fields have no singular value. Free-form per-unit customer content remains owned by Personalization.
+**Consequence:** Product Options groups one or more eligible customization units under the same active option choices, preserves unrelated completed state, and reconciles deterministically when quantity or dependencies change. Singleton Product Options may not depend on allocated per-unit fields because those fields have no singular value. Arbitrary free-form per-unit customer content remains owned by Personalization.
 
 ## 2026-09-09 — Product Options allocation groups are unique active combinations
 
@@ -181,6 +181,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 **Why:** Repeating an identical allocation group does not express a new option; its units belong in the existing group's count. Dependent options require combination-level uniqueness rather than globally disabling an upstream choice. For example, `Empty` is one combination, while `Filled + Cheetos` and `Filled + Doritos` are separate combinations. This allows `Filled` to remain reusable until its valid dependent choices are exhausted without creating Snack Bag-specific logic.
 
 **Consequence:** Renderers ask the Product Options owner which enumerated choices remain valid instead of deriving uniqueness from DOM state. Hidden dependent values do not alter combination identity. Duplicate state supplied externally fails incomplete, direct duplicate transitions are rejected, and `Add another option` is available only while units remain unallocated and at least one unused valid combination still exists.
+
+## 2026-09-09 — Allocated Product Options may own conditional detail leaves
+
+**Decision:** `features.productOptionsAllocation.fieldIds` may include conditional `text` or `textarea` detail fields alongside allocated `select`/`radio` choices when the detail is a leaf dependency driven by an allocated choice. Allocated `select`/`radio` fields alone define unique combination identity. Conditional details participate in group validation and payload only while active.
+
+**Why:** Product choices commonly need a generic `Other → required detail` pattern. Treating that detail as a singleton is incorrect because the parent choice is allocation-scoped; treating it as Personalization would create a second owner for Product Option semantics; making the typed detail part of uniqueness would incorrectly allow multiple `Other` groups simply by entering different text.
+
+**Consequence:** `jill-product-capabilities.js` validates the allowed allocation shape, `jill-product-options.js` owns selector identity plus detail state/pruning, and the shared `jill-product.js` renderer supports the field kinds without product-family branches. The canonical dependency policy is clear-on-deactivate: unavailable detail is removed from state and normalized payload, and must be entered again if reactivated. Product Page and CLEAN Custom Order receive the same behavior because both use the same capability profile, renderer and product runtime.
 
 ## Decision process
 

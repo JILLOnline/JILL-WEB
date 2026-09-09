@@ -459,6 +459,64 @@
       return shell;
     }
 
+    function syncAllocationDetailField(field, groupId, value, shell) {
+      try {
+        productOptionsState = globalThis.JILLProductOptions.setAllocationGroupValue(
+          productOptionsState,
+          profile,
+          groupId,
+          field.id,
+          value,
+        );
+        syncProductOptionsPayload();
+
+        const changedGroup = productOptionsState.allocation.groups.find((group) => group.id === groupId);
+        const result = changedGroup?.results.find((candidate) => candidate.id === field.id);
+        if (result?.valid) clearFieldError(shell);
+        else if (attemptedSubmit && result?.available) markFieldError(shell);
+        if (productOptionsState.complete) setStatus('');
+      } catch (error) {
+        failConfiguration();
+      }
+    }
+
+    function createAllocationDetailField(field, group) {
+      const shell = document.createElement('div');
+      shell.className = 'jill-field';
+      shell.dataset.jillProductOptionsField = field.id;
+
+      const id = `JillProductOption-${root.dataset.jillProductId}-${group.id}-${field.id}`;
+      const label = document.createElement('label');
+      label.className = 'jill-field__label';
+      label.htmlFor = id;
+      label.textContent = field.label;
+      if (field.required) appendRequiredMark(label);
+
+      const control = document.createElement(field.kind === 'textarea' ? 'textarea' : 'input');
+      control.className = field.kind === 'textarea'
+        ? 'jill-field__control jill-field__control--textarea'
+        : 'jill-field__control';
+      control.id = id;
+      if (field.kind === 'text') control.type = 'text';
+      if (field.required) control.required = true;
+      if (typeof field.minLength === 'number') control.minLength = field.minLength;
+      if (typeof field.maxLength === 'number') control.maxLength = field.maxLength;
+      control.value = group.values[field.id] || '';
+
+      const update = () => syncAllocationDetailField(field, group.id, control.value, shell);
+      control.addEventListener('input', update);
+      control.addEventListener('change', update);
+
+      shell.append(label, control);
+      if (field.help) {
+        const help = document.createElement('p');
+        help.className = 'jill-field__message';
+        help.textContent = field.help;
+        shell.append(help);
+      }
+      return shell;
+    }
+
     function renderAllocationGroup(group, groupIndex) {
       const container = document.createElement('div');
       container.className = 'jill-product-customization__group';
@@ -474,9 +532,11 @@
         const result = results[fieldId];
         if (!result?.available) continue;
         const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
-        const fieldNode = field.kind === 'radio'
-          ? createAllocationRadio(field, group)
-          : createAllocationSelect(field, group);
+        let fieldNode = null;
+        if (field.kind === 'radio') fieldNode = createAllocationRadio(field, group);
+        else if (field.kind === 'select') fieldNode = createAllocationSelect(field, group);
+        else if (field.kind === 'text' || field.kind === 'textarea') fieldNode = createAllocationDetailField(field, group);
+        else throw new Error(`Unsupported allocated Product Options field kind: ${field.kind}`);
         container.append(fieldNode);
       }
 

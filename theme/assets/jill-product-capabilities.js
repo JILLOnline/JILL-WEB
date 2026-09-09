@@ -9,7 +9,8 @@
     'reference',
   ]);
   const GROUP_SET = new Set(GROUPS);
-  const ALLOCATED_OPTION_KINDS = new Set(['select', 'radio']);
+  const ALLOCATED_OPTION_CHOICE_KINDS = new Set(['select', 'radio']);
+  const ALLOCATED_OPTION_DETAIL_KINDS = new Set(['text', 'textarea']);
   const COMMERCE_GROUPS = new Set(['product_options', 'personalization']);
   const COMMERCE_QUANTITY_BASES = new Set([
     'once',
@@ -133,31 +134,64 @@
     }
   }
 
-  function validateProductOptionsAllocationFeature(feature, byId) {
+  function validateProductOptionsAllocationFeature(feature, fields, byId) {
     if (!feature) return new Set();
     if (!Array.isArray(feature.fieldIds) || feature.fieldIds.length === 0) {
       fail('productOptionsAllocation.fieldIds must be a non-empty array');
     }
 
     const allocated = new Set();
+    const detailIds = new Set();
+    const choiceIds = new Set();
+
     for (const fieldId of feature.fieldIds) {
       if (allocated.has(fieldId)) fail(`productOptionsAllocation contains duplicate field ${fieldId}`);
       const field = assertFieldReference(byId, fieldId, 'productOptionsAllocation');
       if (field.group !== 'product_options') {
         fail(`productOptionsAllocation field ${fieldId} must belong to product_options group`);
       }
-      if (!ALLOCATED_OPTION_KINDS.has(field.kind)) {
-        fail(`productOptionsAllocation field ${fieldId} must be a select or radio field`);
-      }
-      if (!Array.isArray(field.options) || field.options.length === 0) {
-        fail(`productOptionsAllocation field ${fieldId} must define options`);
+
+      if (ALLOCATED_OPTION_CHOICE_KINDS.has(field.kind)) {
+        if (!Array.isArray(field.options) || field.options.length === 0) {
+          fail(`productOptionsAllocation field ${fieldId} must define options`);
+        }
+
+        const optionValues = field.options.map((option) => option?.value);
+        if (new Set(optionValues).size !== optionValues.length) {
+          fail(`productOptionsAllocation field ${fieldId} has duplicate option values`);
+        }
+        choiceIds.add(fieldId);
+      } else if (ALLOCATED_OPTION_DETAIL_KINDS.has(field.kind)) {
+        const conditions = field.visibleWhen?.conditions || [];
+        if (conditions.length === 0) {
+          fail(`productOptionsAllocation field ${fieldId} must be a select or radio field unless it is a conditional text or textarea detail field`);
+        }
+        detailIds.add(fieldId);
+      } else {
+        fail(`productOptionsAllocation field ${fieldId} must be a select or radio field unless it is a conditional text or textarea detail field`);
       }
 
-      const optionValues = field.options.map((option) => option?.value);
-      if (new Set(optionValues).size !== optionValues.length) {
-        fail(`productOptionsAllocation field ${fieldId} has duplicate option values`);
-      }
       allocated.add(fieldId);
+    }
+
+    if (choiceIds.size === 0) {
+      fail('productOptionsAllocation must include at least one select or radio choice field');
+    }
+
+    for (const detailId of detailIds) {
+      const detail = byId[detailId];
+      const dependsOnAllocatedChoice = (detail.visibleWhen?.conditions || []).some(
+        (condition) => choiceIds.has(condition.field),
+      );
+      if (!dependsOnAllocatedChoice) {
+        fail(`productOptionsAllocation field ${detailId} must be a select or radio field unless it is a conditional text or textarea detail field driven by an allocated select or radio field`);
+      }
+
+      for (const field of fields) {
+        if ((field.visibleWhen?.conditions || []).some((condition) => condition.field === detailId)) {
+          fail(`productOptionsAllocation detail field ${detailId} must be a leaf dependency`);
+        }
+      }
     }
 
     return allocated;
@@ -283,7 +317,11 @@
     }
 
     validateCustomizationUnitsFeature(features.customizationUnits);
-    const productOptionAllocatedFieldIds = validateProductOptionsAllocationFeature(features.productOptionsAllocation, byId);
+    const productOptionAllocatedFieldIds = validateProductOptionsAllocationFeature(
+      features.productOptionsAllocation,
+      fields,
+      byId,
+    );
     validateProductOptionsDependencies(fields, byId, productOptionAllocatedFieldIds);
     const personalizationAllocatedFieldIds = validatePersonalizationFeature(features.personalizationAllocation, byId);
     validateDatePlanningFeature(features.datePlanning, byId);
@@ -339,6 +377,15 @@
     return resolvedProfile?.features?.productOptionsAllocation?.fieldIds || EMPTY_FIELD_IDS;
   }
 
+  function getProductOptionsAllocationChoiceFieldIds(resolvedProfile) {
+    return Object.freeze(
+      getProductOptionsAllocationFieldIds(resolvedProfile).filter((fieldId) => {
+        const field = getField(resolvedProfile, fieldId);
+        return ALLOCATED_OPTION_CHOICE_KINDS.has(field?.kind);
+      }),
+    );
+  }
+
   function getPersonalizationAllocationFieldIds(resolvedProfile) {
     if (resolvedProfile?.features?.personalizationAllocation?.enabled === false) return EMPTY_FIELD_IDS;
     return resolvedProfile?.features?.personalizationAllocation?.fieldIds || EMPTY_FIELD_IDS;
@@ -356,6 +403,7 @@
     getFieldsForGroup,
     getCustomizationUnitsPerQuantity,
     getProductOptionsAllocationFieldIds,
+    getProductOptionsAllocationChoiceFieldIds,
     getPersonalizationAllocationFieldIds,
     getCommerceAdjustments,
   });
