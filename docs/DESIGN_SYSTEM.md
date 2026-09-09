@@ -33,7 +33,7 @@ Canonical form markup owners:
 - `snippets/ui-textarea.liquid` — multiline text
 - `snippets/ui-select.liquid` — select/options
 - `snippets/ui-choice.liquid` — checkbox/radio
-- `snippets/ui-quantity.liquid` — quantity input
+- `snippets/ui-quantity.liquid` — quantity stepper markup
 - `snippets/ui-file.liquid` — file selection
 
 These snippets share the same label, required, help, disabled, focus and error language. Product pages, Custom Order, future content forms and merchant-specific compositions must render these owners rather than reproducing their markup or visual states.
@@ -62,6 +62,26 @@ A composition may configure:
 A composition may not create a separate visual field system, duplicate required/error styling, infer validity from CSS, or change the ordered quantity from a personalization allocator.
 
 Browser-native semantics remain the baseline unless a later behavior owner has a justified need to enhance them. Enhancement must preserve keyboard, focus, mobile and no-JavaScript-safe behavior wherever Shopify/platform contracts permit it.
+
+## Canonical quantity stepper
+
+`snippets/ui-quantity.liquid`, the `.jill-quantity` family in `jill-ui.css`, and `assets/jill-quantity.js` together own the reusable quantity interaction.
+
+The customer-facing control is always presented as a single field with three visible parts: decrement button, editable numeric value, increment button. Native browser spinner chrome is not a JILL quantity UI.
+
+Rules:
+
+- decrement and increment controls stay visible, including when disabled at a boundary
+- the numeric input remains directly editable and keeps native numeric keyboard/arrow-key semantics
+- min, max and step are semantic constraints supplied by the consuming domain; the quantity primitive only enforces them
+- increment/decrement buttons have meaningful accessible names and reference the input they control
+- redundant step buttons stay outside the primary Tab sequence while the editable input remains keyboard reachable
+- touch targets are at least 44 CSS pixels in the quantity stepper even when a merchant configures a shorter general button height
+- mouse-wheel scrolling over a focused quantity input must not silently change the value
+- dynamic allocation count controls clone the canonical quantity markup and configure it through `JILLQuantity`; they may not hand-build a second numeric control
+- the quantity primitive never owns Shopify commerce quantity, customization-unit multiplication, Product Options allocation arithmetic or Personalization allocation arithmetic
+
+This primitive applies to Shopify merchandise quantity, cart quantity and every Product Options/Personalization count control that asks a customer how many units belong to an allocation group.
 
 ## Variant rule
 
