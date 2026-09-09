@@ -117,6 +117,8 @@ Supported capabilities include:
 
 Current JILL print methods include DTF, Sublimation and Vinyl. The list is configuration; the engine is not print-method-specific.
 
+Shopify-native merchandise options such as size, color, tote style or a method that already exists as a Shopify variant remain Shopify variant truth. Product Capability fields may not duplicate those choices merely to make Custom Order allocation easier.
+
 ## 7. Product Options contract — protected reference
 
 Product Options is a protected behavior until its Theme Core replacement is certified.
@@ -216,11 +218,25 @@ The Custom Order experience supports multiple selected products in one request.
 
 The UI may visually group these stages differently as long as the contracts and data dependencies remain intact.
 
+### Native Shopify variations
+
+For a product with more than one Shopify variant, Custom Order may split the product's one canonical merchandise quantity across multiple real Shopify variants.
+
+- Shopify variant IDs, titles, availability and variant pricing remain Shopify truth.
+- Size, color, tote style, method or other Shopify-native variant options are never copied into Product Capability fields solely for Custom Order.
+- Each variation allocation group selects one available Shopify variant and a positive quantity.
+- The same Shopify variant may appear in at most one variation allocation group; repeated units belong in that group's quantity.
+- The sum of variation allocation quantities must equal the selected product merchandise quantity before Review can proceed.
+- Sold-out/unavailable variants cannot be assigned.
+- Changing merchandise quantity reconciles allocation deterministically. A complete one-variation order may grow with that same variation; otherwise newly unallocated quantity remains visibly unresolved until assigned.
+- Each allocated merchandise unit receives a stable unit ID based on the product item identity. Where personalization also operates one customization unit per merchandise unit, those shared IDs preserve correlation between the Shopify variation and its personalization.
+- Variation allocation never owns price calculation and never changes the canonical total merchandise quantity.
+
 ### Review
 
 Review is available as the next destination but cannot advance while required state is incomplete. If blocked, the first missing requirement is surfaced.
 
-The review summary groups information coherently by selected product/family and shows all meaningful options, personalization, dates and fulfillment choices before submission.
+The review summary groups information coherently by selected product/family and shows all meaningful options, Shopify variation splits, personalization, dates and fulfillment choices before submission.
 
 ### Submit
 
@@ -246,9 +262,12 @@ The canonical request can include:
 - theme
 - colors
 - selected products/collections
+- Shopify variant ID or structured variant allocations
 - reference images
 - marketing consent and consent timestamp/source
 - structured/raw payload
+
+Structured variant allocations carry the real Shopify variant ID, assigned merchandise quantity and stable unit IDs so downstream processing can correlate the variation with per-unit customization without parsing display labels.
 
 The theme builds the request; the backend owns persistence, privileged synchronization and notifications.
 
