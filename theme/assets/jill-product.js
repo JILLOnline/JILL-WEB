@@ -482,7 +482,10 @@
       allocationMount.setAttribute('aria-hidden', available ? 'false' : 'true');
       if (!available) {
         allocationGroupsNode.replaceChildren();
-        if (allocationSummary) allocationSummary.textContent = '';
+        if (allocationSummary) {
+          allocationSummary.textContent = '';
+          allocationSummary.hidden = true;
+        }
         allocationAddButton.hidden = true;
         return;
       }
@@ -494,10 +497,14 @@
       const unallocated = productOptionsState.allocation.unallocatedUnitIds.length;
       const assigned = productOptionsState.eligibleUnitCount - unallocated;
       const unitLabel = allocationUnitLabel(productOptionsState.eligibleUnitCount);
+      const hasUnallocated = unallocated > 0;
       if (allocationSummary) {
-        allocationSummary.textContent = `${assigned} ${allocationMount.dataset.ofLabel} ${productOptionsState.eligibleUnitCount} ${unitLabel} ${allocationMount.dataset.assignedLabel}${unallocated ? ` — ${unallocated} ${allocationMount.dataset.unassignedLabel}` : ''}`;
+        allocationSummary.hidden = !hasUnallocated;
+        allocationSummary.textContent = hasUnallocated
+          ? `${assigned} ${allocationMount.dataset.ofLabel} ${productOptionsState.eligibleUnitCount} ${unitLabel} ${allocationMount.dataset.assignedLabel}${unallocated ? ` — ${unallocated} ${allocationMount.dataset.unassignedLabel}` : ''}`
+          : '';
       }
-      allocationAddButton.hidden = unallocated === 0;
+      allocationAddButton.hidden = !hasUnallocated;
     }
 
     function firstOtherBlockingResult(validation) {
