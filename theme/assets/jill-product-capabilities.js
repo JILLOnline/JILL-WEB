@@ -175,7 +175,7 @@
     }
 
     if (choiceIds.size === 0) {
-      fail('productOptionsAllocation must include at least one select or radio choice field');
+      fail('at least one productOptionsAllocation field must be a select or radio field');
     }
 
     for (const detailId of detailIds) {
