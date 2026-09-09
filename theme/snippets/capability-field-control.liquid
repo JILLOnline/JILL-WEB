@@ -1,0 +1,105 @@
+{% case field.kind %}
+  {% when 'text' %}
+    {% render 'ui-field',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      type: 'text',
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      minlength: field.minLength,
+      maxlength: field.maxLength
+    %}
+
+  {% when 'textarea' %}
+    {% render 'ui-textarea',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      maxlength: field.maxLength,
+      rows: 4
+    %}
+
+  {% when 'number' %}
+    {% render 'ui-field',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      type: 'number',
+      inputmode: 'decimal',
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      min: field.min,
+      max: field.max,
+      step: field.step
+    %}
+
+  {% when 'select' %}
+    {% render 'ui-select',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      placeholder: choose_option_label,
+      options: field.options
+    %}
+
+  {% when 'radio' %}
+    {% render 'ui-choice-group',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      options: field.options
+    %}
+
+  {% when 'checkbox' %}
+    {% render 'ui-choice',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      value: 'Yes',
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled
+    %}
+
+  {% when 'date' %}
+    {% render 'ui-field',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      type: 'date',
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled
+    %}
+
+  {% when 'file' %}
+    {% liquid
+      assign file_accept = field.accept | join: ','
+      assign file_multiple = false
+      if field.maxFiles > 1
+        assign file_multiple = true
+      endif
+    %}
+    {% render 'ui-file',
+      id: field_dom_id,
+      name: field_name,
+      label: field.label,
+      help: field.help,
+      required: field.required,
+      disabled: field_disabled,
+      accept: file_accept,
+      multiple: file_multiple
+    %}
+{% endcase %}
