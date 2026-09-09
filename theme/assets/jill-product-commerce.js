@@ -46,7 +46,7 @@
   }
 
   function collectLineProperties(formData) {
-    const properties = Object.create(null);
+    const properties = {};
     for (const [name, value] of formData.entries()) {
       const match = /^properties\[(.+)]$/.exec(name);
       if (!match) continue;
@@ -86,7 +86,7 @@
       );
     }
 
-    const values = Object.create(null);
+    const values = {};
     for (const fieldId of profile.groups.personalization || []) {
       if (allocatedIds.has(fieldId)) continue;
       const field = capabilities.getField(profile, fieldId);
