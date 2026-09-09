@@ -136,12 +136,7 @@
     },
     "card": {
       "view_product": "View product",
-      "customize": "Customize this",
-      "more_images": "More product images",
-      "teaser_1": "There’s more to this one than the photo gives away. Take a closer look.",
-      "teaser_2": "Caught your eye? Good. Open it up and see the rest.",
-      "teaser_3": "This one deserves a closer look. See what’s waiting inside.",
-      "teaser_4": "Don’t stop at the thumbnail. Come see the rest."
+      "customize": "Customize this"
     }
   },
   "collections": {

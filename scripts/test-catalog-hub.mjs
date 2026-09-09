@@ -1,4 +1,4 @@
-// Catalog cards intentionally tease; product pages own product detail and configuration context.
+// Catalog cards stay concise; product pages own detail and configuration context.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
@@ -8,6 +8,9 @@ const template = JSON.parse(fs.readFileSync('theme/templates/collection.json', '
 const productCard = fs.readFileSync('theme/snippets/product-card.liquid', 'utf8');
 const storefrontStyles = fs.readFileSync('theme/assets/jill-storefront.css', 'utf8');
 const uiStyles = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');
+const disclosureStyles = fs.readFileSync('theme/assets/jill-catalog-disclosure.css', 'utf8');
+const disclosureRuntime = fs.readFileSync('theme/assets/jill-catalog-disclosure.js', 'utf8');
+const locale = JSON.parse(fs.readFileSync('theme/locales/en.default.json', 'utf8'));
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
 const customOrderSection = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const customOrderRuntime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
@@ -35,29 +38,40 @@ assert.ok(!categoryHandles.includes('jill'), 'internal catch-all collection must
 
 assert.doesNotMatch(section, /data-jill-catalog-category-link/, 'collection discovery cards belong to header navigation, not Catalog body');
 assert.doesNotMatch(section, /data-jill-catalog-filter/, 'Catalog body must not duplicate header collection navigation with filter pills');
+assert.match(section, /<details[^>]*data-jill-catalog-disclosure/s, 'Catalog collections must use native disclosure controls');
+assert.match(section, /<summary class="jill-catalog-disclosure__pill">/, 'each collection disclosure must collapse to the canonical pill');
 assert.match(section, /data-jill-catalog-group/, 'Catalog Hub must group products by configured Shopify collection');
 assert.match(section, /JillCatalogCollection-/, 'catalog collection groups must expose stable anchors for header navigation');
 assert.match(section, /category_collection\.products/, 'each catalog collection must render its own available products');
 assert.match(section, /jill-catalog__product-grid/, 'each collection group must use the canonical product grid');
 assert.match(section, /render 'product-card'/, 'Catalog Hub must reuse the canonical Product Card');
 assert.match(section, /featured_collection\.products/, 'featured merchandising must come from the configured Shopify collection');
-assert.match(section, /jill-catalog__section-heading--centered/, 'featured Catalog heading must use the centered composition owner');
+assert.match(section, /jill-catalog-disclosure--featured/, 'featured merchandising must use the same collapsible collection pattern');
 assert.doesNotMatch(section, /featured_eyebrow|FEATURED RIGHT NOW/i, 'featured Catalog shelf must not render or configure an eyebrow label');
 assert.match(section, /block\.type == 'creation'/, 'real-work gallery must be merchant configurable');
 assert.match(section, /block\.type == 'testimonial'/, 'testimonials must be merchant supplied');
 assert.doesNotMatch(section, /Add to cart|name="id"|\/cart\/add/i, 'Catalog Hub must not become another product configurator');
 
 assert.doesNotMatch(section, /JillCatalogSearch|show_search|browse_label|Browse products|type:\s*'search'/i, 'Catalog must not own duplicate browse or search controls');
-assert.doesNotMatch(layout, /jill-catalog\.js/, 'Catalog-only search runtime must not be loaded after header search becomes canonical');
-assert.equal(fs.existsSync('theme/assets/jill-catalog.js'), false, 'obsolete Catalog search runtime must be removed');
+assert.doesNotMatch(layout, /jill-catalog\.js/, 'obsolete Catalog search runtime must not return');
+assert.equal(fs.existsSync('theme/assets/jill-catalog.js'), false, 'obsolete Catalog search runtime must remain removed');
+assert.match(layout, /is_catalog_hub/, 'catalog-only disclosure assets must be route scoped');
+assert.match(layout, /jill-catalog-disclosure\.css/, 'catalog disclosure styles must load from one dedicated owner');
+assert.match(layout, /jill-catalog-disclosure\.js/, 'catalog disclosure behavior must load from one dedicated owner');
+assert.match(disclosureRuntime, /hashchange/, 'collection dock anchors must open their collapsed catalog collection');
+assert.match(disclosureRuntime, /target\.open = true/, 'targeted catalog disclosures must be opened explicitly');
 
 assert.doesNotMatch(productCard, /render 'catalog-product-summary'/, 'Catalog cards must not expose Product Options or personalization summaries');
-assert.match(productCard, /catalog\.card\.teaser_/, 'Catalog cards must use curiosity-driven teaser copy instead of product instructions');
-assert.match(productCard, /jill-product-card__teaser/, 'Catalog cards must expose one intentional teaser copy surface');
+assert.doesNotMatch(productCard, /catalog_teaser|catalog\.card\.teaser_|jill-product-card__teaser/, 'product cards must not render teaser sentences');
+assert.equal('teaser_1' in locale.catalog.card, false, 'removed teaser copy must not remain in locales');
+assert.equal('teaser_2' in locale.catalog.card, false, 'removed teaser copy must not remain in locales');
+assert.equal('teaser_3' in locale.catalog.card, false, 'removed teaser copy must not remain in locales');
+assert.equal('teaser_4' in locale.catalog.card, false, 'removed teaser copy must not remain in locales');
 assert.doesNotMatch(productCard, /truncatewords: 34/, 'Catalog cards must not reproduce shortened product descriptions');
 assert.match(productCard, /custom_order_url/, 'catalog product cards must support contextual Custom Order handoff');
 assert.match(productCard, /product=/, 'contextual handoff must preserve the selected product handle');
 assert.match(productCard, /heading_tag/, 'canonical Product Card must accept the semantic heading level from its composition owner');
+assert.match(productCard, /data-jill-product-card-media/, 'canonical Product Card must expose one media-surface hook');
 assert.doesNotMatch(productCard, /card_product\.images/, 'catalog cards must keep one strong thumbnail instead of a secondary gallery');
 assert.doesNotMatch(productCard, /data-search|data-jill-catalog-product|assign catalog_search/, 'removed Catalog search must leave no product-card search metadata behind');
 
@@ -65,14 +79,15 @@ assert.doesNotMatch(storefrontStyles, /jill-catalog__collection-grid|jill-catalo
 assert.doesNotMatch(storefrontStyles, /jill-catalog__filters/, 'removed Catalog filter pills must not leave dead style owners behind');
 assert.doesNotMatch(storefrontStyles, /jill-product-card__thumbnails|jill-product-card__thumbnail/, 'removed Catalog secondary thumbnails must not leave dead style owners behind');
 assert.doesNotMatch(storefrontStyles, /jill-catalog__hero(?:-title|-text|-actions)?/, 'removed Catalog hero must not leave dead style owners behind');
-assert.match(storefrontStyles, /jill-catalog__section-heading--centered/, 'Catalog must own one centered heading composition');
-assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
 assert.match(storefrontStyles, /\.jill-product-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'all product grids must use the same centered reference width');
 assert.match(storefrontStyles, /\.jill-catalog__featured-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'featured products must use the canonical reference width');
 assert.match(storefrontStyles, /\.jill-catalog__product-grid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 18rem\), 18rem\)\);[^}]*justify-content:\s*center;/s, 'catalog collection groups must use the canonical reference width');
 assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\]\s*\{[^}]*max-width:\s*18rem;[^}]*padding:\s*calc\(var\(--jill-space-unit\) \* 2\);/s, 'catalog cards must hug the thumbnail frame at one canonical width');
 assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__media\s*\{[^}]*aspect-ratio:\s*1;/s, 'catalog thumbnails must share one square reference frame');
 assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__image\s*\{[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/s, 'Catalog thumbnails must show the full product instead of cropping it');
+assert.match(disclosureStyles, /\[data-jill-product-card-media\]\s*\{[^}]*background:\s*var\(--jill-color-background\);/s, 'unused thumbnail canvas must be white');
+assert.match(disclosureStyles, /\.jill-catalog-disclosure__pill\s*\{[^}]*border-radius:\s*999px;/s, 'collapsed collections must render as pills');
+assert.match(disclosureStyles, /\.jill-catalog-disclosure\[open\]\s*\{/, 'expanded collections must restore a full content surface');
 assert.match(storefrontStyles, /\.jill-product-card__actions\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s, 'catalog product actions must use one compact two-button layout');
 assert.doesNotMatch(storefrontStyles, /\.jill-catalog__featured-grid \.jill-product-card/, 'featured merchandising must not fork canonical product-card sizing');
 assert.doesNotMatch(uiStyles, /jill-product-card\[data-display='catalog'\]/, 'Catalog product-card visuals belong to the storefront owner, not the generic UI layer');

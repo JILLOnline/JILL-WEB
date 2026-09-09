@@ -27,32 +27,42 @@
     endfor
   %}
 
-  <section class="jill-catalog jill-page-width">
+  <section class="jill-catalog jill-page-width" data-jill-catalog-disclosures>
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
-      <div class="jill-catalog__section jill-catalog__featured">
-        <div class="jill-catalog__section-heading jill-catalog__section-heading--centered">
-          <h2>{{ section.settings.featured_heading }}</h2>
-          {% if section.settings.featured_text != blank %}
-            <p>{{ section.settings.featured_text }}</p>
-          {% endif %}
-        </div>
+      {% assign featured_count = featured_collection.products_count | at_most: featured_limit %}
+      <details class="jill-catalog-disclosure jill-catalog-disclosure--featured" data-jill-catalog-disclosure open>
+        <summary class="jill-catalog-disclosure__pill">
+          <span class="jill-catalog-disclosure__title">{{ section.settings.featured_heading }}</span>
+          <span class="jill-catalog-disclosure__count">
+            {{ featured_count }} {% if featured_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
+          </span>
+          <span class="jill-catalog-disclosure__icon" aria-hidden="true">
+            {% render 'ui-icon', name: 'chevron-down' %}
+          </span>
+        </summary>
 
-        <div class="jill-catalog__featured-grid">
-          {% for card_product in featured_collection.products limit: featured_limit %}
-            {% render 'product-card',
-              card_product: card_product,
-              mode: 'catalog',
-              heading_tag: 'h3',
-              custom_order_url: custom_order_url
-            %}
-          {% endfor %}
+        <div class="jill-catalog-disclosure__content">
+          {% if section.settings.featured_text != blank %}
+            <p class="jill-catalog-disclosure__description jill-catalog-disclosure__description--centered">{{ section.settings.featured_text }}</p>
+          {% endif %}
+
+          <div class="jill-catalog__featured-grid">
+            {% for card_product in featured_collection.products limit: featured_limit %}
+              {% render 'product-card',
+                card_product: card_product,
+                mode: 'catalog',
+                heading_tag: 'h3',
+                custom_order_url: custom_order_url
+              %}
+            {% endfor %}
+          </div>
         </div>
-      </div>
+      </details>
     {% endif %}
 
     <div id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
       {% if category_count > 0 and catalog_product_count > 0 %}
-        <div>
+        <div class="jill-catalog-disclosure-list">
           {% for block in section.blocks %}
             {% if block.type == 'category' and block.settings.collection != blank %}
               {% liquid
@@ -64,33 +74,40 @@
               %}
 
               {% if category_collection.products_count > 0 %}
-                <section
-                  class="jill-card jill-catalog__section"
+                <details
+                  class="jill-catalog-disclosure"
                   id="JillCatalogCollection-{{ category_collection.handle | escape }}"
+                  data-jill-catalog-disclosure
                   data-jill-catalog-group
                   {{ block.shopify_attributes }}
                 >
-                  <div class="jill-catalog__section-heading">
-                    <p class="jill-catalog__eyebrow">
+                  <summary class="jill-catalog-disclosure__pill">
+                    <span class="jill-catalog-disclosure__title">{{ category_collection.title }}</span>
+                    <span class="jill-catalog-disclosure__count">
                       {{ category_collection.products_count }} {% if category_collection.products_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
-                    </p>
-                    <h3>{{ category_collection.title }}</h3>
-                    {% if category_description != blank %}
-                      <p>{{ category_description }}</p>
-                    {% endif %}
-                  </div>
+                    </span>
+                    <span class="jill-catalog-disclosure__icon" aria-hidden="true">
+                      {% render 'ui-icon', name: 'chevron-down' %}
+                    </span>
+                  </summary>
 
-                  <div class="jill-product-grid jill-catalog__product-grid">
-                    {% for card_product in category_collection.products %}
-                      {% render 'product-card',
-                        card_product: card_product,
-                        mode: 'catalog',
-                        heading_tag: 'h4',
-                        custom_order_url: custom_order_url
-                      %}
-                    {% endfor %}
+                  <div class="jill-catalog-disclosure__content">
+                    {% if category_description != blank %}
+                      <p class="jill-catalog-disclosure__description">{{ category_description }}</p>
+                    {% endif %}
+
+                    <div class="jill-product-grid jill-catalog__product-grid">
+                      {% for card_product in category_collection.products %}
+                        {% render 'product-card',
+                          card_product: card_product,
+                          mode: 'catalog',
+                          heading_tag: 'h4',
+                          custom_order_url: custom_order_url
+                        %}
+                      {% endfor %}
+                    </div>
                   </div>
-                </section>
+                </details>
               {% endif %}
             {% endif %}
           {% endfor %}

@@ -9,25 +9,12 @@
   assign customize_label = 'catalog.card.customize' | t
   assign is_catalog = false
   assign card_heading_tag = heading_tag | default: 'h2'
-  assign catalog_teaser = blank
 
   if card_mode == 'catalog'
     assign is_catalog = true
     if heading_tag == blank
       assign card_heading_tag = 'h3'
     endif
-
-    assign teaser_variant = card_product.id | modulo: 4
-    case teaser_variant
-      when 0
-        assign catalog_teaser = 'catalog.card.teaser_1' | t
-      when 1
-        assign catalog_teaser = 'catalog.card.teaser_2' | t
-      when 2
-        assign catalog_teaser = 'catalog.card.teaser_3' | t
-      else
-        assign catalog_teaser = 'catalog.card.teaser_4' | t
-    endcase
   endif
 
   assign custom_order_link = blank
@@ -45,7 +32,12 @@
   class="jill-product-card{% if is_catalog %} jill-card{% endif %}"
   {% if is_catalog %}data-display="catalog"{% endif %}
 >
-  <a class="jill-product-card__media" href="{{ card_url }}" aria-label="{{ card_title | escape }}">
+  <a
+    class="jill-product-card__media"
+    href="{{ card_url }}"
+    aria-label="{{ card_title | escape }}"
+    data-jill-product-card-media
+  >
     {% if card_product.featured_image != blank %}
       {{ card_product.featured_image | image_url: width: 900 | image_tag: class: 'jill-product-card__image', loading: 'lazy', widths: '320, 480, 640, 900', sizes: '(min-width: 70rem) 30vw, (min-width: 45rem) 45vw, 100vw' }}
     {% else %}
@@ -61,10 +53,6 @@
     <{{ card_heading_tag }} class="jill-product-card__title">
       <a href="{{ card_url }}">{{ card_title }}</a>
     </{{ card_heading_tag }}>
-
-    {% if is_catalog and catalog_teaser != blank %}
-      <p class="jill-product-card__excerpt jill-product-card__teaser">{{ catalog_teaser }}</p>
-    {% endif %}
 
     <div class="jill-product-card__price">
       {% if price_varies %}<span>{{ 'products.card.from' | t }}</span>{% endif %}
