@@ -566,7 +566,8 @@
     text-transform: uppercase;
   }
 
-  [data-jill-product-options-allocation] {
+  [data-jill-product-options-allocation],
+  [data-jill-personalization-allocation] {
     display: grid;
     gap: calc(var(--jill-space-unit) * 2.5);
   }
@@ -576,7 +577,8 @@
     line-height: 1.25;
   }
 
-  [data-jill-product-options-groups].jill-card {
+  [data-jill-product-options-groups].jill-card,
+  [data-jill-personalization-groups].jill-card {
     display: grid;
     gap: calc(var(--jill-space-unit) * 3);
     border-color: color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
@@ -584,21 +586,29 @@
     box-shadow: 0 0.4rem 1.25rem color-mix(in srgb, var(--jill-color-foreground) 5%, transparent);
   }
 
-  [data-jill-product-options-groups] > .jill-product-customization__group + .jill-product-customization__group {
+  [data-jill-personalization-groups].jill-card:empty {
+    display: none;
+  }
+
+  [data-jill-product-options-groups] > .jill-product-customization__group + .jill-product-customization__group,
+  [data-jill-personalization-groups] > .jill-product-customization__group + .jill-product-customization__group {
     padding-block-start: calc(var(--jill-space-unit) * 3);
     border-block-start: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 18%, transparent);
   }
 
-  [data-jill-product-options-groups] > .jill-product-customization__group > .jill-product-customization__group-title {
+  [data-jill-product-options-groups] > .jill-product-customization__group > .jill-product-customization__group-title,
+  [data-jill-personalization-groups] > .jill-product-customization__group > .jill-product-customization__group-title {
     font-size: 1.05rem;
     font-weight: 750;
   }
 
-  [data-jill-product-options-groups] .jill-choice-group {
+  [data-jill-capability-group='product_options'] .jill-choice-group,
+  [data-jill-capability-group='personalization'] .jill-choice-group {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   }
 
-  [data-jill-product-options-groups] .jill-choice {
+  [data-jill-capability-group='product_options'] .jill-choice,
+  [data-jill-capability-group='personalization'] .jill-choice {
     min-height: var(--jill-button-height);
     align-items: center;
     padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
@@ -608,17 +618,20 @@
     transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
   }
 
-  [data-jill-product-options-groups] .jill-choice:hover {
+  [data-jill-capability-group='product_options'] .jill-choice:hover,
+  [data-jill-capability-group='personalization'] .jill-choice:hover {
     border-color: color-mix(in srgb, var(--jill-color-accent) 50%, transparent);
   }
 
-  [data-jill-product-options-groups] .jill-choice:has(.jill-choice__control:checked) {
+  [data-jill-capability-group='product_options'] .jill-choice:has(.jill-choice__control:checked),
+  [data-jill-capability-group='personalization'] .jill-choice:has(.jill-choice__control:checked) {
     border-color: var(--jill-color-accent);
     background: color-mix(in srgb, var(--jill-color-accent) 10%, var(--jill-color-background));
     transform: translateY(-1px);
   }
 
-  [data-jill-product-options-summary].jill-pill {
+  [data-jill-product-options-summary].jill-pill,
+  [data-jill-personalization-summary].jill-pill {
     width: fit-content;
     max-width: 100%;
     justify-self: start;
@@ -628,14 +641,16 @@
     font-weight: 650;
   }
 
-  [data-jill-product-options-add] {
+  [data-jill-product-options-add],
+  [data-jill-personalization-add] {
     justify-self: start;
     border-color: color-mix(in srgb, var(--jill-color-accent) 55%, transparent);
     background: color-mix(in srgb, var(--jill-color-accent) 6%, var(--jill-color-background));
     color: var(--jill-color-accent);
   }
 
-  [data-jill-product-options-groups] .jill-button[data-variant='secondary'] {
+  [data-jill-product-options-groups] .jill-button[data-variant='secondary'],
+  [data-jill-personalization-groups] .jill-button[data-variant='secondary'] {
     justify-self: start;
   }
 }
