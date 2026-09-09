@@ -90,6 +90,14 @@
       "title": "Products",
       "help": "Select any products you want included. Each selected product automatically loads its current Product Options, quantity rules, and personalization fields."
     },
+    "variants": {
+      "title": "Variations",
+      "help": "Split the total product quantity across the Shopify variations you need. Each variation can be used once.",
+      "group": "Variation",
+      "select": "Choose variation",
+      "add": "Add another variation",
+      "incomplete": "Assign the full product quantity across variations before review."
+    },
     "review": {
       "title": "Review your custom order"
     },
