@@ -1,5 +1,15 @@
 {% liquid
   assign all_products = collections['all']
+  assign customer_name_label = 'custom_order.customer.name' | t
+  assign customer_email_label = 'custom_order.customer.email' | t
+  assign customer_phone_label = 'custom_order.customer.phone' | t
+  assign event_date_label = 'custom_order.planning.event_date' | t
+  assign date_needed_label = 'custom_order.planning.date_needed' | t
+  assign city_label = 'custom_order.planning.city' | t
+  assign state_label = 'custom_order.planning.state' | t
+  assign postal_code_label = 'custom_order.planning.postal_code' | t
+  assign quantity_label = 'products.product.quantity' | t
+  assign review_label = 'custom_order.actions.review' | t
 %}
 
 <section class="jill-custom-order jill-page-width" data-jill-custom-order>
@@ -10,15 +20,21 @@
 
   <div class="jill-custom-order__customer" data-jill-custom-order-customer>
     <h2>{{ 'custom_order.customer.title' | t }}</h2>
-    {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: 'custom_order.customer.name' | t, type: 'text', required: true %}
-    {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: 'custom_order.customer.email' | t, type: 'email', required: true %}
-    {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: 'custom_order.customer.phone' | t, type: 'tel' %}
+    {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true %}
+    {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true %}
+    {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: customer_phone_label, type: 'tel' %}
     {% assign contact_options = 'email,phone,text' | split: ',' %}
     <div class="jill-field">
       <label class="jill-field__label" for="JillCustomOrderContact">{{ 'custom_order.customer.preferred_contact' | t }}</label>
       <select class="jill-field__control" id="JillCustomOrderContact" name="preferred_contact">
         {% for value in contact_options %}
-          <option value="{{ value }}">{{ 'custom_order.customer.contact_options.' | append: value | t }}</option>
+          <option value="{{ value }}">
+            {% case value %}
+              {% when 'email' %}{{ 'custom_order.customer.contact_options.email' | t }}
+              {% when 'phone' %}{{ 'custom_order.customer.contact_options.phone' | t }}
+              {% when 'text' %}{{ 'custom_order.customer.contact_options.text' | t }}
+            {% endcase %}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -26,21 +42,26 @@
 
   <div class="jill-custom-order__planning" data-jill-custom-order-planning>
     <h2>{{ 'custom_order.planning.title' | t }}</h2>
-    {% render 'ui-field', id: 'JillCustomOrderEventDate', name: 'event_date', label: 'custom_order.planning.event_date' | t, type: 'date' %}
-    {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: 'custom_order.planning.date_needed' | t, type: 'date', required: true %}
+    {% render 'ui-field', id: 'JillCustomOrderEventDate', name: 'event_date', label: event_date_label, type: 'date' %}
+    {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true %}
     {% assign fulfillment_options = 'pickup,shipping' | split: ',' %}
     <div class="jill-field">
       <label class="jill-field__label" for="JillCustomOrderFulfillment">{{ 'custom_order.planning.fulfillment' | t }}</label>
       <select class="jill-field__control" id="JillCustomOrderFulfillment" name="fulfillment" required>
         <option value="" disabled selected>{{ 'products.product.choose_option' | t }}</option>
         {% for value in fulfillment_options %}
-          <option value="{{ value }}">{{ 'custom_order.planning.fulfillment_options.' | append: value | t }}</option>
+          <option value="{{ value }}">
+            {% case value %}
+              {% when 'pickup' %}{{ 'custom_order.planning.fulfillment_options.pickup' | t }}
+              {% when 'shipping' %}{{ 'custom_order.planning.fulfillment_options.shipping' | t }}
+            {% endcase %}
+          </option>
         {% endfor %}
       </select>
     </div>
-    {% render 'ui-field', id: 'JillCustomOrderCity', name: 'city', label: 'custom_order.planning.city' | t, type: 'text' %}
-    {% render 'ui-field', id: 'JillCustomOrderState', name: 'state', label: 'custom_order.planning.state' | t, type: 'text' %}
-    {% render 'ui-field', id: 'JillCustomOrderPostalCode', name: 'postal_code', label: 'custom_order.planning.postal_code' | t, type: 'text' %}
+    {% render 'ui-field', id: 'JillCustomOrderCity', name: 'city', label: city_label, type: 'text' %}
+    {% render 'ui-field', id: 'JillCustomOrderState', name: 'state', label: state_label, type: 'text' %}
+    {% render 'ui-field', id: 'JillCustomOrderPostalCode', name: 'postal_code', label: postal_code_label, type: 'text' %}
   </div>
 
   <div class="jill-custom-order__products">
@@ -105,7 +126,7 @@
                 {% render 'ui-quantity',
                   id: quantity_id,
                   name: 'quantity',
-                  label: 'products.product.quantity' | t,
+                  label: quantity_label,
                   value: 1,
                   min: 1,
                   step: 1,
@@ -124,7 +145,7 @@
                   aria-live="polite"
                   data-jill-product-status
                   data-error-prefix="{{ 'products.product.complete_field' | t | escape }}"
-                  data-quantity-label="{{ 'products.product.quantity' | t | escape }}"
+                  data-quantity-label="{{ quantity_label | escape }}"
                   data-config-error="{{ 'products.product.configuration_error' | t | escape }}"
                   data-choose-option-label="{{ 'products.product.choose_option' | t | escape }}"
                 ></p>
@@ -144,7 +165,7 @@
   <p class="jill-product-form__status" role="status" aria-live="polite" data-jill-custom-order-status></p>
 
   <div class="jill-custom-order__actions">
-    {% render 'ui-button', type: 'button', label: 'custom_order.actions.review' | t, attributes: 'data-jill-custom-order-review-button' %}
+    {% render 'ui-button', type: 'button', label: review_label %}
   </div>
 </section>
 
