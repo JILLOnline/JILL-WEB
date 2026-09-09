@@ -8,8 +8,10 @@
   assign view_product_label = 'catalog.card.view_product' | t
   assign customize_label = 'catalog.card.customize' | t
   assign is_catalog = false
+  assign heading_tag = 'h2'
   if card_mode == 'catalog'
     assign is_catalog = true
+    assign heading_tag = 'h3'
   endif
 
   assign custom_order_link = blank
@@ -64,9 +66,9 @@
       <p class="jill-product-card__vendor">{{ card_product.vendor }}</p>
     {% endif %}
 
-    <h2 class="jill-product-card__title">
+    <{{ heading_tag }} class="jill-product-card__title">
       <a href="{{ card_url }}">{{ card_title }}</a>
-    </h2>
+    </{{ heading_tag }}>
 
     <div class="jill-product-card__price">
       {% if price_varies %}<span>{{ 'products.card.from' | t }}</span>{% endif %}
@@ -82,7 +84,7 @@
 
     {% if is_catalog %}
       {% if card_product.description != blank %}
-        <p class="jill-product-card__excerpt">{{ card_product.description | strip_html | truncatewords: 22 }}</p>
+        <p class="jill-product-card__excerpt">{{ card_product.description | replace: '</p>', '</p> ' | replace: '</li>', '</li> ' | replace: '</h2>', '</h2> ' | replace: '</h3>', '</h3> ' | strip_html | truncatewords: 22 }}</p>
       {% endif %}
 
       {% render 'catalog-product-summary', card_product: card_product %}

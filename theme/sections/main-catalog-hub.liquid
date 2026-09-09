@@ -106,7 +106,7 @@
                     <span class="jill-catalog-collection__description">{{ category_description }}</span>
                   {% endif %}
                   <span class="jill-catalog-collection__meta">
-                    {{ category_collection.products_count }} {{ 'catalog.collections.products' | t }}
+                    {{ category_collection.products_count }} {% if category_collection.products_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
                     <span aria-hidden="true">→</span>
                   </span>
                 </span>

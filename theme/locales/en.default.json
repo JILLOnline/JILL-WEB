@@ -106,9 +106,6 @@
     }
   },
   "catalog": {
-    "collections": {
-      "products": "products"
-    },
     "search": {
       "label": "Search the catalog",
       "placeholder": "Search products"
