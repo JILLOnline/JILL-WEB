@@ -1,9 +1,11 @@
+{% assign browse_catalog_label = 'not_found.action' | t %}
+
 <section class="jill-rich-text jill-page-width">
   <h1 class="jill-rich-text__heading">{{ 'not_found.title' | t }}</h1>
   <div class="jill-rich-text__body rte">
     <p>{{ 'not_found.body' | t }}</p>
   </div>
-  {% render 'ui-button', label: 'not_found.action' | t, url: routes.all_products_collection_url, variant: 'primary' %}
+  {% render 'ui-button', label: browse_catalog_label, url: routes.all_products_collection_url, variant: 'primary' %}
 </section>
 
 {% schema %}
