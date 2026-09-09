@@ -7,6 +7,7 @@ const standardCollection = fs.readFileSync('theme/sections/main-collection.liqui
 const template = JSON.parse(fs.readFileSync('theme/templates/collection.json', 'utf8'));
 const productCard = fs.readFileSync('theme/snippets/product-card.liquid', 'utf8');
 const storefrontStyles = fs.readFileSync('theme/assets/jill-storefront.css', 'utf8');
+const uiStyles = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
 const customOrderSection = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const customOrderRuntime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
@@ -68,6 +69,7 @@ assert.match(storefrontStyles, /jill-catalog__section-heading--centered/, 'Catal
 assert.match(storefrontStyles, /jill-catalog__featured-grid \.jill-product-card__actions/, 'featured Catalog shelf must own its compact card action layout');
 assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
 assert.match(storefrontStyles, /minmax\(min\(100%, 21rem\), 1fr\)/, 'Catalog cards must remain broad enough for product-led discovery');
+assert.match(uiStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__image\s*\{[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/s, 'Catalog thumbnails must show the full product instead of cropping it');
 
 assert.match(customOrderSection, /data-product-handle=/, 'Custom Order items must expose stable product handles for catalog handoff');
 assert.match(customOrderRuntime, /URLSearchParams/, 'Custom Order must read contextual catalog intent from the URL');

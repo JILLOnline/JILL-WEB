@@ -305,3 +305,10 @@
     border-color: var(--jill-color-error);
   }
 }
+
+@layer storefront {
+  .jill-product-card[data-display='catalog'] .jill-product-card__image {
+    object-fit: contain;
+    object-position: center;
+  }
+}
