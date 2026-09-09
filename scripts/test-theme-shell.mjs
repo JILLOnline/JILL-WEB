@@ -52,10 +52,12 @@ includesAll(dockCss, 'collection dock CSS', [
   '.jill-category-dock__track',
   '.jill-category-dock__item',
   '.jill-category-dock__media',
+  '.jill-category-dock__item:focus-visible',
   '@media (max-width: 749px)',
-  '@media (prefers-reduced-motion: reduce)',
 ]);
-if (dockCss.includes('!important')) fail('collection dock CSS must not use !important');
+for (const forbidden of ['!important', '.jill-category-dock__item:hover', 'transition:']) {
+  if (dockCss.includes(forbidden)) fail(`collection dock CSS must not contain ${forbidden}`);
+}
 
 const headerGroup = read('theme/sections/header-group.json');
 for (const handle of ['pinatas', 'catalog', 'kid-activities', 'party-supplies', 'apparel-gifts-dtf-sublimation']) {
