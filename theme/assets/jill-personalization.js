@@ -28,11 +28,16 @@
     return Array.from({length: count}, (_, index) => `${itemId}::${index + 1}`);
   }
 
+  function blankValue(field) {
+    if (field.kind === 'checkbox') return false;
+    return '';
+  }
+
   function allowedModes(profile, eligibleUnitCount) {
     const configured = profile?.features?.personalizationAllocation;
     if (!configured || configured.enabled === false) return [];
     const modes = Array.isArray(configured.allowedModes) ? configured.allowedModes : [];
-    if (eligibleUnitCount < 2) return modes.includes('same') ? ['same'] : modes.slice(0, 1);
+    if (eligibleUnitCount < 2) return modes.includes('same') ? ['same'] : [];
     return modes;
   }
 
@@ -44,15 +49,29 @@
 
   function sanitizeValues(fields, values) {
     const source = values && typeof values === 'object' ? values : {};
-    return Object.fromEntries(fields.map((field) => [field.id, source[field.id] ?? '']));
+    return Object.fromEntries(fields.map((field) => [field.id, source[field.id] ?? blankValue(field)]));
   }
 
   function evaluateGroup(fields, values) {
     const {formEngine} = dependencies();
-    const validation = formEngine.validateFields(fields, values);
+    let normalizedValues = sanitizeValues(fields, values);
+    let validation = formEngine.validateFields(fields, normalizedValues);
+    let pruned = false;
+
+    for (const result of validation.results) {
+      if (result.available) continue;
+      const field = fields.find((candidate) => candidate.id === result.id);
+      const blank = blankValue(field);
+      if (normalizedValues[result.id] !== blank) {
+        normalizedValues = {...normalizedValues, [result.id]: blank};
+        pruned = true;
+      }
+    }
+    if (pruned) validation = formEngine.validateFields(fields, normalizedValues);
+
     const blocking = validation.results.find((result) => result.available && !result.valid) || null;
     return {
-      values,
+      values: normalizedValues,
       results: validation.results,
       complete: !blocking,
       firstInvalidFieldId: blocking?.id || null,
@@ -79,8 +98,7 @@
       }
       if (!owned.length) continue;
 
-      const values = sanitizeValues(fields, source.values);
-      const evaluated = evaluateGroup(fields, values);
+      const evaluated = evaluateGroup(fields, source.values);
       normalized.push({
         id,
         unitIds: owned,
@@ -93,8 +111,7 @@
 
     if (mode === 'same' && eligibleIds.length) {
       const first = normalized[0];
-      const values = sanitizeValues(fields, first?.values || {});
-      const evaluated = evaluateGroup(fields, values);
+      const evaluated = evaluateGroup(fields, first?.values || {});
       return {
         groups: [{
           id: first?.id || 'group_1',
@@ -159,6 +176,8 @@
         reason: 'field',
         fieldId: invalidGroup.firstInvalidFieldId,
       };
+    } else if (normalizedMode === 'different' && normalized.groups.length < 2) {
+      firstIssue = {scope: 'allocation', reason: 'different_requires_multiple'};
     } else if (unallocatedUnitIds.length) {
       firstIssue = {scope: 'allocation', reason: 'unallocated'};
     }
@@ -201,7 +220,9 @@
     let groups = state.groups;
     if (mode === 'different' && state.mode !== 'different') {
       const first = state.groups[0];
-      groups = first ? [{...first, unitIds: [state.eligibleUnitIds[0]]}] : [];
+      groups = first
+        ? [{id: first.id, unitIds: [...state.eligibleUnitIds], values: {...first.values}}]
+        : [];
     }
     return rebuild(state, profile, {mode, groups});
   }
@@ -253,15 +274,17 @@
 
   function setGroupValue(state, profile, groupId, fieldId, value) {
     if (!state.fieldIds.includes(fieldId)) fail(`field ${fieldId} is not allocated personalization`);
+    let found = false;
     const groups = state.groups.map((group) => {
       if (group.id !== groupId) return {id: group.id, unitIds: [...group.unitIds], values: {...group.values}};
+      found = true;
       return {
         id: group.id,
         unitIds: [...group.unitIds],
         values: {...group.values, [fieldId]: value},
       };
     });
-    if (!groups.some((group) => group.id === groupId)) fail(`unknown group ${groupId}`);
+    if (!found) fail(`unknown group ${groupId}`);
     return rebuild(state, profile, {groups});
   }
 
