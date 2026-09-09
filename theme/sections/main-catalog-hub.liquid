@@ -30,8 +30,7 @@
   <section class="jill-catalog jill-page-width">
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
       <div class="jill-catalog__section jill-catalog__featured">
-        <div class="jill-catalog__section-heading">
-          <p class="jill-catalog__eyebrow">{{ section.settings.featured_eyebrow }}</p>
+        <div class="jill-catalog__section-heading jill-catalog__section-heading--centered">
           <h2>{{ section.settings.featured_heading }}</h2>
           {% if section.settings.featured_text != blank %}
             <p>{{ section.settings.featured_text }}</p>
@@ -227,7 +226,6 @@
     {"type": "url", "id": "custom_order_url", "label": "Custom order URL"},
     {"type": "collection", "id": "featured_collection", "label": "Featured products collection"},
     {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
-    {"type": "text", "id": "featured_eyebrow", "label": "Featured eyebrow", "default": "FEATURED RIGHT NOW"},
     {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Shop the Party"},
     {"type": "text", "id": "featured_text", "label": "Featured text", "default": "A rotating edit of JILL favorites and pieces we want you to see first."},
 
