@@ -3,7 +3,9 @@
 
   const STATE_VERSION = 1;
   const MAX_ALLOCATABLE_UNITS = 10000;
+  const MAX_OPTION_COMBINATIONS = 10000;
   const EMPTY = Object.freeze([]);
+  const MISSING = Symbol('missing');
 
   function fail(message) {
     throw new Error(`JILL Product Options: ${message}`);
@@ -130,9 +132,72 @@
       unitIds: Object.freeze([...group.unitIds]),
       values: freezeValues(group.values),
       results: Object.freeze([...group.results]),
+      signature: group.signature,
+      duplicate: group.duplicate,
       complete: group.complete,
       firstInvalidFieldId: group.firstInvalidFieldId,
     });
+  }
+
+  function allocationSignature(allocatedFields, values, results) {
+    const byId = Object.fromEntries(results.map((result) => [result.id, result]));
+    return JSON.stringify(
+      allocatedFields
+        .filter((field) => byId[field.id]?.available && hasOwn(values, field.id))
+        .map((field) => [field.id, values[field.id]]),
+    );
+  }
+
+  function combinationChoices(field) {
+    return [MISSING, ...(field.options || []).map((option) => option.value)];
+  }
+
+  function enumerateAllocationCombinations({fields, allocatedFields, singletonValues, formEngine}) {
+    if (allocatedFields.length === 0) return EMPTY;
+
+    let possibleCount = 1;
+    for (const field of allocatedFields) {
+      possibleCount *= combinationChoices(field).length;
+      if (!Number.isSafeInteger(possibleCount) || possibleCount > MAX_OPTION_COMBINATIONS) {
+        fail(`Product Options allocation may not exceed ${MAX_OPTION_COMBINATIONS} possible option combinations`);
+      }
+    }
+
+    const combinations = new Map();
+    const rawValues = Object.create(null);
+
+    function visit(index) {
+      if (index === allocatedFields.length) {
+        const validation = formEngine.validateFields(fields, {...singletonValues, ...rawValues});
+        const results = scopedResults(allocatedFields, validation);
+        if (!scopeComplete(results)) return;
+
+        const values = canonicalValues(allocatedFields, rawValues, validation);
+        const canonicalValidation = formEngine.validateFields(fields, {...singletonValues, ...values});
+        const canonicalResults = scopedResults(allocatedFields, canonicalValidation);
+        if (!scopeComplete(canonicalResults)) return;
+
+        const signature = allocationSignature(allocatedFields, values, canonicalResults);
+        if (!combinations.has(signature)) {
+          combinations.set(signature, Object.freeze({
+            signature,
+            values: freezeValues(values),
+          }));
+        }
+        return;
+      }
+
+      const field = allocatedFields[index];
+      for (const choice of combinationChoices(field)) {
+        if (choice === MISSING) delete rawValues[field.id];
+        else rawValues[field.id] = choice;
+        visit(index + 1);
+      }
+      delete rawValues[field.id];
+    }
+
+    visit(0);
+    return Object.freeze([...combinations.values()]);
   }
 
   function normalizeGroups({
@@ -148,6 +213,7 @@
     const eligible = new Set(eligibleUnitIds);
     const claimed = new Set();
     const groupIds = new Set();
+    const usedSignatures = new Set();
     const groups = [];
 
     for (const rawGroup of rawGroups) {
@@ -178,14 +244,22 @@
       const canonicalValidation = formEngine.validateFields(fields, {...singletonValues, ...values});
       const results = scopedResults(allocatedFields, canonicalValidation);
       const firstInvalidFieldId = firstBlockingFieldId(results);
-      const complete = unitIds.length > 0 && scopeComplete(results);
+      const fieldsComplete = scopeComplete(results);
+      const signature = unitIds.length > 0 && fieldsComplete
+        ? allocationSignature(allocatedFields, values, results)
+        : null;
+      const duplicate = signature !== null && usedSignatures.has(signature);
+      const complete = unitIds.length > 0 && fieldsComplete && !duplicate;
 
+      if (complete) usedSignatures.add(signature);
       for (const unitId of unitIds) claimed.add(unitId);
       groups.push(freezeGroup({
         id: rawGroup.id,
         unitIds,
         values,
         results,
+        signature,
+        duplicate,
         complete,
         firstInvalidFieldId,
       }));
@@ -220,6 +294,9 @@
           groupId: group.id,
           fieldId: group.firstInvalidFieldId,
         });
+      }
+      if (group.duplicate) {
+        return freezeIssue({scope: 'allocation_group', reason: 'duplicate', groupId: group.id});
       }
     }
 
@@ -329,6 +406,68 @@
     }));
   }
 
+  function usedAllocationSignatures(state, excludedGroupId = null) {
+    return new Set(
+      state.allocation.groups
+        .filter((group) => group.id !== excludedGroupId && group.complete && group.signature !== null)
+        .map((group) => group.signature),
+    );
+  }
+
+  function allocationCombinations(state, profile) {
+    assertState(state);
+    assertResolvedProfile(profile);
+    const {capabilities, formEngine} = dependencies();
+    const {fields, allocatedFields} = partitionFields(profile, capabilities);
+    return enumerateAllocationCombinations({
+      fields,
+      allocatedFields,
+      singletonValues: state.singleton.values,
+      formEngine,
+    });
+  }
+
+  function combinationMatchesGroup(combination, group, targetFieldId, targetValue, allocatedFieldIds) {
+    if (combination.values[targetFieldId] !== targetValue) return false;
+    for (const fieldId of allocatedFieldIds) {
+      if (fieldId === targetFieldId || !hasOwn(group.values, fieldId)) continue;
+      if (hasOwn(combination.values, fieldId) && combination.values[fieldId] !== group.values[fieldId]) return false;
+    }
+    return true;
+  }
+
+  function getAvailableAllocationFieldOptions(state, profile, groupId, fieldId) {
+    assertState(state);
+    const group = findGroup(state, groupId);
+    if (!state.allocation.fieldIds.includes(fieldId)) fail(`field ${fieldId} is not an allocated Product Options field`);
+
+    const {capabilities} = dependencies();
+    const field = capabilities.getField(profile, fieldId);
+    const usedSignatures = usedAllocationSignatures(state, groupId);
+    const combinations = allocationCombinations(state, profile);
+
+    return Object.freeze(
+      (field.options || []).filter((option) => combinations.some((combination) =>
+        !usedSignatures.has(combination.signature)
+        && combinationMatchesGroup(
+          combination,
+          group,
+          fieldId,
+          option.value,
+          state.allocation.fieldIds,
+        ),
+      )),
+    );
+  }
+
+  function canAddAllocationGroup(state, profile) {
+    assertState(state);
+    if (!state.allocation.enabled || !state.allocation.available) return false;
+    if (state.allocation.unallocatedUnitIds.length === 0) return false;
+    const usedSignatures = usedAllocationSignatures(state);
+    return allocationCombinations(state, profile).some((combination) => !usedSignatures.has(combination.signature));
+  }
+
   function reconcile(state, profile, merchandiseQuantity = state?.merchandiseQuantity) {
     assertState(state);
     return buildState({
@@ -358,6 +497,7 @@
     assertState(state);
     if (!state.allocation.enabled || !state.allocation.available) fail('Product Options allocation is not available');
     if (state.allocation.unallocatedUnitIds.length === 0) fail('no unallocated customization units remain');
+    if (!canAddAllocationGroup(state, profile)) fail('no unused Product Options combination remains');
 
     const id = `group_${state.nextGroupNumber}`;
     const groups = rawGroupsFromState(state);
@@ -435,7 +575,7 @@
         ? {...candidate, values: {...candidate.values, [fieldId]: value}}
         : candidate,
     );
-    return buildState({
+    const next = buildState({
       itemId: state.itemId,
       merchandiseQuantity: state.merchandiseQuantity,
       profile,
@@ -443,6 +583,9 @@
       allocationGroups: groups,
       nextGroupNumber: state.nextGroupNumber,
     });
+    const changedGroup = findGroup(next, groupId);
+    if (changedGroup.duplicate) fail(`allocation group ${groupId} duplicates another option combination`);
+    return next;
   }
 
   function removeAllocationGroup(state, profile, groupId) {
@@ -481,9 +624,12 @@
   const api = Object.freeze({
     STATE_VERSION,
     MAX_ALLOCATABLE_UNITS,
+    MAX_OPTION_COMBINATIONS,
     createState: buildState,
     reconcile,
     setSingletonValue,
+    canAddAllocationGroup,
+    getAvailableAllocationFieldOptions,
     addAllocationGroup,
     setAllocationGroupUnits,
     setAllocationGroupCount,
