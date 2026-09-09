@@ -81,6 +81,13 @@
     width: 100%;
   }
 
+  fieldset.jill-field {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
   .jill-field__label {
     display: inline-flex;
     align-items: baseline;
