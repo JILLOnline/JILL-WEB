@@ -14,10 +14,10 @@
     padding: 0.55rem 0.65rem;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
-    border: var(--jill-border-width) solid #efc5dc;
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 24%, var(--jill-color-background));
     border-radius: 999px;
-    background: color-mix(in srgb, #fff 94%, var(--jill-color-accent) 6%);
-    box-shadow: 0 0.55rem 1.75rem color-mix(in srgb, #b86a96 15%, transparent);
+    background: color-mix(in srgb, var(--jill-color-accent) 5%, var(--jill-color-background));
+    box-shadow: 0 0.55rem 1.75rem color-mix(in srgb, var(--jill-color-foreground) 9%, transparent);
     scroll-snap-type: x proximity;
     scrollbar-width: none;
   }
@@ -45,8 +45,8 @@
   }
 
   .jill-category-dock__item:hover {
-    border-color: color-mix(in srgb, #d889b5 55%, transparent);
-    background: color-mix(in srgb, #f5dbea 62%, var(--jill-color-background));
+    border-color: color-mix(in srgb, var(--jill-color-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--jill-color-accent) 9%, var(--jill-color-background));
   }
 
   .jill-category-dock__item:focus-visible {
@@ -55,8 +55,8 @@
   }
 
   .jill-category-dock__item.is-active {
-    border-color: #d889b5;
-    background: color-mix(in srgb, #f2cfe3 72%, var(--jill-color-background));
+    border-color: color-mix(in srgb, var(--jill-color-accent) 56%, var(--jill-color-background));
+    background: color-mix(in srgb, var(--jill-color-accent) 13%, var(--jill-color-background));
   }
 
   .jill-category-dock__media {
@@ -65,7 +65,7 @@
     height: 4.35rem;
     place-items: center;
     overflow: hidden;
-    border: var(--jill-border-width) solid color-mix(in srgb, #d889b5 44%, transparent);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 34%, var(--jill-color-background));
     border-radius: 999px;
     background: var(--jill-color-background);
   }
