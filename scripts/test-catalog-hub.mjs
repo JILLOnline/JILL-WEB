@@ -31,11 +31,14 @@ assert.deepEqual(categoryHandles, [
 assert.equal(template.sections.catalog.settings.featured_collection, 'shop-the-party');
 assert.equal(new URL(template.sections.catalog.settings.custom_order_url, 'https://example.com').searchParams.get('view'), 'custom-order', 'CLEAN handoff must use its isolated template without changing the live page assignment');
 assert.ok(!categoryHandles.includes('shop-the-party'), 'Shop the Party is merchandising, not a catalog category');
-assert.ok(!categoryHandles.includes('jill'), 'internal catch-all collection must not become customer category navigation');
+assert.ok(!categoryHandles.includes('jill'), 'internal catch-all collection must not become a customer catalog group');
 
-assert.match(section, /data-jill-catalog-category-link/, 'collection cards must hand off to the canonical catalog filter');
-assert.match(section, /data-jill-catalog-filter/, 'Catalog Hub must expose accessible category filters');
-assert.match(section, /data-jill-catalog-product-grid/, 'Catalog Hub must own one complete product grid');
+assert.doesNotMatch(section, /data-jill-catalog-category-link/, 'collection discovery cards belong to header navigation, not Catalog body');
+assert.doesNotMatch(section, /data-jill-catalog-filter/, 'Catalog body must not duplicate header collection navigation with filter pills');
+assert.match(section, /data-jill-catalog-group/, 'Catalog Hub must group products by configured Shopify collection');
+assert.match(section, /JillCatalogCollection-/, 'catalog collection groups must expose stable anchors for future header navigation');
+assert.match(section, /category_collection\.products/, 'each catalog collection must render its own available products');
+assert.match(section, /data-jill-catalog-product-grid/, 'each collection group must own a canonical product grid');
 assert.match(section, /render 'product-card'/, 'Catalog Hub must reuse the canonical Product Card');
 assert.match(section, /featured_collection\.products/, 'featured merchandising must come from the configured Shopify collection');
 assert.match(section, /block\.type == 'creation'/, 'real-work gallery must be merchant configurable');
@@ -45,7 +48,9 @@ assert.doesNotMatch(section, /Add to cart|name="id"|\/cart\/add/i, 'Catalog Hub 
 assert.match(productCard, /render 'catalog-product-summary'/, 'catalog product cards must consume the catalog summary adapter');
 assert.match(productCard, /custom_order_url/, 'catalog product cards must support contextual Custom Order handoff');
 assert.match(productCard, /product=/, 'contextual handoff must preserve the selected product handle');
-assert.match(productCard, /card_product\.images/, 'catalog mode must support additional product imagery');
+assert.match(productCard, /truncatewords: 34/, 'catalog cards must provide enough product context to invite exploration');
+assert.match(productCard, /heading_tag/, 'canonical Product Card must accept the semantic heading level from its composition owner');
+assert.doesNotMatch(productCard, /card_product\.images/, 'catalog cards must keep one strong thumbnail instead of a secondary gallery');
 
 assert.match(summary, /jill_product_capabilities/, 'catalog summary must consume the canonical capability metafield');
 assert.match(summary, /jill_product_page_capability_override/, 'catalog summary must respect listing-surface projection');
@@ -54,11 +59,11 @@ assert.match(summary, /product_options/, 'catalog summary may summarize Product 
 assert.match(summary, /personalizationAllocation/, 'catalog summary may summarize personalization capability data');
 assert.doesNotMatch(summary, /Snack Bags|Pinata|Piñata|Hoodie|T-Shirt|Tote/i, 'catalog summary must remain product-family agnostic');
 
-assert.match(catalogRuntime, /data-jill-catalog-filter/, 'catalog runtime must own category filtering');
-assert.match(catalogRuntime, /data-jill-catalog-category-link/, 'collection discovery cards must use the same filter owner');
-assert.match(catalogRuntime, /data-jill-catalog-product/, 'catalog runtime filters canonical rendered product cards');
+assert.match(catalogRuntime, /data-jill-catalog-group/, 'catalog runtime must search within canonical collection groups');
+assert.match(catalogRuntime, /data-jill-catalog-product/, 'catalog runtime must filter canonical rendered product cards');
+assert.doesNotMatch(catalogRuntime, /data-jill-catalog-filter|data-jill-catalog-category-link/, 'catalog runtime must not duplicate future header collection navigation');
 assert.doesNotMatch(catalogRuntime, /Snack|Pinata|Piñata|Apparel|Hoodie|Tote/i, 'catalog runtime must remain product-family agnostic');
-assert.doesNotMatch(catalogRuntime, /MutationObserver|setTimeout|setInterval/, 'catalog filtering must be deterministic and event driven');
+assert.doesNotMatch(catalogRuntime, /MutationObserver|setTimeout|setInterval/, 'catalog search must be deterministic and event driven');
 assert.match(layout, /request\.page_type == 'collection' and collection\.handle == 'all'/, 'catalog JavaScript must load only on the Catalog route');
 assert.match(layout, /jill-catalog\.js/, 'Catalog route must load the canonical catalog runtime');
 
@@ -106,56 +111,63 @@ const makeControl = (dataset = {}) => ({
   setAttribute(name, value) { this.attributes[name] = value; },
   fire(name, event = {}) { this.handlers[name]?.forEach((handler) => handler(event)); },
 });
-const cards = [
-  {dataset: {collections: '|first|', search: 'Alpha'}, hidden: false},
-  {dataset: {collections: '|second|', search: 'Beta'}, hidden: false},
-];
-const featured = {dataset: {collections: '|first|', search: 'Alpha'}, hidden: false};
-const filters = ['all', 'first', 'second'].map((value) => makeControl({jillCatalogFilter: value}));
-const category = makeControl({jillCatalogCategoryLink: 'second'});
+const alpha = {dataset: {search: 'Alpha party piece'}, hidden: false};
+const beta = {dataset: {search: 'Beta celebration piece'}, hidden: false};
+const firstGroupCount = {};
+const secondGroupCount = {};
+const firstGroup = {
+  hidden: false,
+  querySelectorAll(selector) { return selector === '[data-jill-catalog-product]' ? [alpha] : []; },
+  querySelector(selector) { return selector === '[data-jill-catalog-group-count]' ? firstGroupCount : null; },
+};
+const secondGroup = {
+  hidden: false,
+  querySelectorAll(selector) { return selector === '[data-jill-catalog-product]' ? [beta] : []; },
+  querySelector(selector) { return selector === '[data-jill-catalog-group-count]' ? secondGroupCount : null; },
+};
 const search = makeControl();
 const count = {};
 const empty = {};
-const destination = {focus() { this.focused = true; }, scrollIntoView() { this.scrolled = true; }};
 const catalogRoot = {
   dataset: {resultSingular: 'product', resultPlural: 'products'},
   querySelectorAll(selector) {
-    if (selector === '[data-jill-catalog-product]') return [featured, ...cards];
-    if (selector === '[data-jill-catalog-filter]') return filters;
-    if (selector === '[data-jill-catalog-category-link]') return [category];
-    return [];
+    return selector === '[data-jill-catalog-group]' ? [firstGroup, secondGroup] : [];
   },
   querySelector(selector) {
     return {
-      '[data-jill-catalog-product-grid]': {querySelectorAll: () => cards},
       '[id^="JillCatalogSearch-"]': search,
       '[data-jill-catalog-results-count]': count,
       '[data-jill-catalog-empty]': empty,
-      '[data-jill-catalog-products-section]': destination,
     }[selector];
   },
 };
 const document = makeControl();
 document.querySelectorAll = () => [catalogRoot];
 vm.runInNewContext(catalogRuntime, {document});
-assert.equal(count.textContent, '2 products', 'featured duplicates never inflate catalog counts');
-filters[1].fire('click');
-assert.deepEqual(cards.map((card) => card.hidden), [false, true]);
-assert.equal(count.textContent, '1 product');
+assert.equal(count.textContent, '2 products');
+assert.equal(firstGroupCount.textContent, '1 product');
+assert.equal(secondGroupCount.textContent, '1 product');
 search.value = 'Beta';
 search.fire('input');
-assert.ok(cards.every((card) => card.hidden));
+assert.equal(alpha.hidden, true);
+assert.equal(beta.hidden, false);
+assert.equal(firstGroup.hidden, true);
+assert.equal(secondGroup.hidden, false);
+assert.equal(count.textContent, '1 product');
+assert.equal(empty.hidden, true);
+search.value = 'no match';
+search.fire('input');
+assert.equal(firstGroup.hidden, true);
+assert.equal(secondGroup.hidden, true);
+assert.equal(count.textContent, '0 products');
 assert.equal(empty.hidden, false);
-assert.equal(featured.hidden, false, 'search and categories must not hide featured merchandising');
 search.value = '';
-category.fire('click', {preventDefault() {}});
-assert.deepEqual(cards.map((card) => card.hidden), [true, false]);
-assert.equal(filters[2].attributes['aria-pressed'], 'true');
-assert.equal(destination.focused, true);
-assert.equal(destination.scrolled, true);
-filters[0].fire('click');
-assert.ok(cards.every((card) => !card.hidden));
+search.fire('input');
+assert.equal(alpha.hidden, false);
+assert.equal(beta.hidden, false);
+assert.equal(firstGroup.hidden, false);
+assert.equal(secondGroup.hidden, false);
 document.fire('shopify:section:load', {target: document});
-assert.equal(filters[0].handlers.click.length, 1, 'section reinitialization must not duplicate listeners');
+assert.equal(search.handlers.input.length, 1, 'section reinitialization must not duplicate listeners');
 
 console.log('JILL Catalog Hub tests passed.');

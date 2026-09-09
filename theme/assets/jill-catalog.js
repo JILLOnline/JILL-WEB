@@ -9,67 +9,40 @@
     if (!root || root.dataset.jillCatalogInitialized === 'true') return;
     root.dataset.jillCatalogInitialized = 'true';
 
-    const grid = root.querySelector('[data-jill-catalog-product-grid]');
-    const cards = Array.from(grid?.querySelectorAll('[data-jill-catalog-product]') || []);
-    const filters = Array.from(root.querySelectorAll('[data-jill-catalog-filter]'));
-    const categoryLinks = Array.from(root.querySelectorAll('[data-jill-catalog-category-link]'));
+    const groups = Array.from(root.querySelectorAll('[data-jill-catalog-group]'));
     const search = root.querySelector('[id^="JillCatalogSearch-"]');
     const count = root.querySelector('[data-jill-catalog-results-count]');
     const empty = root.querySelector('[data-jill-catalog-empty]');
-    const productsSection = root.querySelector('[data-jill-catalog-products-section]');
-    let activeFilter = 'all';
-
-    function collectionMatch(card) {
-      if (activeFilter === 'all') return true;
-      const handles = String(card.dataset.collections || '')
-        .split('|')
-        .filter(Boolean);
-      return handles.includes(activeFilter);
-    }
-
-    function searchMatch(card) {
-      const query = normalize(search?.value);
-      if (!query) return true;
-      return normalize(card.dataset.search).includes(query);
-    }
 
     function render() {
-      let visible = 0;
-      for (const card of cards) {
-        const matches = collectionMatch(card) && searchMatch(card);
-        card.hidden = !matches;
-        if (matches) visible += 1;
-      }
+      const query = normalize(search?.value);
+      let visibleTotal = 0;
 
-      for (const filter of filters) {
-        const pressed = filter.dataset.jillCatalogFilter === activeFilter;
-        filter.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      for (const group of groups) {
+        const cards = Array.from(group.querySelectorAll('[data-jill-catalog-product]'));
+        const groupCount = group.querySelector('[data-jill-catalog-group-count]');
+        let visibleInGroup = 0;
+
+        for (const card of cards) {
+          const matches = !query || normalize(card.dataset.search).includes(query);
+          card.hidden = !matches;
+          if (matches) visibleInGroup += 1;
+        }
+
+        group.hidden = visibleInGroup === 0;
+        visibleTotal += visibleInGroup;
+
+        if (groupCount) {
+          const noun = visibleInGroup === 1 ? root.dataset.resultSingular : root.dataset.resultPlural;
+          groupCount.textContent = `${visibleInGroup} ${noun}`;
+        }
       }
 
       if (count) {
-        const noun = visible === 1 ? root.dataset.resultSingular : root.dataset.resultPlural;
-        count.textContent = `${visible} ${noun}`;
+        const noun = visibleTotal === 1 ? root.dataset.resultSingular : root.dataset.resultPlural;
+        count.textContent = `${visibleTotal} ${noun}`;
       }
-      if (empty) empty.hidden = visible !== 0;
-    }
-
-    for (const filter of filters) {
-      filter.addEventListener('click', () => {
-        activeFilter = filter.dataset.jillCatalogFilter || 'all';
-        render();
-      });
-    }
-
-    for (const link of categoryLinks) {
-      link.addEventListener('click', (event) => {
-        const handle = link.dataset.jillCatalogCategoryLink;
-        if (!handle) return;
-        event.preventDefault();
-        activeFilter = handle;
-        render();
-        productsSection?.focus({preventScroll: true});
-        productsSection?.scrollIntoView({block: 'start'});
-      });
+      if (empty) empty.hidden = visibleTotal !== 0;
     }
 
     search?.addEventListener('input', render);
