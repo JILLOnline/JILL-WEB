@@ -536,4 +536,106 @@
     gap: calc(var(--jill-space-unit) * 4);
     padding-block: calc(var(--jill-space-unit) * 3);
   }
+
+  .jill-product-customization.jill-card {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border-color: color-mix(in srgb, var(--jill-color-accent) 18%, var(--jill-color-foreground) 8%);
+    background: color-mix(in srgb, var(--jill-color-accent) 2%, var(--jill-color-background));
+    box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--jill-color-foreground) 7%, transparent);
+  }
+
+  .jill-product-customization.jill-card .jill-product-customization__title {
+    font-size: clamp(1.35rem, 1.2rem + 0.55vw, 1.75rem);
+    line-height: 1.15;
+  }
+
+  .jill-product-customization.jill-card .jill-product-customization__intro {
+    gap: calc(var(--jill-space-unit) * 1.5);
+  }
+
+  .jill-product-customization__group[data-jill-capability-group] + .jill-product-customization__group[data-jill-capability-group] {
+    padding-block-start: calc(var(--jill-space-unit) * 4);
+    border-block-start: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 11%, transparent);
+  }
+
+  .jill-product-customization__group[data-jill-capability-group] > .jill-product-customization__group-title {
+    color: var(--jill-color-accent);
+    font-size: 0.8125rem;
+    font-weight: 750;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+  }
+
+  [data-jill-product-options-allocation] {
+    display: grid;
+    gap: calc(var(--jill-space-unit) * 2.5);
+  }
+
+  [data-jill-product-options-allocation] > .jill-product-customization__group-title {
+    font-size: 1.125rem;
+    line-height: 1.25;
+  }
+
+  [data-jill-product-options-groups].jill-card {
+    display: grid;
+    gap: calc(var(--jill-space-unit) * 3);
+    border-color: color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
+    background: color-mix(in srgb, var(--jill-color-accent) 5%, var(--jill-color-background));
+    box-shadow: 0 0.4rem 1.25rem color-mix(in srgb, var(--jill-color-foreground) 5%, transparent);
+  }
+
+  [data-jill-product-options-groups] > .jill-product-customization__group + .jill-product-customization__group {
+    padding-block-start: calc(var(--jill-space-unit) * 3);
+    border-block-start: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 18%, transparent);
+  }
+
+  [data-jill-product-options-groups] > .jill-product-customization__group > .jill-product-customization__group-title {
+    font-size: 1.05rem;
+    font-weight: 750;
+  }
+
+  [data-jill-product-options-groups] .jill-choice-group {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  }
+
+  [data-jill-product-options-groups] .jill-choice {
+    min-height: var(--jill-button-height);
+    align-items: center;
+    padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 16%, transparent);
+    border-radius: var(--jill-field-radius);
+    background: var(--jill-color-background);
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  }
+
+  [data-jill-product-options-groups] .jill-choice:hover {
+    border-color: color-mix(in srgb, var(--jill-color-accent) 50%, transparent);
+  }
+
+  [data-jill-product-options-groups] .jill-choice:has(.jill-choice__control:checked) {
+    border-color: var(--jill-color-accent);
+    background: color-mix(in srgb, var(--jill-color-accent) 10%, var(--jill-color-background));
+    transform: translateY(-1px);
+  }
+
+  [data-jill-product-options-summary].jill-pill {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: start;
+    border-color: color-mix(in srgb, var(--jill-color-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--jill-color-accent) 8%, var(--jill-color-background));
+    color: var(--jill-color-foreground);
+    font-weight: 650;
+  }
+
+  [data-jill-product-options-add] {
+    justify-self: start;
+    border-color: color-mix(in srgb, var(--jill-color-accent) 55%, transparent);
+    background: color-mix(in srgb, var(--jill-color-accent) 6%, var(--jill-color-background));
+    color: var(--jill-color-accent);
+  }
+
+  [data-jill-product-options-groups] .jill-button[data-variant='secondary'] {
+    justify-self: start;
+  }
 }
