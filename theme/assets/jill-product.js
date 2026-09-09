@@ -95,8 +95,11 @@
     const allocationAddButton = allocationMount?.querySelector('[data-jill-product-options-add]') || null;
     const allocationQuantityTemplate = allocationMount?.querySelector('[data-jill-allocation-quantity-template]') || null;
     const productOptionsPayload = form.querySelector('[data-jill-product-options-payload]');
+    const personalizationMount = form.querySelector('[data-jill-personalization-allocation]');
+    const personalizationPayload = form.querySelector('[data-jill-personalization-payload]');
     let profile = null;
     let allocatedOptionFieldIds = new Set();
+    let allocatedPersonalizationFieldIds = new Set();
     let productOptionsState = null;
     let attemptedSubmit = false;
 
@@ -139,6 +142,9 @@
         allocatedOptionFieldIds = new Set(
           globalThis.JILLProductCapabilities.getProductOptionsAllocationFieldIds(profile),
         );
+        allocatedPersonalizationFieldIds = new Set(
+          globalThis.JILLProductCapabilities.getPersonalizationAllocationFieldIds(profile),
+        );
       } catch (error) {
         failConfiguration();
         return;
@@ -148,7 +154,7 @@
     const wrappers = new Map();
     if (profile) {
       for (const field of profile.fields) {
-        if (allocatedOptionFieldIds.has(field.id)) continue;
+        if (allocatedOptionFieldIds.has(field.id) || allocatedPersonalizationFieldIds.has(field.id)) continue;
         const wrapper = form.querySelector(`[data-jill-capability-field="${field.id}"]`);
         if (!wrapper) {
           failConfiguration();
@@ -164,6 +170,13 @@
       if (
         allocatedOptionFieldIds.size > 0
         && (!allocationMount || !allocationGroupsNode || !allocationAddButton || !allocationQuantityTemplate || !globalThis.JILLQuantity)
+      ) {
+        failConfiguration();
+        return;
+      }
+      if (
+        allocatedPersonalizationFieldIds.size > 0
+        && (!personalizationMount || !personalizationPayload || !globalThis.JILLPersonalization)
       ) {
         failConfiguration();
         return;
@@ -189,6 +202,11 @@
 
     function quantityContainer() {
       return quantityControl?.closest('.jill-quantity') || null;
+    }
+
+    function personalizationComplete() {
+      if (!allocatedPersonalizationFieldIds.size) return true;
+      return personalizationMount?.dataset.jillPersonalizationComplete === 'true';
     }
 
     function allocationGroupsForRebuild() {
@@ -528,7 +546,10 @@
     function firstOtherBlockingResult(validation) {
       return validation.results.find((result) => {
         const field = globalThis.JILLProductCapabilities.getField(profile, result.id);
-        return field.group !== 'product_options' && result.available && !result.valid;
+        return field.group !== 'product_options'
+          && !allocatedPersonalizationFieldIds.has(result.id)
+          && result.available
+          && !result.valid;
       }) || null;
     }
 
@@ -544,6 +565,7 @@
       for (const node of allocationGroupsNode?.querySelectorAll('[data-jill-product-options-field], [data-jill-product-options-count-field]') || []) {
         clearFieldError(node);
       }
+      if (personalizationMount) clearFieldError(personalizationMount);
       const quantity = quantityContainer();
       if (quantity) clearFieldError(quantity);
     }
@@ -583,6 +605,14 @@
         const allocationTitle = allocationMount?.querySelector('.jill-product-customization__group-title')?.textContent;
         setStatus(`${prefix} ${field?.label || allocationTitle || 'Product options'}`);
         return firstFocusableControl(target) || (target?.focus ? target : null);
+      }
+
+      if (!personalizationComplete()) {
+        if (personalizationMount) markFieldError(personalizationMount);
+        const title = personalizationMount?.closest('[data-jill-capability-group="personalization"]')
+          ?.querySelector('.jill-product-customization__group-title')?.textContent;
+        setStatus(`${prefix} ${title || 'Personalization'}`);
+        return firstFocusableControl(personalizationMount);
       }
 
       if (otherBlocking) {
@@ -627,6 +657,7 @@
       const otherBlocking = firstOtherBlockingResult(synced.validation);
       const valid = merchandiseQuantity !== null
         && Boolean(productOptionsState?.complete)
+        && personalizationComplete()
         && !otherBlocking;
 
       let focusControl = null;
@@ -652,6 +683,10 @@
 
       form.addEventListener('change', (event) => {
         if (event.target !== quantityControl && !event.target.closest('[data-jill-capability-field]')) return;
+        evaluateCustomization(attemptedSubmit);
+      });
+
+      root.addEventListener('jill:personalization-change', () => {
         evaluateCustomization(attemptedSubmit);
       });
 
