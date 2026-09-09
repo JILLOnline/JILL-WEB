@@ -1,3 +1,4 @@
+// Catalog cards intentionally tease; product pages own product detail and configuration context.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
