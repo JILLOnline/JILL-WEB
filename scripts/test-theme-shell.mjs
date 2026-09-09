@@ -15,6 +15,15 @@ function includesAll(source, owner, markers) {
   }
 }
 
+function assertSingleSectionTemplate(templatePath, expectedType) {
+  const template = JSON.parse(read(templatePath));
+  const sections = Object.values(template.sections || {});
+  if (sections.length !== 1 || sections[0].type !== expectedType) {
+    fail(`${templatePath} must have one canonical ${expectedType} owner`);
+  }
+  return template;
+}
+
 const header = read('theme/sections/header.liquid');
 includesAll(header, 'header', [
   'data-jill-header-drawer',
@@ -61,13 +70,19 @@ for (const forbidden of ['!important', '.jill-category-dock__item:hover', 'trans
 
 const headerGroup = read('theme/sections/header-group.json');
 for (const handle of ['pinatas', 'catalog', 'kid-activities', 'party-supplies', 'apparel-gifts-dtf-sublimation']) {
-  if (!headerGroup.includes(`\"${handle}\"`)) fail(`header group is missing collection dock handle ${handle}`);
+  if (!headerGroup.includes(`"${handle}"`)) fail(`header group is missing collection dock handle ${handle}`);
 }
 
 const themeLayout = read('theme/layout/theme.liquid');
-if (!themeLayout.includes("'jill-category-dock.css' | asset_url | stylesheet_tag")) {
-  fail('theme layout must load the canonical collection dock stylesheet');
-}
+includesAll(themeLayout, 'theme layout', [
+  "'jill-category-dock.css' | asset_url | stylesheet_tag",
+  "template.suffix == 'custom-order'",
+  "template.suffix == 'our-story'",
+  "template.suffix == 'contact'",
+  "'jill-forms.css' | asset_url | stylesheet_tag",
+  "'jill-custom-order.js' | asset_url",
+  "'jill-contact.js' | asset_url",
+]);
 
 const headerJs = read('theme/assets/jill-header.js');
 includesAll(headerJs, 'header runtime', [
@@ -88,6 +103,42 @@ includesAll(storefrontCss, 'storefront CSS', [
   '.jill-site-header__localization',
   '.jill-site-header--sticky',
 ]);
+
+const formsCss = read('theme/assets/jill-forms.css');
+includesAll(formsCss, 'guided form CSS', [
+  '.jill-custom-order',
+  '.jill-contact',
+  '.jill-custom-order__catalog',
+  '.jill-contact__step-index',
+  '.jill-contact__choice-group',
+  '@media (max-width: 749px)',
+]);
+
+const contactSection = read('theme/sections/main-contact.liquid');
+includesAll(contactSection, 'contact form', [
+  "form 'contact'",
+  'data-jill-contact',
+  'data-contact-reason',
+  'data-contact-message',
+  'data-contact-phone',
+  'contact[Reviewed details]',
+  '/pages/quote?view=custom-order',
+]);
+for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver']) {
+  if (contactSection.includes(forbidden)) fail(`contact form must not contain ${forbidden}`);
+}
+
+const contactJs = read('theme/assets/jill-contact.js');
+includesAll(contactJs, 'contact runtime', [
+  'setRegion',
+  'syncPhoneRequirement',
+  'syncEmailValidity',
+  'syncReason',
+  "document.addEventListener('shopify:section:load'",
+]);
+for (const forbidden of ['MutationObserver', 'setTimeout', '.style', 'insertAdjacent', 'innerHTML']) {
+  if (contactJs.includes(forbidden)) fail(`contact runtime must not contain ${forbidden}`);
+}
 
 const settingsSchema = read('theme/config/settings_schema.json');
 includesAll(settingsSchema, 'global brand settings', [
@@ -118,13 +169,25 @@ if (homeTypes.length < 3 || homeTypes.some((type) => type !== 'rich-text')) {
 
 for (const [templatePath, expectedType] of [
   ['theme/templates/page.json', 'main-page'],
+  ['theme/templates/page.about-us.json', 'main-page'],
+  ['theme/templates/page.contact.json', 'main-contact'],
+  ['theme/templates/page.custom-order.json', 'main-custom-order'],
+  ['theme/templates/page.our-story.json', 'main-custom-order'],
   ['theme/templates/404.json', 'main-404'],
 ]) {
-  const template = JSON.parse(read(templatePath));
-  const sections = Object.values(template.sections || {});
-  if (sections.length !== 1 || sections[0].type !== expectedType) {
-    fail(`${templatePath} must have one canonical ${expectedType} owner`);
-  }
+  assertSingleSectionTemplate(templatePath, expectedType);
+}
+
+const welcome = assertSingleSectionTemplate('theme/templates/page.welcome.json', 'rich-text');
+const welcomeSettings = Object.values(welcome.sections)[0].settings || {};
+if (!String(welcomeSettings.heading || '').includes('Welcome to JILL')) {
+  fail('welcome page must ship with JILL welcome content');
+}
+if (!String(welcomeSettings.body || '').includes('every party deserves a little extra sparkle')) {
+  fail('welcome page must ship with substantive welcome copy');
+}
+if (welcomeSettings.button_link !== '/collections/all') {
+  fail('welcome page must link into the catalog');
 }
 
 console.log('Theme shell contract passed.');

@@ -1,0 +1,273 @@
+{% liquid
+  assign contact_name = ''
+  assign contact_email = ''
+  assign contact_phone = ''
+  assign custom_order_url = section.settings.custom_order_url | default: '/pages/quote?view=custom-order'
+
+  if customer
+    assign contact_name = customer.name
+    assign contact_email = customer.email
+    assign contact_phone = customer.phone
+    if contact_phone == blank and customer.default_address
+      assign contact_phone = customer.default_address.phone
+    endif
+  endif
+%}
+
+<section class="jill-contact jill-page-width" data-jill-contact>
+  <header class="jill-contact__header">
+    <h1 class="jill-contact__title">{{ section.settings.heading | escape }}</h1>
+    {% if section.settings.intro != blank %}
+      <div class="jill-contact__intro rte">{{ section.settings.intro }}</div>
+    {% endif %}
+  </header>
+
+  {% form 'contact', id: 'JillContactForm', class: 'jill-contact__form' %}
+    <input type="hidden" name="contact[Form]" value="Contact Us">
+
+    {% if form.posted_successfully? %}
+      <div class="jill-contact__notice" role="status" tabindex="-1">
+        <strong>Message received!</strong>
+        <p>Thanks! JILL will review the details and follow up with next steps.</p>
+      </div>
+    {% elsif form.errors %}
+      <div class="jill-contact__notice" role="alert">
+        {{ form.errors | default_errors }}
+      </div>
+    {% endif %}
+
+    <section class="jill-contact__card" data-contact-stage="about">
+      <div class="jill-contact__step">
+        <span class="jill-contact__step-index" aria-hidden="true">1</span>
+        <div>
+          <h2>About you</h2>
+          <p>Who are we helping and how should we reach you?</p>
+        </div>
+      </div>
+
+      <div class="jill-contact__grid">
+        {% render 'ui-field',
+          id: 'JillContactName',
+          name: 'contact[name]',
+          label: 'Name',
+          type: 'text',
+          value: contact_name,
+          autocomplete: 'name',
+          required: true
+        %}
+        {% render 'ui-field',
+          id: 'JillContactEmail',
+          name: 'contact[email]',
+          label: 'Email',
+          type: 'email',
+          value: contact_email,
+          placeholder: 'name@example.com',
+          autocomplete: 'email',
+          required: true
+        %}
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillContactPhone">
+            Phone
+            <span data-contact-phone-optional>optional</span>
+            <span class="jill-field__required" data-contact-phone-required hidden aria-hidden="true">*</span>
+          </label>
+          <input
+            class="jill-field__control"
+            id="JillContactPhone"
+            name="contact[Phone]"
+            type="tel"
+            value="{{ contact_phone | escape }}"
+            autocomplete="tel"
+            data-contact-phone
+          >
+        </div>
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillContactPreferred">
+            Preferred contact
+            <span class="jill-field__required" aria-hidden="true">*</span>
+          </label>
+          <select class="jill-field__control" id="JillContactPreferred" name="contact[Preferred contact]" required data-contact-preferred>
+            <option value="" selected disabled>Choose one</option>
+            <option value="Email">Email</option>
+            <option value="Phone">Text / phone</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="jill-contact__card" data-contact-stage="reason">
+      <div class="jill-contact__step">
+        <span class="jill-contact__step-index" aria-hidden="true">2</span>
+        <div>
+          <h2>What can we help with?</h2>
+          <p>Let’s get you to the right place — pick what you need help with.</p>
+        </div>
+      </div>
+
+      <div class="jill-field">
+        <label class="jill-field__label" for="JillContactReason">
+          Reason
+          <span class="jill-field__required" aria-hidden="true">*</span>
+        </label>
+        <select class="jill-field__control" id="JillContactReason" name="contact[Reason]" required data-contact-reason>
+          <option value="" selected disabled>Choose one</option>
+          <option value="existing" data-message-title="Tell us about your order" data-message-help="Tell us what happened with your order so we can help.">Existing order</option>
+          <option value="shipping" data-message-title="Tell us about the shipping issue" data-message-help="Let us know what’s happening with your shipment or delivery.">Shipping / delivery issue</option>
+          <option value="product" data-message-title="Tell us what you’d like to know" data-message-help="Share your product question and the details we should know.">Product question</option>
+          <option value="custom" data-message-title="Tell us what you’re planning" data-message-help="Give us a quick idea of the custom project you have in mind.">Custom order / quote</option>
+          <option value="pickup" data-message-title="Tell us about your pickup" data-message-help="Let us know what you need help with for local pickup.">Local pickup</option>
+          <option value="business" data-message-title="Tell us about your business inquiry" data-message-help="Share what you’re looking for and we’ll point you in the right direction.">Wholesale / business inquiry</option>
+          <option value="website" data-message-title="Tell us what went wrong" data-message-help="Tell us where it happened and what you expected to see.">Website issue</option>
+          <option value="other" data-message-title="Tell us how we can help" data-message-help="Give us the details and we’ll take it from there.">Other</option>
+        </select>
+      </div>
+
+      <div class="jill-contact__conditional" data-contact-group="order" hidden aria-hidden="true">
+        {% render 'ui-field',
+          id: 'JillContactOrderNumber',
+          name: 'contact[Order number]',
+          label: 'Order number',
+          type: 'text',
+          required: true,
+          disabled: true
+        %}
+      </div>
+
+      <div class="jill-contact__conditional" data-contact-group="product" hidden aria-hidden="true">
+        {% render 'ui-field',
+          id: 'JillContactProduct',
+          name: 'contact[Product]',
+          label: 'Product name',
+          type: 'text',
+          disabled: true
+        %}
+      </div>
+
+      <div class="jill-contact__conditional jill-contact__callout" data-contact-group="custom" hidden aria-hidden="true">
+        <div>
+          <strong>Planning something custom?</strong>
+          <p>Our guided Custom Order form keeps the product, personalization, date, and fulfillment details together.</p>
+        </div>
+        {% render 'ui-button', label: 'Open Custom Order Form', url: custom_order_url, variant: 'secondary' %}
+      </div>
+
+      <div class="jill-contact__conditional jill-contact__grid" data-contact-group="business" hidden aria-hidden="true">
+        {% render 'ui-field',
+          id: 'JillContactBusiness',
+          name: 'contact[Business or organization]',
+          label: 'Business / organization',
+          type: 'text',
+          disabled: true
+        %}
+        {% render 'ui-field',
+          id: 'JillContactBusinessLink',
+          name: 'contact[Business link]',
+          label: 'Website / social',
+          type: 'text',
+          disabled: true
+        %}
+      </div>
+
+      <div class="jill-contact__conditional jill-contact__grid" data-contact-group="website" hidden aria-hidden="true">
+        {% render 'ui-field',
+          id: 'JillContactSiteArea',
+          name: 'contact[Page or area]',
+          label: 'Page or area of the site',
+          type: 'text',
+          disabled: true
+        %}
+        {% render 'ui-field',
+          id: 'JillContactDevice',
+          name: 'contact[Device or browser]',
+          label: 'Device / browser',
+          type: 'text',
+          disabled: true
+        %}
+      </div>
+    </section>
+
+    <section class="jill-contact__card" data-contact-message hidden aria-hidden="true">
+      <div class="jill-contact__step">
+        <span class="jill-contact__step-index" aria-hidden="true">3</span>
+        <div>
+          <h2 data-contact-message-title>Tell us what happened</h2>
+          <p data-contact-message-help>A little context helps us answer faster.</p>
+        </div>
+      </div>
+
+      {% render 'ui-textarea',
+        id: 'JillContactMessage',
+        name: 'contact[body]',
+        label: 'Message',
+        rows: 7,
+        required: true,
+        disabled: true
+      %}
+
+      <fieldset class="jill-field">
+        <legend class="jill-field__label">Do you have photos or screenshots that would help?</legend>
+        <div class="jill-contact__choice-group">
+          {% render 'ui-choice',
+            id: 'JillContactImagesYes',
+            name: 'contact[Has reference images]',
+            type: 'radio',
+            value: 'Yes',
+            label: 'Yes',
+            disabled: true
+          %}
+          {% render 'ui-choice',
+            id: 'JillContactImagesNo',
+            name: 'contact[Has reference images]',
+            type: 'radio',
+            value: 'No',
+            label: 'No',
+            disabled: true
+          %}
+        </div>
+      </fieldset>
+
+      <p class="jill-contact__security-note">For security, this form does not accept unscanned email attachments. If images are needed, JILL will request them through the secure image-upload step.</p>
+    </section>
+
+    <div class="jill-contact__confirmation">
+      {% render 'ui-choice',
+        id: 'JillContactReviewed',
+        name: 'contact[Reviewed details]',
+        type: 'checkbox',
+        value: 'Yes',
+        label: 'I reviewed the information above and it is accurate.',
+        required: true
+      %}
+    </div>
+
+    <div class="jill-contact__actions">
+      {% render 'ui-button', type: 'submit', label: 'Send message' %}
+      <small>Protected by Shopify’s built-in spam detection.</small>
+    </div>
+  {% endform %}
+</section>
+
+{% schema %}
+{
+  "name": "Contact JILL",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Contact JILL"
+    },
+    {
+      "type": "richtext",
+      "id": "intro",
+      "label": "Intro",
+      "default": "<p>Need a hand? Tell us what you need help with and we’ll take it from there.</p>"
+    },
+    {
+      "type": "url",
+      "id": "custom_order_url",
+      "label": "Custom order page"
+    }
+  ]
+}
+{% endschema %}

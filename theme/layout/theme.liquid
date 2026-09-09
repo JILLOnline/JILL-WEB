@@ -13,6 +13,22 @@
     {{ 'jill-ui.css' | asset_url | stylesheet_tag }}
     {{ 'jill-storefront.css' | asset_url | stylesheet_tag }}
     {{ 'jill-category-dock.css' | asset_url | stylesheet_tag }}
+
+    {% liquid
+      assign is_custom_order_template = false
+      if template.suffix == 'custom-order' or template.suffix == 'our-story'
+        assign is_custom_order_template = true
+      endif
+
+      assign is_contact_template = false
+      if template.suffix == 'contact'
+        assign is_contact_template = true
+      endif
+    %}
+
+    {% if is_custom_order_template or is_contact_template %}
+      {{ 'jill-forms.css' | asset_url | stylesheet_tag }}
+    {% endif %}
   </head>
 
   <body>
@@ -28,7 +44,7 @@
 
     <script src="{{ 'jill-header.js' | asset_url }}" defer></script>
     <script src="{{ 'jill-quantity.js' | asset_url }}" defer></script>
-    {% if request.page_type == 'product' or template.suffix == 'custom-order' %}
+    {% if request.page_type == 'product' or is_custom_order_template %}
       <script src="{{ 'jill-product-capabilities.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-form-engine.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-product-options.js' | asset_url }}" defer></script>
@@ -44,9 +60,12 @@
       <script src="{{ 'jill-commerce-cart.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-product-commerce.js' | asset_url }}" defer></script>
     {% endif %}
-    {% if template.suffix == 'custom-order' %}
+    {% if is_custom_order_template %}
       <script src="{{ 'jill-variant-allocation.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-custom-order.js' | asset_url }}" defer></script>
+    {% endif %}
+    {% if is_contact_template %}
+      <script src="{{ 'jill-contact.js' | asset_url }}" defer></script>
     {% endif %}
     {% if request.page_type == 'collection' and collection.handle == 'all' %}
       <script src="{{ 'jill-catalog.js' | asset_url }}" defer></script>
