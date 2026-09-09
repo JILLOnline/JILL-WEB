@@ -63,8 +63,10 @@ assert.equal(personalization.toPayload(state).allocations[0].unitIds.length, 12)
 
 state = personalization.setMode(state, profile, 'different');
 assert.equal(state.mode, 'different');
-assert.equal(state.groups[0].unitIds.length, 1);
-assert.equal(state.unallocatedUnitIds.length, 11);
+assert.equal(state.groups[0].unitIds.length, 12);
+assert.equal(state.unallocatedUnitIds.length, 0);
+assert.equal(state.complete, false, 'different mode needs at least two personalization groups');
+assert.equal(state.firstIssue.reason, 'different_requires_multiple');
 
 state = personalization.setGroupCount(state, profile, 'group_1', 6);
 assert.equal(state.groups[0].unitIds.length, 6);
@@ -124,6 +126,72 @@ const oneUnitProfile = capabilities.resolve({
 const single = personalization.createState({itemId: 'one', merchandiseQuantity: 1, profile: oneUnitProfile});
 assert.deepEqual(single.allowedModes, ['same']);
 assert.equal(single.groups[0].unitIds.length, 1);
+
+const differentOnlyProfile = capabilities.resolve({
+  version: 1,
+  id: 'different_only',
+  fields: [{
+    id: 'name',
+    kind: 'text',
+    group: 'personalization',
+    label: 'Name',
+    required: true,
+  }],
+  features: {
+    personalizationAllocation: {
+      enabled: true,
+      allowedModes: ['different'],
+      fieldIds: ['name'],
+    },
+  },
+});
+const differentOnlySingle = personalization.createState({itemId: 'one', merchandiseQuantity: 1, profile: differentOnlyProfile});
+assert.equal(differentOnlySingle.available, false, 'different-only personalization is unavailable for one eligible unit');
+
+const dependentProfile = capabilities.resolve({
+  version: 1,
+  id: 'dependent_personalization',
+  fields: [
+    {
+      id: 'include_age',
+      kind: 'radio',
+      group: 'personalization',
+      label: 'Add age?',
+      required: true,
+      options: [
+        {value: 'yes', label: 'Yes'},
+        {value: 'no', label: 'No'},
+      ],
+    },
+    {
+      id: 'age',
+      kind: 'number',
+      group: 'personalization',
+      label: 'Age',
+      required: true,
+      min: 1,
+      max: 9,
+      visibleWhen: {
+        mode: 'all',
+        conditions: [{field: 'include_age', operator: 'equals', value: 'yes'}],
+      },
+    },
+  ],
+  features: {
+    personalizationAllocation: {
+      enabled: true,
+      allowedModes: ['same'],
+      fieldIds: ['include_age', 'age'],
+    },
+  },
+});
+let dependent = personalization.createState({itemId: 'dependent', merchandiseQuantity: 1, profile: dependentProfile});
+dependent = personalization.setGroupValue(dependent, dependentProfile, 'group_1', 'include_age', 'yes');
+dependent = personalization.setGroupValue(dependent, dependentProfile, 'group_1', 'age', 5);
+assert.equal(dependent.complete, true);
+dependent = personalization.setGroupValue(dependent, dependentProfile, 'group_1', 'include_age', 'no');
+assert.equal(dependent.groups[0].values.age, '', 'hidden dependent personalization value must be pruned');
+assert.equal(dependent.complete, true);
 
 const unavailable = personalization.createState({
   itemId: 'plain',
