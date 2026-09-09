@@ -42,6 +42,9 @@ jobs:
       - name: Run Theme Core architecture guard
         run: npm run check:theme
 
+      - name: Run theme shell tests
+        run: npm run test:theme-shell
+
       - name: Run universal form engine tests
         run: npm run test:form-engine
 

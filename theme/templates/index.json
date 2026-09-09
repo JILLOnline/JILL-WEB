@@ -1,9 +1,31 @@
 {
   "sections": {
-    "main": {
+    "hero": {
       "type": "rich-text",
-      "settings": {}
+      "settings": {
+        "heading": "Celebrate it your way.",
+        "body": "<p>Custom piñatas, party favors, activities, supplies, apparel and gifts—made around the details that make your celebration yours.</p>",
+        "button_label": "Browse the catalog",
+        "button_link": "/collections/all"
+      }
+    },
+    "custom": {
+      "type": "rich-text",
+      "settings": {
+        "heading": "Have an idea that needs the JILL touch?",
+        "body": "<p>Tell us what you’re planning, choose what you need, and send the details through one guided custom order request.</p>",
+        "button_label": "Request a custom order",
+        "button_link": "/pages/quote?view=custom-order"
+      }
+    },
+    "local": {
+      "type": "rich-text",
+      "settings": {
+        "heading": "Made by JILL in Jacksonville.",
+        "body": "<p>Handmade and personalized with local pickup available, plus shipping for celebrations farther away.</p>",
+        "button_label": ""
+      }
     }
   },
-  "order": ["main"]
+  "order": ["hero", "custom", "local"]
 }

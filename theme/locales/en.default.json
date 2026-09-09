@@ -2,6 +2,25 @@
   "accessibility": {
     "skip_to_content": "Skip to content"
   },
+  "header": {
+    "navigation": "Primary navigation",
+    "home": "Home",
+    "catalog": "Catalog",
+    "search": "Search",
+    "account": "Account",
+    "cart": "Cart"
+  },
+  "footer": {
+    "navigation": "Footer navigation",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok"
+  },
+  "not_found": {
+    "title": "That page wandered off.",
+    "body": "The page you were looking for isn’t here, but the party can keep going.",
+    "action": "Browse the catalog"
+  },
   "general": {
     "pagination": {
       "label": "Pagination",

@@ -1,12 +1,48 @@
+{% liquid
+  assign custom_order_url = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
+%}
+
 <header class="jill-site-header">
   <div class="jill-site-header__inner jill-page-width">
-    <a class="jill-site-header__brand" href="{{ routes.root_url }}">{{ shop.name }}</a>
+    <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+      {% if section.settings.logo != blank %}
+        {{ section.settings.logo | image_url: width: section.settings.logo_width | image_tag: alt: shop.name, width: section.settings.logo_width, loading: 'eager' }}
+      {% else %}
+        {{ shop.name }}
+      {% endif %}
+    </a>
 
-    <nav class="jill-site-header__nav" aria-label="Primary navigation">
-      {% for link in section.settings.menu.links %}
-        <a class="jill-site-header__link" href="{{ link.url }}">{{ link.title }}</a>
-      {% endfor %}
-      <a class="jill-site-header__link" href="{{ routes.cart_url }}">Cart ({{ cart.item_count }})</a>
+    <nav class="jill-site-header__nav" aria-label="{{ 'header.navigation' | t }}">
+      {% if section.settings.menu != blank and section.settings.menu.links.size > 0 %}
+        {% for link in section.settings.menu.links %}
+          <a
+            class="jill-site-header__link"
+            href="{{ link.url }}"
+            {% if link.current %}aria-current="page"{% endif %}
+          >
+            {{ link.title }}
+          </a>
+        {% endfor %}
+      {% else %}
+        <a class="jill-site-header__link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
+        <a class="jill-site-header__link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
+      {% endif %}
+
+      {% if section.settings.show_custom_order %}
+        <a class="jill-button" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
+      {% endif %}
+
+      {% if section.settings.show_search %}
+        <a class="jill-site-header__link" href="{{ routes.search_url }}">{{ 'header.search' | t }}</a>
+      {% endif %}
+
+      {% if section.settings.show_account and shop.customer_accounts_enabled %}
+        <a class="jill-site-header__link" href="{{ routes.account_url }}">{{ 'header.account' | t }}</a>
+      {% endif %}
+
+      <a class="jill-site-header__link" href="{{ routes.cart_url }}">
+        {{ 'header.cart' | t }} ({{ cart.item_count }})
+      </a>
     </nav>
   </div>
 </header>
@@ -16,9 +52,54 @@
   "name": "Header",
   "settings": [
     {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 80,
+      "max": 240,
+      "step": 10,
+      "unit": "px",
+      "label": "Logo width",
+      "default": 140
+    },
+    {
       "type": "link_list",
       "id": "menu",
-      "label": "Menu"
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_custom_order",
+      "label": "Show custom order button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "custom_order_label",
+      "label": "Custom order button label",
+      "default": "Custom Order"
+    },
+    {
+      "type": "url",
+      "id": "custom_order_link",
+      "label": "Custom order link"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Show customer account",
+      "default": true
     }
   ]
 }

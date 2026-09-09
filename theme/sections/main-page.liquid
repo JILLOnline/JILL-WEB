@@ -1,0 +1,14 @@
+<section class="jill-rich-text jill-page-width">
+  <h1 class="jill-rich-text__heading">{{ page.title }}</h1>
+
+  {% if page.content != blank %}
+    <div class="jill-rich-text__body rte">{{ page.content }}</div>
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Page",
+  "settings": []
+}
+{% endschema %}

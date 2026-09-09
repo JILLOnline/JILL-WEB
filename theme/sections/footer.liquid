@@ -1,13 +1,30 @@
 <footer class="jill-site-footer">
   <div class="jill-site-footer__inner jill-page-width">
-    <small>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}</small>
-    {% if section.settings.menu != blank %}
-      <nav aria-label="Footer navigation">
+    <div>
+      <strong>{{ shop.name }}</strong>
+      {% if section.settings.tagline != blank %}
+        <p>{{ section.settings.tagline }}</p>
+      {% endif %}
+      <small>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}</small>
+    </div>
+
+    <nav aria-label="{{ 'footer.navigation' | t }}">
+      {% if section.settings.menu != blank %}
         {% for link in section.settings.menu.links %}
           <a href="{{ link.url }}">{{ link.title }}</a>
         {% endfor %}
-      </nav>
-    {% endif %}
+      {% endif %}
+
+      {% if section.settings.instagram_url != blank %}
+        <a href="{{ section.settings.instagram_url }}" target="_blank" rel="noopener">{{ 'footer.instagram' | t }}</a>
+      {% endif %}
+      {% if section.settings.facebook_url != blank %}
+        <a href="{{ section.settings.facebook_url }}" target="_blank" rel="noopener">{{ 'footer.facebook' | t }}</a>
+      {% endif %}
+      {% if section.settings.tiktok_url != blank %}
+        <a href="{{ section.settings.tiktok_url }}" target="_blank" rel="noopener">{{ 'footer.tiktok' | t }}</a>
+      {% endif %}
+    </nav>
   </div>
 </footer>
 
@@ -16,9 +33,31 @@
   "name": "Footer",
   "settings": [
     {
+      "type": "text",
+      "id": "tagline",
+      "label": "Tagline",
+      "default": "Thoughtful details for celebrations worth remembering."
+    },
+    {
       "type": "link_list",
       "id": "menu",
-      "label": "Menu"
+      "label": "Menu",
+      "default": "footer"
+    },
+    {
+      "type": "url",
+      "id": "instagram_url",
+      "label": "Instagram URL"
+    },
+    {
+      "type": "url",
+      "id": "facebook_url",
+      "label": "Facebook URL"
+    },
+    {
+      "type": "url",
+      "id": "tiktok_url",
+      "label": "TikTok URL"
     }
   ]
 }
