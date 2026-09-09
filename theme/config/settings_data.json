@@ -1,3 +1,19 @@
 {
-  "current": {}
+  "current": {
+    "type_primary_font": "work_sans_n4",
+    "background_color": "#FFFFFF",
+    "foreground_color": "#171717",
+    "accent_color": "#6B3FA0",
+    "muted_color": "#6B7280",
+    "success_color": "#167A3F",
+    "info_color": "#245AA8",
+    "error_color": "#B42318",
+    "max_page_width": "90rem",
+    "min_page_margin": 20,
+    "space_unit": 6,
+    "button_radius": 24,
+    "button_height": 48,
+    "field_radius": 12,
+    "card_radius": 16
+  }
 }
