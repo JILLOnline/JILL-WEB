@@ -242,10 +242,12 @@ const required = [
   'assets/jill-form-engine.js',
   'assets/jill-product-capabilities.js',
   'assets/jill-product-options.js',
+  'assets/jill-personalization.js',
   'assets/jill-commerce-adjustments.js',
   'assets/jill-commerce-cart.js',
   'assets/jill-product.js',
   'assets/jill-product-commerce.js',
+  'assets/jill-custom-order.js',
   'config/settings_schema.json',
   'config/settings_data.json',
   'sections/header-group.json',
@@ -257,6 +259,7 @@ const required = [
   'sections/main-cart.liquid',
   'sections/main-collection.liquid',
   'sections/main-search.liquid',
+  'sections/main-custom-order.liquid',
   'snippets/ui-button.liquid',
   'snippets/ui-field.liquid',
   'snippets/ui-textarea.liquid',
@@ -273,10 +276,11 @@ const required = [
   'templates/cart.json',
   'templates/collection.json',
   'templates/search.json',
+  'templates/page.custom-order.json',
 ];
 
 for (const relativePath of required) {
   if (!fs.existsSync(path.join(THEME_ROOT, relativePath))) fail(`required canonical owner is missing: theme/${relativePath}`);
 }
 
-console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, canonical quantity stepper, universal form engine, capability resolver, Product Options, paid commerce planning and transport, product commerce, native cart and discovery owners present.`);
+console.log(`JILL Theme Core guard passed: ${files.length} files, ${selectorOwners.size} selectors, ${tokenOwners.size} design tokens, ${keyframeOwners.size} keyframe sets, product capability contract v1, canonical quantity stepper, universal form engine, capability resolver, Product Options, personalization, paid commerce planning and transport, product commerce, capability-driven Custom Order, native cart and discovery owners present.`);
