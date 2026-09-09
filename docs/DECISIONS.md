@@ -190,6 +190,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** `jill-product-capabilities.js` validates the allowed allocation shape, `jill-product-options.js` owns selector identity plus detail state/pruning, and the shared `jill-product.js` renderer supports the field kinds without product-family branches. The canonical dependency policy is clear-on-deactivate: unavailable detail is removed from state and normalized payload, and must be entered again if reactivated. Product Page and CLEAN Custom Order receive the same behavior because both use the same capability profile, renderer and product runtime.
 
+## 2026-09-09 — Custom Order allocates real Shopify variants, never cloned size/color fields
+
+**Decision:** Multi-variant Custom Order products split the one canonical merchandise quantity across actual Shopify variant IDs through `theme/assets/jill-variant-allocation.js`. Variant allocations use stable merchandise-unit IDs based on the same `shopify-product:<product-id>` identity already used by Product Options and Personalization. Shopify-native variant choices such as size, color, tote style and method are never recreated as capability fields merely to support Custom Order.
+
+**Why:** A single variant dropdown cannot represent requests such as two small white shirts plus three medium pink shirts. Recreating those choices in Product Capabilities would create a second commerce owner and allow customization state to drift from Shopify's variant/price truth. Stable shared unit IDs also preserve correlation between the physical variation assignment and per-unit personalization.
+
+**Consequence:** `jill-variant-allocation.js` owns variant uniqueness, availability, quantity reconciliation and normalized allocation payload. `main-custom-order.liquid` emits Shopify variant truth and the canonical quantity primitive; `jill-custom-order.js` renders/consumes the allocator and re-normalizes its serialized payload before Review. Product Pages keep Shopify's normal single-selected-variant purchase flow. The Custom Order API may carry structured `variant_allocations` with variant ID, quantity and stable unit IDs while retaining `variant_id` for single-variant items.
+
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
