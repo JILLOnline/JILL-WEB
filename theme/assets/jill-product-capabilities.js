@@ -10,7 +10,17 @@
   ]);
   const GROUP_SET = new Set(GROUPS);
   const ALLOCATED_OPTION_KINDS = new Set(['select', 'radio']);
+  const COMMERCE_GROUPS = new Set(['product_options', 'personalization']);
+  const COMMERCE_QUANTITY_BASES = new Set([
+    'once',
+    'merchandise_quantity',
+    'customization_units',
+    'matched_units',
+    'matched_groups',
+  ]);
+  const CONDITION_OPERATORS = new Set(['equals', 'not_equals', 'in', 'not_in']);
   const EMPTY_FIELD_IDS = Object.freeze([]);
+  const EMPTY_COMMERCE_ADJUSTMENTS = Object.freeze([]);
 
   function fail(message) {
     throw new Error(`JILL product capabilities: ${message}`);
@@ -170,14 +180,19 @@
   }
 
   function validatePersonalizationFeature(feature, byId) {
-    if (!feature) return;
+    if (!feature) return new Set();
     if (!Array.isArray(feature.fieldIds)) fail('personalizationAllocation.fieldIds must be an array');
+
+    const allocated = new Set();
     for (const fieldId of feature.fieldIds) {
+      if (allocated.has(fieldId)) fail(`personalizationAllocation contains duplicate field ${fieldId}`);
       const field = assertFieldReference(byId, fieldId, 'personalizationAllocation');
       if (field.group !== 'personalization') {
         fail(`personalizationAllocation field ${fieldId} must belong to personalization group`);
       }
+      allocated.add(fieldId);
     }
+    return allocated;
   }
 
   function validateDatePlanningFeature(feature, byId) {
@@ -196,17 +211,88 @@
     if (field.kind !== 'file') fail(`referenceUpload field ${feature.fieldId} must be a file field`);
   }
 
+  function expectedConditionValues(condition) {
+    return Array.isArray(condition.value) ? condition.value : [condition.value];
+  }
+
+  function validateCommerceCondition(rule, field) {
+    const condition = rule.when;
+    if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+      fail(`commerce adjustment ${rule.id} when must be an object`);
+    }
+    if (!CONDITION_OPERATORS.has(condition.operator)) {
+      fail(`commerce adjustment ${rule.id} has unsupported operator ${condition.operator}`);
+    }
+
+    const expectedValues = expectedConditionValues(condition);
+    if (field.kind === 'select' || field.kind === 'radio') {
+      const allowed = new Set((field.options || []).map((option) => option.value));
+      for (const value of expectedValues) {
+        if (typeof value !== 'string' || !allowed.has(value)) {
+          fail(`commerce adjustment ${rule.id} references invalid option ${String(value)} for field ${field.id}`);
+        }
+      }
+    }
+    if (field.kind === 'number' && expectedValues.some((value) => typeof value !== 'number')) {
+      fail(`commerce adjustment ${rule.id} must compare number field ${field.id} with numeric values`);
+    }
+    if (field.kind === 'checkbox' && expectedValues.some((value) => typeof value !== 'boolean')) {
+      fail(`commerce adjustment ${rule.id} must compare checkbox field ${field.id} with boolean values`);
+    }
+  }
+
+  function validateCommerceAdjustmentsFeature(feature, byId, allocatedFieldIds) {
+    if (!feature) return;
+    if (!Array.isArray(feature) || feature.length === 0) {
+      fail('commerceAdjustments must be a non-empty array when configured');
+    }
+
+    const ruleIds = new Set();
+    for (const rule of feature) {
+      if (!rule || typeof rule !== 'object' || Array.isArray(rule)) fail('every commerce adjustment must be an object');
+      assertIdentifier(rule.id, 'commerce adjustment id');
+      if (ruleIds.has(rule.id)) fail(`duplicate commerce adjustment id ${rule.id}`);
+      ruleIds.add(rule.id);
+
+      if (!rule.when?.field) fail(`commerce adjustment ${rule.id} must define when.field`);
+      const field = assertFieldReference(byId, rule.when.field, `commerce adjustment ${rule.id}`);
+      if (!COMMERCE_GROUPS.has(field.group)) {
+        fail(`commerce adjustment ${rule.id} field ${field.id} must belong to product_options or personalization`);
+      }
+      validateCommerceCondition(rule, field);
+
+      if (!COMMERCE_QUANTITY_BASES.has(rule.quantityBasis)) {
+        fail(`commerce adjustment ${rule.id} has unsupported quantity basis ${rule.quantityBasis}`);
+      }
+      if ((rule.quantityBasis === 'matched_units' || rule.quantityBasis === 'matched_groups') && !allocatedFieldIds.has(field.id)) {
+        fail(`commerce adjustment ${rule.id} quantity basis ${rule.quantityBasis} requires allocated field ${field.id}`);
+      }
+
+      if (typeof rule.variantId !== 'string' || !/^(?:gid:\/\/shopify\/ProductVariant\/)?[1-9][0-9]*$/.test(rule.variantId)) {
+        fail(`commerce adjustment ${rule.id} must reference a Shopify ProductVariant id`);
+      }
+      if (rule.label !== undefined && (typeof rule.label !== 'string' || !rule.label.trim() || rule.label.length > 200)) {
+        fail(`commerce adjustment ${rule.id} label must be a non-empty string up to 200 characters`);
+      }
+    }
+  }
+
   function validateFeatures(features, fields, byId) {
     if (!features || typeof features !== 'object' || Array.isArray(features)) {
       fail('features must be an object');
     }
 
     validateCustomizationUnitsFeature(features.customizationUnits);
-    const allocatedFieldIds = validateProductOptionsAllocationFeature(features.productOptionsAllocation, byId);
-    validateProductOptionsDependencies(fields, byId, allocatedFieldIds);
-    validatePersonalizationFeature(features.personalizationAllocation, byId);
+    const productOptionAllocatedFieldIds = validateProductOptionsAllocationFeature(features.productOptionsAllocation, byId);
+    validateProductOptionsDependencies(fields, byId, productOptionAllocatedFieldIds);
+    const personalizationAllocatedFieldIds = validatePersonalizationFeature(features.personalizationAllocation, byId);
     validateDatePlanningFeature(features.datePlanning, byId);
     validateReferenceUploadFeature(features.referenceUpload, byId);
+    validateCommerceAdjustmentsFeature(
+      features.commerceAdjustments,
+      byId,
+      new Set([...productOptionAllocatedFieldIds, ...personalizationAllocatedFieldIds]),
+    );
   }
 
   function resolve(input) {
@@ -253,6 +339,15 @@
     return resolvedProfile?.features?.productOptionsAllocation?.fieldIds || EMPTY_FIELD_IDS;
   }
 
+  function getPersonalizationAllocationFieldIds(resolvedProfile) {
+    if (resolvedProfile?.features?.personalizationAllocation?.enabled === false) return EMPTY_FIELD_IDS;
+    return resolvedProfile?.features?.personalizationAllocation?.fieldIds || EMPTY_FIELD_IDS;
+  }
+
+  function getCommerceAdjustments(resolvedProfile) {
+    return resolvedProfile?.features?.commerceAdjustments || EMPTY_COMMERCE_ADJUSTMENTS;
+  }
+
   const api = Object.freeze({
     SUPPORTED_VERSION,
     GROUPS,
@@ -261,6 +356,8 @@
     getFieldsForGroup,
     getCustomizationUnitsPerQuantity,
     getProductOptionsAllocationFieldIds,
+    getPersonalizationAllocationFieldIds,
+    getCommerceAdjustments,
   });
 
   Object.defineProperty(globalThis, 'JILLProductCapabilities', {
