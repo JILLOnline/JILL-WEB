@@ -6,7 +6,6 @@ const section = fs.readFileSync('theme/sections/main-catalog-hub.liquid', 'utf8'
 const standardCollection = fs.readFileSync('theme/sections/main-collection.liquid', 'utf8');
 const template = JSON.parse(fs.readFileSync('theme/templates/collection.json', 'utf8'));
 const productCard = fs.readFileSync('theme/snippets/product-card.liquid', 'utf8');
-const summary = fs.readFileSync('theme/snippets/catalog-product-summary.liquid', 'utf8');
 const catalogRuntime = fs.readFileSync('theme/assets/jill-catalog.js', 'utf8');
 const storefrontStyles = fs.readFileSync('theme/assets/jill-storefront.css', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
@@ -46,10 +45,12 @@ assert.match(section, /block\.type == 'creation'/, 'real-work gallery must be me
 assert.match(section, /block\.type == 'testimonial'/, 'testimonials must be merchant supplied');
 assert.doesNotMatch(section, /Add to cart|name="id"|\/cart\/add/i, 'Catalog Hub must not become another product configurator');
 
-assert.match(productCard, /render 'catalog-product-summary'/, 'catalog product cards must consume the catalog summary adapter');
+assert.doesNotMatch(productCard, /render 'catalog-product-summary'/, 'Catalog cards must not expose Product Options or personalization summaries');
+assert.match(productCard, /catalog\.card\.teaser_/, 'Catalog cards must use curiosity-driven teaser copy instead of product instructions');
+assert.match(productCard, /jill-product-card__teaser/, 'Catalog cards must expose one intentional teaser copy surface');
+assert.doesNotMatch(productCard, /truncatewords: 34/, 'Catalog cards must not reproduce shortened product descriptions');
 assert.match(productCard, /custom_order_url/, 'catalog product cards must support contextual Custom Order handoff');
 assert.match(productCard, /product=/, 'contextual handoff must preserve the selected product handle');
-assert.match(productCard, /truncatewords: 34/, 'catalog cards must provide enough product context to invite exploration');
 assert.match(productCard, /heading_tag/, 'canonical Product Card must accept the semantic heading level from its composition owner');
 assert.doesNotMatch(productCard, /card_product\.images/, 'catalog cards must keep one strong thumbnail instead of a secondary gallery');
 
@@ -58,13 +59,6 @@ assert.doesNotMatch(storefrontStyles, /jill-catalog__filters/, 'removed Catalog 
 assert.doesNotMatch(storefrontStyles, /jill-product-card__thumbnails|jill-product-card__thumbnail/, 'removed Catalog secondary thumbnails must not leave dead style owners behind');
 assert.match(storefrontStyles, /data-jill-catalog-group/, 'grouped Catalog composition must have one explicit visual owner');
 assert.match(storefrontStyles, /minmax\(min\(100%, 21rem\), 1fr\)/, 'Catalog cards must remain broad enough for product-led discovery');
-
-assert.match(summary, /jill_product_capabilities/, 'catalog summary must consume the canonical capability metafield');
-assert.match(summary, /jill_product_page_capability_override/, 'catalog summary must respect listing-surface projection');
-assert.match(summary, /options_with_values/, 'catalog summary must consume Shopify-native product variations');
-assert.match(summary, /product_options/, 'catalog summary may summarize Product Options capability data');
-assert.match(summary, /personalizationAllocation/, 'catalog summary may summarize personalization capability data');
-assert.doesNotMatch(summary, /Snack Bags|Pinata|Piñata|Hoodie|T-Shirt|Tote/i, 'catalog summary must remain product-family agnostic');
 
 assert.match(catalogRuntime, /data-jill-catalog-group/, 'catalog runtime must search within canonical collection groups');
 assert.match(catalogRuntime, /data-jill-catalog-product/, 'catalog runtime must filter canonical rendered product cards');
