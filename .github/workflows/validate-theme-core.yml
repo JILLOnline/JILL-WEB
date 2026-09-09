@@ -14,6 +14,9 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
       - 'scripts/test-quantity.mjs'
+      - 'scripts/test-commerce-adjustments.mjs'
+      - 'scripts/test-commerce-cart.mjs'
+      - 'scripts/test-product-commerce.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -27,6 +30,9 @@ on:
       - 'scripts/test-product-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
       - 'scripts/test-quantity.mjs'
+      - 'scripts/test-commerce-adjustments.mjs'
+      - 'scripts/test-commerce-cart.mjs'
+      - 'scripts/test-product-commerce.mjs'
       - 'scripts/check-custom-order-contract.mjs'
       - 'package.json'
       - '.github/workflows/validate-theme-core.yml'
@@ -69,6 +75,15 @@ jobs:
 
       - name: Run quantity stepper tests explicitly
         run: npm run test:quantity
+
+      - name: Run commerce adjustment tests explicitly
+        run: npm run test:commerce-adjustments
+
+      - name: Run commerce cart tests explicitly
+        run: npm run test:commerce-cart
+
+      - name: Run paid product commerce tests explicitly
+        run: npm run test:product-commerce
 
       - name: Run Custom Order contract guard explicitly
         run: npm run check:custom-order
