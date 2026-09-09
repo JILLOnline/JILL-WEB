@@ -19,6 +19,27 @@
     details.setAttribute('aria-hidden', selected ? 'false' : 'true');
   }
 
+  function requestedProductHandle(search = globalThis.location?.search || '') {
+    try {
+      return String(new URLSearchParams(search).get('product') || '').trim();
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function applyCatalogPrefill(root, search) {
+    const handle = requestedProductHandle(search);
+    if (!handle) return false;
+    const item = Array.from(root.querySelectorAll('[data-jill-custom-order-item]'))
+      .find((candidate) => candidate.dataset.productHandle === handle);
+    const select = item?.querySelector('[data-jill-custom-order-select]');
+    if (!item || !select) return false;
+    select.checked = true;
+    setItemSelected(item, true);
+    root.dataset.jillCustomOrderPrefilled = 'true';
+    return true;
+  }
+
   function validateSimpleControls(container) {
     const controls = Array.from(container.querySelectorAll('input, select, textarea'))
       .filter((control) => !control.disabled && control.type !== 'hidden');
@@ -537,6 +558,8 @@
       select.addEventListener('change', () => setItemSelected(item, select.checked));
     }
 
+    applyCatalogPrefill(root);
+
     const reviewButton = root.querySelector('.jill-custom-order__actions .jill-button');
     const status = root.querySelector('[data-jill-custom-order-status]');
     reviewButton?.addEventListener('click', () => {
@@ -588,7 +611,14 @@
   }
 
   Object.defineProperty(globalThis, 'JILLCustomOrder', {
-    value: Object.freeze({itemRequest, buildRequest, cleanUndefined, normalizeVariantPayload}),
+    value: Object.freeze({
+      itemRequest,
+      buildRequest,
+      cleanUndefined,
+      normalizeVariantPayload,
+      requestedProductHandle,
+      applyCatalogPrefill,
+    }),
     configurable: false,
     enumerable: false,
     writable: false,

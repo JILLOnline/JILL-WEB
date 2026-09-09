@@ -4,9 +4,43 @@
   assign current_price = card_product.price
   assign compare_price = card_product.compare_at_price
   assign price_varies = card_product.price_varies
+  assign card_mode = mode | default: 'default'
+  assign is_catalog = false
+  if card_mode == 'catalog'
+    assign is_catalog = true
+  endif
+
+  assign custom_order_link = blank
+  if is_catalog and custom_order_url != blank
+    assign encoded_handle = card_product.handle | url_encode
+    assign separator = '?'
+    if custom_order_url contains '?'
+      assign separator = '&'
+    endif
+    assign custom_order_link = custom_order_url | append: separator | append: 'product=' | append: encoded_handle
+  endif
+
+  capture catalog_collections
+    if is_catalog
+      echo '|'
+      for card_collection in card_product.collections
+        echo card_collection.handle | append: '|'
+      endfor
+    endif
+  endcapture
+
+  assign catalog_search = card_title | append: ' ' | append: card_product.product_type | append: ' ' | append: card_product.description | strip_html | downcase
 %}
 
-<article class="jill-product-card">
+<article
+  class="jill-product-card{% if is_catalog %} jill-card{% endif %}"
+  {% if is_catalog %}
+    data-display="catalog"
+    data-jill-catalog-product
+    data-collections="{{ catalog_collections | strip | escape }}"
+    data-search="{{ catalog_search | escape }}"
+  {% endif %}
+>
   <a class="jill-product-card__media" href="{{ card_url }}" aria-label="{{ card_title | escape }}">
     {% if card_product.featured_image != blank %}
       {{ card_product.featured_image | image_url: width: 900 | image_tag: class: 'jill-product-card__image', loading: 'lazy', widths: '320, 480, 640, 900', sizes: '(min-width: 70rem) 25vw, (min-width: 45rem) 33vw, 50vw' }}
@@ -14,6 +48,14 @@
       <span class="jill-product-card__image-placeholder" aria-hidden="true"></span>
     {% endif %}
   </a>
+
+  {% if is_catalog and show_gallery and card_product.images.size > 1 %}
+    <div class="jill-product-card__thumbnails" aria-label="{{ 'catalog.card.more_images' | t | escape }}">
+      {% for image in card_product.images offset: 1 limit: 3 %}
+        {{ image | image_url: width: 240 | image_tag: class: 'jill-product-card__thumbnail', loading: 'lazy', widths: '96, 144, 240', sizes: '5rem' }}
+      {% endfor %}
+    </div>
+  {% endif %}
 
   <div class="jill-product-card__details">
     {% if show_vendor and card_product.vendor != blank %}
@@ -35,5 +77,20 @@
     {% unless card_product.available %}
       <span class="jill-pill" data-tone="muted">{{ 'products.product.sold_out' | t }}</span>
     {% endunless %}
+
+    {% if is_catalog %}
+      {% if card_product.description != blank %}
+        <p class="jill-product-card__excerpt">{{ card_product.description | strip_html | truncatewords: 22 }}</p>
+      {% endif %}
+
+      {% render 'catalog-product-summary', card_product: card_product %}
+
+      <div class="jill-product-card__actions">
+        {% render 'ui-button', type: 'button', label: 'catalog.card.view_product' | t, url: card_url %}
+        {% if custom_order_link != blank %}
+          {% render 'ui-button', type: 'button', label: 'catalog.card.customize' | t, url: custom_order_link, variant: 'secondary' %}
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 </article>

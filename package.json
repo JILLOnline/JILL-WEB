@@ -7,7 +7,7 @@
     "extensions/*"
   ],
   "scripts": {
-    "postinstall": "node scripts/check-theme-core.mjs && node scripts/check-theme-settings.mjs && node scripts/test-form-engine.mjs && node scripts/test-product-capabilities.mjs && node scripts/test-product-surface.mjs && node scripts/test-commerce-capabilities.mjs && node scripts/test-product-options.mjs && node scripts/test-product-option-details.mjs && node scripts/test-personalization.mjs && node scripts/test-jill-catalog-capabilities.mjs && node scripts/test-quantity.mjs && node scripts/test-variant-allocation.mjs && node scripts/test-commerce-adjustments.mjs && node scripts/test-commerce-cart.mjs && node scripts/test-product-commerce.mjs && node scripts/test-custom-order-integration.mjs && node scripts/check-custom-order-contract.mjs && node scripts/check-rewards-engine.mjs && node scripts/test-rewards-engine.mjs",
+    "postinstall": "node scripts/check-theme-core.mjs && node scripts/check-theme-settings.mjs && node scripts/test-form-engine.mjs && node scripts/test-product-capabilities.mjs && node scripts/test-product-surface.mjs && node scripts/test-commerce-capabilities.mjs && node scripts/test-product-options.mjs && node scripts/test-product-option-details.mjs && node scripts/test-personalization.mjs && node scripts/test-jill-catalog-capabilities.mjs && node scripts/test-catalog-hub.mjs && node scripts/test-quantity.mjs && node scripts/test-variant-allocation.mjs && node scripts/test-commerce-adjustments.mjs && node scripts/test-commerce-cart.mjs && node scripts/test-product-commerce.mjs && node scripts/test-custom-order-integration.mjs && node scripts/check-custom-order-contract.mjs && node scripts/check-rewards-engine.mjs && node scripts/test-rewards-engine.mjs",
     "shopify": "shopify",
     "link": "shopify app config link",
     "build": "shopify app build",
@@ -24,6 +24,7 @@
     "test:product-option-details": "node scripts/test-product-option-details.mjs",
     "test:personalization": "node scripts/test-personalization.mjs",
     "test:jill-catalog-capabilities": "node scripts/test-jill-catalog-capabilities.mjs",
+    "test:catalog-hub": "node scripts/test-catalog-hub.mjs",
     "test:quantity": "node scripts/test-quantity.mjs",
     "test:variant-allocation": "node scripts/test-variant-allocation.mjs",
     "test:commerce-adjustments": "node scripts/test-commerce-adjustments.mjs",

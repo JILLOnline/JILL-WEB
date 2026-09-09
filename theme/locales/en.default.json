@@ -105,6 +105,39 @@
       "review": "Review"
     }
   },
+  "catalog": {
+    "collections": {
+      "products": "products"
+    },
+    "search": {
+      "label": "Search the catalog",
+      "placeholder": "Search products"
+    },
+    "filters": {
+      "label": "Filter catalog by category",
+      "all": "All"
+    },
+    "results": {
+      "product": "product",
+      "products": "products",
+      "empty": "No products match this filter yet."
+    },
+    "card": {
+      "view_product": "View product",
+      "customize": "Customize this",
+      "more_images": "More product images"
+    },
+    "summary": {
+      "label": "Product options and customization summary",
+      "pack": "Pack",
+      "personalization": "Personalization",
+      "references": "Reference images",
+      "available": "Available",
+      "required": "Required",
+      "optional": "Optional",
+      "up_to": "up to"
+    }
+  },
   "collections": {
     "sort_by": "Sort by",
     "apply_sort": "Apply",

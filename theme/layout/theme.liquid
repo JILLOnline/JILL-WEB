@@ -46,5 +46,8 @@
       <script src="{{ 'jill-variant-allocation.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-custom-order.js' | asset_url }}" defer></script>
     {% endif %}
+    {% if request.page_type == 'collection' and collection.handle == 'all' %}
+      <script src="{{ 'jill-catalog.js' | asset_url }}" defer></script>
+    {% endif %}
   </body>
 </html>

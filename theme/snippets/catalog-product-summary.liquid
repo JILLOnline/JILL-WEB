@@ -1,0 +1,105 @@
+{% liquid
+  assign capability_profile = blank
+  assign capability_metafield = card_product.metafields.custom.jill_product_capabilities
+  if capability_metafield != blank and capability_metafield.type == 'json'
+    assign capability_profile = capability_metafield.value
+  endif
+
+  assign excluded_field_ids = blank
+  assign surface_metafield = card_product.metafields.custom.jill_product_page_capability_override
+  if surface_metafield != blank and surface_metafield.type == 'json'
+    assign surface_override = surface_metafield.value
+    assign excluded_field_ids = surface_override.excludeFieldIds
+  endif
+
+  assign personalization_available = false
+  assign reference_field = blank
+%}
+
+<ul class="jill-product-card__summary" aria-label="{{ 'catalog.summary.label' | t | escape }}">
+  {% unless card_product.has_only_default_variant %}
+    {% for option in card_product.options_with_values %}
+      {% unless option.name == 'Title' %}
+        <li>
+          <strong>{{ option.name }}:</strong>
+          <span>
+            {% for option_value in option.values limit: 5 %}
+              {{ option_value }}{% unless forloop.last %} · {% endunless %}
+            {% endfor %}
+            {% if option.values.size > 5 %}
+              {% assign remaining_values = option.values.size | minus: 5 %}
+              · +{{ remaining_values }}
+            {% endif %}
+          </span>
+        </li>
+      {% endunless %}
+    {% endfor %}
+  {% endunless %}
+
+  {% if capability_profile != blank %}
+    {% assign unit_config = capability_profile.features.customizationUnits %}
+    {% if unit_config != blank and unit_config.unitsPerQuantity > 1 %}
+      <li>
+        <strong>{{ 'catalog.summary.pack' | t }}:</strong>
+        <span>{{ unit_config.unitsPerQuantity }} {{ unit_config.pluralLabel }}</span>
+      </li>
+    {% endif %}
+
+    {% for field in capability_profile.fields %}
+      {% assign field_is_excluded = false %}
+      {% if excluded_field_ids != blank and excluded_field_ids contains field.id %}
+        {% assign field_is_excluded = true %}
+      {% endif %}
+
+      {% unless field_is_excluded %}
+        {% if field.group == 'product_options' and field.options != blank %}
+          {% if field.kind == 'select' or field.kind == 'radio' %}
+            <li>
+              <strong>{{ field.label }}:</strong>
+              <span>
+                {% for option in field.options limit: 5 %}
+                  {{ option.label }}{% unless forloop.last %} · {% endunless %}
+                {% endfor %}
+                {% if field.options.size > 5 %}
+                  {% assign remaining_options = field.options.size | minus: 5 %}
+                  · +{{ remaining_options }}
+                {% endif %}
+              </span>
+            </li>
+          {% endif %}
+        {% endif %}
+
+        {% if field.group == 'personalization' %}
+          {% assign personalization_available = true %}
+        {% endif %}
+
+        {% if capability_profile.features.referenceUpload.enabled and field.id == capability_profile.features.referenceUpload.fieldId %}
+          {% assign reference_field = field %}
+        {% endif %}
+      {% endunless %}
+    {% endfor %}
+
+    {% if personalization_available %}
+      <li>
+        <strong>{{ 'catalog.summary.personalization' | t }}:</strong>
+        <span>
+          {% assign personalization_modes = capability_profile.features.personalizationAllocation.allowedModes %}
+          {% if personalization_modes contains 'same' %}{{ 'products.product.personalization.same' | t }}{% endif %}
+          {% if personalization_modes contains 'same' and personalization_modes contains 'different' %} · {% endif %}
+          {% if personalization_modes contains 'different' %}{{ 'products.product.personalization.different' | t }}{% endif %}
+          {% if personalization_modes == blank %}{{ 'catalog.summary.available' | t }}{% endif %}
+        </span>
+      </li>
+    {% endif %}
+
+    {% if reference_field != blank %}
+      <li>
+        <strong>{{ 'catalog.summary.references' | t }}:</strong>
+        <span>
+          {% if reference_field.required %}{{ 'catalog.summary.required' | t }}{% else %}{{ 'catalog.summary.optional' | t }}{% endif %}
+          {% if reference_field.maxFiles != blank %} · {{ 'catalog.summary.up_to' | t }} {{ reference_field.maxFiles }}{% endif %}
+        </span>
+      </li>
+    {% endif %}
+  {% endif %}
+</ul>

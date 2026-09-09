@@ -1,9 +1,39 @@
 {
   "sections": {
+    "catalog": {
+      "type": "main-catalog-hub",
+      "settings": {
+        "custom_order_url": "/pages/quote",
+        "featured_collection": "shop-the-party"
+      },
+      "blocks": {
+        "pinatas": {
+          "type": "category",
+          "settings": {"collection": "pinatas"}
+        },
+        "party_favors": {
+          "type": "category",
+          "settings": {"collection": "catalog"}
+        },
+        "kid_activities": {
+          "type": "category",
+          "settings": {"collection": "kid-activities"}
+        },
+        "party_supplies": {
+          "type": "category",
+          "settings": {"collection": "party-supplies"}
+        },
+        "apparel_gifts": {
+          "type": "category",
+          "settings": {"collection": "apparel-gifts-dtf-sublimation"}
+        }
+      },
+      "block_order": ["pinatas", "party_favors", "kid_activities", "party_supplies", "apparel_gifts"]
+    },
     "main": {
       "type": "main-collection",
       "settings": {}
     }
   },
-  "order": ["main"]
+  "order": ["catalog", "main"]
 }

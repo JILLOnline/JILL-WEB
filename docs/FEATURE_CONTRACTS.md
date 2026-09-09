@@ -347,6 +347,22 @@ Merchant settings configure behavior/capabilities through supported contracts. T
 
 A merchant may change labels, media, content, supported layout variants and global design tokens. They may not create a second button/field/card system through a section setting.
 
-## 18. Compatibility rule
+## 18. Catalog discovery contract
+
+The Catalog Hub is a discovery and handoff surface, not a fourth product configurator.
+
+- the built-in all-products catalog route may combine category discovery, merchant-curated featured products and the full product catalog in one coherent page
+- customer-facing category cards come from merchant-selected Shopify collections; merchandising collections such as JILL's `Shop the Party` remain a separate featured-products source and do not become category filters
+- the full product grid reuses the canonical Product Card and Shopify product truth
+- product summaries may read Shopify-native variants, the canonical Product Capability Profile and the product-page capability projection, but may never redefine or mutate them
+- catalog summaries show only decision-support information such as available variants, relevant Product Options, pack units, personalization availability and reference requirements
+- filtering/searching changes discovery visibility only; it does not alter product, cart or customization state
+- the Catalog Hub may deep-link a product into Custom Order by preserving stable product intent in the URL; Custom Order remains the owner of configuration and request validation
+- Product Page remains the owner for configuring/purchasing one known product
+- Custom Order remains the owner for composing more complex or multi-product requests
+- real-work galleries and testimonials are merchant content; absent real content, those sections stay hidden rather than rendering fabricated proof
+- the Catalog Hub never owns Add to Cart, price calculation, review truth or product-family-specific branching
+
+## 19. Compatibility rule
 
 When migrating old JILL behavior, preserve the user contract—not the implementation technique. Old code may be inspected as evidence. Compatibility layers are temporary only when an explicit migration decision requires one, and Theme Core's default rule is to avoid them entirely.
