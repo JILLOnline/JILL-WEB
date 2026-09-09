@@ -63,6 +63,21 @@ A composition may not create a separate visual field system, duplicate required/
 
 Browser-native semantics remain the baseline unless a later behavior owner has a justified need to enhance them. Enhancement must preserve keyboard, focus, mobile and no-JavaScript-safe behavior wherever Shopify/platform contracts permit it.
 
+## Customization choice language
+
+Product Options and Personalization use the same visual language for discrete radio choices across every product. A radio choice renders as a full-width selectable card inside its choice group, with the same border, hover, selected-accent and focus behavior whether the values are `Empty / Filled`, `Yes / No`, `Same for all / Different by item`, or another capability-defined radio set.
+
+Rules:
+
+- capability meaning determines the labels; product identity never determines the visual treatment
+- selected state is communicated by the real checked radio control plus the shared accent treatment
+- the choice remains a semantic radio input and keeps keyboard/focus behavior
+- browser-default fieldset framing is normalized away so only the canonical JILL field/choice presentation is visible
+- Product Options allocation groups and Personalization allocation groups both use the canonical `.jill-card` surface; no empty Personalization card may remain visible when no personalization group exists
+- Product Options and Personalization status pills and add-group actions share the same composition treatment
+
+This consistency is owned by shared customization composition rules, not product-specific CSS.
+
 ## Canonical quantity stepper
 
 `snippets/ui-quantity.liquid`, the `.jill-quantity` family in `jill-ui.css`, and `assets/jill-quantity.js` together own the reusable quantity interaction.
