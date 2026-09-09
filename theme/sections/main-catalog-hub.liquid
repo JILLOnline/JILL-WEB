@@ -50,22 +50,8 @@
       </div>
     {% endif %}
 
-    <div class="jill-catalog__section" id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
-      <div class="jill-catalog__section-heading">
-        <p class="jill-catalog__eyebrow">{{ section.settings.catalog_eyebrow }}</p>
-        <h2>{{ section.settings.catalog_heading }}</h2>
-        {% if section.settings.catalog_text != blank %}
-          <p>{{ section.settings.catalog_text }}</p>
-        {% endif %}
-      </div>
-
+    <div id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
       {% if category_count > 0 and catalog_product_count > 0 %}
-        <div class="jill-catalog__toolbar">
-          <p class="jill-catalog__results-count">
-            {{ catalog_product_count }} {% if catalog_product_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
-          </p>
-        </div>
-
         <div>
           {% for block in section.blocks %}
             {% if block.type == 'category' and block.settings.collection != blank %}
@@ -228,10 +214,6 @@
     {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
     {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Shop the Party"},
     {"type": "text", "id": "featured_text", "label": "Featured text", "default": "A rotating edit of JILL favorites and pieces we want you to see first."},
-
-    {"type": "text", "id": "catalog_eyebrow", "label": "Catalog eyebrow", "default": "EXPLORE EVERYTHING"},
-    {"type": "text", "id": "catalog_heading", "label": "Catalog heading", "default": "The full JILL catalog"},
-    {"type": "text", "id": "catalog_text", "label": "Catalog text", "default": "Browse each JILL collection, see what makes every piece special, and open the product that feels right for your celebration."},
 
     {"type": "text", "id": "how_eyebrow", "label": "How it works eyebrow", "default": "YOUR IDEA, ORGANIZED"},
     {"type": "text", "id": "how_heading", "label": "How it works heading", "default": "How custom ordering works"},
