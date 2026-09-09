@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const section = fs.readFileSync('theme/sections/main-catalog-hub.liquid', 'utf8');
 const standardCollection = fs.readFileSync('theme/sections/main-collection.liquid', 'utf8');
@@ -28,6 +29,7 @@ assert.deepEqual(categoryHandles, [
   'apparel-gifts-dtf-sublimation',
 ]);
 assert.equal(template.sections.catalog.settings.featured_collection, 'shop-the-party');
+assert.equal(new URL(template.sections.catalog.settings.custom_order_url, 'https://example.com').searchParams.get('view'), 'custom-order', 'CLEAN handoff must use its isolated template without changing the live page assignment');
 assert.ok(!categoryHandles.includes('shop-the-party'), 'Shop the Party is merchandising, not a catalog category');
 assert.ok(!categoryHandles.includes('jill'), 'internal catch-all collection must not become customer category navigation');
 
@@ -92,5 +94,68 @@ assert.equal(select.checked, true);
 assert.equal(details.hidden, false);
 assert.equal(details.ariaHidden, 'false');
 assert.equal(root.dataset.jillCustomOrderPrefilled, 'true');
+select.checked = false;
+details.hidden = true;
+assert.equal(globalThis.JILLCustomOrder.applyCatalogPrefill(root, '?product=unknown'), false);
+assert.equal(select.checked, false);
+assert.equal(details.hidden, true);
+
+const makeControl = (dataset = {}) => ({
+  dataset, handlers: {}, attributes: {},
+  addEventListener(name, handler) { (this.handlers[name] ||= []).push(handler); },
+  setAttribute(name, value) { this.attributes[name] = value; },
+  fire(name, event = {}) { this.handlers[name]?.forEach((handler) => handler(event)); },
+});
+const cards = [
+  {dataset: {collections: '|first|', search: 'Alpha'}, hidden: false},
+  {dataset: {collections: '|second|', search: 'Beta'}, hidden: false},
+];
+const featured = {dataset: {collections: '|first|', search: 'Alpha'}, hidden: false};
+const filters = ['all', 'first', 'second'].map((value) => makeControl({jillCatalogFilter: value}));
+const category = makeControl({jillCatalogCategoryLink: 'second'});
+const search = makeControl();
+const count = {};
+const empty = {};
+const destination = {focus() { this.focused = true; }, scrollIntoView() { this.scrolled = true; }};
+const catalogRoot = {
+  dataset: {resultSingular: 'product', resultPlural: 'products'},
+  querySelectorAll(selector) {
+    if (selector === '[data-jill-catalog-product]') return [featured, ...cards];
+    if (selector === '[data-jill-catalog-filter]') return filters;
+    if (selector === '[data-jill-catalog-category-link]') return [category];
+    return [];
+  },
+  querySelector(selector) {
+    return {
+      '[data-jill-catalog-product-grid]': {querySelectorAll: () => cards},
+      '[id^="JillCatalogSearch-"]': search,
+      '[data-jill-catalog-results-count]': count,
+      '[data-jill-catalog-empty]': empty,
+      '[data-jill-catalog-products-section]': destination,
+    }[selector];
+  },
+};
+const document = makeControl();
+document.querySelectorAll = () => [catalogRoot];
+vm.runInNewContext(catalogRuntime, {document});
+assert.equal(count.textContent, '2 products', 'featured duplicates never inflate catalog counts');
+filters[1].fire('click');
+assert.deepEqual(cards.map((card) => card.hidden), [false, true]);
+assert.equal(count.textContent, '1 product');
+search.value = 'Beta';
+search.fire('input');
+assert.ok(cards.every((card) => card.hidden));
+assert.equal(empty.hidden, false);
+assert.equal(featured.hidden, false, 'search and categories must not hide featured merchandising');
+search.value = '';
+category.fire('click', {preventDefault() {}});
+assert.deepEqual(cards.map((card) => card.hidden), [true, false]);
+assert.equal(filters[2].attributes['aria-pressed'], 'true');
+assert.equal(destination.focused, true);
+assert.equal(destination.scrolled, true);
+filters[0].fire('click');
+assert.ok(cards.every((card) => !card.hidden));
+document.fire('shopify:section:load', {target: document});
+assert.equal(filters[0].handlers.click.length, 1, 'section reinitialization must not duplicate listeners');
 
 console.log('JILL Catalog Hub tests passed.');

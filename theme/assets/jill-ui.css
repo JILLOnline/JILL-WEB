@@ -75,6 +75,21 @@
     display: none;
   }
 
+  .jill-pill[aria-pressed] {
+    min-height: 2.75rem;
+    border-color: color-mix(in srgb, var(--jill-color-foreground) 24%, transparent);
+    background: var(--jill-color-background);
+    color: var(--jill-color-foreground);
+    cursor: pointer;
+  }
+
+  .jill-pill[aria-pressed='true'] {
+    border-color: var(--jill-color-accent);
+    background: color-mix(in srgb, var(--jill-color-accent) 10%, var(--jill-color-background));
+    color: var(--jill-color-accent);
+    font-weight: 700;
+  }
+
   .jill-field {
     display: grid;
     gap: var(--jill-space-unit);

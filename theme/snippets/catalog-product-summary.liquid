@@ -13,6 +13,7 @@
   endif
 
   assign personalization_available = false
+  assign personalization_labels = ''
   assign reference_field = blank
 %}
 
@@ -57,11 +58,11 @@
             <li>
               <strong>{{ field.label }}:</strong>
               <span>
-                {% for option in field.options limit: 5 %}
+                {% for option in field.options limit: 9 %}
                   {{ option.label }}{% unless forloop.last %} · {% endunless %}
                 {% endfor %}
-                {% if field.options.size > 5 %}
-                  {% assign remaining_options = field.options.size | minus: 5 %}
+                {% if field.options.size > 9 %}
+                  {% assign remaining_options = field.options.size | minus: 9 %}
                   · +{{ remaining_options }}
                 {% endif %}
               </span>
@@ -71,6 +72,12 @@
 
         {% if field.group == 'personalization' %}
           {% assign personalization_available = true %}
+          {% if field.kind == 'text' or field.kind == 'textarea' or field.kind == 'select' %}
+            {% if personalization_labels != blank %}
+              {% assign personalization_labels = personalization_labels | append: ' · ' %}
+            {% endif %}
+            {% assign personalization_labels = personalization_labels | append: field.label %}
+          {% endif %}
         {% endif %}
 
         {% if capability_profile.features.referenceUpload.enabled and field.id == capability_profile.features.referenceUpload.fieldId %}
@@ -83,6 +90,7 @@
       <li>
         <strong>{{ 'catalog.summary.personalization' | t }}:</strong>
         <span>
+          {% if personalization_labels != blank %}{{ personalization_labels }} · {% endif %}
           {% assign personalization_modes = capability_profile.features.personalizationAllocation.allowedModes %}
           {% if personalization_modes contains 'same' %}{{ 'products.product.personalization.same' | t }}{% endif %}
           {% if personalization_modes contains 'same' and personalization_modes contains 'different' %} · {% endif %}

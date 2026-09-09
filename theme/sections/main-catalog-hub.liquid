@@ -1,6 +1,10 @@
 {% if collection.handle == 'all' %}
   {% liquid
     assign custom_order_url = section.settings.custom_order_url
+    assign products_anchor = '#JillCatalogProducts-' | append: section.id
+    assign search_id = 'JillCatalogSearch-' | append: section.id
+    assign search_label = 'catalog.search.label' | t
+    assign search_placeholder = 'catalog.search.placeholder' | t
     assign featured_collection = section.settings.featured_collection
     assign featured_limit = section.settings.featured_limit
     assign category_count = 0
@@ -30,7 +34,6 @@
     data-jill-catalog
     data-result-singular="{{ 'catalog.results.product' | t | escape }}"
     data-result-plural="{{ 'catalog.results.products' | t | escape }}"
-    data-no-results="{{ 'catalog.results.empty' | t | escape }}"
   >
     <header class="jill-catalog__hero">
       {% if section.settings.hero_eyebrow != blank %}
@@ -44,7 +47,7 @@
         {% render 'ui-button',
           type: 'button',
           label: section.settings.browse_label,
-          url: '#JillCatalogProducts-' | append: section.id
+          url: products_anchor
         %}
         {% if custom_order_url != blank %}
           {% render 'ui-button',
@@ -137,7 +140,7 @@
       </div>
     {% endif %}
 
-    <div class="jill-catalog__section" id="JillCatalogProducts-{{ section.id }}" data-jill-catalog-products-section>
+    <div class="jill-catalog__section" id="JillCatalogProducts-{{ section.id }}" tabindex="-1" data-jill-catalog-products-section>
       <div class="jill-catalog__section-heading">
         <p class="jill-catalog__eyebrow">{{ section.settings.catalog_eyebrow }}</p>
         <h2>{{ section.settings.catalog_heading }}</h2>
@@ -149,11 +152,11 @@
       <div class="jill-catalog__toolbar">
         {% if section.settings.show_search %}
           {% render 'ui-field',
-            id: 'JillCatalogSearch-' | append: section.id,
+            id: search_id,
             name: blank,
-            label: 'catalog.search.label' | t,
+            label: search_label,
             type: 'search',
-            placeholder: 'catalog.search.placeholder' | t
+            placeholder: search_placeholder
           %}
         {% endif %}
 
@@ -176,7 +179,7 @@
           {% endfor %}
         </div>
 
-        <p class="jill-catalog__results-count" role="status" aria-live="polite" data-jill-catalog-results-count></p>
+        <p class="jill-catalog__results-count" role="status" aria-live="polite" data-jill-catalog-results-count>{{ collection.products_count }} {{ 'catalog.results.products' | t }}</p>
       </div>
 
       {% paginate collection.products by 48 %}
@@ -341,7 +344,7 @@
 
     {"type": "text", "id": "creations_eyebrow", "label": "Creations eyebrow", "default": "MADE BY JILL"},
     {"type": "text", "id": "creations_heading", "label": "Creations heading", "default": "Real ideas we’ve brought to life"},
-    {"type": "text", "id": "creations_text", "label": "Creations text", "default": "Add finished JILL work here from the Theme Editor. This section stays hidden until it has real images."},
+    {"type": "text", "id": "creations_text", "label": "Creations text"},
     {"type": "text", "id": "testimonials_eyebrow", "label": "Testimonials eyebrow", "default": "CUSTOMER LOVE"},
     {"type": "text", "id": "testimonials_heading", "label": "Testimonials heading", "default": "What customers say"},
 

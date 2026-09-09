@@ -5,6 +5,8 @@
   assign compare_price = card_product.compare_at_price
   assign price_varies = card_product.price_varies
   assign card_mode = mode | default: 'default'
+  assign view_product_label = 'catalog.card.view_product' | t
+  assign customize_label = 'catalog.card.customize' | t
   assign is_catalog = false
   if card_mode == 'catalog'
     assign is_catalog = true
@@ -86,9 +88,9 @@
       {% render 'catalog-product-summary', card_product: card_product %}
 
       <div class="jill-product-card__actions">
-        {% render 'ui-button', type: 'button', label: 'catalog.card.view_product' | t, url: card_url %}
+        {% render 'ui-button', type: 'button', label: view_product_label, url: card_url %}
         {% if custom_order_link != blank %}
-          {% render 'ui-button', type: 'button', label: 'catalog.card.customize' | t, url: custom_order_link, variant: 'secondary' %}
+          {% render 'ui-button', type: 'button', label: customize_label, url: custom_order_link, variant: 'secondary' %}
         {% endif %}
       </div>
     {% endif %}

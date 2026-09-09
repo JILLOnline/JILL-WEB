@@ -9,7 +9,8 @@
     if (!root || root.dataset.jillCatalogInitialized === 'true') return;
     root.dataset.jillCatalogInitialized = 'true';
 
-    const cards = Array.from(root.querySelectorAll('[data-jill-catalog-product]'));
+    const grid = root.querySelector('[data-jill-catalog-product-grid]');
+    const cards = Array.from(grid?.querySelectorAll('[data-jill-catalog-product]') || []);
     const filters = Array.from(root.querySelectorAll('[data-jill-catalog-filter]'));
     const categoryLinks = Array.from(root.querySelectorAll('[data-jill-catalog-category-link]'));
     const search = root.querySelector('[id^="JillCatalogSearch-"]');
@@ -66,7 +67,8 @@
         event.preventDefault();
         activeFilter = handle;
         render();
-        productsSection?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        productsSection?.focus({preventScroll: true});
+        productsSection?.scrollIntoView({block: 'start'});
       });
     }
 

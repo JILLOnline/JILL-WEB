@@ -3,7 +3,7 @@
     "catalog": {
       "type": "main-catalog-hub",
       "settings": {
-        "custom_order_url": "/pages/quote",
+        "custom_order_url": "/pages/quote?view=custom-order",
         "featured_collection": "shop-the-party"
       },
       "blocks": {
