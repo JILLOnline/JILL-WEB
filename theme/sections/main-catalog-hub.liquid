@@ -28,26 +28,6 @@
   %}
 
   <section class="jill-catalog jill-page-width">
-    <header class="jill-catalog__hero">
-      {% if section.settings.hero_eyebrow != blank %}
-        <p class="jill-catalog__eyebrow">{{ section.settings.hero_eyebrow }}</p>
-      {% endif %}
-      <h1 class="jill-catalog__hero-title">{{ section.settings.hero_heading }}</h1>
-      {% if section.settings.hero_text != blank %}
-        <div class="jill-catalog__hero-text rte">{{ section.settings.hero_text }}</div>
-      {% endif %}
-      {% if custom_order_url != blank %}
-        <div class="jill-catalog__hero-actions">
-          {% render 'ui-button',
-            type: 'button',
-            label: section.settings.custom_order_label,
-            url: custom_order_url,
-            variant: 'secondary'
-          %}
-        </div>
-      {% endif %}
-    </header>
-
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
       <div class="jill-catalog__section jill-catalog__featured">
         <div class="jill-catalog__section-heading">
@@ -244,12 +224,7 @@
     "templates": ["collection"]
   },
   "settings": [
-    {"type": "text", "id": "hero_eyebrow", "label": "Hero eyebrow", "default": "THE JILL CATALOG"},
-    {"type": "text", "id": "hero_heading", "label": "Hero heading", "default": "Made for your celebration. Made your way."},
-    {"type": "richtext", "id": "hero_text", "label": "Hero text", "default": "<p>Browse handmade piñatas, personalized party favors, kid activities, apparel, gifts and party supplies—or tell us exactly what you’re imagining.</p>"},
     {"type": "url", "id": "custom_order_url", "label": "Custom order URL"},
-    {"type": "text", "id": "custom_order_label", "label": "Custom order button label", "default": "Create a custom order"},
-
     {"type": "collection", "id": "featured_collection", "label": "Featured products collection"},
     {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
     {"type": "text", "id": "featured_eyebrow", "label": "Featured eyebrow", "default": "FEATURED RIGHT NOW"},
