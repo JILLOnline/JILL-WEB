@@ -174,6 +174,14 @@ This log records decisions and rationale so future contributors do not repeatedl
 
 **Consequence:** Product Options groups one or more eligible customization units under the same enumerated option values, preserves unrelated completed state, and reconciles deterministically when quantity or dependencies change. Singleton Product Options may not depend on allocated per-unit fields because those fields have no singular value. Free-form per-unit customer content remains owned by Personalization.
 
+## 2026-09-09 — Product Options allocation groups are unique active combinations
+
+**Decision:** A completed Product Options allocation group is identified by the ordered values of only the allocated fields that are active for that group. Two completed groups may not own the same active combination. `jill-product-options.js` owns combination signatures, duplicate detection, remaining-option availability and whether another allocation group can be created.
+
+**Why:** Repeating an identical allocation group does not express a new option; its units belong in the existing group's count. Dependent options require combination-level uniqueness rather than globally disabling an upstream choice. For example, `Empty` is one combination, while `Filled + Cheetos` and `Filled + Doritos` are separate combinations. This allows `Filled` to remain reusable until its valid dependent choices are exhausted without creating Snack Bag-specific logic.
+
+**Consequence:** Renderers ask the Product Options owner which enumerated choices remain valid instead of deriving uniqueness from DOM state. Hidden dependent values do not alter combination identity. Duplicate state supplied externally fails incomplete, direct duplicate transitions are rejected, and `Add another option` is available only while units remain unallocated and at least one unused valid combination still exists.
+
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
