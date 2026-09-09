@@ -26,14 +26,20 @@
     {% sections 'footer-group' %}
 
     <script src="{{ 'jill-quantity.js' | asset_url }}" defer></script>
-    {% if request.page_type == 'product' %}
+    {% if request.page_type == 'product' or template.suffix == 'custom-order' %}
       <script src="{{ 'jill-product-capabilities.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-form-engine.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-product-options.js' | asset_url }}" defer></script>
+      <script src="{{ 'jill-personalization.js' | asset_url }}" defer></script>
+      <script src="{{ 'jill-product.js' | asset_url }}" defer></script>
+    {% endif %}
+    {% if request.page_type == 'product' %}
       <script src="{{ 'jill-commerce-adjustments.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-commerce-cart.js' | asset_url }}" defer></script>
-      <script src="{{ 'jill-product.js' | asset_url }}" defer></script>
       <script src="{{ 'jill-product-commerce.js' | asset_url }}" defer></script>
+    {% endif %}
+    {% if template.suffix == 'custom-order' %}
+      <script src="{{ 'jill-custom-order.js' | asset_url }}" defer></script>
     {% endif %}
   </body>
 </html>
