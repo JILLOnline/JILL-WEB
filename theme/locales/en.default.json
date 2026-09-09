@@ -21,6 +21,8 @@
       "variant": "Options",
       "quantity": "Quantity",
       "add_to_cart": "Add to cart",
+      "adding_to_cart": "Adding your configured item to the cart…",
+      "cart_error": "We could not add this configured item to your cart. Please try again.",
       "sold_out": "Sold out",
       "choose_option": "Choose an option",
       "customize_title": "Customize your order",
