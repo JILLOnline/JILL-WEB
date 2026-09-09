@@ -50,6 +50,45 @@
       }
     }
   },
+  "custom_order": {
+    "title": "Request a custom order",
+    "intro": "Choose your products and complete the options each product requires. Product configuration is pulled directly from the same JILL capability system used on product pages.",
+    "customer": {
+      "title": "Your details",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "preferred_contact": "Preferred contact",
+      "contact_options": {
+        "email": "Email",
+        "phone": "Phone call",
+        "text": "Text message"
+      }
+    },
+    "planning": {
+      "title": "Event and fulfillment",
+      "event_date": "Event date",
+      "date_needed": "Date you need it",
+      "fulfillment": "How will I get it?",
+      "city": "City",
+      "state": "State",
+      "postal_code": "ZIP / postal code",
+      "fulfillment_options": {
+        "pickup": "Pickup",
+        "shipping": "Shipping"
+      }
+    },
+    "products": {
+      "title": "Products",
+      "help": "Select any products you want included. Each selected product automatically loads its current Product Options, quantity rules, and personalization fields."
+    },
+    "review": {
+      "title": "Review your custom order"
+    },
+    "actions": {
+      "review": "Review"
+    }
+  },
   "collections": {
     "sort_by": "Sort by",
     "apply_sort": "Apply",
