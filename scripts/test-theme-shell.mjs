@@ -24,6 +24,7 @@ includesAll(header, 'header', [
   "render 'ui-icon', name: 'cart'",
   "render 'header-socials'",
   "render 'header-localization'",
+  "render 'jill-category-dock'",
   'settings.brand_logo',
   'section.settings.menu.links',
   'routes.all_products_collection_url',
@@ -32,6 +33,38 @@ includesAll(header, 'header', [
 
 for (const forbidden of ['<style', 'style=', 'MutationObserver', 'insertAdjacent', 'appendChild']) {
   if (header.includes(forbidden)) fail(`header must not contain ${forbidden}`);
+}
+
+const dock = read('theme/snippets/jill-category-dock.liquid');
+includesAll(dock, 'collection dock', [
+  'data-jill-category-dock',
+  'jill-category-dock__item',
+  'jill-category-dock__image',
+  '#JillCatalogCollection-',
+]);
+for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver', 'setTimeout']) {
+  if (dock.includes(forbidden)) fail(`collection dock must not contain ${forbidden}`);
+}
+
+const dockCss = read('theme/assets/jill-category-dock.css');
+includesAll(dockCss, 'collection dock CSS', [
+  '.jill-category-dock',
+  '.jill-category-dock__track',
+  '.jill-category-dock__item',
+  '.jill-category-dock__media',
+  '@media (max-width: 749px)',
+  '@media (prefers-reduced-motion: reduce)',
+]);
+if (dockCss.includes('!important')) fail('collection dock CSS must not use !important');
+
+const headerGroup = read('theme/sections/header-group.json');
+for (const handle of ['pinatas', 'catalog', 'kid-activities', 'party-supplies', 'apparel-gifts-dtf-sublimation']) {
+  if (!headerGroup.includes(`\"${handle}\"`)) fail(`header group is missing collection dock handle ${handle}`);
+}
+
+const themeLayout = read('theme/layout/theme.liquid');
+if (!themeLayout.includes("'jill-category-dock.css' | asset_url | stylesheet_tag")) {
+  fail('theme layout must load the canonical collection dock stylesheet');
 }
 
 const headerJs = read('theme/assets/jill-header.js');

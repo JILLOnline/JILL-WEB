@@ -1,0 +1,59 @@
+{% liquid
+  capture dock_handles
+    echo collection_1.handle
+    echo '|'
+    echo collection_2.handle
+    echo '|'
+    echo collection_3.handle
+    echo '|'
+    echo collection_4.handle
+    echo '|'
+    echo collection_5.handle
+  endcapture
+  assign dock_handles = dock_handles | split: '|'
+%}
+
+<nav class="jill-category-dock" aria-label="Shop by collection" data-jill-category-dock>
+  <div class="jill-category-dock__track">
+    {% for raw_handle in dock_handles %}
+      {% assign dock_handle = raw_handle | strip %}
+      {% if dock_handle != blank %}
+        {% assign dock_collection = collections[dock_handle] %}
+        {% if dock_collection != blank %}
+          {% liquid
+            assign dock_url = dock_collection.url
+            assign is_active = false
+            assign dock_image = dock_collection.image
+
+            if dock_image == blank and dock_collection.products.first != blank
+              assign dock_image = dock_collection.products.first.featured_image
+            endif
+
+            if request.page_type == 'collection'
+              if collection.handle == 'all'
+                assign dock_url = '#JillCatalogCollection-' | append: dock_handle
+              elsif collection.handle == dock_handle
+                assign is_active = true
+              endif
+            endif
+          %}
+
+          <a
+            class="jill-category-dock__item{% if is_active %} is-active{% endif %}"
+            href="{{ dock_url }}"
+            {% if is_active %}aria-current="page"{% endif %}
+          >
+            <span class="jill-category-dock__media" aria-hidden="true">
+              {% if dock_image != blank %}
+                {{ dock_image | image_url: width: 180 | image_tag: class: 'jill-category-dock__image', loading: 'eager', widths: '80, 120, 180', sizes: '72px' }}
+              {% else %}
+                <span class="jill-category-dock__placeholder">{{ dock_collection.title | slice: 0 }}</span>
+              {% endif %}
+            </span>
+            <span class="jill-category-dock__label">{{ dock_collection.title }}</span>
+          </a>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</nav>

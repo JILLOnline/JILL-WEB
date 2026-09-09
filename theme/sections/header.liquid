@@ -19,6 +19,16 @@
   <div class="jill-site-header__inner jill-page-width">
     <div class="jill-site-header__layout" data-header-layout="core">
       <div class="jill-site-header__left">
+        <div class="jill-site-header__brand-stage" data-brand-stage="core">
+          <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+            {% if settings.brand_logo != blank %}
+              {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: shop.name, width: settings.brand_logo_width, loading: 'eager' }}
+            {% else %}
+              {{ shop.name }}
+            {% endif %}
+          </a>
+        </div>
+
         <details class="jill-site-header__drawer" data-jill-header-drawer>
           <summary class="jill-site-header__icon-button" aria-label="{{ 'header.navigation' | t }}">
             {% render 'ui-icon', name: 'menu' %}
@@ -94,15 +104,15 @@
         {% endif %}
       </div>
 
-      <div class="jill-site-header__brand-stage" data-brand-stage="core">
-        <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
-          {% if settings.brand_logo != blank %}
-            {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: shop.name, width: settings.brand_logo_width, loading: 'eager' }}
-          {% else %}
-            {{ shop.name }}
-          {% endif %}
-        </a>
-      </div>
+      {% if section.settings.show_collection_dock %}
+        {% render 'jill-category-dock',
+          collection_1: section.settings.collection_1,
+          collection_2: section.settings.collection_2,
+          collection_3: section.settings.collection_3,
+          collection_4: section.settings.collection_4,
+          collection_5: section.settings.collection_5
+        %}
+      {% endif %}
 
       <div class="jill-site-header__utilities" data-header-utilities="core">
         <div class="jill-site-header__utility-primary">
@@ -180,6 +190,37 @@
       "id": "show_localization",
       "label": "Show country and language selectors",
       "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_collection_dock",
+      "label": "Show collection dock",
+      "default": true
+    },
+    {
+      "type": "collection",
+      "id": "collection_1",
+      "label": "Collection 1"
+    },
+    {
+      "type": "collection",
+      "id": "collection_2",
+      "label": "Collection 2"
+    },
+    {
+      "type": "collection",
+      "id": "collection_3",
+      "label": "Collection 3"
+    },
+    {
+      "type": "collection",
+      "id": "collection_4",
+      "label": "Collection 4"
+    },
+    {
+      "type": "collection",
+      "id": "collection_5",
+      "label": "Collection 5"
     },
     {
       "type": "checkbox",

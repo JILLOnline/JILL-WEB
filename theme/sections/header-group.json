@@ -11,6 +11,12 @@
         "show_account": true,
         "show_socials": true,
         "show_localization": true,
+        "show_collection_dock": true,
+        "collection_1": "pinatas",
+        "collection_2": "catalog",
+        "collection_3": "kid-activities",
+        "collection_4": "party-supplies",
+        "collection_5": "apparel-gifts-dtf-sublimation",
         "show_custom_order": true,
         "custom_order_label": "Custom Order"
       }
