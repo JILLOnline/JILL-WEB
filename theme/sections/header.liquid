@@ -1,6 +1,7 @@
 {% liquid
   assign custom_order_url = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
   assign custom_order_in_menu = false
+  assign search_input_id = 'JillHeaderSearch-' | append: section.id
 
   if section.settings.menu != blank
     for link in section.settings.menu.links
@@ -94,13 +95,39 @@
         </details>
 
         {% if section.settings.show_search %}
-          <a
-            class="jill-site-header__icon-button"
-            href="{{ routes.search_url }}"
-            aria-label="{{ 'header.search' | t }}"
+          <form
+            class="jill-site-header__search"
+            action="{{ routes.search_url }}"
+            method="get"
+            role="search"
+            data-jill-header-search
+            data-header-search="core"
+            data-open="false"
           >
-            {% render 'ui-icon', name: 'search' %}
-          </a>
+            <button
+              class="jill-site-header__icon-button jill-site-header__search-toggle"
+              type="button"
+              aria-label="{{ 'header.search' | t }}"
+              aria-controls="{{ search_input_id }}"
+              aria-expanded="false"
+              data-jill-header-search-toggle
+            >
+              {% render 'ui-icon', name: 'search' %}
+            </button>
+            <input
+              class="jill-site-header__search-input"
+              id="{{ search_input_id }}"
+              type="search"
+              name="q"
+              value="{{ search.terms | escape }}"
+              placeholder="{{ 'search.placeholder' | t | escape }}"
+              aria-label="{{ 'search.label' | t | escape }}"
+              autocomplete="off"
+              enterkeyhint="search"
+              data-jill-header-search-input
+              hidden
+            >
+          </form>
         {% endif %}
       </div>
 

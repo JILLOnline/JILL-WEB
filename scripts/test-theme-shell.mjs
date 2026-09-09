@@ -34,11 +34,19 @@ includesAll(header, 'header', [
   "render 'header-socials'",
   "render 'header-localization'",
   "render 'jill-category-dock'",
+  'data-jill-header-search',
+  'data-jill-header-search-toggle',
+  'data-jill-header-search-input',
+  'action="{{ routes.search_url }}"',
+  'name="q"',
   'settings.brand_logo',
   'section.settings.menu.links',
   'routes.all_products_collection_url',
   '/pages/quote?view=custom-order',
 ]);
+if (header.includes('href="{{ routes.search_url }}"')) {
+  fail('header search must expand into its input instead of navigating before a query exists');
+}
 
 for (const forbidden of ['<style', 'style=', 'MutationObserver', 'insertAdjacent', 'appendChild']) {
   if (header.includes(forbidden)) fail(`header must not contain ${forbidden}`);
@@ -68,6 +76,18 @@ for (const forbidden of ['!important', '.jill-category-dock__item:hover', 'trans
   if (dockCss.includes(forbidden)) fail(`collection dock CSS must not contain ${forbidden}`);
 }
 
+const headerSearchCss = read('theme/assets/jill-header-search.css');
+includesAll(headerSearchCss, 'header search CSS', [
+  '.jill-site-header__search',
+  ".jill-site-header__search[data-open='true']",
+  '.jill-site-header__search-input',
+  '.jill-site-header__search-toggle',
+  '@media (max-width: 749px)',
+]);
+for (const forbidden of ['!important', '#JillHeaderSearch-', 'style=']) {
+  if (headerSearchCss.includes(forbidden)) fail(`header search CSS must not contain ${forbidden}`);
+}
+
 const headerGroup = read('theme/sections/header-group.json');
 for (const handle of ['pinatas', 'catalog', 'kid-activities', 'party-supplies', 'apparel-gifts-dtf-sublimation']) {
   if (!headerGroup.includes(`"${handle}"`)) fail(`header group is missing collection dock handle ${handle}`);
@@ -76,6 +96,7 @@ for (const handle of ['pinatas', 'catalog', 'kid-activities', 'party-supplies', 
 const themeLayout = read('theme/layout/theme.liquid');
 includesAll(themeLayout, 'theme layout', [
   "'jill-category-dock.css' | asset_url | stylesheet_tag",
+  "'jill-header-search.css' | asset_url | stylesheet_tag",
   "template.suffix == 'custom-order'",
   "template.suffix == 'our-story'",
   "template.suffix == 'contact'",
@@ -87,12 +108,28 @@ includesAll(themeLayout, 'theme layout', [
 const headerJs = read('theme/assets/jill-header.js');
 includesAll(headerJs, 'header runtime', [
   "'[data-jill-header-localization]'",
+  "'[data-jill-header-search]'",
+  'setSearchOpen',
   "document.addEventListener('change', onChange)",
+  "document.addEventListener('click', onClick)",
+  "document.addEventListener('keydown', onKeydown)",
+  "event.key !== 'Escape'",
   'requestSubmit()',
 ]);
 for (const forbidden of ['MutationObserver', 'setTimeout', '.style', 'appendChild', 'insertAdjacent']) {
   if (headerJs.includes(forbidden)) fail(`header runtime must not contain ${forbidden}`);
 }
+
+const mainSearch = read('theme/sections/main-search.liquid');
+if (mainSearch.includes('jill-search__form') || mainSearch.includes("name: 'q'") || mainSearch.includes("type: 'submit'")) {
+  fail('search results page must not duplicate the header search input or submit button');
+}
+includesAll(mainSearch, 'search results page', [
+  "'search.title' | t",
+  "'search.result_count' | t",
+  'search.results',
+  "render 'product-card'",
+]);
 
 const storefrontCss = read('theme/assets/jill-storefront.css');
 includesAll(storefrontCss, 'storefront CSS', [
@@ -166,6 +203,10 @@ const homeTypes = Object.values(index.sections || {}).map((section) => section.t
 if (homeTypes.length < 3 || homeTypes.some((type) => type !== 'rich-text')) {
   fail('home must ship with the initial three-section navigable composition');
 }
+const homeHeroSettings = index.sections.hero?.settings || {};
+if (homeHeroSettings.button_label || homeHeroSettings.button_link) {
+  fail('home hero must not duplicate catalog navigation with a browse button');
+}
 
 for (const [templatePath, expectedType] of [
   ['theme/templates/page.json', 'main-page'],
@@ -186,8 +227,8 @@ if (!String(welcomeSettings.heading || '').includes('Welcome to JILL')) {
 if (!String(welcomeSettings.body || '').includes('every party deserves a little extra sparkle')) {
   fail('welcome page must ship with substantive welcome copy');
 }
-if (welcomeSettings.button_link !== '/collections/all') {
-  fail('welcome page must link into the catalog');
+if (welcomeSettings.button_label || welcomeSettings.button_link) {
+  fail('welcome page must not duplicate catalog navigation with a browse button');
 }
 
 console.log('Theme shell contract passed.');

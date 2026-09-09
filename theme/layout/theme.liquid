@@ -12,6 +12,7 @@
     {{ 'jill-foundation.css' | asset_url | stylesheet_tag: preload: true }}
     {{ 'jill-ui.css' | asset_url | stylesheet_tag }}
     {{ 'jill-storefront.css' | asset_url | stylesheet_tag }}
+    {{ 'jill-header-search.css' | asset_url | stylesheet_tag }}
     {{ 'jill-category-dock.css' | asset_url | stylesheet_tag }}
 
     {% liquid
@@ -66,9 +67,6 @@
     {% endif %}
     {% if is_contact_template %}
       <script src="{{ 'jill-contact.js' | asset_url }}" defer></script>
-    {% endif %}
-    {% if request.page_type == 'collection' and collection.handle == 'all' %}
-      <script src="{{ 'jill-catalog.js' | asset_url }}" defer></script>
     {% endif %}
   </body>
 </html>

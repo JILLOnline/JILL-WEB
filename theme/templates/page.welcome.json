@@ -5,8 +5,7 @@
       "settings": {
         "heading": "Welcome to JILL",
         "body": "<p><em>We make every party come to life! 💖🌟</em></p><p>We create 100% recyclable <strong>custom-made piñatas</strong>, colorful party supplies, and unique party favors designed to make your special moments unforgettable. Every piece is handcrafted with love, vibrant colors, and playful details to bring joy to birthdays, baby showers, weddings, and any event worth celebrating.</p><p>From show-stopping piñatas to party favors that make guests smile, we’re here to turn your vision into a celebration full of personality and charm.</p><p>Because at <strong>JILL</strong>, we believe every party deserves a little extra sparkle!</p>",
-        "button_label": "Browse the catalog",
-        "button_link": "/collections/all"
+        "button_label": ""
       }
     }
   },

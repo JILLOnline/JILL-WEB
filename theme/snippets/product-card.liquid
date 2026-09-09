@@ -39,17 +39,11 @@
     endif
     assign custom_order_link = custom_order_url | append: separator | append: 'product=' | append: encoded_handle
   endif
-
-  assign catalog_search = card_title | append: ' ' | append: card_product.product_type | append: ' ' | append: card_product.description | strip_html | downcase
 %}
 
 <article
   class="jill-product-card{% if is_catalog %} jill-card{% endif %}"
-  {% if is_catalog %}
-    data-display="catalog"
-    data-jill-catalog-product
-    data-search="{{ catalog_search | escape }}"
-  {% endif %}
+  {% if is_catalog %}data-display="catalog"{% endif %}
 >
   <a class="jill-product-card__media" href="{{ card_url }}" aria-label="{{ card_title | escape }}">
     {% if card_product.featured_image != blank %}

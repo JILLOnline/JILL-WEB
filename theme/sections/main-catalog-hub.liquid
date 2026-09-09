@@ -1,10 +1,6 @@
 {% if collection.handle == 'all' %}
   {% liquid
     assign custom_order_url = section.settings.custom_order_url
-    assign products_anchor = '#JillCatalogProducts-' | append: section.id
-    assign search_id = 'JillCatalogSearch-' | append: section.id
-    assign search_label = 'catalog.search.label' | t
-    assign search_placeholder = 'catalog.search.placeholder' | t
     assign featured_collection = section.settings.featured_collection
     assign featured_limit = section.settings.featured_limit
     assign category_count = 0
@@ -31,12 +27,7 @@
     endfor
   %}
 
-  <section
-    class="jill-catalog jill-page-width"
-    data-jill-catalog
-    data-result-singular="{{ 'catalog.results.product' | t | escape }}"
-    data-result-plural="{{ 'catalog.results.products' | t | escape }}"
-  >
+  <section class="jill-catalog jill-page-width">
     <header class="jill-catalog__hero">
       {% if section.settings.hero_eyebrow != blank %}
         <p class="jill-catalog__eyebrow">{{ section.settings.hero_eyebrow }}</p>
@@ -45,21 +36,16 @@
       {% if section.settings.hero_text != blank %}
         <div class="jill-catalog__hero-text rte">{{ section.settings.hero_text }}</div>
       {% endif %}
-      <div class="jill-catalog__hero-actions">
-        {% render 'ui-button',
-          type: 'button',
-          label: section.settings.browse_label,
-          url: products_anchor
-        %}
-        {% if custom_order_url != blank %}
+      {% if custom_order_url != blank %}
+        <div class="jill-catalog__hero-actions">
           {% render 'ui-button',
             type: 'button',
             label: section.settings.custom_order_label,
             url: custom_order_url,
             variant: 'secondary'
           %}
-        {% endif %}
-      </div>
+        </div>
+      {% endif %}
     </header>
 
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
@@ -85,7 +71,7 @@
       </div>
     {% endif %}
 
-    <div class="jill-catalog__section" id="JillCatalogProducts-{{ section.id }}" tabindex="-1" data-jill-catalog-products-section>
+    <div class="jill-catalog__section" id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
       <div class="jill-catalog__section-heading">
         <p class="jill-catalog__eyebrow">{{ section.settings.catalog_eyebrow }}</p>
         <h2>{{ section.settings.catalog_heading }}</h2>
@@ -94,23 +80,14 @@
         {% endif %}
       </div>
 
-      {% if category_count > 0 %}
+      {% if category_count > 0 and catalog_product_count > 0 %}
         <div class="jill-catalog__toolbar">
-          {% if section.settings.show_search %}
-            {% render 'ui-field',
-              id: search_id,
-              name: blank,
-              label: search_label,
-              type: 'search',
-              placeholder: search_placeholder
-            %}
-          {% endif %}
-          <p class="jill-catalog__results-count" role="status" aria-live="polite" data-jill-catalog-results-count>
+          <p class="jill-catalog__results-count">
             {{ catalog_product_count }} {% if catalog_product_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
           </p>
         </div>
 
-        <div data-jill-catalog-groups>
+        <div>
           {% for block in section.blocks %}
             {% if block.type == 'category' and block.settings.collection != blank %}
               {% liquid
@@ -126,11 +103,10 @@
                   class="jill-card jill-catalog__section"
                   id="JillCatalogCollection-{{ category_collection.handle | escape }}"
                   data-jill-catalog-group
-                  data-catalog-collection="{{ category_collection.handle | escape }}"
                   {{ block.shopify_attributes }}
                 >
                   <div class="jill-catalog__section-heading">
-                    <p class="jill-catalog__eyebrow" data-jill-catalog-group-count>
+                    <p class="jill-catalog__eyebrow">
                       {{ category_collection.products_count }} {% if category_collection.products_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
                     </p>
                     <h3>{{ category_collection.title }}</h3>
@@ -139,7 +115,7 @@
                     {% endif %}
                   </div>
 
-                  <div class="jill-product-grid jill-catalog__product-grid" data-jill-catalog-product-grid>
+                  <div class="jill-product-grid jill-catalog__product-grid">
                     {% for card_product in category_collection.products %}
                       {% render 'product-card',
                         card_product: card_product,
@@ -154,8 +130,6 @@
             {% endif %}
           {% endfor %}
         </div>
-
-        <p class="jill-catalog__empty" data-jill-catalog-empty hidden>{{ 'catalog.results.empty' | t }}</p>
       {% else %}
         <p class="jill-catalog__empty">{{ 'catalog.results.empty' | t }}</p>
       {% endif %}
@@ -273,7 +247,6 @@
     {"type": "text", "id": "hero_eyebrow", "label": "Hero eyebrow", "default": "THE JILL CATALOG"},
     {"type": "text", "id": "hero_heading", "label": "Hero heading", "default": "Made for your celebration. Made your way."},
     {"type": "richtext", "id": "hero_text", "label": "Hero text", "default": "<p>Browse handmade piñatas, personalized party favors, kid activities, apparel, gifts and party supplies—or tell us exactly what you’re imagining.</p>"},
-    {"type": "text", "id": "browse_label", "label": "Browse button label", "default": "Browse products"},
     {"type": "url", "id": "custom_order_url", "label": "Custom order URL"},
     {"type": "text", "id": "custom_order_label", "label": "Custom order button label", "default": "Create a custom order"},
 
@@ -286,7 +259,6 @@
     {"type": "text", "id": "catalog_eyebrow", "label": "Catalog eyebrow", "default": "EXPLORE EVERYTHING"},
     {"type": "text", "id": "catalog_heading", "label": "Catalog heading", "default": "The full JILL catalog"},
     {"type": "text", "id": "catalog_text", "label": "Catalog text", "default": "Browse each JILL collection, see what makes every piece special, and open the product that feels right for your celebration."},
-    {"type": "checkbox", "id": "show_search", "label": "Show catalog search", "default": true},
 
     {"type": "text", "id": "how_eyebrow", "label": "How it works eyebrow", "default": "YOUR IDEA, ORGANIZED"},
     {"type": "text", "id": "how_heading", "label": "How it works heading", "default": "How custom ordering works"},

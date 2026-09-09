@@ -1,7 +1,4 @@
 {% liquid
-  assign search_input_id = 'JillSearch-' | append: section.id
-  assign search_label = 'search.label' | t
-  assign search_button_label = 'search.submit' | t
   assign empty_label = 'search.no_results' | t
   assign initial_label = 'search.initial' | t
 %}
@@ -9,19 +6,6 @@
 <section class="jill-search jill-page-width">
   <header class="jill-search__header">
     <h1 class="jill-search__title">{{ 'search.title' | t }}</h1>
-
-    <form class="jill-search__form" action="{{ routes.search_url }}" method="get" role="search">
-      {% render 'ui-field',
-        id: search_input_id,
-        name: 'q',
-        label: search_label,
-        type: 'search',
-        value: search.terms,
-        required: true,
-        autocomplete: 'off'
-      %}
-      {% render 'ui-button', type: 'submit', label: search_button_label %}
-    </form>
   </header>
 
   {% if search.performed %}

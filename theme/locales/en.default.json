@@ -125,10 +125,6 @@
     }
   },
   "catalog": {
-    "search": {
-      "label": "Search the catalog",
-      "placeholder": "Search products"
-    },
     "filters": {
       "label": "Filter catalog by category",
       "all": "All"
@@ -136,7 +132,7 @@
     "results": {
       "product": "product",
       "products": "products",
-      "empty": "No products match this filter yet."
+      "empty": "No products are available in this catalog yet."
     },
     "card": {
       "view_product": "View product",
@@ -154,10 +150,10 @@
     "empty": "There are no products in this collection yet."
   },
   "search": {
-    "title": "Search",
-    "label": "Search the store",
-    "submit": "Search",
-    "initial": "Search products, pages, and articles.",
+    "title": "Search results",
+    "label": "Search JILL",
+    "placeholder": "What are you looking for?",
+    "initial": "Use the search icon in the header to search JILL.",
     "no_results": "No results matched your search.",
     "result_count": {
       "one": "{{ count }} result for “{{ terms }}”",
