@@ -12,6 +12,7 @@ on:
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
       - 'scripts/test-product-capabilities.mjs'
+      - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
@@ -28,6 +29,7 @@ on:
       - 'scripts/check-theme-core.mjs'
       - 'scripts/test-form-engine.mjs'
       - 'scripts/test-product-capabilities.mjs'
+      - 'scripts/test-commerce-capabilities.mjs'
       - 'scripts/test-product-options.mjs'
       - 'scripts/test-quantity.mjs'
       - 'scripts/test-commerce-adjustments.mjs'
@@ -69,6 +71,9 @@ jobs:
 
       - name: Run product capability resolver tests explicitly
         run: npm run test:product-capabilities
+
+      - name: Run paid capability failure tests explicitly
+        run: npm run test:commerce-capabilities
 
       - name: Run Product Options tests explicitly
         run: npm run test:product-options
