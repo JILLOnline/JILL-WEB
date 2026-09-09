@@ -9,6 +9,7 @@
     if (!root || root.dataset.jillCatalogInitialized === 'true') return;
     root.dataset.jillCatalogInitialized = 'true';
 
+    // Collection grouping is server-rendered; this runtime owns search visibility only.
     const groups = Array.from(root.querySelectorAll('[data-jill-catalog-group]'));
     const search = root.querySelector('[id^="JillCatalogSearch-"]');
     const count = root.querySelector('[data-jill-catalog-results-count]');
