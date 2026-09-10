@@ -119,6 +119,13 @@
     return true;
   };
 
+  const openInitialCollection = () => {
+    if (openHashTarget(window.location.hash, true)) return;
+
+    const firstTrigger = document.querySelector(`${accordionSelector} ${triggerSelector}`);
+    if (firstTrigger) setActiveTrigger(firstTrigger, true);
+  };
+
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest(triggerSelector);
     if (trigger) {
@@ -140,5 +147,5 @@
   window.addEventListener('resize', () => requestAnimationFrame(syncAllCarousels));
 
   syncAllCarousels();
-  openHashTarget(window.location.hash, true);
+  openInitialCollection();
 })();
