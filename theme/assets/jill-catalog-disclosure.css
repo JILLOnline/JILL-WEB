@@ -271,9 +271,12 @@
   }
 
   [data-jill-catalog-disclosures] .jill-product-card__actions {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: stretch;
     gap: calc(var(--jill-space-unit) * 0.75);
     margin-block-start: 0;
     padding-block-start: calc(var(--jill-space-unit) * 0.5);
+    white-space: nowrap;
   }
 
   .jill-catalog-disclosure__description {
