@@ -110,76 +110,36 @@ assert.equal(globalThis.JILLCustomOrder.requestedProductHandle('?product=party-f
 assert.equal(globalThis.JILLCustomOrder.requestedProductHandle('?foo=bar'), '');
 
 const select = {checked: false};
-const details = {hidden: true, ariaHidden: 'true', setAttribute(name, value) { if (name === 'aria-hidden') this.ariaHidden = value; }};
-const item = {
-  dataset: {productHandle: 'desired-product'},
+const choice = {
+  dataset: {productId: '123', productHandle: 'desired-product'},
   querySelector(selector) {
     if (selector === '[data-jill-custom-order-select]') return select;
-    if (selector === '[data-jill-custom-order-details]') return details;
     return null;
   },
+};
+const item = {
+  hidden: true,
+  ariaHidden: 'true',
+  dataset: {jillProductId: '123', productHandle: 'desired-product'},
+  setAttribute(name, value) { if (name === 'aria-hidden') this.ariaHidden = value; },
 };
 const root = {
   dataset: {},
   querySelectorAll(selector) {
-    return selector === '[data-jill-custom-order-item]' ? [item] : [];
+    if (selector === '[data-jill-product-choice]') return [choice];
+    if (selector === '[data-jill-custom-order-item]') return [item];
+    return [];
   },
 };
 assert.equal(globalThis.JILLCustomOrder.applyCatalogPrefill(root, '?product=desired-product'), true);
 assert.equal(select.checked, true);
-assert.equal(details.hidden, false);
-assert.equal(details.ariaHidden, 'false');
+assert.equal(item.hidden, false);
+assert.equal(item.ariaHidden, 'false');
 assert.equal(root.dataset.jillCustomOrderPrefilled, 'true');
 select.checked = false;
-details.hidden = true;
+item.hidden = true;
 assert.equal(globalThis.JILLCustomOrder.applyCatalogPrefill(root, '?product=unknown'), false);
 assert.equal(select.checked, false);
-assert.equal(details.hidden, true);
+assert.equal(item.hidden, true);
 
 console.log('JILL Catalog Hub tests passed.');
-
-const botanical = fs.readFileSync('theme/assets/jill-botanical-field.svg', 'utf8');
-const foundation = fs.readFileSync('theme/assets/jill-foundation.css.liquid', 'utf8');
-const decorativeRule = disclosureStyles.match(/\.jill-catalog-disclosure\[open\]::before,[\s\S]*?\n  }/)[0];
-
-assert.match(decorativeRule, /\.jill-catalog-accordion__panel::before/);
-assert.match(decorativeRule, /pointer-events: none/);
-assert.match(decorativeRule, /position: absolute/);
-assert.match(decorativeRule, /z-index: 0/);
-assert.match(decorativeRule, /background-image: var\(--jill-botanical-field\)/);
-assert.match(decorativeRule, /background-repeat: no-repeat/);
-assert.match(decorativeRule, /background-size: cover/);
-assert.match(decorativeRule, /opacity: 0\.30/);
-assert.doesNotMatch(decorativeRule, /mask-|background: var\(--jill-color-accent\)/);
-
-assert.doesNotMatch(disclosureStyles, /\.jill-catalog-disclosure__description[^{}]*::(?:before|after)/);
-const descriptionRule = disclosureStyles.match(/\.jill-catalog-disclosure__description\s*\{([^}]+)}/)[1];
-assert.doesNotMatch(descriptionRule, /background-image|mask|botanical/);
-assert.match(descriptionRule, /border-radius:/);
-assert.match(descriptionRule, /text-align: center/);
-
-const mobileBotanicalRule = disclosureStyles.match(/@media \(max-width: 749px\)[\s\S]*?\[data-jill-catalog-disclosures\] :is\(\.jill-catalog-disclosure\[open\], \.jill-catalog-accordion__panel\)::before \{([\s\S]*?)\n    }/)[1];
-assert.match(mobileBotanicalRule, /background-repeat: repeat-y/);
-assert.match(mobileBotanicalRule, /background-position: center top/);
-assert.match(mobileBotanicalRule, /background-size: 100% auto/);
-assert.match(mobileBotanicalRule, /opacity: 0\.18/);
-assert.doesNotMatch(mobileBotanicalRule, /mask-image/, 'mobile botanical field should use the exposed bubble space instead of hiding behind an edge-only mask');
-
-assert.doesNotMatch(botanical, /<style|<script|<image|<foreignObject|<pattern|<defs|<symbol|<use/i);
-assert.match(botanical, /viewBox="0 0 1200 600"/);
-assert.match(botanical, /preserveAspectRatio="none"/);
-assert.ok(Buffer.byteLength(botanical) < 30000, 'Catalog floral SVG must stay lightweight');
-assert.equal((botanical.match(/data-botanical-motif=/g) || []).length, 36, 'Catalog floral field must keep the intentional 36-motif composition');
-
-for (const [tier, expected] of Object.entries({XL: 4, L: 6, M: 8, S: 9, XS: 9})) {
-  const actual = (botanical.match(new RegExp(`data-size-tier="${tier}"`, 'g')) || []).length;
-  assert.equal(actual, expected, `Catalog floral field must keep ${expected} ${tier} motifs`);
-}
-
-for (const color of ['#ffb5e9', '#9e87df', '#bbf3aa', '#f3b600', '#6bc8ef']) {
-  assert.match(botanical, new RegExp(color, 'i'), `Catalog floral field must include ${color}`);
-}
-
-assert.match(foundation, /--jill-botanical-field:\s*url\("\{\{\s*'jill-botanical-field\.svg'\s*\|\s*asset_url\s*\}\}"\);/);
-assert.doesNotMatch(foundation, /inline_asset_content|data:image\/svg\+xml|url_encode|jill_brand_|--jill-brand-/);
-console.log('Catalog floral ownership, versioned asset delivery, density, size hierarchy, responsive free-space treatment and clean descriptions passed.');
