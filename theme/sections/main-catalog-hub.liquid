@@ -58,33 +58,51 @@
 
     <div id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
       {% if category_count > 0 and catalog_product_count > 0 %}
-        <div class="jill-catalog-disclosure-list">
-          {% for block in section.blocks %}
-            {% if block.type == 'category' and block.settings.collection != blank %}
-              {% liquid
-                assign category_collection = block.settings.collection
-                assign category_description = block.settings.description
-                if category_description == blank
-                  assign category_description = category_collection.description | strip_html | truncatewords: 34
-                endif
-              %}
-
-              {% if category_collection.products_count > 0 %}
-                <details
-                  class="jill-catalog-disclosure"
-                  id="JillCatalogCollection-{{ category_collection.handle | escape }}"
-                  data-jill-catalog-disclosure
-                  data-jill-catalog-group
-                  {{ block.shopify_attributes }}
-                >
-                  <summary class="jill-catalog-disclosure__pill">
+        <div class="jill-catalog-accordion" data-jill-catalog-accordion>
+          <div class="jill-catalog-disclosure-list" role="group" aria-label="Catalog collections">
+            {% for block in section.blocks %}
+              {% if block.type == 'category' and block.settings.collection != blank %}
+                {% assign category_collection = block.settings.collection %}
+                {% if category_collection.products_count > 0 %}
+                  <button
+                    class="jill-catalog-disclosure__pill"
+                    type="button"
+                    id="JillCatalogCollection-{{ category_collection.handle | escape }}"
+                    data-jill-catalog-trigger
+                    aria-expanded="false"
+                    aria-controls="JillCatalogPanel-{{ category_collection.handle | escape }}"
+                    {{ block.shopify_attributes }}
+                  >
                     <span class="jill-catalog-disclosure__title">{{ category_collection.title }}</span>
                     <span class="jill-catalog-disclosure__icon" aria-hidden="true">
                       {% render 'ui-icon', name: 'chevron-down' %}
                     </span>
-                  </summary>
+                  </button>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
 
-                  <div class="jill-catalog-disclosure__content">
+          <div class="jill-catalog-accordion__panels">
+            {% for block in section.blocks %}
+              {% if block.type == 'category' and block.settings.collection != blank %}
+                {% liquid
+                  assign category_collection = block.settings.collection
+                  assign category_description = block.settings.description
+                  if category_description == blank
+                    assign category_description = category_collection.description | strip_html | truncatewords: 34
+                  endif
+                %}
+
+                {% if category_collection.products_count > 0 %}
+                  <div
+                    class="jill-catalog-disclosure__content jill-catalog-accordion__panel"
+                    id="JillCatalogPanel-{{ category_collection.handle | escape }}"
+                    data-jill-catalog-panel
+                    data-jill-catalog-group
+                    aria-labelledby="JillCatalogCollection-{{ category_collection.handle | escape }}"
+                    hidden
+                  >
                     {% if category_description != blank %}
                       <p class="jill-catalog-disclosure__description">{{ category_description }}</p>
                     {% endif %}
@@ -100,10 +118,10 @@
                       {% endfor %}
                     </div>
                   </div>
-                </details>
+                {% endif %}
               {% endif %}
-            {% endif %}
-          {% endfor %}
+            {% endfor %}
+          </div>
         </div>
       {% else %}
         <p class="jill-catalog__empty">{{ 'catalog.results.empty' | t }}</p>

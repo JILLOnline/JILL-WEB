@@ -38,15 +38,17 @@ assert.ok(!categoryHandles.includes('jill'), 'internal catch-all collection must
 
 assert.doesNotMatch(section, /data-jill-catalog-category-link/, 'collection discovery cards belong to header navigation, not Catalog body');
 assert.doesNotMatch(section, /data-jill-catalog-filter/, 'Catalog body must not duplicate header collection navigation with filter pills');
-assert.match(section, /<details[^>]*data-jill-catalog-disclosure/s, 'Catalog collections must use native disclosure controls');
-assert.match(section, /<summary class="jill-catalog-disclosure__pill">/, 'each collection disclosure must collapse to the canonical pill');
+assert.match(section, /data-jill-catalog-accordion/, 'Catalog collections must share one accordion owner');
+assert.match(section, /<button[^>]*data-jill-catalog-trigger/s, 'collection controls must be stable pill buttons');
+assert.match(section, /data-jill-catalog-panel/, 'collection content must render in a dedicated panel row below the pill dock');
+assert.doesNotMatch(section, /jill-catalog-disclosure__count/, 'collection pills must not render product-count text');
 assert.match(section, /data-jill-catalog-group/, 'Catalog Hub must group products by configured Shopify collection');
 assert.match(section, /JillCatalogCollection-/, 'catalog collection groups must expose stable anchors for header navigation');
 assert.match(section, /category_collection\.products/, 'each catalog collection must render its own available products');
 assert.match(section, /jill-catalog__product-grid/, 'each collection group must use the canonical product grid');
 assert.match(section, /render 'product-card'/, 'Catalog Hub must reuse the canonical Product Card');
 assert.match(section, /featured_collection\.products/, 'featured merchandising must come from the configured Shopify collection');
-assert.match(section, /jill-catalog-disclosure--featured/, 'featured merchandising must use the same collapsible collection pattern');
+assert.match(section, /jill-catalog-disclosure--featured/, 'featured merchandising must remain independently collapsible');
 assert.doesNotMatch(section, /featured_eyebrow|FEATURED RIGHT NOW/i, 'featured Catalog shelf must not render or configure an eyebrow label');
 assert.match(section, /block\.type == 'creation'/, 'real-work gallery must be merchant configurable');
 assert.match(section, /block\.type == 'testimonial'/, 'testimonials must be merchant supplied');
@@ -58,8 +60,10 @@ assert.equal(fs.existsSync('theme/assets/jill-catalog.js'), false, 'obsolete Cat
 assert.match(layout, /is_catalog_hub/, 'catalog-only disclosure assets must be route scoped');
 assert.match(layout, /jill-catalog-disclosure\.css/, 'catalog disclosure styles must load from one dedicated owner');
 assert.match(layout, /jill-catalog-disclosure\.js/, 'catalog disclosure behavior must load from one dedicated owner');
-assert.match(disclosureRuntime, /hashchange/, 'collection dock anchors must open their collapsed catalog collection');
-assert.match(disclosureRuntime, /target\.open = true/, 'targeted catalog disclosures must be opened explicitly');
+assert.match(disclosureRuntime, /hashchange/, 'collection dock anchors must open their targeted catalog collection');
+assert.match(disclosureRuntime, /setActiveTrigger/, 'catalog collections must have one accordion state owner');
+assert.match(disclosureRuntime, /querySelectorAll\(triggerSelector\)/, 'accordion activation must reconcile every sibling trigger');
+assert.match(disclosureRuntime, /panel\.hidden = !active/, 'accordion activation must show only the active panel');
 
 assert.doesNotMatch(productCard, /render 'catalog-product-summary'/, 'Catalog cards must not expose Product Options or personalization summaries');
 assert.doesNotMatch(productCard, /catalog_teaser|catalog\.card\.teaser_|jill-product-card__teaser/, 'product cards must not render teaser sentences');
@@ -87,7 +91,9 @@ assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.
 assert.match(storefrontStyles, /\.jill-product-card\[data-display='catalog'\] \.jill-product-card__image\s*\{[^}]*object-fit:\s*contain;[^}]*object-position:\s*center;/s, 'Catalog thumbnails must show the full product instead of cropping it');
 assert.match(disclosureStyles, /\[data-jill-product-card-media\]\s*\{[^}]*background:\s*var\(--jill-color-background\);/s, 'unused thumbnail canvas must be white');
 assert.match(disclosureStyles, /\.jill-catalog-disclosure__pill\s*\{[^}]*border-radius:\s*999px;/s, 'collapsed collections must render as pills');
-assert.match(disclosureStyles, /\.jill-catalog-disclosure\[open\]\s*\{/, 'expanded collections must restore a full content surface');
+assert.match(disclosureStyles, /\.jill-catalog-disclosure-list\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s, 'collection pills must stay on one stable horizontal rail');
+assert.match(disclosureStyles, /\.jill-catalog-accordion__panel\s*\{[^}]*width:\s*100%;/s, 'active collection content must open in a full-width row under the pill rail');
+assert.match(disclosureStyles, /\.jill-catalog-disclosure\[open\]\s*\{/, 'featured merchandising must retain its expanded content surface');
 assert.match(storefrontStyles, /\.jill-product-card__actions\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s, 'catalog product actions must use one compact two-button layout');
 assert.doesNotMatch(storefrontStyles, /\.jill-catalog__featured-grid \.jill-product-card/, 'featured merchandising must not fork canonical product-card sizing');
 assert.doesNotMatch(uiStyles, /jill-product-card\[data-display='catalog'\]/, 'Catalog product-card visuals belong to the storefront owner, not the generic UI layer');
