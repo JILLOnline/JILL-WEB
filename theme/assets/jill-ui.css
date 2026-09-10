@@ -36,6 +36,7 @@
   }
 
   .jill-button[data-variant='secondary'] {
+    padding-inline: calc(var(--jill-space-unit) * 3.5);
     border-color: currentColor;
     background: transparent;
     color: var(--jill-color-foreground);
