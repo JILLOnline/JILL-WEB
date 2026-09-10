@@ -80,7 +80,7 @@
     cursor: pointer;
     list-style: none;
     white-space: nowrap;
-    transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    transition: border-color 160ms ease, border-width 160ms ease, background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   }
 
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill {
@@ -118,6 +118,7 @@
   }
 
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill[aria-expanded='true'] {
+    border-width: calc(var(--jill-border-width) + 2px);
     border-color: color-mix(in srgb, var(--jill-color-glow-pink) 92%, var(--jill-color-foreground) 4%);
     box-shadow: inset 0 0 0.7rem color-mix(in srgb, var(--jill-color-glow-pink) 20%, transparent);
   }
@@ -334,6 +335,7 @@
       min-height: 3.05rem;
       flex: 1 1 0;
       padding: 0.68rem clamp(0.3rem, 1vw, 0.6rem);
+      container-type: inline-size;
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill:not([aria-expanded='true']) {
@@ -342,11 +344,11 @@
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__title {
       width: 100%;
-      font-size: clamp(0.68rem, 2.15vw, 0.9rem);
+      font-size: min(0.9rem, 11cqi);
       line-height: 1.05;
       text-align: center;
-      text-wrap: balance;
-      white-space: normal;
+      text-wrap: nowrap;
+      white-space: nowrap;
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-cue {
