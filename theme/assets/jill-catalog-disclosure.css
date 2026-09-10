@@ -141,7 +141,7 @@
     background: color-mix(in srgb, var(--jill-color-accent) 4%, var(--jill-color-background));
   }
 
-  [data-jill-catalog-disclosures] .jill-product-card__title {
+  [data-jill-catalog-disclosures] .jill-product-card[data-display='catalog'] .jill-product-card__title {
     width: 100%;
     min-height: 0;
     text-align: center;
