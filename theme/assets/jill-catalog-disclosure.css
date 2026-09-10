@@ -118,7 +118,7 @@
     overscroll-behavior-inline: contain;
     scroll-snap-type: inline proximity;
     scrollbar-width: thin;
-    padding-block-end: calc(var(--jill-space-unit) * 0.5);
+    padding-block: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 0.5);
   }
 
   [data-jill-catalog-disclosures] :is(.jill-catalog__featured-grid, .jill-catalog__product-grid) > .jill-product-card {
