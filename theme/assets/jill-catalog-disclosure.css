@@ -136,12 +136,34 @@
   }
 
   .jill-catalog-accordion__panel {
+    position: relative;
+    isolation: isolate;
     width: 100%;
+    overflow: hidden;
     padding: clamp(1rem, 2.25vw, 1.75rem);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
     border-radius: calc(var(--jill-card-radius) * 1.2);
     background: var(--jill-color-background);
     scroll-margin-top: 10rem;
+  }
+
+  .jill-catalog-accordion__panel::before,
+  .jill-catalog-disclosure__description::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--jill-color-accent);
+    -webkit-mask-image: url('jill-botanical-field.svg');
+    mask-image: url('jill-botanical-field.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: cover;
+    mask-size: cover;
+    opacity: 0.16;
   }
 
   [data-jill-catalog-disclosures] :is(.jill-catalog__featured-grid, .jill-catalog__product-grid) {
@@ -239,10 +261,13 @@
   }
 
   .jill-catalog-disclosure__description {
+    position: relative;
+    isolation: isolate;
     order: 2;
     width: 100%;
     max-width: none;
     box-sizing: border-box;
+    overflow: hidden;
     margin: 0 auto;
     padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
