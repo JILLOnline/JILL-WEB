@@ -145,7 +145,10 @@ const formsCss = read('theme/assets/jill-forms.css');
 includesAll(formsCss, 'guided form CSS', [
   '.jill-custom-order',
   '.jill-contact',
-  '.jill-custom-order__catalog',
+  '.jill-custom-order__product-list',
+  '.jill-custom-order-item',
+  '.jill-custom-order__personalization',
+  '.jill-media',
   '.jill-contact__step-index',
   '.jill-contact__choice-group',
   '@media (max-width: 749px)',
