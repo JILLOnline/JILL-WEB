@@ -168,7 +168,7 @@
     background-repeat: no-repeat;
     background-position: center;
     background-size: 100% 100%;
-    opacity: 0.15;
+    opacity: 0.30;
   }
 
   .jill-catalog-disclosure[open] > *,
@@ -299,8 +299,8 @@
 
   @media (max-width: 749px) {
     [data-jill-catalog-disclosures] :is(.jill-catalog-disclosure[open], .jill-catalog-accordion__panel)::before {
-      opacity: 0.11;
-      mask-image: linear-gradient(to right, var(--jill-color-foreground), transparent 2.5rem, transparent calc(100% - 2.5rem), var(--jill-color-foreground));
+      opacity: 0.18;
+      mask-image: linear-gradient(to right, var(--jill-color-foreground) 0 2.5rem, transparent 6.5rem calc(100% - 6.5rem), var(--jill-color-foreground) calc(100% - 2.5rem) 100%);
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {

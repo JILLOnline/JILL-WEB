@@ -138,30 +138,37 @@ assert.equal(details.hidden, true);
 
 console.log('JILL Catalog Hub tests passed.');
 
-
 const botanical = fs.readFileSync('theme/assets/jill-botanical-field.svg', 'utf8');
 const foundation = fs.readFileSync('theme/assets/jill-foundation.css.liquid', 'utf8');
 const decorativeRule = disclosureStyles.match(/\.jill-catalog-disclosure\[open\]::before,[\s\S]*?\n  }/)[0];
+
 assert.match(decorativeRule, /\.jill-catalog-accordion__panel::before/);
 assert.match(decorativeRule, /pointer-events: none/);
 assert.match(decorativeRule, /position: absolute/);
 assert.match(decorativeRule, /z-index: 0/);
 assert.match(decorativeRule, /background-image: var\(--jill-botanical-field\)/);
 assert.match(decorativeRule, /background-repeat: no-repeat/);
+assert.match(decorativeRule, /opacity: 0\.30/);
 assert.doesNotMatch(decorativeRule, /mask-|background: var\(--jill-color-accent\)/);
+
 assert.doesNotMatch(disclosureStyles, /\.jill-catalog-disclosure__description[^{}]*::(?:before|after)/);
 const descriptionRule = disclosureStyles.match(/\.jill-catalog-disclosure__description\s*\{([^}]+)}/)[1];
 assert.doesNotMatch(descriptionRule, /background-image|mask|botanical/);
 assert.match(descriptionRule, /border-radius:/);
 assert.match(descriptionRule, /text-align: center/);
-assert.match(disclosureStyles, /@media \(max-width: 749px\)[\s\S]*opacity: 0\.11;[\s\S]*mask-image: linear-gradient/);
-assert.doesNotMatch(botanical, /<style|<script|<image|<foreignObject|<pattern|#[0-9a-f]{6}/i);
-assert.ok(Buffer.byteLength(botanical) < 15000, 'SVG must fit Shopify inline_asset_content limit');
-assert.equal((foundation.match(/inline_asset_content/g) || []).length, 1);
-for (const name of ['pink', 'purple', 'green', 'yellow', 'blue']) {
-  assert.match(botanical, new RegExp('var\\(--jill-brand-' + name + '\\)'));
-  assert.equal((foundation.match(new RegExp('assign jill_brand_' + name + ' =', 'g')) || []).length, 1);
-  assert.ok(foundation.includes(`replace: 'var(--jill-brand-${name})', jill_brand_${name}`));
+
+assert.match(disclosureStyles, /@media \(max-width: 749px\)[\s\S]*opacity: 0\.18;[\s\S]*mask-image: linear-gradient/);
+
+assert.doesNotMatch(botanical, /<style|<script|<image|<foreignObject|<pattern|<defs|<symbol|<use/i);
+assert.match(botanical, /viewBox="0 0 1200 600"/);
+assert.match(botanical, /preserveAspectRatio="none"/);
+assert.ok(Buffer.byteLength(botanical) < 30000, 'Catalog floral SVG must stay lightweight');
+assert.ok((botanical.match(/data-botanical-motif=/g) || []).length >= 48, 'large Catalog panels need a visibly populated floral field');
+
+for (const color of ['#ffb5e9', '#9e87df', '#bbf3aa', '#f3b600', '#6bc8ef']) {
+  assert.match(botanical, new RegExp(color, 'i'), `Catalog floral field must include ${color}`);
 }
-assert.deepEqual([...new Set([...botanical.matchAll(/<svg x="[^"]+" y="[^"]+" width="(\d+)"/g)].map(match => Number(match[1])))].sort((a, b) => a - b), [18, 30, 46, 64]);
-console.log('Catalog floral ownership, palette, clean descriptions and mobile edge treatment passed.');
+
+assert.match(foundation, /--jill-botanical-field:\s*url\("\{\{\s*'jill-botanical-field\.svg'\s*\|\s*asset_url\s*\}\}"\);/);
+assert.doesNotMatch(foundation, /inline_asset_content|data:image\/svg\+xml|url_encode|jill_brand_|--jill-brand-/);
+console.log('Catalog floral ownership, versioned asset delivery, density, clean descriptions and mobile edge treatment passed.');

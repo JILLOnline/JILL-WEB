@@ -1,17 +1,3 @@
-{% liquid
-  assign jill_brand_pink = '#ffb5e9'
-  assign jill_brand_purple = '#9e87df'
-  assign jill_brand_green = '#bbf3aa'
-  assign jill_brand_yellow = '#f3b600'
-  assign jill_brand_blue = '#6bc8ef'
-  assign jill_botanical_field = 'jill-botanical-field.svg' | inline_asset_content
-  assign jill_botanical_field = jill_botanical_field | replace: 'var(--jill-brand-pink)', jill_brand_pink
-  assign jill_botanical_field = jill_botanical_field | replace: 'var(--jill-brand-purple)', jill_brand_purple
-  assign jill_botanical_field = jill_botanical_field | replace: 'var(--jill-brand-green)', jill_brand_green
-  assign jill_botanical_field = jill_botanical_field | replace: 'var(--jill-brand-yellow)', jill_brand_yellow
-  assign jill_botanical_field = jill_botanical_field | replace: 'var(--jill-brand-blue)', jill_brand_blue
-%}
-
 {{ settings.type_primary_font | font_face: font_display: 'swap' }}
 
 @layer foundation, ui, storefront;
@@ -25,12 +11,7 @@
     --jill-color-success: {{ settings.success_color }};
     --jill-color-info: {{ settings.info_color }};
     --jill-color-error: {{ settings.error_color }};
-    --jill-brand-pink: {{ jill_brand_pink }};
-    --jill-brand-purple: {{ jill_brand_purple }};
-    --jill-brand-green: {{ jill_brand_green }};
-    --jill-brand-yellow: {{ jill_brand_yellow }};
-    --jill-brand-blue: {{ jill_brand_blue }};
-    --jill-botanical-field: url("data:image/svg+xml;charset=UTF-8,{{ jill_botanical_field | url_encode | replace: '+', '%20' }}");
+    --jill-botanical-field: url("{{ 'jill-botanical-field.svg' | asset_url }}");
     --jill-color-glow-pink: #ff72b6;
     --jill-font-family: {{ settings.type_primary_font.family }}, {{ settings.type_primary_font.fallback_families }};
     --jill-page-width: {{ settings.max_page_width }};
