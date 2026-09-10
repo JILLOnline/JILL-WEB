@@ -101,13 +101,14 @@
     </div>
 
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
-      <details class="jill-catalog-disclosure jill-catalog-disclosure--featured" data-jill-catalog-disclosure open>
-        <summary class="jill-catalog-disclosure__pill">
-          <span class="jill-catalog-disclosure__title">{{ section.settings.featured_heading }}</span>
-          <span class="jill-catalog-disclosure__icon" aria-hidden="true">
-            {% render 'ui-icon', name: 'chevron-down' %}
-          </span>
-        </summary>
+      <section
+        class="jill-catalog-disclosure jill-catalog-disclosure--featured"
+        open
+        aria-labelledby="JillCatalogFeaturedHeading-{{ section.id }}"
+      >
+        <div class="jill-catalog__section-heading jill-catalog__section-heading--centered">
+          <h2 id="JillCatalogFeaturedHeading-{{ section.id }}">{{ section.settings.featured_heading }}</h2>
+        </div>
 
         <div class="jill-catalog-disclosure__content">
           {% if section.settings.featured_text != blank %}
@@ -125,7 +126,7 @@
             {% endfor %}
           </div>
         </div>
-      </details>
+      </section>
     {% endif %}
 
     {% if creation_count > 0 %}
@@ -204,7 +205,7 @@
     {"type": "url", "id": "custom_order_url", "label": "Custom order URL"},
     {"type": "collection", "id": "featured_collection", "label": "Featured products collection"},
     {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
-    {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Shop the Party"},
+    {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Featured Products"},
     {"type": "text", "id": "featured_text", "label": "Featured text", "default": "A rotating edit of JILL favorites and pieces we want you to see first."},
 
     {"type": "text", "id": "creations_eyebrow", "label": "Creations eyebrow", "default": "MADE BY JILL"},
