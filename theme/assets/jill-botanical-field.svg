@@ -1,93 +1,160 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" fill="none">
-  <defs>
-    <symbol id="rounded" viewBox="-22 -22 44 44">
-      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
-      <circle r="4" fill="var(--jill-brand-yellow)"/>
-    </symbol>
-    <symbol id="daisy" viewBox="-22 -22 44 44">
-      <g fill="currentColor">
-        <ellipse cy="-11" rx="5" ry="10"/>
-        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/>
-        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/>
-        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/>
-        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/>
-        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/>
-      </g>
-      <circle r="4.5" fill="var(--jill-brand-yellow)"/>
-    </symbol>
-    <symbol id="leaves" viewBox="-22 -22 44 44">
-      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/>
-      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="grass" viewBox="-22 -22 44 44">
-      <path fill="var(--jill-brand-green)" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
-    </symbol>
-    <symbol id="sprig" viewBox="-22 -22 44 44">
-      <path d="M-6 18Q-1 1 6-15" stroke="var(--jill-brand-green)" stroke-width="2" stroke-linecap="round"/>
-      <path fill="var(--jill-brand-green)" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
-    </symbol>
-  </defs>
   <svg x="0%" y="0%" width="64" height="64" viewBox="0 0 44 44" transform="translate(-8 -6)" overflow="visible" color="var(--jill-brand-pink)">
-    <use href="#rounded" width="44" height="44" transform="rotate(-12 22 22)"/>
+    <g transform="translate(22 22) rotate(-12)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="0%" y="0%" width="30" height="30" viewBox="0 0 44 44" transform="translate(53 12)" overflow="visible">
-    <use href="#leaves" width="44" height="44" transform="rotate(25 22 22)"/>
+    <g transform="translate(22 22) rotate(25)">
+      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z" />
+      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
   </svg>
   <svg x="16%" y="0%" width="30" height="30" viewBox="0 0 44 44" transform="translate(0 12)" overflow="visible" color="var(--jill-brand-purple)">
-    <use href="#daisy" width="44" height="44" transform="rotate(17 22 22)"/>
+    <g transform="translate(22 22) rotate(17)">
+      <g fill="currentColor">
+        <ellipse cy="-11" rx="5" ry="10" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)" />
+      </g>
+      <circle r="4.5" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="29%" y="0%" width="18" height="18" viewBox="0 0 44 44" transform="translate(0 6)" overflow="visible">
-    <use href="#grass" width="44" height="44" transform="rotate(-16 22 22)"/>
+    <g transform="translate(22 22) rotate(-16)">
+      <path fill="var(--jill-brand-green)" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z" />
+    </g>
   </svg>
   <svg x="77%" y="0%" width="30" height="30" viewBox="0 0 44 44" transform="translate(0 10)" overflow="visible" color="var(--jill-brand-blue)">
-    <use href="#rounded" width="44" height="44" transform="rotate(-18 22 22)"/>
+    <g transform="translate(22 22) rotate(-18)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="0%" width="46" height="46" viewBox="0 0 44 44" transform="translate(-55 2)" overflow="visible" color="var(--jill-brand-yellow)">
-    <use href="#daisy" width="44" height="44" transform="rotate(15 22 22)"/>
+    <g transform="translate(22 22) rotate(15)">
+      <g fill="currentColor">
+        <ellipse cy="-11" rx="5" ry="10" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)" />
+      </g>
+      <circle r="4.5" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="0%" width="30" height="30" viewBox="0 0 44 44" transform="translate(-28 45)" overflow="visible">
-    <use href="#leaves" width="44" height="44" transform="rotate(-25 22 22)"/>
+    <g transform="translate(22 22) rotate(-25)">
+      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z" />
+      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
   </svg>
   <svg x="0%" y="24%" width="30" height="30" viewBox="0 0 44 44" transform="translate(2 0)" overflow="visible" color="var(--jill-brand-purple)">
-    <use href="#rounded" width="44" height="44" transform="rotate(25 22 22)"/>
+    <g transform="translate(22 22) rotate(25)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="26%" width="30" height="30" viewBox="0 0 44 44" transform="translate(-24 0)" overflow="visible">
-    <use href="#grass" width="44" height="44" transform="rotate(10 22 22)"/>
+    <g transform="translate(22 22) rotate(10)">
+      <path fill="var(--jill-brand-green)" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z" />
+    </g>
   </svg>
   <svg x="0%" y="48%" width="30" height="30" viewBox="0 0 44 44" transform="translate(-5 0)" overflow="visible">
-    <use href="#leaves" width="44" height="44" transform="rotate(-40 22 22)"/>
+    <g transform="translate(22 22) rotate(-40)">
+      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z" />
+      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
   </svg>
   <svg x="100%" y="50%" width="46" height="46" viewBox="0 0 44 44" transform="translate(-34 0)" overflow="visible" color="var(--jill-brand-pink)">
-    <use href="#rounded" width="44" height="44" transform="rotate(18 22 22)"/>
+    <g transform="translate(22 22) rotate(18)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="0%" y="72%" width="18" height="18" viewBox="0 0 44 44" transform="translate(4 0)" overflow="visible" color="var(--jill-brand-blue)">
-    <use href="#daisy" width="44" height="44" transform="rotate(-20 22 22)"/>
+    <g transform="translate(22 22) rotate(-20)">
+      <g fill="currentColor">
+        <ellipse cy="-11" rx="5" ry="10" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)" />
+      </g>
+      <circle r="4.5" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="76%" width="30" height="30" viewBox="0 0 44 44" transform="translate(-25 0)" overflow="visible">
-    <use href="#sprig" width="44" height="44" transform="rotate(25 22 22)"/>
+    <g transform="translate(22 22) rotate(25)">
+      <path d="M-6 18Q-1 1 6-15" stroke="var(--jill-brand-green)" stroke-width="2" stroke-linecap="round" />
+      <path fill="var(--jill-brand-green)" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z" />
+    </g>
   </svg>
   <svg x="0%" y="100%" width="46" height="46" viewBox="0 0 44 44" transform="translate(-5 -49)" overflow="visible" color="var(--jill-brand-yellow)">
-    <use href="#rounded" width="44" height="44" transform="rotate(-25 22 22)"/>
+    <g transform="translate(22 22) rotate(-25)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="0%" y="100%" width="30" height="30" viewBox="0 0 44 44" transform="translate(34 -29)" overflow="visible">
-    <use href="#leaves" width="44" height="44" transform="rotate(-20 22 22)"/>
+    <g transform="translate(22 22) rotate(-20)">
+      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z" />
+      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
   </svg>
   <svg x="18%" y="100%" width="30" height="30" viewBox="0 0 44 44" transform="translate(0 -31)" overflow="visible" color="var(--jill-brand-purple)">
-    <use href="#daisy" width="44" height="44" transform="rotate(25 22 22)"/>
+    <g transform="translate(22 22) rotate(25)">
+      <g fill="currentColor">
+        <ellipse cy="-11" rx="5" ry="10" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)" />
+      </g>
+      <circle r="4.5" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="33%" y="100%" width="18" height="18" viewBox="0 0 44 44" transform="translate(0 -20)" overflow="visible">
-    <use href="#grass" width="44" height="44" transform="rotate(12 22 22)"/>
+    <g transform="translate(22 22) rotate(12)">
+      <path fill="var(--jill-brand-green)" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z" />
+    </g>
   </svg>
   <svg x="65%" y="100%" width="18" height="18" viewBox="0 0 44 44" transform="translate(0 -20)" overflow="visible" color="var(--jill-brand-pink)">
-    <use href="#rounded" width="44" height="44" transform="rotate(40 22 22)"/>
+    <g transform="translate(22 22) rotate(40)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="83%" y="100%" width="30" height="30" viewBox="0 0 44 44" transform="translate(0 -30)" overflow="visible" color="var(--jill-brand-blue)">
-    <use href="#daisy" width="44" height="44" transform="rotate(-8 22 22)"/>
+    <g transform="translate(22 22) rotate(-8)">
+      <g fill="currentColor">
+        <ellipse cy="-11" rx="5" ry="10" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(60)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(120)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(180)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(240)" />
+        <ellipse cy="-11" rx="5" ry="10" transform="rotate(300)" />
+      </g>
+      <circle r="4.5" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="100%" width="64" height="64" viewBox="0 0 44 44" transform="translate(-58 -60)" overflow="visible" color="var(--jill-brand-purple)">
-    <use href="#rounded" width="44" height="44" transform="rotate(16 22 22)"/>
+    <g transform="translate(22 22) rotate(16)">
+      <path fill="currentColor" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z" />
+      <circle r="4" fill="var(--jill-brand-yellow)" />
+    </g>
   </svg>
   <svg x="100%" y="100%" width="30" height="30" viewBox="0 0 44 44" transform="translate(-84 -25)" overflow="visible">
-    <use href="#leaves" width="44" height="44" transform="rotate(60 22 22)"/>
+    <g transform="translate(22 22) rotate(60)">
+      <path fill="var(--jill-brand-green)" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z" />
+      <path d="M0 17Q0 7 9-5" stroke="var(--jill-brand-green)" stroke-width="2.5" stroke-linecap="round" />
+    </g>
   </svg>
 </svg>

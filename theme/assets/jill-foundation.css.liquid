@@ -30,7 +30,7 @@
     --jill-brand-green: {{ jill_brand_green }};
     --jill-brand-yellow: {{ jill_brand_yellow }};
     --jill-brand-blue: {{ jill_brand_blue }};
-    --jill-botanical-field: url("data:image/svg+xml,{{ jill_botanical_field | url_encode | replace: '+', '%20' }}");
+    --jill-botanical-field: url("data:image/svg+xml;charset=UTF-8,{{ jill_botanical_field | url_encode | replace: '+', '%20' }}");
     --jill-color-glow-pink: #ff72b6;
     --jill-font-family: {{ settings.type_primary_font.family }}, {{ settings.type_primary_font.fallback_families }};
     --jill-page-width: {{ settings.max_page_width }};
