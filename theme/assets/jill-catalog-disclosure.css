@@ -109,6 +109,24 @@
     scroll-margin-top: 10rem;
   }
 
+  .jill-catalog__featured-grid,
+  .jill-catalog__product-grid {
+    grid-template-rows: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(min(100%, 18rem), 18rem);
+    justify-content: safe center;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: thin;
+    padding-block-end: calc(var(--jill-space-unit) * 0.5);
+  }
+
+  .jill-catalog__featured-grid > .jill-product-card,
+  .jill-catalog__product-grid > .jill-product-card {
+    scroll-snap-align: start;
+  }
+
   .jill-catalog-disclosure__description {
     order: 2;
     width: 100%;
