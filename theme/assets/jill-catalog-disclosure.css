@@ -12,7 +12,7 @@
     justify-content: stretch;
     gap: clamp(0.65rem, 1.1vw, 1rem);
     overflow-x: auto;
-    padding: 1rem clamp(1.25rem, 2vw, 1.5rem) 1.5rem;
+    padding: 1rem clamp(1.25rem, 2vw, 1.5rem) 0.8rem;
     scroll-padding-inline: clamp(1.25rem, 2vw, 1.5rem);
     scroll-snap-type: inline proximity;
     scrollbar-width: none;
@@ -20,6 +20,42 @@
 
   .jill-catalog-disclosure-list::-webkit-scrollbar {
     display: none;
+  }
+
+  .jill-catalog-disclosure-cue {
+    display: grid;
+    width: min(calc(100% - 2rem), 64rem);
+    grid-template-columns: minmax(2rem, 1fr) auto minmax(2rem, 1fr);
+    align-items: center;
+    gap: clamp(0.55rem, 1.2vw, 0.9rem);
+    justify-self: center;
+    color: color-mix(in srgb, var(--jill-color-foreground) 52%, transparent);
+  }
+
+  .jill-catalog-disclosure-cue__line {
+    height: var(--jill-border-width);
+    background: color-mix(in srgb, var(--jill-color-foreground) 18%, transparent);
+  }
+
+  .jill-catalog-disclosure-cue__label {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--jill-space-unit) * 0.75);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .jill-catalog-disclosure-cue__icon {
+    display: inline-flex;
+  }
+
+  .jill-catalog-disclosure-cue__icon svg {
+    width: 0.85rem;
+    height: 0.85rem;
   }
 
   .jill-catalog-disclosure {
@@ -36,7 +72,6 @@
     flex: 0 0 auto;
     align-items: center;
     justify-self: center;
-    gap: calc(var(--jill-space-unit) * 1.25);
     padding: calc(var(--jill-space-unit) * 1.25) calc(var(--jill-space-unit) * 2.5);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 18%, transparent);
     border-radius: 999px;
@@ -51,12 +86,11 @@
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill {
     width: auto;
     max-width: none;
-    min-width: clamp(8.5rem, 14vw, 12.5rem);
+    min-width: clamp(7rem, 12vw, 11.5rem);
     min-height: clamp(3.6rem, 4.2vw, 4.25rem);
     flex: 1 1 0;
     justify-content: center;
-    gap: clamp(0.55rem, 0.9vw, 0.9rem);
-    padding: clamp(0.9rem, 1.4vw, 1.2rem) clamp(1.05rem, 1.7vw, 1.65rem);
+    padding: clamp(0.9rem, 1.4vw, 1.2rem) clamp(0.85rem, 1.3vw, 1.25rem);
     border-width: calc(var(--jill-border-width) + 1px);
     border-color: color-mix(in srgb, var(--jill-color-glow-pink) 62%, var(--jill-color-foreground) 8%);
     box-shadow: 0 0 0.42rem color-mix(in srgb, var(--jill-color-glow-pink) 56%, transparent), 0 0.3rem 0.75rem color-mix(in srgb, var(--jill-color-glow-pink) 26%, transparent);
@@ -96,28 +130,7 @@
   }
 
   .jill-catalog-disclosure-list .jill-catalog-disclosure__title {
-    font-size: clamp(1.05rem, 0.95rem + 0.45vw, 1.4rem);
-  }
-
-  .jill-catalog-disclosure__icon {
-    display: inline-flex;
-    flex: 0 0 auto;
-    transition: transform 160ms ease;
-  }
-
-  .jill-catalog-disclosure__icon svg {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .jill-catalog-disclosure-list .jill-catalog-disclosure__icon svg {
-    width: 1.1rem;
-    height: 1.1rem;
-  }
-
-  .jill-catalog-disclosure__pill[aria-expanded='true'] .jill-catalog-disclosure__icon,
-  .jill-catalog-disclosure[open] .jill-catalog-disclosure__icon {
-    transform: rotate(180deg);
+    font-size: clamp(0.9rem, 0.72rem + 0.55vw, 1.3rem);
   }
 
   .jill-catalog-disclosure[open] {
@@ -309,27 +322,36 @@
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {
       justify-content: flex-start;
       gap: 0.6rem;
-      padding: 0.8rem 1rem 1.1rem;
+      padding: 0.8rem 1rem 0.45rem;
       scroll-padding-inline: 1rem;
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill {
       width: auto;
       min-width: max-content;
-      min-height: 3.2rem;
+      min-height: 3.05rem;
       flex: 0 0 auto;
-      gap: 0.55rem;
-      padding: 0.75rem 1rem;
+      padding: 0.72rem 0.8rem;
       box-shadow: 0 0 0.34rem color-mix(in srgb, var(--jill-color-glow-pink) 54%, transparent), 0 0.24rem 0.62rem color-mix(in srgb, var(--jill-color-glow-pink) 24%, transparent);
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__title {
-      font-size: 1rem;
+      font-size: clamp(0.78rem, 2.15vw, 0.9rem);
     }
 
-    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__icon svg {
-      width: 0.9rem;
-      height: 0.9rem;
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-cue {
+      width: calc(100% - 2rem);
+      gap: 0.55rem;
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-cue__label {
+      font-size: 0.66rem;
+      letter-spacing: 0.07em;
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-cue__icon svg {
+      width: 0.75rem;
+      height: 0.75rem;
     }
   }
 }

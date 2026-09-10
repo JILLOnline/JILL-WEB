@@ -46,13 +46,21 @@
                     {{ block.shopify_attributes }}
                   >
                     <span class="jill-catalog-disclosure__title">{{ category_collection.title }}</span>
-                    <span class="jill-catalog-disclosure__icon" aria-hidden="true">
-                      {% render 'ui-icon', name: 'chevron-down' %}
-                    </span>
                   </button>
                 {% endif %}
               {% endif %}
             {% endfor %}
+          </div>
+
+          <div class="jill-catalog-disclosure-cue" aria-hidden="true">
+            <span class="jill-catalog-disclosure-cue__line"></span>
+            <span class="jill-catalog-disclosure-cue__label">
+              <span>Select a category</span>
+              <span class="jill-catalog-disclosure-cue__icon">
+                {% render 'ui-icon', name: 'chevron-down' %}
+              </span>
+            </span>
+            <span class="jill-catalog-disclosure-cue__line"></span>
           </div>
 
           <div class="jill-catalog-accordion__panels">
