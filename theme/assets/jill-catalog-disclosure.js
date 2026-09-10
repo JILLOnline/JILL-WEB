@@ -3,6 +3,75 @@
   const triggerSelector = '[data-jill-catalog-trigger]';
   const panelSelector = '[data-jill-catalog-panel]';
   const collectionHashPrefix = '#JillCatalogCollection-';
+  const carouselTrackSelector = '[data-jill-catalog-disclosures] :is(.jill-catalog__featured-grid, .jill-catalog__product-grid)';
+  const carouselState = new WeakMap();
+
+  const carouselStep = (track) => {
+    const card = track.querySelector('.jill-product-card');
+    if (!card) return Math.max(track.clientWidth * 0.8, 1);
+
+    const styles = getComputedStyle(track);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  };
+
+  const updateCarouselControls = (track) => {
+    const state = carouselState.get(track);
+    if (!state) return;
+
+    const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+    const scrollable = maxScroll > 2;
+    state.controls.hidden = !scrollable;
+    state.previous.disabled = !scrollable || track.scrollLeft <= 2;
+    state.next.disabled = !scrollable || track.scrollLeft >= maxScroll - 2;
+  };
+
+  const createCarouselButton = (direction, label, symbol) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'jill-catalog-carousel__button';
+    button.dataset.jillCatalogCarouselDirection = direction;
+    button.setAttribute('aria-label', label);
+
+    const icon = document.createElement('span');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = symbol;
+    button.append(icon);
+
+    return button;
+  };
+
+  const initCarousel = (track) => {
+    if (carouselState.has(track)) return;
+
+    const controls = document.createElement('div');
+    controls.className = 'jill-catalog-carousel__controls';
+    controls.hidden = true;
+    controls.setAttribute('aria-label', 'Product carousel controls');
+
+    const previous = createCarouselButton('previous', 'Previous products', '‹');
+    const next = createCarouselButton('next', 'Next products', '›');
+    controls.append(previous, next);
+    track.insertAdjacentElement('afterend', controls);
+
+    const scrollByCard = (direction) => {
+      track.scrollBy({left: direction * carouselStep(track), behavior: 'smooth'});
+    };
+
+    previous.addEventListener('click', () => scrollByCard(-1));
+    next.addEventListener('click', () => scrollByCard(1));
+    track.addEventListener('scroll', () => updateCarouselControls(track), {passive: true});
+
+    carouselState.set(track, {controls, previous, next});
+    updateCarouselControls(track);
+  };
+
+  const syncAllCarousels = () => {
+    document.querySelectorAll(carouselTrackSelector).forEach((track) => {
+      initCarousel(track);
+      updateCarouselControls(track);
+    });
+  };
 
   const panelForTrigger = (trigger) => {
     const panelId = trigger?.getAttribute('aria-controls');
@@ -21,6 +90,7 @@
       if (panel?.matches(panelSelector)) panel.hidden = !active;
     });
 
+    requestAnimationFrame(syncAllCarousels);
     return true;
   };
 
@@ -67,5 +137,8 @@
     openHashTarget(window.location.hash, true);
   });
 
+  window.addEventListener('resize', () => requestAnimationFrame(syncAllCarousels));
+
+  syncAllCarousels();
   openHashTarget(window.location.hash, true);
 })();
