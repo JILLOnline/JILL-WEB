@@ -3,6 +3,18 @@
   assign quantity_label = 'products.product.quantity' | t
   assign allocation_count_label = 'products.product.allocation.count' | t
   assign option_surface_groups = 'product_options' | split: ','
+  assign customer_name_label = 'custom_order.customer.name' | t
+  assign customer_email_label = 'custom_order.customer.email' | t
+  assign customer_phone_label = 'custom_order.customer.phone' | t
+  assign theme_label = 'custom_order.design.theme' | t
+  assign colors_label = 'custom_order.design.colors' | t
+  assign reference_instructions_label = 'custom_order.references.instructions' | t
+  assign event_date_label = 'custom_order.planning.event_date' | t
+  assign date_needed_label = 'custom_order.planning.date_needed' | t
+  assign city_label = 'custom_order.planning.city' | t
+  assign state_label = 'custom_order.planning.state' | t
+  assign postal_code_label = 'custom_order.planning.postal_code' | t
+  assign notes_label = 'custom_order.final.notes' | t
 %}
 
 <section
@@ -35,9 +47,9 @@
         </div>
       </div>
       <div class="jill-custom-order__customer" data-jill-custom-order-customer>
-        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: 'custom_order.customer.name' | t, type: 'text', required: true, autocomplete: 'name' %}
-        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: 'custom_order.customer.email' | t, type: 'email', required: true, autocomplete: 'email' %}
-        {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: 'custom_order.customer.phone' | t, type: 'tel', autocomplete: 'tel' %}
+        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name' %}
+        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email' %}
+        {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: customer_phone_label, type: 'tel', autocomplete: 'tel' %}
         <div class="jill-field">
           <label class="jill-field__label" for="JillCustomOrderContact">
             {{ 'custom_order.customer.preferred_contact' | t }} <span class="jill-field__required" aria-hidden="true">*</span>
@@ -253,8 +265,8 @@
 
         <div class="jill-custom-order__design-core" data-jill-design-core hidden aria-hidden="true">
           <div class="jill-custom-order__two-column">
-            {% render 'ui-field', id: 'JillCustomOrderTheme', name: 'theme', label: 'custom_order.design.theme' | t, type: 'text', required: true %}
-            {% render 'ui-field', id: 'JillCustomOrderColors', name: 'colors', label: 'custom_order.design.colors' | t, type: 'text', required: true %}
+            {% render 'ui-field', id: 'JillCustomOrderTheme', name: 'theme', label: theme_label, type: 'text', required: true %}
+            {% render 'ui-field', id: 'JillCustomOrderColors', name: 'colors', label: colors_label, type: 'text', required: true %}
           </div>
         </div>
 
@@ -303,7 +315,7 @@
               <p class="jill-media__count" data-jill-media-count>0 / 3</p>
               <p class="jill-field__message" data-tone="error" data-jill-media-error hidden></p>
             </div>
-            {% render 'ui-textarea', id: 'JillReferenceInstructions', name: 'reference_instructions', label: 'custom_order.references.instructions' | t, rows: 3 %}
+            {% render 'ui-textarea', id: 'JillReferenceInstructions', name: 'reference_instructions', label: reference_instructions_label, rows: 3 %}
           </div>
         </section>
       </section>
@@ -315,8 +327,8 @@
         <div><h2>{{ 'custom_order.planning.title' | t }}</h2><p>{{ 'custom_order.planning.help' | t }}</p></div>
       </div>
       <div class="jill-custom-order__planning" data-jill-custom-order-planning>
-        {% render 'ui-field', id: 'JillCustomOrderEventDate', name: 'event_date', label: 'custom_order.planning.event_date' | t, type: 'date' %}
-        {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: 'custom_order.planning.date_needed' | t, type: 'date', required: true %}
+        {% render 'ui-field', id: 'JillCustomOrderEventDate', name: 'event_date', label: event_date_label, type: 'date' %}
+        {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true %}
         <fieldset class="jill-custom-order__choice-set jill-custom-order__planning-choice">
           <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.planning.fulfillment' | t }}</legend>
           <div class="jill-custom-order__choice-grid">
@@ -325,9 +337,9 @@
           </div>
         </fieldset>
         <div class="jill-custom-order__shipping" data-jill-shipping-fields hidden aria-hidden="true">
-          {% render 'ui-field', id: 'JillCustomOrderCity', name: 'city', label: 'custom_order.planning.city' | t, type: 'text' %}
-          {% render 'ui-field', id: 'JillCustomOrderState', name: 'state', label: 'custom_order.planning.state' | t, type: 'text' %}
-          {% render 'ui-field', id: 'JillCustomOrderPostalCode', name: 'postal_code', label: 'custom_order.planning.postal_code' | t, type: 'text', required: true, autocomplete: 'postal-code' %}
+          {% render 'ui-field', id: 'JillCustomOrderCity', name: 'city', label: city_label, type: 'text' %}
+          {% render 'ui-field', id: 'JillCustomOrderState', name: 'state', label: state_label, type: 'text' %}
+          {% render 'ui-field', id: 'JillCustomOrderPostalCode', name: 'postal_code', label: postal_code_label, type: 'text', required: true, autocomplete: 'postal-code' %}
         </div>
       </div>
     </section>
@@ -366,7 +378,7 @@
           <label class="jill-custom-order__choice"><input type="radio" name="recommend_matching" value="no"><span>{{ 'custom_order.common.no' | t }}</span></label>
         </div>
       </fieldset>
-      {% render 'ui-textarea', id: 'JillCustomOrderNotes', name: 'notes', label: 'custom_order.final.notes' | t, rows: 6 %}
+      {% render 'ui-textarea', id: 'JillCustomOrderNotes', name: 'notes', label: notes_label, rows: 6 %}
       <label class="jill-custom-order__consent">
         <input type="checkbox" data-jill-request-acknowledgment required>
         <span><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.final.acknowledgment' | t }}</span>
