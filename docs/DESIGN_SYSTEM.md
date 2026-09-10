@@ -113,3 +113,13 @@ Every interactive primitive defines required states at its canonical owner: defa
 ## No override policy
 
 There is no `!important`, no override file and no page-specific redefinition of a primitive. If a composition needs a legitimate variation, create a semantic variant in the primitive owner and reuse it everywhere that meaning applies.
+
+## JILL logo floral palette
+
+The five artwork colors come from the opaque interior pixels of the current merchant logo, `LOGO_2025.png` (`v=1779668367`), inspected September 10, 2026. The pink lettering contains near-identical raster shades; the dominant opaque pink is the reference. The legacy form artwork uses rounded five-petal flowers and approximate colors; those approximations do not replace the logo palette. Semantic UI colors remain separate.
+
+`jill-foundation.css.liquid` owns the five `--jill-brand-*` tokens: pink, purple, green, yellow and blue. Each literal is assigned once there. The single `jill-botanical-field.svg` consumes those names; foundation resolves its color references and URL-encodes it once as `--jill-botanical-field`. External SVG backgrounds cannot inherit document custom properties, so the compiled image must contain resolved colors. There is no browser recoloring or second artwork source.
+
+Catalog decoration belongs only to the existing large open Featured disclosure and collection panel pseudo-elements. `jill-catalog-disclosure.css` owns placement, clipping and opacity; all direct content retains its existing higher stacking level. Description bubbles own no artwork.
+
+The field uses deliberately chosen 18, 30, 46 and 64 pixel motifs, percentage edge anchors and no repeating tiles or stretching viewBox. Flowers use pink, purple, yellow and blue; greenery uses green. Desktop opacity is 15%; below 750px opacity is 11% and a transparent-center edge mask keeps the field away from cards. This mask controls visibility only, preserving every artwork color.

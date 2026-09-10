@@ -209,3 +209,11 @@ This log records decisions and rationale so future contributors do not repeatedl
 ## Decision process
 
 Add a new entry only for a real architectural/product-system decision. Routine implementation details belong in code/commits. If a new decision supersedes an old one, append a dated decision and identify the superseded entry; do not rewrite history.
+
+## 2026-09-10 — One token-resolved multicolor Catalog floral field
+
+**Decision:** Replace the monochrome branch mask inside the existing Catalog disclosure stylesheet with one SVG background resolved from the foundation's logo palette. Keep the existing Catalog presentation owner, outer-panel isolation and higher content stacking.
+
+**Why:** A single-color mask loses JILL's multicolor identity; external SVGs cannot inherit document CSS tokens. Resolving the reusable SVG once in the foundation avoids duplicated palette literals, repeated inline markup and a client-side recoloring system.
+
+**Consequence:** No new stylesheet or runtime is introduced. The prior single-color mask and long-stem SVG geometry are removed. Only mobile uses a transparency mask to confine the same multicolor artwork to the outer edges. Form and product-card owners remain unchanged.
