@@ -9,6 +9,8 @@ const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js'
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
 
 assert.match(section, /collections\['all'\]/, 'Custom Order catalog must be sourced from Shopify catalog data');
+assert.match(section, /for catalog_collection in collections/, 'Custom Order collection filters must self-adapt from Shopify collections');
+assert.match(section, /data-jill-collection-filter/, 'Custom Order must expose collection-driven discovery without hard-coded families');
 assert.match(section, /metafields\.custom\.jill_product_capabilities/, 'Custom Order must use the canonical product capability metafield');
 assert.match(section, /render 'product-capability-fields'/, 'Custom Order must reuse the canonical product capability renderer');
 assert.match(section, /data-jill-product\b/, 'Custom Order items must enter the shared product runtime');
@@ -17,6 +19,11 @@ assert.match(section, /render 'ui-quantity'/, 'Custom Order quantity must use th
 assert.match(section, /data-jill-variant-allocation/, 'multi-variant products must expose the native variant allocator mount');
 assert.match(section, /data-jill-variant-catalog/, 'variant allocator must consume Shopify variant truth emitted by Liquid');
 assert.doesNotMatch(section, /data-jill-variant-select/, 'Custom Order must not use one whole-order variant select for multi-variant products');
+assert.match(section, /data-jill-stage="customer"/, 'Custom Order must expose the numbered progressive flow');
+assert.match(section, /data-jill-stage="configuration"/, 'Custom Order must keep product configuration in one canonical stage');
+assert.match(section, /data-jill-custom-order-review/, 'Custom Order must expose a dedicated Review destination');
+assert.match(section, /data-jill-request-submit/, 'Custom Order must expose Request Custom Order only at the review boundary');
+assert.match(section, /data-jill-custom-order-success/, 'Custom Order must expose a dedicated success state');
 assert.doesNotMatch(section, /Snack|Pinata|Piñata|Apparel|Favor/i, 'Custom Order must not branch on product families');
 
 assert.match(productSection, /metafields\.custom\.jill_product_capabilities/, 'Product Page must use the canonical product capability metafield');
@@ -24,6 +31,7 @@ assert.match(productSection, /render 'product-capability-fields'/, 'Product Page
 assert.match(productSection, /data-jill-product\b/, 'Product Page must enter the shared product runtime');
 assert.match(productSection, /class: 'jill-product-form'/, 'Product Page must use the shared product form controller boundary');
 
+assert.match(runtime, /JILLFormEngine/, 'Custom Order progression must consume the universal form engine');
 assert.match(runtime, /JILLVariantAllocation/, 'Custom Order must consume the canonical variant allocation engine');
 assert.match(runtime, /normalizeVariantPayload/, 'Custom Order must re-normalize serialized variant state before building the request');
 assert.match(runtime, /variant_allocations/, 'Custom Order request must carry structured native variant allocations');
@@ -32,6 +40,9 @@ assert.match(runtime, /dispatchEvent\(event\)/, 'Custom Order must delegate item
 assert.match(runtime, /data-jill-product-options-payload/, 'Custom Order must consume the canonical Product Options payload');
 assert.match(runtime, /getPersonalizationAllocationFieldIds/, 'Custom Order must consume canonical personalization capability scope');
 assert.match(runtime, /JILLPersonalization/, 'Custom Order must consume the canonical personalization engine');
+assert.match(runtime, /renderReview/, 'Custom Order must build Review from normalized request state');
+assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');
+assert.match(runtime, /selectedChoices/, 'Custom Order must project selection state into shared product configuration instead of duplicating product forms');
 assert.doesNotMatch(runtime, /unitsPerQuantity\s*\*/, 'Custom Order must not own customization-unit multiplication');
 assert.doesNotMatch(runtime, /Gray|Pink|White|Tote Style|Method/, 'Custom Order runtime must not encode product-specific Shopify variants');
 
