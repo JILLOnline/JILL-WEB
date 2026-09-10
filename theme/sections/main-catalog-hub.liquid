@@ -29,13 +29,9 @@
 
   <section class="jill-catalog jill-page-width" data-jill-catalog-disclosures>
     {% if featured_collection != blank and featured_collection.products_count > 0 %}
-      {% assign featured_count = featured_collection.products_count | at_most: featured_limit %}
       <details class="jill-catalog-disclosure jill-catalog-disclosure--featured" data-jill-catalog-disclosure open>
         <summary class="jill-catalog-disclosure__pill">
           <span class="jill-catalog-disclosure__title">{{ section.settings.featured_heading }}</span>
-          <span class="jill-catalog-disclosure__count">
-            {{ featured_count }} {% if featured_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
-          </span>
           <span class="jill-catalog-disclosure__icon" aria-hidden="true">
             {% render 'ui-icon', name: 'chevron-down' %}
           </span>
@@ -83,9 +79,6 @@
                 >
                   <summary class="jill-catalog-disclosure__pill">
                     <span class="jill-catalog-disclosure__title">{{ category_collection.title }}</span>
-                    <span class="jill-catalog-disclosure__count">
-                      {{ category_collection.products_count }} {% if category_collection.products_count == 1 %}{{ 'catalog.results.product' | t }}{% else %}{{ 'catalog.results.products' | t }}{% endif %}
-                    </span>
                     <span class="jill-catalog-disclosure__icon" aria-hidden="true">
                       {% render 'ui-icon', name: 'chevron-down' %}
                     </span>

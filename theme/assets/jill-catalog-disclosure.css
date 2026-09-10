@@ -1,7 +1,14 @@
 @layer storefront {
   .jill-catalog-disclosure-list {
-    display: grid;
-    gap: calc(var(--jill-space-unit) * 2);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: calc(var(--jill-space-unit) * 1.5);
+  }
+
+  .jill-catalog-disclosure-list > .jill-catalog-disclosure {
+    display: contents;
   }
 
   .jill-catalog-disclosure {
@@ -15,10 +22,10 @@
     width: fit-content;
     max-width: 100%;
     min-height: 3rem;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
     align-items: center;
     justify-self: center;
-    gap: calc(var(--jill-space-unit) * 1.5);
+    gap: calc(var(--jill-space-unit) * 1.25);
     padding: calc(var(--jill-space-unit) * 1.25) calc(var(--jill-space-unit) * 2.5);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 18%, transparent);
     border-radius: 999px;
@@ -26,7 +33,12 @@
     color: var(--jill-color-foreground);
     cursor: pointer;
     list-style: none;
+    white-space: nowrap;
     transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  }
+
+  .jill-catalog-disclosure-list .jill-catalog-disclosure__pill {
+    order: 0;
   }
 
   .jill-catalog-disclosure__pill::-webkit-details-marker {
@@ -44,13 +56,6 @@
     font-size: clamp(1rem, 0.95rem + 0.25vw, 1.15rem);
     font-weight: 750;
     line-height: 1.1;
-  }
-
-  .jill-catalog-disclosure__count {
-    color: var(--jill-color-muted);
-    font-size: 0.8rem;
-    font-weight: 650;
-    white-space: nowrap;
   }
 
   .jill-catalog-disclosure__icon {
@@ -72,6 +77,12 @@
     background: var(--jill-color-background);
   }
 
+  .jill-catalog-disclosure-list > .jill-catalog-disclosure[open] {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
   .jill-catalog-disclosure--featured[open] {
     background: color-mix(in srgb, var(--jill-color-accent) 4%, var(--jill-color-background));
   }
@@ -88,6 +99,16 @@
   .jill-catalog-disclosure__content {
     display: grid;
     gap: clamp(1rem, 2.25vw, 1.75rem);
+  }
+
+  .jill-catalog-disclosure-list .jill-catalog-disclosure__content {
+    order: 1;
+    flex: 1 0 100%;
+    width: 100%;
+    padding: clamp(1rem, 2.25vw, 1.75rem);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
+    border-radius: calc(var(--jill-card-radius) * 1.2);
+    background: var(--jill-color-background);
   }
 
   .jill-catalog-disclosure__description {
