@@ -296,10 +296,14 @@
 
   @media (max-width: 749px) {
     [data-jill-catalog-disclosures] :is(.jill-catalog-disclosure[open], .jill-catalog-accordion__panel)::before {
+      left: 50%;
+      right: auto;
+      width: clamp(100%, calc(54vw + 315px), 155%);
       background-repeat: repeat-y;
       background-position: center top;
       background-size: 100% auto;
       opacity: 0.18;
+      transform: translateX(-50%);
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {
