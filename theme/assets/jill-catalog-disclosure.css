@@ -110,15 +110,21 @@
   }
 
   .jill-catalog-disclosure__description {
-    max-width: 68ch;
-    margin: 0;
+    order: 2;
+    width: fit-content;
+    max-width: min(68ch, 100%);
+    margin: 0 auto;
+    padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
+    border-radius: calc(var(--jill-card-radius) * 0.9);
+    background: color-mix(in srgb, var(--jill-color-accent) 5%, var(--jill-color-background));
     color: var(--jill-color-muted);
+    text-align: center;
     line-height: 1.6;
   }
 
   .jill-catalog-disclosure__description--centered {
     margin-inline: auto;
-    text-align: center;
   }
 
   [data-jill-product-card-media] {
