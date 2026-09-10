@@ -50,8 +50,9 @@
     justify-content: center;
     gap: clamp(0.6rem, 1vw, 1rem);
     padding: clamp(0.95rem, 1.6vw, 1.3rem) clamp(1.25rem, 2vw, 2rem);
-    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 42%, var(--jill-color-foreground) 10%);
-    box-shadow: 0 0 0.7rem color-mix(in srgb, var(--jill-color-glow-pink) 32%, transparent), 0 0.45rem 1.2rem color-mix(in srgb, var(--jill-color-glow-pink) 16%, transparent);
+    border-width: calc(var(--jill-border-width) + 1px);
+    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 62%, var(--jill-color-foreground) 8%);
+    box-shadow: 0 0 0.42rem color-mix(in srgb, var(--jill-color-glow-pink) 56%, transparent), 0 0.3rem 0.75rem color-mix(in srgb, var(--jill-color-glow-pink) 26%, transparent);
   }
 
   .jill-catalog-disclosure__pill::-webkit-details-marker {
@@ -65,8 +66,8 @@
   }
 
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill:hover {
-    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 72%, var(--jill-color-foreground) 8%);
-    box-shadow: 0 0 1.1rem color-mix(in srgb, var(--jill-color-glow-pink) 52%, transparent), 0 0.65rem 1.6rem color-mix(in srgb, var(--jill-color-glow-pink) 24%, transparent);
+    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 82%, var(--jill-color-foreground) 6%);
+    box-shadow: 0 0 0.58rem color-mix(in srgb, var(--jill-color-glow-pink) 72%, transparent), 0 0.4rem 0.95rem color-mix(in srgb, var(--jill-color-glow-pink) 34%, transparent);
   }
 
   .jill-catalog-disclosure__pill[aria-expanded='true'] {
@@ -75,8 +76,8 @@
   }
 
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill[aria-expanded='true'] {
-    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 82%, var(--jill-color-foreground) 6%);
-    box-shadow: 0 0 1.35rem color-mix(in srgb, var(--jill-color-glow-pink) 62%, transparent), 0 0.75rem 1.9rem color-mix(in srgb, var(--jill-color-glow-pink) 28%, transparent);
+    border-color: color-mix(in srgb, var(--jill-color-glow-pink) 92%, var(--jill-color-foreground) 4%);
+    box-shadow: 0 0 0.7rem color-mix(in srgb, var(--jill-color-glow-pink) 82%, transparent), 0 0.45rem 1.05rem color-mix(in srgb, var(--jill-color-glow-pink) 40%, transparent);
   }
 
   .jill-catalog-disclosure__title {
