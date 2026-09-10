@@ -125,6 +125,11 @@
     scroll-snap-align: start;
   }
 
+  [data-jill-catalog-disclosures] .jill-product-card__title {
+    width: 100%;
+    text-align: center;
+  }
+
   [data-jill-catalog-disclosures] .jill-product-card__price {
     width: 100%;
     justify-content: center;
