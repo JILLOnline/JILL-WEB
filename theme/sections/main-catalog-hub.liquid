@@ -128,41 +128,6 @@
       {% endif %}
     </div>
 
-    <div class="jill-catalog__section jill-catalog__how jill-card">
-      <div class="jill-catalog__section-heading">
-        <h2>{{ section.settings.how_heading }}</h2>
-        {% if section.settings.how_text != blank %}
-          <p>{{ section.settings.how_text }}</p>
-        {% endif %}
-      </div>
-
-      <ol class="jill-catalog__steps">
-        {% for index in (1..4) %}
-          {% liquid
-            case index
-              when 1
-                assign step_heading = section.settings.step_1_heading
-                assign step_text = section.settings.step_1_text
-              when 2
-                assign step_heading = section.settings.step_2_heading
-                assign step_text = section.settings.step_2_text
-              when 3
-                assign step_heading = section.settings.step_3_heading
-                assign step_text = section.settings.step_3_text
-              when 4
-                assign step_heading = section.settings.step_4_heading
-                assign step_text = section.settings.step_4_text
-            endcase
-          %}
-          <li class="jill-card jill-catalog-step">
-            <span class="jill-catalog-step__number" aria-hidden="true">{{ index }}</span>
-            <h3>{{ step_heading }}</h3>
-            <p>{{ step_text }}</p>
-          </li>
-        {% endfor %}
-      </ol>
-    </div>
-
     {% if creation_count > 0 %}
       <div class="jill-catalog__section">
         <div class="jill-catalog__section-heading">
@@ -241,17 +206,6 @@
     {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
     {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Shop the Party"},
     {"type": "text", "id": "featured_text", "label": "Featured text", "default": "A rotating edit of JILL favorites and pieces we want you to see first."},
-
-    {"type": "text", "id": "how_heading", "label": "How it works heading", "default": "How custom ordering works"},
-    {"type": "text", "id": "how_text", "label": "How it works text", "default": "For something more involved than one standard listing, build a structured request instead of squeezing everything into a message box."},
-    {"type": "text", "id": "step_1_heading", "label": "Step 1 heading", "default": "Choose what you’re creating"},
-    {"type": "text", "id": "step_1_text", "label": "Step 1 text", "default": "Start with one product or combine several products for the same celebration."},
-    {"type": "text", "id": "step_2_heading", "label": "Step 2 heading", "default": "Make it yours"},
-    {"type": "text", "id": "step_2_text", "label": "Step 2 text", "default": "Tell us the theme, colors, names, quantities, variations and references that apply."},
-    {"type": "text", "id": "step_3_heading", "label": "Step 3 heading", "default": "Review the details"},
-    {"type": "text", "id": "step_3_text", "label": "Step 3 text", "default": "See the request together before it leaves your hands, including item-by-item personalization."},
-    {"type": "text", "id": "step_4_heading", "label": "Step 4 heading", "default": "JILL takes it from there"},
-    {"type": "text", "id": "step_4_text", "label": "Step 4 text", "default": "We review availability, production details, pricing and anything we still need to confirm."},
 
     {"type": "text", "id": "creations_eyebrow", "label": "Creations eyebrow", "default": "MADE BY JILL"},
     {"type": "text", "id": "creations_heading", "label": "Creations heading", "default": "Real ideas we’ve brought to life"},

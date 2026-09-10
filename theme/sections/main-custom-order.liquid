@@ -19,6 +19,8 @@
     <p class="jill-custom-order__intro">{{ 'custom_order.intro' | t }}</p>
   </header>
 
+  {% render 'custom-order-guide' %}
+
   <div class="jill-custom-order__customer" data-jill-custom-order-customer>
     <h2>{{ 'custom_order.customer.title' | t }}</h2>
     {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true %}
