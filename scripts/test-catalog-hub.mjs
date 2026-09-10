@@ -163,7 +163,12 @@ assert.doesNotMatch(botanical, /<style|<script|<image|<foreignObject|<pattern|<d
 assert.match(botanical, /viewBox="0 0 1200 600"/);
 assert.match(botanical, /preserveAspectRatio="none"/);
 assert.ok(Buffer.byteLength(botanical) < 30000, 'Catalog floral SVG must stay lightweight');
-assert.ok((botanical.match(/data-botanical-motif=/g) || []).length >= 48, 'large Catalog panels need a visibly populated floral field');
+assert.equal((botanical.match(/data-botanical-motif=/g) || []).length, 36, 'Catalog floral field must keep the intentional 36-motif composition');
+
+for (const [tier, expected] of Object.entries({XL: 4, L: 6, M: 8, S: 9, XS: 9})) {
+  const actual = (botanical.match(new RegExp(`data-size-tier="${tier}"`, 'g')) || []).length;
+  assert.equal(actual, expected, `Catalog floral field must keep ${expected} ${tier} motifs`);
+}
 
 for (const color of ['#ffb5e9', '#9e87df', '#bbf3aa', '#f3b600', '#6bc8ef']) {
   assert.match(botanical, new RegExp(color, 'i'), `Catalog floral field must include ${color}`);
@@ -171,4 +176,4 @@ for (const color of ['#ffb5e9', '#9e87df', '#bbf3aa', '#f3b600', '#6bc8ef']) {
 
 assert.match(foundation, /--jill-botanical-field:\s*url\("\{\{\s*'jill-botanical-field\.svg'\s*\|\s*asset_url\s*\}\}"\);/);
 assert.doesNotMatch(foundation, /inline_asset_content|data:image\/svg\+xml|url_encode|jill_brand_|--jill-brand-/);
-console.log('Catalog floral ownership, versioned asset delivery, density, clean descriptions and mobile edge treatment passed.');
+console.log('Catalog floral ownership, versioned asset delivery, density, size hierarchy, clean descriptions and mobile edge treatment passed.');

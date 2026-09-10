@@ -1,164 +1,127 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" preserveAspectRatio="none" fill="none">
-  <g data-botanical-motif="1" transform="translate(34 28) rotate(-14) scale(2.0909)">
-    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
+
+  <!-- Top edge: strong corner anchors with sparse supporting rhythm. -->
+  <g data-botanical-motif="1" data-size-tier="XL" transform="translate(48 38) rotate(-14) scale(1.520)">
+    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="2" transform="translate(116 55) rotate(28) scale(1.2273)">
+  <g data-botanical-motif="2" data-size-tier="S" transform="translate(168 72) rotate(28) scale(0.770)">
     <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <g data-botanical-motif="3" transform="translate(205 30) rotate(16) scale(1.4091)">
+  <g data-botanical-motif="3" data-size-tier="M" transform="translate(292 36) rotate(16) scale(1.045)">
     <g fill="#9e87df"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="4" transform="translate(292 52) rotate(-18) scale(0.8636)">
+  <g data-botanical-motif="4" data-size-tier="XS" transform="translate(408 78) rotate(-18) scale(0.550)">
     <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
   </g>
-  <g data-botanical-motif="5" transform="translate(378 26) rotate(25) scale(1.0909)">
-    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
+  <g data-botanical-motif="5" data-size-tier="L" transform="translate(520 30) rotate(24) scale(1.080)">
+    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="6" transform="translate(466 56) rotate(-24) scale(1.2273)">
+  <g data-botanical-motif="6" data-size-tier="L" transform="translate(694 72) rotate(-24) scale(1.620)">
     <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
   </g>
-  <g data-botanical-motif="7" transform="translate(555 27) rotate(-8) scale(1.5909)">
+  <g data-botanical-motif="7" data-size-tier="XS" transform="translate(820 38) rotate(-8) scale(0.550)">
     <g fill="#f3b600"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="8" transform="translate(646 52) rotate(35) scale(0.9545)">
+  <g data-botanical-motif="8" data-size-tier="M" transform="translate(944 74) rotate(34) scale(1.045)">
     <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <g data-botanical-motif="9" transform="translate(736 24) rotate(-22) scale(1.3182)">
-    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
+  <g data-botanical-motif="9" data-size-tier="S" transform="translate(1052 38) rotate(-22) scale(0.770)">
+    <g fill="#ffb5e9"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="10" transform="translate(832 50) rotate(12) scale(1.0000)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
+  <g data-botanical-motif="10" data-size-tier="XL" transform="translate(1158 38) rotate(14) scale(1.520)">
+    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="11" transform="translate(935 28) rotate(18) scale(1.4545)">
-    <g fill="#6bc8ef"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
+
+  <!-- Bottom edge: larger statement pieces balanced against lighter fillers. -->
+  <g data-botanical-motif="11" data-size-tier="XL" transform="translate(42 564) rotate(-24) scale(1.520)">
+    <path fill="#f3b600" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="12" transform="translate(1024 54) rotate(-32) scale(1.0909)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="13" transform="translate(1135 30) rotate(14) scale(2.0000)">
-    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="14" transform="translate(42 130) rotate(18) scale(1.3182)">
+  <g data-botanical-motif="12" data-size-tier="S" transform="translate(162 532) rotate(18) scale(0.840)">
     <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
   </g>
-  <g data-botanical-motif="15" transform="translate(92 188) rotate(-22) scale(1.0455)">
+  <g data-botanical-motif="13" data-size-tier="M" transform="translate(286 568) rotate(-20) scale(1.045)">
     <g fill="#6bc8ef"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="16" transform="translate(38 260) rotate(26) scale(1.6364)">
-    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="17" transform="translate(90 330) rotate(-35) scale(1.2273)">
+  <g data-botanical-motif="14" data-size-tier="XS" transform="translate(410 528) rotate(24) scale(0.550)">
     <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <g data-botanical-motif="18" transform="translate(36 414) rotate(10) scale(1.3182)">
+  <g data-botanical-motif="15" data-size-tier="L" transform="translate(524 570) rotate(-16) scale(1.080)">
+    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="16" data-size-tier="L" transform="translate(704 530) rotate(18) scale(1.485)">
+    <g fill="#9e87df"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="17" data-size-tier="XS" transform="translate(832 570) rotate(-12) scale(0.550)">
+    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
+  </g>
+  <g data-botanical-motif="18" data-size-tier="M" transform="translate(952 532) rotate(22) scale(1.140)">
+    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
+  </g>
+  <g data-botanical-motif="19" data-size-tier="S" transform="translate(1070 568) rotate(-26) scale(0.770)">
+    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <g data-botanical-motif="20" data-size-tier="XL" transform="translate(1164 564) rotate(18) scale(1.520)">
+    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
+  </g>
+
+  <!-- Left edge: secondary anchors; center field remains intentionally open. -->
+  <g data-botanical-motif="21" data-size-tier="L" transform="translate(42 138) rotate(16) scale(1.620)">
+    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
+  </g>
+  <g data-botanical-motif="22" data-size-tier="XS" transform="translate(104 196) rotate(-22) scale(0.550)">
+    <g fill="#6bc8ef"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="23" data-size-tier="M" transform="translate(40 254) rotate(26) scale(0.760)">
+    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="24" data-size-tier="S" transform="translate(100 316) rotate(-34) scale(0.770)">
+    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <g data-botanical-motif="25" data-size-tier="XS" transform="translate(38 378) rotate(10) scale(0.550)">
+    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
+  </g>
+  <g data-botanical-motif="26" data-size-tier="M" transform="translate(100 438) rotate(-10) scale(1.045)">
     <g fill="#f3b600"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="19" transform="translate(92 486) rotate(-10) scale(1.0000)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
+  <g data-botanical-motif="27" data-size-tier="S" transform="translate(42 492) rotate(20) scale(0.840)">
+    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
   </g>
-  <g data-botanical-motif="20" transform="translate(1160 128) rotate(14) scale(1.0455)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
-  </g>
-  <g data-botanical-motif="21" transform="translate(1118 192) rotate(-18) scale(1.4091)">
-    <path fill="#f3b600" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="22" transform="translate(1162 260) rotate(32) scale(1.2727)">
+  <g data-botanical-motif="28" data-size-tier="XS" transform="translate(118 526) rotate(-18) scale(0.550)">
     <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <g data-botanical-motif="23" transform="translate(1115 334) rotate(15) scale(1.1818)">
+
+  <!-- Right edge: asymmetrical counter-rhythm to avoid an evenly sprinkled look. -->
+  <g data-botanical-motif="29" data-size-tier="L" transform="translate(1158 138) rotate(-18) scale(1.080)">
+    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="30" data-size-tier="S" transform="translate(1096 198) rotate(30) scale(0.770)">
+    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <g data-botanical-motif="31" data-size-tier="M" transform="translate(1160 258) rotate(14) scale(1.045)">
     <g fill="#ffb5e9"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
   </g>
-  <g data-botanical-motif="24" transform="translate(1160 416) rotate(-20) scale(1.3182)">
-    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
-  </g>
-  <g data-botanical-motif="25" transform="translate(1118 485) rotate(20) scale(1.5455)">
-    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="26" transform="translate(164 120) rotate(12) scale(0.8182)">
-    <g fill="#ffb5e9"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="27" transform="translate(250 146) rotate(-22) scale(0.7273)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="28" transform="translate(350 118) rotate(-15) scale(0.9091)">
-    <path fill="#f3b600" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="29" transform="translate(448 145) rotate(10) scale(0.6818)">
+  <g data-botanical-motif="32" data-size-tier="XS" transform="translate(1102 320) rotate(-18) scale(0.550)">
     <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
   </g>
-  <g data-botanical-motif="30" transform="translate(760 120) rotate(-12) scale(0.8636)">
-    <g fill="#9e87df"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="31" transform="translate(858 146) rotate(28) scale(0.7727)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="32" transform="translate(956 120) rotate(18) scale(0.9545)">
-    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="33" transform="translate(1048 148) rotate(-18) scale(0.7727)">
+  <g data-botanical-motif="33" data-size-tier="S" transform="translate(1162 382) rotate(-20) scale(0.840)">
     <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
   </g>
-  <g data-botanical-motif="34" transform="translate(186 446) rotate(20) scale(0.7727)">
+  <g data-botanical-motif="34" data-size-tier="M" transform="translate(1102 442) rotate(20) scale(0.760)">
+    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/>
+    <circle r="4.2" fill="#f3b600"/>
+  </g>
+  <g data-botanical-motif="35" data-size-tier="S" transform="translate(1160 494) rotate(-28) scale(0.770)">
     <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
   </g>
-  <g data-botanical-motif="35" transform="translate(286 468) rotate(-22) scale(0.9545)">
-    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="36" transform="translate(408 452) rotate(14) scale(0.8636)">
-    <g fill="#9e87df"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="37" transform="translate(522 478) rotate(-16) scale(0.6818)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
-  </g>
-  <g data-botanical-motif="38" transform="translate(682 466) rotate(15) scale(0.9091)">
-    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="39" transform="translate(800 450) rotate(22) scale(0.7727)">
-    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
-  </g>
-  <g data-botanical-motif="40" transform="translate(914 472) rotate(-12) scale(0.9545)">
-    <g fill="#f3b600"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="41" transform="translate(1025 448) rotate(-30) scale(0.8182)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="42" transform="translate(40 565) rotate(-24) scale(1.9545)">
-    <path fill="#f3b600" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="43" transform="translate(125 548) rotate(-18) scale(1.1818)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="44" transform="translate(220 570) rotate(22) scale(1.3636)">
-    <g fill="#9e87df"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="45" transform="translate(310 548) rotate(12) scale(0.9091)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
-  </g>
-  <g data-botanical-motif="46" transform="translate(400 572) rotate(30) scale(1.1818)">
-    <path fill="#ffb5e9" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="47" transform="translate(492 548) rotate(-22) scale(1.0909)">
-    <path d="M-6 18Q-1 1 6-15" stroke="#bbf3aa" stroke-width="2" stroke-linecap="round"/><path fill="#bbf3aa" d="M-3 9Q-20 7-16-6Q-3-5-3 9ZM0 2Q2-12 16-8Q15 4 0 2ZM4-9Q-7-12-4-21Q7-20 4-9Z"/>
-  </g>
-  <g data-botanical-motif="48" transform="translate(592 570) rotate(-10) scale(1.5455)">
+  <g data-botanical-motif="36" data-size-tier="XS" transform="translate(1086 528) rotate(16) scale(0.550)">
     <g fill="#6bc8ef"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="49" transform="translate(690 548) rotate(30) scale(1.0455)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="50" transform="translate(790 572) rotate(-18) scale(1.1818)">
-    <path fill="#9e87df" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="51" transform="translate(892 548) rotate(15) scale(0.9545)">
-    <path fill="#bbf3aa" d="M0 18Q-6-2-18-8Q-7-8 3 18ZM1 18Q-3-6 2-20Q7-4 5 18ZM5 18Q9-3 21-10Q17 3 8 18Z"/>
-  </g>
-  <g data-botanical-motif="52" transform="translate(998 570) rotate(12) scale(1.4091)">
-    <g fill="#ffb5e9"><ellipse cy="-11" rx="5" ry="10" transform="rotate(0)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(60)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(120)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(180)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(240)"/><ellipse cy="-11" rx="5" ry="10" transform="rotate(300)"/></g><circle r="4.5" fill="#f3b600"/>
-  </g>
-  <g data-botanical-motif="53" transform="translate(1080 548) rotate(-35) scale(1.1364)">
-    <path fill="#bbf3aa" d="M0 10C-18 10-21-1-19-13C-5-12 2-6 0 10ZM2 8C0-8 9-17 21-17C23-3 16 7 2 8Z"/><path d="M0 17Q0 7 9-5" stroke="#bbf3aa" stroke-width="2.5" stroke-linecap="round"/>
-  </g>
-  <g data-botanical-motif="54" transform="translate(1165 566) rotate(18) scale(2.0455)">
-    <path fill="#6bc8ef" d="M0-9C-12-30-27-8-10-3C-32 2-15 27-5 11C-2 33 24 20 11 5C34 5 24-22 7-10C13-30-9-29 0-9Z"/><circle r="4.2" fill="#f3b600"/>
   </g>
 </svg>
