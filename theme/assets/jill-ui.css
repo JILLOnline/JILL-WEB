@@ -56,7 +56,7 @@
   .jill-card {
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 14%, transparent);
     border-radius: var(--jill-card-radius);
-    background: var(--jill-color-background);
+    background: var(--jill-color-surface);
     padding: calc(var(--jill-space-unit) * 4);
   }
 
