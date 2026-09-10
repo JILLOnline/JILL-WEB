@@ -88,10 +88,6 @@
       <p class="jill-product-card__vendor">{{ card_product.vendor }}</p>
     {% endif %}
 
-    <{{ card_heading_tag }} class="jill-product-card__title">
-      <a href="{{ card_url }}" aria-label="{{ card_title | escape }}">{{ card_display_title }}</a>
-    </{{ card_heading_tag }}>
-
     <div class="jill-product-card__price">
       {% if price_varies %}<span>{{ 'products.card.from' | t }}</span>{% endif %}
       <span>{{ current_price | money }}</span>
@@ -99,6 +95,10 @@
         <s>{{ compare_price | money }}</s>
       {% endif %}
     </div>
+
+    <{{ card_heading_tag }} class="jill-product-card__title">
+      <a href="{{ card_url }}" aria-label="{{ card_title | escape }}">{{ card_display_title }}</a>
+    </{{ card_heading_tag }}>
 
     {% unless card_product.available %}
       <span class="jill-pill" data-tone="muted">{{ 'products.product.sold_out' | t }}</span>
