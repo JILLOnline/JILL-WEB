@@ -14,6 +14,12 @@
     overflow-x: auto;
     padding: 1rem clamp(1.25rem, 2vw, 1.5rem) 1.5rem;
     scroll-padding-inline: clamp(1.25rem, 2vw, 1.5rem);
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+  }
+
+  .jill-catalog-disclosure-list::-webkit-scrollbar {
+    display: none;
   }
 
   .jill-catalog-disclosure {
@@ -54,6 +60,7 @@
     border-width: calc(var(--jill-border-width) + 1px);
     border-color: color-mix(in srgb, var(--jill-color-glow-pink) 62%, var(--jill-color-foreground) 8%);
     box-shadow: 0 0 0.42rem color-mix(in srgb, var(--jill-color-glow-pink) 56%, transparent), 0 0.3rem 0.75rem color-mix(in srgb, var(--jill-color-glow-pink) 26%, transparent);
+    scroll-snap-align: start;
   }
 
   .jill-catalog-disclosure__pill::-webkit-details-marker {
@@ -114,7 +121,10 @@
   }
 
   .jill-catalog-disclosure[open] {
+    position: relative;
+    isolation: isolate;
     gap: clamp(1.25rem, 2.5vw, 2rem);
+    overflow: hidden;
     padding: clamp(1rem, 2.25vw, 1.75rem);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
     border-radius: calc(var(--jill-card-radius) * 1.2);
@@ -147,12 +157,12 @@
     scroll-margin-top: 10rem;
   }
 
-  .jill-catalog-accordion__panel::before,
-  .jill-catalog-disclosure__description::before {
+  .jill-catalog-disclosure[open]::before,
+  .jill-catalog-accordion__panel::before {
     content: '';
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
     background: var(--jill-color-accent);
     -webkit-mask-image: url('jill-botanical-field.svg');
@@ -164,6 +174,12 @@
     -webkit-mask-size: cover;
     mask-size: cover;
     opacity: 0.16;
+  }
+
+  .jill-catalog-disclosure[open] > *,
+  .jill-catalog-accordion__panel > * {
+    position: relative;
+    z-index: 1;
   }
 
   [data-jill-catalog-disclosures] :is(.jill-catalog__featured-grid, .jill-catalog__product-grid) {
@@ -261,13 +277,10 @@
   }
 
   .jill-catalog-disclosure__description {
-    position: relative;
-    isolation: isolate;
     order: 2;
     width: 100%;
     max-width: none;
     box-sizing: border-box;
-    overflow: hidden;
     margin: 0 auto;
     padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
@@ -284,5 +297,33 @@
 
   [data-jill-product-card-media] {
     background: var(--jill-color-background);
+  }
+
+  @media (max-width: 749px) {
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {
+      justify-content: flex-start;
+      gap: 0.6rem;
+      padding: 0.8rem 1rem 1.1rem;
+      scroll-padding-inline: 1rem;
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill {
+      width: auto;
+      min-width: max-content;
+      min-height: 3.2rem;
+      flex: 0 0 auto;
+      gap: 0.55rem;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 0 0.34rem color-mix(in srgb, var(--jill-color-glow-pink) 54%, transparent), 0 0.24rem 0.62rem color-mix(in srgb, var(--jill-color-glow-pink) 24%, transparent);
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__title {
+      font-size: 1rem;
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__icon svg {
+      width: 0.9rem;
+      height: 0.9rem;
+    }
   }
 }
