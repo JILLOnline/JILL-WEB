@@ -41,6 +41,7 @@ assert.doesNotMatch(section, /data-jill-catalog-filter/, 'Catalog body must not 
 assert.match(section, /data-jill-catalog-accordion/, 'Catalog collections must share one accordion owner');
 assert.match(section, /<button[^>]*data-jill-catalog-trigger/s, 'collection controls must be stable pill buttons');
 assert.match(section, /data-jill-catalog-panel/, 'collection content must render in a dedicated panel row below the pill dock');
+assert.match(section, /data-jill-catalog-panel[\s\S]*?hidden/, 'collection panels must start hidden until their pill is activated');
 assert.doesNotMatch(section, /jill-catalog-disclosure__count/, 'collection pills must not render product-count text');
 assert.match(section, /data-jill-catalog-group/, 'Catalog Hub must group products by configured Shopify collection');
 assert.match(section, /JillCatalogCollection-/, 'catalog collection groups must expose stable anchors for header navigation');
@@ -93,6 +94,8 @@ assert.match(disclosureStyles, /\[data-jill-product-card-media\]\s*\{[^}]*backgr
 assert.match(disclosureStyles, /\.jill-catalog-disclosure__pill\s*\{[^}]*border-radius:\s*999px;/s, 'collapsed collections must render as pills');
 assert.match(disclosureStyles, /\.jill-catalog-disclosure-list\s*\{[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s, 'collection pills must stay on one stable horizontal rail');
 assert.match(disclosureStyles, /\.jill-catalog-accordion__panel\s*\{[^}]*width:\s*100%;/s, 'active collection content must open in a full-width row under the pill rail');
+assert.match(disclosureStyles, /\.jill-catalog-disclosure__content:not\(\[hidden\]\)\s*\{[^}]*display:\s*grid;/s, 'shared content layout must apply only to visible collection panels');
+assert.doesNotMatch(disclosureStyles, /\.jill-catalog-disclosure__content\s*\{[^}]*display:\s*grid;/s, 'base content styling must never override the hidden panel state');
 assert.match(disclosureStyles, /\.jill-catalog-disclosure\[open\]\s*\{/, 'featured merchandising must retain its expanded content surface');
 assert.match(storefrontStyles, /\.jill-product-card__actions\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/s, 'catalog product actions must use one compact two-button layout');
 assert.doesNotMatch(storefrontStyles, /\.jill-catalog__featured-grid \.jill-product-card/, 'featured merchandising must not fork canonical product-card sizing');

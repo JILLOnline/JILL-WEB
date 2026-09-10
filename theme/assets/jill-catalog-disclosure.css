@@ -95,7 +95,7 @@
     background: color-mix(in srgb, var(--jill-color-accent) 8%, var(--jill-color-background));
   }
 
-  .jill-catalog-disclosure__content {
+  .jill-catalog-disclosure__content:not([hidden]) {
     display: grid;
     gap: clamp(1rem, 2.25vw, 1.75rem);
   }
