@@ -296,8 +296,10 @@
 
   @media (max-width: 749px) {
     [data-jill-catalog-disclosures] :is(.jill-catalog-disclosure[open], .jill-catalog-accordion__panel)::before {
+      background-repeat: repeat-y;
+      background-position: center top;
+      background-size: 100% auto;
       opacity: 0.18;
-      mask-image: linear-gradient(to right, var(--jill-color-foreground) 0 2.5rem, transparent 6.5rem calc(100% - 6.5rem), var(--jill-color-foreground) calc(100% - 2.5rem) 100%);
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {

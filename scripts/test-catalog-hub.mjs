@@ -148,6 +148,7 @@ assert.match(decorativeRule, /position: absolute/);
 assert.match(decorativeRule, /z-index: 0/);
 assert.match(decorativeRule, /background-image: var\(--jill-botanical-field\)/);
 assert.match(decorativeRule, /background-repeat: no-repeat/);
+assert.match(decorativeRule, /background-size: cover/);
 assert.match(decorativeRule, /opacity: 0\.30/);
 assert.doesNotMatch(decorativeRule, /mask-|background: var\(--jill-color-accent\)/);
 
@@ -157,7 +158,12 @@ assert.doesNotMatch(descriptionRule, /background-image|mask|botanical/);
 assert.match(descriptionRule, /border-radius:/);
 assert.match(descriptionRule, /text-align: center/);
 
-assert.match(disclosureStyles, /@media \(max-width: 749px\)[\s\S]*opacity: 0\.18;[\s\S]*mask-image: linear-gradient/);
+const mobileBotanicalRule = disclosureStyles.match(/@media \(max-width: 749px\)[\s\S]*?\[data-jill-catalog-disclosures\] :is\(\.jill-catalog-disclosure\[open\], \.jill-catalog-accordion__panel\)::before \{([\s\S]*?)\n    }/)[1];
+assert.match(mobileBotanicalRule, /background-repeat: repeat-y/);
+assert.match(mobileBotanicalRule, /background-position: center top/);
+assert.match(mobileBotanicalRule, /background-size: 100% auto/);
+assert.match(mobileBotanicalRule, /opacity: 0\.18/);
+assert.doesNotMatch(mobileBotanicalRule, /mask-image/, 'mobile botanical field should use the exposed bubble space instead of hiding behind an edge-only mask');
 
 assert.doesNotMatch(botanical, /<style|<script|<image|<foreignObject|<pattern|<defs|<symbol|<use/i);
 assert.match(botanical, /viewBox="0 0 1200 600"/);
@@ -176,4 +182,4 @@ for (const color of ['#ffb5e9', '#9e87df', '#bbf3aa', '#f3b600', '#6bc8ef']) {
 
 assert.match(foundation, /--jill-botanical-field:\s*url\("\{\{\s*'jill-botanical-field\.svg'\s*\|\s*asset_url\s*\}\}"\);/);
 assert.doesNotMatch(foundation, /inline_asset_content|data:image\/svg\+xml|url_encode|jill_brand_|--jill-brand-/);
-console.log('Catalog floral ownership, versioned asset delivery, density, size hierarchy, clean descriptions and mobile edge treatment passed.');
+console.log('Catalog floral ownership, versioned asset delivery, density, size hierarchy, responsive free-space treatment and clean descriptions passed.');
