@@ -111,8 +111,9 @@
 
   .jill-catalog-disclosure__description {
     order: 2;
-    width: fit-content;
-    max-width: min(68ch, 100%);
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     margin: 0 auto;
     padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 20%, transparent);
