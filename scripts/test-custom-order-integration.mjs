@@ -3,57 +3,106 @@ import fs from 'node:fs';
 
 const section = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const productSection = fs.readFileSync('theme/sections/main-product.liquid', 'utf8');
+const renderer = fs.readFileSync('theme/snippets/product-capability-fields.liquid', 'utf8');
 const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
 const productRuntime = fs.readFileSync('theme/assets/jill-product.js', 'utf8');
 const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
 
 assert.match(section, /collections\['all'\]/, 'Custom Order catalog must be sourced from Shopify catalog data');
-assert.match(section, /for catalog_collection in collections/, 'Custom Order collection filters must self-adapt from Shopify collections');
+assert.match(section, /for catalog_collection in collections/, 'Custom Order collection choices must self-adapt from Shopify collections');
 assert.match(section, /data-jill-collection-filter/, 'Custom Order must expose collection-driven discovery without hard-coded families');
 assert.match(section, /metafields\.custom\.jill_product_capabilities/, 'Custom Order must use the canonical product capability metafield');
 assert.match(section, /render 'product-capability-fields'/, 'Custom Order must reuse the canonical product capability renderer');
+assert.match(section, /surface_groups: option_surface_groups/, 'Custom Order must project only Product Options through the shared capability renderer');
 assert.match(section, /data-jill-product\b/, 'Custom Order items must enter the shared product runtime');
 assert.match(section, /class="jill-product-form"/, 'Custom Order items must use the shared product form controller boundary');
 assert.match(section, /render 'ui-quantity'/, 'Custom Order quantity must use the canonical quantity primitive');
 assert.match(section, /data-jill-variant-allocation/, 'multi-variant products must expose the native variant allocator mount');
 assert.match(section, /data-jill-variant-catalog/, 'variant allocator must consume Shopify variant truth emitted by Liquid');
 assert.doesNotMatch(section, /data-jill-variant-select/, 'Custom Order must not use one whole-order variant select for multi-variant products');
-assert.match(section, /data-jill-stage="customer"/, 'Custom Order must expose the numbered progressive flow');
-assert.match(section, /data-jill-stage="configuration"/, 'Custom Order must keep product configuration in one canonical stage');
+
+assert.match(section, /data-jill-stage="customer"/, 'LIVE parity must keep About you as Step 1');
+assert.match(section, /data-jill-stage="order"/, 'LIVE parity must keep order type and collections as Step 2');
+assert.match(section, /name="order_type" value="one"/, 'LIVE parity must expose One item');
+assert.match(section, /name="order_type" value="multiple"/, 'LIVE parity must expose Multiple items');
+assert.match(section, /data-jill-collection-stage/, 'collection cascade must remain a dedicated Step 2 branch');
+assert.match(section, /data-jill-stage="products"/, 'LIVE parity must keep actual product selection as Step 3');
+assert.match(section, /data-jill-order-quantity/, 'Step 3 must own the visible product quantity control');
+assert.match(section, /data-jill-stage="configuration"/, 'LIVE parity must keep Design & personalization as Step 4');
+assert.match(section, /data-jill-finish-configuration/, 'Product Options must keep an explicit finish milestone');
+assert.match(section, /data-jill-design-core/, 'theme and colors must remain part of Step 4 after Product Options');
+assert.match(section, /data-jill-personalization-mode/, 'Step 4 must own order-level personalization mode');
+assert.match(section, /data-jill-personalization-add/, 'different-by-item personalization must support another personalization group');
+assert.match(section, /data-jill-personalization-finish/, 'personalization must keep an explicit finish milestone');
+assert.match(section, /data-jill-reference-stage/, 'reference images must remain in Step 4 after personalization');
+assert.match(section, /data-jill-media-input/, 'reference images must expose the canonical upload input');
+assert.match(section, /data-jill-stage="planning"/, 'LIVE parity must keep Event & fulfillment as Step 5');
+assert.match(section, /name="fulfillment" value="shipping"/, 'Step 5 must keep Shipping');
+assert.match(section, /name="fulfillment" value="pickup"/, 'Step 5 must keep Jacksonville pickup');
+assert.match(section, /data-jill-stage="final"/, 'LIVE parity must keep Final details as Step 6');
+assert.match(section, /name="budget"/, 'Final details must keep budget');
+assert.match(section, /name="priority"/, 'Final details must keep priority');
+assert.match(section, /name="recommend_matching"/, 'Final details must keep matching-item recommendation choice');
+assert.match(section, /data-jill-request-acknowledgment/, 'Final details must keep the request acknowledgment');
 assert.match(section, /data-jill-custom-order-review/, 'Custom Order must expose a dedicated Review destination');
+assert.match(section, /data-jill-marketing-consent/, 'Review must own optional marketing consent');
+assert.match(section, /data-jill-review-confirm/, 'Review must own the final reviewed-details confirmation');
 assert.match(section, /data-jill-request-submit/, 'Custom Order must expose Request Custom Order only at the review boundary');
 assert.match(section, /data-jill-custom-order-success/, 'Custom Order must expose a dedicated success state');
 assert.doesNotMatch(section, /Snack|Pinata|Piñata|Apparel|Favor/i, 'Custom Order must not branch on product families');
+
+const optionsIndex = section.indexOf('data-jill-product-options-stage');
+const designIndex = section.indexOf('data-jill-design-core');
+const personalizationIndex = section.indexOf('data-jill-order-personalization');
+const referencesIndex = section.indexOf('data-jill-reference-stage');
+assert.ok(optionsIndex >= 0 && optionsIndex < designIndex, 'Product Options must appear before theme/colors in Step 4');
+assert.ok(designIndex < personalizationIndex, 'theme/colors must appear before personalization in Step 4');
+assert.ok(personalizationIndex < referencesIndex, 'personalization must finish before references in Step 4');
+
+assert.match(renderer, /surface_groups/, 'shared capability renderer must accept a generic surface-group projection');
+assert.match(renderer, /show_intro/, 'shared capability renderer must support surfaces that own their own heading copy');
+assert.match(renderer, /group_names = surface_groups/, 'surface projection must be resolved by the shared renderer, not product family logic');
 
 assert.match(productSection, /metafields\.custom\.jill_product_capabilities/, 'Product Page must use the canonical product capability metafield');
 assert.match(productSection, /render 'product-capability-fields'/, 'Product Page must reuse the canonical product capability renderer');
 assert.match(productSection, /data-jill-product\b/, 'Product Page must enter the shared product runtime');
 assert.match(productSection, /class: 'jill-product-form'/, 'Product Page must use the shared product form controller boundary');
 
+assert.match(productRuntime, /renderedGroups/, 'shared product runtime must derive capability scope from groups actually rendered on a surface');
+assert.match(productRuntime, /activeFields/, 'shared product runtime must validate only the canonical fields projected onto the current surface');
+assert.doesNotMatch(productRuntime, /custom-order|custom_order|Custom Order/, 'shared product runtime must remain surface-generic');
+
 assert.match(runtime, /JILLFormEngine/, 'Custom Order progression must consume the universal form engine');
 assert.match(runtime, /JILLVariantAllocation/, 'Custom Order must consume the canonical variant allocation engine');
 assert.match(runtime, /normalizeVariantPayload/, 'Custom Order must re-normalize serialized variant state before building the request');
 assert.match(runtime, /variant_allocations/, 'Custom Order request must carry structured native variant allocations');
-assert.match(runtime, /shopify-product:\$\{productId\}/, 'variant, Product Options and Personalization must share stable product item identity');
-assert.match(runtime, /dispatchEvent\(event\)/, 'Custom Order must delegate item customization validation to the shared product runtime');
+assert.match(runtime, /shopify-product:\$\{productId\}/, 'variant and Product Options must share stable product item identity');
+assert.match(runtime, /dispatchEvent\(event\)/, 'Custom Order must delegate item Product Options validation to the shared product runtime');
 assert.match(runtime, /data-jill-product-options-payload/, 'Custom Order must consume the canonical Product Options payload');
 assert.match(runtime, /getPersonalizationAllocationFieldIds/, 'Custom Order must consume canonical personalization capability scope');
-assert.match(runtime, /JILLPersonalization/, 'Custom Order must consume the canonical personalization engine');
+assert.match(runtime, /JILLPersonalization/, 'Custom Order order-level personalization must still validate through the canonical personalization engine');
+assert.match(runtime, /personalizationState/, 'Custom Order must own one order-level personalization composition state');
+assert.match(runtime, /personalizationOwner/, 'different-by-item personalization must assign selected items deterministically');
+assert.match(runtime, /api\.cloudinary\.com\/v1_1/, 'Custom Order must upload reference images through the configured Cloudinary media transport');
+assert.match(runtime, /validImage/, 'reference upload must validate image signatures instead of trusting file extensions alone');
+assert.match(runtime, /10 \* 1024 \* 1024/, 'reference upload must preserve the 10 MB per-file limit');
+assert.match(runtime, /state\.items\.length >= 3/, 'reference upload must preserve the three-image limit');
+assert.match(runtime, /syncPhoneRequirement/, 'preferred Text\/phone contact must make phone required');
+assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must be constrained against the event date');
+assert.doesNotMatch(runtime, /addBusinessDays|12 business/i, 'LIVE parity must not reintroduce the rejected 12-business-day rule');
+assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
 assert.match(runtime, /renderReview/, 'Custom Order must build Review from normalized request state');
 assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');
-assert.match(runtime, /selectedChoices/, 'Custom Order must project selection state into shared product configuration instead of duplicating product forms');
+assert.match(runtime, /selectedChoices/, 'Custom Order must project selection state into shared product configuration instead of duplicating product engines');
 assert.doesNotMatch(runtime, /unitsPerQuantity\s*\*/, 'Custom Order must not own customization-unit multiplication');
 assert.doesNotMatch(runtime, /Gray|Pink|White|Tote Style|Method/, 'Custom Order runtime must not encode product-specific Shopify variants');
+assert.doesNotMatch(runtime, /Snack Bags|SnackBag|snackbags|jill_snack_bags/i, 'Custom Order runtime must never branch on Snack Bags identity');
 
 assert.match(variantRuntime, /eligibleUnitIds/, 'variant allocator must own stable merchandise unit allocation');
 assert.match(variantRuntime, /getAvailableVariants/, 'variant allocator must enforce unique available Shopify variants');
 assert.match(variantRuntime, /reconcileQuantity/, 'variant allocator must reconcile from canonical merchandise quantity');
 assert.doesNotMatch(variantRuntime, /Size|Color|Tote|Apparel|Shirt|Hoodie/, 'variant allocator must remain product-agnostic');
-
-assert.match(productRuntime, /createAllocationDetailField/, 'shared product runtime must render capability-driven allocated detail fields');
-assert.match(productRuntime, /field\.kind === 'text' \|\| field\.kind === 'textarea'/, 'allocated detail rendering must be generic by field kind');
-assert.doesNotMatch(productRuntime, /Snack Bags|SnackBag|snackbags|jill_snack_bags/i, 'shared product runtime must never branch on Snack Bags identity');
 
 assert.match(layout, /template\.suffix == 'custom-order'/, 'Custom Order template must load shared customization engines');
 assert.match(layout, /jill-variant-allocation\.js/, 'Custom Order template must load native variant allocation');
@@ -63,4 +112,4 @@ assert.ok(
   'variant allocation engine must load before Custom Order composition runtime',
 );
 
-console.log('JILL Custom Order integration tests passed.');
+console.log('JILL Custom Order LIVE-parity integration tests passed.');

@@ -78,76 +78,137 @@
     }
   },
   "custom_order": {
-    "title": "Request a custom order",
-    "intro": "Build your request step by step. JILL automatically uses each product’s current Shopify variations, Product Options, personalization rules and required details.",
+    "title": "Request a Custom Order",
+    "intro": "Dream it up — we’ll help bring your celebration to life, made just for you.",
+    "common": {
+      "choose_one": "Choose one",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "state": {
+      "complete": "Complete ✓",
+      "incomplete": "Incomplete"
+    },
     "customer": {
-      "title": "Your details",
-      "help": "Tell us how to reach you about this request.",
+      "title": "About you",
+      "help": "Who are we helping and how should we reach you?",
       "name": "Name",
       "email": "Email",
       "phone": "Phone",
       "preferred_contact": "Preferred contact",
       "contact_options": {
         "email": "Email",
-        "phone": "Phone call",
-        "text": "Text message"
+        "phone": "Text / phone"
       }
     },
-    "products": {
-      "title": "Choose your products",
-      "help": "Select one or more products. New catalog products and collections automatically appear here without changing the form.",
-      "filter_label": "Filter products by collection",
-      "all": "All products"
+    "order": {
+      "title": "What are you ordering?",
+      "help": "Tell us whether this is one item or a group of matching items.",
+      "count_label": "How many different items?",
+      "one": "One item",
+      "multiple": "Multiple items",
+      "collection_label": "Which collection do you need?",
+      "collection_one_help": "Select one collection.",
+      "collection_multiple_help": "Select one or more collections.",
+      "collection_error": "Please select at least one collection."
     },
-    "configuration": {
-      "title": "Customize your products",
-      "help": "Set quantity, Shopify variations, Product Options, personalization and references required by each selected product.",
-      "finish": "Finish product configuration",
-      "incomplete": "Incomplete"
+    "products": {
+      "title": "Choose your items",
+      "help": "Pick the actual JILL products you want. Quantity opens under each selection.",
+      "error": "Please select at least one product."
+    },
+    "design": {
+      "title": "Design & personalization",
+      "help": "Now we make sure everything belongs together.",
+      "theme": "Theme / character / style",
+      "colors": "Colors"
+    },
+    "options": {
+      "title": "Product options",
+      "help": "Complete the required choices for each selected item. Variant quantities must match the quantity from Step 3.",
+      "finish_help": "Complete the product options above to continue."
+    },
+    "personalization": {
+      "title": "Personalization",
+      "help": "Add the wording once or split it by selected item.",
+      "setup": "Personalization setup",
+      "none": "No personalization",
+      "same": "Same personalization for all selected items",
+      "different": "Different personalization by item",
+      "add": "Add another personalization"
+    },
+    "references": {
+      "title": "Do you have reference images?",
+      "upload_title": "Reference images",
+      "upload_help": "Upload up to 3 photos. JPG, PNG, WEBP, HEIC or HEIF · 10 MB max each.",
+      "add": "+ Add reference images",
+      "required_help": "Upload at least 1 photo to continue",
+      "instructions": "What should we keep, change, or use only as inspiration?"
     },
     "planning": {
-      "title": "Event and fulfillment",
-      "help": "Tell us when you need the order and whether you’ll pick it up or have it shipped.",
+      "title": "Event & fulfillment",
+      "help": "Tell us the event date, when you need it, and how you will get it.",
       "event_date": "Event date",
-      "event_date_help": "For shipping requests, the earliest selectable event date is 12 business days from today. This helps us plan and does not guarantee delivery by that date.",
       "date_needed": "Date you need it",
       "fulfillment": "How will I get it?",
       "city": "City",
       "state": "State",
-      "postal_code": "ZIP / postal code",
+      "postal_code": "ZIP code",
       "fulfillment_options": {
-        "pickup": "Pickup",
+        "pickup": "Jacksonville pickup",
         "shipping": "Shipping"
       }
     },
     "final": {
       "title": "Final details",
-      "help": "Confirm the request terms before reviewing everything together.",
-      "acknowledgment": "I understand this is a request, not a confirmed order. Pricing, availability and timing are confirmed by JILL after review.",
-      "marketing": "Yes — send me JILL party ideas, new designs and occasional offers.",
+      "help": "Anything that helps us quote and plan it right the first time.",
+      "budget": "Approximate budget",
+      "budget_skip": "Not sure / skip",
+      "budget_options": {
+        "under_100": "Under $100",
+        "100_250": "$100–$250",
+        "250_500": "$250–$500",
+        "500_plus": "$500+"
+      },
+      "priority": "What matters most?",
+      "priority_options": {
+        "date": "Receiving it by my date",
+        "budget": "Staying within budget",
+        "design": "Matching the design closely",
+        "overall": "Best overall result"
+      },
+      "recommend": "Would you like JILL to recommend matching items?",
+      "notes": "Anything else we should know?",
+      "acknowledgment": "I understand this submission is a request, not a confirmed order, price, production slot, or delivery date.",
       "optional": "optional"
     },
     "variants": {
       "title": "Variations",
-      "help": "Split the total product quantity across the Shopify variations you need. Each variation can be used once.",
       "group": "Variation",
       "select": "Choose variation",
-      "add": "Add another variation",
+      "add": "Add another combination",
       "incomplete": "Assign the full product quantity across variations before continuing."
     },
     "review": {
       "title": "Review your custom order request",
-      "help": "Check every detail below before sending the request to JILL.",
+      "help": "Please check the information below before sending it to JILL.",
+      "marketing": "Yes — send me JILL party ideas, new designs, occasional offers, and reminders for future celebrations by email and text.",
+      "marketing_help": "Text messages are only sent if you provide a phone number. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe from texts. You can unsubscribe from emails anytime. Consent is not required to submit your request.",
       "confirm": "I reviewed the information above and it is accurate."
     },
     "actions": {
+      "finish_options": "Finish Product Options",
+      "options_finished": "Product Options finished ✓",
+      "finish_personalization": "Finish personalization",
+      "personalization_finished": "Personalization finished ✓",
       "review": "Review",
-      "back": "Back to Edit",
-      "submit": "Request Custom Order"
+      "back": "Back to edit",
+      "submit": "Request Custom Order",
+      "sending": "Sending request…"
     },
     "success": {
       "title": "Your request has been submitted",
-      "body": "Thank you for choosing JILL. We received your custom order request and will contact you using your preferred contact method with pricing, availability and next steps.",
+      "body": "Thank you for choosing JILL. We’ve received your custom order request. We’ll review the details you provided and contact you using your preferred contact method with pricing, availability, and next steps.",
       "action": "Continue Shopping"
     }
   },

@@ -1,7 +1,14 @@
 {% liquid
   assign choose_option_label = 'products.product.choose_option' | t
   assign allocation_count_label = 'products.product.allocation.count' | t
-  assign group_names = 'product_options,personalization,planning,reference' | split: ','
+  assign group_names = surface_groups
+  if group_names == blank
+    assign group_names = 'product_options,personalization,planning,reference' | split: ','
+  endif
+  assign customization_show_intro = true
+  if show_intro == false
+    assign customization_show_intro = false
+  endif
   assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
   assign allocated_personalization_field_ids = capability_profile.features.personalizationAllocation.fieldIds
   assign excluded_field_ids = surface_override.excludeFieldIds
@@ -25,7 +32,7 @@
   endfor
 %}
 
-{% if has_product_options %}
+{% if has_product_options and group_names contains 'product_options' %}
   <input
     type="hidden"
     name="properties[_jill_product_options]"
@@ -33,7 +40,7 @@
   >
 {% endif %}
 
-{% if allocated_personalization_field_ids != blank %}
+{% if allocated_personalization_field_ids != blank and group_names contains 'personalization' %}
   <input
     type="hidden"
     name="properties[_jill_personalization]"
@@ -42,10 +49,12 @@
 {% endif %}
 
 <div class="jill-product-customization jill-card" data-jill-product-customization>
-  <div class="jill-product-customization__intro">
-    <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
-    <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
-  </div>
+  {% if customization_show_intro %}
+    <div class="jill-product-customization__intro">
+      <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
+      <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
+    </div>
+  {% endif %}
 
   {% for group_name in group_names %}
     {% liquid
