@@ -125,6 +125,15 @@
     scroll-snap-align: start;
   }
 
+  [data-jill-catalog-disclosures] .jill-product-card__price {
+    width: 100%;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 750;
+    line-height: 1.2;
+    text-align: center;
+  }
+
   .jill-catalog-disclosure__description {
     order: 2;
     width: 100%;

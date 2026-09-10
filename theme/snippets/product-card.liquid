@@ -1,6 +1,7 @@
 {% liquid
   assign card_url = card_product.url
   assign card_title = card_product.title
+  assign card_display_title = card_product.metafields.custom.card_title.value | default: blank
   assign current_price = card_product.price
   assign compare_price = card_product.compare_at_price
   assign price_varies = card_product.price_varies
@@ -9,6 +10,43 @@
   assign customize_label = 'catalog.card.customize' | t
   assign is_catalog = false
   assign card_heading_tag = heading_tag | default: 'h2'
+
+  if card_display_title == blank
+    case card_product.handle
+      when 'custom-coffee-mug-photo-sublimation-74734'
+        assign card_display_title = '11 oz Mug'
+      when 'cake-toppers-1x-large-12x-small-91117'
+        assign card_display_title = 'Cake Topper Set'
+      when 'party-favors-coloring-books-custom-08343'
+        assign card_display_title = 'Coloring Books'
+      when 'custom-dtf-crewneck-fleece-for-your-crew-48791'
+        assign card_display_title = 'Crewneck'
+      when 'custom-dtf-hoodie-for-your-crew-21083'
+        assign card_display_title = 'Hoodie'
+      when 'custom-dtf-t-shirts-for-your-crew-67138'
+        assign card_display_title = 'T-Shirt'
+      when 'pinata-custom-theme-13-inches-round-96685'
+        assign card_display_title = '13" Round'
+      when 'pinata-custom-theme-all-ages-18-71638'
+        assign card_display_title = '18" Number'
+      when 'pinata-with-stick-custom-theme-all-87524'
+        assign card_display_title = '18" Number With Stick'
+      when 'pinata-custom-theme-includes-stick-76338'
+        assign card_display_title = '36" Number With Stick'
+      when 'party-favors-coloring-box-activity-60610'
+        assign card_display_title = 'Activity Kit'
+      when 'party-favors-snack-bags-custom-theme-99329'
+        assign card_display_title = 'Snack Bags'
+      when 'party-favors-surprise-bags-custom-35779'
+        assign card_display_title = 'Surprise Bags'
+      when 'party-favors-surprise-box-custom-05087'
+        assign card_display_title = 'Surprise Boxes'
+      when 'tote-bag-vinyl-transfer-custom'
+        assign card_display_title = 'Tote Bag'
+      else
+        assign card_display_title = card_title
+    endcase
+  endif
 
   if card_mode == 'catalog'
     assign is_catalog = true
@@ -51,7 +89,7 @@
     {% endif %}
 
     <{{ card_heading_tag }} class="jill-product-card__title">
-      <a href="{{ card_url }}">{{ card_title }}</a>
+      <a href="{{ card_url }}" aria-label="{{ card_title | escape }}">{{ card_display_title }}</a>
     </{{ card_heading_tag }}>
 
     <div class="jill-product-card__price">
