@@ -119,7 +119,7 @@
 
   .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill[aria-expanded='true'] {
     border-color: color-mix(in srgb, var(--jill-color-glow-pink) 92%, var(--jill-color-foreground) 4%);
-    box-shadow: 0 0 0.7rem color-mix(in srgb, var(--jill-color-glow-pink) 82%, transparent), 0 0.45rem 1.05rem color-mix(in srgb, var(--jill-color-glow-pink) 40%, transparent);
+    box-shadow: inset 0 0 0.7rem color-mix(in srgb, var(--jill-color-glow-pink) 20%, transparent);
   }
 
   .jill-catalog-disclosure__title {
@@ -320,23 +320,33 @@
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list {
-      justify-content: flex-start;
-      gap: 0.6rem;
-      padding: 0.8rem 1rem 0.45rem;
-      scroll-padding-inline: 1rem;
+      justify-content: stretch;
+      gap: clamp(0.22rem, 0.9vw, 0.45rem);
+      overflow-x: visible;
+      padding: 0.8rem clamp(0.35rem, 2vw, 1rem) 0.45rem;
+      scroll-padding-inline: 0;
+      scroll-snap-type: none;
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill {
-      width: auto;
-      min-width: max-content;
+      width: 100%;
+      min-width: 0;
       min-height: 3.05rem;
-      flex: 0 0 auto;
-      padding: 0.72rem 0.8rem;
-      box-shadow: 0 0 0.34rem color-mix(in srgb, var(--jill-color-glow-pink) 54%, transparent), 0 0.24rem 0.62rem color-mix(in srgb, var(--jill-color-glow-pink) 24%, transparent);
+      flex: 1 1 0;
+      padding: 0.68rem clamp(0.3rem, 1vw, 0.6rem);
+    }
+
+    [data-jill-catalog-disclosures] .jill-catalog-disclosure-list > .jill-catalog-disclosure__pill:not([aria-expanded='true']) {
+      box-shadow: 0 0 0.24rem color-mix(in srgb, var(--jill-color-glow-pink) 48%, transparent), 0 0.18rem 0.5rem color-mix(in srgb, var(--jill-color-glow-pink) 20%, transparent);
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-list .jill-catalog-disclosure__title {
-      font-size: clamp(0.78rem, 2.15vw, 0.9rem);
+      width: 100%;
+      font-size: clamp(0.68rem, 2.15vw, 0.9rem);
+      line-height: 1.05;
+      text-align: center;
+      text-wrap: balance;
+      white-space: normal;
     }
 
     [data-jill-catalog-disclosures] .jill-catalog-disclosure-cue {
