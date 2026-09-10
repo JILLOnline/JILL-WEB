@@ -51,6 +51,12 @@
 
   .jill-catalog-disclosure-cue__icon {
     display: inline-flex;
+    transform: rotate(180deg);
+    transition: transform 160ms ease;
+  }
+
+  .jill-catalog-accordion:has(.jill-catalog-disclosure__pill[aria-expanded='true']) .jill-catalog-disclosure-cue__icon {
+    transform: rotate(0deg);
   }
 
   .jill-catalog-disclosure-cue__icon svg {
