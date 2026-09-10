@@ -213,7 +213,7 @@
     scroll-snap-align: start;
   }
 
-  .jill-catalog-carousel__controls:not([hidden]) {
+  .jill-catalog-carousel__controls {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -221,32 +221,44 @@
   }
 
   .jill-catalog-carousel__button {
-    display: inline-flex;
+    display: inline-grid;
     width: 2.75rem;
     height: 2.75rem;
-    align-items: center;
-    justify-content: center;
+    flex: 0 0 2.75rem;
+    place-items: center;
     padding: 0;
-    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 18%, transparent);
-    border-radius: 999px;
-    background: var(--jill-color-background);
-    color: var(--jill-color-foreground);
-    font-size: 1.65rem;
-    line-height: 1;
+    border: 0;
+    border-radius: 50%;
+    background: var(--jill-color-accent);
+    color: var(--jill-color-background);
     cursor: pointer;
-    transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease, opacity 160ms ease;
+    box-shadow: 0 0.2rem 0.55rem color-mix(in srgb, var(--jill-color-accent) 24%, transparent);
+    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .jill-catalog-carousel__icon {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-block-start: 0.16rem solid currentColor;
+    border-inline-end: 0.16rem solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  .jill-catalog-carousel__button[data-jill-catalog-carousel-direction='previous'] .jill-catalog-carousel__icon {
+    transform: rotate(-135deg);
   }
 
   .jill-catalog-carousel__button:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--jill-color-accent) 55%, transparent);
-    background: color-mix(in srgb, var(--jill-color-accent) 8%, var(--jill-color-background));
-    color: var(--jill-color-accent);
+    background: color-mix(in srgb, var(--jill-color-accent) 88%, var(--jill-color-foreground));
+    box-shadow: 0 0.3rem 0.75rem color-mix(in srgb, var(--jill-color-accent) 34%, transparent);
     transform: translateY(-1px);
   }
 
   .jill-catalog-carousel__button:disabled {
-    opacity: 0.28;
+    background: color-mix(in srgb, var(--jill-color-muted) 20%, var(--jill-color-background));
+    color: color-mix(in srgb, var(--jill-color-muted) 62%, var(--jill-color-background));
     cursor: default;
+    box-shadow: none;
   }
 
   [data-jill-catalog-disclosures] .jill-product-card[data-display='catalog'] {

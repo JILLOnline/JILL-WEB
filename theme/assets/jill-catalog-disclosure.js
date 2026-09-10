@@ -21,12 +21,11 @@
 
     const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
     const scrollable = maxScroll > 2;
-    state.controls.hidden = !scrollable;
     state.previous.disabled = !scrollable || track.scrollLeft <= 2;
     state.next.disabled = !scrollable || track.scrollLeft >= maxScroll - 2;
   };
 
-  const createCarouselButton = (direction, label, symbol) => {
+  const createCarouselButton = (direction, label) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'jill-catalog-carousel__button';
@@ -34,8 +33,8 @@
     button.setAttribute('aria-label', label);
 
     const icon = document.createElement('span');
+    icon.className = 'jill-catalog-carousel__icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = symbol;
     button.append(icon);
 
     return button;
@@ -46,11 +45,10 @@
 
     const controls = document.createElement('div');
     controls.className = 'jill-catalog-carousel__controls';
-    controls.hidden = true;
     controls.setAttribute('aria-label', 'Product carousel controls');
 
-    const previous = createCarouselButton('previous', 'Previous products', '‹');
-    const next = createCarouselButton('next', 'Next products', '›');
+    const previous = createCarouselButton('previous', 'Previous products');
+    const next = createCarouselButton('next', 'Next products');
     controls.append(previous, next);
     track.insertAdjacentElement('afterend', controls);
 
