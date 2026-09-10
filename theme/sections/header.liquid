@@ -8,6 +8,7 @@
       assign link_title_downcase = link.title | downcase
       if link.url contains '/pages/quote' or link_title_downcase contains 'custom order'
         assign custom_order_in_menu = true
+        break
       endif
     endfor
   endif
@@ -37,49 +38,28 @@
 
           <div class="jill-site-header__drawer-panel" data-drawer-panel="core">
             <nav class="jill-site-header__nav" aria-label="{{ 'header.navigation' | t }}">
+              {% if section.settings.show_custom_order and custom_order_in_menu == false %}
+                <a class="jill-site-header__drawer-link jill-site-header__drawer-link--cta" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
+              {% endif %}
+
               {% if section.settings.menu != blank and section.settings.menu.links.size > 0 %}
                 {% for link in section.settings.menu.links %}
                   {% assign link_title_downcase = link.title | downcase %}
-                  {% assign is_custom_order_link = false %}
                   {% if link.url contains '/pages/quote' or link_title_downcase contains 'custom order' %}
-                    {% assign is_custom_order_link = true %}
+                    {% render 'header-drawer-menu-link', link: link %}
+                    {% break %}
                   {% endif %}
+                {% endfor %}
 
-                  {% if link.links != blank %}
-                    <details class="jill-site-header__drawer-group">
-                      <summary class="jill-site-header__drawer-link">
-                        <span>{{ link.title }}</span>
-                        {% render 'ui-icon', name: 'chevron-down' %}
-                      </summary>
-                      <div class="jill-site-header__drawer-subnav">
-                        {% for child_link in link.links %}
-                          <a
-                            class="jill-site-header__drawer-link"
-                            href="{{ child_link.url }}"
-                            {% if child_link.current %}aria-current="page"{% endif %}
-                          >
-                            {{ child_link.title }}
-                          </a>
-                        {% endfor %}
-                      </div>
-                    </details>
-                  {% else %}
-                    <a
-                      class="jill-site-header__drawer-link{% if is_custom_order_link %} jill-site-header__drawer-link--cta{% endif %}"
-                      href="{{ link.url }}"
-                      {% if link.current %}aria-current="page"{% endif %}
-                    >
-                      {{ link.title }}
-                    </a>
-                  {% endif %}
+                {% for link in section.settings.menu.links %}
+                  {% assign link_title_downcase = link.title | downcase %}
+                  {% unless link.url contains '/pages/quote' or link_title_downcase contains 'custom order' %}
+                    {% render 'header-drawer-menu-link', link: link %}
+                  {% endunless %}
                 {% endfor %}
               {% else %}
                 <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
                 <a class="jill-site-header__drawer-link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
-              {% endif %}
-
-              {% if section.settings.show_custom_order and custom_order_in_menu == false %}
-                <a class="jill-button" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
               {% endif %}
             </nav>
 
