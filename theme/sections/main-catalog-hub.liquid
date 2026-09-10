@@ -34,7 +34,24 @@
           <div class="jill-catalog-disclosure-list" role="group" aria-label="Catalog collections">
             {% for block in section.blocks %}
               {% if block.type == 'category' and block.settings.collection != blank %}
-                {% assign category_collection = block.settings.collection %}
+                {% liquid
+                  assign category_collection = block.settings.collection
+                  assign category_label = category_collection.title
+                  case category_collection.title
+                    when 'Piñatas'
+                      assign category_label = 'Pinatas'
+                    when 'Pinatas'
+                      assign category_label = 'Pinatas'
+                    when 'Party Favors'
+                      assign category_label = 'Favors'
+                    when 'Kid Activities'
+                      assign category_label = 'Activities'
+                    when 'Party Supplies'
+                      assign category_label = 'Supplies'
+                    when 'Apparel & Gifts'
+                      assign category_label = 'Gifts'
+                  endcase
+                %}
                 {% if category_collection.products_count > 0 %}
                   <button
                     class="jill-catalog-disclosure__pill"
@@ -45,7 +62,7 @@
                     aria-controls="JillCatalogPanel-{{ category_collection.handle | escape }}"
                     {{ block.shopify_attributes }}
                   >
-                    <span class="jill-catalog-disclosure__title">{{ category_collection.title }}</span>
+                    <span class="jill-catalog-disclosure__title">{{ category_label }}</span>
                   </button>
                 {% endif %}
               {% endif %}
