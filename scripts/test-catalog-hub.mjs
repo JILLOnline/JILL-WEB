@@ -110,10 +110,18 @@ assert.equal(globalThis.JILLCustomOrder.requestedProductHandle('?product=party-f
 assert.equal(globalThis.JILLCustomOrder.requestedProductHandle('?foo=bar'), '');
 
 const select = {checked: false};
+const orderType = {checked: false};
+const collectionChoice = {
+  checked: false,
+  value: 'desired-collection',
+  dataset: {collectionTitle: 'Desired Collection'},
+};
 const choice = {
-  dataset: {productId: '123', productHandle: 'desired-product'},
+  dataset: {productId: '123', productHandle: 'desired-product', collectionHandles: 'desired-collection'},
   querySelector(selector) {
     if (selector === '[data-jill-custom-order-select]') return select;
+    if (selector === '[data-jill-product-projection-details]') return null;
+    if (selector === '[data-jill-order-quantity] [data-jill-quantity-input]') return null;
     return null;
   },
 };
@@ -122,17 +130,25 @@ const item = {
   ariaHidden: 'true',
   dataset: {jillProductId: '123', productHandle: 'desired-product'},
   setAttribute(name, value) { if (name === 'aria-hidden') this.ariaHidden = value; },
+  querySelector() { return null; },
 };
 const root = {
   dataset: {},
+  querySelector(selector) {
+    if (selector === '[name="order_type"][value="one"]') return orderType;
+    return null;
+  },
   querySelectorAll(selector) {
     if (selector === '[data-jill-product-choice]') return [choice];
     if (selector === '[data-jill-custom-order-item]') return [item];
+    if (selector === '[data-jill-collection-choice]') return [collectionChoice];
     return [];
   },
 };
 assert.equal(globalThis.JILLCustomOrder.applyCatalogPrefill(root, '?product=desired-product'), true);
 assert.equal(select.checked, true);
+assert.equal(orderType.checked, true);
+assert.equal(collectionChoice.checked, true);
 assert.equal(item.hidden, false);
 assert.equal(item.ariaHidden, 'false');
 assert.equal(root.dataset.jillCustomOrderPrefilled, 'true');
