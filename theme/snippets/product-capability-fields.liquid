@@ -163,6 +163,11 @@
             data-items-label="{{ 'products.product.allocation.items' | t | escape }}"
             {% unless allocation_initially_available %}hidden aria-hidden="true"{% else %}aria-hidden="false"{% endunless %}
           >
+            <div data-jill-allocated-capability-fields hidden aria-hidden="true">
+              {% for allocated_field_id in allocated_option_field_ids %}
+                <span data-jill-capability-field="{{ allocated_field_id | escape }}"></span>
+              {% endfor %}
+            </div>
             <h4 class="jill-product-customization__group-title">{{ 'products.product.allocation.title' | t }}</h4>
             <p class="jill-product-customization__help">{{ 'products.product.allocation.help' | t }}</p>
             <template data-jill-allocation-quantity-template>
