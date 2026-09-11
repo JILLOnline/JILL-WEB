@@ -145,11 +145,6 @@
     color: var(--jill-color-error);
   }
 
-  .jill-custom-order-personalization-card__items > .jill-field__label::after {
-    content: '*';
-    color: var(--jill-color-error);
-  }
-
   .jill-custom-order-personalization-card__fields .jill-field:has(> .jill-field__control:not([required])) > .jill-field__label:not(:has(.jill-field__optional))::after {
     content: 'Optional';
     color: var(--jill-color-muted);

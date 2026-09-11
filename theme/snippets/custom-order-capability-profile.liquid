@@ -1,15 +1,47 @@
-{% liquid
-  assign profile_json = capability_profile | json
-  assign source_units_per_quantity = capability_profile.features.customizationUnits.unitsPerQuantity
+{% comment %}
+  Canonical Custom Order capability projection.
 
-  if source_units_per_quantity != blank
-    capture source_units_fragment
-      echo '"unitsPerQuantity":' | append: source_units_per_quantity
-    endcapture
-    capture custom_order_units_fragment
-      echo '"unitsPerQuantity":1'
-    endcapture
-    assign profile_json = profile_json | replace: source_units_fragment, custom_order_units_fragment
+  Custom Order can inherit a shared family profile from
+  collection.metafields.custom.jill_custom_order_capabilities. Product-level
+  custom.jill_product_capabilities remains the fallback and stays canonical for
+  Product Page behavior.
+
+  Custom Order owns order-level personalization and reference uploads separately.
+  This projection deliberately exposes only Product Options to the shared product
+  runtime so hidden Product Page personalization fields can never block or corrupt
+  a Custom Order request. One Custom Order quantity is one customizable unit.
+{% endcomment %}
+{% liquid
+  if product != blank
+    for capability_collection in product.collections
+      assign collection_capability_metafield = capability_collection.metafields.custom.jill_custom_order_capabilities
+      if collection_capability_metafield != blank and collection_capability_metafield.type == 'json'
+        assign capability_profile = collection_capability_metafield.value
+        break
+      endif
+    endfor
   endif
 %}
-{{ profile_json }}
+{
+  "version": {{ capability_profile.version | default: 1 | json }},
+  "id": {{ capability_profile.id | default: 'custom_order_profile' | json }},
+  "fields": [
+    {% assign emitted_field_count = 0 %}
+    {% for field in capability_profile.fields %}
+      {% if field.group == 'product_options' %}
+        {% if emitted_field_count > 0 %},{% endif %}
+        {{ field | json }}
+        {% assign emitted_field_count = emitted_field_count | plus: 1 %}
+      {% endif %}
+    {% endfor %}
+  ],
+  "features": {
+    "customizationUnits": {
+      "unitsPerQuantity": 1,
+      "singularLabel": {{ capability_profile.features.customizationUnits.singularLabel | default: 'item' | json }},
+      "pluralLabel": {{ capability_profile.features.customizationUnits.pluralLabel | default: 'items' | json }}
+    }{% if capability_profile.features.productOptionsAllocation != blank %},
+    "productOptionsAllocation": {{ capability_profile.features.productOptionsAllocation | json }}{% endif %}{% if capability_profile.features.commerceAdjustments != blank %},
+    "commerceAdjustments": {{ capability_profile.features.commerceAdjustments | json }}{% endif %}
+  }
+}
