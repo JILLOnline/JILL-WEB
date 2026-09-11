@@ -1,13 +1,27 @@
 {% comment %}
   Canonical Custom Order capability projection.
 
-  Custom Order owns order-level personalization and reference uploads separately from
-  Product Page capability fields. This projection deliberately exposes only the
-  Product Options contract to the shared product runtime so hidden Product Page
-  personalization fields can never block or corrupt a Custom Order request.
+  Custom Order can inherit a shared family profile from
+  collection.metafields.custom.jill_custom_order_capabilities. Product-level
+  custom.jill_product_capabilities remains the fallback and stays canonical for
+  Product Page behavior.
 
-  One Custom Order quantity always represents one requested/customizable unit.
+  Custom Order owns order-level personalization and reference uploads separately.
+  This projection deliberately exposes only Product Options to the shared product
+  runtime so hidden Product Page personalization fields can never block or corrupt
+  a Custom Order request. One Custom Order quantity is one customizable unit.
 {% endcomment %}
+{% liquid
+  if product != blank
+    for capability_collection in product.collections
+      assign collection_capability_metafield = capability_collection.metafields.custom.jill_custom_order_capabilities
+      if collection_capability_metafield != blank and collection_capability_metafield.type == 'json'
+        assign capability_profile = collection_capability_metafield.value
+        break
+      endif
+    endfor
+  endif
+%}
 {
   "version": {{ capability_profile.version | default: 1 | json }},
   "id": {{ capability_profile.id | default: 'custom_order_profile' | json }},
