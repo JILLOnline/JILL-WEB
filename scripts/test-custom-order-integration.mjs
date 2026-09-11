@@ -63,6 +63,7 @@ assert.match(section, /data-product-title="{{ item_display_title \| escape }}"/,
 assert.match(titleFormatter, /replace: 'Custom '/, 'concise item labels must remove storefront marketing prefixes generically');
 assert.match(titleFormatter, /contains ' Count'/, 'unit-based item labels must remove pack-count segments');
 assert.match(titleFormatter, /contains ' Pieces'/, 'unit-based item labels must remove piece-count segments');
+assert.match(titleFormatter, /split: ' with '/, 'base item labels must remove included-with suffixes generically');
 assert.doesNotMatch(titleFormatter, /replace: ' Inch'/, 'physical size distinctions must remain part of product identity');
 assert.doesNotMatch(titleFormatter, /product\.handle|product\.id|case\s+product/i, 'concise labels must not branch on product identity');
 
@@ -78,6 +79,8 @@ assert.match(uiCss, /jill-field__optional/, 'shared UI owner must style Optional
 assert.match(uiCss, /jill-custom-order-personalization-card__items/, 'dynamic personalization assignment must visibly expose its required marker');
 assert.match(uiCss, /jill-custom-order-personalization-card__fields/, 'dynamic optional personalization fields must visibly expose Optional');
 assert.match(uiCss, /select\.jill-field__control\[required\]/, 'dynamic required variant selection must visibly expose its required marker');
+assert.match(uiCss, /jill-custom-order-product__details \.jill-quantity[\s\S]*margin-inline: auto/, 'Step 3 quantity must be centered inside its product card');
+assert.match(uiCss, /jill-custom-order-product__details \.jill-quantity > \.jill-field__label[\s\S]*justify-content: center/, 'Step 3 quantity label must be centered with its stepper');
 
 const optionsIndex = section.indexOf('data-jill-product-options-stage');
 const designIndex = section.indexOf('data-jill-design-core');
@@ -107,6 +110,9 @@ assert.match(runtime, /variant_allocations/, 'Custom Order request must carry st
 assert.match(runtime, /shopify-product:\$\{productId\}/, 'variant and Product Options must share stable product item identity');
 assert.match(runtime, /dispatchEvent\(event\)/, 'Custom Order must delegate item Product Options validation to the shared product runtime');
 assert.match(runtime, /data-jill-product-options-payload/, 'Custom Order must consume the canonical Product Options payload');
+assert.match(runtime, /function itemHasConfiguration/, 'Section 4 must have one product-agnostic configuration visibility rule');
+assert.match(runtime, /data-jill-variant-allocation[\s\S]*data-jill-capability-group="product_options"/, 'Section 4 visibility must derive from native variants or rendered Product Options, not product identity');
+assert.match(runtime, /composedPath/, 'Section 4 state refresh must survive Product Options control re-rendering');
 assert.match(runtime, /getPersonalizationAllocationFieldIds/, 'Custom Order must consume canonical personalization capability scope');
 assert.match(runtime, /JILLPersonalization/, 'Custom Order order-level personalization must still validate through the canonical personalization engine');
 assert.match(runtime, /personalizationState/, 'Custom Order must own one order-level personalization composition state');
