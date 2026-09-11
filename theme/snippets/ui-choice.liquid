@@ -16,7 +16,11 @@
     {% if error != blank %}aria-invalid="true" aria-describedby="{{ choice_id }}-error"{% elsif help != blank %}aria-describedby="{{ choice_id }}-help"{% endif %}
   >
   <span class="jill-choice__label">{{ label }}</span>
-  {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+  {% if required %}
+    <span class="jill-field__required" aria-hidden="true">*</span>
+  {% elsif optional_label != blank %}
+    <small class="jill-field__optional">{{ optional_label }}</small>
+  {% endif %}
 </label>
 
 {% if error != blank %}
