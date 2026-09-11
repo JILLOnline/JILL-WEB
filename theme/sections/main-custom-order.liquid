@@ -1,5 +1,7 @@
 {% liquid
   assign all_products = collections['all']
+  assign excluded_collection_handles_setting = section.settings.excluded_collection_handles | default: 'all,frontpage,jill,shop-the-party'
+  assign excluded_collection_handles = excluded_collection_handles_setting | downcase | remove: ' ' | split: ','
   assign quantity_label = 'products.product.quantity' | t
   assign allocation_count_label = 'products.product.allocation.count' | t
   assign option_surface_groups = 'product_options' | split: ','
@@ -93,18 +95,20 @@
         <p class="jill-custom-order__help" data-jill-collection-help>{{ 'custom_order.order.collection_one_help' | t }}</p>
         <div class="jill-custom-order__collection-grid">
           {% for catalog_collection in collections %}
-            {% if catalog_collection.handle != 'all' and catalog_collection.handle != 'frontpage' and catalog_collection.products_count > 0 %}
-              <label class="jill-custom-order__collection-choice">
-                <input
-                  type="checkbox"
-                  value="{{ catalog_collection.handle | escape }}"
-                  data-jill-collection-filter
-                  data-jill-collection-choice
-                  data-collection-title="{{ catalog_collection.title | escape }}"
-                >
-                <span>{{ catalog_collection.title }}</span>
-              </label>
-            {% endif %}
+            {% unless excluded_collection_handles contains catalog_collection.handle %}
+              {% if catalog_collection.products_count > 0 %}
+                <label class="jill-custom-order__collection-choice">
+                  <input
+                    type="checkbox"
+                    value="{{ catalog_collection.handle | escape }}"
+                    data-jill-collection-filter
+                    data-jill-collection-choice
+                    data-collection-title="{{ catalog_collection.title | escape }}"
+                  >
+                  <span>{{ catalog_collection.title }}</span>
+                </label>
+              {% endif %}
+            {% endunless %}
           {% endfor %}
         </div>
         <p class="jill-field__message" data-tone="error" data-jill-collection-error hidden>{{ 'custom_order.order.collection_error' | t }}</p>
@@ -430,6 +434,13 @@
 {
   "name": "Custom order",
   "settings": [
+    {
+      "type": "text",
+      "id": "excluded_collection_handles",
+      "label": "Collections hidden from picker",
+      "default": "all,frontpage,jill,shop-the-party",
+      "info": "Comma-separated collection handles. These collections stay in Shopify but do not appear in Custom Order."
+    },
     {
       "type": "text",
       "id": "submission_endpoint",
