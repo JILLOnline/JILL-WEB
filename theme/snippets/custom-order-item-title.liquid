@@ -31,7 +31,7 @@
     assign clean_segment_downcase = clean_segment | downcase
 
     assign is_pack_quantity = false
-    if clean_segment_downcase contains ' count' or clean_segment_downcase contains ' pieces' or clean_segment_downcase contains ' piece' or clean_segment_downcase contains ' pack' or clean_segment_downcase contains ' set of '
+    if clean_segment contains ' Count' or clean_segment contains ' Pieces' or clean_segment_downcase contains ' count' or clean_segment_downcase contains ' pieces' or clean_segment_downcase contains ' piece' or clean_segment_downcase contains ' pack' or clean_segment_downcase contains ' set of '
       assign is_pack_quantity = true
     endif
 
