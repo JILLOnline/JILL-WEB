@@ -155,6 +155,7 @@
     min-height: var(--jill-button-height);
     align-items: center;
     justify-content: center;
+    gap: var(--jill-space-unit);
     padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 42%, transparent);
     border-radius: var(--jill-field-radius);
@@ -164,6 +165,24 @@
     line-height: 1.3;
     text-align: center;
     transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+  }
+
+  .jill-custom-order__choice span::before,
+  .jill-custom-order__collection-choice span::before,
+  .jill-custom-order-product__pick span::before {
+    content: '';
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 0.9rem;
+    border: calc(var(--jill-border-width) * 1.5) solid currentColor;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .jill-custom-order__choice input:checked + span::before,
+  .jill-custom-order__collection-choice input:checked + span::before,
+  .jill-custom-order-product__pick input:checked + span::before {
+    background: currentColor;
   }
 
   .jill-custom-order__choice input:checked + span,
@@ -221,6 +240,7 @@
     display: flex;
     min-height: 4.4rem;
     align-items: center;
+    gap: var(--jill-space-unit);
     padding: calc(var(--jill-space-unit) * 2) calc(var(--jill-space-unit) * 2.25);
     background: var(--jill-color-background);
     font-weight: 750;
@@ -464,7 +484,21 @@
   }
 
   .jill-custom-order-personalization-card__allocation .jill-quantity {
-    width: min(100%, 12rem);
+    display: grid;
+    width: auto;
+    grid-template-columns: auto minmax(9rem, 12rem);
+    align-items: center;
+    gap: var(--jill-space-unit);
+  }
+
+  .jill-custom-order-personalization-card__allocation .jill-quantity > .jill-field__label {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .jill-custom-order__personalization [data-jill-personalization-add] {
+    justify-self: center;
+    margin-inline: auto;
   }
 
   .jill-custom-order__references {
@@ -936,6 +970,14 @@
     .jill-contact[data-jill-contact] .jill-contact__choice-group,
     .jill-contact[data-jill-contact] .jill-contact__callout {
       grid-template-columns: 1fr;
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
+      grid-template-columns: 1fr;
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation .jill-quantity {
+      justify-self: start;
     }
 
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__step-head {

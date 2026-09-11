@@ -153,6 +153,16 @@ assert.match(runtime, /finish\.disabled = state\.finished \|\| !completion\.comp
 assert.match(runtime, /totalPersonalizationUnits/, 'Different personalization must be available from total ordered units, not product-count shortcuts');
 assert.match(runtime, /remainingPersonalizationUnits/, 'Add another personalization must be driven by unallocated ordered units');
 assert.match(runtime, /personalizationAssignedForProduct/, 'personalization quantity allocation must keep one canonical per-product assignment calculation');
+assert.match(runtime, /data-jill-personalization-assigned/, 'every personalization card must expose the shared assigned-total view');
+assert.match(runtime, /personalizationAssignedForProduct\(state, item\.productId\)/, 'allocation rows must show the global assigned total across personalization groups');
+assert.match(runtime, /const allAssigned = state\.mode !== 'different' \|\| remainingPersonalizationUnits\(root, state\) === 0/, 'different-personalization cards must remain incomplete until all selected units are assigned');
+assert.match(runtime, /label: 'Qty'/, 'personalization allocation steppers must use the compact Qty label');
+assert.doesNotMatch(runtime, /Assign item quantities|Personalization is finished\. Continue with reference images below\./, 'personalization must not reintroduce redundant instructional/status copy');
+assert.doesNotMatch(section, /data-jill-personalization-help|custom_order\.personalization\.help/, 'personalization surface must not render redundant helper copy');
+assert.match(formsCss, /data-jill-personalization-add[\s\S]*justify-self: center/, 'Add another personalization must stay centered');
+assert.match(formsCss, /jill-custom-order-personalization-card__allocation \.jill-quantity[\s\S]*grid-template-columns: auto minmax\(9rem, 12rem\)/, 'personalization Qty label must sit inline to the left of its stepper');
+assert.match(formsCss, /jill-custom-order__choice span::before[\s\S]*jill-custom-order-product__pick span::before/, 'button-style Custom Order choices must expose a redundant selector circle');
+assert.match(formsCss, /input:checked \+ span::before[\s\S]*background: currentColor/, 'selector circles must visibly fill from native checked state');
 assert.match(runtime, /syncPersonalizationActions/, 'Finish and Add Another must share one live personalization action-state owner');
 assert.match(runtime, /group\.allocations/, 'different personalization must store quantities by selected product instead of whole-product ownership');
 assert.match(runtime, /personalizationCount/, 'Review must surface the number of units assigned to each personalization');
