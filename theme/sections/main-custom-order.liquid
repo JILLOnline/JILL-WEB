@@ -249,7 +249,7 @@
                     {% if capability_profile != blank %}
                       <input type="hidden" name="properties[_jill_profile]" value="{{ capability_profile.id }}@{{ capability_profile.version }}">
                       {% render 'product-capability-fields', capability_profile: capability_profile, section_id: item_key, surface_groups: option_surface_groups, show_intro: false, optional_label: optional_label %}
-                      <script type="application/json" data-jill-product-capability-profile>{{ capability_profile | json }}</script>
+                      <script type="application/json" data-jill-product-capability-profile>{% render 'custom-order-capability-profile', capability_profile: capability_profile %}</script>
                     {% endif %}
 
                     <p
