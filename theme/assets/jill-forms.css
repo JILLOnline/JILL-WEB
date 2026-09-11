@@ -1037,8 +1037,7 @@
   @media (prefers-reduced-motion: reduce) {
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__step,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__choice span,
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order__collection-choice span,
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__collection-choice span {
       transition: none;
     }
   }
