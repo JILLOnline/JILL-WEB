@@ -86,7 +86,7 @@
       "no": "No"
     },
     "state": {
-      "complete": "Complete ✓",
+      "complete": "Complete",
       "incomplete": "Incomplete"
     },
     "customer": {
