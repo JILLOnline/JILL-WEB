@@ -1,0 +1,54 @@
+name: Section 4 Regression Cleanup
+
+on:
+  push:
+    branches:
+      - jill/custom-order-section4-system-pass
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: jill/custom-order-section4-system-pass
+          fetch-depth: 0
+
+      - name: Clean dead personalization UI and test owner
+        shell: python
+        run: |
+          from pathlib import Path
+
+          ui_path = Path('theme/assets/jill-ui.css')
+          ui = ui_path.read_text()
+          obsolete = "  .jill-custom-order-personalization-card__items > .jill-field__label::after {\n    content: '*';\n    color: var(--jill-color-error);\n  }\n\n"
+          if obsolete not in ui:
+              raise SystemExit('Obsolete checkbox personalization UI rule not found')
+          ui_path.write_text(ui.replace(obsolete, '', 1))
+
+          test_path = Path('scripts/test-custom-order-integration.mjs')
+          test = test_path.read_text()
+          marker = "const uiCss = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');\n"
+          if marker not in test:
+              raise SystemExit('UI CSS test fixture marker not found')
+          if "const formsCss = fs.readFileSync('theme/assets/jill-forms.css', 'utf8');" not in test:
+              test = test.replace(marker, marker + "const formsCss = fs.readFileSync('theme/assets/jill-forms.css', 'utf8');\n", 1)
+          old = "assert.match(uiCss, /jill-custom-order-personalization-card__allocation/, 'quantity-aware personalization allocation must have one canonical row style');"
+          new = "assert.match(formsCss, /jill-custom-order-personalization-card__allocation/, 'quantity-aware personalization allocation must have one canonical row style');"
+          if old not in test:
+              raise SystemExit('Allocation CSS ownership assertion not found')
+          test_path.write_text(test.replace(old, new, 1))
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add theme/assets/jill-ui.css scripts/test-custom-order-integration.mjs
+          git diff --cached --check
+          git commit -m "Clean Section 4 personalization ownership"
+          git push origin HEAD:jill/custom-order-section4-system-pass
