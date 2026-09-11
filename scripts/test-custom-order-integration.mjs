@@ -8,6 +8,7 @@ const customOrderProfile = fs.readFileSync('theme/snippets/custom-order-capabili
 const titleFormatter = fs.readFileSync('theme/snippets/custom-order-item-title.liquid', 'utf8');
 const uiField = fs.readFileSync('theme/snippets/ui-field.liquid', 'utf8');
 const uiCss = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');
+const formsCss = fs.readFileSync('theme/assets/jill-forms.css', 'utf8');
 const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
 const productRuntime = fs.readFileSync('theme/assets/jill-product.js', 'utf8');
 const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js', 'utf8');
@@ -103,7 +104,7 @@ assert.match(renderer, /optional_label: optional_label/, 'capability-driven Prod
 assert.match(uiField, /jill-field__optional/, 'shared field primitive must support an explicit Optional marker');
 assert.match(uiField, /data-dynamic-required/, 'shared field primitive must support conditional required markers without duplicate logic');
 assert.match(uiCss, /jill-field__optional/, 'shared UI owner must style Optional markers');
-assert.match(uiCss, /jill-custom-order-personalization-card__allocation/, 'quantity-aware personalization allocation must have one canonical row style');
+assert.match(formsCss, /jill-custom-order-personalization-card__allocation/, 'quantity-aware personalization allocation must have one canonical row style');
 assert.match(uiCss, /jill-custom-order-personalization-card__fields/, 'dynamic optional personalization fields must visibly expose Optional');
 assert.match(uiCss, /select\.jill-field__control\[required\]/, 'dynamic required variant selection must visibly expose its required marker');
 assert.match(uiCss, /jill-custom-order-product__details \.jill-quantity[\s\S]*margin-inline: auto/, 'Step 3 quantity must be centered inside its product card');
