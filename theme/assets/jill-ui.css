@@ -277,6 +277,14 @@
     width: min(100%, 12rem);
   }
 
+  .jill-custom-order-product__details .jill-quantity {
+    margin-inline: auto;
+  }
+
+  .jill-custom-order-product__details .jill-quantity > .jill-field__label {
+    justify-content: center;
+  }
+
   .jill-quantity__stepper {
     display: grid;
     grid-template-columns: minmax(2.75rem, auto) minmax(3rem, 1fr) minmax(2.75rem, auto);
