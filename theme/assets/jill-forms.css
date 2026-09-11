@@ -140,8 +140,7 @@
 
   .jill-custom-order__choice input,
   .jill-custom-order__collection-choice input,
-  .jill-custom-order-product__pick input,
-  .jill-custom-order-personalization-card__item input {
+  .jill-custom-order-product__pick input {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -468,7 +467,7 @@
     width: min(100%, 12rem);
   }
 
-  .jill-custom-order__references {  .jill-custom-order__references {
+  .jill-custom-order__references {
     display: grid;
     gap: calc(var(--jill-space-unit) * 2);
     padding-block-start: calc(var(--jill-space-unit) * 1.5);
