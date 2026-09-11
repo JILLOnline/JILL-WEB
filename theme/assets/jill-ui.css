@@ -116,11 +116,23 @@
     color: var(--jill-color-error);
   }
 
+  .jill-field__required[data-dynamic-required='true'] {
+    display: none;
+  }
+
+  .jill-field:has(> .jill-field__control[required]) .jill-field__required[data-dynamic-required='true'] {
+    display: inline;
+  }
+
   .jill-field__optional {
     color: var(--jill-color-muted);
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.2;
+  }
+
+  .jill-field:has(> .jill-field__control[required]) > .jill-field__label .jill-field__optional {
+    display: none;
   }
 
   .jill-field__control {
