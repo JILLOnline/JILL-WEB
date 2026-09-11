@@ -6,7 +6,11 @@
 <div class="jill-field"{% if error != blank %} data-state="error"{% endif %}>
   <label class="jill-field__label" for="{{ field_id }}">
     {{ field_label }}
-    {% if required %}<span class="jill-field__required" aria-hidden="true">*</span>{% endif %}
+    {% if required %}
+      <span class="jill-field__required" aria-hidden="true">*</span>
+    {% elsif optional_label != blank %}
+      <small class="jill-field__optional">{{ optional_label }}</small>
+    {% endif %}
   </label>
 
   <select
