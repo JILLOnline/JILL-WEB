@@ -135,6 +135,29 @@
     display: none;
   }
 
+  .jill-custom-order .jill-field:has(> .jill-field__control[required]) > .jill-field__label:empty::after {
+    content: '*';
+    color: var(--jill-color-error);
+  }
+
+  .jill-custom-order .jill-product-customization__group .jill-field:has(> select.jill-field__control[required]) > .jill-field__label:not(:has(.jill-field__required))::after {
+    content: '*';
+    color: var(--jill-color-error);
+  }
+
+  .jill-custom-order-personalization-card__items > .jill-field__label::after {
+    content: '*';
+    color: var(--jill-color-error);
+  }
+
+  .jill-custom-order-personalization-card__fields .jill-field:has(> .jill-field__control:not([required])) > .jill-field__label:not(:has(.jill-field__optional))::after {
+    content: 'Optional';
+    color: var(--jill-color-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
   .jill-field__control {
     width: 100%;
     min-height: var(--jill-button-height);
