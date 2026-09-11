@@ -429,53 +429,46 @@
     grid-column: 1 / -1;
   }
 
-  .jill-custom-order-personalization-card__items {
+  .jill-custom-order-personalization-card__allocations {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
     gap: calc(var(--jill-space-unit) * 1.25);
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
   }
 
-  .jill-custom-order-personalization-card__items legend {
-    grid-column: 1 / -1;
-  }
-
-  .jill-custom-order-personalization-card__item {
-    position: relative;
-    display: block;
+  .jill-custom-order-personalization-card__allocations > .jill-field__label {
     margin: 0;
   }
 
-  .jill-custom-order-personalization-card__item span {
-    display: flex;
-    min-height: 4rem;
-    align-items: center;
+  .jill-custom-order-personalization-card__allocation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: calc(var(--jill-space-unit) * 1.5);
     padding: calc(var(--jill-space-unit) * 1.5);
-    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 36%, transparent);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 16%, transparent);
     border-radius: var(--jill-field-radius);
-    background: var(--jill-color-background);
-    font-weight: 700;
-    line-height: 1.35;
-    cursor: pointer;
+    background: color-mix(in srgb, var(--jill-color-foreground) 2%, var(--jill-color-background));
   }
 
-  .jill-custom-order-personalization-card__item input:checked + span {
-    border-color: var(--jill-color-foreground);
-    background: var(--jill-color-foreground);
-    color: var(--jill-color-background);
+  .jill-custom-order-personalization-card__allocation-meta {
+    display: grid;
+    gap: calc(var(--jill-space-unit) * 0.5);
+    min-width: 0;
   }
 
-  .jill-custom-order-personalization-card__item input:disabled + span {
-    border-color: color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
-    background: color-mix(in srgb, var(--jill-color-foreground) 5%, var(--jill-color-background));
+  .jill-custom-order-personalization-card__allocation-meta strong {
+    overflow-wrap: anywhere;
+  }
+
+  .jill-custom-order-personalization-card__allocation-meta span {
     color: var(--jill-color-muted);
-    cursor: not-allowed;
+    font-size: 0.9rem;
   }
 
-  .jill-custom-order__references {
+  .jill-custom-order-personalization-card__allocation .jill-quantity {
+    width: min(100%, 12rem);
+  }
+
+  .jill-custom-order__references {  .jill-custom-order__references {
     display: grid;
     gap: calc(var(--jill-space-unit) * 2);
     padding-block-start: calc(var(--jill-space-unit) * 1.5);

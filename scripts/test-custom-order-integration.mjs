@@ -103,7 +103,7 @@ assert.match(renderer, /optional_label: optional_label/, 'capability-driven Prod
 assert.match(uiField, /jill-field__optional/, 'shared field primitive must support an explicit Optional marker');
 assert.match(uiField, /data-dynamic-required/, 'shared field primitive must support conditional required markers without duplicate logic');
 assert.match(uiCss, /jill-field__optional/, 'shared UI owner must style Optional markers');
-assert.match(uiCss, /jill-custom-order-personalization-card__items/, 'dynamic personalization assignment must visibly expose its required marker');
+assert.match(uiCss, /jill-custom-order-personalization-card__allocation/, 'quantity-aware personalization allocation must have one canonical row style');
 assert.match(uiCss, /jill-custom-order-personalization-card__fields/, 'dynamic optional personalization fields must visibly expose Optional');
 assert.match(uiCss, /select\.jill-field__control\[required\]/, 'dynamic required variant selection must visibly expose its required marker');
 assert.match(uiCss, /jill-custom-order-product__details \.jill-quantity[\s\S]*margin-inline: auto/, 'Step 3 quantity must be centered inside its product card');
@@ -147,7 +147,15 @@ assert.doesNotMatch(runtime, /if \(root\.dataset\.jillOptionsFinished === 'true'
 assert.match(runtime, /data-jill-variant-allocation[\s\S]*data-jill-capability-group="product_options"/, 'Section 4 visibility must derive from native variants or rendered Product Options, not product identity');
 assert.match(runtime, /composedPath/, 'Section 4 state refresh must survive Product Options control re-rendering');
 assert.match(runtime, /personalizationState/, 'Custom Order must own one order-level personalization composition state');
-assert.match(runtime, /personalizationOwner/, 'different-by-item personalization must assign selected items deterministically');
+assert.match(runtime, /differentOption\.disabled = totalPersonalizationUnits\(root\) < 2/, 'one product with quantity two or more must support Different personalization');
+assert.match(runtime, /finish\.disabled = state\.finished \|\| !completion\.complete/, 'Finish personalization must enable from the same live completion state shown to the customer');
+assert.match(runtime, /totalPersonalizationUnits/, 'Different personalization must be available from total ordered units, not product-count shortcuts');
+assert.match(runtime, /remainingPersonalizationUnits/, 'Add another personalization must be driven by unallocated ordered units');
+assert.match(runtime, /personalizationAssignedForProduct/, 'personalization quantity allocation must keep one canonical per-product assignment calculation');
+assert.match(runtime, /syncPersonalizationActions/, 'Finish and Add Another must share one live personalization action-state owner');
+assert.match(runtime, /group\.allocations/, 'different personalization must store quantities by selected product instead of whole-product ownership');
+assert.match(runtime, /personalizationCount/, 'Review must surface the number of units assigned to each personalization');
+assert.doesNotMatch(runtime, /group\.productIds|personalizationOwner/, 'obsolete whole-product personalization ownership must be removed');
 assert.match(runtime, /api\.cloudinary\.com\/v1_1/, 'Custom Order must upload reference images through the configured Cloudinary media transport');
 assert.match(runtime, /validImage/, 'reference upload must validate image signatures instead of trusting file extensions alone');
 assert.match(runtime, /10 \* 1024 \* 1024/, 'reference upload must preserve the 10 MB per-file limit');

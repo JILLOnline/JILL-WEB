@@ -531,27 +531,6 @@
     return Array.from({length: quantity * multiplier}, (_, index) => `${itemId}::${index + 1}`);
   }
 
-  function semanticPersonalizationValue(field, values) {
-    const key = `${field?.id || ''} ${field?.label || ''}`.toLowerCase();
-    if (/age|number/.test(key)) return values.age;
-    if (/note|detail|instruction/.test(key)) return values.notes;
-    return values.wording;
-  }
-
-  function validateCanonicalPersonalization(profile, itemId, quantity, values) {
-    const fieldIds = globalThis.JILLProductCapabilities.getPersonalizationAllocationFieldIds(profile);
-    if (!fieldIds.length || !globalThis.JILLPersonalization) return;
-    let state = globalThis.JILLPersonalization.createState({itemId, merchandiseQuantity: quantity, profile, mode: 'same'});
-    if (!state.available || state.mode !== 'same') return;
-    const group = state.groups[0];
-    if (!group) return;
-    for (const fieldId of fieldIds) {
-      const field = globalThis.JILLProductCapabilities.getField(profile, fieldId);
-      state = globalThis.JILLPersonalization.setGroupValue(state, profile, group.id, fieldId, semanticPersonalizationValue(field, values));
-    }
-    if (!state.complete) fail('required personalization is incomplete');
-  }
-
   function personalizationState(root) {
     if (!personalizationStates.has(root)) {
       personalizationStates.set(root, {
@@ -566,96 +545,170 @@
     return personalizationStates.get(root);
   }
 
-  function personalizationOwner(state, productId) {
-    return state.groups.find((group) => group.productIds.includes(String(productId))) || null;
+  function personalizationChoiceLabel(choice) {
+    return choice?.querySelector('[data-jill-custom-order-select]')?.closest('label')?.textContent?.trim()
+      || choice?.dataset.productHandle
+      || 'Item';
   }
 
-  function newPersonalizationGroup(state, productIds = []) {
+  function selectedPersonalizationItems(root) {
+    return selectedChoices(root).map((choice) => {
+      const rawQuantity = Number(projectionQuantity(choice)?.value || 1);
+      const quantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+      return {
+        productId: String(choice.dataset.productId),
+        label: personalizationChoiceLabel(choice),
+        quantity,
+      };
+    });
+  }
+
+  function totalPersonalizationUnits(root) {
+    return selectedPersonalizationItems(root).reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  function newPersonalizationGroup(state, allocations = {}) {
     const id = `group_${state.nextGroupNumber++}`;
     state.open.add(id);
-    return {id, productIds: productIds.map(String), wording: '', age: '', notes: ''};
+    return {id, allocations: {...allocations}, wording: '', age: '', notes: ''};
   }
 
-  function selectedProductIds(root) {
-    return selectedChoices(root).map((choice) => String(choice.dataset.productId));
+  function personalizationGroupUnits(group) {
+    return Object.values(group?.allocations || {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+  }
+
+  function personalizationAssignedForProduct(state, productId, excludedGroupId = '') {
+    return state.groups.reduce((sum, group) => {
+      if (group.id === excludedGroupId) return sum;
+      return sum + Math.max(0, Number(group.allocations?.[productId]) || 0);
+    }, 0);
+  }
+
+  function personalizationGroupsReady(state) {
+    return state.groups.length > 0
+      && state.groups.every((group) => personalizationGroupUnits(group) > 0 && Boolean(group.wording.trim()));
+  }
+
+  function seedDifferentPersonalization(root, state) {
+    const items = selectedPersonalizationItems(root);
+    if (!items.length) return;
+    const first = newPersonalizationGroup(state);
+    const second = newPersonalizationGroup(state);
+    first.allocations[items[0].productId] = 1;
+    if (items.length > 1) second.allocations[items[1].productId] = 1;
+    else second.allocations[items[0].productId] = 1;
+    state.groups = [first, second];
   }
 
   function reconcilePersonalization(root) {
     const state = personalizationState(root);
-    const ids = selectedProductIds(root);
-    const allowed = new Set(ids);
-    const claimed = new Set();
+    const items = selectedPersonalizationItems(root);
+    const targets = new Map(items.map((item) => [item.productId, item.quantity]));
+
     for (const group of state.groups) {
-      group.productIds = group.productIds.filter((productId) => allowed.has(productId) && !claimed.has(productId));
-      group.productIds.forEach((productId) => claimed.add(productId));
+      if (!group.allocations || typeof group.allocations !== 'object') group.allocations = {};
+      for (const productId of Object.keys(group.allocations)) {
+        if (!targets.has(productId)) delete group.allocations[productId];
+      }
     }
-    state.groups = state.groups.filter((group, index) => group.productIds.length || index < 2);
-    if (state.mode === 'different' && ids.length < 2) {
-      const source = state.groups.find((group) => group.wording) || state.groups[0];
+
+    for (const item of items) {
+      let remaining = item.quantity;
+      for (const group of state.groups) {
+        const requested = Math.max(0, Math.trunc(Number(group.allocations[item.productId]) || 0));
+        const keep = Math.min(requested, remaining);
+        if (keep > 0) group.allocations[item.productId] = keep;
+        else delete group.allocations[item.productId];
+        remaining -= keep;
+      }
+    }
+
+    const total = items.reduce((sum, item) => sum + item.quantity, 0);
+    if (state.mode === 'different' && total < 2) {
+      const source = state.groups.find((group) => group.wording.trim()) || state.groups[0];
       if (source && !state.same.wording) state.same = {wording: source.wording, age: source.age, notes: source.notes};
-      state.mode = ids.length ? 'same' : '';
+      state.mode = total ? 'same' : '';
       state.groups = [];
       state.open.clear();
       state.finished = false;
     }
-    if (state.mode === 'different' && ids.length >= 2 && !state.groups.length) {
-      state.groups = [newPersonalizationGroup(state, [ids[0]]), newPersonalizationGroup(state, [ids[1]])];
-    }
+    if (state.mode === 'different' && total >= 2 && !state.groups.length) seedDifferentPersonalization(root, state);
     return state;
   }
 
+  function remainingPersonalizationUnits(root, state = reconcilePersonalization(root)) {
+    return selectedPersonalizationItems(root).reduce((sum, item) => {
+      const assigned = personalizationAssignedForProduct(state, item.productId);
+      return sum + Math.max(0, item.quantity - assigned);
+    }, 0);
+  }
+
   function personalizationCompletion(root) {
-    const state = personalizationState(root);
-    const ids = selectedProductIds(root);
+    const state = reconcilePersonalization(root);
+    const total = totalPersonalizationUnits(root);
     if (!state.mode) return {complete: false, message: 'Choose a personalization setup.'};
     if (state.mode === 'none') return {complete: true, message: 'No personalization selected.'};
     if (state.mode === 'same') {
-      return state.same.wording.trim()
+      return total > 0 && state.same.wording.trim()
         ? {complete: true, message: 'Ready to finish personalization.'}
         : {complete: false, message: 'Enter the name or wording.'};
     }
-    if (ids.length < 2) return {complete: false, message: 'Different personalization requires at least two selected items.'};
+    if (total < 2) return {complete: false, message: 'Different personalization requires at least two items.'};
     if (state.groups.length < 2) return {complete: false, message: 'Two personalization cards are required.'};
-    if (state.groups.some((group) => !group.productIds.length)) return {complete: false, message: 'Select at least one item in every personalization card.'};
-    if (state.groups.some((group) => !group.wording.trim())) return {complete: false, message: 'Add wording to every personalization card.'};
-    const assigned = state.groups.flatMap((group) => group.productIds);
-    if (new Set(assigned).size !== assigned.length) return {complete: false, message: 'Each item can belong to only one personalization.'};
-    if (ids.some((id) => !assigned.includes(id))) return {complete: false, message: 'Assign every selected item to a personalization.'};
+    if (state.groups.some((group) => personalizationGroupUnits(group) === 0)) {
+      return {complete: false, message: 'Assign at least one item to every personalization.'};
+    }
+    if (state.groups.some((group) => !group.wording.trim())) {
+      return {complete: false, message: 'Add wording to every personalization.'};
+    }
+    const remaining = remainingPersonalizationUnits(root, state);
+    if (remaining > 0) {
+      return {complete: false, message: `${remaining} item${remaining === 1 ? '' : 's'} still need a personalization.`};
+    }
     return {complete: true, message: 'Ready to finish personalization.'};
   }
 
-  function valuesForProduct(root, productId) {
-    const state = personalizationState(root);
-    if (state.mode === 'none' || !state.mode) return null;
-    if (state.mode === 'same') return state.same;
-    return personalizationOwner(state, productId) || null;
+  function personalizationAttributes(values) {
+    return [
+      {id: 'name_text', label: 'Name / wording', value: values.wording.trim()},
+      {id: 'number_age', label: 'Age / number', value: values.age.trim()},
+      {id: 'personalization_notes', label: 'Notes', value: values.notes.trim()},
+    ].filter((entry) => entry.value !== '');
   }
 
   function applyOrderPersonalization(root, itemNodes, requests) {
-    const state = personalizationState(root);
+    const state = reconcilePersonalization(root);
     if (!state.mode || state.mode === 'none') return;
+
     itemNodes.forEach((item, index) => {
       const request = requests[index];
-      const values = valuesForProduct(root, item.dataset.jillProductId);
-      if (!values) return;
       const form = item.querySelector('[data-jill-custom-order-item-form]');
       const profile = readProfile(form);
-      if (profile) validateCanonicalPersonalization(profile, request.item_id, request.quantity, values);
-      let fields = profile?.groups?.personalization?.map((fieldId) => globalThis.JILLProductCapabilities.getField(profile, fieldId)).filter(Boolean) || [];
-      if (!fields.length) {
-        fields = [
-          {id: 'name_text', label: 'Name / wording'},
-          {id: 'number_age', label: 'Age / number'},
-          {id: 'theme_notes', label: 'Notes'},
-        ];
+      const unitIds = customizationUnitIds(request.item_id, request.quantity, profile);
+
+      if (state.mode === 'same') {
+        request.personalization_groups = [{
+          id: 'same',
+          allocations: unitIds.map((unitId) => ({unit_id: unitId})),
+          attributes: personalizationAttributes(state.same),
+        }];
+        return;
       }
-      const attributes = fields.map((field) => ({id: field.id, label: field.label, value: semanticPersonalizationValue(field, values)}))
-        .filter((entry) => String(entry.value || '').trim() !== '');
-      request.personalization_groups = [{
-        id: state.mode === 'same' ? 'same' : personalizationOwner(state, item.dataset.jillProductId)?.id || 'personalization',
-        allocations: customizationUnitIds(request.item_id, request.quantity, profile).map((unitId) => ({unit_id: unitId})),
-        attributes,
-      }];
+
+      let cursor = 0;
+      request.personalization_groups = [];
+      for (const group of state.groups) {
+        const count = Math.max(0, Number(group.allocations?.[String(item.dataset.jillProductId)]) || 0);
+        if (!count) continue;
+        const allocated = unitIds.slice(cursor, cursor + count);
+        cursor += allocated.length;
+        request.personalization_groups.push({
+          id: group.id,
+          allocations: allocated.map((unitId) => ({unit_id: unitId})),
+          attributes: personalizationAttributes(group),
+        });
+      }
+      if (cursor !== unitIds.length) fail('personalization quantities do not match the selected item quantity');
     });
   }
 
@@ -860,7 +913,8 @@
         item.personalization_groups.forEach((group) => {
           if (!group.attributes.length) return;
           const block = node('div', 'jill-custom-order-review__personalization');
-          block.append(node('h5', '', 'Personalization'));
+          const personalizationCount = group.allocations?.length || 0;
+          block.append(node('h5', '', `Personalization — ${personalizationCount} item${personalizationCount === 1 ? '' : 's'}`));
           const details = node('div', 'jill-custom-order-review__details');
           appendRows(details, group.attributes.map((entry) => reviewRow(entry.label || entry.id, displayValue(entry.value))));
           block.append(details);
@@ -1171,32 +1225,136 @@
 
   function syncPersonalizationCardStatuses(root) {
     const state = personalizationState(root);
+    const selectedUnits = totalPersonalizationUnits(root);
     for (const card of root.querySelectorAll('[data-jill-personalization-card]')) {
       const id = card.dataset.jillPersonalizationCard;
       const record = id === 'same' ? state.same : state.groups.find((group) => group.id === id);
-      const count = id === 'same' ? selectedChoices(root).length : record?.productIds.length || 0;
-      const complete = count > 0 && Boolean(record?.wording?.trim());
+      const units = id === 'same' ? selectedUnits : personalizationGroupUnits(record);
+      const complete = units > 0 && Boolean(record?.wording?.trim());
       const status = card.querySelector('[data-jill-personalization-card-status]');
       if (status) {
-        status.textContent = complete ? (root.dataset.completeLabel || 'Complete ✓') : count ? 'Add wording' : 'Select items';
+        status.textContent = complete ? (root.dataset.completeLabel || 'Complete ✓') : units ? 'Add wording' : 'Assign items';
         status.dataset.tone = complete ? 'success' : 'error';
       }
       card.dataset.state = complete ? 'complete' : 'incomplete';
     }
   }
 
-  function renderPersonalization(root) {
+  function syncPersonalizationActions(root) {
     const state = reconcilePersonalization(root);
-    const cards = root.querySelector('[data-jill-personalization-cards]');
     const actions = root.querySelector('[data-jill-personalization-actions]');
     const add = root.querySelector('[data-jill-personalization-add]');
     const finish = root.querySelector('[data-jill-personalization-finish]');
     const help = root.querySelector('[data-jill-personalization-help]');
+    if (!actions || !add || !finish || !help) return;
+
+    const actionable = state.mode === 'same' || state.mode === 'different';
+    setVisible(actions, actionable);
+    if (!actionable) return;
+
+    const completion = personalizationCompletion(root);
+    const remaining = state.mode === 'different' ? remainingPersonalizationUnits(root, state) : 0;
+    add.hidden = state.mode !== 'different' || state.finished || remaining === 0;
+    add.disabled = state.mode !== 'different' || remaining === 0 || !personalizationGroupsReady(state);
+    add.setAttribute('aria-disabled', add.disabled ? 'true' : 'false');
+    finish.hidden = false;
+    finish.disabled = state.finished || !completion.complete;
+    finish.setAttribute('aria-disabled', finish.disabled ? 'true' : 'false');
+    finish.textContent = state.finished
+      ? (root.dataset.personalizationFinishedLabel || 'Personalization finished ✓')
+      : (root.dataset.finishPersonalizationLabel || 'Finish personalization');
+    help.textContent = state.finished
+      ? 'Personalization is finished. Continue with reference images below.'
+      : completion.message;
+    syncPersonalizationCardStatuses(root);
+  }
+
+  function createPersonalizationQuantityShell(root, state, group, item, groupIndex) {
+    const row = node('div', 'jill-custom-order-personalization-card__allocation');
+    row.dataset.jillPersonalizationAllocation = `${group.id}:${item.productId}`;
+
+    const meta = node('div', 'jill-custom-order-personalization-card__allocation-meta');
+    meta.append(
+      node('strong', '', item.label),
+      node('span', '', `${Math.max(0, Number(group.allocations[item.productId]) || 0)} / ${item.quantity} assigned`),
+    );
+
+    const shell = node('div', 'jill-quantity');
+    shell.dataset.jillQuantity = '';
+    shell.dataset.jillQuantityDecreaseText = 'Decrease';
+    shell.dataset.jillQuantityIncreaseText = 'Increase';
+
+    const quantityLabel = node('label', 'jill-field__label');
+    const quantityLabelText = node('span', '', 'Quantity');
+    quantityLabelText.dataset.jillQuantityLabelText = '';
+    const requiredMark = node('span', 'jill-field__required', '*');
+    requiredMark.hidden = true;
+    quantityLabel.append(quantityLabelText, requiredMark);
+
+    const stepper = node('div', 'jill-quantity__stepper');
+    const decrement = node('button', 'jill-quantity__button');
+    decrement.type = 'button';
+    decrement.tabIndex = -1;
+    decrement.dataset.jillQuantityAction = 'decrement';
+    decrement.append(node('span', '', '−'));
+    decrement.firstElementChild.setAttribute('aria-hidden', 'true');
+
+    const input = document.createElement('input');
+    input.className = 'jill-field__control jill-quantity__control';
+    input.type = 'number';
+    input.inputMode = 'numeric';
+    input.dataset.jillQuantityInput = '';
+
+    const increment = node('button', 'jill-quantity__button');
+    increment.type = 'button';
+    increment.tabIndex = -1;
+    increment.dataset.jillQuantityAction = 'increment';
+    increment.append(node('span', '', '+'));
+    increment.firstElementChild.setAttribute('aria-hidden', 'true');
+    stepper.append(decrement, input, increment);
+    shell.append(quantityLabel, stepper);
+
+    const current = Math.max(0, Number(group.allocations[item.productId]) || 0);
+    const assignedElsewhere = personalizationAssignedForProduct(state, item.productId, group.id);
+    const max = Math.max(0, item.quantity - assignedElsewhere);
+    globalThis.JILLQuantity.configure(shell, {
+      id: `JillPersonalizationQuantity-${group.id}-${item.productId}`,
+      label: 'Quantity',
+      accessibleLabel: `${item.label}, Personalization ${groupIndex + 1}`,
+      value: Math.min(current, max),
+      min: 0,
+      max,
+      step: 1,
+      required: false,
+    });
+
+    input.addEventListener('input', () => {
+      const next = Math.max(0, Math.trunc(Number(input.value) || 0));
+      if (next > 0) group.allocations[item.productId] = next;
+      else delete group.allocations[item.productId];
+      state.finished = false;
+      syncPersonalizationActions(root);
+      syncProgression(root);
+    });
+    input.addEventListener('change', () => {
+      queueMicrotask(() => {
+        renderPersonalization(root);
+        syncProgression(root);
+      });
+    });
+
+    row.append(meta, shell);
+    return row;
+  }
+
+  function renderPersonalization(root) {
+    const state = reconcilePersonalization(root);
+    const cards = root.querySelector('[data-jill-personalization-cards]');
     const mode = root.querySelector('[data-jill-personalization-mode]');
-    if (!cards || !actions || !add || !finish || !help || !mode) return;
+    if (!cards || !mode) return;
 
     const differentOption = mode.querySelector('option[value="different"]');
-    if (differentOption) differentOption.disabled = selectedChoices(root).length < 2;
+    if (differentOption) differentOption.disabled = totalPersonalizationUnits(root) < 2;
     mode.value = state.mode;
     cards.replaceChildren();
 
@@ -1230,17 +1388,19 @@
         createPersonalizationInput('Name / wording', record.wording, true, (value) => {
           record.wording = value;
           state.finished = false;
-          syncPersonalizationCardStatuses(root);
+          syncPersonalizationActions(root);
           syncProgression(root);
         }),
         createPersonalizationInput('Age / number', record.age, false, (value) => {
           record.age = value;
           state.finished = false;
+          syncPersonalizationActions(root);
           syncProgression(root);
         }),
         createPersonalizationInput('Notes', record.notes, false, (value) => {
           record.notes = value;
           state.finished = false;
+          syncPersonalizationActions(root);
           syncProgression(root);
         }, true),
       );
@@ -1249,38 +1409,23 @@
 
     if (state.mode === 'same') {
       const shell = cardShell('same', 'Same personalization for all selected items');
-      shell.body.append(node('p', 'jill-custom-order-personalization-card__shared', selectedChoices(root).map((choice) => choice.querySelector('[data-jill-custom-order-select]')?.closest('label')?.textContent?.trim() || choice.dataset.productHandle).join(' · ')));
+      const summary = selectedPersonalizationItems(root)
+        .map((item) => `${item.label} ×${item.quantity}`)
+        .join(' · ');
+      shell.body.append(node('p', 'jill-custom-order-personalization-card__shared', summary));
       appendFields(shell.body, state.same);
       cards.append(shell.card);
     }
 
     if (state.mode === 'different') {
+      const items = selectedPersonalizationItems(root);
       state.groups.forEach((group, index) => {
         const shell = cardShell(group.id, `Personalization ${index + 1}`);
-        const fieldset = node('fieldset', 'jill-custom-order-personalization-card__items');
-        fieldset.append(node('legend', 'jill-field__label', 'Which items use this personalization?'));
-        selectedChoices(root).forEach((choice) => {
-          const productId = String(choice.dataset.productId);
-          const owner = personalizationOwner(state, productId);
-          const label = node('label', 'jill-custom-order-personalization-card__item');
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.value = productId;
-          input.checked = owner === group;
-          input.disabled = Boolean(owner && owner !== group);
-          const textNode = node('span', '', choice.querySelector('[data-jill-custom-order-select]')?.closest('label')?.textContent?.trim() || choice.dataset.productHandle);
-          input.addEventListener('change', () => {
-            if (input.checked && !group.productIds.includes(productId)) group.productIds.push(productId);
-            if (!input.checked) group.productIds = group.productIds.filter((id) => id !== productId);
-            state.finished = false;
-            renderPersonalization(root);
-            syncProgression(root);
-          });
-          label.append(input, textNode);
-          fieldset.append(label);
-        });
-        shell.body.append(fieldset);
-        if (group.productIds.length) appendFields(shell.body, group);
+        const allocations = node('div', 'jill-custom-order-personalization-card__allocations');
+        allocations.append(node('p', 'jill-field__label', 'Assign item quantities'));
+        items.forEach((item) => allocations.append(createPersonalizationQuantityShell(root, state, group, item, index)));
+        shell.body.append(allocations);
+        if (personalizationGroupUnits(group) > 0) appendFields(shell.body, group);
         if (state.groups.length > 2) {
           const remove = node('button', 'jill-button', 'Remove personalization');
           remove.type = 'button';
@@ -1298,16 +1443,7 @@
       });
     }
 
-    const completion = personalizationCompletion(root);
-    const assigned = new Set(state.groups.flatMap((group) => group.productIds));
-    const remaining = selectedProductIds(root).filter((id) => !assigned.has(id));
-    setVisible(actions, state.mode === 'same' || state.mode === 'different');
-    add.hidden = state.mode !== 'different' || !remaining.length;
-    add.disabled = state.groups.some((group) => !group.productIds.length || !group.wording.trim());
-    finish.disabled = !completion.complete || state.finished;
-    finish.textContent = state.finished ? (root.dataset.personalizationFinishedLabel || 'Personalization finished ✓') : (root.dataset.finishPersonalizationLabel || 'Finish personalization');
-    help.textContent = state.finished ? 'Personalization is finished. Continue with reference images below.' : completion.message;
-    syncPersonalizationCardStatuses(root);
+    syncPersonalizationActions(root);
   }
 
   function referenceReady(root) {
@@ -1508,6 +1644,7 @@
 
     const state = reconcilePersonalization(root);
     const completion = personalizationCompletion(root);
+    syncPersonalizationActions(root);
     const personalizationReady = designReady && completion.complete && (state.mode === 'none' || state.finished);
     setVisible(referenceStage, personalizationReady);
     const referenceChoice = readChecked(root, 'has_references');
@@ -1611,6 +1748,7 @@
         syncCanonicalQuantity(root, choice);
         resetOptions(root);
         personalizationState(root).finished = false;
+        renderPersonalization(root);
         syncProgression(root);
       });
     });
@@ -1670,10 +1808,9 @@
     });
 
     personalizationAdd?.addEventListener('click', () => {
-      const state = personalizationState(root);
-      const assigned = new Set(state.groups.flatMap((group) => group.productIds));
-      const remaining = selectedProductIds(root).filter((id) => !assigned.has(id));
-      if (!remaining.length || state.groups.some((group) => !group.productIds.length || !group.wording.trim())) return;
+      const state = reconcilePersonalization(root);
+      if (state.mode !== 'different') return;
+      if (remainingPersonalizationUnits(root, state) === 0 || !personalizationGroupsReady(state)) return;
       state.groups.push(newPersonalizationGroup(state));
       state.finished = false;
       renderPersonalization(root);
