@@ -2,59 +2,66 @@
   Canonical Custom Order item-label contract.
 
   Section 3 presents sellable/customizable unit names, not storefront listing copy.
-  Keep the base product identity and meaningful physical distinctions such as size,
-  capacity, or shape. Remove marketing prefixes, pack/count wording, production
-  methods, included-extra copy, and personalization/listing descriptors.
+  A product may provide custom.jill_custom_order_label when its storefront title
+  contains a distinction that is represented as a Custom Order Product Option.
+  Otherwise keep the base product identity and meaningful physical distinctions
+  such as size, capacity, or shape while removing listing/packaging copy.
 
   This formatter is presentation-only. It must never branch on product handle/ID,
   mutate Shopify product data, or become a second Product Options owner.
 {% endcomment %}
 {% liquid
-  assign title_segments = product.title | default: '' | split: ' – '
-  assign base_title = title_segments.first | strip
+  assign custom_order_label = product.metafields.custom.jill_custom_order_label.value | default: '' | strip
 
-  assign base_title = base_title | replace: 'Custom Handmade ', ''
-  assign base_title = base_title | replace: 'Custom Kids ', ''
-  assign base_title = base_title | replace: 'Custom ', ''
-  assign base_title = base_title | replace: 'Personalized ', ''
-  assign base_title = base_title | replace: 'Handmade ', ''
-  assign base_title = base_title | replace: 'DTF ', ''
-  assign base_title = base_title | replace: 'Sublimation ', ''
-  assign base_title = base_title | replace: 'Vinyl ', ''
-  assign base_title = base_title | replace: 'Party Favor ', ''
-  assign base_title = base_title | replace: 'Party Favors ', ''
+  if custom_order_label != blank
+    assign unit_title = custom_order_label
+  else
+    assign title_segments = product.title | default: '' | split: ' – '
+    assign base_title = title_segments.first | strip
 
-  assign base_identity = base_title | split: ' with ' | first | strip
-  assign unit_title = base_identity
+    assign base_title = base_title | replace: 'Custom Handmade ', ''
+    assign base_title = base_title | replace: 'Custom Kids ', ''
+    assign base_title = base_title | replace: 'Custom ', ''
+    assign base_title = base_title | replace: 'Personalized ', ''
+    assign base_title = base_title | replace: 'Handmade ', ''
+    assign base_title = base_title | replace: 'DTF ', ''
+    assign base_title = base_title | replace: 'Sublimation ', ''
+    assign base_title = base_title | replace: 'Vinyl ', ''
+    assign base_title = base_title | replace: 'Party Favor ', ''
+    assign base_title = base_title | replace: 'Party Favors ', ''
 
-  for segment in title_segments offset: 1
-    assign clean_segment = segment | strip
-    assign clean_segment_downcase = clean_segment | downcase
-    assign clean_segment_size = clean_segment | size
+    assign base_identity = base_title | split: ' with ' | first | strip
+    assign unit_title = base_identity
 
-    assign is_pack_quantity = false
-    if clean_segment contains ' Count' or clean_segment contains ' Pieces' or clean_segment_downcase contains ' count' or clean_segment_downcase contains ' pieces' or clean_segment_downcase contains ' piece' or clean_segment_downcase contains ' pack' or clean_segment_downcase contains ' set of '
-      assign is_pack_quantity = true
-    endif
+    for segment in title_segments offset: 1
+      assign clean_segment = segment | strip
+      assign clean_segment_downcase = clean_segment | downcase
+      assign clean_segment_size = clean_segment | size
 
-    assign is_listing_copy = false
-    if clean_segment_downcase contains 'made to order' or clean_segment_downcase contains 'personalized' or clean_segment_downcase contains 'includes ' or clean_segment_downcase contains 'print' or clean_segment_downcase contains 'photo' or clean_segment_downcase contains 'design' or clean_segment_downcase == 'dtf' or clean_segment_downcase == 'sublimation' or clean_segment_downcase == 'vinyl'
-      assign is_listing_copy = true
-    endif
+      assign is_pack_quantity = false
+      if clean_segment contains ' Count' or clean_segment contains ' Pieces' or clean_segment_downcase contains ' count' or clean_segment_downcase contains ' pieces' or clean_segment_downcase contains ' piece' or clean_segment_downcase contains ' pack' or clean_segment_downcase contains ' set of '
+        assign is_pack_quantity = true
+      endif
 
-    assign is_noise = false
-    if clean_segment_size <= 1
-      assign is_noise = true
-    endif
+      assign is_listing_copy = false
+      if clean_segment_downcase contains 'made to order' or clean_segment_downcase contains 'personalized' or clean_segment_downcase contains 'includes ' or clean_segment_downcase contains 'print' or clean_segment_downcase contains 'photo' or clean_segment_downcase contains 'design' or clean_segment_downcase == 'dtf' or clean_segment_downcase == 'sublimation' or clean_segment_downcase == 'vinyl'
+        assign is_listing_copy = true
+      endif
 
-    unless clean_segment == blank or is_pack_quantity or is_listing_copy or is_noise
-      assign unit_title = unit_title | append: ' – ' | append: clean_segment
-    endunless
-  endfor
+      assign is_noise = false
+      if clean_segment_size <= 1
+        assign is_noise = true
+      endif
 
-  assign unit_title = unit_title | replace: 'Crewneck Sweatshirt', 'Crewneck'
-  assign unit_title = unit_title | replace: 'Crewneck Fleece - Everyday Wear', 'Crewneck'
-  assign unit_title = unit_title | replace: 'Crewneck Fleece', 'Crewneck'
-  assign unit_title = unit_title | replace: 'Coffee Mug', 'Mug'
+      unless clean_segment == blank or is_pack_quantity or is_listing_copy or is_noise
+        assign unit_title = unit_title | append: ' – ' | append: clean_segment
+      endunless
+    endfor
+
+    assign unit_title = unit_title | replace: 'Crewneck Sweatshirt', 'Crewneck'
+    assign unit_title = unit_title | replace: 'Crewneck Fleece - Everyday Wear', 'Crewneck'
+    assign unit_title = unit_title | replace: 'Crewneck Fleece', 'Crewneck'
+    assign unit_title = unit_title | replace: 'Coffee Mug', 'Mug'
+  endif
 %}
 {{ unit_title | strip }}
