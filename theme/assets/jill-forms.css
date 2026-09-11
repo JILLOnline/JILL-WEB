@@ -474,6 +474,10 @@
     background: color-mix(in srgb, var(--jill-color-success) 4%, var(--jill-color-background));
   }
 
+  .jill-custom-order-personalization-card__allocation:has([data-jill-quantity-action='decrement']:disabled):has([data-jill-quantity-action='increment']:disabled) {
+    display: none;
+  }
+
   .jill-custom-order-personalization-card__allocation-meta {
     display: grid;
     gap: calc(var(--jill-space-unit) * 0.5);
