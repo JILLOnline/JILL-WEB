@@ -58,8 +58,9 @@ assert.doesNotMatch(section, /Snack|Pinata|Piñata|Apparel|Favor/i, 'Custom Orde
 assert.match(section, /render 'custom-order-item-title'/, 'Custom Order must use one canonical concise item-label formatter');
 assert.match(section, /data-product-title="{{ item_display_title \| escape }}"/, 'normalized requests and Review must use the concise Custom Order item label');
 assert.match(titleFormatter, /replace: 'Custom '/, 'concise item labels must remove storefront marketing prefixes generically');
-assert.match(titleFormatter, /replace: ' Count', ' ct'/, 'concise item labels must compact count wording');
-assert.match(titleFormatter, /replace: ' Inch', ' in'/, 'concise item labels must compact dimensions');
+assert.match(titleFormatter, /contains ' Count'/, 'unit-based item labels must remove pack-count segments');
+assert.match(titleFormatter, /contains ' Pieces'/, 'unit-based item labels must remove piece-count segments');
+assert.doesNotMatch(titleFormatter, /replace: ' Inch'/, 'physical size distinctions must remain part of product identity');
 assert.doesNotMatch(titleFormatter, /product\.handle|product\.id|case\s+product/i, 'concise labels must not branch on product identity');
 
 assert.match(section, /data-optional-label=/, 'Custom Order must expose its localized Optional label to the surface');
