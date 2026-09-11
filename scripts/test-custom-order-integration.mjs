@@ -35,8 +35,10 @@ assert.match(customOrderProfile, /commerceAdjustments/, 'Custom Order projection
 assert.doesNotMatch(customOrderProfile, /personalizationAllocation/, 'product-profile personalization must not leak into the order-level Custom Order personalization owner');
 assert.doesNotMatch(customOrderProfile, /Snack|Coloring|Activity|Surprise|Piñata|Pinata|product\.handle|product\.id/i, 'Custom Order capability projection must never branch on product identity or family names');
 assert.doesNotMatch(productSection, /custom-order-capability-profile/, 'Product Page capability semantics must remain untouched by the Custom Order projection');
+assert.doesNotMatch(productSection, /surface_groups:/, 'Product Page must not opt into Custom Order collection-family capability projection');
 
-assert.match(renderer, /jill_custom_order_capabilities/, 'shared renderer must support collection-owned Custom Order family capabilities when product context is supplied');
+assert.match(renderer, /jill_custom_order_capabilities/, 'shared renderer must support collection-owned Custom Order family capabilities on projected surfaces');
+assert.match(renderer, /if surface_groups != blank and product != blank/, 'collection-family capability inheritance must require an explicit projected surface so Product Page stays untouched');
 assert.match(renderer, /for capability_collection in product\.collections/, 'family capability lookup must be data-driven through Shopify collections');
 assert.match(renderer, /surface_groups/, 'shared capability renderer must accept a generic surface-group projection');
 assert.match(renderer, /show_intro/, 'shared capability renderer must support surfaces that own their own heading copy');
@@ -141,7 +143,7 @@ assert.match(runtime, /button\.disabled = finished \|\| !completion\.complete/, 
 assert.match(runtime, /setVisible\(stage, false\)/, 'products with no Product Options must skip the Product Options milestone instead of inventing work');
 assert.match(runtime, /jill:custom-order-item-state/, 'Section 4 readiness must respond to allocator state changes that do not emit native input events');
 assert.match(runtime, /data-jill-product-options-add/, 'Section 4 readiness must respond to dynamically added or removed Product Options allocation groups');
-assert.doesNotMatch(runtime, /data-jill-option-card-toggle[\s\S]{0,600}resetOptions\(root\)/, 'opening or closing a completed option card must not invalidate finished Product Options');
+assert.doesNotMatch(runtime, /if \(root\.dataset\.jillOptionsFinished === 'true'\) resetOptions\(root\);/, 'opening or closing a completed option card must not invalidate finished Product Options');
 assert.match(runtime, /data-jill-variant-allocation[\s\S]*data-jill-capability-group="product_options"/, 'Section 4 visibility must derive from native variants or rendered Product Options, not product identity');
 assert.match(runtime, /composedPath/, 'Section 4 state refresh must survive Product Options control re-rendering');
 assert.match(runtime, /personalizationState/, 'Custom Order must own one order-level personalization composition state');
