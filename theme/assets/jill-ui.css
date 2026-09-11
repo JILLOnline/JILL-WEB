@@ -116,6 +116,13 @@
     color: var(--jill-color-error);
   }
 
+  .jill-field__optional {
+    color: var(--jill-color-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
   .jill-field__control {
     width: 100%;
     min-height: var(--jill-button-height);
