@@ -14,7 +14,7 @@
   assign base_title = title_segments.first | strip
 
   assign base_title = base_title | replace: 'Custom Handmade ', ''
-  assign base_title = base_title | replace: 'Custom Kids ', 'Kids '
+  assign base_title = base_title | replace: 'Custom Kids ', ''
   assign base_title = base_title | replace: 'Custom ', ''
   assign base_title = base_title | replace: 'Personalized ', ''
   assign base_title = base_title | replace: 'Handmade ', ''
@@ -24,7 +24,8 @@
   assign base_title = base_title | replace: 'Party Favor ', ''
   assign base_title = base_title | replace: 'Party Favors ', ''
 
-  assign unit_title = base_title
+  assign base_identity = base_title | split: ' with ' | first | strip
+  assign unit_title = base_identity
 
   for segment in title_segments offset: 1
     assign clean_segment = segment | strip
@@ -51,7 +52,6 @@
     endunless
   endfor
 
-  assign unit_title = unit_title | replace: 'Kids Activity Kit with Play-Doh', 'Activity Kit with Play-Doh'
   assign unit_title = unit_title | replace: 'Crewneck Sweatshirt', 'Crewneck'
   assign unit_title = unit_title | replace: 'Crewneck Fleece - Everyday Wear', 'Crewneck'
   assign unit_title = unit_title | replace: 'Crewneck Fleece', 'Crewneck'

@@ -40,9 +40,23 @@
     return selectedChoices(root).map((choice) => itemForProduct(root, choice.dataset.productId)).filter(Boolean);
   }
 
+  function itemHasConfiguration(item) {
+    if (!item) return false;
+    return Boolean(item.querySelector(
+      '[data-jill-variant-allocation], [data-jill-capability-group="product_options"] [data-jill-capability-field]',
+    ));
+  }
+
+  function eventItem(event) {
+    const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+    return path.find((node) => node?.matches?.('[data-jill-custom-order-item]'))
+      || event.target?.closest?.('[data-jill-custom-order-item]')
+      || null;
+  }
+
   function setItemSelected(item, selected) {
     if (!item) return;
-    setVisible(item, selected);
+    setVisible(item, selected && itemHasConfiguration(item));
   }
 
   function projectionDetails(choice) {
@@ -1568,14 +1582,14 @@
     });
 
     root.querySelector('[data-jill-stage="configuration"]')?.addEventListener('input', (event) => {
-      if (event.target.closest('[data-jill-custom-order-item]')) {
+      if (eventItem(event)) {
         resetOptions(root);
         updateItemStatuses(root);
         syncProgression(root);
       }
     });
     root.querySelector('[data-jill-stage="configuration"]')?.addEventListener('change', (event) => {
-      if (event.target.closest('[data-jill-custom-order-item]')) {
+      if (eventItem(event)) {
         resetOptions(root);
         updateItemStatuses(root);
         syncProgression(root);

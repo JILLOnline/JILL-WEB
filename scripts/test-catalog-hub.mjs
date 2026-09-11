@@ -130,7 +130,10 @@ const item = {
   ariaHidden: 'true',
   dataset: {jillProductId: '123', productHandle: 'desired-product'},
   setAttribute(name, value) { if (name === 'aria-hidden') this.ariaHidden = value; },
-  querySelector() { return null; },
+  querySelector(selector) {
+    if (selector.includes('[data-jill-variant-allocation]')) return {};
+    return null;
+  },
 };
 const root = {
   dataset: {},
