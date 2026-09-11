@@ -1223,17 +1223,46 @@
     return wrapper;
   }
 
+  function syncPersonalizationAllocationViews(root, state = reconcilePersonalization(root)) {
+    const items = new Map(selectedPersonalizationItems(root).map((item) => [item.productId, item]));
+    for (const row of root.querySelectorAll('[data-jill-personalization-allocation]')) {
+      const [groupId, productId] = String(row.dataset.jillPersonalizationAllocation || '').split(':');
+      const item = items.get(productId);
+      const group = state.groups.find((candidate) => candidate.id === groupId);
+      if (!item || !group) continue;
+
+      const assigned = personalizationAssignedForProduct(state, productId);
+      const summary = row.querySelector('[data-jill-personalization-assigned]');
+      if (summary) summary.textContent = `${assigned} / ${item.quantity} assigned`;
+
+      const shell = row.querySelector('[data-jill-quantity]');
+      const input = shell?.querySelector('[data-jill-quantity-input]');
+      if (!shell || !input) continue;
+      const assignedElsewhere = personalizationAssignedForProduct(state, productId, groupId);
+      input.max = String(Math.max(0, item.quantity - assignedElsewhere));
+      globalThis.JILLQuantity?.sync(shell);
+    }
+  }
+
   function syncPersonalizationCardStatuses(root) {
-    const state = personalizationState(root);
+    const state = reconcilePersonalization(root);
     const selectedUnits = totalPersonalizationUnits(root);
+    const allAssigned = state.mode !== 'different' || remainingPersonalizationUnits(root, state) === 0;
     for (const card of root.querySelectorAll('[data-jill-personalization-card]')) {
       const id = card.dataset.jillPersonalizationCard;
       const record = id === 'same' ? state.same : state.groups.find((group) => group.id === id);
       const units = id === 'same' ? selectedUnits : personalizationGroupUnits(record);
-      const complete = units > 0 && Boolean(record?.wording?.trim());
+      const hasWording = Boolean(record?.wording?.trim());
+      const complete = units > 0 && hasWording && allAssigned;
       const status = card.querySelector('[data-jill-personalization-card-status]');
       if (status) {
-        status.textContent = complete ? (root.dataset.completeLabel || 'Complete ✓') : units ? 'Add wording' : 'Assign items';
+        status.textContent = complete
+          ? (root.dataset.completeLabel || 'Complete ✓')
+          : units === 0
+            ? 'Assign items'
+            : !hasWording
+              ? 'Add wording'
+              : (root.dataset.incompleteLabel || 'Incomplete');
         status.dataset.tone = complete ? 'success' : 'error';
       }
       card.dataset.state = complete ? 'complete' : 'incomplete';
@@ -1245,8 +1274,7 @@
     const actions = root.querySelector('[data-jill-personalization-actions]');
     const add = root.querySelector('[data-jill-personalization-add]');
     const finish = root.querySelector('[data-jill-personalization-finish]');
-    const help = root.querySelector('[data-jill-personalization-help]');
-    if (!actions || !add || !finish || !help) return;
+    if (!actions || !add || !finish) return;
 
     const actionable = state.mode === 'same' || state.mode === 'different';
     setVisible(actions, actionable);
@@ -1263,9 +1291,7 @@
     finish.textContent = state.finished
       ? (root.dataset.personalizationFinishedLabel || 'Personalization finished ✓')
       : (root.dataset.finishPersonalizationLabel || 'Finish personalization');
-    help.textContent = state.finished
-      ? 'Personalization is finished. Continue with reference images below.'
-      : completion.message;
+    syncPersonalizationAllocationViews(root, state);
     syncPersonalizationCardStatuses(root);
   }
 
@@ -1274,10 +1300,9 @@
     row.dataset.jillPersonalizationAllocation = `${group.id}:${item.productId}`;
 
     const meta = node('div', 'jill-custom-order-personalization-card__allocation-meta');
-    meta.append(
-      node('strong', '', item.label),
-      node('span', '', `${Math.max(0, Number(group.allocations[item.productId]) || 0)} / ${item.quantity} assigned`),
-    );
+    const assigned = node('span', '', `${personalizationAssignedForProduct(state, item.productId)} / ${item.quantity} assigned`);
+    assigned.dataset.jillPersonalizationAssigned = '';
+    meta.append(node('strong', '', item.label), assigned);
 
     const shell = node('div', 'jill-quantity');
     shell.dataset.jillQuantity = '';
@@ -1285,7 +1310,7 @@
     shell.dataset.jillQuantityIncreaseText = 'Increase';
 
     const quantityLabel = node('label', 'jill-field__label');
-    const quantityLabelText = node('span', '', 'Quantity');
+    const quantityLabelText = node('span', '', 'Qty');
     quantityLabelText.dataset.jillQuantityLabelText = '';
     const requiredMark = node('span', 'jill-field__required', '*');
     requiredMark.hidden = true;
@@ -1319,8 +1344,8 @@
     const max = Math.max(0, item.quantity - assignedElsewhere);
     globalThis.JILLQuantity.configure(shell, {
       id: `JillPersonalizationQuantity-${group.id}-${item.productId}`,
-      label: 'Quantity',
-      accessibleLabel: `${item.label}, Personalization ${groupIndex + 1}`,
+      label: 'Qty',
+      accessibleLabel: `${item.label}, Personalization ${groupIndex + 1}: Quantity`,
       value: Math.min(current, max),
       min: 0,
       max,
@@ -1409,10 +1434,6 @@
 
     if (state.mode === 'same') {
       const shell = cardShell('same', 'Same personalization for all selected items');
-      const summary = selectedPersonalizationItems(root)
-        .map((item) => `${item.label} ×${item.quantity}`)
-        .join(' · ');
-      shell.body.append(node('p', 'jill-custom-order-personalization-card__shared', summary));
       appendFields(shell.body, state.same);
       cards.append(shell.card);
     }
@@ -1422,7 +1443,6 @@
       state.groups.forEach((group, index) => {
         const shell = cardShell(group.id, `Personalization ${index + 1}`);
         const allocations = node('div', 'jill-custom-order-personalization-card__allocations');
-        allocations.append(node('p', 'jill-field__label', 'Assign item quantities'));
         items.forEach((item) => allocations.append(createPersonalizationQuantityShell(root, state, group, item, index)));
         shell.body.append(allocations);
         if (personalizationGroupUnits(group) > 0) appendFields(shell.body, group);
