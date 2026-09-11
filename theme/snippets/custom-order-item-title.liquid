@@ -15,17 +15,24 @@
 
   for segment in title_segments offset: 1
     assign clean_segment = segment | strip
+    assign clean_segment_size = clean_segment | size
+
     assign is_pack_quantity = false
     if clean_segment contains ' Count' or clean_segment contains ' Pieces'
       assign is_pack_quantity = true
     endif
 
     assign is_listing_method = false
-    if clean_segment == 'Made to Order' or clean_segment == 'Personalized Party Favors' or clean_segment == 'Personalized Print' or clean_segment == 'Custom Photo, Text & Design'
+    if clean_segment == 'Made to Order' or clean_segment == 'Print' or clean_segment == 'Photo, Text & Design' or clean_segment == 'Personalized Party Favors' or clean_segment contains 'Includes '
       assign is_listing_method = true
     endif
 
-    unless is_pack_quantity or is_listing_method
+    assign is_noise = false
+    if clean_segment_size <= 1
+      assign is_noise = true
+    endif
+
+    unless is_pack_quantity or is_listing_method or is_noise
       assign unit_title = unit_title | append: ' – ' | append: clean_segment
     endunless
   endfor
