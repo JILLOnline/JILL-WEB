@@ -947,6 +947,7 @@
 
   function firstIncompleteItem(root) {
     for (const item of selectedItems(root)) {
+      if (!itemHasConfiguration(item)) continue;
       const issue = itemCompletionIssue(item);
       if (issue) return issue;
     }
@@ -1372,24 +1373,72 @@
     }
   }
 
+  function selectedConfigurationItems(root) {
+    return selectedItems(root).filter(itemHasConfiguration);
+  }
+
+  function optionsCompletion(root) {
+    const items = selectedConfigurationItems(root);
+    if (!items.length) return {required: false, complete: true, issue: null};
+    for (const item of items) {
+      const issue = itemCompletionIssue(item);
+      if (issue) return {required: true, complete: false, issue};
+    }
+    return {required: true, complete: true, issue: null};
+  }
+
+  function syncOptionsActions(root) {
+    const stage = root.querySelector('[data-jill-product-options-stage]');
+    const button = root.querySelector('[data-jill-finish-configuration]');
+    const help = root.querySelector('[data-jill-options-help]');
+    const completion = optionsCompletion(root);
+
+    if (!completion.required) {
+      root.dataset.jillOptionsFinished = 'true';
+      setVisible(stage, false);
+      return completion;
+    }
+
+    setVisible(stage, true);
+    const finished = root.dataset.jillOptionsFinished === 'true';
+    if (button) {
+      button.disabled = finished || !completion.complete;
+      button.setAttribute('aria-disabled', button.disabled ? 'true' : 'false');
+      button.textContent = finished
+        ? (root.dataset.optionsFinishedLabel || 'Product Options finished ✓')
+        : (root.dataset.finishOptionsLabel || 'Finish Product Options');
+    }
+    if (help) {
+      help.textContent = finished
+        ? 'Product Options are finished. Continue with your design and personalization below.'
+        : completion.complete
+          ? 'Everything is ready. Finish Product Options to continue.'
+          : 'Complete the product options above to continue.';
+    }
+    return completion;
+  }
+
   function resetOptions(root) {
     root.dataset.jillOptionsFinished = 'false';
-    const button = root.querySelector('[data-jill-finish-configuration]');
-    if (button) {
-      button.disabled = false;
-      button.setAttribute('aria-disabled', 'false');
-      button.textContent = root.dataset.finishOptionsLabel || 'Finish Product Options';
-    }
+    syncOptionsActions(root);
   }
 
   function validateConfiguration(root) {
     for (const choice of selectedChoices(root)) syncCanonicalQuantity(root, choice);
-    for (const item of selectedItems(root)) {
+    const configuredItems = selectedConfigurationItems(root);
+    if (!configuredItems.length) {
+      root.dataset.jillOptionsFinished = 'true';
+      syncOptionsActions(root);
+      syncProgression(root);
+      return true;
+    }
+    for (const item of configuredItems) {
       const result = validateProductForm(item);
       if (!result.accepted) {
         const target = result.focusControl || item.querySelector('[aria-invalid="true"], select, input, textarea, button');
         scrollToTarget(target || item);
         updateItemStatuses(root);
+        syncOptionsActions(root);
         return false;
       }
     }
@@ -1397,16 +1446,12 @@
     if (issue) {
       scrollToTarget(issue.target || issue.item);
       updateItemStatuses(root);
+      syncOptionsActions(root);
       return false;
     }
     root.dataset.jillOptionsFinished = 'true';
-    const button = root.querySelector('[data-jill-finish-configuration]');
-    if (button) {
-      button.textContent = root.dataset.optionsFinishedLabel || 'Product Options finished ✓';
-      button.disabled = true;
-      button.setAttribute('aria-disabled', 'true');
-    }
     collapseOptionCards(root);
+    syncOptionsActions(root);
     syncProgression(root);
     root.querySelector('[data-jill-design-core]')?.scrollIntoView({behavior: 'smooth', block: 'center'});
     return true;
@@ -1426,6 +1471,7 @@
     syncShipping(root);
     syncSelectedItems(root);
     updateItemStatuses(root);
+    syncOptionsActions(root);
 
     const customerStage = root.querySelector('[data-jill-stage="customer"]');
     const orderStage = root.querySelector('[data-jill-stage="order"]');
@@ -1500,6 +1546,7 @@
     const personalizationAdd = root.querySelector('[data-jill-personalization-add]');
     const personalizationFinish = root.querySelector('[data-jill-personalization-finish]');
     const finishConfiguration = root.querySelector('[data-jill-finish-configuration]');
+    const configurationStage = root.querySelector('[data-jill-stage="configuration"]');
     const reviewOpen = root.querySelector('[data-jill-review-open]');
     const reviewBack = root.querySelector('[data-jill-review-back]');
     const reviewConfirm = root.querySelector('[data-jill-review-confirm]');
@@ -1573,27 +1620,39 @@
         const item = toggle.closest('[data-jill-custom-order-item]');
         const body = item?.querySelector('[data-jill-option-card-body]');
         if (!body) return;
-        if (root.dataset.jillOptionsFinished === 'true') resetOptions(root);
         const open = body.hidden;
         body.hidden = !open;
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        syncProgression(root);
       });
     });
 
-    root.querySelector('[data-jill-stage="configuration"]')?.addEventListener('input', (event) => {
+    configurationStage?.addEventListener('input', (event) => {
       if (eventItem(event)) {
         resetOptions(root);
         updateItemStatuses(root);
         syncProgression(root);
       }
     });
-    root.querySelector('[data-jill-stage="configuration"]')?.addEventListener('change', (event) => {
+    configurationStage?.addEventListener('change', (event) => {
       if (eventItem(event)) {
         resetOptions(root);
         updateItemStatuses(root);
         syncProgression(root);
       }
+    });
+    configurationStage?.addEventListener('jill:custom-order-item-state', (event) => {
+      if (eventItem(event)) {
+        resetOptions(root);
+        updateItemStatuses(root);
+        syncProgression(root);
+      }
+    });
+    configurationStage?.addEventListener('click', (event) => {
+      const action = event.target.closest?.('[data-jill-product-options-add], [data-jill-product-options-group] button');
+      if (!action || !eventItem(event)) return;
+      resetOptions(root);
+      updateItemStatuses(root);
+      syncProgression(root);
     });
 
     finishConfiguration?.addEventListener('click', () => validateConfiguration(root));
