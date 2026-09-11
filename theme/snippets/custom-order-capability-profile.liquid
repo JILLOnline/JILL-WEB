@@ -1,0 +1,15 @@
+{% liquid
+  assign profile_json = capability_profile | json
+  assign source_units_per_quantity = capability_profile.features.customizationUnits.unitsPerQuantity
+
+  if source_units_per_quantity != blank
+    capture source_units_fragment
+      echo '"unitsPerQuantity":' | append: source_units_per_quantity
+    endcapture
+    capture custom_order_units_fragment
+      echo '"unitsPerQuantity":1'
+    endcapture
+    assign profile_json = profile_json | replace: source_units_fragment, custom_order_units_fragment
+  endif
+%}
+{{ profile_json }}
