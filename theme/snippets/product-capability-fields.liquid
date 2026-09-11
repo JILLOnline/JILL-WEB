@@ -1,5 +1,5 @@
 {% liquid
-  if product != blank
+  if surface_groups != blank and product != blank
     for capability_collection in product.collections
       assign collection_capability_metafield = capability_collection.metafields.custom.jill_custom_order_capabilities
       if collection_capability_metafield != blank and collection_capability_metafield.type == 'json'
