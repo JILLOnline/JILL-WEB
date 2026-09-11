@@ -46,6 +46,12 @@
     gap: calc(var(--jill-space-unit) * 3);
   }
 
+  .jill-custom-order .jill-field,
+  .jill-custom-order .jill-field__control {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .jill-custom-order__step,
   .jill-custom-order__review,
   .jill-custom-order__success {
@@ -185,7 +191,7 @@
   .jill-custom-order__choice input:checked + span::before,
   .jill-custom-order__collection-choice input:checked + span::before,
   .jill-custom-order-product__pick input:checked + span::before {
-    background: currentColor;
+    background-color: currentColor;
   }
 
   .jill-custom-order__choice input:checked + span,
