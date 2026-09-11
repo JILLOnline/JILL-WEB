@@ -463,9 +463,15 @@
     align-items: end;
     gap: calc(var(--jill-space-unit) * 1.5);
     padding: calc(var(--jill-space-unit) * 1.5);
-    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 16%, transparent);
+    border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-error) 64%, transparent);
     border-radius: var(--jill-field-radius);
-    background: color-mix(in srgb, var(--jill-color-foreground) 2%, var(--jill-color-background));
+    background: color-mix(in srgb, var(--jill-color-error) 2%, var(--jill-color-background));
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+
+  .jill-custom-order-personalization-card__allocation:has([data-jill-quantity-action='increment']:disabled) {
+    border-color: color-mix(in srgb, var(--jill-color-success) 70%, transparent);
+    background: color-mix(in srgb, var(--jill-color-success) 4%, var(--jill-color-background));
   }
 
   .jill-custom-order-personalization-card__allocation-meta {
@@ -479,8 +485,14 @@
   }
 
   .jill-custom-order-personalization-card__allocation-meta span {
-    color: var(--jill-color-muted);
+    color: var(--jill-color-error);
     font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .jill-custom-order-personalization-card__allocation:has([data-jill-quantity-action='increment']:disabled)
+    .jill-custom-order-personalization-card__allocation-meta span {
+    color: var(--jill-color-success);
   }
 
   .jill-custom-order-personalization-card__allocation .jill-quantity {
@@ -974,10 +986,34 @@
 
     .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
       grid-template-columns: 1fr;
+      align-items: center;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation-meta {
+      justify-items: center;
+      text-align: center;
     }
 
     .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation .jill-quantity {
-      justify-self: start;
+      grid-template-columns: minmax(9rem, 12rem);
+      justify-items: center;
+      justify-self: center;
+      gap: calc(var(--jill-space-unit) * 0.75);
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation .jill-quantity__stepper {
+      grid-row: 1;
+      justify-self: center;
+      width: 100%;
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation .jill-quantity > .jill-field__label {
+      grid-row: 2;
+      justify-content: center;
+      justify-self: center;
+      text-align: center;
     }
 
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__step-head {
@@ -1001,7 +1037,8 @@
   @media (prefers-reduced-motion: reduce) {
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__step,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__choice span,
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order__collection-choice span {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__collection-choice span,
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
       transition: none;
     }
   }
