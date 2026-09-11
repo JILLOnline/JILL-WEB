@@ -4,18 +4,35 @@
   assign item_title = item_title | replace: 'Custom Kids ', 'Kids '
   assign item_title = item_title | replace: 'Custom ', ''
   assign item_title = item_title | replace: 'Personalized ', ''
-  assign item_title = item_title | replace: ' – Made to Order', ''
-  assign item_title = item_title | replace: ' – Personalized Party Favors', ''
-  assign item_title = item_title | replace: ' – Personalized Print', ''
-  assign item_title = item_title | replace: ' – Custom Photo, Text & Design', ''
-  assign item_title = item_title | replace: 'Party Favor ', ''
-  assign item_title = item_title | replace: ' – Includes Stick', ' + Stick'
-  assign item_title = item_title | replace: ' Inch', ' in'
-  assign item_title = item_title | replace: ' Count', ' ct'
-  assign item_title = item_title | replace: ' Pieces', ' pc'
-  assign item_title = item_title | replace: 'Kids Activity Kit with Play-Doh', 'Activity Kit + Play-Doh'
   assign item_title = item_title | replace: 'DTF ', ''
-  assign item_title = item_title | replace: 'Crewneck Sweatshirt', 'Crewneck'
-  assign item_title = item_title | replace: '11 oz Coffee Mug', '11 oz Mug'
+  assign item_title = item_title | replace: 'Sublimation ', ''
+  assign item_title = item_title | replace: 'Vinyl ', ''
+  assign item_title = item_title | replace: 'Party Favor ', ''
+  assign item_title = item_title | replace: 'Party Favor', ''
+
+  assign title_segments = item_title | split: ' – '
+  assign unit_title = title_segments.first | strip
+
+  for segment in title_segments offset: 1
+    assign clean_segment = segment | strip
+    assign is_pack_quantity = false
+    if clean_segment contains ' Count' or clean_segment contains ' Pieces'
+      assign is_pack_quantity = true
+    endif
+
+    assign is_listing_method = false
+    if clean_segment == 'Made to Order' or clean_segment == 'Personalized Party Favors' or clean_segment == 'Personalized Print' or clean_segment == 'Custom Photo, Text & Design'
+      assign is_listing_method = true
+    endif
+
+    unless is_pack_quantity or is_listing_method
+      assign unit_title = unit_title | append: ' – ' | append: clean_segment
+    endunless
+  endfor
+
+  assign unit_title = unit_title | replace: 'Kids Activity Kit with Play-Doh', 'Activity Kit with Play-Doh'
+  assign unit_title = unit_title | replace: 'Crewneck Fleece - Everyday Wear', 'Crewneck'
+  assign unit_title = unit_title | replace: 'Crewneck Fleece', 'Crewneck'
+  assign unit_title = unit_title | replace: 'Coffee Mug', 'Mug'
 %}
-{{ item_title | strip }}
+{{ unit_title | strip }}
