@@ -171,12 +171,15 @@
   .jill-custom-order__collection-choice span::before,
   .jill-custom-order-product__pick span::before {
     content: '';
+    box-sizing: border-box;
     width: 0.9rem;
     height: 0.9rem;
     flex: 0 0 0.9rem;
+    padding: 0.125rem;
     border: calc(var(--jill-border-width) * 1.5) solid currentColor;
     border-radius: 999px;
     background: transparent;
+    background-clip: content-box;
   }
 
   .jill-custom-order__choice input:checked + span::before,
