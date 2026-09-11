@@ -4,6 +4,9 @@ import fs from 'node:fs';
 const section = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const productSection = fs.readFileSync('theme/sections/main-product.liquid', 'utf8');
 const renderer = fs.readFileSync('theme/snippets/product-capability-fields.liquid', 'utf8');
+const titleFormatter = fs.readFileSync('theme/snippets/custom-order-item-title.liquid', 'utf8');
+const uiField = fs.readFileSync('theme/snippets/ui-field.liquid', 'utf8');
+const uiCss = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');
 const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
 const productRuntime = fs.readFileSync('theme/assets/jill-product.js', 'utf8');
 const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js', 'utf8');
@@ -51,6 +54,26 @@ assert.match(section, /data-jill-review-confirm/, 'Review must own the final rev
 assert.match(section, /data-jill-request-submit/, 'Custom Order must expose Request Custom Order only at the review boundary');
 assert.match(section, /data-jill-custom-order-success/, 'Custom Order must expose a dedicated success state');
 assert.doesNotMatch(section, /Snack|Pinata|Piñata|Apparel|Favor/i, 'Custom Order must not branch on product families');
+
+assert.match(section, /render 'custom-order-item-title'/, 'Custom Order must use one canonical concise item-label formatter');
+assert.match(section, /data-product-title="{{ item_display_title \| escape }}"/, 'normalized requests and Review must use the concise Custom Order item label');
+assert.match(titleFormatter, /replace: 'Custom '/, 'concise item labels must remove storefront marketing prefixes generically');
+assert.match(titleFormatter, /replace: ' Count', ' ct'/, 'concise item labels must compact count wording');
+assert.match(titleFormatter, /replace: ' Inch', ' in'/, 'concise item labels must compact dimensions');
+assert.doesNotMatch(titleFormatter, /product\.handle|product\.id|case\s+product/i, 'concise labels must not branch on product identity');
+
+assert.match(section, /data-optional-label=/, 'Custom Order must expose its localized Optional label to the surface');
+assert.match(section, /dynamic_required: true/, 'conditionally required Phone must have a dynamic required marker');
+assert.match(section, /optional_label: optional_label/, 'Custom Order optional controls must opt into the shared Optional marker contract');
+assert.match(section, /upload_title[^\n]*jill-field__required/s, 'required reference upload must expose a red required marker');
+assert.match(section, /data-jill-review-confirm required/, 'Review confirmation must carry native required semantics');
+assert.match(renderer, /optional_label: optional_label/, 'capability-driven Product Options must inherit the Custom Order Optional marker contract');
+assert.match(uiField, /jill-field__optional/, 'shared field primitive must support an explicit Optional marker');
+assert.match(uiField, /data-dynamic-required/, 'shared field primitive must support conditional required markers without duplicate logic');
+assert.match(uiCss, /jill-field__optional/, 'shared UI owner must style Optional markers');
+assert.match(uiCss, /jill-custom-order-personalization-card__items/, 'dynamic personalization assignment must visibly expose its required marker');
+assert.match(uiCss, /jill-custom-order-personalization-card__fields/, 'dynamic optional personalization fields must visibly expose Optional');
+assert.match(uiCss, /select\.jill-field__control\[required\]/, 'dynamic required variant selection must visibly expose its required marker');
 
 const optionsIndex = section.indexOf('data-jill-product-options-stage');
 const designIndex = section.indexOf('data-jill-design-core');
