@@ -1,0 +1,352 @@
+name: Section 4 Personalization Ledger Polish
+
+on:
+  push:
+    branches:
+      - jill/section4-personalization-ledger-polish
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/section4-personalization-ledger-polish
+          fetch-depth: 0
+
+      - name: Apply Section 4 personalization ledger and visual polish
+        shell: python
+        run: |
+          from pathlib import Path
+
+          runtime_path = Path('theme/assets/jill-custom-order.js')
+          runtime = runtime_path.read_text()
+
+          start = runtime.index('  function syncPersonalizationCardStatuses(root) {')
+          end = runtime.index('  function syncPersonalizationActions(root) {', start)
+          replacement = '''  function syncPersonalizationAllocationViews(root, state = reconcilePersonalization(root)) {
+    const items = new Map(selectedPersonalizationItems(root).map((item) => [item.productId, item]));
+    for (const row of root.querySelectorAll('[data-jill-personalization-allocation]')) {
+      const [groupId, productId] = String(row.dataset.jillPersonalizationAllocation || '').split(':');
+      const item = items.get(productId);
+      const group = state.groups.find((candidate) => candidate.id === groupId);
+      if (!item || !group) continue;
+
+      const assigned = personalizationAssignedForProduct(state, productId);
+      const summary = row.querySelector('[data-jill-personalization-assigned]');
+      if (summary) summary.textContent = `${assigned} / ${item.quantity} assigned`;
+
+      const shell = row.querySelector('[data-jill-quantity]');
+      const input = shell?.querySelector('[data-jill-quantity-input]');
+      if (!shell || !input) continue;
+      const assignedElsewhere = personalizationAssignedForProduct(state, productId, groupId);
+      input.max = String(Math.max(0, item.quantity - assignedElsewhere));
+      globalThis.JILLQuantity?.sync(shell);
+    }
+  }
+
+  function syncPersonalizationCardStatuses(root) {
+    const state = reconcilePersonalization(root);
+    const selectedUnits = totalPersonalizationUnits(root);
+    const allAssigned = state.mode !== 'different' || remainingPersonalizationUnits(root, state) === 0;
+    for (const card of root.querySelectorAll('[data-jill-personalization-card]')) {
+      const id = card.dataset.jillPersonalizationCard;
+      const record = id === 'same' ? state.same : state.groups.find((group) => group.id === id);
+      const units = id === 'same' ? selectedUnits : personalizationGroupUnits(record);
+      const hasWording = Boolean(record?.wording?.trim());
+      const complete = units > 0 && hasWording && allAssigned;
+      const status = card.querySelector('[data-jill-personalization-card-status]');
+      if (status) {
+        status.textContent = complete
+          ? (root.dataset.completeLabel || 'Complete ✓')
+          : units === 0
+            ? 'Assign items'
+            : !hasWording
+              ? 'Add wording'
+              : (root.dataset.incompleteLabel || 'Incomplete');
+        status.dataset.tone = complete ? 'success' : 'error';
+      }
+      card.dataset.state = complete ? 'complete' : 'incomplete';
+    }
+  }
+
+'''
+          runtime = runtime[:start] + replacement + runtime[end:]
+
+          start = runtime.index('  function syncPersonalizationActions(root) {')
+          end = runtime.index('  function createPersonalizationQuantityShell', start)
+          replacement = '''  function syncPersonalizationActions(root) {
+    const state = reconcilePersonalization(root);
+    const actions = root.querySelector('[data-jill-personalization-actions]');
+    const add = root.querySelector('[data-jill-personalization-add]');
+    const finish = root.querySelector('[data-jill-personalization-finish]');
+    if (!actions || !add || !finish) return;
+
+    const actionable = state.mode === 'same' || state.mode === 'different';
+    setVisible(actions, actionable);
+    if (!actionable) return;
+
+    const completion = personalizationCompletion(root);
+    const remaining = state.mode === 'different' ? remainingPersonalizationUnits(root, state) : 0;
+    add.hidden = state.mode !== 'different' || state.finished || remaining === 0;
+    add.disabled = state.mode !== 'different' || remaining === 0 || !personalizationGroupsReady(state);
+    add.setAttribute('aria-disabled', add.disabled ? 'true' : 'false');
+    finish.hidden = false;
+    finish.disabled = state.finished || !completion.complete;
+    finish.setAttribute('aria-disabled', finish.disabled ? 'true' : 'false');
+    finish.textContent = state.finished
+      ? (root.dataset.personalizationFinishedLabel || 'Personalization finished ✓')
+      : (root.dataset.finishPersonalizationLabel || 'Finish personalization');
+    syncPersonalizationAllocationViews(root, state);
+    syncPersonalizationCardStatuses(root);
+  }
+
+'''
+          runtime = runtime[:start] + replacement + runtime[end:]
+
+          start = runtime.index('  function createPersonalizationQuantityShell(root, state, group, item, groupIndex) {')
+          end = runtime.index('  function renderPersonalization(root) {', start)
+          replacement = '''  function createPersonalizationQuantityShell(root, state, group, item, groupIndex) {
+    const row = node('div', 'jill-custom-order-personalization-card__allocation');
+    row.dataset.jillPersonalizationAllocation = `${group.id}:${item.productId}`;
+
+    const meta = node('div', 'jill-custom-order-personalization-card__allocation-meta');
+    const assigned = node('span', '', `${personalizationAssignedForProduct(state, item.productId)} / ${item.quantity} assigned`);
+    assigned.dataset.jillPersonalizationAssigned = '';
+    meta.append(node('strong', '', item.label), assigned);
+
+    const shell = node('div', 'jill-quantity');
+    shell.dataset.jillQuantity = '';
+    shell.dataset.jillQuantityDecreaseText = 'Decrease';
+    shell.dataset.jillQuantityIncreaseText = 'Increase';
+
+    const quantityLabel = node('label', 'jill-field__label');
+    const quantityLabelText = node('span', '', 'Qty');
+    quantityLabelText.dataset.jillQuantityLabelText = '';
+    const requiredMark = node('span', 'jill-field__required', '*');
+    requiredMark.hidden = true;
+    quantityLabel.append(quantityLabelText, requiredMark);
+
+    const stepper = node('div', 'jill-quantity__stepper');
+    const decrement = node('button', 'jill-quantity__button');
+    decrement.type = 'button';
+    decrement.tabIndex = -1;
+    decrement.dataset.jillQuantityAction = 'decrement';
+    decrement.append(node('span', '', '−'));
+    decrement.firstElementChild.setAttribute('aria-hidden', 'true');
+
+    const input = document.createElement('input');
+    input.className = 'jill-field__control jill-quantity__control';
+    input.type = 'number';
+    input.inputMode = 'numeric';
+    input.dataset.jillQuantityInput = '';
+
+    const increment = node('button', 'jill-quantity__button');
+    increment.type = 'button';
+    increment.tabIndex = -1;
+    increment.dataset.jillQuantityAction = 'increment';
+    increment.append(node('span', '', '+'));
+    increment.firstElementChild.setAttribute('aria-hidden', 'true');
+    stepper.append(decrement, input, increment);
+    shell.append(quantityLabel, stepper);
+
+    const current = Math.max(0, Number(group.allocations[item.productId]) || 0);
+    const assignedElsewhere = personalizationAssignedForProduct(state, item.productId, group.id);
+    const max = Math.max(0, item.quantity - assignedElsewhere);
+    globalThis.JILLQuantity.configure(shell, {
+      id: `JillPersonalizationQuantity-${group.id}-${item.productId}`,
+      label: 'Qty',
+      accessibleLabel: `${item.label}, Personalization ${groupIndex + 1}: Quantity`,
+      value: Math.min(current, max),
+      min: 0,
+      max,
+      step: 1,
+      required: false,
+    });
+
+    input.addEventListener('input', () => {
+      const next = Math.max(0, Math.trunc(Number(input.value) || 0));
+      if (next > 0) group.allocations[item.productId] = next;
+      else delete group.allocations[item.productId];
+      state.finished = false;
+      syncPersonalizationActions(root);
+      syncProgression(root);
+    });
+    input.addEventListener('change', () => {
+      queueMicrotask(() => {
+        renderPersonalization(root);
+        syncProgression(root);
+      });
+    });
+
+    row.append(meta, shell);
+    return row;
+  }
+
+'''
+          runtime = runtime[:start] + replacement + runtime[end:]
+
+          old_same = '''    if (state.mode === 'same') {
+      const shell = cardShell('same', 'Same personalization for all selected items');
+      const summary = selectedPersonalizationItems(root)
+        .map((item) => `${item.label} ×${item.quantity}`)
+        .join(' · ');
+      shell.body.append(node('p', 'jill-custom-order-personalization-card__shared', summary));
+      appendFields(shell.body, state.same);
+      cards.append(shell.card);
+    }
+'''
+          new_same = '''    if (state.mode === 'same') {
+      const shell = cardShell('same', 'Same personalization for all selected items');
+      appendFields(shell.body, state.same);
+      cards.append(shell.card);
+    }
+'''
+          if old_same not in runtime:
+            raise SystemExit('same personalization summary marker not found')
+          runtime = runtime.replace(old_same, new_same, 1)
+          runtime = runtime.replace("        allocations.append(node('p', 'jill-field__label', 'Assign item quantities'));\n", '', 1)
+          runtime_path.write_text(runtime)
+
+          section_path = Path('theme/sections/main-custom-order.liquid')
+          section = section_path.read_text()
+          section = section.replace("            <p>{{ 'custom_order.personalization.help' | t }}</p>\n", '', 1)
+          section = section.replace('            <p class="jill-custom-order__help" data-jill-personalization-help></p>\n', '', 1)
+          section_path.write_text(section)
+
+          css_path = Path('theme/assets/jill-forms.css')
+          css = css_path.read_text()
+          css = css.replace(
+            '''  .jill-custom-order__choice span,
+  .jill-custom-order__collection-choice span {
+    display: flex;
+''',
+            '''  .jill-custom-order__choice span,
+  .jill-custom-order__collection-choice span {
+    display: flex;
+''',
+            1,
+          )
+          css = css.replace(
+            '''    align-items: center;
+    justify-content: center;
+    padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
+''',
+            '''    align-items: center;
+    justify-content: center;
+    gap: var(--jill-space-unit);
+    padding: calc(var(--jill-space-unit) * 1.5) calc(var(--jill-space-unit) * 2);
+''',
+            1,
+          )
+          indicator_anchor = '''  .jill-custom-order__choice input:checked + span,
+  .jill-custom-order__collection-choice input:checked + span {
+'''
+          indicator_rules = '''  .jill-custom-order__choice span::before,
+  .jill-custom-order__collection-choice span::before,
+  .jill-custom-order-product__pick span::before {
+    content: '';
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 0.9rem;
+    border: calc(var(--jill-border-width) * 1.5) solid currentColor;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .jill-custom-order__choice input:checked + span::before,
+  .jill-custom-order__collection-choice input:checked + span::before,
+  .jill-custom-order-product__pick input:checked + span::before {
+    background: currentColor;
+  }
+
+'''
+          if indicator_anchor not in css:
+            raise SystemExit('choice indicator anchor not found')
+          css = css.replace(indicator_anchor, indicator_rules + indicator_anchor, 1)
+          css = css.replace(
+            '''    align-items: center;
+    padding: calc(var(--jill-space-unit) * 2) calc(var(--jill-space-unit) * 2.25);
+    background: var(--jill-color-background);
+''',
+            '''    align-items: center;
+    gap: var(--jill-space-unit);
+    padding: calc(var(--jill-space-unit) * 2) calc(var(--jill-space-unit) * 2.25);
+    background: var(--jill-color-background);
+''',
+            1,
+          )
+          old_qty = '''  .jill-custom-order-personalization-card__allocation .jill-quantity {
+    width: min(100%, 12rem);
+  }
+'''
+          new_qty = '''  .jill-custom-order-personalization-card__allocation .jill-quantity {
+    display: grid;
+    width: auto;
+    grid-template-columns: auto minmax(9rem, 12rem);
+    align-items: center;
+    gap: var(--jill-space-unit);
+  }
+
+  .jill-custom-order-personalization-card__allocation .jill-quantity > .jill-field__label {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .jill-custom-order__personalization [data-jill-personalization-add] {
+    justify-self: center;
+    margin-inline: auto;
+  }
+'''
+          if old_qty not in css:
+            raise SystemExit('personalization quantity style marker not found')
+          css = css.replace(old_qty, new_qty, 1)
+          mobile_anchor = '''    .jill-custom-order[data-jill-custom-order] .jill-custom-order__step-head {
+'''
+          mobile_rules = '''    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
+      grid-template-columns: 1fr;
+    }
+
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation .jill-quantity {
+      justify-self: start;
+    }
+
+'''
+          if mobile_anchor not in css:
+            raise SystemExit('mobile personalization style anchor not found')
+          css = css.replace(mobile_anchor, mobile_rules + mobile_anchor, 1)
+          css_path.write_text(css)
+
+          test_path = Path('scripts/test-custom-order-integration.mjs')
+          test = test_path.read_text()
+          marker = "assert.match(runtime, /personalizationAssignedForProduct/, 'personalization quantity allocation must"
+          index = test.find(marker)
+          if index < 0:
+            raise SystemExit('personalization allocation test marker not found')
+          line_end = test.find('\n', index) + 1
+          additions = '''assert.match(runtime, /data-jill-personalization-assigned/, 'every personalization card must expose the shared assigned-total view');
+assert.match(runtime, /personalizationAssignedForProduct\\(state, item\\.productId\\)/, 'allocation rows must show the global assigned total across personalization groups');
+assert.match(runtime, /const allAssigned = state\\.mode !== 'different' \\|\\| remainingPersonalizationUnits\\(root, state\\) === 0/, 'different-personalization cards must remain incomplete until all selected units are assigned');
+assert.match(runtime, /label: 'Qty'/, 'personalization allocation steppers must use the compact Qty label');
+assert.doesNotMatch(runtime, /Assign item quantities|Personalization is finished\\. Continue with reference images below\\./, 'personalization must not reintroduce redundant instructional/status copy');
+assert.doesNotMatch(section, /data-jill-personalization-help|custom_order\\.personalization\\.help/, 'personalization surface must not render redundant helper copy');
+assert.match(formsCss, /data-jill-personalization-add[\\s\\S]*justify-self: center/, 'Add another personalization must stay centered');
+assert.match(formsCss, /jill-custom-order-personalization-card__allocation \\.jill-quantity[\\s\\S]*grid-template-columns: auto minmax\\(9rem, 12rem\\)/, 'personalization Qty label must sit inline to the left of its stepper');
+assert.match(formsCss, /jill-custom-order__choice span::before[\\s\\S]*jill-custom-order-product__pick span::before/, 'button-style Custom Order choices must expose a redundant selector circle');
+assert.match(formsCss, /input:checked \\+ span::before[\\s\\S]*background: currentColor/, 'selector circles must visibly fill from native checked state');
+'''
+          test = test[:line_end] + additions + test[line_end:]
+          test_path.write_text(test)
+
+      - name: Commit polish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add theme/assets/jill-custom-order.js theme/assets/jill-forms.css theme/sections/main-custom-order.liquid scripts/test-custom-order-integration.mjs
+          git diff --cached --check
+          git commit -m "Polish Section 4 personalization ledger"
+          git push origin HEAD:jill/section4-personalization-ledger-polish
