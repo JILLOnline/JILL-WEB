@@ -1,0 +1,45 @@
+name: Section 4 CSS Cleanup
+
+on:
+  push:
+    branches:
+      - jill/custom-order-section4-system-pass
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: jill/custom-order-section4-system-pass
+          fetch-depth: 0
+
+      - name: Clean Section 4 CSS
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('theme/assets/jill-forms.css')
+          css = path.read_text()
+          broken = '  .jill-custom-order__references {  .jill-custom-order__references {'
+          if broken not in css:
+              raise SystemExit('Expected duplicated references selector not found')
+          css = css.replace(broken, '  .jill-custom-order__references {', 1)
+          obsolete = "  .jill-custom-order-product__pick input,\n  .jill-custom-order-personalization-card__item input {"
+          if obsolete not in css:
+              raise SystemExit('Expected obsolete personalization selector not found')
+          css = css.replace(obsolete, '  .jill-custom-order-product__pick input {', 1)
+          path.write_text(css)
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add theme/assets/jill-forms.css
+          git diff --cached --check
+          git commit -m "Clean Section 4 personalization CSS"
+          git push origin HEAD:jill/custom-order-section4-system-pass
