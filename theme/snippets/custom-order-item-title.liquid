@@ -29,6 +29,7 @@
   for segment in title_segments offset: 1
     assign clean_segment = segment | strip
     assign clean_segment_downcase = clean_segment | downcase
+    assign clean_segment_size = clean_segment | size
 
     assign is_pack_quantity = false
     if clean_segment contains ' Count' or clean_segment contains ' Pieces' or clean_segment_downcase contains ' count' or clean_segment_downcase contains ' pieces' or clean_segment_downcase contains ' piece' or clean_segment_downcase contains ' pack' or clean_segment_downcase contains ' set of '
@@ -40,7 +41,12 @@
       assign is_listing_copy = true
     endif
 
-    unless clean_segment == blank or is_pack_quantity or is_listing_copy
+    assign is_noise = false
+    if clean_segment_size <= 1
+      assign is_noise = true
+    endif
+
+    unless clean_segment == blank or is_pack_quantity or is_listing_copy or is_noise
       assign unit_title = unit_title | append: ' – ' | append: clean_segment
     endunless
   endfor
