@@ -31,7 +31,6 @@
         assign is_catalog_hub = true
       endif
     %}
-
     {% if is_custom_order_template or is_contact_template %}
       {{ 'jill-forms.css' | asset_url | stylesheet_tag }}
     {% endif %}
