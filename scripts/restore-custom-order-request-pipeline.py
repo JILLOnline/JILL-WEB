@@ -10,14 +10,23 @@ PHONE = Path('theme/assets/jill-email-validation.js')
 CANONICAL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
 DEAD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec'
 
-# -----------------------------
-# Custom Order Liquid
-# -----------------------------
 section = SECTION.read_text()
 if CANONICAL_ENDPOINT not in section:
     raise SystemExit('Canonical Custom Order endpoint is not present in the section')
 if DEAD_ENDPOINT in section:
     raise SystemExit('Dead Apps Script deployment leaked into Custom Order')
+
+root_anchor = '''  data-upload-preset="{{ section.settings.upload_preset | escape }}"
+  data-optional-label="{{ optional_label | escape }}"'''
+root_replacement = '''  data-upload-preset="{{ section.settings.upload_preset | escape }}"
+  data-optional-label="{{ optional_label | escape }}"
+  data-customer-logged-in="{% if customer %}true{% else %}false{% endif %}"
+  data-customer-name="{% if customer %}{{ customer.name | escape }}{% endif %}"
+  data-customer-email="{% if customer %}{{ customer.email | escape }}{% endif %}"
+  data-customer-phone="{% if customer %}{{ customer.phone | default: customer.default_address.phone | escape }}{% endif %}"'''
+if root_anchor not in section:
+    raise SystemExit('Custom Order root data anchor not found')
+section = section.replace(root_anchor, root_replacement, 1)
 
 old_phone = "        {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: customer_phone_label, type: 'tel', optional_label: optional_label, dynamic_required: true, autocomplete: 'tel' %}"
 new_phone = '''        <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
@@ -77,9 +86,6 @@ if notification_markup not in section:
     section = section.replace(success_anchor, notification_markup + success_anchor, 1)
 SECTION.write_text(section)
 
-# -----------------------------
-# Shared country-aware phone owner
-# -----------------------------
 PHONE.write_text(r'''(() => {
   'use strict';
 
@@ -171,10 +177,21 @@ PHONE.write_text(r'''(() => {
     if (!input) return '';
     const raw = String(input.value || '').trim();
     let digits = digitsOnly(raw);
-    if (raw.startsWith('+') && country.dial && digits.startsWith(country.dial)) {
-      digits = digits.slice(country.dial.length);
-    }
+    if (raw.startsWith('+') && country.dial && digits.startsWith(country.dial)) digits = digits.slice(country.dial.length);
     return digits.slice(0, country.max);
+  }
+
+  function detectCountry(value, fallbackIso = 'US') {
+    const raw = String(value || '').trim();
+    if (!raw.startsWith('+')) return byIso.get(fallbackIso) || byIso.get('US');
+    const digits = digitsOnly(raw);
+    const matches = countries
+      .filter((country) => country.dial && digits.startsWith(country.dial))
+      .sort((a, b) => b.dial.length - a.dial.length);
+    if (!matches.length) return byIso.get('OTHER');
+    if (matches[0].dial !== '1') return matches[0];
+    const fallback = byIso.get(fallbackIso);
+    return fallback?.dial === '1' ? fallback : byIso.get('US');
   }
 
   function validate(field) {
@@ -183,12 +200,10 @@ PHONE.write_text(r'''(() => {
     const country = currentCountry(field);
     const digits = nationalDigits(field, country);
     let message = '';
-    if (digits.length && (digits.length < country.min || digits.length > country.max)) {
-      message = `Enter a valid ${country.name} phone number.`;
-    }
+    if (digits.length && (digits.length < country.min || digits.length > country.max)) message = `Enter a valid ${country.name} phone number.`;
     input.setCustomValidity(message);
     const help = field.querySelector('[data-jill-phone-help]');
-    if (help) help.textContent = message || `${flag(country.iso)} +${country.dial || ''} ${country.name}`.trim();
+    if (help) help.textContent = message || `${flag(country.iso)} ${country.dial ? `+${country.dial}` : ''} ${country.name}`.trim();
     return !message;
   }
 
@@ -202,6 +217,20 @@ PHONE.write_text(r'''(() => {
     input.maxLength = Math.max(country.placeholder.length + 3, formatNational(country, '9'.repeat(country.max)).length);
     input.setAttribute('aria-label', `${country.name} phone number`);
     validate(field);
+  }
+
+  function setPhoneValue(scope, value) {
+    const field = phoneField(scope);
+    if (!field || !value) return;
+    const select = field.querySelector('[data-jill-phone-country]');
+    const input = field.querySelector('[data-jill-phone-number]');
+    if (!select || !input) return;
+    const country = detectCountry(value, field.dataset.defaultCountry || 'US');
+    select.value = country.iso;
+    let digits = digitsOnly(value);
+    if (String(value).trim().startsWith('+') && country.dial && digits.startsWith(country.dial)) digits = digits.slice(country.dial.length);
+    input.value = digits;
+    sync(field);
   }
 
   function configure(field) {
@@ -221,7 +250,6 @@ PHONE.write_text(r'''(() => {
 
     const requested = String(field.dataset.defaultCountry || 'US').toUpperCase();
     select.value = byIso.has(requested) ? requested : 'US';
-
     input.addEventListener('input', () => sync(field));
     input.addEventListener('blur', () => validate(field));
     select.addEventListener('change', () => {
@@ -257,7 +285,7 @@ PHONE.write_text(r'''(() => {
   }
 
   Object.defineProperty(globalThis, 'JILLEmailValidation', {
-    value: Object.freeze({countries, configure, getPhoneValue, validate}),
+    value: Object.freeze({countries, configure, getPhoneValue, setPhoneValue, validate}),
     configurable: false,
     enumerable: false,
     writable: false,
@@ -265,9 +293,6 @@ PHONE.write_text(r'''(() => {
 })();
 ''')
 
-# -----------------------------
-# Custom Order runtime
-# -----------------------------
 runtime = RUNTIME.read_text()
 old_phone_request = "        phone: readNamed(customer, 'phone') || undefined,"
 new_phone_request = "        phone: globalThis.JILLEmailValidation?.getPhoneValue(customer) || readNamed(customer, 'phone') || undefined,"
@@ -328,6 +353,39 @@ if old_date not in runtime:
     raise SystemExit('Date-needed anchor not found')
 runtime = runtime.replace(old_date, new_date, 1)
 
+progress_anchor = '''  function syncProgression(root) {
+    syncPhoneRequirement(root);'''
+prefill_function = '''  function applyLoggedInCustomerPrefill(root) {
+    if (root.dataset.customerLoggedIn !== 'true') return false;
+    const customer = root.querySelector('[data-jill-custom-order-customer]');
+    if (!customer) return false;
+    const name = customer.querySelector('[name="name"]');
+    const email = customer.querySelector('[name="email"]');
+    const phone = customer.querySelector('[data-jill-phone-number]');
+    if (name && !name.value.trim() && root.dataset.customerName) name.value = root.dataset.customerName;
+    if (email && !email.value.trim() && root.dataset.customerEmail) email.value = root.dataset.customerEmail;
+    if (phone && !phone.value.trim() && root.dataset.customerPhone) {
+      globalThis.JILLEmailValidation?.setPhoneValue(customer, root.dataset.customerPhone);
+    }
+    return true;
+  }
+
+'''
+if progress_anchor not in runtime:
+    raise SystemExit('Progression anchor not found')
+runtime = runtime.replace(progress_anchor, prefill_function + progress_anchor, 1)
+
+init_anchor = '''    applyCatalogPrefill(root);
+    if (root.dataset.jillCustomOrderPrefilled === 'true') syncProductVisibility(root);
+    renderPersonalization(root);'''
+init_replacement = '''    applyLoggedInCustomerPrefill(root);
+    applyCatalogPrefill(root);
+    if (root.dataset.jillCustomOrderPrefilled === 'true') syncProductVisibility(root);
+    renderPersonalization(root);'''
+if init_anchor not in runtime:
+    raise SystemExit('Custom Order initialization anchor not found')
+runtime = runtime.replace(init_anchor, init_replacement, 1)
+
 old_submit = '''  async function submitRequest(root, request) {
     const endpoint = String(root.dataset.submitEndpoint || '').trim();
     if (!endpoint) fail('submission is temporarily unavailable');
@@ -379,16 +437,10 @@ new_submit = '''  function ownerNotificationBody(request) {
     const email = form?.querySelector('[name="contact[email]"]');
     const body = form?.querySelector('[name="contact[body]"]');
     if (!form || !name || !email || !body) fail('store notification is temporarily unavailable');
-
     name.value = request.customer.name || 'Custom Order Request';
     email.value = request.customer.email || '';
     body.value = ownerNotificationBody(request);
-
-    const response = await fetch(form.action, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: new FormData(form),
-    });
+    const response = await fetch(form.action, {method: 'POST', credentials: 'same-origin', body: new FormData(form)});
     if (!response.ok) fail('store notification could not be delivered');
   }
 
@@ -406,9 +458,6 @@ if old_submit not in runtime:
 runtime = runtime.replace(old_submit, new_submit, 1)
 RUNTIME.write_text(runtime)
 
-# -----------------------------
-# Canonical Custom Order styling
-# -----------------------------
 forms = FORMS.read_text()
 planning_anchor = '''  .jill-custom-order__planning {
     display: grid;'''
@@ -445,9 +494,6 @@ if phone_date_css not in forms:
     forms = forms.replace(planning_anchor, phone_date_css + planning_anchor, 1)
 FORMS.write_text(forms)
 
-# -----------------------------
-# Script load order
-# -----------------------------
 layout = LAYOUT.read_text()
 layout_anchor = '''    {% if is_custom_order_template %}
       <script src="{{ 'jill-variant-allocation.js' | asset_url }}" defer></script>
@@ -461,9 +507,6 @@ if layout_anchor not in layout:
 layout = layout.replace(layout_anchor, layout_replacement, 1)
 LAYOUT.write_text(layout)
 
-# -----------------------------
-# Integration guards
-# -----------------------------
 tests = TESTS.read_text()
 read_anchor = "const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');"
 read_replacement = read_anchor + "\nconst emailValidation = fs.readFileSync('theme/assets/jill-email-validation.js', 'utf8');"
@@ -491,6 +534,12 @@ assert.match(layout, /jill-email-validation\.js[\s\S]*jill-custom-order\.js/, 's
 assert.match(emailValidation, /United States[\s\S]*Canada[\s\S]*Colombia[\s\S]*France[\s\S]*India[\s\S]*China/, 'shared phone owner must preserve country-aware rules');
 assert.match(emailValidation, /function getPhoneValue/, 'shared phone owner must normalize the submitted phone value');
 assert.match(runtime, /JILLEmailValidation\?\.getPhoneValue\(customer\)/, 'normalized request must use the shared international phone value');
+assert.match(section, /data-customer-logged-in="\{% if customer %\}true/, 'Custom Order must expose a server-rendered logged-in customer snapshot');
+assert.match(section, /data-customer-name="\{% if customer %\}\{\{ customer\.name/, 'logged-in customer name must come from Shopify customer truth');
+assert.match(section, /data-customer-email="\{% if customer %\}\{\{ customer\.email/, 'logged-in customer email must come from Shopify customer truth');
+assert.match(runtime, /function applyLoggedInCustomerPrefill/, 'Custom Order must own one logged-in customer prefill path');
+assert.match(runtime, /applyLoggedInCustomerPrefill\(root\);[\s\S]*applyCatalogPrefill\(root\);/, 'customer prefill and Catalog prefill must coexist in initialization order');
+assert.doesNotMatch(runtime, /preferred_contact[^\n]*=.*customer/, 'logged-in customer prefill must not silently choose a preferred contact method');
 '''
 marker = "console.log('JILL Custom Order LIVE-parity integration tests passed.');"
 if assertions.strip() not in tests:
