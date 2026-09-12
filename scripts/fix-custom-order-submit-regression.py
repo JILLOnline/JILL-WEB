@@ -52,6 +52,15 @@ section = section.replace(owner_form, '', 1)
 section_path.write_text(section)
 
 tests = test_path.read_text()
+stale_guards = """assert.match(section, /data-jill-owner-notification/, 'Custom Order must retain the native Shopify owner-notification lane');
+assert.match(runtime, /function ownerNotificationBody[\\s\\S]*endpointPayload\\(request\\)/, 'merchant notification must derive from the normalized request payload');
+assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
+assert.match(runtime, /await submitOwnerNotification\\(root, request\\)/, 'Custom Order success must wait for the merchant notification submission');
+"""
+if stale_guards not in tests:
+    raise SystemExit('stale Shopify owner-notification guards not found')
+tests = tests.replace(stale_guards, '', 1)
+
 marker = "assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');"
 additions = (
     "\nassert.doesNotMatch(runtime, /submitOwnerNotification|store notification could not be delivered/, 'Custom Order submission must not depend on a second Shopify contact-form request');"
