@@ -16,8 +16,7 @@ old = """  .jill-phone-field__country,
     padding-inline: calc(var(--jill-space-unit) * 1.25);
   }
 """
-new = """  .jill-phone-field__control > .jill-field__control,
-  .jill-phone-field__country-shell {
+new = """  .jill-phone-field__control > .jill-field__control {
     min-width: 0;
     max-width: 100%;
   }
@@ -28,6 +27,8 @@ new = """  .jill-phone-field__control > .jill-field__control,
     grid-template-columns: 1.5rem minmax(2.75rem, auto) 1rem;
     align-items: center;
     gap: calc(var(--jill-space-unit) * 0.75);
+    min-width: 0;
+    max-width: 100%;
     min-height: var(--jill-field-height);
     padding-inline: calc(var(--jill-space-unit) * 1.25);
     border: var(--jill-border-width) solid var(--jill-color-border);
