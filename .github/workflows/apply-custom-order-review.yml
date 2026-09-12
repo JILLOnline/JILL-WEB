@@ -23,7 +23,34 @@ jobs:
           ref: jill/theme-core
 
       - name: Apply Review presentation rebuild
-        run: node scripts/apply-custom-order-review-packed.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { inflateRawSync } from 'node:zlib';
+
+          const packed = fs.readFileSync('scripts/apply-custom-order-review-packed.mjs', 'utf8');
+          const payload = packed.match(/const payload = '([^']+)'/)?.[1];
+          if (!payload) throw new Error('Packed Review payload was not found.');
+
+          const gzip = Buffer.from(payload, 'base64');
+          if (gzip[0] !== 0x1f || gzip[1] !== 0x8b || gzip[2] !== 0x08) throw new Error('Packed Review payload is not gzip data.');
+          const flags = gzip[3];
+          let offset = 10;
+          if (flags & 0x04) {
+            const extraLength = gzip.readUInt16LE(offset);
+            offset += 2 + extraLength;
+          }
+          if (flags & 0x08) while (gzip[offset++] !== 0 && offset < gzip.length) {}
+          if (flags & 0x10) while (gzip[offset++] !== 0 && offset < gzip.length) {}
+          if (flags & 0x02) offset += 2;
+          if (offset >= gzip.length - 8) throw new Error('Packed Review payload header is invalid.');
+
+          const source = inflateRawSync(gzip.subarray(offset, -8)).toString('utf8');
+          fs.writeFileSync('/tmp/jill-custom-order-review-patch.mjs', source);
+          await import('file:///tmp/jill-custom-order-review-patch.mjs');
+          NODE
 
       - name: Validate touched runtime and integration guard
         run: |
