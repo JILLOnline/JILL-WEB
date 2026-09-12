@@ -1,0 +1,51 @@
+name: Probe Live Custom Order Backend
+
+on:
+  pull_request:
+    branches:
+      - jill/theme-core
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'jill/custom-order-email-pipeline'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Probe public web app and Rewards watchdog
+        shell: bash
+        env:
+          ENDPOINT: https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec
+        run: |
+          set -euo pipefail
+          base="$(curl --fail --silent --show-error --location "$ENDPOINT")"
+          printf 'Base endpoint: %s\n' "$base"
+          test "$base" = 'JILL Custom Order Automation is online.'
+
+          watchdog="$(curl --fail --silent --show-error --location "$ENDPOINT?jill_rewards_watchdog=1")"
+          printf 'Rewards watchdog: %s\n' "$watchdog"
+          WATCHDOG="$watchdog" node - <<'NODE'
+          const payload = JSON.parse(process.env.WATCHDOG);
+          if (payload.ok !== true) throw new Error(`watchdog not ok: ${JSON.stringify(payload)}`);
+          if (String(payload.engine_version) !== '13') throw new Error(`unexpected engine version: ${payload.engine_version}`);
+          console.log('Verified live Rewards engine v13 watchdog.');
+          NODE
+
+      - name: Remove temporary probe workflow
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/custom-order-live-probe.yml
+          git config user.name 'JILL Backend Automation'
+          git config user.email 'info@jillonlinestore.com'
+          git commit -m 'Remove temporary live backend probe'
+          git push origin "HEAD:${HEAD_BRANCH}"
