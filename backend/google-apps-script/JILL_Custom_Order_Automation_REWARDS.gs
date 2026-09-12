@@ -2584,41 +2584,87 @@ function setShopifyCustomerMetafields_(customerId, data) {
 }
 
 function buildCustomerMetafields_(ownerId, data) {
-  const now = new Date().toISOString();
-  const entries = [
-    ['request_status', 'single_line_text_field', 'Received'],
-    ['last_request_id', 'single_line_text_field', clean_(data.submission_id)],
-    ['request_submitted_at', 'date_time', isoDateTime_(data.submitted_at) || now],
-    ['date_needed', 'date', isoDate_(data.date_needed)],
-    ['fulfillment', 'single_line_text_field', clean_(data.fulfillment)],
-    ['theme', 'multi_line_text_field', clean_(data.theme)],
-    ['colors', 'multi_line_text_field', clean_(data.colors)],
-    ['collections', 'json', jsonArrayString_(data.collections)],
-    ['products', 'json', jsonArrayString_(data.products)],
-    ['preferred_contact', 'single_line_text_field', clean_(data.preferred_contact)],
-    ['phone', 'single_line_text_field', clean_(data.phone)],
-    ['city', 'single_line_text_field', clean_(data.city)],
-    ['state', 'single_line_text_field', clean_(data.state)],
-    ['zip', 'single_line_text_field', clean_(data.zip)],
-    ['reference_images', 'json', jsonArrayString_(data.reference_images)],
-    ['marketing_consent', 'boolean', marketingConsentGranted_(data.marketing_consent) ? 'true' : 'false'],
-    ['marketing_consent_at', 'date_time', isoDateTime_(data.marketing_consent_at)],
-    ['marketing_consent_source', 'single_line_text_field', clean_(data.marketing_consent_source)]
-  ];
+  const metafields = [];
 
-  return entries
-    .filter(function(entry) {
-      return entry[2] !== '' && entry[2] != null;
-    })
-    .map(function(entry) {
-      return {
-        ownerId: ownerId,
-        namespace: 'jill',
-        key: entry[0],
-        type: entry[1],
-        value: String(entry[2])
-      };
+  function addText(key, value) {
+    value = clean_(value);
+    if (!value) return;
+    metafields.push({
+      ownerId: ownerId,
+      namespace: 'jill',
+      key: key,
+      type: 'single_line_text_field',
+      value: value.replace(/\s+/g, ' ').trim()
     });
+  }
+
+  function addLongText(key, value) {
+    value = clean_(value);
+    if (!value) return;
+    metafields.push({
+      ownerId: ownerId,
+      namespace: 'jill',
+      key: key,
+      type: 'multi_line_text_field',
+      value: value
+    });
+  }
+
+  function addDate(key, value) {
+    value = clean_(value);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    metafields.push({
+      ownerId: ownerId,
+      namespace: 'jill',
+      key: key,
+      type: 'date',
+      value: value
+    });
+  }
+
+  function addDateTime(key, value) {
+    value = clean_(value);
+    if (!value) return;
+    const parsed = new Date(value);
+    if (isNaN(parsed.getTime())) return;
+    metafields.push({
+      ownerId: ownerId,
+      namespace: 'jill',
+      key: key,
+      type: 'date_time',
+      value: parsed.toISOString()
+    });
+  }
+
+  addDateTime('last_custom_request_at', data.submitted_at || new Date().toISOString());
+  addText('last_custom_request_id', data.submission_id);
+  addText('custom_request_status', 'Received');
+  addText('preferred_contact', data.preferred_contact);
+  addDate('date_needed', data.date_needed);
+  addText('fulfillment_preference', data.fulfillment);
+  addText('city', data.city);
+  addText('state', data.state);
+  addText('zip', data.zip);
+  addText('submitted_phone', data.phone);
+  addLongText('theme_interest', data.theme);
+  addLongText('color_preferences', data.colors);
+  addLongText('product_interests', data.products);
+  addLongText('collection_interests', data.collections);
+  addText('reference_images', data.reference_images);
+
+  if (marketingConsentGranted_(data.marketing_consent)) {
+    metafields.push({
+      ownerId: ownerId,
+      namespace: 'jill',
+      key: 'annual_reminder_enabled',
+      type: 'boolean',
+      value: 'true'
+    });
+    addText('marketing_consent_source', data.marketing_consent_source || 'Custom Order Form');
+    addDateTime('marketing_consent_at', data.marketing_consent_at || data.submitted_at || new Date().toISOString());
+  }
+
+  return metafields;
 }
 
 function subscribeEmailMarketing_(customerId, consentAt) {
