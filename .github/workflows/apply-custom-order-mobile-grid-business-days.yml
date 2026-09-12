@@ -32,27 +32,27 @@ jobs:
                   raise SystemExit(f'{path}: expected 1 match, found {count}')
               p.write_text(text.replace(old, new, 1))
 
-          def replace_exact_count(path, old, new, expected):
-              p = Path(path)
-              text = p.read_text()
-              count = text.count(old)
-              if count != expected:
-                  raise SystemExit(f'{path}: expected {expected} matches, found {count}')
-              p.write_text(text.replace(old, new))
-
           forms = 'theme/assets/jill-forms.css'
           runtime = 'theme/assets/jill-custom-order.js'
           test = 'scripts/test-custom-order-integration.mjs'
 
           replace_once(forms,
-          """    position: absolute;
+          """  .jill-custom-order__choice input,
+            .jill-custom-order__collection-choice input,
+            .jill-custom-order-product__pick input {
+              position: absolute;
               width: 1px;
               height: 1px;
               overflow: hidden;
               clip-path: inset(50%);
               white-space: nowrap;
+            }
           """,
-          """    position: absolute;
+          """  .jill-custom-order__choice input,
+            .jill-custom-order__collection-choice input,
+            .jill-custom-order-product__pick input,
+            .jill-media__input {
+              position: absolute;
               width: 1px;
               height: 1px;
               margin: -1px;
@@ -63,6 +63,20 @@ jobs:
               clip: rect(0 0 0 0);
               clip-path: inset(50%);
               white-space: nowrap;
+            }
+          """)
+
+          replace_once(forms,
+          """  .jill-media__input {
+              position: absolute;
+              width: 1px;
+              height: 1px;
+              overflow: hidden;
+              clip-path: inset(50%);
+              white-space: nowrap;
+            }
+
+          """,
           """)
 
           replace_once(forms,
@@ -103,11 +117,30 @@ jobs:
               grid-template-columns: repeat(2, minmax(0, 1fr));
           """)
 
-          replace_exact_count(forms,
-          """      grid-template-columns: 1fr;
+          replace_once(forms,
+          """    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__fields,
+              .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning,
+              .jill-custom-order[data-jill-custom-order] .jill-custom-order__shipping,
           """,
-          """      grid-template-columns: minmax(0, 1fr);
-          """, 2)
+          """    .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__fields,
+              .jill-custom-order[data-jill-custom-order] .jill-custom-order__shipping,
+          """)
+
+          replace_once(forms,
+          """      grid-template-columns: 1fr;
+            }
+
+            .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
+          """,
+          """      grid-template-columns: 1fr;
+            }
+
+            .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning {
+              grid-template-columns: minmax(0, 1fr);
+            }
+
+            .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__allocation {
+          """)
 
           replace_once(runtime,
           """  function todayLocal() {
@@ -168,11 +201,11 @@ jobs:
           assert.match(formsCss, /\\.jill-custom-order \\.jill-field,[\\s\\S]*\\.jill-custom-order \\.jill-field__control[\\s\\S]*min-width: 0;[\\s\\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
           """,
           """assert.match(formsCss, /input:checked \\+ span::before[\\s\\S]*radial-gradient\\(circle, currentColor/, 'selector circles must render an explicit checked inner dot');
-          assert.match(formsCss, /jill-custom-order__choice input,[\\s\\S]*opacity: 0;[\\s\\S]*clip-path: inset\\(50%\\)/, 'button-style native choices must stay visually suppressed beneath the custom indicator');
+          assert.match(formsCss, /jill-custom-order__choice input,[\\s\\S]*jill-media__input[\\s\\S]*opacity: 0;[\\s\\S]*clip-path: inset\\(50%\\)/, 'button-style native choices must stay visually suppressed beneath the custom indicator');
           assert.doesNotMatch(formsCss, /background-clip: content-box/, 'selector circles must not depend on content-box background clipping');
           assert.match(formsCss, /\\.jill-custom-order \\.jill-field,[\\s\\S]*\\.jill-custom-order \\.jill-field__control[\\s\\S]*min-width: 0;[\\s\\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
           assert.match(formsCss, /\\.jill-custom-order__planning \\{[\\s\\S]*min-width: 0;[\\s\\S]*grid-template-columns: repeat\\(2, minmax\\(0, 1fr\\)\\)/, 'Section 5 planning grid must own a zero intrinsic minimum');
-          assert.match(formsCss, /@media \\(max-width: 749px\\)[\\s\\S]*jill-custom-order__planning,[\\s\\S]*grid-template-columns: minmax\\(0, 1fr\\)/, 'mobile form grids must preserve a zero-minimum track so native date controls cannot widen the card');
+          assert.match(formsCss, /@media \\(max-width: 749px\\)[\\s\\S]*\\.jill-custom-order__planning \\{[\\s\\S]*grid-template-columns: minmax\\(0, 1fr\\)/, 'Section 5 mobile planning must preserve a zero-minimum track so native date controls cannot widen the card');
           """)
 
           replace_once(test,
