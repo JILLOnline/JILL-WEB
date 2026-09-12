@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/apply-custom-order-final-audit.yml
       - .github/apply_custom_order_final_audit.py
+      - .github/fix_custom_order_audit_guard.py
 
 permissions:
   contents: write
@@ -22,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Correct temporary audit guard generator
+        run: python3 .github/fix_custom_order_audit_guard.py
       - name: Apply audited Custom Order fixes
         run: python3 .github/apply_custom_order_final_audit.py
       - name: Install dependencies
@@ -75,7 +78,7 @@ jobs:
           python3 -c "from pathlib import Path; s=Path('theme/sections/main-custom-order.liquid').read_text(); r=Path('theme/assets/jill-custom-order.js').read_text(); c=Path('theme/assets/jill-forms.css').read_text(); assert 'AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA' in s; assert 'AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W' not in s; assert 'event_date' not in s and 'event_date' not in r; assert 'needDate.value = earliestNeedDate' not in r; assert 'JILLPersonalization.createState' in r; assert 'data-jill-custom-order-full-profile' in s; assert 'var(--jill-botanical-field)' in c"
       - name: Commit final audited changes and remove temporary runner
         run: |
-          git rm .github/workflows/apply-custom-order-final-audit.yml .github/apply_custom_order_final_audit.py
+          git rm .github/workflows/apply-custom-order-final-audit.yml .github/apply_custom_order_final_audit.py .github/fix_custom_order_audit_guard.py
           git config user.name "JILL Web Automation"
           git config user.email "info@jillonlinestore.com"
           git add theme scripts docs
