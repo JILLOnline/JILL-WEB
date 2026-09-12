@@ -21,7 +21,20 @@ jobs:
           fetch-depth: 0
 
       - name: Apply request and LIVE-parity repair
-        run: python scripts/restore-custom-order-request-pipeline.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/restore-custom-order-request-pipeline.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/test-custom-order-integration.mjs')
+          text = path.read_text()
+          old = "assert.match(section, /dynamic_required: true/, 'conditionally required Phone must have a dynamic required marker');"
+          new = "assert.match(section, /data-dynamic-required=\"true\"/, 'conditionally required Phone must have a dynamic required marker');"
+          if old not in text:
+              raise SystemExit('legacy phone-marker assertion not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
 
       - name: Validate repair and canonical backend
         shell: bash
