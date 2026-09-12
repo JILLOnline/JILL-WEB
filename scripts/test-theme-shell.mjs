@@ -43,8 +43,10 @@ includesAll(header, 'header', [
   'section.settings.menu.links',
   'routes.all_products_collection_url',
   '/pages/quote?view=custom-order',
-  '/pages/contact',
-  '/pages/about-us',
+  'fallback_contact_page',
+  'fallback_about_page',
+  '{{ fallback_contact_page.url }}',
+  '{{ fallback_about_page.url }}',
 ]);
 if (header.includes('href="{{ routes.search_url }}"')) {
   fail('header search must expand into its input instead of navigating before a query exists');
@@ -99,8 +101,6 @@ const themeLayout = read('theme/layout/theme.liquid');
 includesAll(themeLayout, 'theme layout', [
   "'jill-category-dock.css' | asset_url | stylesheet_tag",
   "'jill-header-search.css' | asset_url | stylesheet_tag",
-  "'jill-content-page.css' | asset_url | stylesheet_tag",
-  "request.page_type == 'page'",
   "template.suffix == 'custom-order'",
   "template.suffix == 'our-story'",
   "template.suffix == 'contact'",
@@ -127,8 +127,10 @@ for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver']) {
   if (contentPage.includes(forbidden)) fail(`content page must not contain ${forbidden}`);
 }
 
-const contentPageCss = read('theme/assets/jill-content-page.css');
-includesAll(contentPageCss, 'content page CSS', [
+if (fs.existsSync('theme/assets/jill-content-page.css')) {
+  fail('content page styles must stay in the canonical jill-storefront.css owner');
+}
+includesAll(storefrontCss, 'content page CSS', [
   '.jill-content-page',
   '.jill-content-page__hero',
   '.jill-content-page__body',
@@ -138,8 +140,8 @@ includesAll(contentPageCss, 'content page CSS', [
   "[data-content-width='wide']",
   '@media (max-width: 749px)',
 ]);
-for (const forbidden of ['!important', 'url(', 'MutationObserver', 'style=']) {
-  if (contentPageCss.includes(forbidden)) fail(`content page CSS must not contain ${forbidden}`);
+if (/\.jill-content-page\s*\{[^}]*width:\s*100%/s.test(storefrontCss)) {
+  fail('content page shell must preserve the canonical jill-page-width constraint');
 }
 
 const headerJs = read('theme/assets/jill-header.js');

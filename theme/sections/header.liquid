@@ -2,6 +2,8 @@
   assign custom_order_url = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
   assign custom_order_in_menu = false
   assign search_input_id = 'JillHeaderSearch-' | append: section.id
+  assign fallback_contact_page = section.settings.fallback_contact_page
+  assign fallback_about_page = section.settings.fallback_about_page
 
   if section.settings.menu != blank
     for link in section.settings.menu.links
@@ -60,11 +62,12 @@
               {% else %}
                 <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
                 <a class="jill-site-header__drawer-link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
-                {% if section.settings.show_custom_order %}
-                  <a class="jill-site-header__drawer-link" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
+                {% if fallback_contact_page != blank %}
+                  <a class="jill-site-header__drawer-link" href="{{ fallback_contact_page.url }}">Contact us</a>
                 {% endif %}
-                <a class="jill-site-header__drawer-link" href="/pages/contact">Contact us</a>
-                <a class="jill-site-header__drawer-link" href="/pages/about-us">About us</a>
+                {% if fallback_about_page != blank %}
+                  <a class="jill-site-header__drawer-link" href="{{ fallback_about_page.url }}">About us</a>
+                {% endif %}
               {% endif %}
             </nav>
 
@@ -233,6 +236,18 @@
       "type": "collection",
       "id": "collection_5",
       "label": "Collection 5"
+    },
+    {
+      "type": "page",
+      "id": "fallback_contact_page",
+      "label": "Fallback Contact page",
+      "info": "Used only when the selected navigation menu is empty."
+    },
+    {
+      "type": "page",
+      "id": "fallback_about_page",
+      "label": "Fallback About page",
+      "info": "Used only when the selected navigation menu is empty."
     },
     {
       "type": "checkbox",
