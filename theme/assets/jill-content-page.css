@@ -1,0 +1,177 @@
+@layer storefront {
+  .jill-content-page {
+    display: grid;
+    width: 100%;
+    gap: clamp(1.25rem, 2.5vw, 2rem);
+    padding-block: clamp(2rem, 5vw, 5rem);
+  }
+
+  .jill-content-page__hero,
+  .jill-content-page__body {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    width: 100%;
+    margin-inline: auto;
+    border-color: color-mix(in srgb, var(--jill-color-accent) 18%, var(--jill-color-foreground) 8%);
+    background: var(--jill-color-background);
+    box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--jill-color-foreground) 6%, transparent);
+  }
+
+  .jill-content-page__hero {
+    display: grid;
+    gap: calc(var(--jill-space-unit) * 1.5);
+    padding: clamp(2rem, 5vw, 4rem);
+    text-align: center;
+  }
+
+  .jill-content-page__hero::before,
+  .jill-content-page__body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--jill-botanical-field);
+    background-repeat: no-repeat;
+    opacity: 0.16;
+  }
+
+  .jill-content-page__hero::before {
+    background-position: 78% 18%;
+    background-size: 118% auto;
+    transform: scaleX(-1);
+  }
+
+  .jill-content-page__body::before {
+    background-position: 18% 72%;
+    background-size: 126% auto;
+    opacity: 0.11;
+  }
+
+  .jill-content-page[data-botanical='false'] :is(.jill-content-page__hero, .jill-content-page__body)::before {
+    display: none;
+  }
+
+  .jill-content-page__kicker {
+    margin: 0;
+    color: var(--jill-color-accent);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .jill-content-page__title {
+    margin: 0;
+    font-size: clamp(2rem, 1.5rem + 2vw, 3.65rem);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .jill-content-page__intro {
+    width: min(100%, 46rem);
+    justify-self: center;
+    color: var(--jill-color-muted);
+    font-size: clamp(1rem, 0.94rem + 0.25vw, 1.15rem);
+    line-height: 1.65;
+  }
+
+  .jill-content-page__intro > :first-child,
+  .jill-content-page__body > :first-child {
+    margin-block-start: 0;
+  }
+
+  .jill-content-page__intro > :last-child,
+  .jill-content-page__body > :last-child {
+    margin-block-end: 0;
+  }
+
+  .jill-content-page__body {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    line-height: 1.7;
+  }
+
+  .jill-content-page[data-content-width='narrow'] .jill-content-page__body {
+    max-width: 48rem;
+  }
+
+  .jill-content-page[data-content-width='standard'] .jill-content-page__body {
+    max-width: 64rem;
+  }
+
+  .jill-content-page[data-content-width='wide'] .jill-content-page__body {
+    max-width: 76rem;
+  }
+
+  .jill-content-page__body :is(h2, h3, h4) {
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .jill-content-page__body h2 {
+    margin-block: 2.25rem 1rem;
+    font-size: clamp(1.45rem, 1.2rem + 0.8vw, 2rem);
+  }
+
+  .jill-content-page__body h3 {
+    margin-block: 1.75rem 0.75rem;
+    font-size: clamp(1.2rem, 1.08rem + 0.4vw, 1.5rem);
+  }
+
+  .jill-content-page__body :is(p, ul, ol, blockquote) {
+    max-width: 72ch;
+  }
+
+  .jill-content-page__body a {
+    color: var(--jill-color-accent);
+    text-underline-offset: 0.16em;
+  }
+
+  .jill-content-page__body blockquote {
+    margin-inline: 0;
+    padding: calc(var(--jill-space-unit) * 2);
+    border-inline-start: calc(var(--jill-border-width) * 2) solid var(--jill-color-accent);
+    border-radius: 0 var(--jill-field-radius) var(--jill-field-radius) 0;
+    background: color-mix(in srgb, var(--jill-color-accent) 5%, var(--jill-color-background));
+  }
+
+  @media (max-width: 749px) {
+    .jill-content-page {
+      gap: calc(var(--jill-space-unit) * 2);
+      padding-block: clamp(1.5rem, 7vw, 3rem);
+    }
+
+    .jill-content-page__hero,
+    .jill-content-page__body {
+      border-radius: var(--jill-card-radius);
+    }
+
+    .jill-content-page__hero {
+      padding: calc(var(--jill-space-unit) * 3) calc(var(--jill-space-unit) * 2);
+    }
+
+    .jill-content-page__body {
+      padding: calc(var(--jill-space-unit) * 2);
+    }
+
+    .jill-content-page__hero::before {
+      background-position: 72% 12%;
+      background-size: auto 120%;
+      opacity: 0.11;
+    }
+
+    .jill-content-page__body::before {
+      background-position: 22% 82%;
+      background-size: auto 112%;
+      opacity: 0.08;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .jill-content-page__hero::before {
+      transform: none;
+    }
+  }
+}
