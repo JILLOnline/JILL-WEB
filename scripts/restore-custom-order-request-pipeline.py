@@ -116,7 +116,7 @@ assert.match(runtime, /function ownerNotificationBody/, 'merchant notification m
 assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
 assert.match(runtime, /await submitOwnerNotification\(root, request\)/, 'Custom Order success must wait for the merchant notification submission');
 '''
-marker = "console.log('Custom Order integration guard passed.');"
+marker = "console.log('JILL Custom Order LIVE-parity integration tests passed.');"
 if assertions.strip() not in tests:
     if marker not in tests:
         raise SystemExit('Custom Order test completion marker not found')
