@@ -4,13 +4,14 @@ SECTION = Path('theme/sections/main-custom-order.liquid')
 RUNTIME = Path('theme/assets/jill-custom-order.js')
 TESTS = Path('scripts/test-custom-order-integration.mjs')
 
-OLD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
-CANONICAL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec'
+CANONICAL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
+DEAD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec'
 
 section = SECTION.read_text()
-if OLD_ENDPOINT not in section:
-    raise SystemExit('Old Custom Order endpoint anchor not found')
-section = section.replace(OLD_ENDPOINT, CANONICAL_ENDPOINT)
+if CANONICAL_ENDPOINT not in section:
+    raise SystemExit('Canonical Custom Order endpoint is not present in the section')
+if DEAD_ENDPOINT in section:
+    raise SystemExit('Dead Apps Script deployment leaked into Custom Order')
 
 success_anchor = '  <section class="jill-custom-order__success jill-card" data-jill-custom-order-success hidden aria-hidden="true" role="status">'
 notification_markup = '''  <div data-jill-owner-notification hidden aria-hidden="true">
@@ -109,10 +110,10 @@ RUNTIME.write_text(runtime)
 
 tests = TESTS.read_text()
 assertions = r'''
-assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA\/exec/, 'Custom Order must submit to the canonical v13 Apps Script deployment');
-assert.doesNotMatch(section, /AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/, 'Custom Order must not submit to the retired Apps Script deployment');
+assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W\/exec/, 'Custom Order must retain the canonical Apps Script deployment');
+assert.doesNotMatch(section, /AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/, 'Custom Order must not use the dead Apps Script deployment');
 assert.match(section, /data-jill-owner-notification/, 'Custom Order must retain the native Shopify owner-notification lane');
-assert.match(runtime, /function ownerNotificationBody/, 'merchant notification must derive from the normalized request payload');
+assert.match(runtime, /function ownerNotificationBody[\s\S]*endpointPayload\(request\)/, 'merchant notification must derive from the normalized request payload');
 assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
 assert.match(runtime, /await submitOwnerNotification\(root, request\)/, 'Custom Order success must wait for the merchant notification submission');
 '''
