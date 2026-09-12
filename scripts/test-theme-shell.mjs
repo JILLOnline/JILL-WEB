@@ -43,6 +43,8 @@ includesAll(header, 'header', [
   'section.settings.menu.links',
   'routes.all_products_collection_url',
   '/pages/quote?view=custom-order',
+  '/pages/contact',
+  '/pages/about-us',
 ]);
 if (header.includes('href="{{ routes.search_url }}"')) {
   fail('header search must expand into its input instead of navigating before a query exists');
@@ -97,6 +99,8 @@ const themeLayout = read('theme/layout/theme.liquid');
 includesAll(themeLayout, 'theme layout', [
   "'jill-category-dock.css' | asset_url | stylesheet_tag",
   "'jill-header-search.css' | asset_url | stylesheet_tag",
+  "'jill-content-page.css' | asset_url | stylesheet_tag",
+  "request.page_type == 'page'",
   "template.suffix == 'custom-order'",
   "template.suffix == 'our-story'",
   "template.suffix == 'contact'",
@@ -104,6 +108,39 @@ includesAll(themeLayout, 'theme layout', [
   "'jill-custom-order.js' | asset_url",
   "'jill-contact.js' | asset_url",
 ]);
+
+const contentPage = read('theme/sections/main-page.liquid');
+includesAll(contentPage, 'content page', [
+  'data-jill-content-page',
+  'data-content-width',
+  'data-botanical',
+  'jill-content-page__hero',
+  'jill-content-page__title',
+  'jill-content-page__body',
+  '{{ page.title }}',
+  '{{ page.content }}',
+  '"name": "Content page"',
+  '"id": "content_width"',
+  '"id": "show_botanical"',
+]);
+for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver']) {
+  if (contentPage.includes(forbidden)) fail(`content page must not contain ${forbidden}`);
+}
+
+const contentPageCss = read('theme/assets/jill-content-page.css');
+includesAll(contentPageCss, 'content page CSS', [
+  '.jill-content-page',
+  '.jill-content-page__hero',
+  '.jill-content-page__body',
+  'var(--jill-botanical-field)',
+  "[data-content-width='narrow']",
+  "[data-content-width='standard']",
+  "[data-content-width='wide']",
+  '@media (max-width: 749px)',
+]);
+for (const forbidden of ['!important', 'url(', 'MutationObserver', 'style=']) {
+  if (contentPageCss.includes(forbidden)) fail(`content page CSS must not contain ${forbidden}`);
+}
 
 const headerJs = read('theme/assets/jill-header.js');
 includesAll(headerJs, 'header runtime', [
@@ -199,6 +236,22 @@ includesAll(footer, 'footer', [
 ]);
 if (footer.includes('section.settings.instagram_url') || footer.includes('section.settings.facebook_url') || footer.includes('section.settings.tiktok_url')) {
   fail('footer must consume the global social URL owner');
+}
+
+const accountDashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
+const accountCouponsConfig = read('extensions/jill-account-coupons/shopify.extension.toml');
+const accountProfileConfig = read('extensions/jill-account-home/shopify.extension.toml');
+const accountDashboard = read('extensions/jill-account-dashboard/src/Dashboard.jsx');
+const accountCoupons = read('extensions/jill-account-coupons/src/Coupons.jsx');
+includesAll(accountDashboardConfig, 'account dashboard target', ['customer-account.page.render']);
+includesAll(accountCouponsConfig, 'account coupons target', ['customer-account.page.render']);
+includesAll(accountProfileConfig, 'account profile target', ['customer-account.profile.block.render']);
+includesAll(accountDashboard, 'account dashboard page shell', ['<s-page', 'Back to JILL']);
+includesAll(accountCoupons, 'account coupon page shell', ['<s-page', 'My Coupons']);
+for (const source of [accountDashboard, accountCoupons]) {
+  if (source.includes('theme.liquid') || source.includes('jill-site-header') || source.includes('jill-site-footer')) {
+    fail('customer-account full pages must stay inside Shopify account header/footer instead of importing storefront Liquid shell');
+  }
 }
 
 const index = JSON.parse(read('theme/templates/index.json'));
