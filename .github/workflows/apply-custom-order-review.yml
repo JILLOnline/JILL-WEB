@@ -6,7 +6,7 @@ on:
       - jill/theme-core
     paths:
       - .github/workflows/apply-custom-order-review.yml
-      - scripts/apply-custom-order-review-packed.mjs
+      - scripts/apply-custom-order-review.py
 
 permissions:
   contents: write
@@ -23,34 +23,7 @@ jobs:
           ref: jill/theme-core
 
       - name: Apply Review presentation rebuild
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import { inflateRawSync } from 'node:zlib';
-
-          const packed = fs.readFileSync('scripts/apply-custom-order-review-packed.mjs', 'utf8');
-          const payload = packed.match(/const payload = '([^']+)'/)?.[1];
-          if (!payload) throw new Error('Packed Review payload was not found.');
-
-          const gzip = Buffer.from(payload, 'base64');
-          if (gzip[0] !== 0x1f || gzip[1] !== 0x8b || gzip[2] !== 0x08) throw new Error('Packed Review payload is not gzip data.');
-          const flags = gzip[3];
-          let offset = 10;
-          if (flags & 0x04) {
-            const extraLength = gzip.readUInt16LE(offset);
-            offset += 2 + extraLength;
-          }
-          if (flags & 0x08) while (gzip[offset++] !== 0 && offset < gzip.length) {}
-          if (flags & 0x10) while (gzip[offset++] !== 0 && offset < gzip.length) {}
-          if (flags & 0x02) offset += 2;
-          if (offset >= gzip.length - 8) throw new Error('Packed Review payload header is invalid.');
-
-          const source = inflateRawSync(gzip.subarray(offset, -8)).toString('utf8');
-          fs.writeFileSync('/tmp/jill-custom-order-review-patch.mjs', source);
-          await import('file:///tmp/jill-custom-order-review-patch.mjs');
-          NODE
+        run: python3 scripts/apply-custom-order-review.py
 
       - name: Validate touched runtime and integration guard
         run: |
@@ -60,10 +33,10 @@ jobs:
           ! grep -R "!important" theme/assets/jill-forms.css theme/assets/jill-custom-order.js theme/sections/main-custom-order.liquid
           ! grep -R "MutationObserver" theme/assets/jill-custom-order.js
 
-      - name: Remove one-time applicator and commit canonical source
+      - name: Remove one-time applicators and commit canonical source
         run: |
           set -euo pipefail
-          rm -f scripts/apply-custom-order-review-packed.mjs .github/workflows/apply-custom-order-review.yml
+          rm -f scripts/apply-custom-order-review.py scripts/apply-custom-order-review-packed.mjs .github/workflows/apply-custom-order-review.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
