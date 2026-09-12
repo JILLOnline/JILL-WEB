@@ -63,10 +63,10 @@
                 <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
                 <a class="jill-site-header__drawer-link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
                 {% if fallback_contact_page != blank %}
-                  <a class="jill-site-header__drawer-link" href="{{ fallback_contact_page.url }}">Contact us</a>
+                  <a class="jill-site-header__drawer-link" href="{{ fallback_contact_page.url }}">{{ 'header.contact_us' | t }}</a>
                 {% endif %}
                 {% if fallback_about_page != blank %}
-                  <a class="jill-site-header__drawer-link" href="{{ fallback_about_page.url }}">About us</a>
+                  <a class="jill-site-header__drawer-link" href="{{ fallback_about_page.url }}">{{ 'header.about_us' | t }}</a>
                 {% endif %}
               {% endif %}
             </nav>
