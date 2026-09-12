@@ -59,8 +59,8 @@ for (const forbidden of ['<style', 'style=', 'MutationObserver', 'insertAdjacent
 const dock = read('theme/snippets/jill-category-dock.liquid');
 includesAll(dock, 'collection dock', [
   'data-jill-category-dock',
+  'jill-category-dock__track',
   'jill-category-dock__item',
-  'jill-category-dock__image',
   '#JillCatalogCollection-',
 ]);
 for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver', 'setTimeout']) {
@@ -130,7 +130,8 @@ for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver']) {
 if (fs.existsSync('theme/assets/jill-content-page.css')) {
   fail('content page styles must stay in the canonical jill-storefront.css owner');
 }
-includesAll(storefrontCss, 'content page CSS', [
+const contentPageCss = read('theme/assets/jill-storefront.css');
+includesAll(contentPageCss, 'content page CSS', [
   '.jill-content-page',
   '.jill-content-page__hero',
   '.jill-content-page__body',
@@ -140,7 +141,7 @@ includesAll(storefrontCss, 'content page CSS', [
   "[data-content-width='wide']",
   '@media (max-width: 749px)',
 ]);
-if (/\.jill-content-page\s*\{[^}]*width:\s*100%/s.test(storefrontCss)) {
+if (/\.jill-content-page\s*\{[^}]*width:\s*100%/s.test(contentPageCss)) {
   fail('content page shell must preserve the canonical jill-page-width constraint');
 }
 
