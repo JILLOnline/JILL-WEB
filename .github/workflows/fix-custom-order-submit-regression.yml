@@ -80,11 +80,7 @@ jobs:
 
           tests = test_path.read_text()
           marker = "assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');"
-          additions = """
-assert.doesNotMatch(runtime, /submitOwnerNotification|store notification could not be delivered/, 'Custom Order submission must not depend on a second Shopify contact-form request');
-assert.doesNotMatch(section, /data-jill-owner-notification|JillCustomOrderOwnerNotification/, 'Custom Order must keep one canonical Apps Script submission owner');
-assert.match(runtime, /const submissionId = request\.submission_id;[\\s\\S]*nextRequest\.submission_id = submissionId;/, 'retrying from one Review session must preserve the canonical submission id');
-"""
+          additions = "\nassert.doesNotMatch(runtime, /submitOwnerNotification|store notification could not be delivered/, 'Custom Order submission must not depend on a second Shopify contact-form request');\nassert.doesNotMatch(section, /data-jill-owner-notification|JillCustomOrderOwnerNotification/, 'Custom Order must keep one canonical Apps Script submission owner');\nassert.match(runtime, /const submissionId = request\\.submission_id;[\\s\\S]*nextRequest\\.submission_id = submissionId;/, 'retrying from one Review session must preserve the canonical submission id');\n"
           if marker not in tests:
               raise SystemExit('Custom Order submission integration assertion anchor not found')
           if 'must not depend on a second Shopify contact-form request' not in tests:
