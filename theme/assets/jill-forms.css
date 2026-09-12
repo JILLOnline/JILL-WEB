@@ -64,6 +64,42 @@
     transition: border-color 160ms ease, box-shadow 160ms ease;
   }
 
+
+
+  .jill-custom-order__flow > .jill-custom-order__step {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .jill-custom-order__flow > .jill-custom-order__step::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--jill-botanical-field);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    opacity: 0.08;
+  }
+
+  .jill-custom-order__flow > .jill-custom-order__step:nth-of-type(3n + 2)::before {
+    background-position: 54% 46%;
+    background-size: 118% auto;
+  }
+
+  .jill-custom-order__flow > .jill-custom-order__step:nth-of-type(3n)::before {
+    background-position: 46% 54%;
+    background-size: 112% auto;
+  }
+
+  .jill-custom-order__flow > .jill-custom-order__step > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .jill-custom-order__step[data-stage-state='active'] {
     border-color: color-mix(in srgb, var(--jill-color-accent) 58%, var(--jill-color-foreground) 8%);
     box-shadow: 0 0.8rem 2.2rem color-mix(in srgb, var(--jill-color-accent) 10%, transparent);
@@ -1262,6 +1298,11 @@
   }
 
   @media (max-width: 749px) {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__flow > .jill-custom-order__step::before {
+      background-size: auto 100%;
+      opacity: 0.055;
+    }
+
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning {
       grid-template-columns: minmax(0, 1fr);
     }

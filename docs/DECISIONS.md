@@ -217,3 +217,10 @@ Add a new entry only for a real architectural/product-system decision. Routine i
 **Why:** A single-color mask loses JILL's multicolor identity; external SVGs cannot inherit document CSS tokens. Resolving the reusable SVG once in the foundation avoids duplicated palette literals, repeated inline markup and a client-side recoloring system.
 
 **Consequence:** No new stylesheet or runtime is introduced. The prior single-color mask and long-stem SVG geometry are removed. Only mobile uses a transparency mask to confine the same multicolor artwork to the outer edges. Form and product-card owners remain unchanged.
+
+
+## 2026-09-12 — Custom Order final audit: capability truth, physical units, review purity, and botanical steps
+
+**Decision:** The verified `AKfycbxX.../exec` Apps Script deployment is the canonical Custom Order submission endpoint. Custom Order reads the full product capability profile for required personalization/reference semantics while retaining the existing Product Options-only projection for option rendering. Bundled products use physical customization units from `JILLPersonalization`, including 8- and 12-count merchandise. Date Needed exposes a 12-business-day minimum but remains blank until the customer chooses a date. Review validates without mutating Product Options finish state. Large Custom Order step cards may reuse the canonical botanical field at low opacity with deterministic crop variations; controls remain undecorated.
+
+**Consequence:** This scoped final pass supersedes the 2026-09-10 consequence that the Custom Order form owner was untouched. It does not authorize duplicate engines or a new visual authority. Deployment remains DEVELOPMENT-theme-only until explicitly promoted; LIVE is not modified by this decision.

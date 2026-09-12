@@ -74,3 +74,10 @@ A new domain requires an explicit row here before it receives a new canonical ow
 Placeholder language such as `when introduced` or `when extracted` means the responsibility is reserved but no implementation file should be created until the feature actually exists. Empty scaffolding does not count as architecture.
 
 The current combined Apps Script file remains production code during migration. New backend work must follow the ownership rows above rather than adding more unrelated responsibility to the monolith.
+
+
+## Custom Order final-pass ownership clarification — 2026-09-12
+
+- `jill-custom-order.js` may orchestrate cross-product Custom Order personalization, but physical eligible-unit identity/count must come from `JILLPersonalization` and canonical product capability profiles. It must not own separate units-per-quantity arithmetic.
+- Product-level required personalization/reference semantics come from the full canonical Shopify capability profile; the generic Custom Order choices may only become stricter from that truth, never weaker.
+- `jill-forms.css` owns Custom Order large-card botanical presentation and consumes the same `--jill-botanical-field` foundation asset. It does not own a second botanical asset or decorate ordinary controls.

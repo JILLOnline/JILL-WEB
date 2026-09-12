@@ -135,7 +135,8 @@
       "none": "No personalization",
       "same": "Same personalization for all selected items",
       "different": "Different personalization by item",
-      "add": "Add another personalization"
+      "add": "Add another personalization",
+      "required_selected": "At least one selected item requires personalization."
     },
     "references": {
       "title": "Do you have reference images?",
@@ -143,7 +144,8 @@
       "upload_help": "Upload up to 3 photos. JPG, PNG, WEBP, HEIC or HEIF · 10 MB max each.",
       "add": "+ Add reference images",
       "required_help": "Upload at least 1 photo to continue",
-      "instructions": "What should we keep, change, or use only as inspiration?"
+      "instructions": "What should we keep, change, or use only as inspiration?",
+      "required_by_selection": "At least one selected item requires a reference image."
     },
     "planning": {
       "title": "Event & fulfillment",
@@ -156,7 +158,9 @@
       "fulfillment_options": {
         "pickup": "Jacksonville pickup",
         "shipping": "Shipping"
-      }
+      },
+      "date_needed_help": "Earliest selectable date is 12 business days from today. This helps plan your order but does not guarantee delivery by that date. Pick-up orders are prioritized.",
+      "date_needed_error": "Choose a date at least 12 business days from today."
     },
     "final": {
       "title": "Final details",

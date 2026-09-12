@@ -12,6 +12,7 @@
   assign colors_label = 'custom_order.design.colors' | t
   assign reference_instructions_label = 'custom_order.references.instructions' | t
   assign date_needed_label = 'custom_order.planning.date_needed' | t
+  assign date_needed_help = 'custom_order.planning.date_needed_help' | t
   assign city_label = 'custom_order.planning.city' | t
   assign state_label = 'custom_order.planning.state' | t
   assign postal_code_label = 'custom_order.planning.postal_code' | t
@@ -36,6 +37,9 @@
   data-options-finished-label="{{ 'custom_order.actions.options_finished' | t | escape }}"
   data-finish-personalization-label="{{ 'custom_order.actions.finish_personalization' | t | escape }}"
   data-personalization-finished-label="{{ 'custom_order.actions.personalization_finished' | t | escape }}"
+  data-personalization-required-message="{{ 'custom_order.personalization.required_selected' | t | escape }}"
+  data-reference-required-message="{{ 'custom_order.references.required_by_selection' | t | escape }}"
+  data-needed-date-error="{{ 'custom_order.planning.date_needed_error' | t | escape }}"
   data-request-label="{{ 'custom_order.actions.submit' | t | escape }}"
   data-sending-label="{{ 'custom_order.actions.sending' | t | escape }}"
 >
@@ -119,7 +123,12 @@
 
       <div class="jill-custom-order__collection-stage" data-jill-collection-stage hidden aria-hidden="true">
         <p class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.order.collection_label' | t }}</p>
-        <p class="jill-custom-order__help" data-jill-collection-help>{{ 'custom_order.order.collection_one_help' | t }}</p>
+        <p
+          class="jill-custom-order__help"
+          data-jill-collection-help
+          data-one-help="{{ 'custom_order.order.collection_one_help' | t | escape }}"
+          data-multiple-help="{{ 'custom_order.order.collection_multiple_help' | t | escape }}"
+        >{{ 'custom_order.order.collection_one_help' | t }}</p>
         <div class="jill-custom-order__collection-grid">
           {% for catalog_collection in collections %}
             {% unless excluded_collection_handles contains catalog_collection.handle %}
@@ -282,6 +291,7 @@
                         <input type="hidden" name="properties[_jill_profile]" value="{{ capability_profile.id }}@{{ capability_profile.version }}">
                         {% render 'product-capability-fields', capability_profile: capability_profile, product: catalog_product, section_id: item_key, surface_groups: option_surface_groups, show_intro: false, optional_label: optional_label %}
                         <script type="application/json" data-jill-product-capability-profile>{% render 'custom-order-capability-profile', capability_profile: capability_profile, product: catalog_product %}</script>
+                        <script type="application/json" data-jill-custom-order-full-profile>{{ capability_profile | json }}</script>
                       {% endif %}
 
                       <p
@@ -340,6 +350,7 @@
               <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="yes" data-jill-reference-choice required><span>{{ 'custom_order.common.yes' | t }}</span></label>
               <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="no" data-jill-reference-choice required><span>{{ 'custom_order.common.no' | t }}</span></label>
             </div>
+            <p class="jill-custom-order__help" data-jill-reference-requirement hidden>{{ 'custom_order.references.required_by_selection' | t }}</p>
           </fieldset>
           <div class="jill-custom-order__reference-fields" data-jill-reference-fields hidden aria-hidden="true">
             <div class="jill-media" data-jill-media>
@@ -368,7 +379,7 @@
         <div><h2>{{ 'custom_order.planning.title' | t }}</h2><p>{{ 'custom_order.planning.help' | t }}</p></div>
       </div>
       <div class="jill-custom-order__planning" data-jill-custom-order-planning>
-        {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true %}
+        {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true, help: date_needed_help %}
         <fieldset class="jill-custom-order__choice-set jill-custom-order__planning-choice">
           <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.planning.fulfillment' | t }}</legend>
           <div class="jill-custom-order__choice-grid">
@@ -502,7 +513,7 @@
       "type": "text",
       "id": "submission_endpoint",
       "label": "Submission endpoint",
-      "default": "https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec"
+      "default": "https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec"
     },
     {
       "type": "text",

@@ -123,3 +123,8 @@ The five artwork colors come from the opaque interior pixels of the current merc
 Catalog decoration belongs only to the existing large open Featured disclosure and collection panel pseudo-elements. `jill-catalog-disclosure.css` owns placement, clipping and opacity; all direct content retains its existing higher stacking level. Description bubbles own no artwork.
 
 The field uses deliberately chosen 18, 30, 46 and 64 pixel motifs, percentage edge anchors and no repeating tiles or stretching viewBox. Flowers use pink, purple, yellow and blue; greenery uses green. Desktop opacity is 15%; below 750px opacity is 11% and a transparent-center edge mask keeps the field away from cards. This mask controls visibility only, preserving every artwork color.
+
+
+## Custom Order botanical surface extension — 2026-09-12
+
+The canonical `jill-botanical-field.svg` asset may also be used by `jill-forms.css` on **large Custom Order step cards only**. This is a low-opacity edge field, not a new decorative system. Inputs, selects, phone controls, quantity controls, pills, and ordinary buttons remain clean UI surfaces. Deterministic crop/position variations are allowed so large cards do not look mechanically repeated; random JS placement and duplicate botanical assets are not allowed.

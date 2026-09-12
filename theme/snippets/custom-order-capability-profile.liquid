@@ -37,7 +37,7 @@
   ],
   "features": {
     "customizationUnits": {
-      "unitsPerQuantity": 1,
+      "unitsPerQuantity": {{ capability_profile.features.customizationUnits.unitsPerQuantity | default: 1 | json }},
       "singularLabel": {{ capability_profile.features.customizationUnits.singularLabel | default: 'item' | json }},
       "pluralLabel": {{ capability_profile.features.customizationUnits.pluralLabel | default: 'items' | json }}
     }{% if capability_profile.features.productOptionsAllocation != blank %},

@@ -32,7 +32,7 @@ assert.match(section, /product: catalog_product %}/, 'runtime capability project
 
 assert.match(customOrderProfile, /jill_custom_order_capabilities/, 'Custom Order capability projection must prefer collection-owned family capabilities');
 assert.match(customOrderProfile, /field\.group == 'product_options'/, 'Custom Order runtime projection must contain Product Options only');
-assert.match(customOrderProfile, /"unitsPerQuantity": 1/, 'one Custom Order quantity must represent one customization unit');
+assert.match(customOrderProfile, /capability_profile\.features\.customizationUnits\.unitsPerQuantity \| default: 1/, 'Custom Order Product Options projection must preserve the canonical physical customization-unit multiplier');
 assert.match(customOrderProfile, /productOptionsAllocation/, 'Custom Order projection must preserve canonical Product Options allocation metadata');
 assert.match(customOrderProfile, /commerceAdjustments/, 'Custom Order projection must preserve generic paid-option metadata for future commerce use');
 assert.doesNotMatch(customOrderProfile, /personalizationAllocation/, 'product-profile personalization must not leak into the order-level Custom Order personalization owner');
@@ -185,8 +185,8 @@ assert.match(runtime, /syncPhoneRequirement/, 'preferred Text\/phone contact mus
 assert.match(runtime, /function addBusinessDays/, 'date needed must use one canonical business-day calculator');
 assert.match(runtime, /addBusinessDays\(today, 12\)/, 'date needed must enforce a 12-business-day lead time from the local current date');
 assert.match(runtime, /needDate\.min = earliestNeedDate/, 'date needed must expose the 12-business-day minimum to the native date picker');
-assert.match(runtime, /needDate\.value < earliestNeedDate\) needDate\.value = earliestNeedDate/, 'date needed must return an injected early value to the first available date');
-assert.match(runtime, /needDate\.setCustomValidity\(''\)/, 'date needed must clear stale native validity after restoring the first available date');
+assert.doesNotMatch(runtime, /needDate\.value\s*=\s*earliestNeedDate/, 'Date Needed must remain customer-chosen instead of auto-filling the earliest date');
+assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must validate early customer-entered dates without choosing a date for them');
 assert.doesNotMatch(runtime, /event_date|eventDate|after the event date/, 'Custom Order runtime must not retain event-date state or validation');
 assert.doesNotMatch(customOrderSchema, /event_date/, 'Custom Order API contract must not retain the removed event date');
 assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
@@ -221,13 +221,26 @@ assert.ok(
 );
 
 
-assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W\/exec/, 'Custom Order must retain the canonical Apps Script deployment');
-assert.doesNotMatch(section, /AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/, 'Custom Order must not use the dead Apps Script deployment');
+assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA\/exec/, 'Custom Order must use the verified canonical Apps Script deployment');
+assert.doesNotMatch(section, /AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/, 'Custom Order must not retain the superseded Apps Script deployment');
 assert.match(section, /data-jill-review-gate/, 'Review action must remain visible outside progressively gated form stages');
 assert.ok(section.indexOf('data-jill-review-gate') > section.indexOf('data-jill-stage="final"'), 'persistent Review action must follow the form stages');
 assert.match(runtime, /function firstReviewIssue\(\)/, 'Review must keep one canonical first-missing-field resolver');
+assert.match(section, /data-jill-custom-order-full-profile/, 'Custom Order must expose the full canonical product capability profile for order-level requirements');
+assert.match(runtime, /JILLPersonalization\.createState/, 'Custom Order physical personalization units must come from the shared personalization authority');
+assert.match(runtime, /eligibleUnitIds/, 'Custom Order must allocate bundled products by physical customization units');
+assert.match(runtime, /personalizationRequired\(root\)/, 'selected product capability truth must tighten generic personalization requirements');
+assert.match(runtime, /referenceRequired\(root\)/, 'selected product capability truth must tighten reference-image requirements');
+assert.match(runtime, /noneOption\.disabled = required/, 'No personalization must be unavailable when a selected product requires personalization');
+assert.match(runtime, /no\.disabled = required/, 'No reference images must be unavailable when a selected product requires a file');
+assert.match(runtime, /collectionHelp\.dataset\.multipleHelp/, 'collection guidance must switch for multiple-item orders');
+assert.match(formsCss, /jill-custom-order__flow > \.jill-custom-order__step::before[\s\S]*var\(--jill-botanical-field\)/, 'large Custom Order step cards must reuse the canonical botanical field');
+const firstReviewIssueStart = runtime.indexOf('function firstReviewIssue()');
+const openReviewStart = runtime.indexOf('function openReview()');
+assert.ok(firstReviewIssueStart >= 0 && openReviewStart > firstReviewIssueStart, 'Review validation source boundaries must be discoverable');
+assert.doesNotMatch(runtime.slice(firstReviewIssueStart, openReviewStart), /validateConfiguration\(root\)/, 'Review validation must not mutate the Product Options finish gate');
 assert.match(runtime, /scrollToTarget\(issue\)/, 'Review validation must return the user to the first missing required field');
-assert.match(runtime, /if \(!needDate\.value \|\| needDate\.value < earliestNeedDate\) needDate\.value = earliestNeedDate;/, 'Date Needed must display and restore the first available business-day date');
+assert.doesNotMatch(runtime, /if \(!needDate\.value \|\| needDate\.value < earliestNeedDate\) needDate\.value = earliestNeedDate;/, 'Date Needed must never auto-select a date');
 assert.match(formsCss, /input\[type='date'\]\.jill-field__control[\s\S]*min-inline-size: 0;[\s\S]*max-inline-size: 100%;/, 'mobile-safe date input must not overflow its field');
 assert.match(section, /data-jill-phone-field[\s\S]*data-default-country="\{\{ localization\.country\.iso_code/, 'phone input must initialize from Shopify localization country');
 assert.match(section, /data-jill-phone-country/, 'phone input must expose a country/flag dial-code selector');
