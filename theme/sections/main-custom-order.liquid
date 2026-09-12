@@ -477,14 +477,6 @@
     </div>
   </section>
 
-  <div data-jill-owner-notification hidden aria-hidden="true">
-    {% form 'contact', id: 'JillCustomOrderOwnerNotification' %}
-      <input type="hidden" name="contact[name]" value="">
-      <input type="hidden" name="contact[email]" value="">
-      <input type="hidden" name="contact[body]" value="">
-    {% endform %}
-  </div>
-
   <section class="jill-custom-order__success jill-card" data-jill-custom-order-success hidden aria-hidden="true" role="status">
     <div class="jill-custom-order__success-mark" aria-hidden="true">✓</div>
     <h2 tabindex="-1" data-jill-success-title>{{ 'custom_order.success.title' | t }}</h2>

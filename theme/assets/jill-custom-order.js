@@ -1145,63 +1145,12 @@
     };
   }
 
-  function ownerNotificationBody(request) {
-    const payload = endpointPayload(request);
-    const location = [payload.city, payload.state, payload.zip].filter(Boolean).join(', ');
-    return [
-      'New JILL Custom Order Request',
-      '',
-      `Submission ID: ${payload.submission_id}`,
-      `Submitted: ${payload.submitted_at}`,
-      `Name: ${payload.name}`,
-      `Email: ${payload.email}`,
-      `Phone: ${payload.phone || '—'}`,
-      `Preferred contact: ${payload.preferred_contact || '—'}`,
-      `Order type: ${payload.order_type || '—'}`,
-      `Date needed: ${payload.date_needed || '—'}`,
-      `Fulfillment: ${payload.fulfillment || '—'}`,
-      `Location: ${location || '—'}`,
-      `Collections: ${payload.collections || '—'}`,
-      '',
-      'Products:',
-      payload.products || '—',
-      '',
-      `Theme: ${payload.theme || '—'}`,
-      `Colors: ${payload.colors || '—'}`,
-      `Personalization: ${payload.personalization || '—'}`,
-      `Reference images: ${payload.reference_images || 'No'}`,
-      'Reference links:',
-      payload.reference_image_links || 'None',
-      `Reference instructions: ${payload.reference_instructions || '—'}`,
-      `Budget: ${payload.budget || '—'}`,
-      `Priority: ${payload.priority || '—'}`,
-      `Recommend matching items: ${payload.recommend_matching || '—'}`,
-      `Notes: ${payload.notes || '—'}`,
-      `Marketing consent: ${payload.marketing_consent || 'No'}`,
-    ].join('\n');
-  }
-
-  async function submitOwnerNotification(root, request) {
-    const ownerNotification = root.querySelector('[data-jill-owner-notification]');
-    const form = ownerNotification?.querySelector('form');
-    const name = form?.querySelector('[name="contact[name]"]');
-    const email = form?.querySelector('[name="contact[email]"]');
-    const body = form?.querySelector('[name="contact[body]"]');
-    if (!form || !name || !email || !body) fail('store notification is temporarily unavailable');
-    name.value = request.customer.name || 'Custom Order Request';
-    email.value = request.customer.email || '';
-    body.value = ownerNotificationBody(request);
-    const response = await fetch(form.action, {method: 'POST', credentials: 'same-origin', body: new FormData(form)});
-    if (!response.ok) fail('store notification could not be delivered');
-  }
-
   async function submitRequest(root, request) {
     const endpoint = String(root.dataset.submitEndpoint || '').trim();
     if (!endpoint) fail('submission is temporarily unavailable');
     const body = new URLSearchParams();
     Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
     await fetch(endpoint, {method: 'POST', mode: 'no-cors', keepalive: true, body});
-    await submitOwnerNotification(root, request);
   }
 
   function text(bytes, start, end) {
@@ -2090,7 +2039,10 @@
       requestSubmit.textContent = root.dataset.sendingLabel || 'Sending request…';
       setStatus('');
       try {
-        request = cleanUndefined(buildRequest(root));
+        const submissionId = request.submission_id;
+        const nextRequest = cleanUndefined(buildRequest(root));
+        nextRequest.submission_id = submissionId;
+        request = nextRequest;
         await submitRequest(root, request);
         setVisible(review, false);
         setVisible(success, true);

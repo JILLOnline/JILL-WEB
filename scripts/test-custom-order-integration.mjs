@@ -198,6 +198,10 @@ assert.match(runtime, /\$\{item\.quantity\}× \$\{item\.title\}/, 'Review item q
 assert.match(formsCss, /jill-custom-order-review__summary-grid[\s\S]*repeat\(3, minmax\(0, 1fr\)\)/, 'Review summary cards must use three columns on desktop');
 assert.match(formsCss, /jill-custom-order-review__planning[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/, 'Review Date Needed and Fulfillment must use two columns on desktop');
 assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');
+assert.doesNotMatch(runtime, /submitOwnerNotification|store notification could not be delivered/, 'Custom Order submission must not depend on a second Shopify contact-form request');
+assert.doesNotMatch(section, /data-jill-owner-notification|JillCustomOrderOwnerNotification/, 'Custom Order must keep one canonical Apps Script submission owner');
+assert.match(runtime, /const submissionId = request\.submission_id;[\s\S]*nextRequest\.submission_id = submissionId;/, 'retrying from one Review session must preserve the canonical submission id');
+
 assert.match(runtime, /selectedChoices/, 'Custom Order must project selection state into shared product configuration instead of duplicating product engines');
 assert.doesNotMatch(runtime, /unitsPerQuantity\s*\*/, 'Custom Order must not own customization-unit multiplication');
 assert.doesNotMatch(runtime, /Gray|Pink|White|Tote Style|Method/, 'Custom Order runtime must not encode product-specific Shopify variants');
@@ -219,10 +223,6 @@ assert.ok(
 
 assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W\/exec/, 'Custom Order must retain the canonical Apps Script deployment');
 assert.doesNotMatch(section, /AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/, 'Custom Order must not use the dead Apps Script deployment');
-assert.match(section, /data-jill-owner-notification/, 'Custom Order must retain the native Shopify owner-notification lane');
-assert.match(runtime, /function ownerNotificationBody[\s\S]*endpointPayload\(request\)/, 'merchant notification must derive from the normalized request payload');
-assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
-assert.match(runtime, /await submitOwnerNotification\(root, request\)/, 'Custom Order success must wait for the merchant notification submission');
 assert.match(section, /data-jill-review-gate/, 'Review action must remain visible outside progressively gated form stages');
 assert.ok(section.indexOf('data-jill-review-gate') > section.indexOf('data-jill-stage="final"'), 'persistent Review action must follow the form stages');
 assert.match(runtime, /function firstReviewIssue\(\)/, 'Review must keep one canonical first-missing-field resolver');
