@@ -2085,7 +2085,10 @@ function submissionComplete_(state) {
 }
 
 function emailStageShouldAttempt_(stage) {
-  return stage === 'PENDING' || stage === 'ERROR';
+  // Only a never-attempted email may be sent automatically. ERROR and
+  // ATTEMPTING are terminal for network retries so an ambiguous MailApp
+  // outcome cannot create a duplicate customer or merchant message.
+  return stage === 'PENDING';
 }
 
 function logSubmissionStageError_(submissionId, stage, err) {
