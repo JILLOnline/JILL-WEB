@@ -29,11 +29,19 @@ jobs:
           from pathlib import Path
           path = Path('scripts/test-custom-order-integration.mjs')
           text = path.read_text()
-          old = "assert.match(section, /dynamic_required: true/, 'conditionally required Phone must have a dynamic required marker');"
-          new = "assert.match(section, /data-dynamic-required=\"true\"/, 'conditionally required Phone must have a dynamic required marker');"
-          if old not in text:
-              raise SystemExit('legacy phone-marker assertion not found')
-          path.write_text(text.replace(old, new, 1))
+          replacements = {
+            "assert.match(section, /dynamic_required: true/, 'conditionally required Phone must have a dynamic required marker');":
+              "assert.match(section, /data-dynamic-required=\"true\"/, 'conditionally required Phone must have a dynamic required marker');",
+            "assert.match(runtime, /12 business days from today/, 'date needed must explain the lead-time validation when an early value is injected');":
+              "assert.match(runtime, /needDate\\.value < earliestNeedDate\\) needDate\\.value = earliestNeedDate/, 'date needed must return an injected early value to the first available date');",
+            "assert.match(runtime, /needDate\\.setCustomValidity/, 'date needed must enforce the lead-time minimum');":
+              "assert.match(runtime, /needDate\\.setCustomValidity\\(''\\)/, 'date needed must clear stale native validity after restoring the first available date');",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'legacy assertion not found: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
           PY
 
       - name: Validate repair and canonical backend
