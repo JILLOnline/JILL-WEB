@@ -1,0 +1,200 @@
+name: Apply Custom Order deep mobile fix
+
+on:
+  push:
+    branches:
+      - jill/custom-order-mobile-grid-business-days
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: jill/custom-order-mobile-grid-business-days
+          fetch-depth: 0
+
+      - name: Apply canonical fixes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected 1 match, found {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          def replace_exact_count(path, old, new, expected):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{path}: expected {expected} matches, found {count}')
+              p.write_text(text.replace(old, new))
+
+          forms = 'theme/assets/jill-forms.css'
+          runtime = 'theme/assets/jill-custom-order.js'
+          test = 'scripts/test-custom-order-integration.mjs'
+
+          replace_once(forms,
+          """    position: absolute;
+              width: 1px;
+              height: 1px;
+              overflow: hidden;
+              clip-path: inset(50%);
+              white-space: nowrap;
+          """,
+          """    position: absolute;
+              width: 1px;
+              height: 1px;
+              margin: -1px;
+              padding: 0;
+              overflow: hidden;
+              border: 0;
+              opacity: 0;
+              clip: rect(0 0 0 0);
+              clip-path: inset(50%);
+              white-space: nowrap;
+          """)
+
+          replace_once(forms,
+          """    width: 0.9rem;
+              height: 0.9rem;
+              flex: 0 0 0.9rem;
+              padding: 0.125rem;
+              border: calc(var(--jill-border-width) * 1.5) solid currentColor;
+              border-radius: 999px;
+              background: transparent;
+              background-clip: content-box;
+          """,
+          """    width: 0.9rem;
+              height: 0.9rem;
+              flex: 0 0 0.9rem;
+              border: calc(var(--jill-border-width) * 1.5) solid currentColor;
+              border-radius: 999px;
+              background-color: transparent;
+              background-image: none;
+          """)
+
+          replace_once(forms,
+          """    background-color: currentColor;
+          """,
+          """    background-image: radial-gradient(circle, currentColor 0 0.2rem, transparent 0.21rem);
+          """)
+
+          replace_once(forms,
+          """  .jill-custom-order__planning {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+          """,
+          """  .jill-custom-order__planning {
+              display: grid;
+              min-width: 0;
+              width: 100%;
+              max-width: 100%;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+          """)
+
+          replace_exact_count(forms,
+          """      grid-template-columns: 1fr;
+          """,
+          """      grid-template-columns: minmax(0, 1fr);
+          """, 2)
+
+          replace_once(runtime,
+          """  function todayLocal() {
+              const now = new Date();
+              const offset = now.getTimezoneOffset();
+              return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+            }
+          """,
+          """  function todayLocal() {
+              const now = new Date();
+              const offset = now.getTimezoneOffset();
+              return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+            }
+
+            function addBusinessDays(value, count) {
+              const [year, month, day] = String(value).split('-').map(Number);
+              const date = new Date(year, month - 1, day, 12);
+              let remaining = Math.max(0, Math.trunc(Number(count) || 0));
+              while (remaining > 0) {
+                date.setDate(date.getDate() + 1);
+                const weekday = date.getDay();
+                if (weekday !== 0 && weekday !== 6) remaining -= 1;
+              }
+              return [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0'),
+              ].join('-');
+            }
+          """)
+
+          replace_once(runtime,
+          """    const today = todayLocal();
+              eventDate.min = today;
+              needDate.min = today;
+              needDate.max = eventDate.value || '';
+              const invalid = Boolean(eventDate.value && needDate.value && needDate.value > eventDate.value);
+              needDate.setCustomValidity(invalid ? 'The date you need it cannot be after the event date.' : '');
+          """,
+          """    const today = todayLocal();
+              const earliestNeedDate = addBusinessDays(today, 12);
+              eventDate.min = today;
+              needDate.min = earliestNeedDate;
+              needDate.max = eventDate.value || '';
+              const tooSoon = Boolean(needDate.value && needDate.value < earliestNeedDate);
+              const afterEvent = Boolean(eventDate.value && needDate.value && needDate.value > eventDate.value);
+              needDate.setCustomValidity(
+                tooSoon
+                  ? 'The date you need it must be at least 12 business days from today.'
+                  : afterEvent
+                    ? 'The date you need it cannot be after the event date.'
+                    : '',
+              );
+          """)
+
+          replace_once(test,
+          """assert.match(formsCss, /input:checked \\+ span::before[\\s\\S]*background-color: currentColor/, 'selector circles must visibly fill without resetting the content-box clip');
+          assert.match(formsCss, /\\.jill-custom-order \\.jill-field,[\\s\\S]*\\.jill-custom-order \\.jill-field__control[\\s\\S]*min-width: 0;[\\s\\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
+          """,
+          """assert.match(formsCss, /input:checked \\+ span::before[\\s\\S]*radial-gradient\\(circle, currentColor/, 'selector circles must render an explicit checked inner dot');
+          assert.match(formsCss, /jill-custom-order__choice input,[\\s\\S]*opacity: 0;[\\s\\S]*clip-path: inset\\(50%\\)/, 'button-style native choices must stay visually suppressed beneath the custom indicator');
+          assert.doesNotMatch(formsCss, /background-clip: content-box/, 'selector circles must not depend on content-box background clipping');
+          assert.match(formsCss, /\\.jill-custom-order \\.jill-field,[\\s\\S]*\\.jill-custom-order \\.jill-field__control[\\s\\S]*min-width: 0;[\\s\\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
+          assert.match(formsCss, /\\.jill-custom-order__planning \\{[\\s\\S]*min-width: 0;[\\s\\S]*grid-template-columns: repeat\\(2, minmax\\(0, 1fr\\)\\)/, 'Section 5 planning grid must own a zero intrinsic minimum');
+          assert.match(formsCss, /@media \\(max-width: 749px\\)[\\s\\S]*jill-custom-order__planning,[\\s\\S]*grid-template-columns: minmax\\(0, 1fr\\)/, 'mobile form grids must preserve a zero-minimum track so native date controls cannot widen the card');
+          """)
+
+          replace_once(test,
+          """assert.match(runtime, /needDate\\.setCustomValidity/, 'date needed must be constrained against the event date');
+          assert.doesNotMatch(runtime, /addBusinessDays|12 business/i, 'LIVE parity must not reintroduce the rejected 12-business-day rule');
+          """,
+          """assert.match(runtime, /function addBusinessDays/, 'date needed must use one canonical business-day calculator');
+          assert.match(runtime, /addBusinessDays\\(today, 12\\)/, 'date needed must enforce a 12-business-day lead time from the local current date');
+          assert.match(runtime, /needDate\\.min = earliestNeedDate/, 'date needed must expose the 12-business-day minimum to the native date picker');
+          assert.match(runtime, /12 business days from today/, 'date needed must explain the lead-time validation when an early value is injected');
+          assert.match(runtime, /needDate\\.setCustomValidity/, 'date needed must enforce both lead time and event-date ordering');
+          """)
+
+      - name: Run focused Custom Order guard
+        run: node scripts/test-custom-order-integration.mjs
+
+      - name: Remove one-time workflow and commit result
+        shell: bash
+        run: |
+          rm .github/workflows/apply-custom-order-mobile-grid-business-days.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add theme/assets/jill-forms.css theme/assets/jill-custom-order.js scripts/test-custom-order-integration.mjs .github/workflows/apply-custom-order-mobile-grid-business-days.yml
+          git commit -m "Fix Custom Order mobile grid and date lead time"
+          git push origin HEAD:jill/custom-order-mobile-grid-business-days
