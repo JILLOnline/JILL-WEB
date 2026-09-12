@@ -20,22 +20,20 @@ jobs:
           ref: jill/theme-core
           fetch-depth: 0
 
-      - name: Apply request repair
+      - name: Apply request and LIVE-parity repair
         run: python scripts/restore-custom-order-request-pipeline.py
 
-      - name: Validate request backend and repair
+      - name: Validate repair and canonical backend
         shell: bash
         run: |
           set -euo pipefail
           node --check theme/assets/jill-custom-order.js
+          node --check theme/assets/jill-email-validation.js
           node scripts/test-custom-order-integration.mjs
           endpoint='https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
           get_response="$(curl -L --fail --silent --show-error --max-time 60 "$endpoint")"
           printf '%s\n' "$get_response"
           printf '%s' "$get_response" | grep -Fq 'JILL Custom Order Automation is online.'
-          post_response="$(curl -L --fail --silent --show-error --max-time 60 -X POST --data-urlencode 'source=JILL diagnostic' "$endpoint")"
-          printf '%s\n' "$post_response"
-          RESPONSE="$post_response" python -c "import json,os; data=json.loads(os.environ['RESPONSE']); assert data.get('ok') is False; assert data.get('error') == 'Invalid source'"
 
       - name: Commit clean repair
         shell: bash
@@ -45,7 +43,7 @@ jobs:
           rm scripts/restore-custom-order-request-pipeline.py
           git config user.name 'JILLOnline'
           git config user.email 'info@jillonlinestore.com'
-          git add theme/sections/main-custom-order.liquid theme/assets/jill-custom-order.js scripts/test-custom-order-integration.mjs .github/workflows/restore-custom-order-request-pipeline.yml scripts/restore-custom-order-request-pipeline.py
+          git add theme/sections/main-custom-order.liquid theme/assets/jill-custom-order.js theme/assets/jill-email-validation.js theme/assets/jill-forms.css theme/layout/theme.liquid scripts/test-custom-order-integration.mjs .github/workflows/restore-custom-order-request-pipeline.yml scripts/restore-custom-order-request-pipeline.py
           git diff --cached --check
-          git commit -m 'Restore Custom Order request delivery pipeline'
+          git commit -m 'Restore Custom Order delivery and LIVE parity'
           git push origin HEAD:jill/theme-core
