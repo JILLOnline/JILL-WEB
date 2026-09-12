@@ -19,6 +19,9 @@ jobs:
           ref: jill/custom-order-mobile-grid-business-days
           fetch-depth: 0
 
+      - name: Preserve replacement literals
+        run: sed -i 's/re.subn(pattern, replacement, text/re.subn(pattern, lambda _: replacement, text/' scripts/apply-custom-order-mobile-grid-business-days.py
+
       - name: Apply guarded transformation
         run: python scripts/apply-custom-order-mobile-grid-business-days.py
 
