@@ -11,7 +11,6 @@
   assign theme_label = 'custom_order.design.theme' | t
   assign colors_label = 'custom_order.design.colors' | t
   assign reference_instructions_label = 'custom_order.references.instructions' | t
-  assign event_date_label = 'custom_order.planning.event_date' | t
   assign date_needed_label = 'custom_order.planning.date_needed' | t
   assign city_label = 'custom_order.planning.city' | t
   assign state_label = 'custom_order.planning.state' | t
@@ -341,7 +340,6 @@
         <div><h2>{{ 'custom_order.planning.title' | t }}</h2><p>{{ 'custom_order.planning.help' | t }}</p></div>
       </div>
       <div class="jill-custom-order__planning" data-jill-custom-order-planning>
-        {% render 'ui-field', id: 'JillCustomOrderEventDate', name: 'event_date', label: event_date_label, type: 'date', optional_label: optional_label %}
         {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true %}
         <fieldset class="jill-custom-order__choice-set jill-custom-order__planning-choice">
           <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.planning.fulfillment' | t }}</legend>

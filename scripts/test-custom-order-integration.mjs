@@ -13,6 +13,7 @@ const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
 const productRuntime = fs.readFileSync('theme/assets/jill-product.js', 'utf8');
 const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
+const customOrderSchema = fs.readFileSync('contracts/custom-order-api.schema.json', 'utf8');
 
 assert.match(section, /collections\['all'\]/, 'Custom Order catalog must be sourced from Shopify catalog data');
 assert.match(section, /for catalog_collection in collections/, 'Custom Order collection choices must self-adapt from Shopify collections');
@@ -70,7 +71,8 @@ assert.match(section, /data-jill-personalization-add/, 'different-by-item person
 assert.match(section, /data-jill-personalization-finish/, 'personalization must keep an explicit finish milestone');
 assert.match(section, /data-jill-reference-stage/, 'reference images must remain in Step 4 after personalization');
 assert.match(section, /data-jill-media-input/, 'reference images must expose the canonical upload input');
-assert.match(section, /data-jill-stage="planning"/, 'LIVE parity must keep Event & fulfillment as Step 5');
+assert.match(section, /data-jill-stage="planning"/, 'Custom Order must keep timing and fulfillment as Step 5');
+assert.doesNotMatch(section, /event_date|JillCustomOrderEventDate/, 'Custom Order must not ask for an event date');
 assert.match(section, /name="fulfillment" value="shipping"/, 'Step 5 must keep Shipping');
 assert.match(section, /name="fulfillment" value="pickup"/, 'Step 5 must keep Jacksonville pickup');
 assert.match(section, /data-jill-stage="final"/, 'LIVE parity must keep Final details as Step 6');
@@ -181,7 +183,9 @@ assert.match(runtime, /function addBusinessDays/, 'date needed must use one cano
 assert.match(runtime, /addBusinessDays\(today, 12\)/, 'date needed must enforce a 12-business-day lead time from the local current date');
 assert.match(runtime, /needDate\.min = earliestNeedDate/, 'date needed must expose the 12-business-day minimum to the native date picker');
 assert.match(runtime, /12 business days from today/, 'date needed must explain the lead-time validation when an early value is injected');
-assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must enforce both lead time and event-date ordering');
+assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must enforce the lead-time minimum');
+assert.doesNotMatch(runtime, /event_date|eventDate|after the event date/, 'Custom Order runtime must not retain event-date state or validation');
+assert.doesNotMatch(customOrderSchema, /event_date/, 'Custom Order API contract must not retain the removed event date');
 assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
 assert.match(runtime, /renderReview/, 'Custom Order must build Review from normalized request state');
 assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');

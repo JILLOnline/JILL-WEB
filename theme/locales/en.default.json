@@ -147,8 +147,7 @@
     },
     "planning": {
       "title": "Event & fulfillment",
-      "help": "Tell us the event date, when you need it, and how you will get it.",
-      "event_date": "Event date",
+      "help": "Tell us when you need your order and how you’ll receive it.",
       "date_needed": "Date you need it",
       "fulfillment": "How will I get it?",
       "city": "City",

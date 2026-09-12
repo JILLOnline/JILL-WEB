@@ -56,7 +56,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "event_date": {"type": "string", "format": "date"},
         "date_needed": {"type": "string", "format": "date"},
         "fulfillment": {"type": "string", "minLength": 1, "maxLength": 64},
         "address": { "$ref": "#/$defs/address" },

@@ -785,7 +785,6 @@
         preferred_contact: readNamed(customer, 'preferred_contact') || undefined,
       },
       planning: {
-        event_date: readNamed(planning, 'event_date') || undefined,
         date_needed: readNamed(planning, 'date_needed') || undefined,
         fulfillment: readChecked(planning, 'fulfillment') || undefined,
         address: Object.keys(address).length ? address : undefined,
@@ -1043,7 +1042,6 @@
       phone: request.customer.phone || '',
       preferred_contact: request.customer.preferred_contact || '',
       order_type: requestValue(request, 'order_type'),
-      event_date: request.planning.event_date || '',
       date_needed: request.planning.date_needed || '',
       fulfillment: request.planning.fulfillment === 'pickup' ? 'Jacksonville pickup' : 'Shipping',
       city: request.planning.address?.city || '',
@@ -1515,24 +1513,16 @@
     if (mark) mark.hidden = !required;
   }
 
-  function syncDates(root) {
+  function syncNeededDate(root) {
     const planning = root.querySelector('[data-jill-custom-order-planning]');
-    const eventDate = planning?.querySelector('[name="event_date"]');
     const needDate = planning?.querySelector('[name="date_needed"]');
-    if (!eventDate || !needDate) return;
+    if (!needDate) return;
     const today = todayLocal();
     const earliestNeedDate = addBusinessDays(today, 12);
-    eventDate.min = today;
     needDate.min = earliestNeedDate;
-    needDate.max = eventDate.value || '';
     const tooSoon = Boolean(needDate.value && needDate.value < earliestNeedDate);
-    const afterEvent = Boolean(eventDate.value && needDate.value && needDate.value > eventDate.value);
     needDate.setCustomValidity(
-      tooSoon
-        ? 'The date you need it must be at least 12 business days from today.'
-        : afterEvent
-          ? 'The date you need it cannot be after the event date.'
-          : '',
+      tooSoon ? 'The date you need it must be at least 12 business days from today.' : '',
     );
   }
 
@@ -1647,7 +1637,7 @@
 
   function syncProgression(root) {
     syncPhoneRequirement(root);
-    syncDates(root);
+    syncNeededDate(root);
     syncShipping(root);
     syncSelectedItems(root);
     updateItemStatuses(root);
