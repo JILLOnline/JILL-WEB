@@ -701,9 +701,11 @@
     gap: calc(var(--jill-space-unit) * 3);
   }
 
-  .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__hero,
-  .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__card,
-  .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__consent-card {
+  .jill-custom-order[data-jill-custom-order] :is(
+    .jill-custom-order-review__hero,
+    .jill-custom-order-review__card,
+    .jill-custom-order-review__consent-card
+  ) {
     border: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-accent) 18%, var(--jill-color-foreground) 8%);
     border-radius: var(--jill-card-radius);
     background: var(--jill-color-background);
@@ -851,9 +853,11 @@
     background: color-mix(in srgb, var(--jill-color-accent) 9%, var(--jill-color-background));
   }
 
-  .jill-custom-order-review__collection-title,
-  .jill-custom-order-review__item-title,
-  .jill-custom-order-review__subgroup-title {
+  .jill-custom-order-review :is(
+    .jill-custom-order-review__collection-title,
+    .jill-custom-order-review__item-title,
+    .jill-custom-order-review__subgroup-title
+  ) {
     margin: 0;
   }
 
@@ -1208,67 +1212,71 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order__review {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__review[data-jill-custom-order-review] {
       padding-inline: 1rem;
       gap: calc(var(--jill-space-unit) * 2);
     }
 
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__hero {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__review .jill-custom-order-review__hero {
       align-items: flex-start;
       gap: calc(var(--jill-space-unit) * 1.25);
       padding: calc(var(--jill-space-unit) * 2);
     }
 
-    .jill-custom-order-review__hero-icon {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__hero-icon {
       width: 2.875rem;
       height: 2.875rem;
       font-size: 1.25rem;
     }
 
-    .jill-custom-order-review__hero-copy h2 {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__hero-copy h2 {
       font-size: clamp(1.45rem, 7vw, 1.625rem);
     }
 
-    .jill-custom-order-review__summary-item,
-    .jill-custom-order-review__summary-item:first-child,
-    .jill-custom-order-review__summary-item:last-child {
+    .jill-custom-order[data-jill-custom-order] :is(
+      .jill-custom-order-review__summary-item,
+      .jill-custom-order-review__summary-item:first-child,
+      .jill-custom-order-review__summary-item:last-child
+    ) {
       padding: calc(var(--jill-space-unit) * 1.15) 0;
     }
 
-    .jill-custom-order-review__summary-item:first-child {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__summary-item:first-child {
       padding-block-start: 0;
     }
 
-    .jill-custom-order-review__summary-item:last-child {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__summary-item:last-child {
       padding-block-end: 0;
     }
 
-    .jill-custom-order-review__summary-item + .jill-custom-order-review__summary-item {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__summary-item + .jill-custom-order-review__summary-item {
       border-inline-start: 0;
       border-block-start: var(--jill-border-width) solid color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);
     }
 
-    .jill-custom-order-review__collection-head,
-    .jill-custom-order-review__item-head {
+    .jill-custom-order[data-jill-custom-order] :is(
+      .jill-custom-order-review__collection-head,
+      .jill-custom-order-review__item-head
+    ) {
       align-items: flex-start;
       flex-wrap: wrap;
     }
 
-    .jill-custom-order-review__status {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__status {
       white-space: normal;
     }
 
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__consent-card {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__review .jill-custom-order-review__consent-card {
       grid-template-columns: 2.625rem 1.25rem minmax(0, 1fr);
       padding: calc(var(--jill-space-unit) * 1.35);
     }
 
-    .jill-custom-order-review__consent-line {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__consent-line {
       display: grid;
       justify-content: stretch;
     }
 
-    .jill-custom-order-review__optional {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__optional {
       justify-self: start;
     }
 
