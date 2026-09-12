@@ -1,0 +1,178 @@
+name: Finalize content shell review
+
+on:
+  push:
+    branches:
+      - jill/content-page-shell
+    paths:
+      - .github/workflows/finalize-content-shell-review.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/content-page-shell
+          fetch-depth: 0
+
+      - name: Apply review fixes in canonical owners
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              return source.replace(old, new, 1)
+
+          # Move informational-page presentation into the existing canonical storefront CSS owner.
+          page_css_path = Path('theme/assets/jill-content-page.css')
+          page_css = page_css_path.read_text()
+          prefix = '@layer storefront {\n'
+          if not page_css.startswith(prefix) or not page_css.rstrip().endswith('}'):
+              raise SystemExit('content page CSS wrapper is not canonical')
+          page_css = page_css[len(prefix):].rstrip()
+          page_css = page_css[:-1].rstrip()
+          page_css = replace_once(
+              page_css,
+              "  .jill-content-page {\n    display: grid;\n    width: 100%;",
+              "  .jill-content-page {\n    display: grid;",
+              'preserve jill-page-width',
+          )
+
+          storefront_path = Path('theme/assets/jill-storefront.css')
+          storefront = storefront_path.read_text().rstrip()
+          if not storefront.endswith('}'):
+              raise SystemExit('storefront CSS layer is not closed')
+          storefront = storefront[:-1].rstrip() + '\n\n' + page_css + '\n}\n'
+          storefront_path.write_text(storefront)
+          page_css_path.unlink()
+
+          # The storefront stylesheet is global, so remove the now-dead conditional stylesheet loader.
+          layout_path = Path('theme/layout/theme.liquid')
+          layout = layout_path.read_text()
+          layout = replace_once(
+              layout,
+              "\n      assign is_content_page = false\n      if request.page_type == 'page' and is_custom_order_template == false and is_contact_template == false\n        assign is_content_page = true\n      endif\n",
+              '',
+              'content page loader state',
+          )
+          layout = replace_once(
+              layout,
+              "\n    {% if is_content_page %}\n      {{ 'jill-content-page.css' | asset_url | stylesheet_tag }}\n    {% endif %}\n",
+              '',
+              'content page stylesheet load',
+          )
+          layout_path.write_text(layout)
+
+          # Keep the fallback drawer safe and single-owner. The Custom Order CTA above already owns
+          # the fallback Custom Order action. Contact/About only render when merchants select pages.
+          header_path = Path('theme/sections/header.liquid')
+          header = header_path.read_text()
+          header = replace_once(
+              header,
+              "  assign search_input_id = 'JillHeaderSearch-' | append: section.id\n",
+              "  assign search_input_id = 'JillHeaderSearch-' | append: section.id\n  assign fallback_contact_page = section.settings.fallback_contact_page\n  assign fallback_about_page = section.settings.fallback_about_page\n",
+              'fallback page assignments',
+          )
+          old_fallback = """                <a class=\"jill-site-header__drawer-link\" href=\"{{ routes.root_url }}\">{{ 'header.home' | t }}</a>
+                <a class=\"jill-site-header__drawer-link\" href=\"{{ routes.all_products_collection_url }}\">{{ 'header.catalog' | t }}</a>
+                {% if section.settings.show_custom_order %}
+                  <a class=\"jill-site-header__drawer-link\" href=\"{{ custom_order_url }}\">{{ section.settings.custom_order_label }}</a>
+                {% endif %}
+                <a class=\"jill-site-header__drawer-link\" href=\"/pages/contact\">Contact us</a>
+                <a class=\"jill-site-header__drawer-link\" href=\"/pages/about-us\">About us</a>"""
+          new_fallback = """                <a class=\"jill-site-header__drawer-link\" href=\"{{ routes.root_url }}\">{{ 'header.home' | t }}</a>
+                <a class=\"jill-site-header__drawer-link\" href=\"{{ routes.all_products_collection_url }}\">{{ 'header.catalog' | t }}</a>
+                {% if fallback_contact_page != blank %}
+                  <a class=\"jill-site-header__drawer-link\" href=\"{{ fallback_contact_page.url }}\">Contact us</a>
+                {% endif %}
+                {% if fallback_about_page != blank %}
+                  <a class=\"jill-site-header__drawer-link\" href=\"{{ fallback_about_page.url }}\">About us</a>
+                {% endif %}"""
+          header = replace_once(header, old_fallback, new_fallback, 'safe fallback navigation')
+          schema_anchor = """    {
+      \"type\": \"checkbox\",
+      \"id\": \"show_custom_order\",
+      \"label\": \"Show custom order action when it is not already in the menu\",
+      \"default\": true
+    },"""
+          schema_insert = """    {
+      \"type\": \"page\",
+      \"id\": \"fallback_contact_page\",
+      \"label\": \"Fallback Contact page\",
+      \"info\": \"Used only when the selected navigation menu is empty.\"
+    },
+    {
+      \"type\": \"page\",
+      \"id\": \"fallback_about_page\",
+      \"label\": \"Fallback About page\",
+      \"info\": \"Used only when the selected navigation menu is empty.\"
+    },
+""" + schema_anchor
+          header = replace_once(header, schema_anchor, schema_insert, 'fallback page settings')
+          header_path.write_text(header)
+
+          # Update the shell contract to assert canonical ownership and safe navigation.
+          test_path = Path('scripts/test-theme-shell.mjs')
+          test = test_path.read_text()
+          test = replace_once(
+              test,
+              "  '/pages/contact',\n  '/pages/about-us',\n",
+              "  'fallback_contact_page',\n  'fallback_about_page',\n  '{{ fallback_contact_page.url }}',\n  '{{ fallback_about_page.url }}',\n",
+              'header fallback test markers',
+          )
+          test = replace_once(
+              test,
+              "  \"'jill-content-page.css' | asset_url | stylesheet_tag\",\n  \"request.page_type == 'page'\",\n",
+              '',
+              'remove separate content stylesheet expectations',
+          )
+          old_css_test = """const contentPageCss = read('theme/assets/jill-content-page.css');
+includesAll(contentPageCss, 'content page CSS', [
+  '.jill-content-page',
+  '.jill-content-page__hero',
+  '.jill-content-page__body',
+  'var(--jill-botanical-field)',
+  \"[data-content-width='narrow']\",
+  \"[data-content-width='standard']\",
+  \"[data-content-width='wide']\",
+  '@media (max-width: 749px)',
+]);
+for (const forbidden of ['!important', 'url(', 'MutationObserver', 'style=']) {
+  if (contentPageCss.includes(forbidden)) fail(`content page CSS must not contain ${forbidden}`);
+}
+"""
+          new_css_test = """if (fs.existsSync('theme/assets/jill-content-page.css')) {
+  fail('content page styles must stay in the canonical jill-storefront.css owner');
+}
+includesAll(storefrontCss, 'content page CSS', [
+  '.jill-content-page',
+  '.jill-content-page__hero',
+  '.jill-content-page__body',
+  'var(--jill-botanical-field)',
+  \"[data-content-width='narrow']\",
+  \"[data-content-width='standard']\",
+  \"[data-content-width='wide']\",
+  '@media (max-width: 749px)',
+]);
+"""
+          test = replace_once(test, old_css_test, new_css_test, 'canonical content CSS test')
+          test_path.write_text(test)
+          PY
+
+      - name: Remove temporary workflow
+        run: git rm .github/workflows/finalize-content-shell-review.yml
+
+      - name: Commit review fixes
+        run: |
+          git config user.name "JILL Web Automation"
+          git config user.email "info@jillonlinestore.com"
+          git add theme scripts .github
+          git commit -m "Address content shell architecture review"
+          git push origin HEAD:jill/content-page-shell
