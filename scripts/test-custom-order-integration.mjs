@@ -162,7 +162,8 @@ assert.doesNotMatch(section, /data-jill-personalization-help|custom_order\.perso
 assert.match(formsCss, /data-jill-personalization-add[\s\S]*justify-self: center/, 'Add another personalization must stay centered');
 assert.match(formsCss, /jill-custom-order-personalization-card__allocation \.jill-quantity[\s\S]*grid-template-columns: auto minmax\(9rem, 12rem\)/, 'personalization Qty label must sit inline to the left of its stepper');
 assert.match(formsCss, /jill-custom-order__choice span::before[\s\S]*jill-custom-order-product__pick span::before/, 'button-style Custom Order choices must expose a redundant selector circle');
-assert.match(formsCss, /input:checked \+ span::before[\s\S]*background: currentColor/, 'selector circles must visibly fill from native checked state');
+assert.match(formsCss, /input:checked \+ span::before[\s\S]*background-color: currentColor/, 'selector circles must visibly fill without resetting the content-box clip');
+assert.match(formsCss, /\.jill-custom-order \.jill-field,[\s\S]*\.jill-custom-order \.jill-field__control[\s\S]*min-width: 0;[\s\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
 assert.match(runtime, /syncPersonalizationActions/, 'Finish and Add Another must share one live personalization action-state owner');
 assert.match(runtime, /group\.allocations/, 'different personalization must store quantities by selected product instead of whole-product ownership');
 assert.match(runtime, /personalizationCount/, 'Review must surface the number of units assigned to each personalization');
