@@ -1,14 +1,60 @@
-<section class="jill-rich-text jill-page-width">
-  <h1 class="jill-rich-text__heading">{{ page.title }}</h1>
+<section
+  class="jill-content-page jill-page-width"
+  data-jill-content-page
+  data-content-width="{{ section.settings.content_width }}"
+  data-botanical="{{ section.settings.show_botanical }}"
+>
+  <header class="jill-content-page__hero jill-card">
+    {% if section.settings.kicker != blank %}
+      <p class="jill-content-page__kicker">{{ section.settings.kicker }}</p>
+    {% endif %}
+
+    <h1 class="jill-content-page__title">{{ page.title }}</h1>
+
+    {% if section.settings.intro != blank %}
+      <div class="jill-content-page__intro rte">{{ section.settings.intro }}</div>
+    {% endif %}
+  </header>
 
   {% if page.content != blank %}
-    <div class="jill-rich-text__body rte">{{ page.content }}</div>
+    <article class="jill-content-page__body jill-card rte">
+      {{ page.content }}
+    </article>
   {% endif %}
 </section>
 
 {% schema %}
 {
-  "name": "Page",
-  "settings": []
+  "name": "Content page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker",
+      "default": "JILL"
+    },
+    {
+      "type": "richtext",
+      "id": "intro",
+      "label": "Intro"
+    },
+    {
+      "type": "select",
+      "id": "content_width",
+      "label": "Content width",
+      "default": "standard",
+      "options": [
+        {"value": "narrow", "label": "Narrow"},
+        {"value": "standard", "label": "Standard"},
+        {"value": "wide", "label": "Wide"}
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_botanical",
+      "label": "Show botanical field",
+      "default": true
+    }
+  ]
 }
 {% endschema %}
