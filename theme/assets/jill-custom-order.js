@@ -962,6 +962,22 @@
     return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
   }
 
+  function addBusinessDays(value, count) {
+    const [year, month, day] = String(value).split('-').map(Number);
+    const date = new Date(year, month - 1, day, 12);
+    let remaining = Math.max(0, Math.trunc(Number(count) || 0));
+    while (remaining > 0) {
+      date.setDate(date.getDate() + 1);
+      const weekday = date.getDay();
+      if (weekday !== 0 && weekday !== 6) remaining -= 1;
+    }
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+  }
+
   function scrollToTarget(target) {
     if (!target) return;
     const element = target.closest?.('.jill-field, .jill-product-customization__group, .jill-custom-order-item, .jill-custom-order__step') || target;
@@ -1505,11 +1521,19 @@
     const needDate = planning?.querySelector('[name="date_needed"]');
     if (!eventDate || !needDate) return;
     const today = todayLocal();
+    const earliestNeedDate = addBusinessDays(today, 12);
     eventDate.min = today;
-    needDate.min = today;
+    needDate.min = earliestNeedDate;
     needDate.max = eventDate.value || '';
-    const invalid = Boolean(eventDate.value && needDate.value && needDate.value > eventDate.value);
-    needDate.setCustomValidity(invalid ? 'The date you need it cannot be after the event date.' : '');
+    const tooSoon = Boolean(needDate.value && needDate.value < earliestNeedDate);
+    const afterEvent = Boolean(eventDate.value && needDate.value && needDate.value > eventDate.value);
+    needDate.setCustomValidity(
+      tooSoon
+        ? 'The date you need it must be at least 12 business days from today.'
+        : afterEvent
+          ? 'The date you need it cannot be after the event date.'
+          : '',
+    );
   }
 
   function syncShipping(root) {

@@ -146,11 +146,17 @@
 
   .jill-custom-order__choice input,
   .jill-custom-order__collection-choice input,
-  .jill-custom-order-product__pick input {
+  .jill-custom-order-product__pick input,
+  .jill-media__input {
     position: absolute;
     width: 1px;
     height: 1px;
+    margin: -1px;
+    padding: 0;
     overflow: hidden;
+    border: 0;
+    opacity: 0;
+    clip: rect(0 0 0 0);
     clip-path: inset(50%);
     white-space: nowrap;
   }
@@ -181,17 +187,16 @@
     width: 0.9rem;
     height: 0.9rem;
     flex: 0 0 0.9rem;
-    padding: 0.125rem;
     border: calc(var(--jill-border-width) * 1.5) solid currentColor;
     border-radius: 999px;
-    background: transparent;
-    background-clip: content-box;
+    background-color: transparent;
+    background-image: none;
   }
 
   .jill-custom-order__choice input:checked + span::before,
   .jill-custom-order__collection-choice input:checked + span::before,
   .jill-custom-order-product__pick input:checked + span::before {
-    background-color: currentColor;
+    background-image: radial-gradient(circle, currentColor 0 0.2rem, transparent 0.21rem);
   }
 
   .jill-custom-order__choice input:checked + span,
@@ -578,14 +583,6 @@
     color: var(--jill-color-background);
   }
 
-  .jill-media__input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
 
   .jill-media__grid {
     display: grid;
@@ -666,6 +663,9 @@
 
   .jill-custom-order__planning {
     display: grid;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: calc(var(--jill-space-unit) * 2.5);
   }
@@ -981,12 +981,15 @@
   }
 
   @media (max-width: 749px) {
+    .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__customer,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__two-column,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__collection-grid,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__product-list,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order-personalization-card__fields,
-    .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__shipping,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order__review-actions,
     .jill-custom-order[data-jill-custom-order] .jill-custom-order-review__row,

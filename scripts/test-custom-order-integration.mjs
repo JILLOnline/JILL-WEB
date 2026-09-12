@@ -162,8 +162,12 @@ assert.doesNotMatch(section, /data-jill-personalization-help|custom_order\.perso
 assert.match(formsCss, /data-jill-personalization-add[\s\S]*justify-self: center/, 'Add another personalization must stay centered');
 assert.match(formsCss, /jill-custom-order-personalization-card__allocation \.jill-quantity[\s\S]*grid-template-columns: auto minmax\(9rem, 12rem\)/, 'personalization Qty label must sit inline to the left of its stepper');
 assert.match(formsCss, /jill-custom-order__choice span::before[\s\S]*jill-custom-order-product__pick span::before/, 'button-style Custom Order choices must expose a redundant selector circle');
-assert.match(formsCss, /input:checked \+ span::before[\s\S]*background-color: currentColor/, 'selector circles must visibly fill without resetting the content-box clip');
+assert.match(formsCss, /input:checked \+ span::before[\s\S]*radial-gradient\(circle, currentColor/, 'selector circles must render an explicit checked inner dot');
+assert.match(formsCss, /jill-custom-order__choice input,[\s\S]*jill-media__input[\s\S]*opacity: 0;[\s\S]*clip-path: inset\(50%\)/, 'button-style native choices must stay visually suppressed beneath the custom indicator');
+assert.doesNotMatch(formsCss, /background-clip: content-box/, 'selector circles must not depend on content-box background clipping');
 assert.match(formsCss, /\.jill-custom-order \.jill-field,[\s\S]*\.jill-custom-order \.jill-field__control[\s\S]*min-width: 0;[\s\S]*max-width: 100%;/, 'Custom Order fields must shrink within mobile containers');
+assert.match(formsCss, /\.jill-custom-order__planning \{[\s\S]*min-width: 0;[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/, 'Section 5 planning grid must own a zero intrinsic minimum');
+assert.match(formsCss, /@media \(max-width: 749px\)[\s\S]*\.jill-custom-order__planning \{[\s\S]*grid-template-columns: minmax\(0, 1fr\)/, 'Section 5 mobile planning must preserve a zero-minimum track so native date controls cannot widen the card');
 assert.match(runtime, /syncPersonalizationActions/, 'Finish and Add Another must share one live personalization action-state owner');
 assert.match(runtime, /group\.allocations/, 'different personalization must store quantities by selected product instead of whole-product ownership');
 assert.match(runtime, /personalizationCount/, 'Review must surface the number of units assigned to each personalization');
@@ -173,8 +177,11 @@ assert.match(runtime, /validImage/, 'reference upload must validate image signat
 assert.match(runtime, /10 \* 1024 \* 1024/, 'reference upload must preserve the 10 MB per-file limit');
 assert.match(runtime, /state\.items\.length >= 3/, 'reference upload must preserve the three-image limit');
 assert.match(runtime, /syncPhoneRequirement/, 'preferred Text\/phone contact must make phone required');
-assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must be constrained against the event date');
-assert.doesNotMatch(runtime, /addBusinessDays|12 business/i, 'LIVE parity must not reintroduce the rejected 12-business-day rule');
+assert.match(runtime, /function addBusinessDays/, 'date needed must use one canonical business-day calculator');
+assert.match(runtime, /addBusinessDays\(today, 12\)/, 'date needed must enforce a 12-business-day lead time from the local current date');
+assert.match(runtime, /needDate\.min = earliestNeedDate/, 'date needed must expose the 12-business-day minimum to the native date picker');
+assert.match(runtime, /12 business days from today/, 'date needed must explain the lead-time validation when an early value is injected');
+assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must enforce both lead time and event-date ordering');
 assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
 assert.match(runtime, /renderReview/, 'Custom Order must build Review from normalized request state');
 assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');
