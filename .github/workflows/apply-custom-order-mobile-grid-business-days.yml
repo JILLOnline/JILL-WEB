@@ -77,7 +77,7 @@ jobs:
             }
 
           """,
-          """)
+          '')
 
           replace_once(forms,
           """    width: 0.9rem;
