@@ -454,6 +454,33 @@
     return globalThis.JILLProductCapabilities.resolve(source.textContent.trim());
   }
 
+  function readFullCapabilityProfile(item) {
+    const source = item?.querySelector('[data-jill-custom-order-full-profile]');
+    if (!source) return null;
+    return globalThis.JILLProductCapabilities.resolve(source.textContent.trim());
+  }
+
+  function personalizationProjection(item, merchandiseQuantity) {
+    const profile = readFullCapabilityProfile(item);
+    if (!profile) return null;
+    if (!globalThis.JILLPersonalization) fail('personalization engine is unavailable');
+    const state = globalThis.JILLPersonalization.createState({itemId: itemRuntimeId(item), merchandiseQuantity, profile});
+    return state.available ? {profile, state} : null;
+  }
+
+  function fieldAllowsPersonalizationOptOut(field) {
+    return ['radio', 'select'].includes(field?.kind)
+      && (field.options || []).some((option) => ['no', 'none'].includes(String(option.value || '').toLowerCase()));
+  }
+
+  function profileRequiresPersonalization(profile) {
+    if (!profile) return false;
+    return globalThis.JILLProductCapabilities.getFieldsForGroup(profile, 'personalization').some((field) => {
+      if (!field.required || field.visibleWhen || ['theme', 'colors'].includes(field.id)) return false;
+      return !fieldAllowsPersonalizationOptOut(field);
+    });
+  }
+
   function readProductOptions(form) {
     const source = form.querySelector('[data-jill-product-options-payload]');
     if (!source?.value) return null;
@@ -526,10 +553,6 @@
     };
   }
 
-  function customizationUnitIds(itemId, quantity, profile) {
-    const multiplier = profile ? globalThis.JILLProductCapabilities.getCustomizationUnitsPerQuantity(profile) : 1;
-    return Array.from({length: quantity * multiplier}, (_, index) => `${itemId}::${index + 1}`);
-  }
 
   function personalizationState(root) {
     if (!personalizationStates.has(root)) {
@@ -554,13 +577,23 @@
   function selectedPersonalizationItems(root) {
     return selectedChoices(root).map((choice) => {
       const rawQuantity = Number(projectionQuantity(choice)?.value || 1);
-      const quantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+      const merchandiseQuantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+      const item = itemForProduct(root, choice.dataset.productId);
+      const projection = personalizationProjection(item, merchandiseQuantity);
+      const quantity = projection?.state.eligibleUnitCount || merchandiseQuantity;
       return {
         productId: String(choice.dataset.productId),
         label: personalizationChoiceLabel(choice),
+        merchandiseQuantity,
         quantity,
+        unitIds: projection?.state.eligibleUnitIds || Array.from({length: merchandiseQuantity}, (_, index) => `${itemRuntimeId(item)}::${index + 1}`),
+        required: profileRequiresPersonalization(projection?.profile),
       };
     });
+  }
+
+  function personalizationRequired(root) {
+    return selectedPersonalizationItems(root).some((entry) => entry.required);
   }
 
   function totalPersonalizationUnits(root) {
@@ -647,7 +680,11 @@
     const state = reconcilePersonalization(root);
     const total = totalPersonalizationUnits(root);
     if (!state.mode) return {complete: false, message: 'Choose a personalization setup.'};
-    if (state.mode === 'none') return {complete: true, message: 'No personalization selected.'};
+    if (state.mode === 'none') {
+      return personalizationRequired(root)
+        ? {complete: false, message: root.dataset.personalizationRequiredMessage || 'At least one selected item requires personalization.'}
+        : {complete: true, message: 'No personalization selected.'};
+    }
     if (state.mode === 'same') {
       return total > 0 && state.same.wording.trim()
         ? {complete: true, message: 'Ready to finish personalization.'}
@@ -682,9 +719,9 @@
 
     itemNodes.forEach((item, index) => {
       const request = requests[index];
-      const form = item.querySelector('[data-jill-custom-order-item-form]');
-      const profile = readProfile(form);
-      const unitIds = customizationUnitIds(request.item_id, request.quantity, profile);
+      const source = selectedPersonalizationItems(root).find((entry) => entry.productId === String(item.dataset.jillProductId));
+      const unitIds = source?.unitIds || [];
+      if (!unitIds.length) fail('personalization units are unavailable for the selected item');
 
       if (state.mode === 'same') {
         request.personalization_groups = [{
@@ -1471,6 +1508,13 @@
     const mode = root.querySelector('[data-jill-personalization-mode]');
     if (!cards || !mode) return;
 
+    const required = personalizationRequired(root);
+    const noneOption = mode.querySelector('option[value="none"]');
+    if (noneOption) noneOption.disabled = required;
+    if (required && state.mode === 'none') {
+      state.mode = '';
+      state.finished = false;
+    }
     const differentOption = mode.querySelector('option[value="different"]');
     if (differentOption) differentOption.disabled = totalPersonalizationUnits(root) < 2;
     mode.value = state.mode;
@@ -1559,10 +1603,31 @@
     syncPersonalizationActions(root);
   }
 
+  function referenceRequired(root) {
+    return selectedItems(root).some((item) => {
+      const profile = readFullCapabilityProfile(item);
+      const fieldId = profile?.features?.referenceUpload?.fieldId;
+      const field = fieldId ? globalThis.JILLProductCapabilities.getField(profile, fieldId) : null;
+      return Boolean(field?.required);
+    });
+  }
+
+  function syncReferenceRequirement(root) {
+    const required = referenceRequired(root);
+    const no = root.querySelector('[data-jill-reference-choice][value="no"]');
+    const note = root.querySelector('[data-jill-reference-requirement]');
+    if (no) {
+      no.disabled = required;
+      no.setAttribute('aria-disabled', required ? 'true' : 'false');
+      if (required && no.checked) no.checked = false;
+    }
+    setVisible(note, required);
+  }
+
   function referenceReady(root) {
     const choice = readChecked(root, 'has_references');
     if (!choice) return false;
-    if (choice === 'no') return true;
+    if (choice === 'no') return !referenceRequired(root);
     const state = mediaState(root);
     return state.uploading === 0 && uploadedMedia(root).length > 0;
   }
@@ -1598,8 +1663,11 @@
     const today = todayLocal();
     const earliestNeedDate = addBusinessDays(today, 12);
     needDate.min = earliestNeedDate;
-    if (!needDate.value || needDate.value < earliestNeedDate) needDate.value = earliestNeedDate;
-    needDate.setCustomValidity('');
+    needDate.setCustomValidity(
+      needDate.value && needDate.value < earliestNeedDate
+        ? (root.dataset.neededDateError || 'Choose a date at least 12 business days from today.')
+        : '',
+    );
   }
 
   function syncShipping(root) {
@@ -1752,6 +1820,10 @@
     setVisible(orderStage, customerReady);
 
     const orderType = readChecked(root, 'order_type');
+    const collectionHelp = root.querySelector('[data-jill-collection-help]');
+    if (collectionHelp) {
+      collectionHelp.textContent = orderType === 'multiple' ? collectionHelp.dataset.multipleHelp : collectionHelp.dataset.oneHelp;
+    }
     setVisible(collectionStage, customerReady && Boolean(orderType));
     const collectionCount = selectedCollectionChoices(root).length;
     const collectionsReady = customerReady && Boolean(orderType) && (orderType === 'one' ? collectionCount === 1 : collectionCount > 0);
@@ -1772,6 +1844,7 @@
     syncPersonalizationActions(root);
     const personalizationReady = designReady && completion.complete && (state.mode === 'none' || state.finished);
     setVisible(referenceStage, personalizationReady);
+    syncReferenceRequirement(root);
     const referenceChoice = readChecked(root, 'has_references');
     setVisible(referenceFields, personalizationReady && referenceChoice === 'yes');
     if (referenceChoice !== 'yes') root.querySelector('[data-jill-media-input]')?.setAttribute('disabled', '');
@@ -1973,7 +2046,6 @@
       if (!selectedCollectionChoices(root).length) return root.querySelector('[data-jill-collection-choice]');
       if (!selectedChoices(root).length) return root.querySelector('[data-jill-custom-order-select]');
       if (root.dataset.jillOptionsFinished !== 'true') {
-        validateConfiguration(root);
         return firstIncompleteItem(root)?.target || finishConfiguration;
       }
       const design = validateControlGroup(root.querySelector('[data-jill-design-core]'), true);
