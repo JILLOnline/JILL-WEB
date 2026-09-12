@@ -20,11 +20,15 @@ jobs:
           ref: jill/custom-order-final-audit
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Apply audited Custom Order fixes
         run: python3 .github/apply_custom_order_final_audit.py
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: npm install --ignore-scripts
 
       - name: Run final Custom Order validation
         run: |
@@ -42,6 +46,7 @@ jobs:
           npm run check:custom-order
           npm run check:rewards
           npm run test:rewards
+          npx shopify theme check --path theme
 
       - name: Final regression guards
         run: |
@@ -52,6 +57,6 @@ jobs:
           git rm .github/workflows/apply-custom-order-final-audit.yml .github/apply_custom_order_final_audit.py
           git config user.name "JILL Web Automation"
           git config user.email "info@jillonlinestore.com"
-          git add theme scripts docs
+          git add theme scripts docs package-lock.json
           git commit -m "Finalize Custom Order audit fixes"
           git push origin HEAD:jill/custom-order-final-audit
