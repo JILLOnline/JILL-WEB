@@ -1,0 +1,45 @@
+name: Apply Custom Order event-date removal
+
+on:
+  push:
+    branches:
+      - jill/remove-custom-order-event-date
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: jill/remove-custom-order-event-date
+          fetch-depth: 0
+
+      - name: Apply guarded event-date removal
+        run: python scripts/apply-remove-custom-order-event-date.py
+
+      - name: Run focused Custom Order guard
+        run: node scripts/test-custom-order-integration.mjs
+
+      - name: Confirm event date is gone from canonical Custom Order paths
+        shell: bash
+        run: |
+          if grep -R "event_date" theme/sections/main-custom-order.liquid theme/assets/jill-custom-order.js theme/locales/en.default.json contracts/custom-order-api.schema.json; then
+            echo "event_date still present in canonical Custom Order paths"
+            exit 1
+          fi
+
+      - name: Remove one-time tooling and commit result
+        shell: bash
+        run: |
+          rm .github/workflows/apply-remove-custom-order-event-date.yml
+          rm scripts/apply-remove-custom-order-event-date.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add theme/sections/main-custom-order.liquid theme/locales/en.default.json theme/assets/jill-custom-order.js contracts/custom-order-api.schema.json scripts/test-custom-order-integration.mjs .github/workflows/apply-remove-custom-order-event-date.yml scripts/apply-remove-custom-order-event-date.py
+          git commit -m "Remove Custom Order event date"
+          git push origin HEAD:jill/remove-custom-order-event-date
