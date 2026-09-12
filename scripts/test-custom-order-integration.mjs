@@ -81,6 +81,8 @@ assert.match(section, /name="priority"/, 'Final details must keep priority');
 assert.match(section, /name="recommend_matching"/, 'Final details must keep matching-item recommendation choice');
 assert.match(section, /data-jill-request-acknowledgment/, 'Final details must keep the request acknowledgment');
 assert.match(section, /data-jill-custom-order-review/, 'Custom Order must expose a dedicated Review destination');
+assert.match(section, /data-jill-custom-order-review hidden aria-hidden="true"/, 'Review must be server-rendered hidden before the runtime explicitly opens it');
+assert.doesNotMatch(formsCss, /\.jill-custom-order\[data-jill-custom-order\] \.jill-custom-order__review\s*\{[^}]*\bdisplay\s*:/s, 'Review layout CSS must not override the canonical hidden-state owner');
 assert.match(section, /data-jill-marketing-consent/, 'Review must own optional marketing consent');
 assert.match(section, /data-jill-review-confirm/, 'Review must own the final reviewed-details confirmation');
 assert.match(section, /data-jill-request-submit/, 'Custom Order must expose Request Custom Order only at the review boundary');

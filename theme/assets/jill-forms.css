@@ -693,7 +693,6 @@
   }
 
   .jill-custom-order[data-jill-custom-order] .jill-custom-order__review {
-    display: grid;
     width: 100%;
     max-width: 72rem;
     margin-inline: auto;
