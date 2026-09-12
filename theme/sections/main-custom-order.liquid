@@ -63,7 +63,12 @@
             <small class="jill-field__optional">{{ optional_label }}</small>
           </label>
           <div class="jill-phone-field__control">
-            <select class="jill-field__control jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>
+            <div class="jill-phone-field__country-shell">
+              <img class="jill-phone-field__flag" data-jill-phone-flag alt="" width="24" height="16">
+              <span class="jill-phone-field__dial" data-jill-phone-dial aria-hidden="true"></span>
+              <span class="jill-phone-field__chevron" aria-hidden="true"></span>
+              <select class="jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>
+            </div>
             <input
               class="jill-field__control jill-phone-field__number"
               id="JillCustomOrderPhone"

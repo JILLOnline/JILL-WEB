@@ -30,9 +30,9 @@
 
   const byIso = new Map(countries.map((country) => [country.iso, country]));
 
-  function flag(iso) {
-    if (!/^[A-Z]{2}$/.test(iso)) return '🌐';
-    return String.fromCodePoint(...iso.split('').map((letter) => 127397 + letter.charCodeAt(0)));
+  function flagUrl(iso) {
+    if (!/^[A-Z]{2}$/.test(iso)) return '';
+    return `https://flagcdn.com/${iso.toLowerCase()}.svg`;
   }
 
   function digitsOnly(value) {
@@ -115,7 +115,7 @@
     if (digits.length && (digits.length < country.min || digits.length > country.max)) message = `Enter a valid ${country.name} phone number.`;
     input.setCustomValidity(message);
     const help = field.querySelector('[data-jill-phone-help]');
-    if (help) help.textContent = message || `${flag(country.iso)} ${country.dial ? `+${country.dial}` : ''} ${country.name}`.trim();
+    if (help) help.textContent = message || `${country.dial ? `+${country.dial} · ` : ''}${country.name}`;
     return !message;
   }
 
@@ -128,6 +128,14 @@
     input.placeholder = country.placeholder;
     input.maxLength = Math.max(country.placeholder.length + 3, formatNational(country, '9'.repeat(country.max)).length);
     input.setAttribute('aria-label', `${country.name} phone number`);
+    const flag = field.querySelector('[data-jill-phone-flag]');
+    const dial = field.querySelector('[data-jill-phone-dial]');
+    if (flag) {
+      const source = flagUrl(country.iso);
+      flag.hidden = !source;
+      if (source) flag.src = source;
+    }
+    if (dial) dial.textContent = country.dial ? `+${country.dial}` : 'Intl';
     validate(field);
   }
 
@@ -155,8 +163,8 @@
     countries.forEach((country) => {
       const option = document.createElement('option');
       option.value = country.iso;
-      option.textContent = `${flag(country.iso)} ${country.dial ? `+${country.dial}` : 'Intl'}`;
-      option.title = `${country.name}${country.dial ? ` +${country.dial}` : ''}`;
+      option.textContent = `${country.name}${country.dial ? ` (+${country.dial})` : ''}`;
+      option.title = option.textContent;
       select.append(option);
     });
 

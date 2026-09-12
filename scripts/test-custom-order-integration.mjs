@@ -234,6 +234,11 @@ assert.match(section, /data-jill-phone-country/, 'phone input must expose a coun
 assert.match(layout, /jill-email-validation\.js[\s\S]*jill-custom-order\.js/, 'shared phone validation must load before Custom Order runtime');
 assert.match(emailValidation, /United States[\s\S]*Canada[\s\S]*Colombia[\s\S]*France[\s\S]*India[\s\S]*China/, 'shared phone owner must preserve country-aware rules');
 assert.match(emailValidation, /function getPhoneValue/, 'shared phone owner must normalize the submitted phone value');
+assert.match(emailValidation, /flagcdn\.com\/\$\{iso\.toLowerCase\(\)\}\.svg/, 'country selector must render full-color SVG flag assets');
+assert.doesNotMatch(emailValidation, /String\.fromCodePoint|127397/, 'country selector must not fall back to emoji flags');
+assert.match(section, /data-jill-phone-flag/, 'phone country control must expose the visible SVG flag surface');
+assert.match(formsCss, /jill-phone-field__country-shell/, 'phone country SVG surface must have one canonical layout owner');
+
 assert.match(runtime, /JILLEmailValidation\?\.getPhoneValue\(customer\)/, 'normalized request must use the shared international phone value');
 assert.match(section, /data-customer-logged-in="\{% if customer %\}true/, 'Custom Order must expose a server-rendered logged-in customer snapshot');
 assert.match(section, /data-customer-name="\{% if customer %\}\{\{ customer\.name/, 'logged-in customer name must come from Shopify customer truth');
