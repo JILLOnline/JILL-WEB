@@ -26,6 +26,10 @@
   data-cloud-name="{{ section.settings.cloud_name | escape }}"
   data-upload-preset="{{ section.settings.upload_preset | escape }}"
   data-optional-label="{{ optional_label | escape }}"
+  data-customer-logged-in="{% if customer %}true{% else %}false{% endif %}"
+  data-customer-name="{% if customer %}{{ customer.name | escape }}{% endif %}"
+  data-customer-email="{% if customer %}{{ customer.email | escape }}{% endif %}"
+  data-customer-phone="{% if customer %}{{ customer.phone | default: customer.default_address.phone | escape }}{% endif %}"
   data-complete-label="{{ 'custom_order.state.complete' | t | escape }}"
   data-incomplete-label="{{ 'custom_order.state.incomplete' | t | escape }}"
   data-finish-options-label="{{ 'custom_order.actions.finish_options' | t | escape }}"
@@ -52,7 +56,26 @@
       <div class="jill-custom-order__customer" data-jill-custom-order-customer>
         {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name' %}
         {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email' %}
-        {% render 'ui-field', id: 'JillCustomOrderPhone', name: 'phone', label: customer_phone_label, type: 'tel', optional_label: optional_label, dynamic_required: true, autocomplete: 'tel' %}
+        <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
+          <label class="jill-field__label" for="JillCustomOrderPhone">
+            {{ customer_phone_label }}
+            <span class="jill-field__required" data-dynamic-required="true" aria-hidden="true">*</span>
+            <small class="jill-field__optional">{{ optional_label }}</small>
+          </label>
+          <div class="jill-phone-field__control">
+            <select class="jill-field__control jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>
+            <input
+              class="jill-field__control jill-phone-field__number"
+              id="JillCustomOrderPhone"
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel-national"
+              data-jill-phone-number
+            >
+          </div>
+          <p class="jill-field__message" data-jill-phone-help aria-live="polite"></p>
+        </div>
         <div class="jill-field">
           <label class="jill-field__label" for="JillCustomOrderContact">
             {{ 'custom_order.customer.preferred_contact' | t }} <span class="jill-field__required" aria-hidden="true">*</span>
@@ -395,11 +418,12 @@
         <input type="checkbox" data-jill-request-acknowledgment required>
         <span><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.final.acknowledgment' | t }}</span>
       </label>
-      <div class="jill-custom-order__stage-actions">
-        <button class="jill-button" type="button" data-jill-review-open>{{ 'custom_order.actions.review' | t }}</button>
-        <p class="jill-custom-order__help" data-jill-review-validation-note hidden></p>
-      </div>
     </section>
+
+    <div class="jill-custom-order__stage-actions" data-jill-review-gate>
+      <button class="jill-button" type="button" data-jill-review-open>{{ 'custom_order.actions.review' | t }}</button>
+      <p class="jill-custom-order__help" data-jill-review-validation-note hidden></p>
+    </div>
   </div>
 
   <section class="jill-custom-order__review" data-jill-custom-order-review hidden aria-hidden="true">
@@ -447,6 +471,14 @@
       <button class="jill-button" type="button" data-jill-request-submit disabled aria-disabled="true">{{ 'custom_order.actions.submit' | t }}</button>
     </div>
   </section>
+
+  <div data-jill-owner-notification hidden aria-hidden="true">
+    {% form 'contact', id: 'JillCustomOrderOwnerNotification' %}
+      <input type="hidden" name="contact[name]" value="">
+      <input type="hidden" name="contact[email]" value="">
+      <input type="hidden" name="contact[body]" value="">
+    {% endform %}
+  </div>
 
   <section class="jill-custom-order__success jill-card" data-jill-custom-order-success hidden aria-hidden="true" role="status">
     <div class="jill-custom-order__success-mark" aria-hidden="true">✓</div>

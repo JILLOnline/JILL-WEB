@@ -10,6 +10,7 @@ const uiField = fs.readFileSync('theme/snippets/ui-field.liquid', 'utf8');
 const uiCss = fs.readFileSync('theme/assets/jill-ui.css', 'utf8');
 const formsCss = fs.readFileSync('theme/assets/jill-forms.css', 'utf8');
 const runtime = fs.readFileSync('theme/assets/jill-custom-order.js', 'utf8');
+const emailValidation = fs.readFileSync('theme/assets/jill-email-validation.js', 'utf8');
 const productRuntime = fs.readFileSync('theme/assets/jill-product.js', 'utf8');
 const variantRuntime = fs.readFileSync('theme/assets/jill-variant-allocation.js', 'utf8');
 const layout = fs.readFileSync('theme/layout/theme.liquid', 'utf8');
@@ -100,7 +101,7 @@ assert.doesNotMatch(titleFormatter, /replace: ' Inch'/, 'physical size distincti
 assert.doesNotMatch(titleFormatter, /product\.handle|product\.id|case\s+product/i, 'concise labels must not branch on product identity');
 
 assert.match(section, /data-optional-label=/, 'Custom Order must expose its localized Optional label to the surface');
-assert.match(section, /dynamic_required: true/, 'conditionally required Phone must have a dynamic required marker');
+assert.match(section, /data-dynamic-required="true"/, 'conditionally required Phone must have a dynamic required marker');
 assert.match(section, /optional_label: optional_label/, 'Custom Order optional controls must opt into the shared Optional marker contract');
 assert.match(section, /upload_title[^\n]*jill-field__required/s, 'required reference upload must expose a red required marker');
 assert.match(section, /data-jill-review-confirm required/, 'Review confirmation must carry native required semantics');
@@ -184,8 +185,8 @@ assert.match(runtime, /syncPhoneRequirement/, 'preferred Text\/phone contact mus
 assert.match(runtime, /function addBusinessDays/, 'date needed must use one canonical business-day calculator');
 assert.match(runtime, /addBusinessDays\(today, 12\)/, 'date needed must enforce a 12-business-day lead time from the local current date');
 assert.match(runtime, /needDate\.min = earliestNeedDate/, 'date needed must expose the 12-business-day minimum to the native date picker');
-assert.match(runtime, /12 business days from today/, 'date needed must explain the lead-time validation when an early value is injected');
-assert.match(runtime, /needDate\.setCustomValidity/, 'date needed must enforce the lead-time minimum');
+assert.match(runtime, /needDate\.value < earliestNeedDate\) needDate\.value = earliestNeedDate/, 'date needed must return an injected early value to the first available date');
+assert.match(runtime, /needDate\.setCustomValidity\(''\)/, 'date needed must clear stale native validity after restoring the first available date');
 assert.doesNotMatch(runtime, /event_date|eventDate|after the event date/, 'Custom Order runtime must not retain event-date state or validation');
 assert.doesNotMatch(customOrderSchema, /event_date/, 'Custom Order API contract must not retain the removed event date');
 assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
@@ -214,5 +215,31 @@ assert.ok(
   layout.indexOf('jill-variant-allocation.js') < layout.indexOf('jill-custom-order.js'),
   'variant allocation engine must load before Custom Order composition runtime',
 );
+
+
+assert.match(section, /https:\/\/script\.google\.com\/macros\/s\/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W\/exec/, 'Custom Order must retain the canonical Apps Script deployment');
+assert.doesNotMatch(section, /AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/, 'Custom Order must not use the dead Apps Script deployment');
+assert.match(section, /data-jill-owner-notification/, 'Custom Order must retain the native Shopify owner-notification lane');
+assert.match(runtime, /function ownerNotificationBody[\s\S]*endpointPayload\(request\)/, 'merchant notification must derive from the normalized request payload');
+assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
+assert.match(runtime, /await submitOwnerNotification\(root, request\)/, 'Custom Order success must wait for the merchant notification submission');
+assert.match(section, /data-jill-review-gate/, 'Review action must remain visible outside progressively gated form stages');
+assert.ok(section.indexOf('data-jill-review-gate') > section.indexOf('data-jill-stage="final"'), 'persistent Review action must follow the form stages');
+assert.match(runtime, /function firstReviewIssue\(\)/, 'Review must keep one canonical first-missing-field resolver');
+assert.match(runtime, /scrollToTarget\(issue\)/, 'Review validation must return the user to the first missing required field');
+assert.match(runtime, /if \(!needDate\.value \|\| needDate\.value < earliestNeedDate\) needDate\.value = earliestNeedDate;/, 'Date Needed must display and restore the first available business-day date');
+assert.match(formsCss, /input\[type='date'\]\.jill-field__control[\s\S]*min-inline-size: 0;[\s\S]*max-inline-size: 100%;/, 'mobile-safe date input must not overflow its field');
+assert.match(section, /data-jill-phone-field[\s\S]*data-default-country="\{\{ localization\.country\.iso_code/, 'phone input must initialize from Shopify localization country');
+assert.match(section, /data-jill-phone-country/, 'phone input must expose a country/flag dial-code selector');
+assert.match(layout, /jill-email-validation\.js[\s\S]*jill-custom-order\.js/, 'shared phone validation must load before Custom Order runtime');
+assert.match(emailValidation, /United States[\s\S]*Canada[\s\S]*Colombia[\s\S]*France[\s\S]*India[\s\S]*China/, 'shared phone owner must preserve country-aware rules');
+assert.match(emailValidation, /function getPhoneValue/, 'shared phone owner must normalize the submitted phone value');
+assert.match(runtime, /JILLEmailValidation\?\.getPhoneValue\(customer\)/, 'normalized request must use the shared international phone value');
+assert.match(section, /data-customer-logged-in="\{% if customer %\}true/, 'Custom Order must expose a server-rendered logged-in customer snapshot');
+assert.match(section, /data-customer-name="\{% if customer %\}\{\{ customer\.name/, 'logged-in customer name must come from Shopify customer truth');
+assert.match(section, /data-customer-email="\{% if customer %\}\{\{ customer\.email/, 'logged-in customer email must come from Shopify customer truth');
+assert.match(runtime, /function applyLoggedInCustomerPrefill/, 'Custom Order must own one logged-in customer prefill path');
+assert.match(runtime, /applyLoggedInCustomerPrefill\(root\);[\s\S]*applyCatalogPrefill\(root\);/, 'customer prefill and Catalog prefill must coexist in initialization order');
+assert.doesNotMatch(runtime, /preferred_contact[^\n]*=.*customer/, 'logged-in customer prefill must not silently choose a preferred contact method');
 
 console.log('JILL Custom Order LIVE-parity integration tests passed.');

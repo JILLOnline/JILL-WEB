@@ -781,7 +781,7 @@
       customer: {
         name: readNamed(customer, 'name'),
         email: readNamed(customer, 'email').toLowerCase(),
-        phone: readNamed(customer, 'phone') || undefined,
+        phone: globalThis.JILLEmailValidation?.getPhoneValue(customer) || readNamed(customer, 'phone') || undefined,
         preferred_contact: readNamed(customer, 'preferred_contact') || undefined,
       },
       planning: {
@@ -1145,12 +1145,63 @@
     };
   }
 
+  function ownerNotificationBody(request) {
+    const payload = endpointPayload(request);
+    const location = [payload.city, payload.state, payload.zip].filter(Boolean).join(', ');
+    return [
+      'New JILL Custom Order Request',
+      '',
+      `Submission ID: ${payload.submission_id}`,
+      `Submitted: ${payload.submitted_at}`,
+      `Name: ${payload.name}`,
+      `Email: ${payload.email}`,
+      `Phone: ${payload.phone || '—'}`,
+      `Preferred contact: ${payload.preferred_contact || '—'}`,
+      `Order type: ${payload.order_type || '—'}`,
+      `Date needed: ${payload.date_needed || '—'}`,
+      `Fulfillment: ${payload.fulfillment || '—'}`,
+      `Location: ${location || '—'}`,
+      `Collections: ${payload.collections || '—'}`,
+      '',
+      'Products:',
+      payload.products || '—',
+      '',
+      `Theme: ${payload.theme || '—'}`,
+      `Colors: ${payload.colors || '—'}`,
+      `Personalization: ${payload.personalization || '—'}`,
+      `Reference images: ${payload.reference_images || 'No'}`,
+      'Reference links:',
+      payload.reference_image_links || 'None',
+      `Reference instructions: ${payload.reference_instructions || '—'}`,
+      `Budget: ${payload.budget || '—'}`,
+      `Priority: ${payload.priority || '—'}`,
+      `Recommend matching items: ${payload.recommend_matching || '—'}`,
+      `Notes: ${payload.notes || '—'}`,
+      `Marketing consent: ${payload.marketing_consent || 'No'}`,
+    ].join('\n');
+  }
+
+  async function submitOwnerNotification(root, request) {
+    const ownerNotification = root.querySelector('[data-jill-owner-notification]');
+    const form = ownerNotification?.querySelector('form');
+    const name = form?.querySelector('[name="contact[name]"]');
+    const email = form?.querySelector('[name="contact[email]"]');
+    const body = form?.querySelector('[name="contact[body]"]');
+    if (!form || !name || !email || !body) fail('store notification is temporarily unavailable');
+    name.value = request.customer.name || 'Custom Order Request';
+    email.value = request.customer.email || '';
+    body.value = ownerNotificationBody(request);
+    const response = await fetch(form.action, {method: 'POST', credentials: 'same-origin', body: new FormData(form)});
+    if (!response.ok) fail('store notification could not be delivered');
+  }
+
   async function submitRequest(root, request) {
     const endpoint = String(root.dataset.submitEndpoint || '').trim();
     if (!endpoint) fail('submission is temporarily unavailable');
     const body = new URLSearchParams();
     Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
     await fetch(endpoint, {method: 'POST', mode: 'no-cors', keepalive: true, body});
+    await submitOwnerNotification(root, request);
   }
 
   function text(bytes, start, end) {
@@ -1584,12 +1635,11 @@
   function syncPhoneRequirement(root) {
     const customer = root.querySelector('[data-jill-custom-order-customer]');
     const pref = customer?.querySelector('[name="preferred_contact"]');
-    const phone = customer?.querySelector('[name="phone"]');
+    const phoneField = customer?.querySelector('[data-jill-phone-field]');
+    const phone = phoneField?.querySelector('[data-jill-phone-number]');
     if (!pref || !phone) return;
-    const required = pref.value === 'phone';
-    phone.required = required;
-    const mark = phone.closest('.jill-field')?.querySelector('.jill-field__required');
-    if (mark) mark.hidden = !required;
+    phone.required = pref.value === 'phone';
+    globalThis.JILLEmailValidation?.validate(phoneField);
   }
 
   function syncNeededDate(root) {
@@ -1599,10 +1649,8 @@
     const today = todayLocal();
     const earliestNeedDate = addBusinessDays(today, 12);
     needDate.min = earliestNeedDate;
-    const tooSoon = Boolean(needDate.value && needDate.value < earliestNeedDate);
-    needDate.setCustomValidity(
-      tooSoon ? 'The date you need it must be at least 12 business days from today.' : '',
-    );
+    if (!needDate.value || needDate.value < earliestNeedDate) needDate.value = earliestNeedDate;
+    needDate.setCustomValidity('');
   }
 
   function syncShipping(root) {
@@ -1712,6 +1760,21 @@
       if (!stage) return;
       stage.dataset.stageState = !available ? 'locked' : complete ? 'complete' : stage === firstPending ? 'active' : 'available';
     });
+  }
+
+  function applyLoggedInCustomerPrefill(root) {
+    if (root.dataset.customerLoggedIn !== 'true') return false;
+    const customer = root.querySelector('[data-jill-custom-order-customer]');
+    if (!customer) return false;
+    const name = customer.querySelector('[name="name"]');
+    const email = customer.querySelector('[name="email"]');
+    const phone = customer.querySelector('[data-jill-phone-number]');
+    if (name && !name.value.trim() && root.dataset.customerName) name.value = root.dataset.customerName;
+    if (email && !email.value.trim() && root.dataset.customerEmail) email.value = root.dataset.customerEmail;
+    if (phone && !phone.value.trim() && root.dataset.customerPhone) {
+      globalThis.JILLEmailValidation?.setPhoneValue(customer, root.dataset.customerPhone);
+    }
+    return true;
   }
 
   function syncProgression(root) {
@@ -2050,6 +2113,7 @@
     });
     requestSubmit?.addEventListener('click', submit);
 
+    applyLoggedInCustomerPrefill(root);
     applyCatalogPrefill(root);
     if (root.dataset.jillCustomOrderPrefilled === 'true') syncProductVisibility(root);
     renderPersonalization(root);

@@ -661,6 +661,32 @@
     color: var(--jill-color-background);
   }
 
+  .jill-phone-field__control {
+    display: grid;
+    grid-template-columns: minmax(6.75rem, 7.75rem) minmax(0, 1fr);
+    gap: var(--jill-space-unit);
+    min-width: 0;
+  }
+
+  .jill-phone-field__country,
+  .jill-phone-field__number {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .jill-phone-field__country {
+    padding-inline: calc(var(--jill-space-unit) * 1.25);
+  }
+
+  .jill-custom-order[data-jill-custom-order] .jill-custom-order__planning input[type='date'].jill-field__control {
+    display: block;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    font-size: 1rem;
+  }
+
   .jill-custom-order__planning {
     display: grid;
     min-width: 0;
