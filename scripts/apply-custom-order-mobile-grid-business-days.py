@@ -26,6 +26,13 @@ def replace_once(path, label, old, new):
 
 sub_once(
     FORMS,
+    'remove duplicate media hidden rule',
+    r'''\n  \.jill-media__input \{\n(?:    .*\n)+?  \}\n''',
+    '\n',
+)
+
+sub_once(
+    FORMS,
     'consolidate hidden controls',
     r'''  \.jill-custom-order__choice input,\n  \.jill-custom-order__collection-choice input,\n  \.jill-custom-order-product__pick input \{\n(?:    .*\n)+?  \}''',
     '''  .jill-custom-order__choice input,
@@ -44,13 +51,6 @@ sub_once(
     clip-path: inset(50%);
     white-space: nowrap;
   }''',
-)
-
-sub_once(
-    FORMS,
-    'remove duplicate media hidden rule',
-    r'''\n  \.jill-media__input \{\n(?:    .*\n)+?  \}\n''',
-    '\n',
 )
 
 sub_once(
