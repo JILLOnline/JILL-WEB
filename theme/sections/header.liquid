@@ -60,6 +60,11 @@
               {% else %}
                 <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}">{{ 'header.home' | t }}</a>
                 <a class="jill-site-header__drawer-link" href="{{ routes.all_products_collection_url }}">{{ 'header.catalog' | t }}</a>
+                {% if section.settings.show_custom_order %}
+                  <a class="jill-site-header__drawer-link" href="{{ custom_order_url }}">{{ section.settings.custom_order_label }}</a>
+                {% endif %}
+                <a class="jill-site-header__drawer-link" href="/pages/contact">Contact us</a>
+                <a class="jill-site-header__drawer-link" href="/pages/about-us">About us</a>
               {% endif %}
             </nav>
 
