@@ -1,0 +1,45 @@
+name: Apply Custom Order Review Rebuild
+
+on:
+  push:
+    branches:
+      - jill/theme-core
+    paths:
+      - .github/workflows/apply-custom-order-review.yml
+      - scripts/apply-custom-order-review-packed.mjs
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Theme Core
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: jill/theme-core
+
+      - name: Apply Review presentation rebuild
+        run: node scripts/apply-custom-order-review-packed.mjs
+
+      - name: Validate touched runtime and integration guard
+        run: |
+          set -euo pipefail
+          node --check theme/assets/jill-custom-order.js
+          node scripts/test-custom-order-integration.mjs
+          ! grep -R "!important" theme/assets/jill-forms.css theme/assets/jill-custom-order.js theme/sections/main-custom-order.liquid
+          ! grep -R "MutationObserver" theme/assets/jill-custom-order.js
+
+      - name: Remove one-time applicator and commit canonical source
+        run: |
+          set -euo pipefail
+          rm -f scripts/apply-custom-order-review-packed.mjs .github/workflows/apply-custom-order-review.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Rebuild Custom Order review presentation"
+          git push origin HEAD:jill/theme-core
