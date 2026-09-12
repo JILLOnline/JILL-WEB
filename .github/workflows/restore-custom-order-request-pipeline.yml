@@ -1,4 +1,4 @@
-name: One-time restore Custom Order request pipeline
+name: Restore Custom Order request pipeline
 
 on:
   push:
@@ -20,138 +20,10 @@ jobs:
           ref: jill/theme-core
           fetch-depth: 0
 
-      - name: Restore canonical request delivery
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
+      - name: Apply request repair
+        run: python scripts/restore-custom-order-request-pipeline.py
 
-          section_path = Path('theme/sections/main-custom-order.liquid')
-          runtime_path = Path('theme/assets/jill-custom-order.js')
-          test_path = Path('scripts/test-custom-order-integration.mjs')
-
-          old_endpoint = 'https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
-          canonical_endpoint = 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec'
-
-          section = section_path.read_text()
-          if old_endpoint not in section:
-              raise SystemExit('Old Custom Order endpoint anchor not found')
-          section = section.replace(old_endpoint, canonical_endpoint)
-
-          success_anchor = '  <section class="jill-custom-order__success jill-card" data-jill-custom-order-success hidden aria-hidden="true" role="status">'
-          notification_markup = '''  <div data-jill-owner-notification hidden aria-hidden="true">
-            {% form 'contact', id: 'JillCustomOrderOwnerNotification' %}
-              <input type="hidden" name="contact[name]" value="">
-              <input type="hidden" name="contact[email]" value="">
-              <input type="hidden" name="contact[body]" value="">
-            {% endform %}
-          </div>
-
-'''
-          if notification_markup not in section:
-              if success_anchor not in section:
-                  raise SystemExit('Custom Order success anchor not found')
-              section = section.replace(success_anchor, notification_markup + success_anchor, 1)
-          section_path.write_text(section)
-
-          runtime = runtime_path.read_text()
-          old_submit = '''  async function submitRequest(root, request) {
-            const endpoint = String(root.dataset.submitEndpoint || '').trim();
-            if (!endpoint) fail('submission is temporarily unavailable');
-            const body = new URLSearchParams();
-            Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
-            await fetch(endpoint, {method: 'POST', mode: 'no-cors', keepalive: true, body});
-          }
-'''
-          new_submit = '''  function ownerNotificationBody(request) {
-            const payload = endpointPayload(request);
-            const location = [payload.city, payload.state, payload.zip].filter(Boolean).join(', ');
-            return [
-              'New JILL Custom Order Request',
-              '',
-              `Submission ID: ${payload.submission_id}`,
-              `Submitted: ${payload.submitted_at}`,
-              `Name: ${payload.name}`,
-              `Email: ${payload.email}`,
-              `Phone: ${payload.phone || '—'}`,
-              `Preferred contact: ${payload.preferred_contact || '—'}`,
-              `Order type: ${payload.order_type || '—'}`,
-              `Date needed: ${payload.date_needed || '—'}`,
-              `Fulfillment: ${payload.fulfillment || '—'}`,
-              `Location: ${location || '—'}`,
-              `Collections: ${payload.collections || '—'}`,
-              '',
-              'Products:',
-              payload.products || '—',
-              '',
-              `Theme: ${payload.theme || '—'}`,
-              `Colors: ${payload.colors || '—'}`,
-              `Personalization: ${payload.personalization || '—'}`,
-              `Reference images: ${payload.reference_images || 'No'}`,
-              'Reference links:',
-              payload.reference_image_links || 'None',
-              `Reference instructions: ${payload.reference_instructions || '—'}`,
-              `Budget: ${payload.budget || '—'}`,
-              `Priority: ${payload.priority || '—'}`,
-              `Recommend matching items: ${payload.recommend_matching || '—'}`,
-              `Notes: ${payload.notes || '—'}`,
-              `Marketing consent: ${payload.marketing_consent || 'No'}`,
-            ].join('\\n');
-          }
-
-          async function submitOwnerNotification(root, request) {
-            const ownerNotification = root.querySelector('[data-jill-owner-notification]');
-            const form = ownerNotification?.querySelector('form');
-            const name = form?.querySelector('[name="contact[name]"]');
-            const email = form?.querySelector('[name="contact[email]"]');
-            const body = form?.querySelector('[name="contact[body]"]');
-            if (!form || !name || !email || !body) fail('store notification is temporarily unavailable');
-
-            name.value = request.customer.name || 'Custom Order Request';
-            email.value = request.customer.email || '';
-            body.value = ownerNotificationBody(request);
-
-            const response = await fetch(form.action, {
-              method: 'POST',
-              credentials: 'same-origin',
-              body: new FormData(form),
-            });
-            if (!response.ok) fail('store notification could not be delivered');
-          }
-
-          async function submitRequest(root, request) {
-            const endpoint = String(root.dataset.submitEndpoint || '').trim();
-            if (!endpoint) fail('submission is temporarily unavailable');
-            const body = new URLSearchParams();
-            Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
-            await fetch(endpoint, {method: 'POST', mode: 'no-cors', keepalive: true, body});
-            await submitOwnerNotification(root, request);
-          }
-'''
-          if old_submit not in runtime:
-              raise SystemExit('Custom Order submitRequest anchor not found')
-          runtime = runtime.replace(old_submit, new_submit, 1)
-          runtime_path.write_text(runtime)
-
-          tests = test_path.read_text()
-          assertions = f'''
-          assert.match(section, /{canonical_endpoint.replace('/', r'\\/').replace('.', r'\\.')}/, 'Custom Order must submit to the canonical v13 Apps Script deployment');
-          assert.doesNotMatch(section, /{old_endpoint.replace('/', r'\\/').replace('.', r'\\.')}/, 'Custom Order must not submit to the retired Apps Script deployment');
-          assert.match(section, /data-jill-owner-notification/, 'Custom Order must retain the native Shopify owner-notification lane');
-          assert.match(runtime, /function ownerNotificationBody/, 'merchant notification must derive from the normalized request payload');
-          assert.match(runtime, /function submitOwnerNotification/, 'Custom Order must own one merchant-notification submit path');
-          assert.match(runtime, /await submitOwnerNotification\(root, request\)/, 'Custom Order success must wait for the merchant notification submission');
-          '''
-          marker = "console.log('Custom Order integration guard passed.');"
-          if assertions.strip() not in tests:
-              if marker not in tests:
-                  raise SystemExit('Custom Order test completion marker not found')
-              tests = tests.replace(marker, assertions + '\n' + marker, 1)
-          test_path.write_text(tests)
-          PY
-
-      - name: Validate request pipeline repair
+      - name: Validate repair
         shell: bash
         run: |
           set -euo pipefail
@@ -159,22 +31,17 @@ jobs:
           node scripts/test-custom-order-integration.mjs
           response="$(curl -L --fail --silent --show-error --max-time 180 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec?jill_rewards_watchdog=1')"
           printf '%s\n' "$response"
-          RESPONSE="$response" python - <<'PY'
-          import json, os
-          data = json.loads(os.environ['RESPONSE'])
-          assert data.get('ok') is True
-          assert data.get('watchdog') is True
-          assert str(data.get('engine_version')) == '13'
-          PY
+          RESPONSE="$response" python -c "import json,os; data=json.loads(os.environ['RESPONSE']); assert data.get('ok') is True; assert data.get('watchdog') is True; assert str(data.get('engine_version')) == '13'"
 
-      - name: Commit repair and remove one-time workflow
+      - name: Commit clean repair
         shell: bash
         run: |
           set -euo pipefail
           rm .github/workflows/restore-custom-order-request-pipeline.yml
+          rm scripts/restore-custom-order-request-pipeline.py
           git config user.name 'JILLOnline'
           git config user.email 'info@jillonlinestore.com'
-          git add theme/sections/main-custom-order.liquid theme/assets/jill-custom-order.js scripts/test-custom-order-integration.mjs .github/workflows/restore-custom-order-request-pipeline.yml
+          git add theme/sections/main-custom-order.liquid theme/assets/jill-custom-order.js scripts/test-custom-order-integration.mjs .github/workflows/restore-custom-order-request-pipeline.yml scripts/restore-custom-order-request-pipeline.py
           git diff --cached --check
           git commit -m 'Restore Custom Order request delivery pipeline'
           git push origin HEAD:jill/theme-core
