@@ -402,20 +402,46 @@
     </section>
   </div>
 
-  <section class="jill-custom-order__review jill-card" data-jill-custom-order-review hidden aria-hidden="true">
-    <div class="jill-custom-order__step-head">
-      <span class="jill-custom-order__step-index" aria-hidden="true">✓</span>
-      <div><h2>{{ 'custom_order.review.title' | t }}</h2><p>{{ 'custom_order.review.help' | t }}</p></div>
+  <section class="jill-custom-order__review" data-jill-custom-order-review hidden aria-hidden="true">
+    <div class="jill-custom-order-review__hero jill-card">
+      <span class="jill-custom-order-review__hero-icon" aria-hidden="true">{% render 'ui-icon', name: 'check' %}</span>
+      <div class="jill-custom-order-review__hero-copy">
+        <h2>{{ 'custom_order.review.title' | t }}</h2>
+        <p>{{ 'custom_order.review.help' | t }}</p>
+      </div>
     </div>
+
+    <div class="jill-custom-order-review__icon-bank" hidden aria-hidden="true">
+      <template data-jill-review-icon="customer">{% render 'ui-icon', name: 'account' %}</template>
+      <template data-jill-review-icon="items">{% render 'ui-icon', name: 'bag' %}</template>
+      <template data-jill-review-icon="total">{% render 'ui-icon', name: 'package' %}</template>
+      <template data-jill-review-icon="design">{% render 'ui-icon', name: 'palette' %}</template>
+      <template data-jill-review-icon="date">{% render 'ui-icon', name: 'calendar' %}</template>
+      <template data-jill-review-icon="fulfillment">{% render 'ui-icon', name: 'location' %}</template>
+    </div>
+
     <div class="jill-custom-order__review-content" data-jill-custom-order-review-content></div>
-    <label class="jill-custom-order__consent jill-custom-order__marketing">
+
+    <label class="jill-custom-order__consent jill-custom-order__marketing jill-custom-order-review__consent-card jill-card">
+      <span class="jill-custom-order-review__consent-icon" aria-hidden="true">{% render 'ui-icon', name: 'mail' %}</span>
       <input type="checkbox" data-jill-marketing-consent>
-      <span><strong>{{ 'custom_order.review.marketing' | t }} <small class="jill-field__optional">{{ optional_label }}</small></strong><small>{{ 'custom_order.review.marketing_help' | t }}</small></span>
+      <span class="jill-custom-order-review__consent-copy">
+        <span class="jill-custom-order-review__consent-line">
+          <strong>{{ 'custom_order.review.marketing' | t }}</strong>
+          <small class="jill-custom-order-review__optional">{{ optional_label }}</small>
+        </span>
+        <small class="jill-custom-order-review__disclosure">{{ 'custom_order.review.marketing_help' | t }}</small>
+      </span>
     </label>
-    <label class="jill-custom-order__consent">
+
+    <label class="jill-custom-order__consent jill-custom-order-review__consent-card jill-custom-order-review__consent-card--required jill-card">
+      <span class="jill-custom-order-review__consent-icon" aria-hidden="true">{% render 'ui-icon', name: 'shield-check' %}</span>
       <input type="checkbox" data-jill-review-confirm required>
-      <span><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.review.confirm' | t }}</span>
+      <span class="jill-custom-order-review__consent-copy">
+        <strong><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.review.confirm' | t }}</strong>
+      </span>
     </label>
+
     <div class="jill-custom-order__review-actions">
       <button class="jill-button" data-variant="secondary" type="button" data-jill-review-back>{{ 'custom_order.actions.back' | t }}</button>
       <button class="jill-button" type="button" data-jill-request-submit disabled aria-disabled="true">{{ 'custom_order.actions.submit' | t }}</button>

@@ -188,6 +188,12 @@ assert.doesNotMatch(runtime, /event_date|eventDate|after the event date/, 'Custo
 assert.doesNotMatch(customOrderSchema, /event_date/, 'Custom Order API contract must not retain the removed event date');
 assert.doesNotMatch(runtime, /MutationObserver/, 'Custom Order must not recreate LIVE MutationObserver patch architecture');
 assert.match(runtime, /renderReview/, 'Custom Order must build Review from normalized request state');
+assert.match(runtime, /function displayCapabilityValue/, 'Review must resolve human-facing Product Options labels without rewriting normalized payload values');
+assert.match(runtime, /option\?\.label \|\| displayValue\(value\)/, 'Review must prefer capability option display labels over raw internal values');
+assert.match(runtime, /Personalization \$\{index \+ 1\}/, 'Review must preserve quantity-aware personalization groups instead of flattening them');
+assert.match(runtime, /\$\{item\.quantity\}× \$\{item\.title\}/, 'Review item quantity must use the polished multiplication sign');
+assert.match(formsCss, /jill-custom-order-review__summary-grid[\s\S]*repeat\(3, minmax\(0, 1fr\)\)/, 'Review summary cards must use three columns on desktop');
+assert.match(formsCss, /jill-custom-order-review__planning[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/, 'Review Date Needed and Fulfillment must use two columns on desktop');
 assert.match(runtime, /submitRequest/, 'Custom Order must own one final request submission boundary');
 assert.match(runtime, /selectedChoices/, 'Custom Order must project selection state into shared product configuration instead of duplicating product engines');
 assert.doesNotMatch(runtime, /unitsPerQuantity\s*\*/, 'Custom Order must not own customization-unit multiplication');

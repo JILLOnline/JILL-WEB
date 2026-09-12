@@ -825,7 +825,7 @@
   }
 
   function displayValue(value) {
-    if (Array.isArray(value)) return value.join(', ');
+    if (Array.isArray(value)) return value.map(displayValue).filter(Boolean).join(', ');
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     return String(value ?? '');
   }
@@ -834,17 +834,54 @@
     return request.request_attributes.find((entry) => entry.id === id)?.value ?? '';
   }
 
-  function productOptionReview(item, host) {
+  function reviewIcon(root, name, className = 'jill-custom-order-review__icon') {
+    const holder = node('span', className);
+    holder.setAttribute('aria-hidden', 'true');
+    const template = root.querySelector(`template[data-jill-review-icon="${name}"]`);
+    const icon = template?.content?.firstElementChild?.cloneNode(true);
+    if (icon) holder.append(icon);
+    return holder;
+  }
+
+  function reviewHeading(root, iconName, title, help = '') {
+    const head = node('div', 'jill-custom-order-review__section-head');
+    head.append(reviewIcon(root, iconName));
+    const copy = node('div', 'jill-custom-order-review__section-copy');
+    copy.append(node('h3', 'jill-custom-order-review__heading', title));
+    if (help) copy.append(node('p', 'jill-custom-order-review__help', help));
+    head.append(copy);
+    return head;
+  }
+
+  function itemProfile(root, item) {
+    const itemNode = itemForProduct(root, item.product_id);
+    const form = itemNode?.querySelector('[data-jill-custom-order-item-form]');
+    return form ? readProfile(form) : null;
+  }
+
+  function displayCapabilityValue(profile, fieldId, value) {
+    if (Array.isArray(value)) {
+      return value.map((entry) => displayCapabilityValue(profile, fieldId, entry)).filter(Boolean).join(', ');
+    }
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    const field = profile ? globalThis.JILLProductCapabilities?.getField(profile, fieldId) : null;
+    const option = (field?.options || []).find((candidate) => String(candidate.value) === String(value));
+    return option?.label || displayValue(value);
+  }
+
+  function productOptionReview(item, host, profile) {
     const encoded = item.attributes.find((entry) => entry.id === 'product_options')?.value;
     if (!encoded) return;
     let groups = [];
     try { groups = JSON.parse(encoded); } catch (error) { return; }
     groups.forEach((group, index) => {
-      const block = node('div', 'jill-custom-order-review__subgroup');
+      const block = node('section', 'jill-custom-order-review__subgroup');
       const count = group.unit_ids?.length || 0;
-      block.append(node('h5', '', `Option ${index + 1}${count ? ` — ${count} item${count === 1 ? '' : 's'}` : ''}`));
+      block.append(node('h5', 'jill-custom-order-review__subgroup-title', `Option ${index + 1}${count ? ` — ${count} item${count === 1 ? '' : 's'}` : ''}`));
       const details = node('div', 'jill-custom-order-review__details');
-      appendRows(details, (group.attributes || []).map((entry) => reviewRow(entry.label || entry.id, displayValue(entry.value))));
+      appendRows(details, (group.attributes || []).map((entry) =>
+        reviewRow(entry.label || entry.id, displayCapabilityValue(profile, entry.id, entry.value)),
+      ));
       block.append(details);
       host.append(block);
     });
@@ -854,26 +891,43 @@
     return new Map(collectionChoices(root).map((choice) => [choice.value, choice.dataset.collectionTitle || choice.value]));
   }
 
+  function personalizationStatus(items) {
+    const states = items.map((item) => Boolean(item.personalization_groups?.length));
+    if (states.every(Boolean)) return 'Personalized';
+    if (states.every((state) => !state)) return 'Not personalized';
+    return '';
+  }
+
+  function statusPill(text) {
+    if (!text) return null;
+    const pill = node('span', 'jill-custom-order-review__status', text);
+    pill.dataset.tone = text === 'Personalized' ? 'success' : 'neutral';
+    return pill;
+  }
+
   function renderReview(root, request) {
     const review = root.querySelector('[data-jill-custom-order-review]');
     const content = root.querySelector('[data-jill-custom-order-review-content]');
     if (!review || !content) return;
     const sheet = node('div', 'jill-custom-order-review');
 
-    const customer = node('section', 'jill-custom-order-review__section');
-    customer.append(node('h3', 'jill-custom-order-review__heading', 'Customer info'));
-    const customerDetails = node('div', 'jill-custom-order-review__details');
+    const customer = node('section', 'jill-custom-order-review__card jill-card');
+    customer.append(reviewHeading(root, 'customer', 'Customer Information'));
+    const customerDetails = node('div', 'jill-custom-order-review__summary-grid');
+    const preferredContact = request.customer.preferred_contact === 'phone' ? 'Text / phone' : 'Email';
+    const preferredValue = request.customer.phone && request.customer.preferred_contact === 'phone'
+      ? `${preferredContact} · ${request.customer.phone}`
+      : preferredContact;
     appendRows(customerDetails, [
-      reviewRow('Name', request.customer.name),
-      reviewRow('Email', request.customer.email),
-      reviewRow('Phone', request.customer.phone),
-      reviewRow('Preferred contact', request.customer.preferred_contact === 'phone' ? 'Text / phone' : 'Email'),
+      reviewRow('Name', request.customer.name, 'jill-custom-order-review__summary-item'),
+      reviewRow('Email', request.customer.email, 'jill-custom-order-review__summary-item'),
+      reviewRow('Preferred contact', preferredValue, 'jill-custom-order-review__summary-item'),
     ]);
     customer.append(customerDetails);
     sheet.append(customer);
 
-    const itemsSection = node('section', 'jill-custom-order-review__section');
-    itemsSection.append(node('h3', 'jill-custom-order-review__heading', 'Items'));
+    const itemsSection = node('section', 'jill-custom-order-review__card jill-custom-order-review__items-card jill-card');
+    itemsSection.append(reviewHeading(root, 'items', 'Items', 'Here’s what you’re requesting.'));
     const titles = collectionTitleMap(root);
     const selectedCollections = new Set(selectedCollectionChoices(root).map((choice) => choice.value));
     const groups = new Map();
@@ -888,32 +942,46 @@
 
     groups.forEach((items, title) => {
       const collection = node('section', 'jill-custom-order-review__collection');
-      collection.append(node('h4', 'jill-custom-order-review__collection-title', title));
+      const collectionHead = node('div', 'jill-custom-order-review__collection-head');
+      collectionHead.append(node('h4', 'jill-custom-order-review__collection-title', title));
+      const collectionStatus = statusPill(personalizationStatus(items));
+      if (collectionStatus) collectionHead.append(collectionStatus);
+      collection.append(collectionHead);
+
       items.forEach((item) => {
         const article = node('article', 'jill-custom-order-review__item');
         const head = node('div', 'jill-custom-order-review__item-head');
-        head.append(
-          node('h4', '', `${item.quantity}x ${item.title}`),
-          node('span', 'jill-custom-order-review__item-status', item.personalization_groups.length ? 'Personalized' : 'Not personalized'),
-        );
+        head.append(node('h4', 'jill-custom-order-review__item-title', `${item.quantity}× ${item.title}`));
+        if (!collectionStatus) {
+          const itemStatus = statusPill(item.personalization_groups?.length ? 'Personalized' : 'Not personalized');
+          if (itemStatus) head.append(itemStatus);
+        }
         article.append(head);
+
+        const profile = itemProfile(root, item);
         if (item.variant_allocations?.length) {
-          const variants = node('div', 'jill-custom-order-review__details');
-          item.variant_allocations.forEach((allocation) => variants.append(reviewRow('Variation', `${allocation.quantity}x ${allocation.title}`)));
+          const variants = node('div', 'jill-custom-order-review__details jill-custom-order-review__inner-panel');
+          item.variant_allocations.forEach((allocation) =>
+            variants.append(reviewRow('Variation', `${allocation.quantity}× ${allocation.title}`)),
+          );
           article.append(variants);
         }
+
         const singleton = item.attributes.filter((entry) => entry.id !== 'product_options');
         if (singleton.length) {
-          const details = node('div', 'jill-custom-order-review__details');
-          appendRows(details, singleton.map((entry) => reviewRow(entry.label || entry.id, displayValue(entry.value))));
+          const details = node('div', 'jill-custom-order-review__details jill-custom-order-review__inner-panel');
+          appendRows(details, singleton.map((entry) =>
+            reviewRow(entry.label || entry.id, displayCapabilityValue(profile, entry.id, entry.value)),
+          ));
           article.append(details);
         }
-        productOptionReview(item, article);
-        item.personalization_groups.forEach((group) => {
+
+        productOptionReview(item, article, profile);
+        item.personalization_groups.forEach((group, index) => {
           if (!group.attributes.length) return;
-          const block = node('div', 'jill-custom-order-review__personalization');
+          const block = node('section', 'jill-custom-order-review__personalization');
           const personalizationCount = group.allocations?.length || 0;
-          block.append(node('h5', '', `Personalization — ${personalizationCount} item${personalizationCount === 1 ? '' : 's'}`));
+          block.append(node('h5', 'jill-custom-order-review__subgroup-title', `Personalization ${index + 1} — ${personalizationCount} item${personalizationCount === 1 ? '' : 's'}`));
           const details = node('div', 'jill-custom-order-review__details');
           appendRows(details, group.attributes.map((entry) => reviewRow(entry.label || entry.id, displayValue(entry.value))));
           block.append(details);
@@ -923,33 +991,44 @@
       });
       itemsSection.append(collection);
     });
+
+    const totalBar = node('div', 'jill-custom-order-review__total');
+    const totalLabel = node('div', 'jill-custom-order-review__total-label');
+    totalLabel.append(reviewIcon(root, 'total', 'jill-custom-order-review__total-icon'), node('strong', '', 'Total Items'));
+    totalBar.append(totalLabel, node('strong', 'jill-custom-order-review__total-value', total));
+    itemsSection.append(totalBar);
     sheet.append(itemsSection);
 
-    const totalSection = node('section', 'jill-custom-order-review__total');
-    totalSection.append(node('span', '', 'Total items'), node('span', 'jill-custom-order-review__total-line'), node('strong', '', total));
-    sheet.append(totalSection);
-
-    const design = node('section', 'jill-custom-order-review__section');
-    design.append(node('h3', 'jill-custom-order-review__heading', 'Design'));
-    const designDetails = node('div', 'jill-custom-order-review__details');
+    const design = node('section', 'jill-custom-order-review__card jill-card');
+    design.append(reviewHeading(root, 'design', 'Design Details', 'Your style preferences for this order.'));
+    const designDetails = node('div', 'jill-custom-order-review__summary-grid');
+    const references = uploadedMedia(root);
+    const referenceValue = references.length
+      ? `${references.length} uploaded: ${references.map((reference) => reference.name).filter(Boolean).join(', ')}`
+      : 'No';
     appendRows(designDetails, [
-      reviewRow('Theme', requestValue(request, 'theme')),
-      reviewRow('Colors', requestValue(request, 'colors')),
-      reviewRow('Reference images', request.reference_ids.length ? 'Yes' : 'No'),
+      reviewRow('Theme', requestValue(request, 'theme'), 'jill-custom-order-review__summary-item'),
+      reviewRow('Colors', requestValue(request, 'colors'), 'jill-custom-order-review__summary-item'),
+      reviewRow('Reference Images', referenceValue, 'jill-custom-order-review__summary-item'),
     ]);
     design.append(designDetails);
-    sheet.append(design);
 
-    const event = node('section', 'jill-custom-order-review__event');
-    const location = request.planning.address
-      ? [request.planning.address.city, request.planning.address.state, request.planning.address.postal_code].filter(Boolean).join(', ')
-      : '';
-    appendRows(event, [
-      reviewRow('Date needed', request.planning.date_needed, 'jill-custom-order-review__event-item'),
-      reviewRow('Fulfillment', request.planning.fulfillment === 'pickup' ? 'Jacksonville pickup' : 'Shipping', 'jill-custom-order-review__event-item'),
-      reviewRow('Location', location, 'jill-custom-order-review__event-item'),
-    ]);
-    sheet.append(event);
+    const planning = node('div', 'jill-custom-order-review__planning');
+    const date = node('section', 'jill-custom-order-review__planning-card');
+    date.append(reviewIcon(root, 'date'), node('div', 'jill-custom-order-review__planning-copy'));
+    date.lastElementChild.append(node('span', 'jill-custom-order-review__planning-label', 'Date Needed'), node('strong', 'jill-custom-order-review__planning-value', request.planning.date_needed || '—'));
+
+    const fulfillment = node('section', 'jill-custom-order-review__planning-card');
+    fulfillment.append(reviewIcon(root, 'fulfillment'), node('div', 'jill-custom-order-review__planning-copy'));
+    const fulfillmentValue = request.planning.fulfillment === 'pickup' ? 'Jacksonville pickup' : 'Shipping';
+    fulfillment.lastElementChild.append(node('span', 'jill-custom-order-review__planning-label', 'Fulfillment'), node('strong', 'jill-custom-order-review__planning-value', fulfillmentValue));
+    if (request.planning.address) {
+      const location = [request.planning.address.city, request.planning.address.state, request.planning.address.postal_code].filter(Boolean).join(', ');
+      if (location) fulfillment.lastElementChild.append(node('span', 'jill-custom-order-review__planning-meta', location));
+    }
+    planning.append(date, fulfillment);
+    design.append(planning);
+    sheet.append(design);
 
     content.replaceChildren(sheet);
     setVisible(review, true);
