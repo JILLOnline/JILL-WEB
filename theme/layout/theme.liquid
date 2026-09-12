@@ -26,12 +26,20 @@
         assign is_contact_template = true
       endif
 
+      assign is_content_page = false
+      if request.page_type == 'page' and is_custom_order_template == false and is_contact_template == false
+        assign is_content_page = true
+      endif
+
       assign is_catalog_hub = false
       if request.page_type == 'collection' and collection.handle == 'all'
         assign is_catalog_hub = true
       endif
     %}
 
+    {% if is_content_page %}
+      {{ 'jill-content-page.css' | asset_url | stylesheet_tag }}
+    {% endif %}
     {% if is_custom_order_template or is_contact_template %}
       {{ 'jill-forms.css' | asset_url | stylesheet_tag }}
     {% endif %}
