@@ -121,13 +121,21 @@ function doPost(e) {
     const data = parsePayload_(e);
 
     if (clean_(data.source) !== JILL.SOURCE) {
-      return json_({ ok: false, error: 'Invalid source' });
+      return customOrderFailure_(
+        'invalid_source',
+        'Invalid Custom Order source.',
+        false
+      );
     }
 
     const email = clean_(data.email).toLowerCase();
 
     if (!isValidEmail_(email)) {
-      return json_({ ok: false, error: 'Invalid email' });
+      return customOrderFailure_(
+        'invalid_email',
+        'A valid email address is required.',
+        false
+      );
     }
 
     data.email = email;
@@ -146,57 +154,119 @@ function doPost(e) {
     const sheet = getSheet_();
     const existingRow = findSubmissionRow_(sheet, submissionId);
     const statusColumn = HEADERS.indexOf('status') + 1;
-
+    const duplicate = Boolean(existingRow);
     let currentStatus = '';
+
     if (existingRow) {
       currentStatus = clean_(
         sheet.getRange(existingRow, statusColumn).getValue()
       );
-
-      if (currentStatus === 'SENT + SHOPIFY') {
-        return json_({ ok: true, duplicate: true });
-      }
     }
 
     const row = existingRow || saveSubmission_(sheet, data);
-    const confirmationAlreadySent = currentStatus.indexOf('SENT') === 0;
+    const state = submissionState_(currentStatus);
 
-    // Confirmation email first. Shopify sync failure must never block this.
-    // If Shopify failed on an earlier attempt, do not send the email twice.
-    if (!confirmationAlreadySent) {
-      sendConfirmation_(data);
-      sheet.getRange(row, statusColumn).setValue('SENT');
+    if (!existingRow) {
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
     }
 
-    try {
-      const customerId = syncShopifyCustomer_(data);
-      sheet.getRange(row, statusColumn).setValue('SENT + SHOPIFY');
-      console.log('Shopify customer synced: ' + customerId);
-    } catch (shopifyErr) {
-      sheet.getRange(row, statusColumn).setValue('SENT / SHOPIFY ERROR');
+    if (submissionComplete_(state)) {
+      return customOrderSuccess_(submissionId, true);
+    }
+
+    // Shopify synchronization is designed to be safely repeatable. If an
+    // execution ended while this stage was ATTEMPTING, a retry may run it
+    // again because customerSet, metafieldsSet, and the consent mutation all
+    // converge on the same submitted state/timestamp.
+    if (state.shopify !== 'SYNCED') {
+      state.shopify = 'ATTEMPTING';
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+
+      try {
+        syncShopifyCustomer_(data);
+        state.shopify = 'SYNCED';
+      } catch (shopifyErr) {
+        state.shopify = 'ERROR';
+        logSubmissionStageError_(
+          submissionId,
+          'Shopify sync',
+          shopifyErr
+        );
+      }
+
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+    }
+
+    // Email is intentionally at-most-once across ambiguous retries. The
+    // ATTEMPTING state is persisted before calling MailApp. If the process is
+    // interrupted after Google accepted the message but before ACCEPTED can be
+    // persisted, a retry will not send a duplicate message automatically.
+    if (emailStageShouldAttempt_(state.customerEmail)) {
+      state.customerEmail = 'ATTEMPTING';
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+
+      try {
+        sendCustomerConfirmation_(data);
+        state.customerEmail = 'ACCEPTED';
+      } catch (customerEmailErr) {
+        state.customerEmail = 'ERROR';
+        logSubmissionStageError_(
+          submissionId,
+          'Customer confirmation email',
+          customerEmailErr
+        );
+      }
+
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+    }
+
+    if (emailStageShouldAttempt_(state.merchantEmail)) {
+      state.merchantEmail = 'ATTEMPTING';
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+
+      try {
+        sendMerchantNotification_(data);
+        state.merchantEmail = 'ACCEPTED';
+      } catch (merchantEmailErr) {
+        state.merchantEmail = 'ERROR';
+        logSubmissionStageError_(
+          submissionId,
+          'Merchant notification email',
+          merchantEmailErr
+        );
+      }
+
+      writeSubmissionStatus_(sheet, row, statusColumn, state);
+    }
+
+    if (!submissionComplete_(state)) {
       console.error(
-        'Shopify sync failed: ' +
-        (shopifyErr && shopifyErr.stack ? shopifyErr.stack : shopifyErr)
+        'Custom Order downstream incomplete ' + submissionId + ': ' +
+        submissionStatusValue_(state)
       );
     }
 
-    return json_({
-      ok: true,
-      submission_id: submissionId
-    });
+    // The request itself is accepted once it is persisted. Downstream stage
+    // truth is kept in the canonical Sheet status and execution logs rather
+    // than falsely claiming inbox delivery in the HTTP response.
+    return customOrderSuccess_(submissionId, duplicate);
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      'Custom Order backend failure: ' +
+      (err && err.stack ? err.stack : err)
+    );
 
     // Let Shopify retry a verified rewards webhook when processing fails.
     if (verifiedRewardHook) {
       throw err;
     }
 
-    return json_({
-      ok: false,
-      error: String(err)
-    });
+    return customOrderFailure_(
+      'backend_error',
+      'The Custom Order request could not be processed.',
+      true
+    );
 
   } finally {
     try {
@@ -204,6 +274,8 @@ function doPost(e) {
     } catch (err) {}
   }
 }
+
+
 
 /* ---------------------------
    JILL REWARDS
@@ -1947,41 +2019,147 @@ function rewardCode_(value) {
 
 
 /* ---------------------------
+   CUSTOM ORDER DELIVERY STATE
+---------------------------- */
+
+function submissionState_(status) {
+  const raw = clean_(status);
+  const state = {
+    shopify: 'PENDING',
+    customerEmail: 'PENDING',
+    merchantEmail: 'PENDING'
+  };
+
+  // Preserve the meaning of historical rows while migrating them to the
+  // canonical stage status the next time that submission is retried.
+  if (raw === 'SENT + SHOPIFY') {
+    state.shopify = 'SYNCED';
+    state.customerEmail = 'ACCEPTED';
+    return state;
+  }
+
+  if (raw === 'SENT / SHOPIFY ERROR') {
+    state.shopify = 'ERROR';
+    state.customerEmail = 'ACCEPTED';
+    return state;
+  }
+
+  if (raw === 'SENT') {
+    state.customerEmail = 'ACCEPTED';
+    return state;
+  }
+
+  const shopifyMatch = raw.match(/(?:^|\|\s*)SHOPIFY=(PENDING|ATTEMPTING|SYNCED|ERROR)(?:\s*\||$)/);
+  const customerMatch = raw.match(/(?:^|\|\s*)CUSTOMER_EMAIL=(PENDING|ATTEMPTING|ACCEPTED|ERROR)(?:\s*\||$)/);
+  const merchantMatch = raw.match(/(?:^|\|\s*)MERCHANT_EMAIL=(PENDING|ATTEMPTING|ACCEPTED|ERROR)(?:\s*\||$)/);
+
+  if (shopifyMatch) state.shopify = shopifyMatch[1];
+  if (customerMatch) state.customerEmail = customerMatch[1];
+  if (merchantMatch) state.merchantEmail = merchantMatch[1];
+
+  return state;
+}
+
+function submissionStatusValue_(state) {
+  return [
+    'RECEIVED',
+    'SHOPIFY=' + state.shopify,
+    'CUSTOMER_EMAIL=' + state.customerEmail,
+    'MERCHANT_EMAIL=' + state.merchantEmail
+  ].join(' | ');
+}
+
+function writeSubmissionStatus_(sheet, row, statusColumn, state) {
+  sheet
+    .getRange(row, statusColumn)
+    .setValue(submissionStatusValue_(state));
+  SpreadsheetApp.flush();
+}
+
+function submissionComplete_(state) {
+  return (
+    state.shopify === 'SYNCED' &&
+    state.customerEmail === 'ACCEPTED' &&
+    state.merchantEmail === 'ACCEPTED'
+  );
+}
+
+function emailStageShouldAttempt_(stage) {
+  // Only a never-attempted email may be sent automatically. ERROR and
+  // ATTEMPTING are terminal for network retries so an ambiguous MailApp
+  // outcome cannot create a duplicate customer or merchant message.
+  return stage === 'PENDING';
+}
+
+function logSubmissionStageError_(submissionId, stage, err) {
+  console.error(
+    'Custom Order ' + submissionId + ' — ' + stage + ' failed: ' +
+    (err && err.stack ? err.stack : err)
+  );
+}
+
+function customOrderSuccess_(submissionId, duplicate) {
+  return json_({
+    version: 1,
+    operation: 'custom_order.submit.result',
+    ok: true,
+    submission_id: submissionId,
+    duplicate: Boolean(duplicate),
+    status: 'received'
+  });
+}
+
+function customOrderFailure_(code, message, retryable) {
+  return json_({
+    version: 1,
+    operation: 'custom_order.submit.result',
+    ok: false,
+    error: {
+      code: clean_(code) || 'backend_error',
+      message: clean_(message) || 'Custom Order request failed.',
+      retryable: Boolean(retryable)
+    }
+  });
+}
+
+
+/* ---------------------------
    CUSTOMER CONFIRMATION
 ---------------------------- */
 
-function sendConfirmation_(data) {
-  const name = escapeHtml_(clean_(data.name) || 'there');
-  const dateNeeded = escapeHtml_(
-    clean_(data.date_needed) || 'Not provided'
-  );
-  const fulfillment = escapeHtml_(
-    clean_(data.fulfillment) || 'Not provided'
-  );
+function sendCustomerConfirmation_(data) {
+  assertMailQuota_('customer confirmation');
 
+  const nameText = clean_(data.name) || 'there';
+  const dateNeededText = clean_(data.date_needed) || 'Not provided';
+  const fulfillmentText = clean_(data.fulfillment) || 'Not provided';
+  const name = escapeHtml_(nameText);
+  const dateNeeded = escapeHtml_(dateNeededText);
+  const fulfillment = escapeHtml_(fulfillmentText);
   const subject = 'We received your JILL custom order request 💜';
 
   const html = `
     <p>Hi ${name},</p>
 
-    <p>We received your custom order request and it’s now in review.</p>
     <p>
-      <strong>
-        This is not yet a confirmed order, price, production slot,
-        or delivery date.
-      </strong>
-      We’ll review the details you submitted and contact you with
-      the next steps.
+      JILL received your custom order request and it is now under review.
     </p>
 
     <p>
-      <strong>Date needed:</strong> ${dateNeeded}<br>
+      This confirmation only means we received your request. It is
+      <strong>not</strong> a confirmed order, <strong>not</strong> a confirmed
+      price, <strong>not</strong> a confirmed production slot, and
+      <strong>not</strong> a guaranteed delivery date.
+    </p>
+
+    <p>
+      <strong>Date Needed:</strong> ${dateNeeded}<br>
       <strong>Fulfillment:</strong> ${fulfillment}
     </p>
 
     <p>
-      If we need clarification, we’ll contact you using your
-      preferred contact method.
+      We will review the details you submitted and contact you with next steps.
+      If we need clarification, we will use your preferred contact method.
     </p>
 
     <p>Thank you for choosing JILL!</p>
@@ -1993,16 +2171,16 @@ function sendConfirmation_(data) {
   `;
 
   const plainText =
-`Hi ${clean_(data.name) || 'there'},
+`Hi ${nameText},
 
-We received your custom order request and it’s now in review.
+JILL received your custom order request and it is now under review.
 
-This is not yet a confirmed order, price, production slot, or delivery date. We’ll review the details you submitted and contact you with the next steps.
+This confirmation only means we received your request. It is not a confirmed order, not a confirmed price, not a confirmed production slot, and not a guaranteed delivery date.
 
-Date needed: ${clean_(data.date_needed) || 'Not provided'}
-Fulfillment: ${clean_(data.fulfillment) || 'Not provided'}
+Date Needed: ${dateNeededText}
+Fulfillment: ${fulfillmentText}
 
-If we need clarification, we’ll contact you using your preferred contact method.
+We will review the details you submitted and contact you with next steps. If we need clarification, we will use your preferred contact method.
 
 Thank you for choosing JILL!
 
@@ -2023,83 +2201,348 @@ jillonlinestore.com`;
 
 
 /* ---------------------------
+   MERCHANT NOTIFICATION
+---------------------------- */
+
+function sendMerchantNotification_(data) {
+  assertMailQuota_('merchant notification');
+
+  const summary = merchantRequestSummary_(data);
+  const customerName = clean_(data.name) || 'Customer';
+  const subject = 'New JILL Custom Order Request — ' + customerName;
+  const shipping = merchantShippingSummary_(data);
+
+  const plainText = [
+    'New JILL Custom Order Request',
+    '',
+    'Submission ID: ' + clean_(data.submission_id),
+    'Submitted: ' + (clean_(data.submitted_at) || 'Not provided'),
+    '',
+    'CUSTOMER',
+    'Name: ' + customerName,
+    'Email: ' + clean_(data.email),
+    'Phone: ' + (clean_(data.phone) || 'Not provided'),
+    'Preferred contact: ' + (clean_(data.preferred_contact) || 'Not provided'),
+    '',
+    'REQUEST',
+    'Collections selected: ' + (clean_(data.collections) || 'Not provided'),
+    'Requested products/items and quantities:',
+    summary.items,
+    '',
+    'Product Options:',
+    summary.productOptions,
+    '',
+    'Personalization:',
+    summary.personalization,
+    '',
+    'Theme / style: ' + (clean_(data.theme) || 'Not provided'),
+    'Colors: ' + (clean_(data.colors) || 'Not provided'),
+    'Reference images: ' + summary.references,
+    '',
+    'PLANNING',
+    'Date Needed: ' + (clean_(data.date_needed) || 'Not provided'),
+    'Fulfillment: ' + (clean_(data.fulfillment) || 'Not provided'),
+    'Shipping: ' + shipping,
+    '',
+    'Marketing consent: ' + (marketingConsentGranted_(data.marketing_consent) ? 'Yes' : 'No'),
+    '',
+    'JILL Custom Order backend'
+  ].join('\n');
+
+  const html = `
+    <h2>New JILL Custom Order Request</h2>
+
+    <p>
+      <strong>Submission ID:</strong> ${escapeHtml_(clean_(data.submission_id))}<br>
+      <strong>Submitted:</strong> ${escapeHtml_(clean_(data.submitted_at) || 'Not provided')}
+    </p>
+
+    <h3>Customer</h3>
+    <p>
+      <strong>Name:</strong> ${escapeHtml_(customerName)}<br>
+      <strong>Email:</strong> ${escapeHtml_(clean_(data.email))}<br>
+      <strong>Phone:</strong> ${escapeHtml_(clean_(data.phone) || 'Not provided')}<br>
+      <strong>Preferred contact:</strong> ${escapeHtml_(clean_(data.preferred_contact) || 'Not provided')}
+    </p>
+
+    <h3>Request</h3>
+    <p>
+      <strong>Collections selected:</strong> ${escapeHtml_(clean_(data.collections) || 'Not provided')}
+    </p>
+
+    <p><strong>Requested products/items and quantities:</strong><br>${multilineHtml_(summary.items)}</p>
+    <p><strong>Product Options:</strong><br>${multilineHtml_(summary.productOptions)}</p>
+    <p><strong>Personalization:</strong><br>${multilineHtml_(summary.personalization)}</p>
+
+    <p>
+      <strong>Theme / style:</strong> ${escapeHtml_(clean_(data.theme) || 'Not provided')}<br>
+      <strong>Colors:</strong> ${escapeHtml_(clean_(data.colors) || 'Not provided')}<br>
+      <strong>Reference images:</strong> ${multilineHtml_(summary.references)}
+    </p>
+
+    <h3>Planning</h3>
+    <p>
+      <strong>Date Needed:</strong> ${escapeHtml_(clean_(data.date_needed) || 'Not provided')}<br>
+      <strong>Fulfillment:</strong> ${escapeHtml_(clean_(data.fulfillment) || 'Not provided')}<br>
+      <strong>Shipping:</strong> ${escapeHtml_(shipping)}
+    </p>
+
+    <p>
+      <strong>Marketing consent:</strong>
+      ${marketingConsentGranted_(data.marketing_consent) ? 'Yes' : 'No'}
+    </p>
+
+    <p><a href="${JILL.STORE_URL}">jillonlinestore.com</a></p>
+  `;
+
+  MailApp.sendEmail(
+    JILL.STORE_EMAIL,
+    subject,
+    plainText,
+    {
+      htmlBody: html,
+      name: 'JILL Custom Orders',
+      replyTo: data.email
+    }
+  );
+}
+
+function assertMailQuota_(label) {
+  const remaining = MailApp.getRemainingDailyQuota();
+
+  if (remaining < 1) {
+    throw new Error(
+      'Google mail quota exhausted before ' + label +
+      '. Remaining recipient quota: ' + remaining
+    );
+  }
+}
+
+function canonicalCustomOrderRequest_(data) {
+  const raw = clean_(data.raw_payload);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function merchantRequestSummary_(data) {
+  const request = canonicalCustomOrderRequest_(data);
+  const items = request && Array.isArray(request.items) ? request.items : [];
+  const flatProducts = clean_(data.products);
+  const itemLines = [];
+  const optionBlocks = [];
+  const personalizationBlocks = [];
+  const referenceIds = [];
+
+  if (flatProducts) {
+    itemLines.push(flatProducts);
+  } else {
+    items.forEach(function(item) {
+      const title = clean_(item && item.title) || clean_(item && item.product_id) || 'Item';
+      const quantity = Math.max(1, Number(item && item.quantity) || 1);
+      itemLines.push(title + ' — Qty ' + quantity);
+    });
+  }
+
+  items.forEach(function(item) {
+    const title = clean_(item && item.title) || clean_(item && item.product_id) || 'Item';
+    const optionLines = [];
+    const attributes = item && Array.isArray(item.attributes) ? item.attributes : [];
+    const variants = item && Array.isArray(item.variant_allocations)
+      ? item.variant_allocations
+      : [];
+
+    attributes.forEach(function(attribute) {
+      optionLines.push(formatMerchantAttribute_(attribute));
+    });
+
+    variants.forEach(function(variant) {
+      const variantTitle = clean_(variant && variant.title) || clean_(variant && variant.variant_id) || 'Variant';
+      const quantity = Math.max(1, Number(variant && variant.quantity) || 1);
+      optionLines.push('Variant: ' + variantTitle + ' — Qty ' + quantity);
+    });
+
+    if (optionLines.length) {
+      optionBlocks.push(title + '\n  ' + optionLines.join('\n  '));
+    }
+
+    const groups = item && Array.isArray(item.personalization_groups)
+      ? item.personalization_groups
+      : [];
+
+    groups.forEach(function(group, index) {
+      const groupLines = [];
+      const groupAttributes = group && Array.isArray(group.attributes)
+        ? group.attributes
+        : [];
+      const allocations = group && Array.isArray(group.allocations)
+        ? group.allocations
+        : [];
+
+      groupAttributes.forEach(function(attribute) {
+        groupLines.push(formatMerchantAttribute_(attribute));
+      });
+
+      groupLines.push('Allocated units: ' + allocations.length);
+      personalizationBlocks.push(
+        title + ' — Personalization ' + (index + 1) + '\n  ' +
+        groupLines.join('\n  ')
+      );
+    });
+
+    const itemReferenceIds = item && Array.isArray(item.reference_ids)
+      ? item.reference_ids
+      : [];
+    itemReferenceIds.forEach(function(referenceId) {
+      const value = clean_(referenceId);
+      if (value && referenceIds.indexOf(value) === -1) referenceIds.push(value);
+    });
+  });
+
+  if (request && Array.isArray(request.reference_ids)) {
+    request.reference_ids.forEach(function(referenceId) {
+      const value = clean_(referenceId);
+      if (value && referenceIds.indexOf(value) === -1) referenceIds.push(value);
+    });
+  }
+
+  const referenceText = clean_(data.reference_images);
+  const referenceParts = [];
+  if (referenceText) referenceParts.push(referenceText);
+  if (referenceIds.length) {
+    referenceParts.push(
+      referenceIds.length + ' reference file(s):\n' + referenceIds.join('\n')
+    );
+  }
+
+  return {
+    items: itemLines.length ? itemLines.join('\n') : 'Not provided',
+    productOptions: optionBlocks.length ? optionBlocks.join('\n\n') : 'No additional product options provided',
+    personalization: personalizationBlocks.length ? personalizationBlocks.join('\n\n') : 'No personalization provided',
+    references: referenceParts.length ? referenceParts.join('\n') : 'No reference images provided'
+  };
+}
+
+function formatMerchantAttribute_(attribute) {
+  const label =
+    clean_(attribute && attribute.label) ||
+    clean_(attribute && attribute.id) ||
+    'Option';
+  const value = attribute ? attribute.value : '';
+  let formatted = '';
+
+  if (Array.isArray(value)) {
+    formatted = value.map(function(item) { return clean_(item); }).filter(Boolean).join(', ');
+  } else if (typeof value === 'boolean') {
+    formatted = value ? 'Yes' : 'No';
+  } else {
+    formatted = clean_(value);
+  }
+
+  return label + ': ' + (formatted || 'Not provided');
+}
+
+function merchantShippingSummary_(data) {
+  const fulfillment = clean_(data.fulfillment).toLowerCase();
+  const address = [clean_(data.city), clean_(data.state), clean_(data.zip)]
+    .filter(Boolean)
+    .join(', ');
+
+  if (fulfillment.indexOf('shipping') === -1) {
+    return address || 'Not applicable';
+  }
+
+  return address || 'Shipping selected; address not provided';
+}
+
+function multilineHtml_(value) {
+  return escapeHtml_(clean_(value) || 'Not provided').replace(/\n/g, '<br>');
+}
+
+
+/* ---------------------------
    SHOPIFY CUSTOMER SYNC
 ---------------------------- */
 
 function syncShopifyCustomer_(data) {
-  const existing = findShopifyCustomerByEmail_(data.email);
-  const customerId = existing ? existing.id : createShopifyCustomer_(data);
+  const email = clean_(data.email).toLowerCase();
 
-  setShopifyCustomerMetafields_(customerId, data);
-  return customerId;
-}
+  if (!isValidEmail_(email)) {
+    throw new Error('Cannot sync Shopify customer without a valid email.');
+  }
 
-function findShopifyCustomerByEmail_(email) {
-  const query = `
-    query FindCustomer($query: String!) {
-      customers(first: 1, query: $query) {
-        nodes {
-          id
-          email
-        }
-      }
-    }
-  `;
-
-  const data = shopifyGraphQL_(query, {
-    query: 'email:' + JSON.stringify(email)
-  });
-
-  const nodes = data.customers ? data.customers.nodes : [];
-  return nodes && nodes.length ? nodes[0] : null;
-}
-
-function createShopifyCustomer_(data) {
+  const submittedPhone = normalizePhone_(data.phone);
   const mutation = `
-    mutation CreateCustomer($input: CustomerInput!) {
-      customerCreate(input: $input) {
-        customer {
-          id
-          email
-        }
-        userErrors {
-          field
-          message
-        }
+    mutation UpsertCustomer(
+      $identifier: CustomerSetIdentifiers,
+      $input: CustomerSetInput!
+    ) {
+      customerSet(identifier: $identifier, input: $input) {
+        customer { id email }
+        userErrors { field message }
       }
     }
   `;
 
   const input = {
-    email: data.email,
+    email: email,
     firstName: firstName_(data.name),
     lastName: lastName_(data.name)
   };
 
-  const phone = clean_(data.phone);
-  if (phone) input.phone = phone;
+  if (!input.lastName) delete input.lastName;
+  if (submittedPhone) input.phone = submittedPhone;
 
-  const result = shopifyGraphQL_(mutation, { input: input });
-  const payload = result.customerCreate;
-  const errors = payload.userErrors || [];
+  let result = shopifyGraphQL_(mutation, {
+    identifier: { email: email },
+    input: input
+  });
+  let payload = result.customerSet || {};
+  let errors = payload.userErrors || [];
+
+  // A malformed or already-owned phone number must not block the email-based
+  // customer upsert. Retry without phone, preserving the canonical email ID.
+  if (errors.length && submittedPhone) {
+    delete input.phone;
+    result = shopifyGraphQL_(mutation, {
+      identifier: { email: email },
+      input: input
+    });
+    payload = result.customerSet || {};
+    errors = payload.userErrors || [];
+  }
 
   if (errors.length) {
-    const duplicate = errors.some(function(error) {
-      return /taken|already|exists/i.test(error.message || '');
-    });
-
-    if (duplicate) {
-      const existing = findShopifyCustomerByEmail_(data.email);
-      if (existing) return existing.id;
-    }
-
     throw new Error(
-      'Shopify customerCreate: ' +
+      'Shopify customerSet: ' +
       errors.map(function(error) { return error.message; }).join(' | ')
     );
   }
 
-  return payload.customer.id;
+  const customer = payload.customer;
+
+  if (!customer || !customer.id) {
+    throw new Error('Shopify customerSet returned no customer ID.');
+  }
+
+  setShopifyCustomerMetafields_(customer.id, data);
+
+  // Unchecked consent never changes an existing marketing state. A checked
+  // submission converges to the production-proven SINGLE_OPT_IN state using
+  // the original submission timestamp so retries do not invent new consent.
+  if (marketingConsentGranted_(data.marketing_consent)) {
+    subscribeEmailMarketing_(
+      customer.id,
+      data.marketing_consent_at || data.submitted_at
+    );
+  }
+
+  return customer.id;
 }
 
 function setShopifyCustomerMetafields_(customerId, data) {
@@ -2129,8 +2572,8 @@ function setShopifyCustomerMetafields_(customerId, data) {
   const result = shopifyGraphQL_(mutation, {
     metafields: metafields
   });
-
-  const errors = result.metafieldsSet.userErrors || [];
+  const payload = result.metafieldsSet || {};
+  const errors = payload.userErrors || [];
 
   if (errors.length) {
     throw new Error(
@@ -2146,7 +2589,6 @@ function buildCustomerMetafields_(ownerId, data) {
     ['request_status', 'single_line_text_field', 'Received'],
     ['last_request_id', 'single_line_text_field', clean_(data.submission_id)],
     ['request_submitted_at', 'date_time', isoDateTime_(data.submitted_at) || now],
-    ['event_date', 'date', isoDate_(data.event_date)],
     ['date_needed', 'date', isoDate_(data.date_needed)],
     ['fulfillment', 'single_line_text_field', clean_(data.fulfillment)],
     ['theme', 'multi_line_text_field', clean_(data.theme)],
@@ -2159,7 +2601,7 @@ function buildCustomerMetafields_(ownerId, data) {
     ['state', 'single_line_text_field', clean_(data.state)],
     ['zip', 'single_line_text_field', clean_(data.zip)],
     ['reference_images', 'json', jsonArrayString_(data.reference_images)],
-    ['marketing_consent', 'boolean', booleanString_(data.marketing_consent)],
+    ['marketing_consent', 'boolean', marketingConsentGranted_(data.marketing_consent) ? 'true' : 'false'],
     ['marketing_consent_at', 'date_time', isoDateTime_(data.marketing_consent_at)],
     ['marketing_consent_source', 'single_line_text_field', clean_(data.marketing_consent_source)]
   ];
@@ -2179,6 +2621,70 @@ function buildCustomerMetafields_(ownerId, data) {
     });
 }
 
+function subscribeEmailMarketing_(customerId, consentAt) {
+  const mutation = `
+    mutation EmailConsent(
+      $input: CustomerEmailMarketingConsentUpdateInput!
+    ) {
+      customerEmailMarketingConsentUpdate(input: $input) {
+        customer { id }
+        userErrors { field message }
+      }
+    }
+  `;
+
+  const timestamp = isoDateTime_(consentAt) || new Date().toISOString();
+  const result = shopifyGraphQL_(mutation, {
+    input: {
+      customerId: customerId,
+      emailMarketingConsent: {
+        marketingState: 'SUBSCRIBED',
+        marketingOptInLevel: 'SINGLE_OPT_IN',
+        consentUpdatedAt: timestamp
+      }
+    }
+  });
+  const payload = result.customerEmailMarketingConsentUpdate || {};
+  const errors = payload.userErrors || [];
+
+  if (errors.length) {
+    throw new Error(
+      'Shopify email consent: ' +
+      errors.map(function(error) { return error.message; }).join(' | ')
+    );
+  }
+}
+
+function marketingConsentGranted_(value) {
+  if (value === true || value === 1) return true;
+  const normalized = clean_(value).toLowerCase();
+  return (
+    normalized === 'yes' ||
+    normalized === 'true' ||
+    normalized === '1' ||
+    normalized === 'on'
+  );
+}
+
+function normalizePhone_(value) {
+  const raw = clean_(value);
+  if (!raw) return '';
+
+  const digits = raw.replace(/\D/g, '');
+
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+
+  if (
+    raw.charAt(0) === '+' &&
+    digits.length >= 8 &&
+    digits.length <= 15
+  ) {
+    return '+' + digits;
+  }
+
+  return '';
+}
 
 /* ---------------------------
    SHOPIFY GRAPHQL
@@ -2596,16 +3102,6 @@ function jsonArrayString_(value) {
   } catch (err) {
     return JSON.stringify([raw]);
   }
-}
-
-function booleanString_(value) {
-  if (value === true || value === 'true' || value === 1 || value === '1') {
-    return 'true';
-  }
-  if (value === false || value === 'false' || value === 0 || value === '0') {
-    return 'false';
-  }
-  return '';
 }
 
 function isoDate_(value) {
