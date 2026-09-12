@@ -45,22 +45,8 @@ jobs:
         run: npm run test:quantity
       - name: Variant allocation tests
         run: npm run test:variant-allocation
-      - name: Custom Order integration diagnostics
-        id: integration
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          npm run test:custom-order-integration 2>&1 | tee custom-order-integration.log
-      - name: Upload integration diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: custom-order-integration-diagnostics
-          path: custom-order-integration.log
-          if-no-files-found: error
-      - name: Require integration success
-        if: steps.integration.outcome != 'success'
-        run: exit 1
+      - name: Custom Order integration tests
+        run: npm run test:custom-order-integration
       - name: Custom Order catalog tests
         run: npm run test:custom-order-catalog-groups
       - name: Custom Order naming tests
@@ -71,8 +57,22 @@ jobs:
         run: npm run check:rewards
       - name: Rewards tests
         run: npm run test:rewards
-      - name: Shopify Theme Check
-        run: npx shopify theme check --path theme
+      - name: Shopify Theme Check diagnostics
+        id: themecheck
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx shopify theme check --path theme 2>&1 | tee theme-check.log
+      - name: Upload Theme Check diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-order-theme-check-diagnostics
+          path: theme-check.log
+          if-no-files-found: error
+      - name: Require Theme Check success
+        if: steps.themecheck.outcome != 'success'
+        run: exit 1
       - name: Final regression guards
         run: |
           python3 -c "from pathlib import Path; s=Path('theme/sections/main-custom-order.liquid').read_text(); r=Path('theme/assets/jill-custom-order.js').read_text(); c=Path('theme/assets/jill-forms.css').read_text(); assert 'AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA' in s; assert 'AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W' not in s; assert 'event_date' not in s and 'event_date' not in r; assert 'needDate.value = earliestNeedDate' not in r; assert 'JILLPersonalization.createState' in r; assert 'data-jill-custom-order-full-profile' in s; assert 'var(--jill-botanical-field)' in c"
