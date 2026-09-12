@@ -1,0 +1,40 @@
+name: Trace Live Custom Order POST Redirect
+
+on:
+  push:
+    branches:
+      - jill/live-custom-order-e2e
+    paths:
+      - .github/probe-live-custom-order-redirect.trigger
+
+permissions:
+  contents: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trace POST without following redirects
+        shell: bash
+        env:
+          ENDPOINT: https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec
+        run: |
+          set -euo pipefail
+          PAYLOAD='{"source":"JILL custom order","submission_id":"jill:backend-e2e-20260912-1024-a1","submitted_at":"2026-09-12T14:24:00.000Z","name":"JILL Backend E2E Test","email":"info+backendtest-20260912-1024@jillonlinestore.com","preferred_contact":"email","date_needed":"2026-09-30","fulfillment":"Jacksonville pickup","theme":"Backend verification","colors":"JILL test","collections":"Piñatas","products":"1 × Piñata – 13 Inch","reference_images":"No","marketing_consent":"Yes","marketing_consent_at":"2026-09-12T14:24:00.000Z","marketing_consent_source":"backend_e2e_verification"}'
+          set +e
+          curl -sS --max-redirs 0 -D headers.txt -o body.txt -H 'Content-Type: application/json' --data "$PAYLOAD" "$ENDPOINT"
+          RC=$?
+          set -e
+          echo "CURL_RC=$RC"
+          echo '--- HEADERS ---'
+          cat headers.txt
+          echo '--- BODY ---'
+          cat body.txt || true
+          echo
+          LOCATION="$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' headers.txt)"
+          echo "LOCATION=$LOCATION"
+          if [ -n "$LOCATION" ]; then
+            echo '--- LOCATION GET ---'
+            curl -fsSL "$LOCATION" || true
+            echo
+          fi
