@@ -46,3 +46,5 @@ jobs:
           git diff --cached --check
           git commit -m 'Fix Custom Order phone SVG parity and CSS ownership'
           git push origin HEAD:jill/theme-core
+
+# retry after CSS ownership consolidation
