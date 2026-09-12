@@ -1,0 +1,121 @@
+name: One-time fix Custom Order phone parity
+
+on:
+  push:
+    branches:
+      - jill/theme-core
+    paths:
+      - '.github/workflows/fix-custom-order-phone-and-deploy.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Theme Core
+        uses: actions/checkout@v4
+        with:
+          ref: jill/theme-core
+          fetch-depth: 0
+
+      - name: Fix phone SVG parity and CSS ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          css_path = Path('theme/assets/jill-forms.css')
+          section_path = Path('theme/sections/main-custom-order.liquid')
+          phone_path = Path('theme/assets/jill-email-validation.js')
+          test_path = Path('scripts/test-custom-order-integration.mjs')
+
+          css = css_path.read_text()
+          old = """  .jill-phone-field__country,\n  .jill-phone-field__number {\n    min-width: 0;\n    max-width: 100%;\n  }\n\n  .jill-phone-field__country {\n    padding-inline: calc(var(--jill-space-unit) * 1.25);\n  }\n"""
+          new = """  .jill-phone-field__control > .jill-field__control,\n  .jill-phone-field__country-shell {\n    min-width: 0;\n    max-width: 100%;\n  }\n\n  .jill-phone-field__country-shell {\n    position: relative;\n    display: grid;\n    grid-template-columns: 1.5rem minmax(2.75rem, auto) 1rem;\n    align-items: center;\n    gap: calc(var(--jill-space-unit) * 0.75);\n    min-height: var(--jill-field-height);\n    padding-inline: calc(var(--jill-space-unit) * 1.25);\n    border: var(--jill-border-width) solid var(--jill-color-border);\n    border-radius: var(--jill-field-radius);\n    background: var(--jill-color-background);\n    color: var(--jill-color-foreground);\n  }\n\n  .jill-phone-field__flag {\n    display: block;\n    width: 1.5rem;\n    height: 1rem;\n    border-radius: 0.125rem;\n    object-fit: cover;\n    box-shadow: 0 0 0 1px color-mix(in srgb, var(--jill-color-foreground) 12%, transparent);\n  }\n\n  .jill-phone-field__dial {\n    font-weight: 700;\n    line-height: 1;\n    white-space: nowrap;\n  }\n\n  .jill-phone-field__chevron {\n    width: 0.75rem;\n    height: 0.75rem;\n    border-inline-end: 0.125rem solid currentColor;\n    border-block-end: 0.125rem solid currentColor;\n    transform: rotate(45deg) translateY(-0.125rem);\n    transform-origin: center;\n  }\n\n  .jill-phone-field__country {\n    position: absolute;\n    inset: 0;\n    width: 100%;\n    height: 100%;\n    margin: 0;\n    cursor: pointer;\n    opacity: 0;\n  }\n"""
+          if old not in css:
+              raise SystemExit('phone CSS ownership anchor not found')
+          css = css.replace(old, new, 1)
+          css_path.write_text(css)
+
+          section = section_path.read_text()
+          old = '<select class="jill-field__control jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>'
+          new = '''<div class="jill-phone-field__country-shell">
+              <img class="jill-phone-field__flag" data-jill-phone-flag alt="" width="24" height="16">
+              <span class="jill-phone-field__dial" data-jill-phone-dial aria-hidden="true"></span>
+              <span class="jill-phone-field__chevron" aria-hidden="true"></span>
+              <select class="jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>
+            </div>'''
+          if old not in section:
+              raise SystemExit('phone country select anchor not found')
+          section = section.replace(old, new, 1)
+          section_path.write_text(section)
+
+          phone = phone_path.read_text()
+          old_flag = '''  function flag(iso) {
+    if (!/^[A-Z]{2}$/.test(iso)) return '🌐';
+    return String.fromCodePoint(...iso.split('').map((letter) => 127397 + letter.charCodeAt(0)));
+  }
+'''
+          new_flag = '''  function flagUrl(iso) {
+    if (!/^[A-Z]{2}$/.test(iso)) return '';
+    return `https://flagcdn.com/${iso.toLowerCase()}.svg`;
+  }
+'''
+          if old_flag not in phone:
+              raise SystemExit('emoji flag helper anchor not found')
+          phone = phone.replace(old_flag, new_flag, 1)
+
+          old_validate = """    const help = field.querySelector('[data-jill-phone-help]');\n    if (help) help.textContent = message || `${flag(country.iso)} ${country.dial ? `+${country.dial}` : ''} ${country.name}`.trim();\n    return !message;\n"""
+          new_validate = """    const help = field.querySelector('[data-jill-phone-help]');\n    if (help) help.textContent = message || `${country.dial ? `+${country.dial} · ` : ''}${country.name}`;\n    return !message;\n"""
+          if old_validate not in phone:
+              raise SystemExit('phone validation flag anchor not found')
+          phone = phone.replace(old_validate, new_validate, 1)
+
+          old_sync = """    input.value = formatNational(country, digits);\n    input.placeholder = country.placeholder;\n    input.maxLength = Math.max(country.placeholder.length + 3, formatNational(country, '9'.repeat(country.max)).length);\n    input.setAttribute('aria-label', `${country.name} phone number`);\n    validate(field);\n"""
+          new_sync = """    input.value = formatNational(country, digits);\n    input.placeholder = country.placeholder;\n    input.maxLength = Math.max(country.placeholder.length + 3, formatNational(country, '9'.repeat(country.max)).length);\n    input.setAttribute('aria-label', `${country.name} phone number`);\n    const flag = field.querySelector('[data-jill-phone-flag]');\n    const dial = field.querySelector('[data-jill-phone-dial]');\n    if (flag) {\n      const source = flagUrl(country.iso);\n      flag.hidden = !source;\n      if (source) flag.src = source;\n    }\n    if (dial) dial.textContent = country.dial ? `+${country.dial}` : 'Intl';\n    validate(field);\n"""
+          if old_sync not in phone:
+              raise SystemExit('phone sync anchor not found')
+          phone = phone.replace(old_sync, new_sync, 1)
+
+          old_option = """      option.value = country.iso;\n      option.textContent = `${flag(country.iso)} ${country.dial ? `+${country.dial}` : 'Intl'}`;\n      option.title = `${country.name}${country.dial ? ` +${country.dial}` : ''}`;\n"""
+          new_option = """      option.value = country.iso;\n      option.textContent = `${country.name}${country.dial ? ` (+${country.dial})` : ''}`;\n      option.title = option.textContent;\n"""
+          if old_option not in phone:
+              raise SystemExit('phone option flag anchor not found')
+          phone = phone.replace(old_option, new_option, 1)
+          phone_path.write_text(phone)
+
+          tests = test_path.read_text()
+          marker = "assert.match(emailValidation, /function getPhoneValue/, 'shared phone owner must normalize the submitted phone value');"
+          additions = """assert.match(emailValidation, /flagcdn\\.com\\/\\$\\{iso\\.toLowerCase\\(\\)\\}\\.svg/, 'country selector must render full-color SVG flag assets');\nassert.doesNotMatch(emailValidation, /String\\.fromCodePoint|127397/, 'country selector must not fall back to emoji flags');\nassert.match(section, /data-jill-phone-flag/, 'phone country control must expose the visible SVG flag surface');\nassert.match(formsCss, /jill-phone-field__country-shell/, 'phone country SVG surface must have one canonical layout owner');\n"""
+          if marker not in tests:
+              raise SystemExit('phone integration guard anchor not found')
+          if 'country selector must render full-color SVG flag assets' not in tests:
+              tests = tests.replace(marker, marker + '\n' + additions, 1)
+          test_path.write_text(tests)
+          PY
+
+      - name: Validate full Theme Core source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install
+          node --check theme/assets/jill-email-validation.js
+          node scripts/check-theme-core.mjs
+          node scripts/test-custom-order-integration.mjs
+          node scripts/check-custom-order-contract.mjs
+          git diff --check
+
+      - name: Commit clean fix and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/fix-custom-order-phone-and-deploy.yml
+          git config user.name 'JILLOnline'
+          git config user.email 'info@jillonlinestore.com'
+          git add theme/assets/jill-forms.css theme/sections/main-custom-order.liquid theme/assets/jill-email-validation.js scripts/test-custom-order-integration.mjs .github/workflows/fix-custom-order-phone-and-deploy.yml
+          git diff --cached --check
+          git commit -m 'Fix Custom Order phone SVG parity and CSS ownership'
+          git push origin HEAD:jill/theme-core
