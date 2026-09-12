@@ -23,15 +23,19 @@ jobs:
       - name: Apply request repair
         run: python scripts/restore-custom-order-request-pipeline.py
 
-      - name: Validate repair
+      - name: Validate request backend and repair
         shell: bash
         run: |
           set -euo pipefail
           node --check theme/assets/jill-custom-order.js
           node scripts/test-custom-order-integration.mjs
-          response="$(curl -L --fail --silent --show-error --max-time 180 'https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec?jill_rewards_watchdog=1')"
-          printf '%s\n' "$response"
-          RESPONSE="$response" python -c "import json,os; data=json.loads(os.environ['RESPONSE']); assert data.get('ok') is True; assert data.get('watchdog') is True; assert str(data.get('engine_version')) == '13'"
+          endpoint='https://script.google.com/macros/s/AKfycbwjFDQxhjc4RDu8T0gSweQf70Y5TheTyWZ6KoVDux6Hx-Ue9jdE7E5Enl5nyxjJpo2W/exec'
+          get_response="$(curl -L --fail --silent --show-error --max-time 60 "$endpoint")"
+          printf '%s\n' "$get_response"
+          printf '%s' "$get_response" | grep -Fq 'JILL Custom Order Automation is online.'
+          post_response="$(curl -L --fail --silent --show-error --max-time 60 -X POST --data-urlencode 'source=JILL diagnostic' "$endpoint")"
+          printf '%s\n' "$post_response"
+          RESPONSE="$post_response" python -c "import json,os; data=json.loads(os.environ['RESPONSE']); assert data.get('ok') is False; assert data.get('error') == 'Invalid source'"
 
       - name: Commit clean repair
         shell: bash
