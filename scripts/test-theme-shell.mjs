@@ -59,8 +59,8 @@ for (const forbidden of ['<style', 'style=', 'MutationObserver', 'insertAdjacent
 const dock = read('theme/snippets/jill-category-dock.liquid');
 includesAll(dock, 'collection dock', [
   'data-jill-category-dock',
-  'jill-category-dock__track',
   'jill-category-dock__item',
+  'jill-category-dock__image',
   '#JillCatalogCollection-',
 ]);
 for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver', 'setTimeout']) {
@@ -130,8 +130,15 @@ for (const forbidden of ['<style', 'style=', '<script', 'MutationObserver']) {
 if (fs.existsSync('theme/assets/jill-content-page.css')) {
   fail('content page styles must stay in the canonical jill-storefront.css owner');
 }
-const contentPageCss = read('theme/assets/jill-storefront.css');
-includesAll(contentPageCss, 'content page CSS', [
+
+const storefrontCss = read('theme/assets/jill-storefront.css');
+includesAll(storefrontCss, 'storefront CSS', [
+  '.jill-site-header__layout',
+  '.jill-site-header__drawer-panel',
+  '.jill-site-header__utilities',
+  '.jill-site-header__socials',
+  '.jill-site-header__localization',
+  '.jill-site-header--sticky',
   '.jill-content-page',
   '.jill-content-page__hero',
   '.jill-content-page__body',
@@ -141,7 +148,7 @@ includesAll(contentPageCss, 'content page CSS', [
   "[data-content-width='wide']",
   '@media (max-width: 749px)',
 ]);
-if (/\.jill-content-page\s*\{[^}]*width:\s*100%/s.test(contentPageCss)) {
+if (/\.jill-content-page\s*\{[^}]*width:\s*100%/s.test(storefrontCss)) {
   fail('content page shell must preserve the canonical jill-page-width constraint');
 }
 
@@ -169,16 +176,6 @@ includesAll(mainSearch, 'search results page', [
   "'search.result_count' | t",
   'search.results',
   "render 'product-card'",
-]);
-
-const storefrontCss = read('theme/assets/jill-storefront.css');
-includesAll(storefrontCss, 'storefront CSS', [
-  '.jill-site-header__layout',
-  '.jill-site-header__drawer-panel',
-  '.jill-site-header__utilities',
-  '.jill-site-header__socials',
-  '.jill-site-header__localization',
-  '.jill-site-header--sticky',
 ]);
 
 const formsCss = read('theme/assets/jill-forms.css');
@@ -250,7 +247,7 @@ includesAll(accountDashboardConfig, 'account dashboard target', ['customer-accou
 includesAll(accountCouponsConfig, 'account coupons target', ['customer-account.page.render']);
 includesAll(accountProfileConfig, 'account profile target', ['customer-account.profile.block.render']);
 includesAll(accountDashboard, 'account dashboard page shell', ['<s-page', 'Back to JILL']);
-includesAll(accountCoupons, 'account coupon page shell', ['<s-page', 'My Coupons']);
+includesAll(accountCoupons, 'account coupon page shell', ['<s-page', 'heading="Coupons"']);
 for (const source of [accountDashboard, accountCoupons]) {
   if (source.includes('theme.liquid') || source.includes('jill-site-header') || source.includes('jill-site-footer')) {
     fail('customer-account full pages must stay inside Shopify account header/footer instead of importing storefront Liquid shell');
