@@ -1,0 +1,300 @@
+name: Patch reward generation enqueue flow
+
+on:
+  push:
+    branches:
+      - jill/rewards-generate-fix
+    paths:
+      - '.github/workflows/patch-rewards-generate-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/rewards-generate-fix
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Patch canonical reward request flow
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          dashboard_path = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          source = dashboard_path.read_text()
+
+          old = "const API = 'shopify://customer-account/api/2026-07/graphql.json';\nconst STORE = 'https://jillonlinestore.com';\nconst REWARDS_REFRESH_MS = 25000;"
+          new = "const API = 'shopify://customer-account/api/2026-07/graphql.json';\nconst WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';\nconst STORE = 'https://jillonlinestore.com';\nconst REWARDS_REFRESH_MS = 25000;\nconst REWARD_REQUEST_TIMEOUT_MS = 10000;"
+          assert old in source, 'API constants anchor not found'
+          source = source.replace(old, new, 1)
+
+          mutation_anchor = '''const REQUEST_REWARD_MUTATION = `
+            mutation RequestJillReward($metafields: [MetafieldsSetInput!]!) {
+              metafieldsSet(metafields: $metafields) {
+                metafields { namespace key value }
+                userErrors { field message code }
+              }
+            }
+          `;'''
+          verify_block = mutation_anchor + '''
+
+          const VERIFY_REWARD_REQUEST_QUERY = `
+            query VerifyJillRewardRequest {
+              customer {
+                redeemRequestPoints: metafield(namespace: "jill_rewards", key: "redeem_request_points") {
+                  value
+                }
+                redeemRequestNonce: metafield(namespace: "jill_rewards", key: "redeem_request_nonce") {
+                  value
+                }
+                coupons: metafield(namespace: "jill_rewards", key: "coupons") {
+                  value
+                }
+              }
+            }
+          `;'''
+          assert mutation_anchor in source, 'reward mutation anchor not found'
+          source = source.replace(mutation_anchor, verify_block, 1)
+
+          pattern = re.compile(r"async function requestReward\(customerId, points\) \{.*?\n\}\n\nfunction wait\(milliseconds\)", re.S)
+          match = pattern.search(source)
+          assert match, 'requestReward block not found'
+          replacement = '''async function fetchCustomerAccount(url, options, timeoutMessage) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REWARD_REQUEST_TIMEOUT_MS);
+
+            try {
+              return await fetch(url, {...options, signal: controller.signal});
+            } catch (error) {
+              if (error?.name === 'AbortError') {
+                throw new Error(timeoutMessage);
+              }
+              throw error;
+            } finally {
+              clearTimeout(timeoutId);
+            }
+          }
+
+          async function verifyRewardRequest(points, nonce) {
+            const response = await fetchCustomerAccount(
+              API,
+              {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({query: VERIFY_REWARD_REQUEST_QUERY}),
+              },
+              'JILL could not confirm your reward request in time. Refresh your rewards before trying again.',
+            );
+            const payload = await response.json();
+            const customer = payload?.data?.customer;
+            if (!response.ok || payload?.errors?.length || !customer) {
+              throw new Error(
+                payload?.errors?.[0]?.message ||
+                  'JILL could not confirm your reward request. Refresh your rewards before trying again.',
+              );
+            }
+
+            const requestPoints = customer?.redeemRequestPoints?.value || '';
+            const requestNonce = customer?.redeemRequestNonce?.value || '';
+            const wallet = rewardWallet(customer?.coupons?.value);
+            const pendingMatches = requestPoints === String(points) && requestNonce === nonce;
+            const alreadyConsumed =
+              requestNonce === `consumed:${nonce}` ||
+              wallet.some((coupon) => coupon?.request_nonce === nonce);
+
+            if (!pendingMatches && !alreadyConsumed) {
+              throw new Error(
+                'Shopify did not persist your reward request. Your points were not changed. Please try again.',
+              );
+            }
+          }
+
+          async function requestReward(customerId, points) {
+            const nonce = createRewardNonce();
+            const response = await fetchCustomerAccount(
+              WRITE_API,
+              {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                  query: REQUEST_REWARD_MUTATION,
+                  variables: {
+                    metafields: [
+                      {
+                        ownerId: customerId,
+                        namespace: 'jill_rewards',
+                        key: 'redeem_request_points',
+                        type: 'number_integer',
+                        value: String(points),
+                      },
+                      {
+                        ownerId: customerId,
+                        namespace: 'jill_rewards',
+                        key: 'redeem_request_nonce',
+                        type: 'single_line_text_field',
+                        value: nonce,
+                      },
+                    ],
+                  },
+                }),
+              },
+              'JILL could not start your reward request in time. Refresh your rewards before trying again.',
+            );
+
+            const payload = await response.json();
+            const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
+            if (!response.ok || payload?.errors?.length || userErrors.length) {
+              throw new Error(
+                userErrors?.[0]?.message ||
+                  payload?.errors?.[0]?.message ||
+                  'Unable to request your JILL reward right now.',
+              );
+            }
+
+            const written = payload?.data?.metafieldsSet?.metafields;
+            const writeConfirmed = Array.isArray(written) && [
+              ['redeem_request_points', String(points)],
+              ['redeem_request_nonce', nonce],
+            ].every(([key, value]) => written.some((field) =>
+              field?.namespace === 'jill_rewards' && field.key === key && field.value === value,
+            ));
+            if (!writeConfirmed) {
+              throw new Error('Shopify did not confirm your reward request. Refresh your rewards before trying again.');
+            }
+
+            await verifyRewardRequest(points, nonce);
+            return nonce;
+          }
+
+          function wait(milliseconds)'''
+          source = source[:match.start()] + replacement + source[match.end():]
+
+          old = "const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;\n  const isGeneratingReward = Boolean(pendingPoints) && !redeemError;"
+          new = "const pendingPoints = requestedPoints || localPendingPoints;\n  const isSubmittingReward = Boolean(submittingPoints);\n  const isGeneratingReward = Boolean(pendingPoints) && !redeemError;"
+          assert old in source, 'pendingPoints anchor not found'
+          source = source.replace(old, new, 1)
+
+          old = "if (!customer?.id || pendingPoints || points < tier.points || activeCouponForTier(tier.points)) {"
+          new = "if (!customer?.id || pendingPoints || isSubmittingReward || points < tier.points || activeCouponForTier(tier.points)) {"
+          assert old in source, 'redeem guard anchor not found'
+          source = source.replace(old, new, 1)
+
+          old = '''    setConfirmTier(null);
+              setFreshCoupon(null);
+              setRedeemError('');
+              setSlowRequest(false);
+              setSubmittingPoints(tier.points);
+              setLocalPendingPoints(tier.points);
+
+              try {
+                const requestNonce = await requestReward(customer.id, tier.points);
+                let completed = false;'''
+          new = '''    setFreshCoupon(null);
+              setRedeemError('');
+              setSlowRequest(false);
+              setSubmittingPoints(tier.points);
+
+              try {
+                const requestNonce = await requestReward(customer.id, tier.points);
+                setConfirmTier(null);
+                setLocalPendingPoints(tier.points);
+                setSubmittingPoints(0);
+                let completed = false;'''
+          assert old in source, 'redeem start anchor not found'
+          source = source.replace(old, new, 1)
+
+          old = '''    } catch (error) {
+                console.warn('JILL reward request error', error);
+                setLocalPendingPoints(0);'''
+          new = '''    } catch (error) {
+                console.warn('JILL reward request error', error);
+                setConfirmTier(null);
+                setLocalPendingPoints(0);'''
+          assert old in source, 'redeem catch anchor not found'
+          source = source.replace(old, new, 1)
+
+          old = 'disabled={Boolean(pendingPoints)}'
+          new = 'disabled={Boolean(pendingPoints || isSubmittingReward)}'
+          assert old in source, 'reward disable anchor not found'
+          source = source.replace(old, new, 1)
+
+          dashboard_path.write_text(source)
+
+          test_path = Path('scripts/test-account-reward-request.mjs')
+          test_path.write_text(r'''import fs from 'node:fs';
+
+          function fail(message) {
+            throw new Error(`Account reward request test failed: ${message}`);
+          }
+
+          const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+
+          for (const marker of [
+            "const API = 'shopify://customer-account/api/2026-07/graphql.json'",
+            "const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json'",
+            'const REWARD_REQUEST_TIMEOUT_MS = 10000',
+            'VERIFY_REWARD_REQUEST_QUERY',
+            'new AbortController()',
+            'await verifyRewardRequest(points, nonce)',
+            "requestNonce === `consumed:${nonce}`",
+            "wallet.some((coupon) => coupon?.request_nonce === nonce)",
+            'const pendingPoints = requestedPoints || localPendingPoints;',
+            'pendingPoints || isSubmittingReward',
+          ]) {
+            if (!source.includes(marker)) fail(`missing ${marker}`);
+          }
+
+          const requestCall = source.indexOf('const requestNonce = await requestReward(customer.id, tier.points);');
+          const pendingStart = source.indexOf('setLocalPendingPoints(tier.points);', requestCall);
+          if (requestCall < 0 || pendingStart < 0 || pendingStart < requestCall) {
+            fail('Creating state must begin only after the Shopify enqueue is confirmed');
+          }
+
+          const writeCall = source.indexOf('WRITE_API');
+          const verifyCall = source.indexOf('await verifyRewardRequest(points, nonce)');
+          if (writeCall < 0 || verifyCall < 0 || verifyCall < writeCall) {
+            fail('reward request must write before read-back verification');
+          }
+
+          for (const forbidden of ['X-Shopify-Access-Token', 'SHOPIFY_ADMIN', 'MutationObserver', 'innerHTML']) {
+            if (source.includes(forbidden)) fail(`dashboard reward path must not contain ${forbidden}`);
+          }
+
+          console.log('Customer account reward enqueue contract passed.');
+          ''')
+
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          command = 'node scripts/test-account-reward-request.mjs'
+          if command not in package['scripts']['postinstall']:
+            package['scripts']['postinstall'] += ' && ' + command
+          package['scripts']['test:account-reward-request'] = command
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+          PY
+
+      - name: Run full repository guards
+        run: npm install
+
+      - name: Confirm focused reward enqueue contract
+        run: npm run test:account-reward-request
+
+      - name: Commit canonical fix
+        shell: bash
+        run: |
+          git config user.name 'JILLOnline'
+          git config user.email 'info@jillonlinestore.com'
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx scripts/test-account-reward-request.mjs package.json package-lock.json
+          git diff --cached --check
+          git commit -m 'Fix customer reward request enqueue'
+          git push origin HEAD:jill/rewards-generate-fix
