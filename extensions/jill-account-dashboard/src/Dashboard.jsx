@@ -12,8 +12,10 @@ import {
 } from './rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
+const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
 const REWARDS_REFRESH_MS = 25000;
+const REWARD_REQUEST_TIMEOUT_MS = 10000;
 
 const JILL_KEYS = [
   'last_custom_request_at',
@@ -116,51 +118,67 @@ function createRewardNonce() {
 
 async function requestReward(customerId, points) {
   const nonce = createRewardNonce();
-  const response = await fetch(API, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      query: REQUEST_REWARD_MUTATION,
-      variables: {
-        metafields: [
-          {
-            ownerId: customerId,
-            namespace: 'jill_rewards',
-            key: 'redeem_request_points',
-            type: 'number_integer',
-            value: String(points),
-          },
-          {
-            ownerId: customerId,
-            namespace: 'jill_rewards',
-            key: 'redeem_request_nonce',
-            type: 'single_line_text_field',
-            value: nonce,
-          },
-        ],
-      },
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REWARD_REQUEST_TIMEOUT_MS);
 
-  const payload = await response.json();
-  const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
-  if (!response.ok || payload?.errors?.length || userErrors.length) {
-    throw new Error(
-      userErrors?.[0]?.message ||
-        payload?.errors?.[0]?.message ||
-        'Unable to request your JILL reward right now.',
-    );
+  try {
+    const response = await fetch(WRITE_API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      signal: controller.signal,
+      body: JSON.stringify({
+        query: REQUEST_REWARD_MUTATION,
+        variables: {
+          metafields: [
+            {
+              ownerId: customerId,
+              namespace: 'jill_rewards',
+              key: 'redeem_request_points',
+              type: 'number_integer',
+              value: String(points),
+            },
+            {
+              ownerId: customerId,
+              namespace: 'jill_rewards',
+              key: 'redeem_request_nonce',
+              type: 'single_line_text_field',
+              value: nonce,
+            },
+          ],
+        },
+      }),
+    });
+
+    const payload = await response.json();
+    const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
+    if (!response.ok || payload?.errors?.length || userErrors.length) {
+      throw new Error(
+        userErrors?.[0]?.message ||
+          payload?.errors?.[0]?.message ||
+          'Unable to request your JILL reward right now.',
+      );
+    }
+
+    const written = payload?.data?.metafieldsSet?.metafields;
+    if (!Array.isArray(written) || ![
+      ['redeem_request_points', String(points)],
+      ['redeem_request_nonce', nonce],
+    ].every(([key, value]) => written.some((field) =>
+      field?.namespace === 'jill_rewards' && field.key === key && field.value === value,
+    ))) {
+      throw new Error('Shopify did not confirm your reward request. Refresh your rewards before trying again.');
+    }
+    return nonce;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(
+        'JILL could not start your reward request in time. Your points were not changed. Please try again.',
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  const written = payload?.data?.metafieldsSet?.metafields;
-  if (!Array.isArray(written) || ![
-    ['redeem_request_points', String(points)],
-    ['redeem_request_nonce', nonce],
-  ].every(([key, value]) => written.some((field) =>
-    field?.namespace === 'jill_rewards' && field.key === key && field.value === value,
-  ))) {
-    throw new Error('Shopify did not confirm your reward request. Refresh your rewards before trying again.');
-  }
-  return nonce;
 }
 
 function wait(milliseconds) {
