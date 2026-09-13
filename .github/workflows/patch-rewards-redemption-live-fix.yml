@@ -1,0 +1,75 @@
+name: Patch Rewards redemption transport
+
+on:
+  push:
+    branches:
+      - jill/rewards-redemption-live-fix
+    paths:
+      - '.github/workflows/patch-rewards-redemption-live-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/rewards-redemption-live-fix
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Repair Customer Account reward write transport
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          dashboard = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
+          source = dashboard.read_text()
+          wrong = "const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';"
+          right = "const WRITE_API = 'shopify://customer-account/api/2026-07/graphql.json';"
+          assert wrong in source, 'Expected malformed WRITE_API was not found'
+          source = source.replace(wrong, right, 1)
+          dashboard.write_text(source)
+
+          test = Path('scripts/test-rewards-redemption.mjs')
+          source = test.read_text()
+          source = source.replace(
+              "  WRITE_API: 'shopify:customer-account/api/2026-07/graphql.json',",
+              "  WRITE_API: 'shopify://customer-account/api/2026-07/graphql.json',",
+              1,
+          )
+          source = source.replace(
+              "  assert.equal(url, 'shopify:customer-account/api/2026-07/graphql.json');",
+              "  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');",
+              1,
+          )
+          anchor = "const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');\n"
+          guard = (
+              anchor +
+              "assert.ok(source.includes(\"shopify://customer-account/api/2026-07/graphql.json\"));\n" +
+              "assert.ok(!source.includes(\"shopify:customer-account/api/\"));\n"
+          )
+          assert anchor in source, 'Dashboard source test anchor missing'
+          source = source.replace(anchor, guard, 1)
+          test.write_text(source)
+          PY
+
+      - name: Run repository guards
+        run: npm install
+
+      - name: Commit canonical fix
+        shell: bash
+        run: |
+          git config user.name 'JILLOnline'
+          git config user.email 'info@jillonlinestore.com'
+          git add extensions/jill-account-dashboard/src/Dashboard.jsx scripts/test-rewards-redemption.mjs
+          git diff --cached --check
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'Fix Rewards redemption Customer Account transport'
+          git push origin HEAD:jill/rewards-redemption-live-fix
