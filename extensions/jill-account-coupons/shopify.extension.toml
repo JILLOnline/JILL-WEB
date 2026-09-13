@@ -4,6 +4,7 @@ api_version = "2026-07"
 type = "ui_extension"
 name = "Coupons"
 handle = "jill-account-coupons"
+uid = "01a07d19-eb4d-7a32-9c0c-36916f1dae4b"
 
 [[extensions.targeting]]
 target = "customer-account.page.render"
