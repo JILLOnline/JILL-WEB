@@ -4,6 +4,7 @@ api_version = "2026-07"
 type = "ui_extension"
 name = "JILL Settings"
 handle = "jill-account-home"
+uid = "923e30e6-dbf9-f48a-57a6-0dbd1ab57763f55ebbde"
 
 [[extensions.targeting]]
 target = "customer-account.profile.block.render"
