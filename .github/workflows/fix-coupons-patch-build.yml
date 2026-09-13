@@ -1,0 +1,62 @@
+name: Fix Coupons patch build validation
+
+on:
+  push:
+    branches:
+      - jill/coupons-live-promotions
+    paths:
+      - '.github/workflows/fix-coupons-patch-build.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/coupons-live-promotions
+          fetch-depth: 0
+
+      - name: Correct production app build validation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/patch-coupons-live-promotions.yml')
+          source = path.read_text()
+          old = "      - name: Build Shopify app extensions\n        run: npx shopify app build\n"
+          new = '''      - name: Pull current JILL Custom Form app configuration
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+          SHOPIFY_CLIENT_ID: ebf1a69d82f46619d2f2945faab78afa
+        run: >-
+          npx shopify app config link
+          --client-id "$SHOPIFY_CLIENT_ID"
+          --file-name production
+          --force
+
+      - name: Preserve current scopes and add Customer Account scopes
+        run: node scripts/merge-shopify-scopes.mjs shopify.app.production.toml
+
+      - name: Validate Shopify configuration and extensions
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: npx shopify app config validate --config production
+
+      - name: Build Shopify app extensions
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        run: npx shopify app build --config production
+'''
+          assert old in source, 'build validation anchor missing'
+          path.write_text(source.replace(old, new, 1))
+          PY
+
+          git config user.name 'JILLOnline'
+          git config user.email 'info@jillonlinestore.com'
+          git add .github/workflows/patch-coupons-live-promotions.yml
+          git diff --cached --check
+          git commit -m 'Validate Coupons against linked Shopify app'
+          git push origin HEAD:jill/coupons-live-promotions
