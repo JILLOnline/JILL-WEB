@@ -12,6 +12,8 @@ import {
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
 assert.ok(source.includes("shopify://customer-account/api/2026-07/graphql.json"));
 assert.ok(!source.includes("shopify:customer-account/api/"));
+assert.ok(!source.includes("const WRITE_API"));
+assert.ok(!source.includes("AbortController"));
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
 function between(start, end) {
@@ -124,24 +126,18 @@ for (const overrides of [
 // Validate actual mutation variables and all error/acknowledgment branches.
 const api = vm.createContext({
   API: 'shopify://customer-account/api/2026-07/graphql.json',
-  WRITE_API: 'shopify://customer-account/api/2026-07/graphql.json',
   QUERY: 'query {}',
-  REWARD_REQUEST_TIMEOUT_MS: 10000,
-  AbortController,
-  setTimeout,
-  clearTimeout,
 });
 vm.runInContext(mutation + transport, api);
 api.fetch = async (url, options) => {
   assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
-  assert.ok(options.signal);
+  assert.equal(options.signal, undefined);
   const {variables} = JSON.parse(options.body);
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
   assert.ok(variables.metafields.every((f) => f.ownerId === 'gid://shopify/Customer/1'));
   return {ok: true, json: async () => ({data: {metafieldsSet: {metafields: variables.metafields, userErrors: []}}})};
 };
 assert.match(await api.requestReward('gid://shopify/Customer/1', 10), /^jill:/);
-assert.equal(api.REWARD_REQUEST_TIMEOUT_MS, 10000);
 for (const payload of [
   {}, {data: {metafieldsSet: null}},
   {data: {metafieldsSet: {metafields: [], userErrors: []}}},
