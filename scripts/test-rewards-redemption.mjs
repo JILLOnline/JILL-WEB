@@ -11,8 +11,7 @@ import {
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
 assert.ok(source.includes("shopify://customer-account/api/2026-07/graphql.json"));
-assert.ok(!source.includes("shopify:customer-account/api/"));
-assert.ok(!source.includes("const WRITE_API"));
+assert.ok(source.includes("const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';"));
 assert.ok(!source.includes("AbortController"));
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
@@ -126,11 +125,12 @@ for (const overrides of [
 // Validate actual mutation variables and all error/acknowledgment branches.
 const api = vm.createContext({
   API: 'shopify://customer-account/api/2026-07/graphql.json',
+  WRITE_API: 'shopify:customer-account/api/2026-07/graphql.json',
   QUERY: 'query {}',
 });
 vm.runInContext(mutation + transport, api);
 api.fetch = async (url, options) => {
-  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
+  assert.equal(url, 'shopify:customer-account/api/2026-07/graphql.json');
   assert.equal(options.signal, undefined);
   const {variables} = JSON.parse(options.body);
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
