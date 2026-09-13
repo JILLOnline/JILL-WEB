@@ -17,49 +17,44 @@ function includesAll(source, owner, markers) {
 
 const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
-const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 
 includesAll(config, 'Coupons extension config', [
   'api_version = "2026-07"',
+  'handle = "jill-account-coupons"',
   'target = "customer-account.page.render"',
   'module = "./src/Coupons.jsx"',
-  'uid = "01a07d19-eb4d-7a32-9c0c-36916f1dae4b"',
   'api_access = true',
 ]);
-includesAll(dashboardConfig, 'Dashboard extension config', [
-  'uid = "01a078c5-3a1d-7702-9518-af73dc4c17b1"',
-]);
 
-includesAll(source, 'Coupons page', [
-  "shopify://customer-account/api/2026-07/graphql.json",
-  'namespace:"jill_rewards",key:"coupons"',
-  'metafield(namespace:"jill_account", key:"public_offers")',
-  'parseRewardCoupons',
-  'parsePublicOffers',
-  'publicOfferIsActive',
-  'FOR YOU · JILL REWARDS',
-  'STOREWIDE',
+if (/^uid\s*=/m.test(config)) {
+  fail('Coupons extension identity must remain owned by the linked Shopify app configuration');
+}
+
+includesAll(source, 'Coupons runtime probe', [
+  '<s-page',
+  'heading="Coupons"',
   'Storewide offers',
+  '5% off entire order',
+  'PARTY10',
+  'One use per customer.',
   'No expiration date',
   'Use now',
-  'Coupon history',
-  'payload?.errors?.length',
-  '!response.ok || !payload?.data',
+  'For you',
+  'extension:jill-account-dashboard/',
   'render(<Coupons />, document.body)',
 ]);
 
 for (const forbidden of [
+  'shopify://customer-account/api',
   'admin/api',
   'X-Shopify-Access-Token',
   'SHOPIFY_ADMIN',
   'MutationObserver',
   'innerHTML',
+  'useEffect',
+  'useState',
 ]) {
-  if (source.includes(forbidden)) fail(`Coupons page must not contain ${forbidden}`);
+  if (source.includes(forbidden)) fail(`Coupons runtime probe must not contain ${forbidden}`);
 }
 
-if (/payload\?\.errors\?\.length\)\s*\{?\s*throw/.test(source)) {
-  fail('partial Customer Account GraphQL errors must not take down the whole coupon wallet');
-}
-
-console.log('Customer account Coupons contract passed.');
+console.log('Customer account Coupons runtime probe contract passed.');
