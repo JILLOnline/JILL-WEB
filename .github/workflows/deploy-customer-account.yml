@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - jill/theme-core
     paths:
       - 'extensions/**'
       - 'scripts/**'
@@ -77,4 +77,4 @@ jobs:
           --allow-updates
           --source-control-url "$COMMIT_URL"
 
-# Keeps customer-account UI fixes deployable through the normal validated pipeline.
+# Canonical customer-account deploy owner follows jill/theme-core, not the stale main branch.
