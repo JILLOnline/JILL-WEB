@@ -12,6 +12,7 @@ import {
 } from './rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
+const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
 const REWARDS_REFRESH_MS = 25000;
 
@@ -116,7 +117,7 @@ function createRewardNonce() {
 
 async function requestReward(customerId, points) {
   const nonce = createRewardNonce();
-  const response = await fetch(API, {
+  const response = await fetch(WRITE_API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
