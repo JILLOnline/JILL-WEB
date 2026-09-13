@@ -4,6 +4,7 @@ api_version = "2026-07"
 type = "ui_extension"
 name = "Coupons Recovery"
 handle = "jill-account-coupons-v2"
+uid = "bad98099-a546-242e-ad23-378ad515feca749d22cc"
 
 [[extensions.targeting]]
 target = "customer-account.page.render"
