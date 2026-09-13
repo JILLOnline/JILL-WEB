@@ -12,7 +12,7 @@ import {
 } from './rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
-const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
+const WRITE_API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
 const REWARDS_REFRESH_MS = 25000;
 const REWARD_REQUEST_TIMEOUT_MS = 10000;

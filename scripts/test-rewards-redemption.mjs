@@ -10,6 +10,8 @@ import {
 } from '../extensions/jill-account-dashboard/src/rewards.mjs';
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+assert.ok(source.includes("shopify://customer-account/api/2026-07/graphql.json"));
+assert.ok(!source.includes("shopify:customer-account/api/"));
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
 function between(start, end) {
@@ -122,7 +124,7 @@ for (const overrides of [
 // Validate actual mutation variables and all error/acknowledgment branches.
 const api = vm.createContext({
   API: 'shopify://customer-account/api/2026-07/graphql.json',
-  WRITE_API: 'shopify:customer-account/api/2026-07/graphql.json',
+  WRITE_API: 'shopify://customer-account/api/2026-07/graphql.json',
   QUERY: 'query {}',
   REWARD_REQUEST_TIMEOUT_MS: 10000,
   AbortController,
@@ -131,7 +133,7 @@ const api = vm.createContext({
 });
 vm.runInContext(mutation + transport, api);
 api.fetch = async (url, options) => {
-  assert.equal(url, 'shopify:customer-account/api/2026-07/graphql.json');
+  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
   assert.ok(options.signal);
   const {variables} = JSON.parse(options.body);
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
