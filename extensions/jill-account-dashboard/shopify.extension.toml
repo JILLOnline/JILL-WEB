@@ -4,6 +4,7 @@ api_version = "2026-07"
 type = "ui_extension"
 name = "My JILL"
 handle = "jill-account-dashboard"
+uid = "2f093e56-265e-4263-57fc-eb7b7a8a3f49ccd3b19a"
 
 [[extensions.targeting]]
 target = "customer-account.page.render"
