@@ -6,7 +6,6 @@ dashboard = Path('extensions/jill-account-dashboard/src/Dashboard.jsx')
 source = dashboard.read_text()
 source = source.replace("const WRITE_API = 'shopify://customer-account/api/2026-07/graphql.json';\n", '', 1)
 source = source.replace('const REWARD_REQUEST_TIMEOUT_MS = 10000;\n', '', 1)
-
 start = source.index('async function requestReward(customerId, points) {')
 end = source.index('\nfunction wait(milliseconds) {', start)
 known_good = '''async function requestReward(customerId, points) {
@@ -67,21 +66,14 @@ guard = 'assert.ok(!source.includes("shopify:customer-account/api/"));\n'
 assert guard in t
 if 'assert.ok(!source.includes("const WRITE_API"));' not in t:
     t = t.replace(guard, guard + 'assert.ok(!source.includes("const WRITE_API"));\nassert.ok(!source.includes("AbortController"));\n', 1)
-old_ctx = """const api = vm.createContext({
-  API: 'shopify://customer-account/api/2026-07/graphql.json',
-  WRITE_API: 'shopify://customer-account/api/2026-07/graphql.json',
-  QUERY: 'query {}',
-  REWARD_REQUEST_TIMEOUT_MS: 10000,
-  AbortController,
-  setTimeout,
-  clearTimeout,
-});"""
+ctx_start = t.index('const api = vm.createContext({')
+ctx_end = t.index('vm.runInContext(mutation + transport, api);', ctx_start)
 new_ctx = """const api = vm.createContext({
   API: 'shopify://customer-account/api/2026-07/graphql.json',
   QUERY: 'query {}',
-});"""
-assert old_ctx in t
-t = t.replace(old_ctx, new_ctx, 1)
-t = t.replace("  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');\n  assert.ok(options.signal);", "  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');\n  assert.equal(options.signal, undefined);", 1)
+});
+"""
+t = t[:ctx_start] + new_ctx + t[ctx_end:]
+t = t.replace("  assert.ok(options.signal);\n", "  assert.equal(options.signal, undefined);\n", 1)
 t = t.replace('assert.equal(api.REWARD_REQUEST_TIMEOUT_MS, 10000);\n', '', 1)
 test.write_text(t)
