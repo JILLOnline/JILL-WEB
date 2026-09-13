@@ -17,12 +17,17 @@ function includesAll(source, owner, markers) {
 
 const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
+const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 
 includesAll(config, 'Coupons extension config', [
   'api_version = "2026-07"',
   'target = "customer-account.page.render"',
   'module = "./src/Coupons.jsx"',
+  'uid = "01a07d19-eb4d-7a32-9c0c-36916f1dae4b"',
   'api_access = true',
+]);
+includesAll(dashboardConfig, 'Dashboard extension config', [
+  'uid = "01a078c5-3a1d-7702-9518-af73dc4c17b1"',
 ]);
 
 includesAll(source, 'Coupons page', [
