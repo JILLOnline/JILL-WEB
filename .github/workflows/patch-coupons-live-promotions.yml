@@ -1,0 +1,435 @@
+name: Patch live Coupons promotion sync
+
+on:
+  push:
+    branches:
+      - jill/coupons-live-promotions
+    paths:
+      - '.github/workflows/patch-coupons-live-promotions.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: jill/coupons-live-promotions
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Replace Coupons runtime with Shopify-backed data
+        shell: bash
+        run: |
+          cat > extensions/jill-account-coupons/src/Coupons.jsx <<'EOF'
+          import '@shopify/ui-extensions/preact';
+          import {render} from 'preact';
+          import {useEffect, useMemo, useState} from 'preact/hooks';
+          import {rewardCouponStatus, rewardWallet} from '../../jill-account-dashboard/src/rewards.mjs';
+
+          const STORE = 'https://jillonlinestore.com';
+          const STOREFRONT_API = 'shopify://storefront/api/2026-07/graphql.json';
+          const CUSTOMER_API = 'shopify://customer-account/api/2026-07/graphql.json';
+
+          const PROMOTIONS_QUERY = `
+            query JillPublicPromotions {
+              shop {
+                promotionSnapshot: metafield(
+                  namespace: "jill_promotions"
+                  key: "active_public_codes"
+                ) { value }
+              }
+            }
+          `;
+
+          const REWARDS_QUERY = `
+            query JillPersonalCoupons {
+              customer {
+                coupons: metafield(namespace: "jill_rewards", key: "coupons") { value }
+              }
+            }
+          `;
+
+          function parsePromotionSnapshot(value) {
+            if (!value) return [];
+            try {
+              const parsed = JSON.parse(value);
+              if (parsed?.version !== 1 || !Array.isArray(parsed?.offers)) return [];
+              return parsed.offers.filter((offer) => offer?.code && offer?.summary);
+            } catch (error) {
+              console.warn('JILL promotions snapshot parse error', error);
+              return [];
+            }
+          }
+
+          async function graphQL(url, query, errorMessage) {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({query}),
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.errors?.length) {
+              throw new Error(payload?.errors?.[0]?.message || errorMessage);
+            }
+            return payload?.data || {};
+          }
+
+          async function loadCouponsData() {
+            const [promotionData, customerData] = await Promise.all([
+              graphQL(STOREFRONT_API, PROMOTIONS_QUERY, 'Unable to load JILL promotions.'),
+              graphQL(CUSTOMER_API, REWARDS_QUERY, 'Unable to load your JILL Rewards coupons.'),
+            ]);
+            return {
+              promotions: parsePromotionSnapshot(promotionData?.shop?.promotionSnapshot?.value),
+              rewards: rewardWallet(customerData?.customer?.coupons?.value)
+                .filter((coupon) => rewardCouponStatus(coupon) === 'active')
+                .sort((a, b) => Date.parse(b?.created_at || '') - Date.parse(a?.created_at || '')),
+            };
+          }
+
+          function formatDate(value) {
+            const time = Date.parse(value || '');
+            if (!Number.isFinite(time)) return '';
+            return new Intl.DateTimeFormat(undefined, {
+              month: 'short', day: 'numeric', year: 'numeric',
+            }).format(new Date(time));
+          }
+
+          function discountUrl(code) {
+            return `${STORE}/discount/${encodeURIComponent(code)}?redirect=/collections/all`;
+          }
+
+          function StorewideOffer({offer}) {
+            const expires = formatDate(offer.ends_at);
+            return (
+              <s-box padding="base" border="base base solid" borderRadius="large">
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" justifyContent="space-between" alignItems="start">
+                    <s-stack direction="block" gap="small-100">
+                      <s-text color="subdued">STOREWIDE</s-text>
+                      <s-heading>{offer.summary}</s-heading>
+                    </s-stack>
+                    <s-badge tone="success">Available</s-badge>
+                  </s-stack>
+                  <s-box padding="small-200" background="subdued" borderRadius="large">
+                    <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                      <s-text color="subdued">Code</s-text>
+                      <s-text type="strong">{offer.code}</s-text>
+                    </s-stack>
+                  </s-box>
+                  <s-stack direction="block" gap="small-100">
+                    {offer.applies_once_per_customer ? <s-text>One use per customer.</s-text> : null}
+                    <s-text>{expires ? `Expires ${expires}` : 'No expiration date'}</s-text>
+                  </s-stack>
+                  <s-button variant="primary" href={discountUrl(offer.code)}>Use now</s-button>
+                </s-stack>
+              </s-box>
+            );
+          }
+
+          function RewardCoupon({coupon}) {
+            const expires = formatDate(coupon.expires_at);
+            const value = Number(coupon.value || 0);
+            const minimum = Number(coupon.minimum || 0);
+            return (
+              <s-box padding="base" border="base base solid" borderRadius="large">
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" justifyContent="space-between" alignItems="start">
+                    <s-stack direction="block" gap="small-100">
+                      <s-text color="subdued">YOUR REWARD</s-text>
+                      <s-heading>{value > 0 ? `$${value} OFF` : 'JILL Reward'}</s-heading>
+                    </s-stack>
+                    <s-badge tone="success">Ready</s-badge>
+                  </s-stack>
+                  <s-box padding="small-200" background="subdued" borderRadius="large">
+                    <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                      <s-text color="subdued">Code</s-text>
+                      <s-text type="strong">{coupon.code}</s-text>
+                    </s-stack>
+                  </s-box>
+                  <s-stack direction="block" gap="small-100">
+                    {minimum > 0 ? <s-text>${minimum} minimum order.</s-text> : null}
+                    {expires ? <s-text>Expires {expires}</s-text> : null}
+                  </s-stack>
+                  <s-button variant="primary" href={discountUrl(coupon.code)}>Use now</s-button>
+                </s-stack>
+              </s-box>
+            );
+          }
+
+          function Coupons() {
+            const [data, setData] = useState({promotions: [], rewards: []});
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+              let active = true;
+              loadCouponsData()
+                .then((next) => {
+                  if (!active) return;
+                  setData(next);
+                  setError('');
+                })
+                .catch((nextError) => {
+                  console.warn('JILL Coupons load error', nextError);
+                  if (active) setError('Coupons are temporarily unavailable. Please refresh and try again.');
+                })
+                .finally(() => {
+                  if (active) setLoading(false);
+                });
+              return () => { active = false; };
+            }, []);
+
+            const activeRewards = useMemo(() => data.rewards || [], [data.rewards]);
+
+            return (
+              <s-page heading="Coupons" subheading="Your JILL offers in one place.">
+                <s-stack direction="block" gap="base">
+                  {loading ? (
+                    <s-box padding="base" border="base base solid" borderRadius="large">
+                      <s-stack direction="inline" gap="small-200" alignItems="center">
+                        <s-spinner size="small" />
+                        <s-text>Loading current JILL offers…</s-text>
+                      </s-stack>
+                    </s-box>
+                  ) : null}
+                  {error ? <s-banner tone="critical">{error}</s-banner> : null}
+                  {!loading && !error ? (
+                    <>
+                      <s-section>
+                        <s-stack direction="block" gap="base">
+                          <s-heading>Storewide offers</s-heading>
+                          <s-text color="subdued">Current Shopify promotions available to everyone.</s-text>
+                          {data.promotions.length ? data.promotions.map((offer) => (
+                            <StorewideOffer key={`promotion-${offer.code}`} offer={offer} />
+                          )) : <s-text color="subdued">No storewide promotions right now.</s-text>}
+                        </s-stack>
+                      </s-section>
+                      <s-section>
+                        <s-stack direction="block" gap="base">
+                          <s-heading>For you</s-heading>
+                          <s-text color="subdued">Personal JILL Rewards coupons generated from your Dashboard.</s-text>
+                          {activeRewards.length ? activeRewards.map((coupon) => (
+                            <RewardCoupon key={`reward-${coupon.code}`} coupon={coupon} />
+                          )) : (
+                            <>
+                              <s-text color="subdued">You do not have an active Rewards coupon yet.</s-text>
+                              <s-button href="extension:jill-account-dashboard/">View Rewards</s-button>
+                            </>
+                          )}
+                        </s-stack>
+                      </s-section>
+                    </>
+                  ) : null}
+                </s-stack>
+              </s-page>
+            );
+          }
+
+          export default async () => {
+            render(<Coupons />, document.body);
+          };
+          EOF
+
+      - name: Add public promotion synchronization to Rewards backend
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs')
+          source = path.read_text()
+
+          anchor = "const JILL_REWARDS_INFRA_CHECK_MS = 5 * 60 * 1000;"
+          replacement = anchor + "\nconst JILL_PUBLIC_PROMOTIONS_SYNC_PROPERTY = 'JILL_PUBLIC_PROMOTIONS_SYNC_AT';\nconst JILL_PUBLIC_PROMOTIONS_SYNC_MS = 60 * 1000;"
+          assert anchor in source, 'Rewards constants anchor missing'
+          source = source.replace(anchor, replacement, 1)
+
+          anchor = "function processPendingJillRewardRequests() {\n"
+          insertion = '''function syncJillPublicPromotions_(force) {
+            const props = PropertiesService.getScriptProperties();
+            const now = Date.now();
+            const lastSync = Number(props.getProperty(JILL_PUBLIC_PROMOTIONS_SYNC_PROPERTY) || 0);
+            if (!force && lastSync && now - lastSync < JILL_PUBLIC_PROMOTIONS_SYNC_MS) {
+              return { ok: true, synced: false, throttled: true };
+            }
+
+            const query = `
+              query JillPublicDiscountSnapshot($first: Int!) {
+                shop { id }
+                discountNodes(first: $first, query: "status:active method:code", sortKey: UPDATED_AT, reverse: true) {
+                  nodes {
+                    discount {
+                      __typename
+                      ... on DiscountCodeBasic {
+                        title status startsAt endsAt summary shortSummary appliesOncePerCustomer
+                        codes(first: 2) { nodes { code } }
+                        context { __typename }
+                      }
+                      ... on DiscountCodeFreeShipping {
+                        title status startsAt endsAt summary shortSummary appliesOncePerCustomer
+                        codes(first: 2) { nodes { code } }
+                        context { __typename }
+                      }
+                      ... on DiscountCodeBxgy {
+                        title status startsAt endsAt summary appliesOncePerCustomer
+                        codes(first: 2) { nodes { code } }
+                        context { __typename }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const data = shopifyGraphQL_(query, { first: 50 });
+            const shopId = clean_(data.shop && data.shop.id);
+            if (!shopId) throw new Error('Shopify promotions sync returned no Shop ID.');
+            const nodes = data.discountNodes && data.discountNodes.nodes ? data.discountNodes.nodes : [];
+            const offers = [];
+
+            nodes.forEach(function(node) {
+              const discount = node && node.discount;
+              if (!discount || discount.status !== 'ACTIVE') return;
+              if (!discount.context || discount.context.__typename !== 'DiscountBuyerSelectionAll') return;
+              const codes = discount.codes && discount.codes.nodes
+                ? discount.codes.nodes.map(function(item) { return clean_(item && item.code); }).filter(Boolean)
+                : [];
+              if (codes.length !== 1) return;
+              const summary = clean_(discount.shortSummary) || clean_(discount.summary) || clean_(discount.title);
+              if (!summary) return;
+              offers.push({
+                kind: discount.__typename === 'DiscountCodeFreeShipping'
+                  ? 'free_shipping'
+                  : discount.__typename === 'DiscountCodeBxgy' ? 'bxgy' : 'basic',
+                code: codes[0],
+                title: clean_(discount.title) || codes[0],
+                summary: summary,
+                details: clean_(discount.summary) || summary,
+                starts_at: clean_(discount.startsAt) || null,
+                ends_at: clean_(discount.endsAt) || null,
+                applies_once_per_customer: Boolean(discount.appliesOncePerCustomer)
+              });
+            });
+
+            const snapshot = { version: 1, synced_at: new Date(now).toISOString(), offers: offers };
+            const mutation = `
+              mutation SetJillPublicPromotions($metafields: [MetafieldsSetInput!]!) {
+                metafieldsSet(metafields: $metafields) {
+                  metafields { namespace key value }
+                  userErrors { field message code }
+                }
+              }
+            `;
+            const result = shopifyGraphQL_(mutation, {
+              metafields: [{
+                ownerId: shopId,
+                namespace: 'jill_promotions',
+                key: 'active_public_codes',
+                type: 'json',
+                value: JSON.stringify(snapshot)
+              }]
+            });
+            const payload = result.metafieldsSet || {};
+            const errors = payload.userErrors || [];
+            if (errors.length) {
+              throw new Error('Shopify public promotions metafieldsSet: ' + errors.map(function(error) { return error.message; }).join(' | '));
+            }
+            props.setProperty(JILL_PUBLIC_PROMOTIONS_SYNC_PROPERTY, String(now));
+            return {
+              ok: true,
+              synced: true,
+              throttled: false,
+              offer_count: offers.length,
+              codes: offers.map(function(offer) { return offer.code; })
+            };
+          }
+
+          function runJillPublicPromotionsSync() {
+            return syncJillPublicPromotions_(true);
+          }
+
+          ''' + anchor
+          assert anchor in source, 'Rewards sweep anchor missing'
+          source = source.replace(anchor, insertion, 1)
+
+          anchor = "function processPendingJillRewardRequests() {\n  // Self-heal the webhook layer every few minutes from the same minute trigger."
+          replacement = "function processPendingJillRewardRequests() {\n  try {\n    syncJillPublicPromotions_(false);\n  } catch (promotionErr) {\n    console.error(\n      'JILL public promotions sync failed: ' +\n      (promotionErr && promotionErr.stack ? promotionErr.stack : promotionErr)\n    );\n  }\n\n  // Self-heal the webhook layer every few minutes from the same minute trigger."
+          assert anchor in source, 'Rewards sweep body anchor missing'
+          source = source.replace(anchor, replacement, 1)
+
+          path.write_text(source)
+          PY
+
+      - name: Update canonical Coupons contract test
+        shell: bash
+        run: |
+          cat > scripts/test-account-coupons.mjs <<'EOF'
+          import fs from 'node:fs';
+
+          function fail(message) {
+            throw new Error(`Customer account Coupons test failed: ${message}`);
+          }
+          function includesAll(source, owner, markers) {
+            for (const marker of markers) if (!source.includes(marker)) fail(`${owner} missing ${marker}`);
+          }
+
+          const source = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
+          const config = fs.readFileSync('extensions/jill-account-coupons/shopify.extension.toml', 'utf8');
+          const recoverySource = fs.readFileSync('extensions/jill-account-coupons-v2/src/Coupons.jsx', 'utf8');
+          const recoveryConfig = fs.readFileSync('extensions/jill-account-coupons-v2/shopify.extension.toml', 'utf8');
+          const dashboardConfig = fs.readFileSync('extensions/jill-account-dashboard/shopify.extension.toml', 'utf8');
+          const profileConfig = fs.readFileSync('extensions/jill-account-home/shopify.extension.toml', 'utf8');
+          const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+
+          includesAll(config, 'Coupons extension config', [
+            'api_version = "2026-07"', 'handle = "jill-account-coupons"',
+            'uid = "dfb3e6f0-162d-b114-19a1-d854706d0d45166f43aa"',
+            'target = "customer-account.page.render"', 'module = "./src/Coupons.jsx"', 'api_access = true',
+          ]);
+          includesAll(source, 'Coupons runtime', [
+            'jill_promotions', 'active_public_codes', 'jill_rewards', 'rewardWallet', 'rewardCouponStatus',
+            'shopify://storefront/api/2026-07/graphql.json',
+            'shopify://customer-account/api/2026-07/graphql.json',
+            'Storewide offers', 'Personal JILL Rewards coupons generated from your Dashboard.',
+            'No storewide promotions right now.', 'render(<Coupons />, document.body)',
+          ]);
+          for (const forbidden of ['PARTY10', 'PARTY5', 'SUBSCRIBE10', 'X-Shopify-Access-Token', 'SHOPIFY_ADMIN', 'MutationObserver', 'innerHTML']) {
+            if (source.includes(forbidden)) fail(`Coupons runtime must not contain hardcoded/private ${forbidden}`);
+          }
+          includesAll(backend, 'Public promotion synchronizer', [
+            'function syncJillPublicPromotions_(force)', 'DiscountBuyerSelectionAll',
+            "namespace: 'jill_promotions'", "key: 'active_public_codes'", 'codes(first: 2)',
+            'if (codes.length !== 1) return;', 'function runJillPublicPromotionsSync()', 'syncJillPublicPromotions_(false)',
+          ]);
+          if (backend.includes('query: "status:active method:code context:all"')) {
+            fail('Promotion sync must inspect buyer context explicitly');
+          }
+          includesAll(recoveryConfig, 'Coupons recovery extension config', ['handle = "jill-account-coupons-v2"']);
+          includesAll(recoverySource, 'Coupons recovery runtime', ['Coupons page connected ✨']);
+          includesAll(dashboardConfig, 'Dashboard extension identity', ['handle = "jill-account-dashboard"']);
+          includesAll(profileConfig, 'Settings extension identity', ['handle = "jill-account-home"']);
+          console.log('Customer account Coupons Shopify-source-of-truth contract passed.');
+          EOF
+
+      - name: Run repository guards
+        run: npm install
+
+      - name: Build Shopify app extensions
+        run: npx shopify app build
+
+      - name: Commit canonical implementation
+        shell: bash
+        run: |
+          git config user.name 'JILLOnline'
+          git config user.email 'info@jillonlinestore.com'
+          git add extensions/jill-account-coupons/src/Coupons.jsx backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs scripts/test-account-coupons.mjs
+          git diff --cached --check
+          git commit -m 'Connect Coupons to live Shopify promotions'
+          git push origin HEAD:jill/coupons-live-promotions
