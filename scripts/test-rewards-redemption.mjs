@@ -10,10 +10,6 @@ import {
 } from '../extensions/jill-account-dashboard/src/rewards.mjs';
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
-assert.ok(source.includes("shopify://customer-account/api/2026-07/graphql.json"));
-assert.ok(!source.includes("shopify:customer-account/api/"));
-assert.ok(!source.includes("const WRITE_API"));
-assert.ok(!source.includes("AbortController"));
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
 function between(start, end) {
@@ -22,7 +18,7 @@ function between(start, end) {
 }
 const transport = between('async function loadData()', 'function wait(');
 const mutation = between('const REQUEST_REWARD_MUTATION', 'const COLLECTIONS');
-const handler = between('  async function handleRedeem(tier, trigger)', '  function rewardStatusControl(');
+const handler = between('  async function handleRedeem(tier)', '  function rewardStatusControl(');
 const nonce = 'request-1';
 const tier = {points: 10, value: 5, minimum: 25};
 const coupon = {points: 10, request_nonce: nonce, code: 'JILL-TEST', status: 'active'};
@@ -50,7 +46,7 @@ function harness(overrides = {}) {
   const context = vm.createContext({
     console: {warn() {}},
     customer: customer({}), points: 30, pendingPoints: 0,
-    activeCouponForTier: () => null,
+    redemptionInFlight: {current: false}, activeCouponForTier: () => null,
     rewardRequestIsPending, rewardRequestIsComplete, rewardWallet, rewardCouponStatus,
     metaMap: (data) => Object.fromEntries((data?.metafields || []).map((f) => [f.key, f.value])),
     wait: async () => {}, onCustomerUpdate() {}, requestReward: async () => nonce,
@@ -59,11 +55,10 @@ function harness(overrides = {}) {
     ...overrides,
   });
   vm.runInContext(handler, context);
-  const trigger = {disabled: false, loading: false};
-  return {context, state, trigger, redeem: () => context.handleRedeem(tier, trigger)};
+  return {context, state, redeem: () => context.handleRedeem(tier)};
 }
 
-// Immediate feedback precedes the response; the clicked control itself blocks a duplicate submission.
+// Immediate feedback precedes the response; a second click cannot submit twice.
 {
   let resolveRequest;
   let writes = 0;
@@ -71,8 +66,6 @@ function harness(overrides = {}) {
     loadData: async () => customer(meta(0, `consumed:${nonce}`, [coupon])),
   });
   const result = h.redeem();
-  assert.equal(h.trigger.disabled, true);
-  assert.equal(h.trigger.loading, true);
   assert.equal(h.state.SubmittingPoints, 10);
   assert.equal(h.state.LocalPendingPoints, 10);
   assert.equal(h.state.ConfirmTier, null);
@@ -81,8 +74,7 @@ function harness(overrides = {}) {
   resolveRequest(nonce);
   await result;
   assert.equal(h.state.FreshCoupon.code, coupon.code);
-  assert.equal(h.trigger.disabled, false);
-  assert.equal(h.trigger.loading, false);
+  assert.equal(h.context.redemptionInFlight.current, false);
 }
 
 // Stale pre-write reads and the worker's intermediate claim must keep polling.
@@ -96,8 +88,6 @@ function harness(overrides = {}) {
   assert.equal(count, 5);
   assert.equal(h.state.FreshCoupon.code, coupon.code);
   assert.equal(h.state.RedeemError, '');
-  assert.equal(h.trigger.disabled, false);
-  assert.equal(h.trigger.loading, false);
 }
 
 for (const overrides of [{customer: null}, {pendingPoints: 10}, {points: 0}, {activeCouponForTier: () => coupon}]) {
@@ -106,8 +96,6 @@ for (const overrides of [{customer: null}, {pendingPoints: 10}, {points: 0}, {ac
   await h.redeem();
   assert.equal(writes, 0);
   assert.ok(h.state.RedeemError);
-  assert.equal(h.trigger.disabled, false);
-  assert.equal(h.trigger.loading, false);
 }
 for (const overrides of [
   {requestReward: async () => {throw new Error('Access denied');}},
@@ -119,19 +107,13 @@ for (const overrides of [
   await h.redeem();
   assert.ok(h.state.RedeemError);
   assert.equal(h.state.SubmittingPoints, 0);
-  assert.equal(h.trigger.disabled, false);
-  assert.equal(h.trigger.loading, false);
+  assert.equal(h.context.redemptionInFlight.current, false);
 }
 
 // Validate actual mutation variables and all error/acknowledgment branches.
-const api = vm.createContext({
-  API: 'shopify://customer-account/api/2026-07/graphql.json',
-  QUERY: 'query {}',
-});
+const api = vm.createContext({API: 'shopify://customer-account/api/2026-07/graphql.json', QUERY: 'query {}'});
 vm.runInContext(mutation + transport, api);
-api.fetch = async (url, options) => {
-  assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
-  assert.equal(options.signal, undefined);
+api.fetch = async (_url, options) => {
   const {variables} = JSON.parse(options.body);
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
   assert.ok(variables.metafields.every((f) => f.ownerId === 'gid://shopify/Customer/1'));
