@@ -103,6 +103,16 @@ jobs:
               )
               sys.exit(1)
 
+          infrastructure = data.get('infrastructure') or {}
+          if infrastructure.get('ok') is not True:
+              print('JILL Rewards webhook/trigger infrastructure is unhealthy:', raw, file=sys.stderr)
+              sys.exit(1)
+
+          sweep = data.get('sweep') or {}
+          if sweep.get('ok') is not True or sweep.get('fresh') is not True:
+              print('JILL Rewards minute maintenance is stale or unhealthy:', raw, file=sys.stderr)
+              sys.exit(1)
+
           promotions = data.get('promotions') or {}
           promotion_health = promotions.get('health') or {}
           if promotions.get('ok') is not True or promotion_health.get('fresh') is not True:

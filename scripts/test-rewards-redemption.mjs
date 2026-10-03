@@ -282,3 +282,32 @@ console.log('JILL Rewards resumable sweep cursor contract passed.');
   );
 }
 console.log('JILL Rewards deleted-discount durable queue contract passed.');
+
+
+{
+  const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  const watchdogStart = backendSource.indexOf('function runJillRewardsWatchdog_() {');
+  const watchdogEnd = backendSource.indexOf('\nfunction processPendingJillRewardRequests()', watchdogStart);
+  assert.ok(watchdogStart >= 0 && watchdogEnd > watchdogStart, 'watchdog function boundaries must exist');
+  const watchdogSource = backendSource.slice(watchdogStart, watchdogEnd);
+
+  for (const forbidden of [
+    'ensureJillRewardsInfrastructure_(',
+    'ensureJillPublicPromotionsHealthy_(',
+    'processPendingJillRewardRequests(',
+    'setProperty(',
+    'deleteProperty(',
+  ]) {
+    assert.equal(
+      watchdogSource.includes(forbidden),
+      false,
+      `read-only watchdog contract must not contain ${forbidden}`,
+    );
+  }
+
+  assert.match(backendSource, /JILL_REWARDS_LAST_SWEEP_PROPERTY = 'JILL_REWARDS_LAST_SWEEP'/);
+  assert.match(backendSource, /ensureJillPublicPromotionsHealthy_\(false\)/);
+  assert.match(backendSource, /jillRewardsInfrastructureHealth_\(\)/);
+  assert.match(backendSource, /jillRewardsSweepHealth_\(\)/);
+}
+console.log('JILL Rewards read-only watchdog contract passed.');

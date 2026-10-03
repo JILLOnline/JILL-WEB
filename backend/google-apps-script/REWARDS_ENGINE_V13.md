@@ -81,3 +81,10 @@ The minute Rewards worker traverses customers with a persisted Shopify paginatio
 ## Deleted-discount durable queue
 
 The Shopify `DISCOUNTS_DELETE` webhook never scans the customer population synchronously. It idempotently enqueues the deleted discount ID in Script Properties and returns. The minute Rewards worker processes the oldest queue job in bounded pages, persisting the Shopify cursor only after each page has been handled. Repeated webhook delivery for the same discount ID reuses the existing job. A stale Shopify cursor is cleared and retried once from the beginning. The queue entry is removed only after the full customer connection has been traversed (or Shopify proves the discount still exists). Unused matching Rewards coupons are revoked with `admin_deleted` and their points are released; used or expired coupons remain committed.
+
+
+## Maintenance and monitoring separation
+
+The minute Apps Script trigger is the sole owner of operational repair and reconciliation. It verifies Rewards webhook/trigger infrastructure, keeps Public Promotions healthy, processes pending redemptions, normalizes wallets, advances the resumable customer cursor, and processes the deleted-discount queue.
+
+The public `?jill_rewards_watchdog=1` endpoint is read-only. It reports webhook/trigger health, the age and summary of the most recent successful minute sweep, Public Promotions freshness/trigger state, deletion-queue depth, engine version, and deployed Git build SHA. An external watchdog can therefore detect drift without causing business-state mutations merely by polling health.

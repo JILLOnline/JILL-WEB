@@ -268,6 +268,36 @@ for (const marker of [
   }
 }
 
+const watchdogStart = backend.indexOf('function runJillRewardsWatchdog_() {');
+const watchdogEnd = backend.indexOf('\nfunction processPendingJillRewardRequests()', watchdogStart);
+if (watchdogStart < 0 || watchdogEnd < 0) {
+  throw new Error('Rewards watchdog function boundaries were not found.');
+}
+const watchdogSection = backend.slice(watchdogStart, watchdogEnd);
+for (const forbidden of [
+  'ensureJillRewardsInfrastructure_(',
+  'ensureJillPublicPromotionsHealthy_(',
+  'processPendingJillRewardRequests(',
+  'setProperty(',
+  'deleteProperty(',
+]) {
+  if (watchdogSection.includes(forbidden)) {
+    throw new Error(`Public watchdog must remain read-only; found ${forbidden}`);
+  }
+}
+for (const marker of [
+  'jillRewardsInfrastructureHealth_()',
+  'jillRewardsSweepHealth_()',
+  'jillPublicPromotionsHealth_()',
+  'JILL_REWARDS_LAST_SWEEP_PROPERTY',
+  'JILL_REWARDS_SWEEP_HEALTH_MAX_AGE_MS',
+  'ensureJillPublicPromotionsHealthy_(false)',
+]) {
+  if (!backend.includes(marker)) {
+    throw new Error(`Rewards maintenance/health contract missing: ${marker}`);
+  }
+}
+
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
   throw new Error('Redemption completion must match the request nonce and cleared points.');
 }

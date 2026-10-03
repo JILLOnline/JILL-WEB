@@ -64,10 +64,10 @@ function doGet(e) {
     return handleShopifyOAuthCallback_(e);
   }
 
-  // Permanent rewards watchdog. This endpoint is intentionally safe to call
-  // without a shared secret: it only verifies/recreates JILL-owned Shopify
-  // webhook subscriptions, verifies the minute sweep trigger, and runs the
-  // source-of-truth reconciler. Expensive work is throttled server-side.
+  // Permanent read-only rewards watchdog. This endpoint is intentionally safe
+  // to call without a shared secret: it reports operational health only.
+  // All repair, synchronization and reconciliation are owned by internal
+  // scheduled maintenance, never by an external health request.
   if (
     e &&
     e.parameter &&
@@ -302,6 +302,8 @@ const JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN = 5;
 const JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY = 'JILL_REWARDS_DELETED_DISCOUNT_QUEUE';
 const JILL_REWARDS_DELETED_DISCOUNT_PAGE_SIZE = 100;
 const JILL_REWARDS_DELETED_DISCOUNT_MAX_PAGES_PER_RUN = 5;
+const JILL_REWARDS_LAST_SWEEP_PROPERTY = 'JILL_REWARDS_LAST_SWEEP';
+const JILL_REWARDS_SWEEP_HEALTH_MAX_AGE_MS = 5 * 60 * 1000;
 const JILL_REWARDS_INFRA_CHECK_PROPERTY = 'JILL_REWARDS_INFRA_CHECK_AT';
 const JILL_REWARDS_INFRA_CHECK_MS = 5 * 60 * 1000;
 const JILL_REWARD_SUBSCRIPTIONS = [
@@ -459,28 +461,102 @@ function runJillRewardsSweep() {
 // External fail-safe used by GitHub Actions. If Shopify ever drops a
 // shop-specific webhook, or the Google minute trigger is removed, this call
 // reinstalls the missing infrastructure and reconciles customer wallets.
-function runJillRewardsWatchdog_() {
-  const infrastructure = ensureJillRewardsInfrastructure_(false);
-  const promotions = ensureJillPublicPromotionsHealthy_(false);
-  let reconciliation = null;
+function jillRewardsInfrastructureHealth_() {
+  const subscriptions = JILL_REWARD_SUBSCRIPTIONS.map(function(item) {
+    const uri = rewardsWebhookUri_(item.key);
+    const found = findRewardsWebhook_(item.topic, uri);
+    return {
+      topic: item.topic,
+      ok: Boolean(found && clean_(found.uri) === uri)
+    };
+  });
 
-  if (infrastructure.checked) {
-    reconciliation = processPendingJillRewardRequests();
-  }
+  const triggerCount = ScriptApp.getProjectTriggers().filter(function(trigger) {
+    return trigger.getHandlerFunction() === JILL_REWARDS_SWEEP_HANDLER;
+  }).length;
+  const verified = subscriptions.filter(function(item) {
+    return item.ok;
+  }).length;
 
   return {
-    ok: promotions.ok === true,
+    ok:
+      verified === JILL_REWARD_SUBSCRIPTIONS.length &&
+      triggerCount === 1,
+    webhook_subscriptions_expected: JILL_REWARD_SUBSCRIPTIONS.length,
+    webhook_subscriptions_verified: verified,
+    sweep_trigger_count: triggerCount,
+    sweep_trigger_ok: triggerCount === 1
+  };
+}
+
+function jillRewardsSweepHealth_() {
+  const raw = clean_(
+    PropertiesService.getScriptProperties().getProperty(
+      JILL_REWARDS_LAST_SWEEP_PROPERTY
+    )
+  );
+
+  if (!raw) {
+    return {
+      ok: false,
+      last_sweep_at: null,
+      age_ms: null,
+      fresh: false
+    };
+  }
+
+  let snapshot;
+  try {
+    snapshot = JSON.parse(raw);
+  } catch (err) {
+    return {
+      ok: false,
+      last_sweep_at: null,
+      age_ms: null,
+      fresh: false
+    };
+  }
+
+  const completedAt = Date.parse(snapshot.completed_at || '');
+  const ageMs = Number.isFinite(completedAt)
+    ? Math.max(0, Date.now() - completedAt)
+    : null;
+  const fresh =
+    ageMs !== null &&
+    ageMs <= JILL_REWARDS_SWEEP_HEALTH_MAX_AGE_MS;
+
+  return {
+    ok: fresh && snapshot.ok === true,
+    last_sweep_at: snapshot.completed_at || null,
+    age_ms: ageMs,
+    fresh: fresh,
+    customers_scanned: Number(snapshot.customers_scanned) || 0,
+    requests_processed: Number(snapshot.requests_processed) || 0,
+    wallets_normalized: Number(snapshot.wallets_normalized) || 0,
+    deletion_queue_depth: Number(snapshot.deletion_queue_depth) || 0
+  };
+}
+
+// Public endpoint owner: health only. This must never create triggers, repair
+// webhooks, synchronize promotions, process redemptions or mutate wallets.
+function runJillRewardsWatchdog_() {
+  const infrastructure = jillRewardsInfrastructureHealth_();
+  const promotions = jillPublicPromotionsHealth_();
+  const sweep = jillRewardsSweepHealth_();
+  const deletionQueue = rewardDeletedDiscountQueue_();
+
+  return {
+    ok:
+      infrastructure.ok === true &&
+      promotions.ok === true &&
+      sweep.ok === true,
     watchdog: true,
     engine_version: JILL_REWARDS_ENGINE_VERSION,
     build_sha: JILL_REWARDS_BUILD_SHA,
-    checked: infrastructure.checked,
-    throttled: infrastructure.throttled,
-    created: infrastructure.created,
-    updated: infrastructure.updated,
-    existing: infrastructure.existing,
-    sweep_trigger: infrastructure.sweep_trigger,
-    reconciliation: reconciliation,
-    promotions: promotions
+    infrastructure: infrastructure,
+    sweep: sweep,
+    promotions: promotions,
+    deletion_queue_depth: deletionQueue.length
   };
 }
 
@@ -494,6 +570,15 @@ function processPendingJillRewardRequests() {
     console.error(
       'JILL Rewards infrastructure self-heal failed: ' +
       (infraErr && infraErr.stack ? infraErr.stack : infraErr)
+    );
+  }
+
+  try {
+    ensureJillPublicPromotionsHealthy_(false);
+  } catch (promotionsErr) {
+    console.error(
+      'JILL public promotions maintenance failed: ' +
+      (promotionsErr && promotionsErr.stack ? promotionsErr.stack : promotionsErr)
     );
   }
 
@@ -688,6 +773,21 @@ function processPendingJillRewardRequests() {
       cycle_complete: cycleComplete,
       deleted_discount_queue: deletedDiscountQueue
     };
+
+    props.setProperty(
+      JILL_REWARDS_LAST_SWEEP_PROPERTY,
+      JSON.stringify({
+        ok: true,
+        completed_at: new Date().toISOString(),
+        customers_scanned: scanned,
+        requests_processed: processed,
+        wallets_normalized: normalized,
+        deletion_queue_depth:
+          deletedDiscountQueue && Number(deletedDiscountQueue.queue_depth)
+            ? Number(deletedDiscountQueue.queue_depth)
+            : 0
+      })
+    );
 
     Logger.log(JSON.stringify(result, null, 2));
     return result;
