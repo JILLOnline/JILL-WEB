@@ -159,7 +159,7 @@ for (const marker of [
   }
 }
 const rewardsSweepStart = backend.indexOf('function processPendingJillRewardRequests() {');
-const rewardsSweepEnd = backend.indexOf('\nfunction rewardWebhookSecret_()', rewardsSweepStart);
+const rewardsSweepEnd = backend.indexOf('\nfunction rewardWebhookSubscriptionForKey_(', rewardsSweepStart);
 if (rewardsSweepStart < 0 || rewardsSweepEnd < 0) {
   throw new Error('Rewards normal sweep function boundaries were not found.');
 }
@@ -313,6 +313,24 @@ for (const marker of [
 ]) {
   if (!backend.includes(marker)) {
     throw new Error(`Rewards maintenance/health contract missing: ${marker}`);
+  }
+}
+
+const legacyRewardKeys = [
+  'active_coupon_code',
+  'active_coupon_value_cents',
+  'active_coupon_points',
+];
+for (const key of legacyRewardKeys) {
+  for (const [owner, source] of [
+    ['Dashboard', dashboard],
+    ['Coupons', coupons],
+    ['shared Rewards', ui],
+    ['Rewards backend', backend],
+  ]) {
+    if (source.includes(key)) {
+      throw new Error(`${owner} reintroduced retired Rewards field ${key}.`);
+    }
   }
 }
 

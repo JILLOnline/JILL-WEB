@@ -238,7 +238,7 @@ console.log('JILL Rewards backend claim/commit/rollback regression tests passed.
     'resumable sweep cursor contract recovers a rejected stored cursor once',
   );
   const sweepStart = backendSource.indexOf('function processPendingJillRewardRequests() {');
-  const sweepEnd = backendSource.indexOf('\nfunction rewardWebhookSecret_()', sweepStart);
+  const sweepEnd = backendSource.indexOf('\nfunction rewardWebhookSubscriptionForKey_(', sweepStart);
   assert.ok(sweepStart >= 0 && sweepEnd > sweepStart, 'normal Rewards sweep function boundaries must exist');
   const sweepSource = backendSource.slice(sweepStart, sweepEnd);
   assert.doesNotMatch(
@@ -347,3 +347,17 @@ console.log('JILL Rewards read-only watchdog contract passed.');
   );
 }
 console.log('JILL Rewards topic-scoped webhook ingress contract passed.');
+
+
+{
+  const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  const sharedSource = fs.readFileSync('shared/rewards.mjs', 'utf8');
+  const dashboardSource = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+  const couponsSource = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
+  for (const key of ['active_coupon_code', 'active_coupon_value_cents', 'active_coupon_points']) {
+    for (const source of [backendSource, sharedSource, dashboardSource, couponsSource]) {
+      assert.equal(source.includes(key), false, `retired Rewards field must stay removed: ${key}`);
+    }
+  }
+}
+console.log('JILL Rewards retired Rewards schema contract passed.');
