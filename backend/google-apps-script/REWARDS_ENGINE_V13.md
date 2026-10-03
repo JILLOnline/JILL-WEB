@@ -76,3 +76,8 @@ Manual Apps Script editor changes are not a canonical delivery path after this l
 ## Resumable customer sweep
 
 The minute Rewards worker traverses customers with a persisted Shopify pagination cursor instead of restarting at customer 1 on every invocation. Each run processes at most 5 pages of 100 customers. Progress is persisted only after a page has been fully handled; the end of the Shopify connection clears the cursor and marks the cycle complete. If Shopify rejects a stored cursor before any page is processed, the worker clears that non-authoritative traversal marker and retries once from the beginning. Individual customer failures remain isolated and do not discard progress for the rest of the page.
+
+
+## Deleted-discount durable queue
+
+The Shopify `DISCOUNTS_DELETE` webhook never scans the customer population synchronously. It idempotently enqueues the deleted discount ID in Script Properties and returns. The minute Rewards worker processes the oldest queue job in bounded pages, persisting the Shopify cursor only after each page has been handled. Repeated webhook delivery for the same discount ID reuses the existing job. A stale Shopify cursor is cleared and retried once from the beginning. The queue entry is removed only after the full customer connection has been traversed (or Shopify proves the discount still exists). Unused matching Rewards coupons are revoked with `admin_deleted` and their points are released; used or expired coupons remain committed.

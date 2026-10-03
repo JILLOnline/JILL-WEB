@@ -168,6 +168,33 @@ if (/while \(hasNextPage && scanned < 1000\)/.test(rewardsSweepSection)) {
   throw new Error('Rewards normal sweep reintroduced the permanent 1,000-customer ceiling.');
 }
 
+for (const marker of [
+  "JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY = 'JILL_REWARDS_DELETED_DISCOUNT_QUEUE'",
+  'JILL_REWARDS_DELETED_DISCOUNT_PAGE_SIZE = 100',
+  'JILL_REWARDS_DELETED_DISCOUNT_MAX_PAGES_PER_RUN = 5',
+  'enqueueDeletedRewardDiscount_(discountId)',
+  'processDeletedRewardDiscountQueue_()',
+  'saveRewardDeletedDiscountQueue_(queue)',
+  "coupon.revoked_reason = 'admin_deleted'",
+  'deleted_discount_queue: deletedDiscountQueue',
+]) {
+  if (!backend.includes(marker)) {
+    throw new Error(`Rewards deleted-discount queue guard missing: ${marker}`);
+  }
+}
+if (backend.includes('const result = reconcileDeletedRewardDiscount_(discountId);')) {
+  throw new Error('DISCOUNTS_DELETE webhook must enqueue work instead of scanning customers synchronously.');
+}
+const deletedQueueStart = backend.indexOf('function processDeletedRewardDiscountQueue_() {');
+const deletedQueueEnd = backend.indexOf('\nfunction normalizeRewardWalletForCustomer_', deletedQueueStart);
+if (deletedQueueStart < 0 || deletedQueueEnd < 0) {
+  throw new Error('Deleted-discount queue processor boundaries were not found.');
+}
+const deletedQueueSection = backend.slice(deletedQueueStart, deletedQueueEnd);
+if (/while \(hasNextPage && scanned < 1000\)/.test(deletedQueueSection)) {
+  throw new Error('Deleted-discount reconciliation reintroduced the permanent 1,000-customer ceiling.');
+}
+
 if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
   throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');
 }

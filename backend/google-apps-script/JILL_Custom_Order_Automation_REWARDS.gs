@@ -299,6 +299,9 @@ const JILL_REWARDS_SWEEP_HANDLER = 'processPendingJillRewardRequests';
 const JILL_REWARDS_SWEEP_CURSOR_PROPERTY = 'JILL_REWARDS_SWEEP_CURSOR';
 const JILL_REWARDS_SWEEP_PAGE_SIZE = 100;
 const JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN = 5;
+const JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY = 'JILL_REWARDS_DELETED_DISCOUNT_QUEUE';
+const JILL_REWARDS_DELETED_DISCOUNT_PAGE_SIZE = 100;
+const JILL_REWARDS_DELETED_DISCOUNT_MAX_PAGES_PER_RUN = 5;
 const JILL_REWARDS_INFRA_CHECK_PROPERTY = 'JILL_REWARDS_INFRA_CHECK_AT';
 const JILL_REWARDS_INFRA_CHECK_MS = 5 * 60 * 1000;
 const JILL_REWARD_SUBSCRIPTIONS = [
@@ -669,6 +672,8 @@ function processPendingJillRewardRequests() {
     const cursorEnd =
       clean_(props.getProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY)) || null;
 
+    const deletedDiscountQueue = processDeletedRewardDiscountQueue_();
+
     const result = {
       ok: true,
       scanned: scanned,
@@ -680,7 +685,8 @@ function processPendingJillRewardRequests() {
       cursor_start: cursorStart,
       cursor_end: cursorEnd,
       cursor_recovered: cursorRecovered,
-      cycle_complete: cycleComplete
+      cycle_complete: cycleComplete,
+      deleted_discount_queue: deletedDiscountQueue
     };
 
     Logger.log(JSON.stringify(result, null, 2));
@@ -841,15 +847,16 @@ function handleJillRewardsWebhook_(e) {
       throw new Error('Discount delete webhook did not include a discount ID.');
     }
 
-    const result = reconcileDeletedRewardDiscount_(discountId);
+    const queued = enqueueDeletedRewardDiscount_(discountId);
 
     return json_({
       ok: true,
       rewards: true,
       topic: topic,
       discount_id: discountId,
-      reconciled_customers: result.reconciled_customers,
-      restored_points: result.restored_points
+      queued: queued.queued,
+      already_queued: queued.already_queued,
+      queue_depth: queued.queue_depth
     });
   }
 
@@ -1770,136 +1777,291 @@ function revokeActiveRewardsForSolvency_(wallet, earnedPoints, now) {
   };
 }
 
-function reconcileDeletedRewardDiscount_(discountId) {
-  const targetId = clean_(discountId);
+function rewardDeletedDiscountQueue_() {
+  const raw = clean_(
+    PropertiesService.getScriptProperties().getProperty(
+      JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY
+    )
+  );
 
-  if (!targetId) {
-    return { reconciled_customers: 0, restored_points: 0 };
+  if (!raw) return [];
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error('Invalid JILL Rewards deleted-discount queue JSON.');
   }
 
-  const stillExists = rewardDiscountSnapshots_([targetId]);
-  if (stillExists[targetId]) {
+  if (!Array.isArray(parsed)) {
+    throw new Error('Invalid JILL Rewards deleted-discount queue shape.');
+  }
+
+  return parsed
+    .filter(function(job) {
+      return job && clean_(job.discount_id);
+    })
+    .map(function(job) {
+      return {
+        discount_id: clean_(job.discount_id),
+        cursor: clean_(job.cursor) || null,
+        enqueued_at: clean_(job.enqueued_at) || null
+      };
+    });
+}
+
+function saveRewardDeletedDiscountQueue_(queue) {
+  const props = PropertiesService.getScriptProperties();
+  const normalized = Array.isArray(queue) ? queue : [];
+
+  if (!normalized.length) {
+    props.deleteProperty(JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY);
+    return;
+  }
+
+  props.setProperty(
+    JILL_REWARDS_DELETED_DISCOUNT_QUEUE_PROPERTY,
+    JSON.stringify(normalized)
+  );
+}
+
+function enqueueDeletedRewardDiscount_(discountId) {
+  const targetId = clean_(discountId);
+  if (!targetId) {
+    throw new Error('Deleted reward discount queue requires a discount ID.');
+  }
+
+  const queue = rewardDeletedDiscountQueue_();
+  const existing = queue.some(function(job) {
+    return clean_(job && job.discount_id) === targetId;
+  });
+
+  if (!existing) {
+    queue.push({
+      discount_id: targetId,
+      cursor: null,
+      enqueued_at: new Date().toISOString()
+    });
+    saveRewardDeletedDiscountQueue_(queue);
+  }
+
+  return {
+    queued: !existing,
+    already_queued: existing,
+    queue_depth: queue.length
+  };
+}
+
+function processDeletedRewardDiscountQueue_() {
+  const queue = rewardDeletedDiscountQueue_();
+
+  if (!queue.length) {
     return {
+      ok: true,
+      queue_depth: 0,
+      processed_discount_id: null,
+      pages_scanned: 0,
+      customers_scanned: 0,
       reconciled_customers: 0,
       restored_points: 0,
+      cycle_complete: false
+    };
+  }
+
+  const job = queue[0];
+  const targetId = clean_(job.discount_id);
+  const stillExists = rewardDiscountSnapshots_([targetId]);
+
+  if (stillExists[targetId]) {
+    queue.shift();
+    saveRewardDeletedDiscountQueue_(queue);
+
+    return {
+      ok: true,
+      queue_depth: queue.length,
+      processed_discount_id: targetId,
+      pages_scanned: 0,
+      customers_scanned: 0,
+      reconciled_customers: 0,
+      restored_points: 0,
+      cycle_complete: true,
       skipped: 'Discount still exists in Shopify'
     };
   }
 
-  let after = null;
-  let hasNextPage = true;
-  let scanned = 0;
+  let after = clean_(job.cursor) || null;
+  let pagesScanned = 0;
+  let customersScanned = 0;
   let reconciledCustomers = 0;
   let restoredPoints = 0;
+  let cycleComplete = false;
+  let cursorRecovered = false;
 
-  while (hasNextPage && scanned < 1000) {
-    const query = `
-      query JillDeletedRewardDiscount($first: Int!, $after: String) {
-        customers(first: $first, after: $after) {
-          nodes {
-            id
-            pointsBalance: metafield(
-              namespace: "jill_rewards",
-              key: "points_balance"
-            ) { value compareDigest }
-            pointsEarned: metafield(
-              namespace: "jill_rewards",
-              key: "points_earned_lifetime"
-            ) { value compareDigest }
-            pointsRedeemed: metafield(
-              namespace: "jill_rewards",
-              key: "points_redeemed_lifetime"
-            ) { value compareDigest }
-            coupons: metafield(
-              namespace: "jill_rewards",
-              key: "coupons"
-            ) { value compareDigest }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
+  const query = `
+    query JillDeletedRewardDiscount($first: Int!, $after: String) {
+      customers(first: $first, after: $after) {
+        nodes {
+          id
+          pointsBalance: metafield(
+            namespace: "jill_rewards",
+            key: "points_balance"
+          ) { value compareDigest }
+          pointsEarned: metafield(
+            namespace: "jill_rewards",
+            key: "points_earned_lifetime"
+          ) { value compareDigest }
+          pointsRedeemed: metafield(
+            namespace: "jill_rewards",
+            key: "points_redeemed_lifetime"
+          ) { value compareDigest }
+          coupons: metafield(
+            namespace: "jill_rewards",
+            key: "coupons"
+          ) { value compareDigest }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
-    `;
+    }
+  `;
 
-    const data = shopifyGraphQL_(query, {
-      first: 100,
-      after: after
-    });
+  while (pagesScanned < JILL_REWARDS_DELETED_DISCOUNT_MAX_PAGES_PER_RUN) {
+    let data;
+
+    try {
+      data = shopifyGraphQL_(query, {
+        first: JILL_REWARDS_DELETED_DISCOUNT_PAGE_SIZE,
+        after: after
+      });
+    } catch (pageErr) {
+      if (after && pagesScanned === 0 && !cursorRecovered) {
+        console.error(
+          'JILL Rewards deleted-discount cursor reset after Shopify rejected cursor: ' +
+          (pageErr && pageErr.stack ? pageErr.stack : pageErr)
+        );
+        job.cursor = null;
+        queue[0] = job;
+        saveRewardDeletedDiscountQueue_(queue);
+        after = null;
+        cursorRecovered = true;
+        continue;
+      }
+      throw pageErr;
+    }
+
     const connection = data.customers || {};
     const customers = connection.nodes || [];
 
     customers.forEach(function(customer) {
-      scanned += 1;
+      customersScanned += 1;
       if (!customer || !customer.id || !customer.coupons) return;
 
-      const now = new Date();
-      const original = rewardWallet_(customer.coupons);
-      const wallet = normalizeRewardCoupons_(original, now);
-      let changed = JSON.stringify(original) !== JSON.stringify(wallet);
-      let released = 0;
+      try {
+        const now = new Date();
+        const original = rewardWallet_(customer.coupons);
+        const wallet = normalizeRewardCoupons_(original, now);
+        let changed = JSON.stringify(original) !== JSON.stringify(wallet);
+        let released = 0;
 
-      wallet.forEach(function(coupon) {
-        if (
-          clean_(coupon && coupon.discount_id) === targetId &&
-          rewardCouponIsActive_(coupon, now)
-        ) {
-          released += Math.max(0, Number(coupon.points) || 0);
-          coupon.status = 'revoked';
-          coupon.revoked_at = now.toISOString();
-          coupon.revoked_reason = 'admin_deleted';
-          changed = true;
-        }
-      });
+        wallet.forEach(function(coupon) {
+          if (
+            clean_(coupon && coupon.discount_id) === targetId &&
+            rewardCouponIsActive_(coupon, now)
+          ) {
+            released += Math.max(0, Number(coupon.points) || 0);
+            coupon.status = 'revoked';
+            coupon.revoked_at = now.toISOString();
+            coupon.revoked_reason = 'admin_deleted';
+            changed = true;
+          }
+        });
 
-      if (!changed || released <= 0) return;
+        if (!changed || released <= 0) return;
 
-      const committed = rewardCommittedPoints_(wallet, now);
-      const earned = rewardInt_(customer.pointsEarned);
-      const balance = Math.max(0, earned - committed);
+        const committed = rewardCommittedPoints_(wallet, now);
+        const earned = rewardInt_(customer.pointsEarned);
+        const balance = Math.max(0, earned - committed);
 
-      setRewardMetafields_([
-        rewardMetafieldInput_(
-          customer.id,
-          'coupons',
-          'json',
-          JSON.stringify(wallet),
-          customer.coupons
-        ),
-        rewardMetafieldInput_(
-          customer.id,
-          'points_balance',
-          'number_integer',
-          balance,
-          customer.pointsBalance
-        ),
-        rewardMetafieldInput_(
-          customer.id,
-          'points_redeemed_lifetime',
-          'number_integer',
-          committed,
-          customer.pointsRedeemed
-        )
-      ]);
+        setRewardMetafields_([
+          rewardMetafieldInput_(
+            customer.id,
+            'coupons',
+            'json',
+            JSON.stringify(wallet),
+            customer.coupons
+          ),
+          rewardMetafieldInput_(
+            customer.id,
+            'points_balance',
+            'number_integer',
+            balance,
+            customer.pointsBalance
+          ),
+          rewardMetafieldInput_(
+            customer.id,
+            'points_redeemed_lifetime',
+            'number_integer',
+            committed,
+            customer.pointsRedeemed
+          )
+        ]);
 
-      reconciledCustomers += 1;
-      restoredPoints += released;
+        reconciledCustomers += 1;
+        restoredPoints += released;
+      } catch (customerErr) {
+        console.error(
+          'JILL Rewards deleted-discount customer ' + customer.id + ': ' +
+          (customerErr && customerErr.stack ? customerErr.stack : customerErr)
+        );
+      }
     });
 
+    pagesScanned += 1;
+
     const pageInfo = connection.pageInfo || {};
-    hasNextPage = Boolean(pageInfo.hasNextPage);
-    after = pageInfo.endCursor || null;
-    if (!after) hasNextPage = false;
+    const hasNextPage = Boolean(pageInfo.hasNextPage);
+    const nextCursor = clean_(pageInfo.endCursor) || null;
+
+    if (!hasNextPage) {
+      queue.shift();
+      saveRewardDeletedDiscountQueue_(queue);
+      after = null;
+      cycleComplete = true;
+      break;
+    }
+
+    if (!nextCursor || nextCursor === after) {
+      throw new Error(
+        'JILL Rewards deleted-discount pagination returned an invalid next cursor.'
+      );
+    }
+
+    // Commit queue progress only after the page has been handled. If Apps
+    // Script stops earlier, the same page is revisited and wallet writes
+    // converge safely through coupon status + compareDigest semantics.
+    job.cursor = nextCursor;
+    queue[0] = job;
+    saveRewardDeletedDiscountQueue_(queue);
+    after = nextCursor;
   }
 
+  const currentQueue = rewardDeletedDiscountQueue_();
   const result = {
+    ok: true,
+    queue_depth: currentQueue.length,
+    processed_discount_id: targetId,
+    pages_scanned: pagesScanned,
+    customers_scanned: customersScanned,
     reconciled_customers: reconciledCustomers,
-    restored_points: restoredPoints
+    restored_points: restoredPoints,
+    cursor_recovered: cursorRecovered,
+    cycle_complete: cycleComplete
   };
 
   Logger.log(
-    'JILL Rewards deleted discount reconciliation ' +
+    'JILL Rewards deleted discount queue ' +
     targetId + ': ' + JSON.stringify(result)
   );
 

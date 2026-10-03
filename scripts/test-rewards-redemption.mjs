@@ -248,3 +248,37 @@ console.log('JILL Rewards backend claim/commit/rollback regression tests passed.
   );
 }
 console.log('JILL Rewards resumable sweep cursor contract passed.');
+
+
+{
+  const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  assert.match(
+    backendSource,
+    /enqueueDeletedRewardDiscount_\(discountId\)/,
+    'DISCOUNTS_DELETE should enqueue durable reconciliation work',
+  );
+  assert.match(
+    backendSource,
+    /queue\.some\(function\(job\)[\s\S]*?job\.discount_id\) === targetId/,
+    'deleted-discount queue should deduplicate repeated deliveries',
+  );
+  assert.match(
+    backendSource,
+    /job\.cursor = nextCursor;[\s\S]*?saveRewardDeletedDiscountQueue_\(queue\);[\s\S]*?after = nextCursor/,
+    'deleted-discount queue should persist a handled page before advancing',
+  );
+  assert.match(
+    backendSource,
+    /queue\.shift\(\);[\s\S]*?saveRewardDeletedDiscountQueue_\(queue\);[\s\S]*?cycleComplete = true/,
+    'deleted-discount queue should remove a job only after full traversal',
+  );
+  assert.doesNotMatch(
+    backendSource.slice(
+      backendSource.indexOf('function processDeletedRewardDiscountQueue_() {'),
+      backendSource.indexOf('\nfunction normalizeRewardWalletForCustomer_', backendSource.indexOf('function processDeletedRewardDiscountQueue_() {')),
+    ),
+    /while \(hasNextPage && scanned < 1000\)/,
+    'deleted-discount reconciliation must not have a permanent 1,000-customer ceiling',
+  );
+}
+console.log('JILL Rewards deleted-discount durable queue contract passed.');
