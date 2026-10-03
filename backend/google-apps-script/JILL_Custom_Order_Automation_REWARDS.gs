@@ -100,16 +100,25 @@ function doPost(e) {
   const suppliedRewardSecret = clean_(
     e && e.parameter ? e.parameter.jill_rewards_hook : ''
   );
-  let verifiedRewardHook = false;
+  const suppliedRewardTopic = clean_(
+    e && e.parameter ? e.parameter.jill_rewards_topic : ''
+  );
 
   try {
     lock.waitLock(10000);
 
-    if (suppliedRewardSecret) {
-      verifiedRewardHook =
-        suppliedRewardSecret === rewardWebhookSecret_();
+    if (suppliedRewardSecret || suppliedRewardTopic) {
+      const subscription = rewardWebhookSubscriptionForKey_(
+        suppliedRewardTopic
+      );
 
-      if (!verifiedRewardHook) {
+      if (
+        !subscription ||
+        !constantTimeEqual_(
+          suppliedRewardSecret,
+          rewardWebhookSecret_(subscription.key)
+        )
+      ) {
         return json_({ ok: false, error: 'Invalid rewards webhook' });
       }
 
@@ -484,6 +493,8 @@ function jillRewardsInfrastructureHealth_() {
       triggerCount === 1,
     webhook_subscriptions_expected: JILL_REWARD_SUBSCRIPTIONS.length,
     webhook_subscriptions_verified: verified,
+    webhook_auth_mode: 'topic_scoped_query_secret_v2',
+    standard_hmac_verified: false,
     sweep_trigger_count: triggerCount,
     sweep_trigger_ok: triggerCount === 1
   };
@@ -798,7 +809,21 @@ function processPendingJillRewardRequests() {
   }
 }
 
-function rewardWebhookSecret_() {
+function rewardWebhookSubscriptionForKey_(topicKey) {
+  const key = clean_(topicKey);
+
+  return JILL_REWARD_SUBSCRIPTIONS.find(function(item) {
+    return item && item.key === key;
+  }) || null;
+}
+
+function rewardWebhookSecret_(topicKey) {
+  const subscription = rewardWebhookSubscriptionForKey_(topicKey);
+
+  if (!subscription) {
+    throw new Error('Unsupported JILL Rewards webhook topic.');
+  }
+
   const props = PropertiesService.getScriptProperties();
   const clientSecret = clean_(props.getProperty('SHOPIFY_CLIENT_SECRET'));
 
@@ -808,7 +833,9 @@ function rewardWebhookSecret_() {
     );
   }
 
-  return fingerprint_('jill-rewards-webhook|' + clientSecret).slice(0, 48);
+  return fingerprint_(
+    'jill-rewards-webhook-v2|' + subscription.key + '|' + clientSecret
+  ).slice(0, 48);
 }
 
 function rewardsBaseUrl_() {
@@ -821,7 +848,7 @@ function rewardsWebhookUri_(topicKey) {
   return (
     rewardsBaseUrl_() +
     '?jill_rewards_hook=' +
-    encodeURIComponent(rewardWebhookSecret_()) +
+    encodeURIComponent(rewardWebhookSecret_(topicKey)) +
     '&jill_rewards_topic=' +
     encodeURIComponent(topicKey)
   );
@@ -926,6 +953,10 @@ function handleJillRewardsWebhook_(e) {
 
   if (!topic) {
     throw new Error('Missing JILL Rewards webhook topic.');
+  }
+
+  if (!rewardWebhookSubscriptionForKey_(topic)) {
+    throw new Error('Unsupported JILL Rewards webhook topic.');
   }
 
   if (topic === 'customers_update') {
@@ -3499,6 +3530,21 @@ function isoDateTime_(value) {
 
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+}
+
+function constantTimeEqual_(left, right) {
+  const a = String(left || '');
+  const b = String(right || '');
+  const length = Math.max(a.length, b.length);
+  let difference = a.length ^ b.length;
+
+  for (let index = 0; index < length; index += 1) {
+    difference |=
+      (index < a.length ? a.charCodeAt(index) : 0) ^
+      (index < b.length ? b.charCodeAt(index) : 0);
+  }
+
+  return difference === 0;
 }
 
 function fingerprint_(value) {

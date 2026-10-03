@@ -88,3 +88,10 @@ The Shopify `DISCOUNTS_DELETE` webhook never scans the customer population synch
 The minute Apps Script trigger is the sole owner of operational repair and reconciliation. It verifies Rewards webhook/trigger infrastructure, keeps Public Promotions healthy, processes pending redemptions, normalizes wallets, advances the resumable customer cursor, and processes the deleted-discount queue.
 
 The public `?jill_rewards_watchdog=1` endpoint is read-only. It reports webhook/trigger health, the age and summary of the most recent successful minute sweep, Public Promotions freshness/trigger state, deletion-queue depth, engine version, and deployed Git build SHA. An external watchdog can therefore detect drift without causing business-state mutations merely by polling health.
+
+
+## Webhook ingress security
+
+The current Apps Script web-app transport cannot inspect Shopify's HTTPS webhook headers, so it cannot truthfully implement Shopify's standard `X-Shopify-Hmac-SHA256` verification at this endpoint. The active Apps Script fallback therefore uses a topic-scoped 48-character derived secret in each webhook URI, rejects unknown topic keys before payload processing, compares the supplied secret with constant work, and keeps event handling idempotent/reconcilable. The public health response explicitly reports `webhook_auth_mode: topic_scoped_query_secret_v2` and `standard_hmac_verified: false` so operational health never masquerades as standard Shopify HMAC authentication.
+
+A future header-capable ingress may replace this boundary only when it is a real deployed canonical owner. It must verify the raw-body Shopify HMAC, expected shop domain/topic, and Shopify delivery ID before forwarding an authenticated event. Do not add an undeployed placeholder ingress or a second competing webhook authority.

@@ -311,3 +311,39 @@ console.log('JILL Rewards deleted-discount durable queue contract passed.');
   assert.match(backendSource, /jillRewardsSweepHealth_\(\)/);
 }
 console.log('JILL Rewards read-only watchdog contract passed.');
+
+
+{
+  const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  assert.match(
+    backendSource,
+    /rewardWebhookSubscriptionForKey_\(suppliedRewardTopic\)/,
+    'webhook ingress must validate the requested topic before processing',
+  );
+  assert.match(
+    backendSource,
+    /jill-rewards-webhook-v2\|' \+ subscription\.key \+ '\|' \+ clientSecret/,
+    'webhook query secret must be topic-scoped',
+  );
+  assert.match(
+    backendSource,
+    /constantTimeEqual_\([\s\S]*?suppliedRewardSecret[\s\S]*?rewardWebhookSecret_\(subscription\.key\)/,
+    'webhook ingress must compare the topic-scoped secret with constant work',
+  );
+  assert.doesNotMatch(
+    backendSource,
+    /suppliedRewardSecret === rewardWebhookSecret_\(\)/,
+    'global webhook query secret must not return',
+  );
+  assert.match(
+    backendSource,
+    /webhook_auth_mode: 'topic_scoped_query_secret_v2'/,
+    'health must report the actual webhook auth mode',
+  );
+  assert.match(
+    backendSource,
+    /standard_hmac_verified: false/,
+    'health must not falsely claim Shopify HMAC verification while Apps Script is the ingress',
+  );
+}
+console.log('JILL Rewards topic-scoped webhook ingress contract passed.');

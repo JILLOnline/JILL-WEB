@@ -195,6 +195,23 @@ if (/while \(hasNextPage && scanned < 1000\)/.test(deletedQueueSection)) {
   throw new Error('Deleted-discount reconciliation reintroduced the permanent 1,000-customer ceiling.');
 }
 
+for (const marker of [
+  'rewardWebhookSubscriptionForKey_(suppliedRewardTopic)',
+  'constantTimeEqual_(',
+  "jill-rewards-webhook-v2|' + subscription.key",
+  'rewardWebhookSecret_(topicKey)',
+  "webhook_auth_mode: 'topic_scoped_query_secret_v2'",
+  'standard_hmac_verified: false',
+  "throw new Error('Unsupported JILL Rewards webhook topic.')",
+]) {
+  if (!backend.includes(marker)) {
+    throw new Error(`Rewards webhook ingress hardening guard missing: ${marker}`);
+  }
+}
+if (backend.includes("suppliedRewardSecret === rewardWebhookSecret_()")) {
+  throw new Error('Rewards webhook ingress reintroduced the global query secret.');
+}
+
 if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
   throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');
 }
