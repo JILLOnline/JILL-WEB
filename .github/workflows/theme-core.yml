@@ -84,6 +84,18 @@ jobs:
       - name: Run Custom Order contract guard
         run: npm run check:custom-order
 
+      - name: Run Rewards architecture guard
+        run: npm run check:rewards
+
+      - name: Run Rewards state and accounting tests
+        run: npm run test:rewards
+
+      - name: Run Rewards redemption transaction tests
+        run: npm run test:rewards-redemption
+
+      - name: Run Customer Account Coupons tests
+        run: npm run test:account-coupons
+
       - name: Run Shopify Theme Check
         run: npx shopify theme check --path theme
 

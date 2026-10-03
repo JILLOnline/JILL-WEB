@@ -46,6 +46,22 @@ jobs:
         if: steps.auth.outputs.ready == 'true'
         run: npm install
 
+      - name: Run Rewards architecture guard
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run check:rewards
+
+      - name: Run Rewards state and accounting tests
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run test:rewards
+
+      - name: Run Rewards redemption transaction tests
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run test:rewards-redemption
+
+      - name: Run Customer Account Coupons tests
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run test:account-coupons
+
       - name: Pull current JILL Custom Form app configuration
         if: steps.auth.outputs.ready == 'true'
         env:
