@@ -96,7 +96,6 @@ jobs:
           npx shopify app deploy
           --config production
           --allow-updates
-          --allow-deletes
           --source-control-url "$COMMIT_URL"
 
 # Canonical customer-account deploy owner follows jill/theme-core, not the stale main branch.
