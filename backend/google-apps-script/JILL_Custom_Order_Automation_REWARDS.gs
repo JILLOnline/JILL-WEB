@@ -84,6 +84,7 @@ function doGet(e) {
         ok: false,
         watchdog: true,
         engine_version: JILL_REWARDS_ENGINE_VERSION,
+        build_sha: JILL_REWARDS_BUILD_SHA,
         error: String(err)
       });
     }
@@ -286,6 +287,7 @@ const JILL_REWARD_TIERS = {
 };
 
 const JILL_REWARDS_ENGINE_VERSION = '13';
+const JILL_REWARDS_BUILD_SHA = '__JILL_REWARDS_BUILD_SHA__';
 const JILL_REWARD_SPEND_CENTS_PER_POINT = 1000;
 const JILL_REWARD_COUPON_DAYS = 30;
 const JILL_REWARDS_SWEEP_HANDLER = 'processPendingJillRewardRequests';
@@ -307,6 +309,7 @@ function setupJillRewards() {
   const result = {
     ok: true,
     engine_version: JILL_REWARDS_ENGINE_VERSION,
+    build_sha: JILL_REWARDS_BUILD_SHA,
     created: infrastructure.created,
     updated: infrastructure.updated,
     existing: infrastructure.existing,
@@ -457,6 +460,7 @@ function runJillRewardsWatchdog_() {
     ok: true,
     watchdog: true,
     engine_version: JILL_REWARDS_ENGINE_VERSION,
+    build_sha: JILL_REWARDS_BUILD_SHA,
     checked: infrastructure.checked,
     throttled: infrastructure.throttled,
     created: infrastructure.created,

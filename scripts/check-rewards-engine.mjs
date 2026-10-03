@@ -5,6 +5,7 @@ const dashboard = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboa
 const ui = fs.readFileSync('extensions/jill-account-dashboard/src/rewards.mjs', 'utf8');
 const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
+const backendDeploy = fs.readFileSync('.github/workflows/deploy-rewards-backend.yml', 'utf8');
 
 try {
   // Parse the Apps Script source as JavaScript without executing Apps Script APIs.
@@ -46,6 +47,10 @@ if (JSON.stringify(backendTiers(backend)) !== JSON.stringify(expectedTiers)) {
 
 const uiVersion = mustMatch(ui, /REWARD_ENGINE_VERSION = '([^']+)'/, 'UI engine version');
 const backendVersion = mustMatch(backend, /JILL_REWARDS_ENGINE_VERSION = '([^']+)'/, 'Backend engine version');
+const backendBuild = mustMatch(backend, /JILL_REWARDS_BUILD_SHA = '([^']+)'/, 'Backend build provenance marker');
+if (backendBuild !== '__JILL_REWARDS_BUILD_SHA__') {
+  throw new Error('Repository Rewards backend must retain the deployment build-SHA marker.');
+}
 if (uiVersion !== String(config.engineVersion) || backendVersion !== String(config.engineVersion)) {
   throw new Error(`Rewards engine version drift: config=${config.engineVersion} ui=${uiVersion} backend=${backendVersion}`);
 }
@@ -94,6 +99,21 @@ for (const guard of ['asyncUsageCount', 'DiscountCustomers', 'DiscountAmount', '
 }
 if (!watchdog.includes(`EXPECTED_ENGINE_VERSION: '${config.engineVersion}'`)) {
   throw new Error('Watchdog engine version does not match rewards.config.json.');
+}
+if (!watchdog.includes('EXPECTED_BUILD_SHA') || !watchdog.includes('deploy-rewards-backend.yml')) {
+  throw new Error('Watchdog must verify the exact successful Rewards backend deployment SHA.');
+}
+for (const marker of [
+  "EXPECTED_ENGINE_VERSION: '" + config.engineVersion + "'",
+  'CLASPRC_JSON',
+  'CLASP_JSON',
+  'clasp pull',
+  'clasp push --force',
+  'create-deployment',
+  'APPS_SCRIPT_DEPLOYMENT_ID',
+  'EXPECTED_BUILD_SHA',
+]) {
+  if (!backendDeploy.includes(marker)) throw new Error(`Rewards backend deployment guard missing: ${marker}`);
 }
 
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {

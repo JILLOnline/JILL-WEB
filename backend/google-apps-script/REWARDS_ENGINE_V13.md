@@ -63,3 +63,11 @@ Do not label the engine locked until all of the following pass:
 - admin deletion of an unused coupon revokes it and releases points
 - deletion of a used coupon does not release points
 - partial/full refund behavior matches the solvency rules
+
+## Deployment provenance
+
+The canonical backend delivery owner is `.github/workflows/deploy-rewards-backend.yml`. It deploys the existing Apps Script project and existing web-app deployment only after the Rewards guards and redemption transaction tests pass. The workflow first pulls the remote Apps Script project and refuses to overwrite it if unexpected production-only source files exist.
+
+Repository source retains the literal `__JILL_REWARDS_BUILD_SHA__` marker. Deployment replaces that marker in the staged copy with the exact Git commit SHA. The runtime watchdog reports both `engine_version` and `build_sha`; deployment certification requires the live `/exec` endpoint to report the exact commit that was deployed.
+
+Manual Apps Script editor changes are not a canonical delivery path after this lane is activated. The existing web-app deployment ID is updated in place so JILL does not create a second backend authority or change the public Custom Order/Rewards endpoint.

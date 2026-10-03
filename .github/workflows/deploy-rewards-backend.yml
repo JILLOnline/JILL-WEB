@@ -1,0 +1,211 @@
+name: Deploy JILL Rewards backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - jill/theme-core
+    paths:
+      - 'backend/google-apps-script/**'
+      - 'rewards.config.json'
+      - 'scripts/check-rewards-engine.mjs'
+      - 'scripts/test-rewards-engine.mjs'
+      - 'scripts/test-rewards-redemption.mjs'
+      - '.github/workflows/deploy-rewards-backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jill-rewards-backend-production
+  cancel-in-progress: false
+
+env:
+  EXPECTED_ENGINE_VERSION: '13'
+  APPS_SCRIPT_DEPLOYMENT_ID: AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA
+  WATCHDOG_URL: https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec?jill_rewards_watchdog=1
+
+jobs:
+  deploy:
+    name: Deploy canonical Apps Script backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout canonical source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies and run repository guards
+        run: npm install
+
+      - name: Run Rewards architecture guard
+        run: npm run check:rewards
+
+      - name: Run Rewards state and accounting tests
+        run: npm run test:rewards
+
+      - name: Run Rewards redemption transaction tests
+        run: npm run test:rewards-redemption
+
+      - name: Require Apps Script deployment credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CLASPRC_JSON" ] || [ -z "$CLASP_JSON" ]; then
+            echo 'CLASPRC_JSON and CLASP_JSON GitHub secrets are required for the canonical Apps Script deployment lane.' >&2
+            exit 1
+          fi
+
+      - name: Install pinned clasp
+        run: npm install --global @google/clasp@3.4.1
+
+      - name: Prepare authenticated Apps Script workspace
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="$RUNNER_TEMP/jill-apps-script"
+          mkdir -p "$workspace"
+          chmod 700 "$workspace"
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+
+          CLASP_JSON="$CLASP_JSON" WORKSPACE="$workspace" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          supplied = json.loads(os.environ['CLASP_JSON'])
+          script_id = str(supplied.get('scriptId', '')).strip()
+          if not script_id:
+              raise SystemExit('CLASP_JSON does not contain scriptId.')
+
+          config = {
+              'scriptId': script_id,
+              'rootDir': '.',
+              'scriptExtensions': ['gs', 'js'],
+              'htmlExtensions': ['html'],
+          }
+          target = Path(os.environ['WORKSPACE']) / '.clasp.json'
+          target.write_text(json.dumps(config), encoding='utf-8')
+          target.chmod(0o600)
+          PY
+
+      - name: Pull and audit current Apps Script project
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="$RUNNER_TEMP/jill-apps-script"
+          cd "$workspace"
+          clasp pull
+
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          expected_scripts = {
+              'JILL_Custom_Order_Automation_REWARDS.gs',
+              'JILL_Public_Promotions.gs',
+          }
+          actual_scripts = {
+              path.name for path in root.iterdir()
+              if path.is_file() and path.suffix.lower() in {'.gs', '.js', '.html'}
+          }
+
+          if not (root / 'appsscript.json').is_file():
+              raise SystemExit('Remote Apps Script project has no appsscript.json manifest.')
+
+          if actual_scripts != expected_scripts:
+              raise SystemExit(
+                  'Remote Apps Script source ownership mismatch. '
+                  f'Expected {sorted(expected_scripts)}, received {sorted(actual_scripts)}. '
+                  'Refusing to overwrite unknown or missing production source.'
+              )
+          PY
+
+      - name: Stage exact Git source with build provenance
+        shell: bash
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          workspace="$RUNNER_TEMP/jill-apps-script"
+          cp backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs "$workspace/JILL_Custom_Order_Automation_REWARDS.gs"
+          cp backend/google-apps-script/JILL_Public_Promotions.gs "$workspace/JILL_Public_Promotions.gs"
+
+          BUILD_SHA="$BUILD_SHA" WORKSPACE="$workspace" python - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ['WORKSPACE']) / 'JILL_Custom_Order_Automation_REWARDS.gs'
+          source = path.read_text(encoding='utf-8')
+          marker = '__JILL_REWARDS_BUILD_SHA__'
+          if source.count(marker) != 1:
+              raise SystemExit(f'Expected exactly one {marker} marker before deployment.')
+          source = source.replace(marker, os.environ['BUILD_SHA'])
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Push source and update existing web-app deployment
+        shell: bash
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/jill-apps-script"
+          clasp show-file-status
+          clasp push --force
+          clasp create-deployment             --deploymentId "$APPS_SCRIPT_DEPLOYMENT_ID"             --description "JILL Rewards $BUILD_SHA"
+
+      - name: Verify exact deployed build
+        shell: bash
+        env:
+          EXPECTED_BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          for attempt in $(seq 1 12); do
+            response="$(curl -L --fail --silent --show-error --max-time 180 "$WATCHDOG_URL" || true)"
+            if RESPONSE="$response" EXPECTED_BUILD_SHA="$EXPECTED_BUILD_SHA" EXPECTED_ENGINE_VERSION="$EXPECTED_ENGINE_VERSION" python - <<'PY'
+          import json
+          import os
+          import sys
+
+          raw = os.environ.get('RESPONSE', '').strip()
+          expected_sha = os.environ['EXPECTED_BUILD_SHA']
+          expected_version = os.environ['EXPECTED_ENGINE_VERSION']
+
+          try:
+              data = json.loads(raw)
+          except Exception:
+              sys.exit(1)
+
+          if data.get('ok') is not True or data.get('watchdog') is not True:
+              sys.exit(1)
+          if str(data.get('engine_version', '')).strip() != expected_version:
+              sys.exit(1)
+          if str(data.get('build_sha', '')).strip() != expected_sha:
+              sys.exit(1)
+          PY
+            then
+              printf '%s\n' "$response"
+              echo "Verified Apps Script deployment at $EXPECTED_BUILD_SHA."
+              exit 0
+            fi
+
+            echo "Deployment has not propagated build $EXPECTED_BUILD_SHA yet (attempt $attempt/12)."
+            sleep 5
+          done
+
+          echo 'Apps Script deployment did not report the exact Git build SHA.' >&2
+          exit 1
