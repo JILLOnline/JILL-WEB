@@ -237,8 +237,12 @@ console.log('JILL Rewards backend claim/commit/rollback regression tests passed.
     /if \(after && pagesScanned === 0 && !cursorRecovered\)[\s\S]*?deleteProperty\(JILL_REWARDS_SWEEP_CURSOR_PROPERTY\)[\s\S]*?after = null/,
     'resumable sweep cursor contract recovers a rejected stored cursor once',
   );
+  const sweepStart = backendSource.indexOf('function processPendingJillRewardRequests() {');
+  const sweepEnd = backendSource.indexOf('\nfunction rewardWebhookSecret_()', sweepStart);
+  assert.ok(sweepStart >= 0 && sweepEnd > sweepStart, 'normal Rewards sweep function boundaries must exist');
+  const sweepSource = backendSource.slice(sweepStart, sweepEnd);
   assert.doesNotMatch(
-    backendSource,
+    sweepSource,
     /while \(hasNextPage && scanned < 1000\)/,
     'normal Rewards sweep must not restart with a permanent 1,000-customer ceiling',
   );

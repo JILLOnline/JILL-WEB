@@ -158,8 +158,14 @@ for (const marker of [
     throw new Error(`Rewards resumable sweep guard missing: ${marker}`);
   }
 }
-if (/while \(hasNextPage && scanned < 1000\)/.test(backend)) {
-  throw new Error('Rewards sweep reintroduced the permanent 1,000-customer ceiling.');
+const rewardsSweepStart = backend.indexOf('function processPendingJillRewardRequests() {');
+const rewardsSweepEnd = backend.indexOf('\nfunction rewardWebhookSecret_()', rewardsSweepStart);
+if (rewardsSweepStart < 0 || rewardsSweepEnd < 0) {
+  throw new Error('Rewards normal sweep function boundaries were not found.');
+}
+const rewardsSweepSection = backend.slice(rewardsSweepStart, rewardsSweepEnd);
+if (/while \(hasNextPage && scanned < 1000\)/.test(rewardsSweepSection)) {
+  throw new Error('Rewards normal sweep reintroduced the permanent 1,000-customer ceiling.');
 }
 
 if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
