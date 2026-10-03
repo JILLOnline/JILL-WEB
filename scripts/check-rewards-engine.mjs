@@ -245,11 +245,12 @@ if (promotionBackendMaxAgeMinutes !== couponPromotionMaxAgeMinutes) {
 
 for (const marker of [
   'ensureJillPublicPromotionsHealthy_(false)',
+  'const promotions = jillPublicPromotionsHealth_();',
   'promotions: promotions',
-  'ok: promotions.ok === true',
+  'promotions.ok === true',
 ]) {
   if (!backend.includes(marker)) {
-    throw new Error(`Rewards watchdog is not enforcing public promotions health: ${marker}`);
+    throw new Error(`Rewards maintenance/watchdog is not enforcing public promotions health: ${marker}`);
   }
 }
 
