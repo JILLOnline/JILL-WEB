@@ -4,7 +4,7 @@ import {useEffect, useState} from 'preact/hooks';
 import {
   rewardCouponStatus,
   rewardWallet,
-} from '../../jill-account-dashboard/src/rewards.mjs';
+} from '../../../shared/rewards.mjs';
 
 const STORE = 'https://jillonlinestore.com';
 const STOREFRONT_API = 'shopify://storefront/api/2026-07/graphql.json';

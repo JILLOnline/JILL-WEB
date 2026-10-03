@@ -7,7 +7,7 @@ import {
   rewardRequestIsPending,
   rewardRequestIsComplete,
   rewardWallet,
-} from '../extensions/jill-account-dashboard/src/rewards.mjs';
+} from '../shared/rewards.mjs';
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
 // Execute the actual transport and handler with controlled Shopify responses and

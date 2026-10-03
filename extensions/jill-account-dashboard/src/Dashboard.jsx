@@ -2,6 +2,8 @@ import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import {useEffect, useRef, useState} from 'preact/hooks';
 import {
+  REWARD_COUPON_POLICY,
+  REWARD_SPEND_CENTS_PER_POINT,
   REWARD_STATES,
   buildRewardJourney,
   rewardCouponStatus,
@@ -9,7 +11,7 @@ import {
   rewardRequestIsComplete,
   rewardWallet,
   toRewardInteger,
-} from './rewards.mjs';
+} from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
@@ -483,7 +485,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
                     Redeem {tier.points} points for ${tier.value} OFF?
                   </s-text>
                   <s-text color="subdued">
-                    ${tier.minimum} minimum order · Expires 30 days after creation · Cannot be combined with other discounts.
+                    ${tier.minimum} minimum order · Expires ${REWARD_COUPON_POLICY.expirationDays} days after creation · ${Object.values(REWARD_COUPON_POLICY.stacking).some(Boolean) ? 'Combination rules apply.' : 'Cannot be combined with other discounts.'}
                   </s-text>
                   <s-stack direction="inline" gap="small-300">
                     <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
@@ -526,7 +528,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
         <s-stack direction="inline" justifyContent="space-between" alignItems="center">
           <s-stack direction="block" gap="small-100">
             <s-heading>Rewards ★</s-heading>
-            <s-text color="subdued">Earn 1 point for every $10 of eligible JILL merchandise spend.</s-text>
+            <s-text color="subdued">{`Earn 1 point for every ${REWARD_SPEND_CENTS_PER_POINT / 100} of eligible JILL merchandise spend.`}</s-text>
           </s-stack>
           <s-badge>{loading ? 'Loading…' : `${points} pts`}</s-badge>
         </s-stack>

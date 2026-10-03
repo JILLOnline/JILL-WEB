@@ -1,6 +1,22 @@
 export const REWARD_ENGINE_VERSION = '13';
 export const REWARD_SPEND_CENTS_PER_POINT = 1000;
 export const REWARD_COUPON_DAYS = 30;
+export const REWARD_COUPON_USAGE_LIMIT = 1;
+export const REWARD_COUPON_APPLIES_ONCE_PER_CUSTOMER = true;
+export const REWARD_COUPON_ORDER_STACKING = false;
+export const REWARD_COUPON_PRODUCT_STACKING = false;
+export const REWARD_COUPON_SHIPPING_STACKING = false;
+
+export const REWARD_COUPON_POLICY = Object.freeze({
+  expirationDays: REWARD_COUPON_DAYS,
+  usageLimit: REWARD_COUPON_USAGE_LIMIT,
+  appliesOncePerCustomer: REWARD_COUPON_APPLIES_ONCE_PER_CUSTOMER,
+  stacking: Object.freeze({
+    order: REWARD_COUPON_ORDER_STACKING,
+    product: REWARD_COUPON_PRODUCT_STACKING,
+    shipping: REWARD_COUPON_SHIPPING_STACKING,
+  }),
+});
 
 export const REWARD_TIERS = Object.freeze([
   Object.freeze({points: 10, value: 5, minimum: 25}),

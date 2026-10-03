@@ -6,7 +6,7 @@ import {
   chooseSolvencyRevocations,
   rewardAccounting,
   rewardCouponStatus,
-} from '../extensions/jill-account-dashboard/src/rewards.mjs';
+} from '../shared/rewards.mjs';
 
 const FAR_FUTURE = '2099-10-01T00:00:00Z';
 function active(points, createdAt = '2026-09-01T00:00:00Z') {

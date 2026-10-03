@@ -2,7 +2,8 @@ import fs from 'node:fs';
 
 const config = JSON.parse(fs.readFileSync('rewards.config.json', 'utf8'));
 const dashboard = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
-const ui = fs.readFileSync('extensions/jill-account-dashboard/src/rewards.mjs', 'utf8');
+const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
+const coupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
 const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
 const backendDeploy = fs.readFileSync('.github/workflows/deploy-rewards-backend.yml', 'utf8');
@@ -67,8 +68,48 @@ if (uiDays !== config.coupon.expirationDays || backendDays !== config.coupon.exp
   throw new Error('Rewards expiration parity failed.');
 }
 
-if (!dashboard.includes("from './rewards.mjs'")) {
-  throw new Error('Dashboard is not using the canonical reward state module.');
+function policyBoolean(source, regex, label) {
+  const value = mustMatch(source, regex, label);
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(`${label} must be a boolean literal.`);
+  }
+  return value === 'true';
+}
+
+const uiUsageLimit = Number(mustMatch(ui, /REWARD_COUPON_USAGE_LIMIT = (\d+)/, 'UI usage limit'));
+const backendUsageLimit = Number(mustMatch(backend, /JILL_REWARD_USAGE_LIMIT = (\d+)/, 'Backend usage limit'));
+const uiOnce = policyBoolean(ui, /REWARD_COUPON_APPLIES_ONCE_PER_CUSTOMER = (true|false)/, 'UI once-per-customer policy');
+const backendOnce = policyBoolean(backend, /JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER = (true|false)/, 'Backend once-per-customer policy');
+const uiOrderStacking = policyBoolean(ui, /REWARD_COUPON_ORDER_STACKING = (true|false)/, 'UI order stacking policy');
+const uiProductStacking = policyBoolean(ui, /REWARD_COUPON_PRODUCT_STACKING = (true|false)/, 'UI product stacking policy');
+const uiShippingStacking = policyBoolean(ui, /REWARD_COUPON_SHIPPING_STACKING = (true|false)/, 'UI shipping stacking policy');
+const backendOrderStacking = policyBoolean(backend, /JILL_REWARD_ORDER_STACKING = (true|false)/, 'Backend order stacking policy');
+const backendProductStacking = policyBoolean(backend, /JILL_REWARD_PRODUCT_STACKING = (true|false)/, 'Backend product stacking policy');
+const backendShippingStacking = policyBoolean(backend, /JILL_REWARD_SHIPPING_STACKING = (true|false)/, 'Backend shipping stacking policy');
+
+if (
+  uiUsageLimit !== config.coupon.usageLimit ||
+  backendUsageLimit !== config.coupon.usageLimit ||
+  uiOnce !== config.coupon.appliesOncePerCustomer ||
+  backendOnce !== config.coupon.appliesOncePerCustomer ||
+  uiOrderStacking !== config.coupon.stacking.order ||
+  backendOrderStacking !== config.coupon.stacking.order ||
+  uiProductStacking !== config.coupon.stacking.product ||
+  backendProductStacking !== config.coupon.stacking.product ||
+  uiShippingStacking !== config.coupon.stacking.shipping ||
+  backendShippingStacking !== config.coupon.stacking.shipping
+) {
+  throw new Error('Rewards coupon policy parity failed.');
+}
+
+if (fs.existsSync('extensions/jill-account-dashboard/src/rewards.mjs')) {
+  throw new Error('Dashboard-local Rewards module must not coexist with shared/rewards.mjs.');
+}
+if (!dashboard.includes("from '../../../shared/rewards.mjs'")) {
+  throw new Error('Dashboard is not using the canonical shared Rewards module.');
+}
+if (!coupons.includes("from '../../../shared/rewards.mjs'")) {
+  throw new Error('Coupons is not using the canonical shared Rewards module.');
 }
 if (dashboard.includes('const REWARD_TIERS = [')) {
   throw new Error('Dashboard reintroduced a duplicate reward tier table.');
@@ -76,11 +117,18 @@ if (dashboard.includes('const REWARD_TIERS = [')) {
 if (dashboard.includes(': !isAvailable\n                      ? ` · ${pointsRemaining}')) {
   throw new Error('Locked tiers are incorrectly displaying pts-left copy.');
 }
+if (dashboard.includes('Expires 30 days') || dashboard.includes('every $10')) {
+  throw new Error('Dashboard reintroduced hard-coded Rewards policy copy.');
+}
 
-const noStackGuard = /combinesWith\s*:\s*\{[\s\S]*?orderDiscounts\s*:\s*false[\s\S]*?productDiscounts\s*:\s*false[\s\S]*?shippingDiscounts\s*:\s*false[\s\S]*?\}/;
-if (!noStackGuard.test(backend)) throw new Error('Reward coupon stacking policy changed.');
-if (!/usageLimit\s*:\s*1/.test(backend) || !/appliesOncePerCustomer\s*:\s*true/.test(backend)) {
-  throw new Error('Reward coupon single-use policy changed.');
+for (const marker of [
+  'usageLimit: JILL_REWARD_USAGE_LIMIT',
+  'appliesOncePerCustomer: JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER',
+  'orderDiscounts: JILL_REWARD_ORDER_STACKING',
+  'productDiscounts: JILL_REWARD_PRODUCT_STACKING',
+  'shippingDiscounts: JILL_REWARD_SHIPPING_STACKING',
+]) {
+  if (!backend.includes(marker)) throw new Error(`Reward coupon creation is not using canonical policy: ${marker}`);
 }
 if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
   throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');

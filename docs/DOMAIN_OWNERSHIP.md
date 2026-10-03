@@ -60,7 +60,7 @@ This registry answers one question: **where does this behavior belong?**
 | Theme Editor lifecycle integration | feature owner requiring lifecycle support | Shopify section events | global reinitialization observers |
 | Public Storewide promotion mirror | `backend/google-apps-script/JILL_Public_Promotions.gs` | active Shopify code discounts, Shop metafield `jill_promotions.active_public_codes`, scheduled trigger health | personal Rewards coupons/accounting, subscriber/segment/customer-targeted codes, hard-coded campaign codes in Customer Account UI |
 | Rewards accounting/integrity | backend/rewards authority | Shopify/admin data | storefront presentation files |
-| Rewards customer state derivation | existing rewards state module | backend response | reward accounting |
+| Rewards customer state derivation | `shared/rewards.mjs` | backend response + `rewards.config.json` parity contract | reward accounting, extension-specific presentation ownership |
 | Rewards Shopify discount adapter | rewards backend adapter/transport owner | privileged Shopify client | UI state ownership |
 | Customer Account shared presentation | `shared/customer-account-ui.jsx` | account extension state | reward accounting/business truth |
 | Customer durable profile/preferences | one explicit Shopify-metafield or backend persistence owner when introduced | authenticated customer identity | arbitrary browser-supplied customer identity |

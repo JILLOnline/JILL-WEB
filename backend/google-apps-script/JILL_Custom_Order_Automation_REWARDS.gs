@@ -290,6 +290,11 @@ const JILL_REWARDS_ENGINE_VERSION = '13';
 const JILL_REWARDS_BUILD_SHA = '__JILL_REWARDS_BUILD_SHA__';
 const JILL_REWARD_SPEND_CENTS_PER_POINT = 1000;
 const JILL_REWARD_COUPON_DAYS = 30;
+const JILL_REWARD_USAGE_LIMIT = 1;
+const JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER = true;
+const JILL_REWARD_ORDER_STACKING = false;
+const JILL_REWARD_PRODUCT_STACKING = false;
+const JILL_REWARD_SHIPPING_STACKING = false;
 const JILL_REWARDS_SWEEP_HANDLER = 'processPendingJillRewardRequests';
 const JILL_REWARDS_INFRA_CHECK_PROPERTY = 'JILL_REWARDS_INFRA_CHECK_AT';
 const JILL_REWARDS_INFRA_CHECK_MS = 5 * 60 * 1000;
@@ -1338,12 +1343,12 @@ function createRewardDiscount_(customer, points, tier) {
     minimumRequirement: {
       subtotal: { greaterThanOrEqualToSubtotal: String(tier.minimum) }
     },
-    usageLimit: 1,
-    appliesOncePerCustomer: true,
+    usageLimit: JILL_REWARD_USAGE_LIMIT,
+    appliesOncePerCustomer: JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER,
     combinesWith: {
-      orderDiscounts: false,
-      productDiscounts: false,
-      shippingDiscounts: false
+      orderDiscounts: JILL_REWARD_ORDER_STACKING,
+      productDiscounts: JILL_REWARD_PRODUCT_STACKING,
+      shippingDiscounts: JILL_REWARD_SHIPPING_STACKING
     },
     tags: [
       'JILL_REWARDS',
@@ -1593,12 +1598,12 @@ function rewardDiscountIntegrity_(snapshot, coupon, customerId, now) {
     return { ok: false, reason: 'code_mismatch' };
   }
 
-  if (Number(snapshot.usageLimit) !== 1 || snapshot.appliesOncePerCustomer !== true) {
+  if (Number(snapshot.usageLimit) !== JILL_REWARD_USAGE_LIMIT || snapshot.appliesOncePerCustomer !== JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER) {
     return { ok: false, reason: 'usage_policy' };
   }
 
   const combines = snapshot.combinesWith || {};
-  if (combines.orderDiscounts || combines.productDiscounts || combines.shippingDiscounts) {
+  if (combines.orderDiscounts !== JILL_REWARD_ORDER_STACKING || combines.productDiscounts !== JILL_REWARD_PRODUCT_STACKING || combines.shippingDiscounts !== JILL_REWARD_SHIPPING_STACKING) {
     return { ok: false, reason: 'stacking_policy' };
   }
 
