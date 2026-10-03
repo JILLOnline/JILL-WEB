@@ -317,7 +317,7 @@ console.log('JILL Rewards read-only watchdog contract passed.');
   const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
   assert.match(
     backendSource,
-    /rewardWebhookSubscriptionForKey_\(suppliedRewardTopic\)/,
+    /rewardWebhookSubscriptionForKey_\(\s*suppliedRewardTopic\s*\)/,
     'webhook ingress must validate the requested topic before processing',
   );
   assert.match(
