@@ -196,7 +196,8 @@ if (/while \(hasNextPage && scanned < 1000\)/.test(deletedQueueSection)) {
 }
 
 for (const marker of [
-  'rewardWebhookSubscriptionForKey_(suppliedRewardTopic)',
+  'rewardWebhookSubscriptionForKey_(',
+  'suppliedRewardTopic',
   'constantTimeEqual_(',
   "jill-rewards-webhook-v2|' + subscription.key",
   'rewardWebhookSecret_(topicKey)',
