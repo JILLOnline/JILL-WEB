@@ -401,20 +401,11 @@ function ensureJillPublicPromotionsHealthy_(force) {
 
   if (force || !health.fresh) {
     sync = syncJillPublicPromotions();
-    health = {
-      ok: true,
-      fresh: true,
-      version: sync.version,
-      synced_at: sync.synced_at,
-      snapshot_age_ms: 0,
-      offer_count: sync.offer_count,
-      trigger_count: 1,
-      trigger_ok: true
-    };
+    health = jillPublicPromotionsHealth_();
   }
 
   return {
-    ok: health.ok,
+    ok: Boolean(health.ok),
     infrastructure: infrastructure,
     health: health,
     sync: sync

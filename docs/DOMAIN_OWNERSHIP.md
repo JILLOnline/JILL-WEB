@@ -55,6 +55,7 @@ This registry answers one question: **where does this behavior belong?**
 | Backend event/webhook reconciliation | event's canonical domain owner | verified Shopify/source event, authoritative platform data | trusting event delivery as sole correctness layer |
 | Backend operational health | each privileged domain's health contract + shared transport only when generic | version/infrastructure/reconciliation state | secrets or customer private data |
 | Rewards backend deployment/provenance | `.github/workflows/deploy-rewards-backend.yml` + `JILL_REWARDS_BUILD_SHA` runtime marker | canonical Git source, existing Apps Script project/deployment, Rewards guards | manual editor changes as a competing source, creating a second production web-app deployment, unverifiable runtime source |
+| Public promotions snapshot + trigger health | `backend/google-apps-script/JILL_Public_Promotions.gs` | active public Shopify code discovery, sanitized shop metafield snapshot, freshness and trigger health | customer-targeted codes, personal Rewards wallet state, hard-coded promotion lists |
 | SEO/meta/structured data | canonical SEO snippets | Shopify objects/settings | page-local duplicated metadata systems |
 | Localization strings | `theme/locales/*` | canonical translation keys | hard-coded duplicated merchant/customer strings |
 | Theme Editor lifecycle integration | feature owner requiring lifecycle support | Shopify section events | global reinitialization observers |

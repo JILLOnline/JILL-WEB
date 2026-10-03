@@ -87,6 +87,10 @@ includesAll(promotionBackend, 'Public promotion synchronizer', [
   'shopifyGraphQL_',
   'metafieldsSet',
   'function ensureJillPublicPromotionsHealthy_(force)',
+  'PAGE_SIZE: 50',
+  'MAX_PAGES: 100',
+  'MAX_SNAPSHOT_AGE_MS: 10 * 60 * 1000',
+  'health = jillPublicPromotionsHealth_();',
 ]);
 
 for (const forbidden of [

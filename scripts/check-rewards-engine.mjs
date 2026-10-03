@@ -5,6 +5,7 @@ const dashboard = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboa
 const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
 const coupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
 const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+const promotionBackend = fs.readFileSync('backend/google-apps-script/JILL_Public_Promotions.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
 const backendDeploy = fs.readFileSync('.github/workflows/deploy-rewards-backend.yml', 'utf8');
 
@@ -14,6 +15,12 @@ try {
   new Function(backend);
 } catch (error) {
   throw new Error(`Rewards Apps Script syntax check failed: ${error.message}`);
+}
+
+try {
+  new Function(promotionBackend);
+} catch (error) {
+  throw new Error(`Public promotions Apps Script syntax check failed: ${error.message}`);
 }
 
 function mustMatch(source, regex, label) {
@@ -170,6 +177,45 @@ for (const marker of [
   'EXPECTED_BUILD_SHA',
 ]) {
   if (!backendDeploy.includes(marker)) throw new Error(`Rewards backend deployment guard missing: ${marker}`);
+}
+
+const promotionBackendMaxAgeMinutes = Number(mustMatch(
+  promotionBackend,
+  /MAX_SNAPSHOT_AGE_MS:\s*(\d+)\s*\*\s*60\s*\*\s*1000/,
+  'Public promotions backend freshness window',
+));
+const couponPromotionMaxAgeMinutes = Number(mustMatch(
+  coupons,
+  /PROMOTION_SNAPSHOT_MAX_AGE_MS = (\d+) \* 60 \* 1000/,
+  'Coupons promotion freshness window',
+));
+if (promotionBackendMaxAgeMinutes !== couponPromotionMaxAgeMinutes) {
+  throw new Error('Public promotion freshness policy drifted between backend and Coupons.');
+}
+
+for (const marker of [
+  'ensureJillPublicPromotionsHealthy_(false)',
+  'promotions: promotions',
+  'ok: promotions.ok === true',
+]) {
+  if (!backend.includes(marker)) {
+    throw new Error(`Rewards watchdog is not enforcing public promotions health: ${marker}`);
+  }
+}
+
+for (const marker of [
+  'PAGE_SIZE: 50',
+  'MAX_PAGES: 100',
+  'after: $after',
+  'hasNextPage',
+  'endCursor',
+  'DiscountBuyerSelectionAll',
+  'if (codes.length !== 1) return;',
+  'health = jillPublicPromotionsHealth_();',
+]) {
+  if (!promotionBackend.includes(marker)) {
+    throw new Error(`Public promotions source-of-truth guard missing: ${marker}`);
+  }
 }
 
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
