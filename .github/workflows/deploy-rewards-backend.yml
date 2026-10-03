@@ -52,6 +52,9 @@ jobs:
       - name: Run Rewards redemption transaction tests
         run: npm run test:rewards-redemption
 
+      - name: Run Public Promotions tests
+        run: npm run test:public-promotions
+
       - name: Require Apps Script deployment credentials
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}

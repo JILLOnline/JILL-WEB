@@ -318,6 +318,8 @@ Account modules share platform-safe JILL action/status primitives. They should v
 
 The storefront and Customer Account may use different implementation primitives because of Shopify platform boundaries, but they must share semantic action/state definitions.
 
+The Coupons page separates personal Rewards coupons from public Storewide offers. Public Storewide offers are a sanitized mirror of active Shopify code discounts whose buyer context is `all`; segment-, subscriber-, customer-targeted and multi-code campaigns must not be exposed in that mirror. The mirror must be no more than 10 minutes old, its scheduled synchronizer must self-deduplicate to one trigger, and pagination must cover the complete active code-discount connection rather than silently truncating after the first page.
+
 ## 15. Header/navigation contract
 
 - header state renders correctly at first paint

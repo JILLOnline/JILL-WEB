@@ -450,6 +450,7 @@ function runJillRewardsSweep() {
 // reinstalls the missing infrastructure and reconciles customer wallets.
 function runJillRewardsWatchdog_() {
   const infrastructure = ensureJillRewardsInfrastructure_(false);
+  const promotions = ensureJillPublicPromotionsHealthy_(false);
   let reconciliation = null;
 
   if (infrastructure.checked) {
@@ -457,7 +458,7 @@ function runJillRewardsWatchdog_() {
   }
 
   return {
-    ok: true,
+    ok: promotions.ok === true,
     watchdog: true,
     engine_version: JILL_REWARDS_ENGINE_VERSION,
     build_sha: JILL_REWARDS_BUILD_SHA,
@@ -467,7 +468,8 @@ function runJillRewardsWatchdog_() {
     updated: infrastructure.updated,
     existing: infrastructure.existing,
     sweep_trigger: infrastructure.sweep_trigger,
-    reconciliation: reconciliation
+    reconciliation: reconciliation,
+    promotions: promotions
   };
 }
 

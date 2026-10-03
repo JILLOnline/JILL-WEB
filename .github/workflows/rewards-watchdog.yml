@@ -3,7 +3,7 @@ name: JILL rewards watchdog
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   push:
     branches:
       - main
@@ -101,6 +101,15 @@ jobs:
                   f'JILL Rewards deployed build mismatch: expected {expected_build}, got {build_sha}',
                   file=sys.stderr,
               )
+              sys.exit(1)
+
+          promotions = data.get('promotions') or {}
+          promotion_health = promotions.get('health') or {}
+          if promotions.get('ok') is not True or promotion_health.get('fresh') is not True:
+              print('JILL public promotions mirror is unhealthy or stale:', raw, file=sys.stderr)
+              sys.exit(1)
+          if promotion_health.get('trigger_ok') is not True:
+              print('JILL public promotions trigger is unhealthy:', raw, file=sys.stderr)
               sys.exit(1)
 
           print('JILL Rewards watchdog OK:', raw)

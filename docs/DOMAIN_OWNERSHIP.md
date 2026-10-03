@@ -58,6 +58,7 @@ This registry answers one question: **where does this behavior belong?**
 | SEO/meta/structured data | canonical SEO snippets | Shopify objects/settings | page-local duplicated metadata systems |
 | Localization strings | `theme/locales/*` | canonical translation keys | hard-coded duplicated merchant/customer strings |
 | Theme Editor lifecycle integration | feature owner requiring lifecycle support | Shopify section events | global reinitialization observers |
+| Public Storewide promotion mirror | `backend/google-apps-script/JILL_Public_Promotions.gs` | active Shopify code discounts, Shop metafield `jill_promotions.active_public_codes`, scheduled trigger health | personal Rewards coupons/accounting, subscriber/segment/customer-targeted codes, hard-coded campaign codes in Customer Account UI |
 | Rewards accounting/integrity | backend/rewards authority | Shopify/admin data | storefront presentation files |
 | Rewards customer state derivation | existing rewards state module | backend response | reward accounting |
 | Rewards Shopify discount adapter | rewards backend adapter/transport owner | privileged Shopify client | UI state ownership |

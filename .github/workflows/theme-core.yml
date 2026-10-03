@@ -93,6 +93,9 @@ jobs:
       - name: Run Rewards redemption transaction tests
         run: npm run test:rewards-redemption
 
+      - name: Run Public Promotions tests
+        run: npm run test:public-promotions
+
       - name: Run Customer Account Coupons tests
         run: npm run test:account-coupons
 

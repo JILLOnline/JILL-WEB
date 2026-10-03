@@ -58,6 +58,10 @@ jobs:
         if: steps.auth.outputs.ready == 'true'
         run: npm run test:rewards-redemption
 
+      - name: Run Public Promotions tests
+        if: steps.auth.outputs.ready == 'true'
+        run: npm run test:public-promotions
+
       - name: Run Customer Account Coupons tests
         if: steps.auth.outputs.ready == 'true'
         run: npm run test:account-coupons

@@ -72,12 +72,17 @@ includesAll(promotionBackend, 'Public promotion synchronizer', [
   'function setupJillPublicPromotions()',
   'function syncJillPublicPromotions()',
   '.everyMinutes(1)',
+  'after: $after',
+  'pageInfo {',
+  'hasNextPage',
+  'endCursor',
   'DiscountBuyerSelectionAll',
   'codes(first: 2)',
   'if (codes.length !== 1) return;',
   'query: "status:active method:code"',
   'shopifyGraphQL_',
   'metafieldsSet',
+  'function ensureJillPublicPromotionsHealthy_(force)',
 ]);
 
 for (const forbidden of [
