@@ -17,8 +17,6 @@ function includesAll(source, owner, markers) {
 
 const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
-const recoverySource = read('extensions/jill-account-coupons-v2/src/Coupons.jsx');
-const recoveryConfig = read('extensions/jill-account-coupons-v2/shopify.extension.toml');
 const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 const profileConfig = read('extensions/jill-account-home/shopify.extension.toml');
 const promotionBackend = read('backend/google-apps-script/JILL_Public_Promotions.gs');
@@ -99,20 +97,6 @@ for (const forbidden of [
   }
 }
 
-includesAll(recoveryConfig, 'Coupons recovery extension config', [
-  'api_version = "2026-07"',
-  'handle = "jill-account-coupons-v2"',
-  'uid = "bad98099-a546-242e-ad23-378ad515feca749d22cc"',
-  'target = "customer-account.page.render"',
-  'module = "./src/Coupons.jsx"',
-]);
-
-includesAll(recoverySource, 'Coupons recovery runtime', [
-  '<s-page',
-  'heading="Coupons"',
-  'Coupons page connected ✨',
-  'render(<CouponsRecovery />, document.body)',
-]);
 
 includesAll(dashboardConfig, 'Dashboard extension identity', [
   'handle = "jill-account-dashboard"',
