@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {
+  REWARDS_REFRESH_MS,
   buildRewardJourney,
   rewardCouponStatus,
   rewardRequestIsPending,
   rewardRequestIsComplete,
+  rewardRequestOutcome,
   rewardWallet,
 } from '../shared/rewards.mjs';
 
@@ -41,6 +43,14 @@ assert.equal(rewardRequestIsComplete(meta(0, 'consumed:older'), nonce), false);
 assert.equal(buildRewardJourney(30, [], {confirmingPoints: 10}).collapsed.tier.points, 10);
 assert.equal(buildRewardJourney(30, [], {pendingPoints: 10}).collapsed.tier.points, 10);
 
+assert.equal(REWARDS_REFRESH_MS, 25000);
+assert.equal(rewardRequestOutcome(meta(10, nonce), nonce).status, 'pending');
+assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`), nonce).status, 'complete_without_coupon');
+assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`, [coupon]), nonce).status, 'coupon');
+assert.equal(rewardRequestOutcome(meta(0, 'consumed:older'), nonce).status, 'waiting');
+assert.ok(source.includes('rewardRequestOutcome(meta, lastRequest.nonce)'));
+assert.ok(source.includes('Rewards may be out of date.'));
+
 function harness(overrides = {}) {
   const state = {};
   const context = vm.createContext({
@@ -51,7 +61,7 @@ function harness(overrides = {}) {
     metaMap: (data) => Object.fromEntries((data?.metafields || []).map((f) => [f.key, f.value])),
     wait: async () => {}, onCustomerUpdate() {}, requestReward: async () => nonce,
     ...Object.fromEntries(['ConfirmTier', 'FreshCoupon', 'RedeemError', 'SlowRequest',
-      'SubmittingPoints', 'LocalPendingPoints'].map((key) => [`set${key}`, (value) => {state[key] = value;}])),
+      'SubmittingPoints', 'LocalPendingPoints', 'LastRequest'].map((key) => [`set${key}`, (value) => {state[key] = value;}])),
     ...overrides,
   });
   vm.runInContext(handler, context);

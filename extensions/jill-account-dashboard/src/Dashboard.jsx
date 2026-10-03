@@ -4,18 +4,19 @@ import {useEffect, useRef, useState} from 'preact/hooks';
 import {
   REWARD_COUPON_POLICY,
   REWARD_SPEND_CENTS_PER_POINT,
+  REWARDS_REFRESH_MS,
   REWARD_STATES,
   buildRewardJourney,
   rewardCouponStatus,
   rewardRequestIsPending,
   rewardRequestIsComplete,
+  rewardRequestOutcome,
   rewardWallet,
   toRewardInteger,
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
-const REWARDS_REFRESH_MS = 25000;
 
 const JILL_KEYS = [
   'last_custom_request_at',
@@ -228,7 +229,7 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
+function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   const redemptionInFlight = useRef(false);
   const [submittingPoints, setSubmittingPoints] = useState(0);
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
@@ -237,6 +238,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const [slowRequest, setSlowRequest] = useState(false);
   const [confirmTier, setConfirmTier] = useState(null);
   const [freshCoupon, setFreshCoupon] = useState(null);
+  const [lastRequest, setLastRequest] = useState(null);
 
   const points = toRewardInteger(meta.points_balance);
   const wallet = rewardWallet(meta.coupons);
@@ -249,6 +251,37 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
   const availableTiers = journey.redeemable.map((item) => item.tier);
   const collapsedTier = journey.collapsed.tier;
   const visibleRewardItems = showAllRewards ? journey.expanded : [journey.collapsed];
+
+  useEffect(() => {
+    if (!lastRequest?.nonce) return;
+
+    const outcome = rewardRequestOutcome(meta, lastRequest.nonce);
+
+    if (outcome.status === 'coupon') {
+      setFreshCoupon(outcome.couponStatus === 'active' ? outcome.coupon : null);
+      setRedeemError('');
+      setLocalPendingPoints(0);
+      setSubmittingPoints(0);
+      setSlowRequest(false);
+      setLastRequest(null);
+      return;
+    }
+
+    if (outcome.status === 'complete_without_coupon') {
+      setLocalPendingPoints(0);
+      setSubmittingPoints(0);
+      setSlowRequest(false);
+      setRedeemError(
+        'This request finished without a coupon in your wallet. Refresh your rewards before trying again.',
+      );
+      setLastRequest(null);
+    }
+  }, [
+    meta.coupons,
+    meta.redeem_request_nonce,
+    meta.redeem_request_points,
+    lastRequest,
+  ]);
 
   function activeCouponForTier(tierPoints) {
     return journey.couponForTier(tierPoints);
@@ -269,6 +302,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
     setConfirmTier(null);
     setFreshCoupon(null);
+    setLastRequest(null);
     setRedeemError('');
     setSlowRequest(false);
     setSubmittingPoints(tier.points);
@@ -276,6 +310,7 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
     try {
       const requestNonce = await requestReward(customer.id, tier.points);
+      setLastRequest({nonce: requestNonce, points: tier.points});
       let completed = false;
 
       for (let attempt = 0; attempt < 42; attempt += 1) {
@@ -294,8 +329,10 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
 
         if (createdCoupon) {
           setFreshCoupon(createdCoupon);
+          setRedeemError('');
           setLocalPendingPoints(0);
           setSlowRequest(false);
+          setLastRequest(null);
           completed = true;
           break;
         }
@@ -309,7 +346,10 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
             setRedeemError(
               'This request finished without a coupon in your wallet. Refresh your rewards before trying again.',
             );
+          } else {
+            setRedeemError('');
           }
+          setLastRequest(null);
           break;
         }
       }
@@ -564,6 +604,12 @@ function RewardsCard({customer, meta, loading, onCustomerUpdate}) {
           </s-box>
         )}
 
+        {stale && (
+          <s-banner tone="info">
+            Rewards may be out of date. Your last confirmed balance and coupons are still shown while we refresh automatically.
+          </s-banner>
+        )}
+
         {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
 
         {!loading && freshCoupon && (
@@ -612,6 +658,7 @@ function Dashboard() {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [rewardsStale, setRewardsStale] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -622,10 +669,13 @@ function Dashboard() {
           if (!active) return;
           setCustomer(data);
           setLoadError(false);
+          setRewardsStale(false);
         })
         .catch((error) => {
           console.warn('JILL dashboard data error', error);
-          if (active && initial) setLoadError(true);
+          if (!active) return;
+          if (initial) setLoadError(true);
+          else setRewardsStale(true);
         })
         .finally(() => {
           if (active && initial) setLoading(false);
@@ -676,7 +726,7 @@ function Dashboard() {
           </s-banner>
         )}
 
-        <RewardsCard customer={customer} meta={meta} loading={loading} onCustomerUpdate={setCustomer} />
+        <RewardsCard customer={customer} meta={meta} loading={loading} stale={rewardsStale} onCustomerUpdate={setCustomer} />
 
         <s-section>
           <s-stack direction="block" gap="base">

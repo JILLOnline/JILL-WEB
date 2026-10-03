@@ -111,6 +111,14 @@ if (!dashboard.includes("from '../../../shared/rewards.mjs'")) {
 if (!coupons.includes("from '../../../shared/rewards.mjs'")) {
   throw new Error('Coupons is not using the canonical shared Rewards module.');
 }
+
+const refreshMs = Number(mustMatch(ui, /REWARDS_REFRESH_MS = (\d+)/, 'Rewards refresh cadence'));
+if (refreshMs !== 25000) {
+  throw new Error('Rewards refresh cadence changed without contract review.');
+}
+if (dashboard.includes('const REWARDS_REFRESH_MS =') || coupons.includes('const REWARDS_REFRESH_MS =')) {
+  throw new Error('Rewards refresh cadence must have one owner in shared/rewards.mjs.');
+}
 if (dashboard.includes('const REWARD_TIERS = [')) {
   throw new Error('Dashboard reintroduced a duplicate reward tier table.');
 }

@@ -1,5 +1,6 @@
 export const REWARD_ENGINE_VERSION = '13';
 export const REWARD_SPEND_CENTS_PER_POINT = 1000;
+export const REWARDS_REFRESH_MS = 25000;
 export const REWARD_COUPON_DAYS = 30;
 export const REWARD_COUPON_USAGE_LIMIT = 1;
 export const REWARD_COUPON_APPLIES_ONCE_PER_CUSTOMER = true;
@@ -77,6 +78,37 @@ export function rewardRequestIsPending(meta) {
 export function rewardRequestIsComplete(meta, nonce) {
   return String(meta?.redeem_request_points ?? '').trim() === '0' &&
     meta.redeem_request_nonce === `consumed:${nonce}`;
+}
+
+export function rewardRequestOutcome(meta, nonce) {
+  const requestNonce = String(nonce || '').trim();
+  if (!requestNonce) return {status: 'idle', coupon: null};
+
+  const coupon = rewardWallet(meta?.coupons).find(
+    (item) => String(item?.request_nonce || '').trim() === requestNonce,
+  ) || null;
+
+  if (coupon) {
+    return {
+      status: 'coupon',
+      coupon,
+      couponStatus: rewardCouponStatus(coupon),
+    };
+  }
+
+  if (rewardRequestIsComplete(meta, requestNonce)) {
+    return {status: 'complete_without_coupon', coupon: null};
+  }
+
+  const currentNonce = String(meta?.redeem_request_nonce || '').trim();
+  if (
+    toRewardInteger(meta?.redeem_request_points) > 0 &&
+    (currentNonce === requestNonce || currentNonce === `consumed:${requestNonce}`)
+  ) {
+    return {status: 'pending', coupon: null};
+  }
+
+  return {status: 'waiting', coupon: null};
 }
 
 export function rewardAccounting(pointsEarned, wallet, now = Date.now()) {

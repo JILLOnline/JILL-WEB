@@ -2,6 +2,7 @@ import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import {useEffect, useState} from 'preact/hooks';
 import {
+  REWARDS_REFRESH_MS,
   rewardCouponStatus,
   rewardWallet,
 } from '../../../shared/rewards.mjs';
@@ -226,6 +227,7 @@ function Coupons() {
   const [rewardsLoading, setRewardsLoading] = useState(true);
   const [promotionsError, setPromotionsError] = useState('');
   const [rewardsError, setRewardsError] = useState('');
+  const [rewardsStale, setRewardsStale] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -249,27 +251,41 @@ function Coupons() {
         if (active) setPromotionsLoading(false);
       });
 
-    loadRewardCoupons()
-      .then((coupons) => {
-        if (!active) return;
-        setRewardCoupons(coupons);
-        setRewardsError('');
-      })
-      .catch((error) => {
-        console.warn('JILL Rewards coupons load error', error);
-        if (active) {
-          setRewardCoupons([]);
-          setRewardsError(
-            'Your Rewards coupons are temporarily unavailable. Please refresh shortly.',
-          );
-        }
-      })
-      .finally(() => {
-        if (active) setRewardsLoading(false);
-      });
+    const refreshRewards = (initial = false) => {
+      loadRewardCoupons()
+        .then((nextCoupons) => {
+          if (!active) return;
+          setRewardCoupons(nextCoupons);
+          setRewardsError('');
+          setRewardsStale(false);
+        })
+        .catch((error) => {
+          console.warn('JILL Rewards coupons load error', error);
+          if (!active) return;
+
+          if (initial) {
+            setRewardCoupons([]);
+            setRewardsError(
+              'Your Rewards coupons are temporarily unavailable. Please refresh shortly.',
+            );
+          } else {
+            setRewardsStale(true);
+          }
+        })
+        .finally(() => {
+          if (active && initial) setRewardsLoading(false);
+        });
+    };
+
+    refreshRewards(true);
+    const rewardsRefreshTimer = setInterval(
+      () => refreshRewards(false),
+      REWARDS_REFRESH_MS,
+    );
 
     return () => {
       active = false;
+      clearInterval(rewardsRefreshTimer);
     };
   }, []);
 
@@ -333,6 +349,12 @@ function Coupons() {
 
             {!rewardsLoading && rewardsError ? (
               <s-banner tone="critical">{rewardsError}</s-banner>
+            ) : null}
+
+            {!rewardsLoading && !rewardsError && rewardsStale ? (
+              <s-banner tone="info">
+                Rewards may be out of date. Your last confirmed coupons are still shown while we refresh automatically.
+              </s-banner>
             ) : null}
 
             {!rewardsLoading && !rewardsError && rewardCoupons.length

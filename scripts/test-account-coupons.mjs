@@ -40,6 +40,11 @@ includesAll(source, 'Coupons runtime', [
   'PROMOTION_SNAPSHOT_MAX_AGE_MS',
   'rewardWallet',
   'rewardCouponStatus',
+  'REWARDS_REFRESH_MS',
+  'refreshRewards(false)',
+  'clearInterval(rewardsRefreshTimer)',
+  'setRewardsStale(true)',
+  'Your last confirmed coupons are still shown while we refresh automatically.',
   'Storewide offers',
   'Current Shopify promotions available to everyone.',
   'Personal JILL Rewards coupons generated from your Dashboard.',
@@ -57,6 +62,7 @@ for (const forbidden of [
   'SHOPIFY_ADMIN',
   'MutationObserver',
   'innerHTML',
+  'const REWARDS_REFRESH_MS =',
 ]) {
   if (source.includes(forbidden)) {
     fail(`Coupons runtime must not contain ${forbidden}`);

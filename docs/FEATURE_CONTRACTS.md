@@ -308,6 +308,8 @@ The theme/account UI does not calculate point balances, create discounts, reconc
 
 A redemption action requires confirmation before the privileged request is submitted. Pending state replaces/locks the initiating action deterministically so repeated clicks cannot create parallel requests.
 
+Customer Account Rewards surfaces refresh authoritative personal Rewards state every 25 seconds while open. A successful authoritative refresh must reconcile stale transient redemption UI: if the requested coupon appears, stale errors clear and the coupon becomes usable; if a consumed request completes without a wallet entry, the UI preserves a deterministic failure state. Background refresh failures must preserve the last confirmed Rewards data and expose a non-destructive stale notice rather than clearing the wallet or silently presenting old state as fresh.
+
 ## 14. Customer Account contract
 
 Desired JILL navigation:
