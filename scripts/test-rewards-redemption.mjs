@@ -29,7 +29,12 @@ const meta = (points, requestNonce, coupons = []) => ({
   coupons: JSON.stringify(coupons),
 });
 const customer = (values) => ({id: 'gid://shopify/Customer/1', metafields:
-  Object.entries(values).map(([key, value]) => ({key, value})),
+  Object.entries(values).map(([key, value]) => ({
+    namespace: 'jill_rewards',
+    key,
+    value,
+    compareDigest: `digest:${key}:${value}`,
+  })),
 });
 
 assert.equal(rewardRequestIsPending(meta(10, nonce)), true);
@@ -120,25 +125,112 @@ for (const overrides of [
   assert.equal(h.context.redemptionInFlight.current, false);
 }
 
-// Validate actual mutation variables and all error/acknowledgment branches.
+// Validate actual mutation variables, CAS behavior and all error/acknowledgment branches.
 const api = vm.createContext({API: 'shopify://customer-account/api/2026-07/graphql.json', QUERY: 'query {}'});
 vm.runInContext(mutation + transport, api);
+const writableCustomer = customer({
+  redeem_request_points: '0',
+  redeem_request_nonce: 'consumed:older',
+});
+let calls = 0;
 api.fetch = async (_url, options) => {
-  const {variables} = JSON.parse(options.body);
+  const body = JSON.parse(options.body);
+  calls += 1;
+
+  if (body.query === 'query {}') {
+    return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
+  }
+
+  const {variables} = body;
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
   assert.ok(variables.metafields.every((f) => f.ownerId === 'gid://shopify/Customer/1'));
-  return {ok: true, json: async () => ({data: {metafieldsSet: {metafields: variables.metafields, userErrors: []}}})};
+  assert.ok(variables.metafields.every((f) => typeof f.compareDigest === 'string'));
+  assert.ok(variables.metafields.every((f) => !Object.hasOwn(f, 'type')));
+  return {
+    ok: true,
+    json: async () => ({
+      data: {
+        metafieldsSet: {
+          metafields: variables.metafields.map((field) => ({
+            namespace: field.namespace,
+            key: field.key,
+            value: field.value,
+            compareDigest: 'next',
+          })),
+          userErrors: [],
+        },
+      },
+    }),
+  };
 };
 assert.match(await api.requestReward('gid://shopify/Customer/1', 10), /^jill:/);
-for (const payload of [
-  {}, {data: {metafieldsSet: null}},
-  {data: {metafieldsSet: {metafields: [], userErrors: []}}},
-  {errors: [{message: 'Access denied'}]},
-  {data: {metafieldsSet: {userErrors: [{message: 'Not writable'}]}}},
-]) {
-  api.fetch = async () => ({ok: true, json: async () => payload});
-  await assert.rejects(api.requestReward('gid://shopify/Customer/1', 10));
+assert.equal(calls, 2);
+
+// A digest conflict is refreshed and retried once.
+{
+  let mutationCalls = 0;
+  api.fetch = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.query === 'query {}') {
+      return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
+    }
+    mutationCalls += 1;
+    if (mutationCalls === 1) {
+      return {
+        ok: true,
+        json: async () => ({
+          data: {metafieldsSet: {metafields: [], userErrors: [{code: 'STALE_OBJECT', message: 'Compare digest mismatch'}]}},
+        }),
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({
+        data: {
+          metafieldsSet: {
+            metafields: body.variables.metafields.map((field) => ({
+              namespace: field.namespace,
+              key: field.key,
+              value: field.value,
+              compareDigest: 'next',
+            })),
+            userErrors: [],
+          },
+        },
+      }),
+    };
+  };
+  assert.match(await api.requestReward('gid://shopify/Customer/1', 10), /^jill:/);
+  assert.equal(mutationCalls, 2);
 }
+
+// Authorization and business errors are surfaced with the Shopify error code.
+api.fetch = async (_url, options) => {
+  const body = JSON.parse(options.body);
+  if (body.query === 'query {}') {
+    return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
+  }
+  return {
+    ok: true,
+    json: async () => ({
+      errors: [{message: 'Access denied for metafieldsSet field.', extensions: {code: 'ACCESS_DENIED'}}],
+    }),
+  };
+};
+await assert.rejects(
+  api.requestReward('gid://shopify/Customer/1', 10),
+  /Access denied for metafieldsSet field\. \(ACCESS_DENIED\)/,
+);
+
+api.fetch = async (_url, options) => {
+  const body = JSON.parse(options.body);
+  if (body.query === 'query {}') {
+    return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
+  }
+  return {ok: true, json: async () => ({data: {metafieldsSet: {metafields: [], userErrors: []}}})};
+};
+await assert.rejects(api.requestReward('gid://shopify/Customer/1', 10), /did not confirm/);
+
 api.fetch = async () => ({ok: false, json: async () => ({})});
 await assert.rejects(api.requestReward('gid://shopify/Customer/1', 10));
 api.fetch = async () => ({ok: true, json: async () => {throw new Error('Invalid JSON');}});

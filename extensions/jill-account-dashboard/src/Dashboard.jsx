@@ -78,6 +78,7 @@ const QUERY = `
         key
         value
         type
+        compareDigest
       }
     }
   }
@@ -86,7 +87,7 @@ const QUERY = `
 const REQUEST_REWARD_MUTATION = `
   mutation RequestJillReward($metafields: [MetafieldsSetInput!]!) {
     metafieldsSet(metafields: $metafields) {
-      metafields { namespace key value }
+      metafields { namespace key value compareDigest }
       userErrors { field message code }
     }
   }
@@ -117,8 +118,41 @@ function createRewardNonce() {
   return `jill:${Date.now()}:${Math.random().toString(36).slice(2, 12)}`;
 }
 
-async function requestReward(customerId, points) {
-  const nonce = createRewardNonce();
+function rewardRequestMetafield(customer, key) {
+  return (customer?.metafields || []).find(
+    (field) => field?.namespace === 'jill_rewards' && field.key === key,
+  ) || null;
+}
+
+function rewardRequestError(payload, fallback) {
+  const userError = payload?.data?.metafieldsSet?.userErrors?.[0];
+  const graphQLError = payload?.errors?.[0];
+  const error = userError || graphQLError;
+  const code = error?.code || error?.extensions?.code || '';
+  const message = error?.message || fallback;
+  return new Error(code ? `${message} (${code})` : message);
+}
+
+function rewardRequestHasDigestConflict(payload) {
+  const errors = [
+    ...(payload?.data?.metafieldsSet?.userErrors || []),
+    ...(payload?.errors || []),
+  ];
+  return errors.some((error) =>
+    /compare.?digest|digest.*match|stale/i.test(
+      `${error?.code || error?.extensions?.code || ''} ${error?.message || ''}`,
+    ),
+  );
+}
+
+async function writeRewardRequest(customer, points, nonce) {
+  const pointsField = rewardRequestMetafield(customer, 'redeem_request_points');
+  const nonceField = rewardRequestMetafield(customer, 'redeem_request_nonce');
+
+  if (!customer?.id || !pointsField?.compareDigest || !nonceField?.compareDigest) {
+    throw new Error('Your reward request state could not be verified. Refresh the page and try again.');
+  }
+
   const response = await fetch(API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -127,43 +161,78 @@ async function requestReward(customerId, points) {
       variables: {
         metafields: [
           {
-            ownerId: customerId,
+            ownerId: customer.id,
             namespace: 'jill_rewards',
             key: 'redeem_request_points',
-            type: 'number_integer',
             value: String(points),
+            compareDigest: pointsField.compareDigest,
           },
           {
-            ownerId: customerId,
+            ownerId: customer.id,
             namespace: 'jill_rewards',
             key: 'redeem_request_nonce',
-            type: 'single_line_text_field',
             value: nonce,
+            compareDigest: nonceField.compareDigest,
           },
         ],
       },
     }),
   });
 
-  const payload = await response.json();
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error('Shopify returned an invalid response while creating your reward.');
+  }
+
   const userErrors = payload?.data?.metafieldsSet?.userErrors || [];
   if (!response.ok || payload?.errors?.length || userErrors.length) {
-    throw new Error(
-      userErrors?.[0]?.message ||
-        payload?.errors?.[0]?.message ||
-        'Unable to request your JILL reward right now.',
-    );
+    return {ok: false, payload};
   }
+
   const written = payload?.data?.metafieldsSet?.metafields;
-  if (!Array.isArray(written) || ![
+  const acknowledged = Array.isArray(written) && [
     ['redeem_request_points', String(points)],
     ['redeem_request_nonce', nonce],
   ].every(([key, value]) => written.some((field) =>
     field?.namespace === 'jill_rewards' && field.key === key && field.value === value,
-  ))) {
+  ));
+
+  if (!acknowledged) {
     throw new Error('Shopify did not confirm your reward request. Refresh your rewards before trying again.');
   }
-  return nonce;
+
+  return {ok: true};
+}
+
+async function requestReward(customerId, points) {
+  const nonce = createRewardNonce();
+  let customer = await loadData();
+
+  if (!customer?.id || customer.id !== customerId) {
+    throw new Error('Your signed-in account changed. Refresh the page before redeeming.');
+  }
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = await writeRewardRequest(customer, points, nonce);
+    if (result.ok) return nonce;
+
+    if (attempt === 0 && rewardRequestHasDigestConflict(result.payload)) {
+      customer = await loadData();
+      if (!customer?.id || customer.id !== customerId) {
+        throw new Error('Your signed-in account changed. Refresh the page before redeeming.');
+      }
+      continue;
+    }
+
+    throw rewardRequestError(
+      result.payload,
+      'Unable to request your JILL reward right now.',
+    );
+  }
+
+  throw new Error('Unable to request your JILL reward right now.');
 }
 
 function wait(milliseconds) {
