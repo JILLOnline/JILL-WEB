@@ -71,3 +71,8 @@ The canonical backend delivery owner is `.github/workflows/deploy-rewards-backen
 Repository source retains the literal `__JILL_REWARDS_BUILD_SHA__` marker. Deployment replaces that marker in the staged copy with the exact Git commit SHA. The runtime watchdog reports both `engine_version` and `build_sha`; deployment certification requires the live `/exec` endpoint to report the exact commit that was deployed.
 
 Manual Apps Script editor changes are not a canonical delivery path after this lane is activated. The existing web-app deployment ID is updated in place so JILL does not create a second backend authority or change the public Custom Order/Rewards endpoint.
+
+
+## Resumable customer sweep
+
+The minute Rewards worker traverses customers with a persisted Shopify pagination cursor instead of restarting at customer 1 on every invocation. Each run processes at most 5 pages of 100 customers. Progress is persisted only after a page has been fully handled; the end of the Shopify connection clears the cursor and marks the cycle complete. If Shopify rejects a stored cursor before any page is processed, the worker clears that non-authoritative traversal marker and retries once from the beginning. Individual customer failures remain isolated and do not discard progress for the rest of the page.

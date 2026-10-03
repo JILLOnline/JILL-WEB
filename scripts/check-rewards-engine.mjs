@@ -145,6 +145,23 @@ for (const marker of [
 ]) {
   if (!backend.includes(marker)) throw new Error(`Reward coupon creation is not using canonical policy: ${marker}`);
 }
+for (const marker of [
+  "JILL_REWARDS_SWEEP_CURSOR_PROPERTY = 'JILL_REWARDS_SWEEP_CURSOR'",
+  'JILL_REWARDS_SWEEP_PAGE_SIZE = 100',
+  'JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN = 5',
+  'props.setProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY, nextCursor)',
+  'props.deleteProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY)',
+  'cursor_recovered: cursorRecovered',
+  'cycle_complete: cycleComplete',
+]) {
+  if (!backend.includes(marker)) {
+    throw new Error(`Rewards resumable sweep guard missing: ${marker}`);
+  }
+}
+if (/while \(hasNextPage && scanned < 1000\)/.test(backend)) {
+  throw new Error('Rewards sweep reintroduced the permanent 1,000-customer ceiling.');
+}
+
 if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
   throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');
 }

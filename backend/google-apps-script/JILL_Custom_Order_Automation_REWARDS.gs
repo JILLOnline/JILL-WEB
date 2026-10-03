@@ -296,6 +296,9 @@ const JILL_REWARD_ORDER_STACKING = false;
 const JILL_REWARD_PRODUCT_STACKING = false;
 const JILL_REWARD_SHIPPING_STACKING = false;
 const JILL_REWARDS_SWEEP_HANDLER = 'processPendingJillRewardRequests';
+const JILL_REWARDS_SWEEP_CURSOR_PROPERTY = 'JILL_REWARDS_SWEEP_CURSOR';
+const JILL_REWARDS_SWEEP_PAGE_SIZE = 100;
+const JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN = 5;
 const JILL_REWARDS_INFRA_CHECK_PROPERTY = 'JILL_REWARDS_INFRA_CHECK_AT';
 const JILL_REWARDS_INFRA_CHECK_MS = 5 * 60 * 1000;
 const JILL_REWARD_SUBSCRIPTIONS = [
@@ -496,73 +499,98 @@ function processPendingJillRewardRequests() {
   try {
     lock.waitLock(10000);
 
-    let after = null;
+    const props = PropertiesService.getScriptProperties();
+    const cursorStart =
+      clean_(props.getProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY)) || null;
+    let after = cursorStart;
     let scanned = 0;
     let processed = 0;
     let normalized = 0;
-    let hasNextPage = true;
+    let pagesScanned = 0;
+    let cycleComplete = false;
+    let cursorRecovered = false;
 
-    while (hasNextPage && scanned < 1000) {
-      const query = `
-        query JillRewardsSweep($first: Int!, $after: String) {
-          customers(first: $first, after: $after) {
-            nodes {
-              id
-              pointsBalance: metafield(
-                namespace: "jill_rewards",
-                key: "points_balance"
-              ) {
-                value
-                compareDigest
-              }
-              pointsEarned: metafield(
-                namespace: "jill_rewards",
-                key: "points_earned_lifetime"
-              ) {
-                value
-                compareDigest
-              }
-              pointsRedeemed: metafield(
-                namespace: "jill_rewards",
-                key: "points_redeemed_lifetime"
-              ) {
-                value
-                compareDigest
-              }
-              redeemRequestPoints: metafield(
-                namespace: "jill_rewards",
-                key: "redeem_request_points"
-              ) {
-                value
-                compareDigest
-              }
-              redeemRequestNonce: metafield(
-                namespace: "jill_rewards",
-                key: "redeem_request_nonce"
-              ) {
-                value
-                compareDigest
-              }
-              coupons: metafield(
-                namespace: "jill_rewards",
-                key: "coupons"
-              ) {
-                value
-                compareDigest
-              }
+    const query = `
+      query JillRewardsSweep($first: Int!, $after: String) {
+        customers(first: $first, after: $after) {
+          nodes {
+            id
+            pointsBalance: metafield(
+              namespace: "jill_rewards",
+              key: "points_balance"
+            ) {
+              value
+              compareDigest
             }
-            pageInfo {
-              hasNextPage
-              endCursor
+            pointsEarned: metafield(
+              namespace: "jill_rewards",
+              key: "points_earned_lifetime"
+            ) {
+              value
+              compareDigest
+            }
+            pointsRedeemed: metafield(
+              namespace: "jill_rewards",
+              key: "points_redeemed_lifetime"
+            ) {
+              value
+              compareDigest
+            }
+            redeemRequestPoints: metafield(
+              namespace: "jill_rewards",
+              key: "redeem_request_points"
+            ) {
+              value
+              compareDigest
+            }
+            redeemRequestNonce: metafield(
+              namespace: "jill_rewards",
+              key: "redeem_request_nonce"
+            ) {
+              value
+              compareDigest
+            }
+            coupons: metafield(
+              namespace: "jill_rewards",
+              key: "coupons"
+            ) {
+              value
+              compareDigest
             }
           }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
         }
-      `;
+      }
+    `;
 
-      const data = shopifyGraphQL_(query, {
-        first: 100,
-        after: after
-      });
+    while (pagesScanned < JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN) {
+      let data;
+
+      try {
+        data = shopifyGraphQL_(query, {
+          first: JILL_REWARDS_SWEEP_PAGE_SIZE,
+          after: after
+        });
+      } catch (pageErr) {
+        // Shopify cursors can become invalid after enough customer churn.
+        // A stored cursor is only an optimization/progress marker, never
+        // authoritative business state, so recover once from the beginning.
+        if (after && pagesScanned === 0 && !cursorRecovered) {
+          console.error(
+            'JILL Rewards sweep cursor reset after Shopify rejected cursor: ' +
+            (pageErr && pageErr.stack ? pageErr.stack : pageErr)
+          );
+          props.deleteProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY);
+          after = null;
+          cursorRecovered = true;
+          continue;
+        }
+        throw pageErr;
+      }
+
       const connection = data.customers || {};
       const customers = connection.nodes || [];
 
@@ -613,18 +641,46 @@ function processPendingJillRewardRequests() {
         }
       });
 
-      const pageInfo = connection.pageInfo || {};
-      hasNextPage = Boolean(pageInfo.hasNextPage);
-      after = pageInfo.endCursor || null;
+      pagesScanned += 1;
 
-      if (!after) hasNextPage = false;
+      const pageInfo = connection.pageInfo || {};
+      const hasNextPage = Boolean(pageInfo.hasNextPage);
+      const nextCursor = clean_(pageInfo.endCursor) || null;
+
+      if (!hasNextPage) {
+        props.deleteProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY);
+        after = null;
+        cycleComplete = true;
+        break;
+      }
+
+      if (!nextCursor || nextCursor === after) {
+        throw new Error(
+          'JILL Rewards sweep pagination returned an invalid next cursor.'
+        );
+      }
+
+      // Commit traversal progress only after the page has been handled. If
+      // execution stops before this point, the same page is safely revisited.
+      props.setProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY, nextCursor);
+      after = nextCursor;
     }
+
+    const cursorEnd =
+      clean_(props.getProperty(JILL_REWARDS_SWEEP_CURSOR_PROPERTY)) || null;
 
     const result = {
       ok: true,
       scanned: scanned,
       processed: processed,
-      normalized: normalized
+      normalized: normalized,
+      pages_scanned: pagesScanned,
+      page_size: JILL_REWARDS_SWEEP_PAGE_SIZE,
+      max_pages_per_run: JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN,
+      cursor_start: cursorStart,
+      cursor_end: cursorEnd,
+      cursor_recovered: cursorRecovered,
+      cycle_complete: cycleComplete
     };
 
     Logger.log(JSON.stringify(result, null, 2));

@@ -221,3 +221,26 @@ function backendHarness(failCommit = false) {
   assert.equal(h.stats().record.redeemRequestPoints.value, '0');
 }
 console.log('JILL Rewards backend claim/commit/rollback regression tests passed.');
+
+
+{
+  const backendSource = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  assert.match(backendSource, /JILL_REWARDS_SWEEP_CURSOR_PROPERTY = 'JILL_REWARDS_SWEEP_CURSOR'/);
+  assert.match(backendSource, /JILL_REWARDS_SWEEP_MAX_PAGES_PER_RUN = 5/);
+  assert.match(
+    backendSource,
+    /props\.setProperty\(JILL_REWARDS_SWEEP_CURSOR_PROPERTY, nextCursor\)[\s\S]*?after = nextCursor/,
+    'resumable sweep cursor contract commits a handled page before advancing',
+  );
+  assert.match(
+    backendSource,
+    /if \(after && pagesScanned === 0 && !cursorRecovered\)[\s\S]*?deleteProperty\(JILL_REWARDS_SWEEP_CURSOR_PROPERTY\)[\s\S]*?after = null/,
+    'resumable sweep cursor contract recovers a rejected stored cursor once',
+  );
+  assert.doesNotMatch(
+    backendSource,
+    /while \(hasNextPage && scanned < 1000\)/,
+    'normal Rewards sweep must not restart with a permanent 1,000-customer ceiling',
+  );
+}
+console.log('JILL Rewards resumable sweep cursor contract passed.');
