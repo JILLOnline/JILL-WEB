@@ -338,8 +338,23 @@ for (const key of legacyRewardKeys) {
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
   throw new Error('Redemption completion must match the request nonce and cleared points.');
 }
-if (!/<s-clickable\b[\s\S]*?onClick=\{\(\) => handleRedeem\(tier\)\}[\s\S]*?Generate coupon[\s\S]*?<\/s-clickable>/.test(dashboard)) {
-  throw new Error('Reward confirmation must use the proven Shopify clickable action.');
+for (const marker of [
+  '<s-modal',
+  'If you redeem these points, your coupon will expire in',
+  'No, keep my points',
+  'Yes, redeem',
+  "generating: 'Generating coupon'",
+  "setting_up: 'Setting up code'",
+  "redeemed: 'Code redeemed'",
+  'Use Now',
+  '/discount/',
+]) {
+  if (!dashboard.includes(marker)) {
+    throw new Error(`Reward redemption lifecycle missing: ${marker}`);
+  }
+}
+if (dashboard.includes('{isThisConfirming && (')) {
+  throw new Error('Reward confirmation must not render inline; use the modal owner.');
 }
 
 console.log('JILL Rewards v13 guard passed:', JSON.stringify({

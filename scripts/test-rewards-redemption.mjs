@@ -55,17 +55,14 @@ assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`, [coupon]), nonce)
 assert.equal(rewardRequestOutcome(meta(0, 'consumed:older'), nonce).status, 'waiting');
 assert.ok(source.includes('rewardRequestOutcome(meta, lastRequest.nonce)'));
 assert.ok(source.includes('Rewards may be out of date.'));
-const confirmationSource = between('{isThisConfirming && (', '          </s-stack>\n        </s-box>');
-assert.match(
-  confirmationSource,
-  /<s-clickable[\s\S]*?Generate coupon/,
-  'Generate coupon confirmation must use the proven clickable primitive',
-);
-assert.doesNotMatch(
-  confirmationSource,
-  /<s-button[\s\S]*?Generate coupon/,
-  'Generate coupon must not fall back to the previously dead button interaction',
-);
+assert.match(source, /<s-modal[\s\S]*?If you redeem these points, your coupon will expire in/);
+assert.match(source, /No, keep my points/);
+assert.match(source, /Yes, redeem/);
+assert.match(source, /generating: 'Generating coupon'/);
+assert.match(source, /setting_up: 'Setting up code'/);
+assert.match(source, /redeemed: 'Code redeemed'/);
+assert.match(source, />\s*Use Now\s*<\/s-button>/);
+assert.doesNotMatch(source, /\{isThisConfirming && \(/);
 
 function harness(overrides = {}) {
   const state = {};
@@ -76,8 +73,12 @@ function harness(overrides = {}) {
     rewardRequestIsPending, rewardRequestIsComplete, rewardWallet, rewardCouponStatus,
     metaMap: (data) => Object.fromEntries((data?.metafields || []).map((f) => [f.key, f.value])),
     wait: async () => {}, onCustomerUpdate() {}, requestReward: async () => nonce,
-    ...Object.fromEntries(['ConfirmTier', 'FreshCoupon', 'RedeemError', 'SlowRequest',
+    ...Object.fromEntries(['FreshCoupon', 'RedeemError',
       'SubmittingPoints', 'LocalPendingPoints', 'LastRequest'].map((key) => [`set${key}`, (value) => {state[key] = value;}])),
+    setRedemptionStage(value) {
+      state.RedemptionStage = value;
+      state.RedemptionStageHistory = [...(state.RedemptionStageHistory || []), value?.status || null];
+    },
     ...overrides,
   });
   vm.runInContext(handler, context);
@@ -94,12 +95,16 @@ function harness(overrides = {}) {
   const result = h.redeem();
   assert.equal(h.state.SubmittingPoints, 10);
   assert.equal(h.state.LocalPendingPoints, 10);
-  assert.equal(h.state.ConfirmTier, null);
+  assert.equal(h.state.RedemptionStage.status, 'generating');
   await h.redeem();
   assert.equal(writes, 1);
   resolveRequest(nonce);
   await result;
   assert.equal(h.state.FreshCoupon.code, coupon.code);
+  assert.deepEqual(
+    h.state.RedemptionStageHistory.filter(Boolean),
+    ['generating', 'setting_up', 'redeemed'],
+  );
   assert.equal(h.context.redemptionInFlight.current, false);
 }
 

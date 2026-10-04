@@ -300,12 +300,12 @@ function SavedDetail({label, value}) {
 
 function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   const redemptionInFlight = useRef(false);
+  const rewardModalRefs = useRef({});
   const [submittingPoints, setSubmittingPoints] = useState(0);
   const [localPendingPoints, setLocalPendingPoints] = useState(0);
   const [redeemError, setRedeemError] = useState('');
   const [showAllRewards, setShowAllRewards] = useState(false);
-  const [slowRequest, setSlowRequest] = useState(false);
-  const [confirmTier, setConfirmTier] = useState(null);
+  const [redemptionStage, setRedemptionStage] = useState(null);
   const [freshCoupon, setFreshCoupon] = useState(null);
   const [lastRequest, setLastRequest] = useState(null);
 
@@ -315,7 +315,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   const requestedPoints = persistedPending ? toRewardInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
   const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
-  const journey = buildRewardJourney(points, wallet, {pendingPoints, confirmingPoints: confirmTier?.points});
+  const journey = buildRewardJourney(points, wallet, {pendingPoints});
   const activeCoupons = journey.activeCoupons;
   const availableTiers = journey.redeemable.map((item) => item.tier);
   const collapsedTier = journey.collapsed.tier;
@@ -331,7 +331,6 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       setRedeemError('');
       setLocalPendingPoints(0);
       setSubmittingPoints(0);
-      setSlowRequest(false);
       setLastRequest(null);
       return;
     }
@@ -339,7 +338,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
     if (outcome.status === 'complete_without_coupon') {
       setLocalPendingPoints(0);
       setSubmittingPoints(0);
-      setSlowRequest(false);
+      setRedemptionStage(null);
       setRedeemError(
         'This request finished without a coupon in your wallet. Refresh your rewards before trying again.',
       );
@@ -359,7 +358,6 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   async function handleRedeem(tier) {
     if (redemptionInFlight.current) return;
     if (!customer?.id || pendingPoints || points < tier.points || activeCouponForTier(tier.points)) {
-      setConfirmTier(null);
       setRedeemError(!customer?.id
         ? 'Your account could not be loaded. Refresh the page before redeeming.'
         : pendingPoints
@@ -367,24 +365,23 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
           : 'Your rewards have changed. Review your balance and coupon wallet before redeeming.');
       return;
     }
-    redemptionInFlight.current = true;
 
-    setConfirmTier(null);
+    redemptionInFlight.current = true;
     setFreshCoupon(null);
     setLastRequest(null);
     setRedeemError('');
-    setSlowRequest(false);
     setSubmittingPoints(tier.points);
     setLocalPendingPoints(tier.points);
+    setRedemptionStage({points: tier.points, status: 'generating'});
 
     try {
       const requestNonce = await requestReward(customer.id, tier.points);
       setLastRequest({nonce: requestNonce, points: tier.points});
+      setRedemptionStage({points: tier.points, status: 'setting_up'});
       let completed = false;
 
       for (let attempt = 0; attempt < 42; attempt += 1) {
         await wait(attempt === 0 ? 900 : 1500);
-        if (attempt === 8) setSlowRequest(true);
 
         const nextCustomer = await loadData();
         if (nextCustomer) onCustomerUpdate(nextCustomer);
@@ -400,24 +397,39 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
           setFreshCoupon(createdCoupon);
           setRedeemError('');
           setLocalPendingPoints(0);
-          setSlowRequest(false);
           setLastRequest(null);
+          setRedemptionStage({points: tier.points, status: 'redeemed'});
           completed = true;
+          await wait(900);
+          setRedemptionStage(null);
           break;
         }
 
         if (rewardRequestIsComplete(nextMeta, requestNonce)) {
           setLocalPendingPoints(0);
-          setSlowRequest(false);
           completed = true;
 
-          if (!nextWallet.some((coupon) => coupon?.request_nonce === requestNonce)) {
+          const completedCoupon = nextWallet.find(
+            (coupon) =>
+              coupon?.request_nonce === requestNonce && rewardCouponStatus(coupon) === 'active',
+          );
+
+          if (completedCoupon) {
+            setFreshCoupon(completedCoupon);
+            setRedeemError('');
+            setRedemptionStage({points: tier.points, status: 'redeemed'});
+            await wait(900);
+            setRedemptionStage(null);
+          } else if (!nextWallet.some((coupon) => coupon?.request_nonce === requestNonce)) {
+            setRedemptionStage(null);
             setRedeemError(
               'This request finished without a coupon in your wallet. Refresh your rewards before trying again.',
             );
           } else {
+            setRedemptionStage(null);
             setRedeemError('');
           }
+
           setLastRequest(null);
           break;
         }
@@ -425,7 +437,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
 
       if (!completed) {
         setLocalPendingPoints(0);
-        setSlowRequest(false);
+        setRedemptionStage(null);
         setRedeemError(
           'Your request is still awaiting confirmation. Rewards refresh automatically; check your coupon wallet before trying again.',
         );
@@ -433,55 +445,103 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
     } catch (error) {
       console.warn('JILL reward request error', error);
       setLocalPendingPoints(0);
-      setSlowRequest(false);
+      setRedemptionStage(null);
       setRedeemError(error?.message || 'Unable to request your reward right now.');
     } finally {
       redemptionInFlight.current = false;
       setSubmittingPoints(0);
     }
   }
-
   function rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending) {
-    if (isThisPending) {
+    const stage =
+      redemptionStage?.points === tier.points ? redemptionStage.status : null;
+    const stageLabel = {
+      generating: 'Generating coupon',
+      setting_up: 'Setting up code',
+      redeemed: 'Code redeemed',
+    }[stage] || '';
+
+    if (stage || isThisPending) {
       return (
         <s-stack direction="inline" gap="small-200" alignItems="center">
           <s-spinner size="small" />
-          <s-text tone="info">
-            {slowRequest ? 'Still creating…' : 'Creating…'}
-          </s-text>
+          <s-text tone="info">{stageLabel || 'Generating coupon'}</s-text>
         </s-stack>
       );
     }
 
     if (coupon) {
       return (
-        <s-clickable
-          href="extension:jill-account-coupons/"
-          background="subdued"
-          padding="small-200"
-          borderRadius="max"
-          accessibilityLabel={`Use your $${tier.value} OFF coupon`}
+        <s-button
+          variant="primary"
+          href={`${STORE}/discount/${encodeURIComponent(coupon.code)}?redirect=/cart`}
+          accessibilityLabel={`Use your $${tier.value} OFF coupon now`}
         >
-          <s-text tone="info">Use Coupon</s-text>
-        </s-clickable>
+          Use Now
+        </s-button>
       );
     }
 
     if (isAvailable) {
+      const modalId = `jill-reward-confirm-${tier.points}`;
+
       return (
-        <s-clickable
-          disabled={Boolean(pendingPoints)}
-          background="subdued"
-          padding="small-200"
-          borderRadius="max"
-          accessibilityLabel={`Redeem ${tier.points} points for $${tier.value} OFF`}
-          onClick={() => {
-            setRedeemError('');
-            setConfirmTier(tier);
-          }}
-        >
-          <s-text tone="success">Redeem</s-text>
-        </s-clickable>
+        <>
+          <s-button
+            variant="secondary"
+            command="--show"
+            commandFor={modalId}
+            disabled={Boolean(pendingPoints)}
+          >
+            Redeem
+          </s-button>
+
+          <s-modal
+            id={modalId}
+            heading={`Confirm $${tier.value} OFF reward`}
+            ref={(element) => {
+              if (element) rewardModalRefs.current[tier.points] = element;
+              else delete rewardModalRefs.current[tier.points];
+            }}
+          >
+            <s-stack direction="block" gap="base">
+              <s-text type="strong">
+                Spend {tier.points} points for ${tier.value} OFF?
+              </s-text>
+              <s-text>
+                If you redeem these points, your coupon will expire in {REWARD_COUPON_POLICY.expirationDays} days.
+              </s-text>
+              <s-text color="subdued">
+                ${tier.minimum} minimum order · {Object.values(REWARD_COUPON_POLICY.stacking).some(Boolean) ? 'Combination rules apply.' : 'Cannot be combined with other discounts.'}
+              </s-text>
+
+              <s-stack direction="inline" gap="small-300">
+                <s-clickable
+                  background="subdued"
+                  padding="small-300"
+                  borderRadius="large"
+                  accessibilityLabel="No, keep my points"
+                  onClick={() => rewardModalRefs.current[tier.points]?.hideOverlay()}
+                >
+                  <s-text>No, keep my points</s-text>
+                </s-clickable>
+
+                <s-clickable
+                  background="subdued"
+                  padding="small-300"
+                  borderRadius="large"
+                  accessibilityLabel={`Yes, spend ${tier.points} points`}
+                  onClick={() => {
+                    rewardModalRefs.current[tier.points]?.hideOverlay();
+                    handleRedeem(tier);
+                  }}
+                >
+                  <s-text type="strong" tone="success">Yes, redeem</s-text>
+                </s-clickable>
+              </s-stack>
+            </s-stack>
+          </s-modal>
+        </>
       );
     }
 
@@ -499,15 +559,19 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       </s-box>
     );
   }
-
   function rewardMilestone(item, showTopRail = false, showBottomRail = false) {
     const tier = item.tier;
-    const coupon = item.coupon;
-    const isRedeemed = item.state === REWARD_STATES.USE_COUPON;
+    const coupon =
+      item.coupon ||
+      (freshCoupon?.points === tier.points && rewardCouponStatus(freshCoupon) === 'active'
+        ? freshCoupon
+        : null);
+    const isRedeemed = Boolean(coupon) || item.state === REWARD_STATES.USE_COUPON;
     const isAvailable = item.state === REWARD_STATES.REDEEM;
     const isNext = item.state === REWARD_STATES.NEXT_REWARD;
-    const isThisPending = isGeneratingReward && pendingPoints === tier.points;
-    const isThisConfirming = confirmTier?.points === tier.points && !pendingPoints;
+    const isThisPending =
+      redemptionStage?.points === tier.points ||
+      (isGeneratingReward && pendingPoints === tier.points);
     const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
     const pointsRemaining = Math.max(0, tier.points - points);
@@ -580,45 +644,11 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
               )}
               {isThisPending && (
                 <s-text color="subdued">
-                  {slowRequest
-                    ? 'Shopify is taking a little longer than usual. Your points stay safe while we finish.'
-                    : 'Your request is being processed. This can take a minute or longer.'}
+                  Your points stay safe until Shopify confirms the reward.
                 </s-text>
               )}
             </s-stack>
 
-            {isThisConfirming && (
-              <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-                <s-stack direction="block" gap="small-300">
-                  <s-text type="strong">
-                    Redeem {tier.points} points for ${tier.value} OFF?
-                  </s-text>
-                  <s-text color="subdued">
-                    ${tier.minimum} minimum order · Expires ${REWARD_COUPON_POLICY.expirationDays} days after creation · ${Object.values(REWARD_COUPON_POLICY.stacking).some(Boolean) ? 'Combination rules apply.' : 'Cannot be combined with other discounts.'}
-                  </s-text>
-                  <s-stack direction="inline" gap="small-300">
-                    <s-clickable
-                      background="subdued"
-                      padding="small-300"
-                      borderRadius="large"
-                      accessibilityLabel="Cancel reward redemption"
-                      onClick={() => setConfirmTier(null)}
-                    >
-                      <s-text>Cancel</s-text>
-                    </s-clickable>
-                    <s-clickable
-                      background="subdued"
-                      padding="small-300"
-                      borderRadius="large"
-                      accessibilityLabel={`Generate a ${tier.value} OFF coupon`}
-                      onClick={() => handleRedeem(tier)}
-                    >
-                      <s-text type="strong" tone="success">Generate coupon</s-text>
-                    </s-clickable>
-                  </s-stack>
-                </s-stack>
-              </s-box>
-            )}
           </s-stack>
         </s-box>
       </s-grid>
@@ -637,7 +667,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   }
 
   const rewardMessage = activeCoupons.length || availableTiers.length
-    ? 'Tap Redeem on any unlocked reward. Tap Use Coupon on a ready reward to open your coupon wallet. ✨'
+    ? 'Tap Redeem on any unlocked reward. Confirm your points, then use the coupon when it is ready. ✨'
     : 'Keep stacking points — your first reward is getting closer. ✨';
 
   return (
@@ -689,33 +719,6 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
         )}
 
         {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
-
-        {!loading && freshCoupon && (
-          <s-box padding="base" background="subdued" borderRadius="large" border="base base solid">
-            <s-stack direction="block" gap="small-300">
-              <s-text type="strong">
-                Your ${Number(freshCoupon.value || 0)} OFF reward is ready 🎉
-              </s-text>
-              <s-text>
-                Code: <s-text type="strong">{freshCoupon.code}</s-text>
-              </s-text>
-              <s-text color="subdued">
-                Expires {formatDate(freshCoupon.expires_at)} · Cannot be combined with other discounts.
-              </s-text>
-              <s-stack direction="inline" gap="small-300">
-                <s-button variant="secondary" href="extension:jill-account-coupons/">
-                  View coupon
-                </s-button>
-                <s-button
-                  variant="primary"
-                  href={`${STORE}/discount/${encodeURIComponent(freshCoupon.code)}?redirect=/cart`}
-                >
-                  Use now
-                </s-button>
-              </s-stack>
-            </s-stack>
-          </s-box>
-        )}
 
         <s-divider />
         <s-stack direction="inline" justifyContent="center">
