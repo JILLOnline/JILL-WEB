@@ -55,6 +55,17 @@ assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`, [coupon]), nonce)
 assert.equal(rewardRequestOutcome(meta(0, 'consumed:older'), nonce).status, 'waiting');
 assert.ok(source.includes('rewardRequestOutcome(meta, lastRequest.nonce)'));
 assert.ok(source.includes('Rewards may be out of date.'));
+const confirmationSource = between('{isThisConfirming && (', '          </s-stack>\n        </s-box>');
+assert.match(
+  confirmationSource,
+  /<s-clickable[\s\S]*?Generate coupon/,
+  'Generate coupon confirmation must use the proven clickable primitive',
+);
+assert.doesNotMatch(
+  confirmationSource,
+  /<s-button[\s\S]*?Generate coupon/,
+  'Generate coupon must not fall back to the previously dead button interaction',
+);
 
 function harness(overrides = {}) {
   const state = {};

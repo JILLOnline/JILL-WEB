@@ -597,15 +597,24 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
                     ${tier.minimum} minimum order · Expires ${REWARD_COUPON_POLICY.expirationDays} days after creation · ${Object.values(REWARD_COUPON_POLICY.stacking).some(Boolean) ? 'Combination rules apply.' : 'Cannot be combined with other discounts.'}
                   </s-text>
                   <s-stack direction="inline" gap="small-300">
-                    <s-button variant="secondary" onClick={() => setConfirmTier(null)}>
-                      Cancel
-                    </s-button>
-                    <s-button
-                      variant="primary"
+                    <s-clickable
+                      background="subdued"
+                      padding="small-300"
+                      borderRadius="large"
+                      accessibilityLabel="Cancel reward redemption"
+                      onClick={() => setConfirmTier(null)}
+                    >
+                      <s-text>Cancel</s-text>
+                    </s-clickable>
+                    <s-clickable
+                      background="subdued"
+                      padding="small-300"
+                      borderRadius="large"
+                      accessibilityLabel={`Generate a ${tier.value} OFF coupon`}
                       onClick={() => handleRedeem(tier)}
                     >
-                      Generate coupon
-                    </s-button>
+                      <s-text type="strong" tone="success">Generate coupon</s-text>
+                    </s-clickable>
                   </s-stack>
                 </s-stack>
               </s-box>
