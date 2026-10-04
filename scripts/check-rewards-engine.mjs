@@ -338,8 +338,8 @@ for (const key of legacyRewardKeys) {
 if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
   throw new Error('Redemption completion must match the request nonce and cleared points.');
 }
-if (!/<s-button\b[^>]*variant="primary"[^>]*onClick=\{\(\) => handleRedeem\(tier\)\}[^>]*>[\s\S]*?Generate coupon\s*<\/s-button>/.test(dashboard)) {
-  throw new Error('Reward confirmation must use the Shopify primary button action.');
+if (!/<s-clickable\b[\s\S]*?onClick=\{\(\) => handleRedeem\(tier\)\}[\s\S]*?Generate coupon[\s\S]*?<\/s-clickable>/.test(dashboard)) {
+  throw new Error('Reward confirmation must use the proven Shopify clickable action.');
 }
 
 console.log('JILL Rewards v13 guard passed:', JSON.stringify({
