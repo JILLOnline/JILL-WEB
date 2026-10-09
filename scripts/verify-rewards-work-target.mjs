@@ -27,11 +27,11 @@ export function assertRewardsWorkConfig(source) {
   if (appName !== 'JILL WORK Rewards') {
     throw new Error('Refusing Rewards WORK preview: linked app name does not match JILL WORK Rewards.');
   }
-  if (/jqtdgr-1y\\.myshopify\\.com|jillonlinestore\\.com|AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/i.test(source)) {
+  if (/jqtdgr-1y\.myshopify\.com|jillonlinestore\.com|AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/i.test(source)) {
     throw new Error('Refusing Rewards WORK preview: LIVE store/backend URL found in WORK config.');
   }
 
-  const scopes = source.match(/^\\s*scopes\\s*=\\s*["']([^"'\\r\\n]+)["']/m)?.[1]
+  const scopes = source.match(/^\s*scopes\s*=\s*["']([^"'\r\n]+)["']/m)?.[1]
     ?.split(',').map((scope) => scope.trim()).filter(Boolean) || [];
   const required = [
     'customer_read_customers',
