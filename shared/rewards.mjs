@@ -229,3 +229,17 @@ export function buildRewardJourney(points, wallet, options = {}) {
     couponForTier,
   };
 }
+
+/**
+ * The Shopify shareable discount route applies the code to an existing or
+ * next cart.  The cart/browser retain that discount until removal; there is
+ * no Customer Account API guarantee of "until session ends".
+ */
+export function discountCartUrl(store, code) {
+  const base = String(store || '').replace(/\/$/, '');
+  const discount = String(code || '').trim();
+  if (!/^https:\/\/[a-z0-9.-]+$/i.test(base) || !discount) {
+    throw new Error('A valid storefront and coupon code are required.');
+  }
+  return `${base}/discount/${encodeURIComponent(discount)}?redirect=/cart`;
+}
