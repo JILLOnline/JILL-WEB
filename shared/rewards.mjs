@@ -243,3 +243,25 @@ export function discountCartUrl(store, code) {
   }
   return `${base}/discount/${encodeURIComponent(discount)}?redirect=/cart`;
 }
+
+/**
+ * Resolve external customer-account links against Shopify's active shop.
+ * Shopify's shop API exposes storefrontUrl for customer-facing navigation,
+ * and myshopifyDomain as the stable store identity. Never default to LIVE.
+ */
+export function storefrontOrigin(shop) {
+  const primary = String(shop?.storefrontUrl || '').trim();
+  if (primary) {
+    const url = new URL(primary);
+    if (url.protocol !== 'https:' || !url.hostname || url.username || url.password) {
+      throw new Error('Shopify provided an invalid storefront URL.');
+    }
+    return url.origin;
+  }
+
+  const domain = String(shop?.myshopifyDomain || '').trim().toLowerCase();
+  if (/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain)) {
+    return `https://${domain}`;
+  }
+  throw new Error('Shopify storefront identity is unavailable.');
+}
