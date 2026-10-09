@@ -61,6 +61,7 @@ This registry answers one question: **where does this behavior belong?**
 | Public Storewide promotion mirror | `backend/google-apps-script/JILL_Public_Promotions.gs` | active Shopify code discounts, paginated public-offer discovery, Shop metafield `jill_promotions.active_public_codes`, snapshot freshness, scheduled trigger health | personal Rewards coupons/accounting, subscriber/segment/customer-targeted codes, hard-coded campaign codes in Customer Account UI |
 | Rewards accounting/integrity | backend/rewards authority | Shopify/admin data | storefront presentation files |
 | Rewards customer state derivation | `shared/rewards.mjs` | backend response + `rewards.config.json` parity contract | reward accounting, extension-specific presentation ownership |
+| Customer Account discount-to-cart URL | `shared/rewards.mjs` exported `discountCartUrl` | Shopify native `/discount/{code}?redirect=/cart` route, store origin and percent-encoded code | custom cart databases, assumed session-only expiration, separate Dashboard/Coupons link builders |
 | Rewards Shopify discount adapter | rewards backend adapter/transport owner | privileged Shopify client | UI state ownership |
 | Customer Account shared presentation | `shared/customer-account-ui.jsx` | account extension state | reward accounting/business truth |
 | Customer durable profile/preferences | one explicit Shopify-metafield or backend persistence owner when introduced | authenticated customer identity | arbitrary browser-supplied customer identity |
