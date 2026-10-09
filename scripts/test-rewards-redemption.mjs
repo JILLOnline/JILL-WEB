@@ -74,6 +74,38 @@ assert.match(source, /redemptionStage\.status !== 'redeemed'/);
 assert.equal(source.includes('const isGeneratingReward = Boolean(pendingPoints) && !redeemError;'), false);
 assert.doesNotMatch(source, /\{isThisConfirming && \(/);
 
+ 
+// Execute the real confirmation callback found in the Preact modal, not a
+// synthetic invocation of handleRedeem.  A modal can look correct and still
+// fail to call the transaction handler (the original production regression).
+{
+  const primary = modal.match(
+    /<s-button\s+slot="primary-action"[\s\S]*?onClick=\{\(\) => \{([\s\S]*?)\}\}\s*>/,
+  );
+  assert.ok(primary, 'native modal action must have an executable click handler');
+  const tier = {points: 10, value: 5, minimum: 25};
+  const events = [];
+  const context = {
+    tier,
+    rewardModalRefs: {
+      current: {
+        10: {hideOverlay: () => events.push('modal closed')},
+      },
+    },
+    handleRedeem: (value) => {
+      assert.equal(value, tier);
+      events.push('redemption requested');
+    },
+  };
+  vm.runInNewContext(`(() => {${primary[1]}})()`, context);
+  assert.deepEqual(events, ['modal closed', 'redemption requested']);
+
+  // Cancelling never invokes the redemption callback.
+  assert.match(modal, /slot="secondary-actions"[\s\S]*?command="--hide"[\s\S]*?Keep my points/);
+  assert.equal(events.length, 2);
+}
+
+
 function harness(overrides = {}) {
   const state = {};
   const context = vm.createContext({
