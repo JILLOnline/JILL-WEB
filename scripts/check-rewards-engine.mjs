@@ -381,10 +381,19 @@ for (const marker of [
   'Code redeemed',
   'const collapsedReward = featuredReward || journey.collapsed',
   'Use Now',
-  '/discount/',
+  'discountCartUrl(STORE, coupon.code)',
 ]) {
   if (!dashboard.includes(marker)) {
     throw new Error(`Reward redemption lifecycle missing: ${marker}`);
+  }
+}
+
+if (!ui.includes('function discountCartUrl(') || !ui.includes('/discount/')) {
+  throw new Error('Shareable discount-to-cart URLs must have one canonical owner.');
+}
+for (const owner of [dashboard, coupons]) {
+  if (!owner.includes('discountCartUrl')) {
+    throw new Error('Customer Account Use Now must consume the shared cart URL.');
   }
 }
 
