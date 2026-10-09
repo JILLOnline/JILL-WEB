@@ -6,9 +6,10 @@ import {
   rewardCouponStatus,
   rewardWallet,
   discountCartUrl,
+  storefrontOrigin,
 } from '../../../shared/rewards.mjs';
 
-const STORE = 'https://jillonlinestore.com';
+const STORE = storefrontOrigin(shopify.shop);
 const STOREFRONT_API = 'shopify://storefront/api/2026-07/graphql.json';
 const CUSTOMER_API = 'shopify://customer-account/api/2026-07/graphql.json';
 const PROMOTION_SNAPSHOT_MAX_AGE_MS = 10 * 60 * 1000;
