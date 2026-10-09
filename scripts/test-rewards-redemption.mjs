@@ -55,13 +55,19 @@ assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`, [coupon]), nonce)
 assert.equal(rewardRequestOutcome(meta(0, 'consumed:older'), nonce).status, 'waiting');
 assert.ok(source.includes('rewardRequestOutcome(meta, lastRequest.nonce)'));
 assert.ok(source.includes('Rewards may be out of date.'));
-assert.match(source, /<s-modal[\s\S]*?If you redeem these points, your coupon will expire in/);
-assert.match(source, /No, keep my points/);
-assert.match(source, /Yes, redeem/);
-assert.match(source, /generating: 'Generating coupon'/);
-assert.match(source, /setting_up: 'Setting up code'/);
-assert.match(source, /redeemed: 'Code redeemed'/);
+// The live modal must expose platform-native, actionable footer buttons.
+const modal = between('          <s-modal', '          </s-modal>');
+assert.match(modal, /Your coupon expires \{REWARD_COUPON_POLICY\.expirationDays\} days after redemption/);
+assert.match(modal, /<s-button[\s\S]*?slot="secondary-actions"[\s\S]*?command="--hide"[\s\S]*?Keep my points/);
+assert.match(modal, /<s-button[\s\S]*?slot="primary-action"[\s\S]*?onClick=\{\(\) => \{[\s\S]*?hideOverlay\(\);[\s\S]*?handleRedeem\(tier\)/);
+assert.doesNotMatch(modal, /<s-clickable/, 'confirmation controls must not be clickable-card imitations');
+assert.match(source, /stage === 'redeemed'[\s\S]*?<s-icon type="check-circle-filled" tone="success" \/>/);
+assert.match(source, /stage === 'setting_up' \? 'Setting up code' : 'Generating coupon'/);
+assert.match(source, /if \(coupon\)[\s\S]*?Use Now/);
 assert.match(source, />\s*Use Now\s*<\/s-button>/);
+assert.match(source, /setRedemptionStage\(null\);\s*setLastRequest\(null\);\s*return;/);
+assert.match(source, /\{redeemError && <s-banner tone="critical">\{redeemError\}<\/s-banner>\}/);
+assert.equal(source.includes('const isGeneratingReward = Boolean(pendingPoints) && !redeemError;'), false);
 assert.doesNotMatch(source, /\{isThisConfirming && \(/);
 
 function harness(overrides = {}) {
