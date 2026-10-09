@@ -13,13 +13,14 @@ import {
   rewardRequestOutcome,
   rewardWallet,
   discountCartUrl,
+  storefrontOrigin,
   toRewardInteger,
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 // Shopify's Customer Account metafield-write route, distinct from the read protocol.
 const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
-const STORE = 'https://jillonlinestore.com';
+const STORE = storefrontOrigin(shopify.shop);
 
 const JILL_KEYS = [
   'last_custom_request_at',
