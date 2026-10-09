@@ -7,6 +7,7 @@ import {
   rewardAccounting,
   rewardCouponStatus,
   discountCartUrl,
+  storefrontOrigin,
 } from '../shared/rewards.mjs';
 
 const FAR_FUTURE = '2099-10-01T00:00:00Z';
@@ -129,3 +130,27 @@ assert.equal(
 );
 assert.throws(() => discountCartUrl('javascript:alert(1)', 'CODE'));
 assert.throws(() => discountCartUrl('https://jillonlinestore.com', ''));
+
+ 
+// Both WORK and LIVE account extensions must navigate only to Shopify's
+// current shop. No hard-coded LIVE fallback is permitted in a WORK preview.
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com', storefrontUrl: 'https://jill-work.myshopify.com/'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jqtdgr-1y.myshopify.com', storefrontUrl: 'https://jillonlinestore.com/collections/all'}),
+  'https://jillonlinestore.com',
+);
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  discountCartUrl(storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com'}), 'TEST 5'),
+  'https://jill-work.myshopify.com/discount/TEST%205?redirect=/cart',
+);
+assert.throws(() => storefrontOrigin({storefrontUrl: 'http://jill-work.myshopify.com'}), /invalid storefront URL/);
+assert.throws(() => storefrontOrigin({storefrontUrl: 'https://user:pass@jill-work.myshopify.com'}), /invalid storefront URL/);
+assert.throws(() => storefrontOrigin({myshopifyDomain: 'jillonlinestore.com'}), /identity is unavailable/);
+assert.throws(() => storefrontOrigin({}), /identity is unavailable/);
