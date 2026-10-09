@@ -196,9 +196,11 @@ Certification applies to a specific commit. Later changes to the owner must re-r
 
 Three separate **release roles**, not interchangeable customer-account routes:
 
-- **WORK** — `jill/rewards-work` feature branch and draft PR checks. No production app deployment, real coupon creation, or customer points mutation.
+- **WORK** — `jill/rewards-work` feature branch and draft PR checks. Development Shopify store `jill-work.myshopify.com` (shown as connected/primary in Shopify Admin on 2026-10-09). No production app deployment, real coupon creation, or customer points mutation. The store's existence does **not** establish a separate development app, app install, backend, or CLI preview.
 - **KEEP** — `jill/rewards-keep` retained green comparison baseline. KEEP is a Git reference; it is **not** a second Shopify-hosted account dashboard.
 - **LIVE** — the existing installed JILL Custom Form app and customer-account routes. Only the certified `jill/theme-core` commit may be deployed, and only after an explicitly confirmed manual release with matching full commit SHA. Do not confuse canonical Git source with evidence of an actual Shopify app release.
+
+WORK app bootstrap gate: locate or create an independently named `JILL WORK Rewards` app through the Shopify Dev Dashboard's Apps section. Obtain its public Client ID (never a client secret or access token in Git). Link via `shopify app config link --client-id <WORK_CLIENT_ID> --file-name work`, explicitly select store `jill-work.myshopify.com` for the development preview, and refuse to continue if `WORK_CLIENT_ID` matches the known production app Client ID. The linked config must keep Shopify work data, OAuth endpoints, webhooks, and privileged Rewards backend separate from LIVE. Never copy production Apps Script tokens or redirect URLs into WORK. This is a setup procedure only until the WORK app identity is verified.
 
 Shopify Customer Account full-page extension versions are app-scoped. To preview WORK safely in Shopify, use a separate development store and an isolated development app through `shopify app dev`. The production app client ID, its existing extension UIDs, production customer points, and production discount objects must not be used for a WORK write test. A separate app/store is not represented as configured unless its identifiers and preview session have been verified.
 
