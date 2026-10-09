@@ -67,6 +67,10 @@ assert.match(source, /if \(coupon\)[\s\S]*?Use Now/);
 assert.match(source, />\s*Use Now\s*<\/s-button>/);
 assert.match(source, /setRedemptionStage\(null\);\s*setLastRequest\(null\);\s*return;/);
 assert.match(source, /\{redeemError && <s-banner tone="critical">\{redeemError\}<\/s-banner>\}/);
+assert.match(source, /const featuredReward = journey\.items\.find\(\(item\) => item\.tier\.points === Number\(featuredPoints\)\)/);
+assert.match(source, /const collapsedReward = featuredReward \|\| journey\.collapsed/);
+assert.match(source, /\[collapsedReward\]/, 'a confirmed new coupon stays on screen until Use Now');
+assert.match(source, /redemptionStage\.status !== 'redeemed'/);
 assert.equal(source.includes('const isGeneratingReward = Boolean(pendingPoints) && !redeemError;'), false);
 assert.doesNotMatch(source, /\{isThisConfirming && \(/);
 
