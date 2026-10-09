@@ -8,6 +8,7 @@ const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Au
 const promotionBackend = fs.readFileSync('backend/google-apps-script/JILL_Public_Promotions.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
 const backendDeploy = fs.readFileSync('.github/workflows/deploy-rewards-backend.yml', 'utf8');
+const accountDeploy = fs.readFileSync('.github/workflows/deploy-customer-account.yml', 'utf8');
 
 try {
   // Parse the Apps Script source as JavaScript without executing Apps Script APIs.
@@ -314,6 +315,32 @@ for (const marker of [
 ]) {
   if (!backend.includes(marker)) {
     throw new Error(`Rewards maintenance/health contract missing: ${marker}`);
+  }
+}
+
+// Customer Account extensions share the production Shopify app.  A
+// repository push must never silently publish a WORK/KEEP candidate to LIVE.
+const accountDeployTriggers = accountDeploy.slice(
+  accountDeploy.indexOf('\non:\n'),
+  accountDeploy.indexOf('\njobs:\n'),
+);
+if (
+  !accountDeployTriggers.includes('workflow_dispatch:') ||
+  /^\s+push:/m.test(accountDeployTriggers) ||
+  /^\s+pull_request:/m.test(accountDeployTriggers)
+) {
+  throw new Error('Customer Account LIVE deploy must be manual-only.');
+}
+for (const marker of [
+  "github.ref == 'refs/heads/jill/theme-core'",
+  'DEPLOY JILL ACCOUNT LIVE',
+  'EXPECTED_SHA',
+  'SOURCE_SHA',
+  'JILL-ACCOUNT-LIVE',
+  'jill-account-live-deploy',
+]) {
+  if (!accountDeploy.includes(marker)) {
+    throw new Error(`Customer Account LIVE release gate missing: ${marker}`);
   }
 }
 
