@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {assertRewardsWorkConfig, WORK_CLIENT_ID, LIVE_CLIENT_ID, WORK_STORE} from './verify-rewards-work-target.mjs';
 import {
   REWARDS_REFRESH_MS,
   buildRewardJourney,
@@ -517,3 +518,32 @@ console.log('JILL Rewards topic-scoped webhook ingress contract passed.');
   }
 }
 console.log('JILL Rewards retired Rewards schema contract passed.');
+
+
+// WORK Preview must remain tied to the independently created dev app and store.
+{
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  assert.notEqual(WORK_CLIENT_ID, LIVE_CLIENT_ID);
+  assert.equal(WORK_STORE, 'jill-work.myshopify.com');
+  assert.equal(pkg.scripts['rewards:work:link'],
+    `shopify app config link --client-id ${WORK_CLIENT_ID} --file-name work`);
+  assert.equal(pkg.scripts['rewards:work:preview'],
+    `node scripts/verify-rewards-work-target.mjs && shopify app dev --config work --store ${WORK_STORE}`);
+
+  const scopes = 'customer_read_customers,customer_write_customers,customer_read_orders,read_customers,write_customers,read_orders,read_discounts,write_discounts';
+  const source = `name = "JILL WORK Rewards"
+client_id = "${WORK_CLIENT_ID}"
+application_url = "https://example.com"
+embedded = false
+
+[access_scopes]
+scopes = "${scopes}"
+`;
+  assert.equal(assertRewardsWorkConfig(source).clientId, WORK_CLIENT_ID);
+  assert.throws(() => assertRewardsWorkConfig(source.replace(WORK_CLIENT_ID, LIVE_CLIENT_ID)), /Client ID/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('JILL WORK Rewards', 'JILL Custom Form')), /app name/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('customer_write_customers,', '')), /missing Rewards scopes/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('https://example.com', 'https://jillonlinestore.com')), /LIVE store/);
+  assert.throws(() => assertRewardsWorkConfig(''), /Missing WORK app configuration/);
+}
+console.log('JILL Rewards WORK app isolation contract passed.');
