@@ -318,8 +318,14 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   const journey = buildRewardJourney(points, wallet, {pendingPoints});
   const activeCoupons = journey.activeCoupons;
   const availableTiers = journey.redeemable.map((item) => item.tier);
-  const collapsedTier = journey.collapsed.tier;
-  const visibleRewardItems = showAllRewards ? journey.expanded : [journey.collapsed];
+  // Keep the just-created coupon on screen: the balance change otherwise
+  // selects the next locked tier and hides the promised Use Now action.
+  const featuredPoints = redemptionStage?.points ||
+    (freshCoupon && rewardCouponStatus(freshCoupon) === 'active' ? freshCoupon.points : 0);
+  const featuredReward = journey.items.find((item) => item.tier.points === Number(featuredPoints));
+  const collapsedReward = featuredReward || journey.collapsed;
+  const collapsedTier = collapsedReward.tier;
+  const visibleRewardItems = showAllRewards ? journey.expanded : [collapsedReward];
 
   useEffect(() => {
     if (!lastRequest?.nonce) return;
@@ -566,7 +572,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
     const isAvailable = item.state === REWARD_STATES.REDEEM;
     const isNext = item.state === REWARD_STATES.NEXT_REWARD;
     const isThisPending =
-      redemptionStage?.points === tier.points ||
+      (redemptionStage?.points === tier.points && redemptionStage.status !== 'redeemed') ||
       (isGeneratingReward && pendingPoints === tier.points);
     const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
@@ -617,7 +623,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
               <s-stack direction="block" gap="small-100">
                 <s-heading>$${tier.value} OFF</s-heading>
-                <s-text color="subdued">Redeem ${tier.points} pts · $${tier.minimum} minimum order</s-text>
+                <s-text color="subdued">Redeem {tier.points} pts · $${tier.minimum} minimum order</s-text>
               </s-stack>
               {rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending)}
             </s-stack>
