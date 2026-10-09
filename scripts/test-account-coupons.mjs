@@ -41,6 +41,8 @@ includesAll(source, 'Coupons runtime', [
   'rewardWallet',
   'rewardCouponStatus',
   'discountCartUrl',
+  'storefrontOrigin',
+  'const STORE = storefrontOrigin(shopify.shop);',
   'href={discountCartUrl(STORE, offer.code)}',
   'href={discountCartUrl(STORE, coupon.code)}',
   'REWARDS_REFRESH_MS',
@@ -58,6 +60,8 @@ includesAll(source, 'Coupons runtime', [
 
 for (const forbidden of [
   'function discountUrl(',
+  "const STORE = 'https://jillonlinestore.com'",
+
   '/discount/${encodeURIComponent',
   'PARTY10',
   'PARTY5',
