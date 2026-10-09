@@ -340,12 +340,19 @@ if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
 }
 for (const marker of [
   '<s-modal',
-  'If you redeem these points, your coupon will expire in',
-  'No, keep my points',
+  'Your coupon expires {REWARD_COUPON_POLICY.expirationDays} days after redemption',
+  'slot="secondary-actions"',
+  'command="--hide"',
+  'Keep my points',
+  'slot="primary-action"',
+  'handleRedeem(tier)',
   'Yes, redeem',
-  "generating: 'Generating coupon'",
-  "setting_up: 'Setting up code'",
-  "redeemed: 'Code redeemed'",
+  "stage === 'redeemed'",
+  "stage === 'setting_up'",
+  'Generating coupon',
+  'Setting up code',
+  'Code redeemed',
+  'const collapsedReward = featuredReward || journey.collapsed',
   'Use Now',
   '/discount/',
 ]) {
@@ -353,6 +360,7 @@ for (const marker of [
     throw new Error(`Reward redemption lifecycle missing: ${marker}`);
   }
 }
+
 if (dashboard.includes('{isThisConfirming && (')) {
   throw new Error('Reward confirmation must not render inline; use the modal owner.');
 }
