@@ -12,6 +12,7 @@ import {
   rewardRequestIsComplete,
   rewardRequestOutcome,
   rewardWallet,
+  discountCartUrl,
   toRewardInteger,
 } from '../../../shared/rewards.mjs';
 
@@ -479,7 +480,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       return (
         <s-button
           variant="primary"
-          href={`${STORE}/discount/${encodeURIComponent(coupon.code)}?redirect=/cart`}
+          href={discountCartUrl(STORE, coupon.code)}
           accessibilityLabel={`Use your $${tier.value} OFF coupon now`}
         >
           Use Now
