@@ -192,3 +192,24 @@ A feature can be marked `CERTIFIED` in the migration registry only when:
 ## Release discipline
 
 Certification applies to a specific commit. Later changes to the owner must re-run the relevant gates. A screenshot or manual approval from an older commit is not transferable proof.
+## Customer Account Rewards release certification — 2026-10-09
+
+Three separate **release roles**, not interchangeable customer-account routes:
+
+- **WORK** — `jill/rewards-work` feature branch and draft PR checks. No production app deployment, real coupon creation, or customer points mutation.
+- **KEEP** — `jill/rewards-keep` retained green comparison baseline. KEEP is a Git reference; it is **not** a second Shopify-hosted account dashboard.
+- **LIVE** — the existing installed JILL Custom Form app and customer-account routes. Only the certified `jill/theme-core` commit may be deployed, and only after an explicitly confirmed manual release with matching full commit SHA. Do not confuse canonical Git source with evidence of an actual Shopify app release.
+
+Shopify Customer Account full-page extension versions are app-scoped. To preview WORK safely in Shopify, use a separate development store and an isolated development app through `shopify app dev`. The production app client ID, its existing extension UIDs, production customer points, and production discount objects must not be used for a WORK write test. A separate app/store is not represented as configured unless its identifiers and preview session have been verified.
+
+**E2E release gate** (real customer-account runtime in an isolated development store):
+1. Confirm Yes closes the modal and immediately replaces Redeem with progress. Confirm No closes with no write.
+2. Confirm Customer Account `metafieldsSet` acknowledges both tier and nonce on the authenticated test customer. Inspect GraphQL user errors; a code-level mock is not proof.
+3. Confirm the sweep claims the nonce, creates exactly one eligible 30-day, single-use, customer-targeted Shopify discount, commits wallet+points, and clears the request.
+4. Confirm the dashboard says Code redeemed, offers Use Now, and the Coupons page has the same code even after a reload. Verify errors and stale-refresh recovery.
+5. Verify the discount is recognized on the correct test cart, survives navigation within that storefront session, respects the minimum order, and does not stack. A `/discount/CODE` redirect alone is **not** proof of cart application or session lifetime.
+6. Verify duplicate Yes clicks, concurrent requests, write refusal, missing/stale digests, failed discount creation, failed wallet write/rollback, and retry after a timed-out request.
+7. Capture phone/tablet/desktop states with Shopify customer-account native styling, keyboard navigation and focus, and approved JILL wording.
+8. Record the exact working app-version evidence, source SHA, backend build SHA, isolated test data cleanup, and explicit LIVE approval before release.
+
+Until these are checked on the actual Shopify runtime, do not mark Rewards redemption end-to-end certified or move the draft PR to LIVE.
