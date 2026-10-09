@@ -5,6 +5,7 @@ import {
   REWARDS_REFRESH_MS,
   rewardCouponStatus,
   rewardWallet,
+  discountCartUrl,
 } from '../../../shared/rewards.mjs';
 
 const STORE = 'https://jillonlinestore.com';
@@ -112,9 +113,6 @@ function formatDate(value) {
   }).format(new Date(time));
 }
 
-function discountUrl(code) {
-  return `${STORE}/discount/${encodeURIComponent(code)}?redirect=/collections/all`;
-}
 
 function StorewideOffer({offer}) {
   const expires = formatDate(offer.ends_at);
@@ -159,7 +157,7 @@ function StorewideOffer({offer}) {
           </s-text>
         </s-stack>
 
-        <s-button variant="primary" href={discountUrl(offer.code)}>
+        <s-button variant="primary" href={discountCartUrl(STORE, offer.code)}>
           Use now
         </s-button>
       </s-stack>
@@ -212,7 +210,7 @@ function RewardCoupon({coupon}) {
           ) : null}
         </s-stack>
 
-        <s-button variant="primary" href={discountUrl(coupon.code)}>
+        <s-button variant="primary" href={discountCartUrl(STORE, coupon.code)}>
           Use now
         </s-button>
       </s-stack>
