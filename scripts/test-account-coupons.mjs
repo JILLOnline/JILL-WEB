@@ -40,6 +40,9 @@ includesAll(source, 'Coupons runtime', [
   'PROMOTION_SNAPSHOT_MAX_AGE_MS',
   'rewardWallet',
   'rewardCouponStatus',
+  'discountCartUrl',
+  'href={discountCartUrl(STORE, offer.code)}',
+  'href={discountCartUrl(STORE, coupon.code)}',
   'REWARDS_REFRESH_MS',
   'refreshRewards(false)',
   'clearInterval(rewardsRefreshTimer)',
@@ -54,6 +57,8 @@ includesAll(source, 'Coupons runtime', [
 ]);
 
 for (const forbidden of [
+  'function discountUrl(',
+  '/discount/${encodeURIComponent',
   'PARTY10',
   'PARTY5',
   'SUBSCRIBE10',
