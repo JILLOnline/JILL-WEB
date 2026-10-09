@@ -6,6 +6,7 @@ import {
   chooseSolvencyRevocations,
   rewardAccounting,
   rewardCouponStatus,
+  discountCartUrl,
 } from '../shared/rewards.mjs';
 
 const FAR_FUTURE = '2099-10-01T00:00:00Z';
@@ -114,3 +115,17 @@ for (const [points, collapsedTier, collapsedState] of boundaries) {
 }
 
 console.log('JILL Rewards v13 state/accounting tests passed.');
+
+ 
+// The two Customer Account surfaces must share the same native Shopify route.
+// This is a link contract only, not a claim of session-bound cart persistence.
+assert.equal(
+  discountCartUrl('https://jillonlinestore.com', 'JILL-TEST'),
+  'https://jillonlinestore.com/discount/JILL-TEST?redirect=/cart',
+);
+assert.equal(
+  discountCartUrl('https://jillonlinestore.com/', 'HELLO 5%'),
+  'https://jillonlinestore.com/discount/HELLO%205%25?redirect=/cart',
+);
+assert.throws(() => discountCartUrl('javascript:alert(1)', 'CODE'));
+assert.throws(() => discountCartUrl('https://jillonlinestore.com', ''));
