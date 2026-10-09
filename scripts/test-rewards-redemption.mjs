@@ -13,6 +13,9 @@ import {
 } from '../shared/rewards.mjs';
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+assert.match(source, /const STORE = storefrontOrigin\(shopify\.shop\);/, 'Dashboard must use Shopify shop storefront context');
+assert.doesNotMatch(source, /const STORE = 'https:\/\/jillonlinestore\.com'/, 'Dashboard must never hard-code LIVE store');
+
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
 function between(start, end) {
