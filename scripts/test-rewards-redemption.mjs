@@ -184,21 +184,27 @@ for (const overrides of [
 }
 
 // Validate actual mutation variables, CAS behavior and all error/acknowledgment branches.
-const api = vm.createContext({API: 'shopify://customer-account/api/2026-07/graphql.json', QUERY: 'query {}'});
+const READ_API = 'shopify://customer-account/api/2026-07/graphql.json';
+const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
+assert.match(source, /const API = 'shopify:\/\/customer-account\/api\/2026-07\/graphql\.json'/);
+assert.match(source, /const WRITE_API = 'shopify:customer-account\/api\/2026-07\/graphql\.json'/);
+const api = vm.createContext({API: READ_API, WRITE_API, QUERY: 'query {}'});
 vm.runInContext(mutation + transport, api);
 const writableCustomer = customer({
   redeem_request_points: '0',
   redeem_request_nonce: 'consumed:older',
 });
 let calls = 0;
-api.fetch = async (_url, options) => {
+api.fetch = async (url, options) => {
   const body = JSON.parse(options.body);
   calls += 1;
 
   if (body.query === 'query {}') {
+    assert.equal(url, READ_API, 'customer read must use the read transport');
     return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
   }
 
+  assert.equal(url, WRITE_API, 'redemption write must use Shopify documented write transport');
   const {variables} = body;
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
   assert.ok(variables.metafields.every((f) => f.ownerId === 'gid://shopify/Customer/1'));
