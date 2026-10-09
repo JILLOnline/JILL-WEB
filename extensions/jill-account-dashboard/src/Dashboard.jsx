@@ -16,6 +16,8 @@ import {
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
+// Shopify's Customer Account metafield-write route, distinct from the read protocol.
+const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
 const STORE = 'https://jillonlinestore.com';
 
 const JILL_KEYS = [
@@ -153,7 +155,7 @@ async function writeRewardRequest(customer, points, nonce) {
     throw new Error('Your reward request state could not be verified. Refresh the page and try again.');
   }
 
-  const response = await fetch(API, {
+  const response = await fetch(WRITE_API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
