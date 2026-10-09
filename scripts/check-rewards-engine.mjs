@@ -388,6 +388,18 @@ for (const marker of [
   }
 }
 
+if (!ui.includes('function storefrontOrigin(shop)') || !ui.includes('shop?.storefrontUrl') || !ui.includes('shop?.myshopifyDomain')) {
+  throw new Error('Customer Account storefront links must resolve Shopify active shop context.');
+}
+for (const owner of [dashboard, coupons]) {
+  if (!owner.includes('const STORE = storefrontOrigin(shopify.shop);')) {
+    throw new Error('Customer Account page still lacks active Shopify store context.');
+  }
+  if (owner.includes("const STORE = 'https://jillonlinestore.com'")) {
+    throw new Error('Customer Account must not send WORK users to LIVE.');
+  }
+}
+
 if (!ui.includes('function discountCartUrl(') || !ui.includes('/discount/')) {
   throw new Error('Shareable discount-to-cart URLs must have one canonical owner.');
 }
