@@ -586,6 +586,17 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   assert.match(bootstrap, /record\.clientId !== WORK_CLIENT_ID/);
   assert.match(bootstrap, /record\.shop !== WORK_STORE/);
   assert.match(bootstrap, /runClasp\('push','--force'\)/);
+  // Exercise the exact Windows cmd.exe argument quoting that previously
+  // broke --title "JILL WORK Rewards Engine" into extra positional tokens.
+  const quoteFunction = bootstrap.match(/^function windowsClaspArg\(value\) \{[\s\S]*?^\}/m)?.[0];
+  assert.ok(quoteFunction, 'Windows clasp shell argument encoder must be present');
+  const quoteWindows = vm.runInNewContext(`${quoteFunction}\nwindowsClaspArg`);
+  assert.equal(quoteWindows('JILL WORK Rewards Engine'), '"JILL WORK Rewards Engine"');
+  assert.equal(quoteWindows('create-script'), 'create-script');
+  assert.equal(quoteWindows('--title'), '--title');
+  assert.throws(() => quoteWindows('bad & shell'), /Unsafe Windows clasp argument/);
+  assert.throws(() => quoteWindows('bad" quote'), /Unsafe Windows clasp argument/);
+
   assert.match(bootstrap, /JSON\.parse\(authCheck\.stdout\.trim\(\)\)\.loggedIn === true/);
   assert.match(bootstrap, /runClasp\('login'\)/);
 
