@@ -8,6 +8,7 @@ import {
   rewardCouponStatus,
   discountCartUrl,
   storefrontOrigin,
+  loadCustomerAccountStorefront,
 } from '../shared/rewards.mjs';
 
 const FAR_FUTURE = '2099-10-01T00:00:00Z';
@@ -154,3 +155,39 @@ assert.throws(() => storefrontOrigin({storefrontUrl: 'http://jill-work.myshopify
 assert.throws(() => storefrontOrigin({storefrontUrl: 'https://user:pass@jill-work.myshopify.com'}), /invalid storefront URL/);
 assert.throws(() => storefrontOrigin({myshopifyDomain: 'jillonlinestore.com'}), /identity is unavailable/);
 assert.throws(() => storefrontOrigin({}), /identity is unavailable/);
+
+assert.equal(
+  storefrontOrigin({url: 'https://jill-work.myshopify.com/collections/all', myshopifyDomain: 'jill-work.myshopify.com'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  storefrontOrigin({url: 'https://jillonlinestore.com/collections/all', myshopifyDomain: 'jqtdgr-1y.myshopify.com'}),
+  'https://jillonlinestore.com',
+);
+
+// Exercise the real shared storefront lookup without calling Shopify.
+// A general account page must not assume the order-only shopify.shop global.
+const originalFetch = globalThis.fetch;
+let capturedShopQuery = null;
+try {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
+    capturedShopQuery = JSON.parse(options.body).query;
+    assert.match(capturedShopQuery, /shop \{ url myshopifyDomain \}/);
+    return {
+      ok: true,
+      json: async () => ({data: {shop: {
+        url: 'https://jill-work.myshopify.com',
+        myshopifyDomain: 'jill-work.myshopify.com',
+      }}}),
+    };
+  };
+  assert.equal(await loadCustomerAccountStorefront(), 'https://jill-work.myshopify.com');
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({errors: [{message:'Shop lookup unavailable'}]}),
+  });
+  await assert.rejects(loadCustomerAccountStorefront(), /Shop lookup unavailable/);
+} finally {
+  globalThis.fetch = originalFetch;
+}
