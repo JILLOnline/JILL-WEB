@@ -14,3 +14,6 @@ shopify.app.work.toml
 # Shopify CLI-generated extension outputs (not canonical source).
 extensions/*/dist/
 extensions/*/shopify.d.ts
+
+# Disposable WORK-only customer account canary; Shopify config remains local.
+.work-account-canary/
