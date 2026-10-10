@@ -230,3 +230,13 @@ Verified directly through the connected WORK Shopify Admin API (`jill-work.mysho
 - No automatic WORK backend, minute sweep, webhook registration, or test-order/refund processing has been certified. The Google Apps Script production backend must NOT be pointed at WORK and no production credentials or project IDs may be reused for a WORK deployment.
 - Separate runtime identity and authorization are required before any customer-triggered redemption is called end-to-end functional. The existing WORK preview can show the fixture coupon, but a user click on Redeem must not be used as proof of backend processing.
 
+
+### WORK backend build prepared; runtime authorization still required
+
+- A WORK-specific `npm run rewards:work:backend:bundle` command generates `.work-backend/` from the **existing canonical** Google Apps Script source. The bundle contains the Rewards processor, Shopify webhook infrastructure, minute sweep, and public promotions synchronizer; it is not deployed automatically.
+- At build time the source replaces the exact runtime marker `JILL_REWARDS_RUNTIME='LIVE'` with `'WORK'`, stamps the immutable Git SHA, removes the production store URL, legacy production email/sheet identifier, and old Shopify shop fallback, and refuses to package if known LIVE markers remain.
+- At runtime WORK requires `SHOPIFY_SHOP=jill-work.myshopify.com` and `SHOPIFY_CLIENT_ID=f8e1ebdbae84490dc8ea5b133637e6c0` before any Admin API call. Custom Order ingress and sheet setup are disabled in WORK mode. The LIVE runtime stays unmodified until an explicit separate approval.
+- Shopify OAuth client secret, a distinct Apps Script project/deployment ID and its Script Properties, Google Apps Script authorization, webhook/trigger installation, and a successful health run are **not** provisioned by code generation. Never put any of these secrets in Git, screenshots, or chat.
+- WORK needs the additional Admin scope `write_orders` for order credit metafield writes. The isolated local config-preparation command automatically adds this scope and refuses the production app ID.
+- CI validates the generated backend's isolation and the normal Rewards regression suite. It is **not** evidence that the backend was deployed or that a real Yes-click generated a coupon automatically.
+
