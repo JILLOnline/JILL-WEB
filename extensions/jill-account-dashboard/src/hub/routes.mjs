@@ -15,9 +15,11 @@ export function canonicalRoute(route) {
 export function routeFromEntry(entry) {
   if (!entry?.url) return 'overview';
   try {
-    const pathname = new URL(entry.url).pathname;
-    const last = pathname.split('/').filter(Boolean).at(-1);
-    return canonicalRoute(last);
+    const url = new URL(entry.url);
+    const last = url.pathname.split('/').filter(Boolean).at(-1);
+    // Shopify's currentEntry can be either the resolved account URL or the
+    // extension://route target; in the latter the route may be the hostname.
+    return canonicalRoute(last || (url.protocol === 'extension:' ? url.hostname : 'overview'));
   } catch {
     return 'overview';
   }
