@@ -250,7 +250,9 @@ export function discountCartUrl(store, code) {
  * and myshopifyDomain as the stable store identity. Never default to LIVE.
  */
 export function storefrontOrigin(shop) {
-  const primary = String(shop?.storefrontUrl || '').trim();
+  // The Customer Account API shop query returns "url"; the Shop target
+  // API exposes "storefrontUrl" only on eligible order-related surfaces.
+  const primary = String(shop?.url || shop?.storefrontUrl || '').trim();
   if (primary) {
     const url = new URL(primary);
     if (url.protocol !== 'https:' || !url.hostname || url.username || url.password) {
@@ -264,4 +266,23 @@ export function storefrontOrigin(shop) {
     return `https://${domain}`;
   }
   throw new Error('Shopify storefront identity is unavailable.');
+}
+
+// General Customer Account full pages and profile blocks do not expose the
+// order-specific "shopify.shop" target API. Read the real shop identity from
+// Shopify's authenticated Customer Account GraphQL endpoint instead.
+// All three JILL customer account extensions share this single owner.
+export async function loadCustomerAccountStorefront() {
+  const response = await fetch('shopify://customer-account/api/2026-07/graphql.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      query: 'query JillCustomerAccountShop { shop { url myshopifyDomain } }',
+    }),
+  });
+  const payload = await response.json();
+  if (!response.ok || payload?.errors?.length || !payload?.data?.shop) {
+    throw new Error(payload?.errors?.[0]?.message || 'Unable to verify this Shopify storefront.');
+  }
+  return storefrontOrigin(payload.data.shop);
 }
