@@ -40,6 +40,7 @@ export function assertRewardsWorkConfig(source) {
     'read_customers',
     'write_customers',
     'read_orders',
+    'write_orders',
     'read_discounts',
     'write_discounts',
   ];
