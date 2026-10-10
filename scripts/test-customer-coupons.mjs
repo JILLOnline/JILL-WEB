@@ -59,7 +59,8 @@ function asAuthenticatedCustomer(key) {
     const body=JSON.parse(opts.body);
     assert.equal(body.query,PERSONAL_WALLET_QUERY);
     assert.equal(Object.hasOwn(body,'variables'),false);
-    assert.doesNotMatch(opts.body,/gid:\\/\\/shopify\\/Customer\\/(101|202)/);
+    assert.equal(opts.body.includes('gid://shopify/Customer/101'),false);
+    assert.equal(opts.body.includes('gid://shopify/Customer/202'),false);
     return {ok:true,json:async()=>({data:{customer:accountWallets.get(key)}})};
   };
 }
