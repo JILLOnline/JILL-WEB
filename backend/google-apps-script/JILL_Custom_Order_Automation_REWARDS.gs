@@ -1082,7 +1082,8 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
           lineItems(first: 250) {
             nodes {
               isGiftCard
-              priceAfterAllDiscountsBeforeTaxesSet {
+              currentQuantity
+              discountedUnitPriceAfterAllDiscountsSet {
                 shopMoney { amount currencyCode }
               }
             }
@@ -1125,14 +1126,22 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
       if (!line || line.isGiftCard) return;
 
       const money =
-        line.priceAfterAllDiscountsBeforeTaxesSet &&
-        line.priceAfterAllDiscountsBeforeTaxesSet.shopMoney;
+        line.discountedUnitPriceAfterAllDiscountsSet &&
+        line.discountedUnitPriceAfterAllDiscountsSet.shopMoney;
 
       if (!money || money.currencyCode !== 'USD') return;
 
-      // Shopify 2026-07: this is the post-discount, pre-tax line subtotal and
-      // already excludes refunded and removed quantities. Shipping is not a line.
-      eligibleCents += Math.round(Number(money.amount || 0) * 100);
+      // Shopify currentQuantity excludes refunded and removed units.
+      // This per-unit amount accounts for product and order discounts;
+      // multiplying by currentQuantity excludes refunded/removed units.
+      // Shopify describes this per-unit price as approximate, so round
+      // the surviving line total once to cents.
+      const remaining = Math.max(0, Number(line.currentQuantity) || 0);
+      const unitAmount = Number(money.amount);
+      if (!Number.isFinite(unitAmount)) {
+        throw new Error('Invalid discounted Shopify line-item unit amount.');
+      }
+      eligibleCents += Math.round(unitAmount * remaining * 100);
     });
   }
 
