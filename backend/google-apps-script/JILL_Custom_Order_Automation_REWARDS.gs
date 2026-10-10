@@ -38,6 +38,9 @@ const HEADERS = [
 ---------------------------- */
 
 function setupJill() {
+  if (JILL_REWARDS_RUNTIME === 'WORK') {
+    throw new Error('WORK Rewards worker cannot access the Custom Order sheet.');
+  }
   const ss = SpreadsheetApp.openById(JILL.SHEET_ID);
   let sheet = ss.getSheetByName(JILL.SHEET_NAME);
 
@@ -103,6 +106,11 @@ function doPost(e) {
   const suppliedRewardTopic = clean_(
     e && e.parameter ? e.parameter.jill_rewards_topic : ''
   );
+
+  // An isolated WORK Rewards deployment does not accept Custom Order writes.
+  if (JILL_REWARDS_RUNTIME === 'WORK' && !(suppliedRewardSecret && suppliedRewardTopic)) {
+    return json_({ok: false, error: 'WORK backend accepts Rewards webhooks only.'});
+  }
 
   try {
     lock.waitLock(10000);
@@ -296,6 +304,20 @@ const JILL_REWARD_TIERS = {
 };
 
 const JILL_REWARDS_ENGINE_VERSION = '13';
+const JILL_REWARDS_RUNTIME = 'LIVE';
+
+function assertJillRewardsRuntimeTarget_() {
+  // The LIVE build remains unchanged. The WORK build replaces the literal
+  // runtime constant during packaging and fails closed before any Shopify API.
+  if (JILL_REWARDS_RUNTIME !== 'WORK') return;
+  const props = PropertiesService.getScriptProperties();
+  const shop = normalizeShopDomain_(clean_(props.getProperty('SHOPIFY_SHOP')));
+  const app = clean_(props.getProperty('SHOPIFY_CLIENT_ID'));
+  if (shop !== 'jill-work.myshopify.com' || app !== 'f8e1ebdbae84490dc8ea5b133637e6c0') {
+    throw new Error('WORK Rewards target mismatch. Refusing all Shopify credentials and writes.');
+  }
+}
+
 const JILL_REWARDS_BUILD_SHA = '__JILL_REWARDS_BUILD_SHA__';
 const JILL_REWARD_SPEND_CENTS_PER_POINT = 1000;
 const JILL_REWARD_COUPON_DAYS = 30;
@@ -325,6 +347,7 @@ const JILL_REWARD_SUBSCRIPTIONS = [
 ];
 
 function setupJillRewards() {
+  assertJillRewardsRuntimeTarget_();
   const infrastructure = ensureJillRewardsInfrastructure_(true);
   const reconciliation = processPendingJillRewardRequests();
 
@@ -3175,6 +3198,7 @@ function shopifyGraphQL_(query, variables) {
 ---------------------------- */
 
 function getShopifyAuth_(forceRefresh) {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const shop = normalizeShopDomain_(
     props.getProperty('SHOPIFY_SHOP') || 'jill-online-store.myshopify.com'
@@ -3253,6 +3277,7 @@ function exchangeShopifyClientCredentials_(shop, clientId, clientSecret) {
 }
 
 function setupShopifyOAuth() {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const shop = normalizeShopDomain_(
     props.getProperty('SHOPIFY_SHOP') || 'jill-online-store.myshopify.com'
@@ -3278,6 +3303,7 @@ function setupShopifyOAuth() {
 }
 
 function handleShopifyOAuthCallback_(e) {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const error = clean_(e && e.parameter ? e.parameter.error : '');
 
@@ -3302,6 +3328,9 @@ function handleShopifyOAuthCallback_(e) {
 
   if (!code || !shop || !clientId || !clientSecret) {
     throw new Error('Incomplete Shopify OAuth callback.');
+  }
+  if (JILL_REWARDS_RUNTIME === 'WORK' && shop !== 'jill-work.myshopify.com') {
+    throw new Error('WORK Shopify OAuth callback did not target JILL WORK.');
   }
 
   const response = UrlFetchApp.fetch(
