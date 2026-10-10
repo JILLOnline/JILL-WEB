@@ -265,6 +265,12 @@ Shopify WORK installation query was repeated after the isolated `npm.cmd run rew
 
 Do not execute `setupJillRewards()` or install subscriptions until WORK Script Properties are set securely, a distinct authorized `/exec` deployment exists, and preflight identity/health are verified. The Apps Script editor must not receive LIVE credentials; the WORK Shopify Client Secret must not be copied into GitHub or conversation text.
 
+### WORK published endpoint — verification gate open (October 9–10, 2026)
+
+The merchant reported completing WORK-only `SHOPIFY_SHOP`, `SHOPIFY_CLIENT_ID`, and `SHOPIFY_CLIENT_SECRET` Script Properties and supplied a separate Google Apps Script Web App `/exec` URL. The URL has the expected shape, but **the live endpoint could not be retrieved from the assistant's network**, so deployment access, active code identity, Google authorization, WORK credential exchange, webhook readiness and runtime health are **unverified**. Do **not** run `setupJillRewards()` or assume a functioning minute sweep based only on the existence of a URL.
+
+Next read-only gate: open the provided WORK deployment with `?jill_rewards_watchdog=1` (no mutating parameters) and confirm it returns parseable JSON with `watchdog:true`, `engine_version:"13"`, `build_sha:"a91f5136527e3ae9f312e93ff8eb260809785bb4"`, and an expected `ok:false` until first setup installs subscriptions and triggers. If it redirects to Google sign-in, returns an HTML error, exposes an unrelated SHA, or reports an unexpected runtime exception, **stop**. The endpoint URL is public by design but must never contain credentials or topic-scoped webhook tokens. After this gate, separately confirm script property `SHOPIFY_REDIRECT_URI` is the precise WORK `/exec` URL before performing any mutating bootstrap.
+
 ### WORK Google project bootstrap — prepared, not executed
 
 The first local Google Apps Script setup is consolidated into `npm run rewards:work:backend:bootstrap` (on Windows: `npm.cmd run rewards:work:backend:bootstrap`). Prerequisite: authenticated developer checkout of branch `jill/rewards-work`, locally linked `shopify.app.work.toml` pointing to Client ID `f8e1ebdbae84490dc8ea5b133637e6c0`, and Google's Apps Script API enabled in the Google account.
