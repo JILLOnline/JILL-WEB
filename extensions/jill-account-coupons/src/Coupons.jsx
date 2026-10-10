@@ -6,10 +6,9 @@ import {
   rewardCouponStatus,
   rewardWallet,
   discountCartUrl,
-  storefrontOrigin,
+  loadCustomerAccountStorefront,
 } from '../../../shared/rewards.mjs';
 
-const STORE = storefrontOrigin(shopify.shop);
 const STOREFRONT_API = 'shopify://storefront/api/2026-07/graphql.json';
 const CUSTOMER_API = 'shopify://customer-account/api/2026-07/graphql.json';
 const PROMOTION_SNAPSHOT_MAX_AGE_MS = 10 * 60 * 1000;
@@ -115,7 +114,7 @@ function formatDate(value) {
 }
 
 
-function StorewideOffer({offer}) {
+function StorewideOffer({offer, store}) {
   const expires = formatDate(offer.ends_at);
 
   return (
@@ -158,7 +157,7 @@ function StorewideOffer({offer}) {
           </s-text>
         </s-stack>
 
-        <s-button variant="primary" href={discountCartUrl(STORE, offer.code)}>
+        <s-button variant="primary" href={store ? discountCartUrl(store, offer.code) : undefined} disabled={!store}>
           Use now
         </s-button>
       </s-stack>
@@ -166,7 +165,7 @@ function StorewideOffer({offer}) {
   );
 }
 
-function RewardCoupon({coupon}) {
+function RewardCoupon({coupon, store}) {
   const expires = formatDate(coupon.expires_at);
   const value = Number(coupon.value || 0);
   const minimum = Number(coupon.minimum || 0);
@@ -211,7 +210,7 @@ function RewardCoupon({coupon}) {
           ) : null}
         </s-stack>
 
-        <s-button variant="primary" href={discountCartUrl(STORE, coupon.code)}>
+        <s-button variant="primary" href={store ? discountCartUrl(store, coupon.code) : undefined} disabled={!store}>
           Use now
         </s-button>
       </s-stack>
@@ -220,6 +219,8 @@ function RewardCoupon({coupon}) {
 }
 
 function Coupons() {
+  const [storefront, setStorefront] = useState('');
+  const [storefrontError, setStorefrontError] = useState(false);
   const [promotions, setPromotions] = useState([]);
   const [rewardCoupons, setRewardCoupons] = useState([]);
   const [promotionsLoading, setPromotionsLoading] = useState(true);
@@ -230,6 +231,14 @@ function Coupons() {
 
   useEffect(() => {
     let active = true;
+
+    // Full-page Customer Account targets do not supply shopify.shop.
+    loadCustomerAccountStorefront()
+      .then((origin) => { if (active) {setStorefront(origin); setStorefrontError(false);} })
+      .catch((error) => {
+        console.warn('JILL coupons storefront identity lookup failed', error);
+        if (active) setStorefrontError(true);
+      });
 
     loadPromotions()
       .then((offers) => {
@@ -288,13 +297,16 @@ function Coupons() {
     };
   }, []);
 
+  const STORE = storefront;
+
   return (
     <s-page heading="Coupons" subheading="Your JILL offers in one place.">
-      <s-button slot="primary-action" variant="secondary" href={STORE}>
+      {STORE && <s-button slot="primary-action" variant="secondary" href={STORE}>
         Back to JILL
-      </s-button>
+      </s-button>}
 
       <s-stack direction="block" gap="base">
+        {storefrontError && <s-banner tone="critical">Storefront links are unavailable. Refresh to restore Use Now.</s-banner>}
         <s-section>
           <s-stack direction="block" gap="base">
             <s-stack direction="block" gap="small-100">
@@ -324,6 +336,7 @@ function Coupons() {
                   <StorewideOffer
                     key={`storewide-${offer.code}`}
                     offer={offer}
+                    store={STORE}
                   />
                 ))
               : null}
@@ -358,7 +371,7 @@ function Coupons() {
 
             {!rewardsLoading && !rewardsError && rewardCoupons.length
               ? rewardCoupons.map((coupon) => (
-                  <RewardCoupon key={`reward-${coupon.code}`} coupon={coupon} />
+                  <RewardCoupon key={`reward-${coupon.code}`} coupon={coupon} store={STORE} />
                 ))
               : null}
 
