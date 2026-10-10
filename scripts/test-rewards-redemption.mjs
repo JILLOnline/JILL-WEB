@@ -607,3 +607,44 @@ console.log('JILL Rewards WORK app isolation contract passed.');
 
 }
 console.log('JILL WORK canonical backend packaging and isolation passed.');
+
+
+// The deployed WORK webhook must propagate the original processing error,
+// rather than obscuring it with an undeclared verifiedRewardHook ReferenceError.
+{
+  const backend = fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  const start = backend.indexOf('function doPost(e) {');
+  const end = backend.indexOf('/* ---------------------------\n   JILL REWARDS', start);
+  assert.ok(start >= 0 && end > start);
+  const postSource = backend.slice(start, end);
+  const originalError = new Error('WORK backend test: Shopify webhook failed');
+  let released = false;
+  const context = {
+    JILL_REWARDS_RUNTIME: 'WORK',
+    LockService: {getScriptLock: () => ({
+      waitLock() {},
+      releaseLock() {released = true;},
+    })},
+    clean_: value => String(value ?? '').trim(),
+    rewardWebhookSubscriptionForKey_: key => ({key}),
+    constantTimeEqual_: (a,b) => a === b,
+    rewardWebhookSecret_: () => 'test-hook-token',
+    handleJillRewardsWebhook_: () => {throw originalError;},
+    json_: value => value,
+    console: {error() {}},
+  };
+  const doPost = vm.runInNewContext(postSource + '\ndoPost', context);
+  const event = {parameter: {
+    jill_rewards_topic: 'customers_update',
+    jill_rewards_hook: 'test-hook-token',
+  }};
+  assert.throws(() => doPost(event), error => error === originalError);
+  assert.equal(released, true, 'Webhook lock should be released after a failure');
+  const rejected = doPost({parameter: {...event.parameter,jill_rewards_hook:'wrong'}});
+  assert.equal(rejected.ok,false);
+  assert.equal(rejected.error,'Invalid rewards webhook');
+  const customOrderRejected = doPost({parameter:{}});
+  assert.equal(customOrderRejected.ok,false);
+  assert.match(customOrderRejected.error,/WORK backend accepts Rewards webhooks only/);
+}
