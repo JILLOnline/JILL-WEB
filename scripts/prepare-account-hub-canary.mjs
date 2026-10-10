@@ -18,10 +18,10 @@ const modules = [
 ];
 
 export function makeCanaryModule(handle, mode = 'minimal') {
-  if (!['minimal','hub','read'].includes(mode)) throw new Error('Unsupported WORK canary mode');
+  if (!['minimal','hub','read','template'].includes(mode)) throw new Error('Unsupported WORK canary mode');
   if (!modules.some(([dir]) => dir === handle)) throw new Error('Unexpected extension target');
-  if ((mode === 'hub' || mode === 'read') && handle === 'jill-account-dashboard') {
-    const component = mode === 'read' ? 'ConnectedHub' : 'AccountHub';
+  if (['hub','read','template'].includes(mode) && handle === 'jill-account-dashboard') {
+    const component = (mode === 'read' || mode === 'template') ? 'ConnectedHub' : 'AccountHub';
     return `import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 import ${component} from './hub/${component}.jsx';
@@ -53,7 +53,7 @@ export default async () => {
 }
 
 export function prepareCanary(mode) {
-  assert.ok(['minimal','hub','read'].includes(mode), 'Canary must be minimal, hub or read');
+  assert.ok(['minimal','hub','read','template'].includes(mode), 'Canary must be minimal, hub, read or template');
   const configPath = path.join(root, appConfig);
   if (!fs.existsSync(configPath)) {
     throw new Error('Missing linked WORK app config; run the existing WORK app link flow first.');
@@ -122,11 +122,22 @@ export function prepareCanary(mode) {
 
     fs.writeFileSync(path.join(dest,'src',moduleName),
       makeCanaryModule(handle,mode));
-    if ((mode === 'hub' || mode === 'read') && handle === 'jill-account-dashboard') {
+    if (['hub','read','template'].includes(mode) && handle === 'jill-account-dashboard') {
       fs.mkdirSync(path.join(dest,'src','hub'),{recursive:true});
       fs.copyFileSync(path.join(base,'src','hub','AccountHub.jsx'),
         path.join(dest,'src','hub','AccountHub.jsx'));
-      if (mode === 'read') {
+      fs.copyFileSync(path.join(base,'src','hub','routes.mjs'),
+        path.join(dest,'src','hub','routes.mjs'));
+      fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
+      for (const page of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
+        'Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+        fs.copyFileSync(path.join(base,'src','pages',page),
+          path.join(dest,'src','pages',page));
+      }
+      fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
+      fs.copyFileSync(path.join(root,'shared','rewards.mjs'),
+        path.join(workdir,'shared','rewards.mjs'));
+      if (mode === 'read' || mode === 'template') {
         fs.copyFileSync(path.join(base,'src','hub','ConnectedHub.jsx'),
           path.join(dest,'src','hub','ConnectedHub.jsx'));
         fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
@@ -144,6 +155,6 @@ export function prepareCanary(mode) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const mode = process.argv.includes('--read') ? 'read' : (process.argv.includes('--hub') ? 'hub' : 'minimal');
+  const mode = process.argv.includes('--template') ? 'template' : (process.argv.includes('--read') ? 'read' : (process.argv.includes('--hub') ? 'hub' : 'minimal'));
   prepareCanary(mode);
 }
