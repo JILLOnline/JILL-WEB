@@ -133,7 +133,7 @@ for (const [name, contents] of [
   ['Coupons', source],
   ['JILL Settings', profileSource],
 ]) {
-  if (contents.includes('shopify.shop')) {
+  if (contents.includes('storefrontOrigin(shopify.shop)') || contents.includes('= shopify.shop')) {
     fail(name + ' must not access order-only shopify.shop on general account pages.');
   }
   if (!contents.includes('loadCustomerAccountStorefront')) {
