@@ -249,6 +249,16 @@ function collectJillPublicOffers_(nodes) {
 
     if (!discount || discount.status !== 'ACTIVE') return;
 
+    // Defensive storefront boundary: status alone does not prove the offer
+    // is currently eligible. Do not publish scheduled or ended codes.
+    const now = Date.now();
+    const startsAt = discount.startsAt ? Date.parse(discount.startsAt) : null;
+    const endsAt = discount.endsAt ? Date.parse(discount.endsAt) : null;
+    if ((discount.startsAt && !Number.isFinite(startsAt)) ||
+        (discount.endsAt && !Number.isFinite(endsAt)) ||
+        (startsAt !== null && startsAt > now) ||
+        (endsAt !== null && endsAt <= now)) return;
+
     if (
       !discount.context ||
       discount.context.__typename !== 'DiscountBuyerSelectionAll'
