@@ -137,4 +137,14 @@ includesAll(profileConfig, 'Settings extension identity', [
   'uid = "923e30e6-dbf9-f48a-57a6-0dbd1ab57763f55ebbde"',
 ]);
 
+const rootPackage = JSON.parse(read('package.json'));
+const workDeploy = rootPackage.scripts['rewards:work:app:deploy'];
+if (workDeploy !==
+  'node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app deploy --config work') {
+  fail('WORK app deploy must verify store and app identity before an interactive --config work release.');
+}
+if (/--force|--allow-deletes|--allow-updates/.test(workDeploy)) {
+  fail('WORK release must remain interactive and prohibit deletion/confirmation bypass flags.');
+}
+
 console.log('Customer account Coupons Shopify source-of-truth contract passed.');
