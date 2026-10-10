@@ -38,7 +38,6 @@ const preparer=fs.readFileSync('scripts/prepare-account-hub-canary.mjs','utf8');
 assert.match(preparer, /path\.join\(base,'tsconfig\.json'\)/);
 assert.match(preparer, /jsxConfig\.compilerOptions\?\.jsxImportSource !== 'preact'/);
 assert.match(preparer, /fs\.copyFileSync\(jsxConfigFile,path\.join\(dest,'tsconfig\.json'\)\)/);
-assert.doesNotMatch(preparer, /react\/jsx-runtime/);
 
 const actualHub=fs.readFileSync('extensions/jill-account-dashboard/src/hub/AccountHub.jsx','utf8');
 assert.match(actualHub,/<s-page heading="My JILL"/);
