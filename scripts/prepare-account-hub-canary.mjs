@@ -85,7 +85,7 @@ export function prepareCanary(mode) {
   // Preserve exact dependency/workspace versions and only remove postinstall.
   const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
   if (pkg.scripts) delete pkg.scripts.postinstall;
-  fs.writeFileSync(path.join(workdir,'package.json'),JSON.stringify(pkg,null,2)+'\\n');
+  fs.writeFileSync(path.join(workdir,'package.json'),JSON.stringify(pkg,null,2));
   for (const filename of ['package-lock.json','.npmrc',appConfig]) {
     const from = path.join(root,filename);
     if (fs.existsSync(from)) fs.copyFileSync(from,path.join(workdir,filename));
