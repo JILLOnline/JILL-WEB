@@ -103,6 +103,23 @@ Prefer **`shared/customer-account-api.mjs`** as the one authenticated customer-a
 
 **Sensitive boundary:** customer id comes from Shopify authenticated context, never user-entered or URL-selected; requests must validate ownership server-side. WORK app scopes are required but *not sufficient*: metafield definitions must also grant the exact Customer Account access. Avoid marketing consent by default; track separate consent for event reminders. No credentials, coupon HMAC, Shopify Admin token or Google Script Property in frontend/Git.
 
+### Proposed JILL-owned customer data contracts — not yet created
+
+These are **provisional schemas**, not existing Shopify definitions. First decide whether each feature is enabled and validate Shopify-supported Customer Account access and privacy before provisioning or implementing UI.
+
+| Proposed field/record | Candidate type/authority | Customer permissions | Important constraint |
+| --- | --- | --- | --- |
+| `jill.saved_preferences` | Shopify Customer JSON metafield | Customer Account READ_WRITE after schema validation | Only non-secret theme, color, fulfillment and interest selections; input validation and size bounds; never duplicate rewards wallet |
+| `jill.celebrations` | Shopify Customer JSON metafield, array of event ID/date/optional theme | Customer Account READ_WRITE after validation | Optional customer-entered dates; deletion/edit support and time zone rules; don't infer children's information |
+| `jill.reminder_opt_in` | Shopify Customer boolean metafield | Customer Account READ_WRITE after consent design | Default false; not the same as marketing email consent; explicit purpose, frequency, revocation and audit |
+| Custom-order history record | backend-owned list indexed by durable request ID and authenticated Shopify Customer ID | Backend read adapter exposes **only the requesting customer's** timeline | Existing Custom Order submission remains untouched; guest orders require separate verified claim/reconciliation; do not treat a title/email match as authorization |
+| Customer Custom Order overview | small backend-authored projection / optional Customer READ metafield | Customer Account READ | Projection only for overview; primary request ledger stays with Custom Order backend |
+| `jill_rewards.*` (7 existing fields) | existing Shopify Customer metafields and backend v13 | READ except two CAS request fields READ_WRITE | Verified existing definitions; do not change their access or shape for a new UI |
+
+Request status vocabulary is proposed as `received → reviewing → proof_ready → approved → in_production → shipped/pickup_ready → completed`, with `cancelled/on_hold` exceptional states. This vocabulary must be reconciled with actual production Custom Order operations before coding it. Every customer history query needs server-side ownership checks, pagination, immutable request IDs, and bounded sanitized public-facing details; never expose internal supplier notes, unrelated customer files, or private upload credentials.
+
+**Rollout order:** verify an authenticated read-only request-history query in WORK first; then enable custom-order page. Define saved-preference metafields and their Shopify Customer Account permissions next, validate read/write and deletion with a synthetic customer, and only then add celebrations/reminders. No scheduled reminder worker or marketing automation is implied by adding a preferences card.
+
 ### Coupons / cart: unresolved product contract
 
 The existing native `/discount/{code}?redirect=/cart` URL can take customers to Shopify's cart but does **not establish** the user-requested “only until this browser session ends” lifetime. Do not promise session-only persistence until Shopify-supported cart/discount clearing behavior is demonstrated. Choose and record a supported native persistence policy or implement a separately audited explicit removal action. Login/session vs browser lifetime must be tested on WORK checkout. No custom session workaround as a default.
