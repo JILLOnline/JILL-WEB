@@ -48,7 +48,7 @@ await assert.rejects(loadPersonalCoupons(async()=>({ok:true,json:async()=>({erro
 
 // Customer-context isolation: the query must never accept a caller-selected
 // customer ID. Two authenticated contexts must return only their own wallets.
-assert.doesNotMatch(PERSONAL_WALLET_QUERY,/customer\\s*\\(/);
+assert.equal(PERSONAL_WALLET_QUERY.includes('customer('),false);
 const accountWallets = new Map([
   ['qa-A',{id:'gid://shopify/Customer/101',coupons:{value:JSON.stringify([walletRecord])}}],
   ['qa-B',{id:'gid://shopify/Customer/202',coupons:{value:'[]'}}],
