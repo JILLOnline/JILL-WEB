@@ -38,7 +38,10 @@ fs.writeFileSync(path.join(output,'JILL_Public_Promotions.gs'),promotionSource);
 fs.writeFileSync(path.join(output,'appsscript.json'),JSON.stringify({
  timeZone:'America/New_York',
  exceptionLogging:'STACKDRIVER',
- runtimeVersion:'V8'
+ runtimeVersion:'V8',
+ // Shopify webhook deliveries must reach a non-logged-in Apps Script endpoint.
+ // POST still requires the topic-scoped webhook secret; WORK custom order ingress is disabled.
+ webapp:{access:'ANYONE_ANONYMOUS',executeAs:'USER_DEPLOYING'}
 },null,2)+'\n');
 console.log(`WORK-only Apps Script bundle ready at .work-backend/ from ${sha}.`);
 console.log('Not deployed. Set up a distinct WORK Apps Script project and WORK-only Script Properties before starting the minute worker.');
