@@ -77,9 +77,28 @@ npm.cmd run rewards:work:hub:preview
 Open **My JILL Web preview**. The new real `AccountHub.jsx` must display
 **Welcome to My JILL**, with no customer/API calls. Coupons remains minimal.
 If minimal renders but hub fails, isolate the `AccountHub.jsx` composition.
-If hub renders, phase-zero startup is proven: next move its tested entrypoint
-into the canonical Dashboard and introduce the authenticated read adapter
-before Rewards or Coupons writes. Capture screenshots and exact preview result.
+If hub renders, phase-zero startup is proven: the merchant confirmed this
+in WORK on 2026-10-10. The connected data layer is now available as a THIRD
+isolated preview mode (still no published app release or backend changes).
+
+```powershell
+# Stop the existing Shopify CLI dev session with q before running:
+npm.cmd run rewards:work:hub:read
+```
+
+Open **My JILL → Web preview** as the signed-in, separate WORK QA customer.
+The preview should retain the same Hub shell and show the authenticated
+customer name, `Available Rewards points: 30`, `Lifetime earned: 30`,
+and `Lifetime redeemed: 0`. Reward requests and checkout links are disabled.
+A different customer's balance must *not* be presented as the QA fixture.
+
+If values are unavailable, the interface says **Unavailable**, never 0. If
+the Customer Account API rejects the query, a contained error appears while
+the Hub shell stays visible. Capture the first actual Console/API error;
+do not seed credits, loosen metafield definitions, or install another app.
+A successful browser read is required before integrating redemption controls.
+Only then migrate the tested entrypoint and read adapter into the canonical
+Dashboard incrementally. Capture preview and backend snapshots.
 
 The command is **`shopify app dev --path .work-account-canary`**, not
 `shopify app deploy`. A Dev Console preview **does not certify the active
