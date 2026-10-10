@@ -20,6 +20,9 @@ replaceExact("STORE_URL: 'https://jillonlinestore.com'","STORE_URL: 'https://jil
 replaceExact("STORE_EMAIL: 'info@jillonlinestore.com'","STORE_EMAIL: 'qa@example.invalid'");
 replaceExact("SHEET_ID: '1xVG4Jvh-vLB6BH5QitNcLQuaLj6DkXeSlFHg_LkECT8'","SHEET_ID: ''");
 replaceExact("'jill-online-store.myshopify.com'","'jill-work.myshopify.com'",2);
+// Retired Custom Order email templates are never executed in WORK, but also
+// sanitize their legacy customer-facing production hostname defensively.
+source = source.replaceAll('jillonlinestore.com','jill-work.myshopify.com');
 const productionPatterns=[
   'jillonlinestore.com',
   'jqtdgr-1y.myshopify.com',
