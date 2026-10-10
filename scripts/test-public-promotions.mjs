@@ -93,6 +93,18 @@ const nodes = [
   },
 ];
 
+const now = Date.now();
+nodes.push(
+  {discount: {__typename: 'DiscountCodeBasic', status: 'ACTIVE',
+    title:'FUTURE', shortSummary:'Future offer', startsAt:new Date(now+86400000).toISOString(),
+    codes:{nodes:[{code:'FUTURE'}]}, context:{__typename:'DiscountBuyerSelectionAll'}}},
+  {discount: {__typename: 'DiscountCodeBasic', status: 'ACTIVE',
+    title:'ENDED', shortSummary:'Ended offer', endsAt:new Date(now-86400000).toISOString(),
+    codes:{nodes:[{code:'ENDED'}]}, context:{__typename:'DiscountBuyerSelectionAll'}}},
+  {discount: {__typename: 'DiscountCodeBasic', status: 'ACTIVE',
+    title:'BROKEN', shortSummary:'Invalid dates', startsAt:'not-a-date',
+    codes:{nodes:[{code:'BROKEN'}]}, context:{__typename:'DiscountBuyerSelectionAll'}}},
+);
 const offers = collectJillPublicOffers_(nodes);
 if (offers.length !== 1) fail('only one all-customer deterministic code should publish');
 if (offers[0].code !== 'PUBLIC5') fail('wrong public code published');
