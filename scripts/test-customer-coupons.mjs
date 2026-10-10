@@ -46,6 +46,27 @@ assert.equal(apiCalls,1);
 await assert.rejects(loadPersonalCoupons(async()=>({ok:true,json:async()=>({data:{customer:null}})})),/Authenticated customer/);
 await assert.rejects(loadPersonalCoupons(async()=>({ok:true,json:async()=>({errors:[{message:'no'}]})})),/rejected/);
 
+// Customer-context isolation: the query must never accept a caller-selected
+// customer ID. Two authenticated contexts must return only their own wallets.
+assert.doesNotMatch(PERSONAL_WALLET_QUERY,/customer\\s*\\(/);
+const accountWallets = new Map([
+  ['qa-A',{id:'gid://shopify/Customer/101',coupons:{value:JSON.stringify([walletRecord])}}],
+  ['qa-B',{id:'gid://shopify/Customer/202',coupons:{value:'[]'}}],
+]);
+function asAuthenticatedCustomer(key) {
+  return async (url,opts) => {
+    assert.equal(url,CUSTOMER_ACCOUNT_API);
+    const body=JSON.parse(opts.body);
+    assert.equal(body.query,PERSONAL_WALLET_QUERY);
+    assert.equal(Object.hasOwn(body,'variables'),false);
+    assert.doesNotMatch(opts.body,/gid:\\/\\/shopify\\/Customer\\/(101|202)/);
+    return {ok:true,json:async()=>({data:{customer:accountWallets.get(key)}})};
+  };
+}
+assert.deepEqual((await loadPersonalCoupons(asAuthenticatedCustomer('qa-A'),now)).map(c=>c.code),['TEST-REWARD-QA']);
+assert.deepEqual(await loadPersonalCoupons(asAuthenticatedCustomer('qa-B'),now),[]);
+await assert.rejects(loadPersonalCoupons(async()=>({ok:true,json:async()=>({data:{customer:null}})}),now),/Authenticated customer/);
+
 const publicSnapshot=JSON.stringify({
   version:1,synced_at:'2026-10-10T20:08:42.379Z',
   offers:[{
