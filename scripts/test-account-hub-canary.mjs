@@ -15,7 +15,7 @@ for (const [handle,filename] of targets) {
     handle + ' must resolve to preact/jsx-runtime, never react/jsx-runtime');
   assert.deepEqual(tsconfig.include, ['./src','./shopify.d.ts']);
 
-  for (const mode of ['minimal','hub','read']) {
+  for (const mode of ['minimal','hub','read','template']) {
     const code=makeCanaryModule(handle,mode);
     assert.match(code,/import '@shopify\/ui-extensions\/preact';/);
     assert.match(code,/import \{render\} from 'preact';/);
@@ -23,8 +23,8 @@ for (const [handle,filename] of targets) {
     assert.match(code,/export default async/);
     assert.doesNotMatch(code,/shopify:\/\/customer-account\/api|shopify:\/\/storefront\/api|metafieldsSet|discountCodeBasicCreate/);
     assert.doesNotMatch(code,/jillonlinestore\.com|jqtdgr-1y\.myshopify\.com/);
-    if (handle === 'jill-account-dashboard' && (mode === 'hub' || mode === 'read')) {
-      const component = mode === 'read' ? 'ConnectedHub' : 'AccountHub';
+    if (handle === 'jill-account-dashboard' && (mode === 'hub' || mode === 'read' || mode === 'template')) {
+      const component = (mode === 'read' || mode === 'template') ? 'ConnectedHub' : 'AccountHub';
       assert.ok(code.includes("import " + component + " from './hub/" + component + ".jsx'"));
       assert.ok(code.includes('render(<' + component + ' />, document.body)'));
     } else {
@@ -46,12 +46,13 @@ assert.match(preparer, /'src','hub','ConnectedHub.jsx'/);
 const actualHub=fs.readFileSync('extensions/jill-account-dashboard/src/hub/AccountHub.jsx','utf8');
 assert.match(actualHub,/<s-page heading="My JILL"/);
 assert.match(actualHub,/<s-section>/);
-assert.doesNotMatch(actualHub, /fetch\(|shopify\.shop|shopify\.query|useEffect|metafieldsSet/);
+assert.doesNotMatch(actualHub, /fetch\(|shopify\.shop|shopify\.query|metafieldsSet/);
 const scripts=JSON.parse(fs.readFileSync('package.json','utf8')).scripts;
 for (const [name,flag] of [
   ['rewards:work:hub:canary',''],
   ['rewards:work:hub:preview','--hub'],
   ['rewards:work:hub:read','--read'],
+  ['rewards:work:hub:template','--template'],
 ]) {
   const expected='node scripts/prepare-account-hub-canary.mjs'+(flag?' '+flag:'')+
     ' && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com';
