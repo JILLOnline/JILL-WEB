@@ -87,7 +87,18 @@ export function parsePublicPromotionSnapshot(value, now = Date.now()) {
   if (!Number.isFinite(syncedAt) || age > PROMOTIONS_MAX_AGE_MS || age < -120000) {
     throw new Error('Public promotions are waiting for a fresh Shopify sync.');
   }
-  return snapshot.offers.map((offer) => {
+  return snapshot.offers.filter((offer) => {
+    // Never display a scheduled, ended, or malformed offer even if a
+    // publisher supplied an inconsistent ACTIVE status.
+    if (!offer || typeof offer !== 'object') return true; // validated below
+    const start = offer.starts_at == null ? null : Date.parse(offer.starts_at);
+    const end = offer.ends_at == null ? null : Date.parse(offer.ends_at);
+    if ((offer.starts_at != null && !Number.isFinite(start)) ||
+        (offer.ends_at != null && !Number.isFinite(end))) {
+      throw new Error('Public promotions contain an invalid offer date.');
+    }
+    return (start === null || start <= now) && (end === null || end > now);
+  }).map((offer) => {
     if (!offer || typeof offer.code !== 'string' || !offer.code.trim() ||
         typeof offer.summary !== 'string' || !offer.summary.trim()) {
       throw new Error('Public promotions contain an invalid offer.');
