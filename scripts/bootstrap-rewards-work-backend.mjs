@@ -14,6 +14,12 @@ if (execFileSync('git', ['branch', '--show-current'], {cwd:root,encoding:'utf8'}
 if (!fs.existsSync(WORK_CONFIG_FILE)) {
   throw new Error('Shopify WORK app config missing. Link JILL WORK Rewards first.');
 }
+// The WORK preview and WORK backend must use the same isolated scope owner.
+// Bring an older locally linked WORK config up to the canonical contract
+// before validating it. The preparation script refuses a LIVE app identity.
+execFileSync(process.execPath,['scripts/prepare-rewards-work-config.mjs'],{
+  cwd:root,stdio:'inherit',
+});
 assertRewardsWorkConfig(fs.readFileSync(WORK_CONFIG_FILE,'utf8'));
 
 const runClasp = (...args) => {
