@@ -18,15 +18,16 @@ const modules = [
 ];
 
 export function makeCanaryModule(handle, mode = 'minimal') {
-  if (mode !== 'minimal' && mode !== 'hub') throw new Error('Unsupported WORK canary mode');
+  if (!['minimal','hub','read'].includes(mode)) throw new Error('Unsupported WORK canary mode');
   if (!modules.some(([dir]) => dir === handle)) throw new Error('Unexpected extension target');
-  if (mode === 'hub' && handle === 'jill-account-dashboard') {
+  if ((mode === 'hub' || mode === 'read') && handle === 'jill-account-dashboard') {
+    const component = mode === 'read' ? 'ConnectedHub' : 'AccountHub';
     return `import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
-import AccountHub from './hub/AccountHub.jsx';
+import ${component} from './hub/${component}.jsx';
 
 export default async () => {
-  render(<AccountHub />, document.body);
+  render(<${component} />, document.body);
 };
 `;
   }
@@ -52,7 +53,7 @@ export default async () => {
 }
 
 export function prepareCanary(mode) {
-  assert.ok(['minimal','hub'].includes(mode), 'Canary must be minimal or hub');
+  assert.ok(['minimal','hub','read'].includes(mode), 'Canary must be minimal, hub or read');
   const configPath = path.join(root, appConfig);
   if (!fs.existsSync(configPath)) {
     throw new Error('Missing linked WORK app config; run the existing WORK app link flow first.');
@@ -121,10 +122,17 @@ export function prepareCanary(mode) {
 
     fs.writeFileSync(path.join(dest,'src',moduleName),
       makeCanaryModule(handle,mode));
-    if (mode === 'hub' && handle === 'jill-account-dashboard') {
+    if ((mode === 'hub' || mode === 'read') && handle === 'jill-account-dashboard') {
       fs.mkdirSync(path.join(dest,'src','hub'),{recursive:true});
       fs.copyFileSync(path.join(base,'src','hub','AccountHub.jsx'),
         path.join(dest,'src','hub','AccountHub.jsx'));
+      if (mode === 'read') {
+        fs.copyFileSync(path.join(base,'src','hub','ConnectedHub.jsx'),
+          path.join(dest,'src','hub','ConnectedHub.jsx'));
+        fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
+        fs.copyFileSync(path.join(root,'shared','customer-account-api.mjs'),
+          path.join(workdir,'shared','customer-account-api.mjs'));
+      }
     }
   }
   // The normal source tree is untouched. Shopify CLI --path points ONLY here.
@@ -136,6 +144,6 @@ export function prepareCanary(mode) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const mode = process.argv.includes('--hub') ? 'hub' : 'minimal';
+  const mode = process.argv.includes('--read') ? 'read' : (process.argv.includes('--hub') ? 'hub' : 'minimal');
   prepareCanary(mode);
 }
