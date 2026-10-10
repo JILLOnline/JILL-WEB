@@ -19,6 +19,7 @@ const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
 const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 const profileConfig = read('extensions/jill-account-home/shopify.extension.toml');
+const profileSource = read('extensions/jill-account-home/src/AccountHome.jsx');
 const promotionBackend = read('backend/google-apps-script/JILL_Public_Promotions.gs');
 
 includesAll(config, 'Coupons extension config', [
@@ -121,6 +122,15 @@ includesAll(dashboardConfig, 'Dashboard extension identity', [
   'handle = "jill-account-dashboard"',
   'uid = "2f093e56-265e-4263-57fc-eb7b7a8a3f49ccd3b19a"',
 ]);
+
+includesAll(profileSource, 'WORK-safe Settings profile block', [
+  "const STORE = storefrontOrigin(shopify.shop);",
+  "extension:jill-account-dashboard/",
+  "href={STORE}",
+]);
+if (profileSource.includes("const STORE = 'https://jillonlinestore.com'")) {
+  fail('Settings profile block must not send WORK users to LIVE.');
+}
 
 includesAll(profileConfig, 'Settings extension identity', [
   'handle = "jill-account-home"',
