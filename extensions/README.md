@@ -105,6 +105,49 @@ The command is **`shopify app dev --path .work-account-canary`**, not
 released pages**, and the WORK app's active version is not promoted. No 
 customer points, coupons or the Apps Script worker are changed.
 
+### Full My JILL hybrid template preview (all seven sections)
+
+The authenticated WORK QA read preview rendered successfully: customer name, 30
+available points, 30 earned and 0 redeemed, as independently confirmed by
+Shopify Admin and the merchant screenshot. That proves the **read-only account
+boundary**; it does not yet certify coupon issuance, Use Now or custom-order
+history.
+
+The next isolated preview uses the same My JILL extension UID and the
+validated signed-in account query, but composes the **complete seven-screen
+template**:
+
+```powershell
+# Stop the previous dev preview with q first:
+git pull --ff-only origin jill/rewards-work
+npm.cmd run rewards:work:hub:template
+```
+
+In Shopify's Dev Console, open **My JILL → Web preview**. Click each internal
+tab: Overview, Rewards, Coupons, Custom Orders, Celebrations, Saved for You and
+JILL Settings. Check small/mobile and desktop layouts, including the native
+Shopify Orders/Profile links and browser back navigation.
+
+- Overview and Rewards use **real, authenticated** QA customer Rewards data.
+- Rewards options read their terms from existing `shared/rewards.mjs`;
+  redemption controls stay disabled. Do not redeem.
+- Coupons distinguishes its unavailable personal wallet/public-offer adapter
+  from a verified empty coupon list; no `Use Now` action is offered.
+- Custom Orders, Celebrations and Saved for You show explicit connection
+  pending states, because customer-owned backend records/metafield definitions
+  are not yet certified. They do not create, edit, send or reveal customer data.
+- JILL Settings links only to Shopify's authenticated native Profile and
+  in-hub preference section; no independent password/identity implementation.
+- All seven screen modules, single route registry and canonical Rewards rules
+  are copied into **`.work-account-canary/`**. The original released
+  `Dashboard.jsx`, standalone Coupons page and Profile block are unchanged.
+
+Source regression suite: `npm.cmd run test:account-hub-template`. Passing
+GitHub CI proves source/test contracts, **not** that the app is responsive in
+the actual Shopify browser. Capture a screenshot of the navigation and every
+page before we connect any additional backend domain or release the app.
+Never run `shopify app deploy` from this throwaway preview directory.
+
 Shopify WORK normal local preview (original code, no LIVE changes):
 
 ```powershell
