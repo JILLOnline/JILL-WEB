@@ -1570,12 +1570,7 @@ function createRewardDiscount_(customer, points, tier) {
       orderDiscounts: JILL_REWARD_ORDER_STACKING,
       productDiscounts: JILL_REWARD_PRODUCT_STACKING,
       shippingDiscounts: JILL_REWARD_SHIPPING_STACKING
-    },
-    tags: [
-      'JILL_REWARDS',
-      'JILL_REWARDS_V' + JILL_REWARDS_ENGINE_VERSION,
-      'JILL_REWARD_' + points + '_POINTS'
-    ]
+    }
   };
 
   const data = shopifyGraphQL_(mutation, { input: input });
