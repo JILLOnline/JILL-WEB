@@ -106,6 +106,19 @@ export function prepareCanary(mode) {
       path.join(dest,'shopify.extension.toml'));
     fs.copyFileSync(path.join(base,'package.json'),
       path.join(dest,'package.json'));
+
+    // Shopify's JSX bundler reads tsconfig from each extension directory.
+    // If it is omitted, esbuild falls back to react/jsx-runtime, while these
+    // extensions depend on Preact only. Always copy and assert the canonical
+    // runtime mapping rather than installing React or masking the build error.
+    const jsxConfigFile = path.join(base,'tsconfig.json');
+    const jsxConfig = JSON.parse(fs.readFileSync(jsxConfigFile,'utf8'));
+    if (jsxConfig.compilerOptions?.jsx !== 'react-jsx' ||
+        jsxConfig.compilerOptions?.jsxImportSource !== 'preact') {
+      throw new Error('Missing canonical Preact JSX runtime config for ' + handle);
+    }
+    fs.copyFileSync(jsxConfigFile,path.join(dest,'tsconfig.json'));
+
     fs.writeFileSync(path.join(dest,'src',moduleName),
       makeCanaryModule(handle,mode));
     if (mode === 'hub' && handle === 'jill-account-dashboard') {
