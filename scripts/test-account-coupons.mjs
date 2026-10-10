@@ -42,10 +42,10 @@ includesAll(source, 'Coupons runtime', [
   'rewardWallet',
   'rewardCouponStatus',
   'discountCartUrl',
-  'storefrontOrigin',
-  'const STORE = storefrontOrigin(shopify.shop);',
-  'href={discountCartUrl(STORE, offer.code)}',
-  'href={discountCartUrl(STORE, coupon.code)}',
+  'loadCustomerAccountStorefront',
+  'href={store ? discountCartUrl(store, offer.code) : undefined}',
+  'href={store ? discountCartUrl(store, coupon.code) : undefined}',
+  'disabled={!store}',
   'REWARDS_REFRESH_MS',
   'refreshRewards(false)',
   'clearInterval(rewardsRefreshTimer)',
@@ -124,10 +124,22 @@ includesAll(dashboardConfig, 'Dashboard extension identity', [
 ]);
 
 includesAll(profileSource, 'WORK-safe Settings profile block', [
-  "const STORE = storefrontOrigin(shopify.shop);",
+  'loadCustomerAccountStorefront',
   "extension:jill-account-dashboard/",
-  "href={STORE}",
+  'href={store}',
 ]);
+for (const [name, contents] of [
+  ['My JILL', read('extensions/jill-account-dashboard/src/Dashboard.jsx')],
+  ['Coupons', source],
+  ['JILL Settings', profileSource],
+]) {
+  if (contents.includes('shopify.shop')) {
+    fail(name + ' must not access order-only shopify.shop on general account pages.');
+  }
+  if (!contents.includes('loadCustomerAccountStorefront')) {
+    fail(name + ' must resolve the store from authenticated Customer Account GraphQL.');
+  }
+}
 if (profileSource.includes("const STORE = 'https://jillonlinestore.com'")) {
   fail('Settings profile block must not send WORK users to LIVE.');
 }
