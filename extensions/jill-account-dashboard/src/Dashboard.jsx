@@ -18,8 +18,9 @@ import {
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
-// Shopify's Customer Account metafield-write route, distinct from the read protocol.
-const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
+// Shopify Customer Account GraphQL uses the same authenticated fetch
+// endpoint for read queries and metafieldsSet mutations.
+const WRITE_API = API;
 
 const JILL_KEYS = [
   'last_custom_request_at',
