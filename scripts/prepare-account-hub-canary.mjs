@@ -79,7 +79,14 @@ export function prepareCanary(mode) {
   fs.writeFileSync(path.join(workdir,sentinel),JSON.stringify({
     owner:'jill-account-hub-work-canary',store:WORK_STORE,mode,
   })+'\n');
-  for (const filename of ['package.json','package-lock.json','.npmrc',appConfig]) {
+  // A Shopify CLI preview can check dependency state in its --path project.
+  // Do not run this repository's large postinstall validation from an isolated
+  // throwaway folder that intentionally has no theme/, scripts/ or backend/.
+  // Preserve exact dependency/workspace versions and only remove postinstall.
+  const pkg = JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+  if (pkg.scripts) delete pkg.scripts.postinstall;
+  fs.writeFileSync(path.join(workdir,'package.json'),JSON.stringify(pkg,null,2)+'\\n');
+  for (const filename of ['package-lock.json','.npmrc',appConfig]) {
     const from = path.join(root,filename);
     if (fs.existsSync(from)) fs.copyFileSync(from,path.join(workdir,filename));
   }
