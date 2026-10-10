@@ -22,10 +22,22 @@ execFileSync(process.execPath,['scripts/prepare-rewards-work-config.mjs'],{
 });
 assertRewardsWorkConfig(fs.readFileSync(WORK_CONFIG_FILE,'utf8'));
 
+// npx.cmd runs through Windows cmd.exe. Without quoting, a multi-word
+// --title value is split into three unwanted positional arguments by cmd.
+// Only fixed, internal clasp commands reach this function.
+function windowsClaspArg(value) {
+  if (/[\r\n"&|<>^%!]/.test(value)) {
+    throw new Error('Unsafe Windows clasp argument. Refusing command.');
+  }
+  return /\s/.test(value) ? `"${value}"` : value;
+}
+
 const runClasp = (...args) => {
-  const binary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const result = spawnSync(binary, ['--yes', '@google/clasp@3.4.1', ...args], {
-    cwd:output, stdio:'inherit', shell:process.platform === 'win32',
+  const windows = process.platform === 'win32';
+  const binary = windows ? 'npx.cmd' : 'npx';
+  const cmdArgs = windows ? args.map(windowsClaspArg) : args;
+  const result = spawnSync(binary, ['--yes', '@google/clasp@3.4.1', ...cmdArgs], {
+    cwd:output, stdio:'inherit', shell:windows,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
