@@ -22,6 +22,25 @@ npm.cmd run test:rewards-redemption
 npm.cmd run test:account-coupons
 ```
 
+### Diagnostic fix — React runtime resolution in throwaway canary (2026-10-10)
+
+The first `rewards:work:hub:canary` attempt aborted during bundling with
+`Could not resolve "react/jsx-runtime"` for all three diagnostic extensions.
+**Cause confirmed:** the canary project copied each manifest and `package.json`
+but omitted each extension's canonical `tsconfig.json`. Shopify's default
+JSX transform then looked for React, even though all extensions use Preact.
+
+The generator now validates and copies all three source `tsconfig.json`
+files with `jsx="react-jsx"` and `jsxImportSource="preact"`. The canary test
+enforces this ownership. **Do not install React**; that would mask a
+misconfigured diagnostic. The original extension source and active v3 WORK
+release have not changed. This fix only unblocks the isolation test: it does
+not explain the pre-existing My JILL/Coupons release-time page errors.
+
+After `q` stops the aborted CLI preview, pull the updated branch and run
+`npm.cmd run rewards:work:hub:canary` again. Expect all three bundles to
+compile without `react/jsx-runtime`. Only then open the Dev Console Web preview.
+
 ### First: isolate the failing page without changing released WORK code
 
 Both the minimalist Shopify-style canary and the actual data-free My JILL hub shell
