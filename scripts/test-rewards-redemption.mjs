@@ -661,3 +661,104 @@ console.log('JILL WORK canonical backend packaging and isolation passed.');
   assert.equal(customOrderRejected.ok,false);
   assert.match(customOrderRejected.error,/WORK backend accepts Rewards webhooks only/);
 }
+
+
+// Schema-level regression: Shopify basic discounts cannot receive tags.
+// Exercise the actual backend function with mocked Shopify responses.
+{
+  const source = fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const discountSource = source.slice(
+    source.indexOf('function createRewardDiscount_(customer, points, tier) {'),
+    source.indexOf('function deleteRewardDiscount_(discountId)')
+  );
+  let input;
+  const context = {
+    rewardCode_: ()=>'JILL5-SCHEMA',
+    JILL_REWARD_COUPON_DAYS:30,
+    JILL_REWARD_USAGE_LIMIT:1,
+    JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER:true,
+    JILL_REWARD_ORDER_STACKING:false,
+    JILL_REWARD_PRODUCT_STACKING:false,
+    JILL_REWARD_SHIPPING_STACKING:false,
+    JILL_REWARDS_ENGINE_VERSION:'13',
+    shopifyGraphQL_: (_query, variables)=>{
+      input = variables.input;
+      return {discountCodeBasicCreate:{
+        codeDiscountNode:{id:'gid://shopify/DiscountCodeNode/1',
+          codeDiscount:{codes:{nodes:[{code:'JILL5-SCHEMA'}]}}},
+        userErrors:[],
+      }};
+    },
+  };
+  const create = vm.runInNewContext(discountSource+'\ncreateRewardDiscount_',context);
+  const result = create({id:'gid://shopify/Customer/1'},10,{value:5,minimum:25});
+  assert.equal(result.code,'JILL5-SCHEMA');
+  // Keys confirmed in the Shopify 2026-07 DiscountCodeBasicInput schema.
+  assert.deepEqual(Object.keys(input).sort(), [
+    'title','code','startsAt','endsAt','context','customerGets',
+    'minimumRequirement','usageLimit','appliesOncePerCustomer','combinesWith',
+  ].sort());
+  assert.equal(input.customerGets.value.discountAmount.amount,'5');
+  assert.equal(input.minimumRequirement.subtotal.greaterThanOrEqualToSubtotal,'25');
+  assert.equal(input.context.customers.add[0],'gid://shopify/Customer/1');
+}
+
+// The Shopify 2026-07 LineItem type has no
+// priceAfterAllDiscountsBeforeTaxesSet field. Use an available price which
+// accounts for order discounts times currentQuantity (surviving units).
+{
+  const source=fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const start=source.indexOf('function reconcileRewardsOrder_(orderId, allowInitialCredit) {');
+  const end=source.indexOf('function setRewardLedger_(',start);
+  assert.ok(start>=0 && end>start);
+  const fn=source.slice(start,end);
+  assert.doesNotMatch(fn,/priceAfterAllDiscountsBeforeTaxesSet/);
+  assert.match(fn,/discountedUnitPriceAfterAllDiscountsSet/);
+  assert.match(fn,/currentQuantity/);
+  let recorded;
+  const order={
+    id:'gid://shopify/Order/1',
+    cancelledAt:null,
+    customer:{
+      id:'gid://shopify/Customer/1',
+      eligibleSpend:{value:'3750'},
+      pointsEarned:{value:'3'},
+      pointsRedeemed:{value:'0'},
+      pointsBalance:{value:'3'},
+      coupons:{value:'[]'}
+    },
+    creditedCents:{value:'3750'},
+    lineItems:{nodes:[
+      {isGiftCard:false,currentQuantity:2,
+        discountedUnitPriceAfterAllDiscountsSet:{
+          shopMoney:{amount:'12.50',currencyCode:'USD'}}},
+      {isGiftCard:true,currentQuantity:1,
+        discountedUnitPriceAfterAllDiscountsSet:{
+          shopMoney:{amount:'999',currencyCode:'USD'}}},
+    ]},
+    discountApplications:{nodes:[]},
+  };
+  const context={
+    shopifyGraphQL_:()=>({order}),
+    rewardInt_: x=>Number(x?.value||0),
+    rewardWallet_:()=>[],
+    normalizeRewardCoupons_:wallet=>wallet,
+    markRewardCouponsUsedInWallet_:()=>false,
+    revokeActiveRewardsForSolvency_:()=>({revoked_points:0}),
+    rewardCommittedPoints_:()=>0,
+    setRewardLedger_:(...args)=>{recorded=args},
+    JILL_REWARD_SPEND_CENTS_PER_POINT:1000,
+    JILL_REWARDS_ENGINE_VERSION:'13',
+  };
+  const reconcile=vm.runInNewContext(fn+'\nreconcileRewardsOrder_',context);
+  const result=reconcile(order.id,false);
+  assert.equal(result.eligible_cents,2500);
+  assert.equal(result.delta_cents,-1250);
+  assert.equal(result.points_earned,2);
+  assert.equal(result.points_balance,2);
+  assert.equal(recorded[2],2500);
+  assert.equal(recorded[3],2);
+  assert.equal(recorded[6],2);
+}
