@@ -106,6 +106,9 @@ function doPost(e) {
   const suppliedRewardTopic = clean_(
     e && e.parameter ? e.parameter.jill_rewards_topic : ''
   );
+  // Mark only successfully authenticated Rewards deliveries for retryable
+  // failure handling. An unauthenticated POST must not enter that path.
+  let verifiedRewardHook = false;
 
   // An isolated WORK Rewards deployment does not accept Custom Order writes.
   if (JILL_REWARDS_RUNTIME === 'WORK' && !(suppliedRewardSecret && suppliedRewardTopic)) {
@@ -130,6 +133,7 @@ function doPost(e) {
         return json_({ ok: false, error: 'Invalid rewards webhook' });
       }
 
+      verifiedRewardHook = true;
       return handleJillRewardsWebhook_(e);
     }
 
