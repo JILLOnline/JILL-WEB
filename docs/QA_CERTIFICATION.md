@@ -400,3 +400,15 @@ Merchant executed `npm.cmd run rewards:work:hub:canary` and supplied the exact S
 
 **Next evidence:** stop aborted CLI session with `q`, fast-forward local `jill/rewards-work`, rerun `npm.cmd run rewards:work:hub:canary`. Confirm all three bundles are built, then open Shopify Dev Console My JILL/Coupons Web previews. If both render, follow with `npm.cmd run rewards:work:hub:preview` for the new AccountHub. If compilation still fails, capture fresh exact CLI error and stop; no WORK app release, no backend changes, no rewards redemption, and absolutely no LIVE change.
 
+
+
+### WORK full-page minimal canary — rendered successfully (merchant evidence)
+
+Merchant provided WORK Shopify **Dev Console Web preview** screenshots on 2026-10-10 showing both existing extension targets loaded correctly in the isolated `.work-account-canary/` minimal test after copying the three original Preact JSX `tsconfig.json` files:
+
+- **My JILL:** `WORK runtime confirmed` and `JILL WORK My JILL full-page extension rendered.`
+- **Coupons:** `WORK runtime confirmed` and `JILL WORK Coupons full-page extension rendered.`
+
+This **passes Phase 0's minimal extension-delivery/rendering probe** for both targets in WORK development preview. It demonstrates that the Shopify customer-account page host, authenticated preview routing, Preact JSX bundle config, existing extension targets and minimal `<s-page>` elements can render. It narrows the **published** v3 page failure to the original application code/imports/render-time behavior or a difference between the dev preview and the installed release; it does **not** identify the exact exception or certify active published pages.
+
+**NEXT PROOF GATE:** stop minimal preview (`q`), run `npm.cmd run rewards:work:hub:preview` using the existing linked WORK config, press `c`, and open **My JILL → Web preview**. Expected `Welcome to My JILL` from `AccountHub.jsx`, with no GraphQL/network calls. If successful, migrate the tested thin entrypoint into the original Dashboard only after preparing an incremental read-only adapter path. Do not publish WORK, change BACKEND, provision custom fields or spend points on the strength of this canary alone.
