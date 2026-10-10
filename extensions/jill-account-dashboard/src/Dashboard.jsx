@@ -12,11 +12,15 @@ import {
   rewardRequestIsComplete,
   rewardRequestOutcome,
   rewardWallet,
+  discountCartUrl,
+  loadCustomerAccountStorefront,
   toRewardInteger,
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
-const STORE = 'https://jillonlinestore.com';
+// Shopify Customer Account GraphQL uses the same authenticated fetch
+// endpoint for read queries and metafieldsSet mutations.
+const WRITE_API = API;
 
 const JILL_KEYS = [
   'last_custom_request_at',
@@ -153,7 +157,7 @@ async function writeRewardRequest(customer, points, nonce) {
     throw new Error('Your reward request state could not be verified. Refresh the page and try again.');
   }
 
-  const response = await fetch(API, {
+  const response = await fetch(WRITE_API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
@@ -298,7 +302,8 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
+function RewardsCard({customer, meta, loading, stale, onCustomerUpdate, store}) {
+  const STORE = store;
   const redemptionInFlight = useRef(false);
   const rewardModalRefs = useRef({});
   const [submittingPoints, setSubmittingPoints] = useState(0);
@@ -314,12 +319,18 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   const persistedPending = rewardRequestIsPending(meta);
   const requestedPoints = persistedPending ? toRewardInteger(meta.redeem_request_points) : 0;
   const pendingPoints = requestedPoints || localPendingPoints || submittingPoints;
-  const isGeneratingReward = Boolean(pendingPoints) && !redeemError;
+  const isGeneratingReward = Boolean(pendingPoints);
   const journey = buildRewardJourney(points, wallet, {pendingPoints});
   const activeCoupons = journey.activeCoupons;
   const availableTiers = journey.redeemable.map((item) => item.tier);
-  const collapsedTier = journey.collapsed.tier;
-  const visibleRewardItems = showAllRewards ? journey.expanded : [journey.collapsed];
+  // Keep the just-created coupon on screen: the balance change otherwise
+  // selects the next locked tier and hides the promised Use Now action.
+  const featuredPoints = redemptionStage?.points ||
+    (freshCoupon && rewardCouponStatus(freshCoupon) === 'active' ? freshCoupon.points : 0);
+  const featuredReward = journey.items.find((item) => item.tier.points === Number(featuredPoints));
+  const collapsedReward = featuredReward || journey.collapsed;
+  const collapsedTier = collapsedReward.tier;
+  const visibleRewardItems = showAllRewards ? journey.expanded : [collapsedReward];
 
   useEffect(() => {
     if (!lastRequest?.nonce) return;
@@ -331,6 +342,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       setRedeemError('');
       setLocalPendingPoints(0);
       setSubmittingPoints(0);
+      setRedemptionStage(null);
       setLastRequest(null);
       return;
     }
@@ -455,30 +467,37 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
   function rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending) {
     const stage =
       redemptionStage?.points === tier.points ? redemptionStage.status : null;
-    const stageLabel = {
-      generating: 'Generating coupon',
-      setting_up: 'Setting up code',
-      redeemed: 'Code redeemed',
-    }[stage] || '';
 
-    if (stage || isThisPending) {
+    if (stage === 'redeemed') {
       return (
         <s-stack direction="inline" gap="small-200" alignItems="center">
-          <s-spinner size="small" />
-          <s-text tone="info">{stageLabel || 'Generating coupon'}</s-text>
+          <s-icon type="check-circle-filled" tone="success" />
+          <s-text tone="success">Code redeemed</s-text>
         </s-stack>
       );
     }
 
+    // A confirmed wallet coupon takes precedence over a stale spinner.
     if (coupon) {
       return (
         <s-button
           variant="primary"
-          href={`${STORE}/discount/${encodeURIComponent(coupon.code)}?redirect=/cart`}
+          href={STORE ? discountCartUrl(STORE, coupon.code) : undefined}
+          disabled={!STORE}
           accessibilityLabel={`Use your $${tier.value} OFF coupon now`}
         >
           Use Now
         </s-button>
+      );
+    }
+
+    if (stage || isThisPending) {
+      const stageLabel = stage === 'setting_up' ? 'Setting up code' : 'Generating coupon';
+      return (
+        <s-stack direction="inline" gap="small-200" alignItems="center">
+          <s-spinner size="small" />
+          <s-text tone="info">{stageLabel}</s-text>
+        </s-stack>
       );
     }
 
@@ -488,7 +507,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       return (
         <>
           <s-button
-            variant="secondary"
+            variant="primary"
             command="--show"
             commandFor={modalId}
             disabled={Boolean(pendingPoints)}
@@ -498,48 +517,37 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
 
           <s-modal
             id={modalId}
-            heading={`Confirm $${tier.value} OFF reward`}
+            heading={`Redeem $${tier.value} OFF`}
             ref={(element) => {
               if (element) rewardModalRefs.current[tier.points] = element;
               else delete rewardModalRefs.current[tier.points];
             }}
           >
-            <s-stack direction="block" gap="base">
-              <s-text type="strong">
-                Spend {tier.points} points for ${tier.value} OFF?
-              </s-text>
-              <s-text>
-                If you redeem these points, your coupon will expire in {REWARD_COUPON_POLICY.expirationDays} days.
-              </s-text>
+            <s-stack direction="block" gap="small-300">
+              <s-text type="strong">Spend {tier.points} points for $${tier.value} OFF?</s-text>
+              <s-text>Your coupon expires {REWARD_COUPON_POLICY.expirationDays} days after redemption.</s-text>
               <s-text color="subdued">
-                ${tier.minimum} minimum order · {Object.values(REWARD_COUPON_POLICY.stacking).some(Boolean) ? 'Combination rules apply.' : 'Cannot be combined with other discounts.'}
+                $${tier.minimum} minimum order · One use per customer · Cannot be combined with other discounts.
               </s-text>
-
-              <s-stack direction="inline" gap="small-300">
-                <s-clickable
-                  background="subdued"
-                  padding="small-300"
-                  borderRadius="large"
-                  accessibilityLabel="No, keep my points"
-                  onClick={() => rewardModalRefs.current[tier.points]?.hideOverlay()}
-                >
-                  <s-text>No, keep my points</s-text>
-                </s-clickable>
-
-                <s-clickable
-                  background="subdued"
-                  padding="small-300"
-                  borderRadius="large"
-                  accessibilityLabel={`Yes, spend ${tier.points} points`}
-                  onClick={() => {
-                    rewardModalRefs.current[tier.points]?.hideOverlay();
-                    handleRedeem(tier);
-                  }}
-                >
-                  <s-text type="strong" tone="success">Yes, redeem</s-text>
-                </s-clickable>
-              </s-stack>
             </s-stack>
+            <s-button
+              slot="secondary-actions"
+              variant="secondary"
+              command="--hide"
+              commandFor={modalId}
+            >
+              Keep my points
+            </s-button>
+            <s-button
+              slot="primary-action"
+              variant="primary"
+              onClick={() => {
+                rewardModalRefs.current[tier.points]?.hideOverlay();
+                handleRedeem(tier);
+              }}
+            >
+              Yes, redeem
+            </s-button>
           </s-modal>
         </>
       );
@@ -570,7 +578,7 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
     const isAvailable = item.state === REWARD_STATES.REDEEM;
     const isNext = item.state === REWARD_STATES.NEXT_REWARD;
     const isThisPending =
-      redemptionStage?.points === tier.points ||
+      (redemptionStage?.points === tier.points && redemptionStage.status !== 'redeemed') ||
       (isGeneratingReward && pendingPoints === tier.points);
     const tierProgress = isRedeemed ? tier.points : Math.max(0, Math.min(points, tier.points));
     const progressValue = tierProgress === 0 ? 0.001 : tierProgress;
@@ -619,9 +627,9 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
         >
           <s-stack direction="block" gap="small-300">
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-              <s-stack direction="inline" gap="small-200" alignItems="center">
-                <s-heading>${tier.value} OFF</s-heading>
-                <s-text color="subdued">${tier.minimum} minimum order</s-text>
+              <s-stack direction="block" gap="small-100">
+                <s-heading>$${tier.value} OFF</s-heading>
+                <s-text color="subdued">Redeem {tier.points} pts · $${tier.minimum} minimum order</s-text>
               </s-stack>
               {rewardStatusControl(tier, coupon, isAvailable, isNext, isThisPending)}
             </s-stack>
@@ -703,6 +711,8 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
                 ))}
               </s-grid>
 
+              {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
+
               <s-stack direction="inline" justifyContent="center">
                 <s-button variant="secondary" onClick={() => setShowAllRewards((current) => !current)}>
                   {showAllRewards ? 'Collapse rewards' : 'View all rewards'}
@@ -717,8 +727,6 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
             Rewards may be out of date. Your last confirmed balance and coupons are still shown while we refresh automatically.
           </s-banner>
         )}
-
-        {redeemError && <s-banner tone="critical">{redeemError}</s-banner>}
 
         <s-divider />
         <s-stack direction="inline" justifyContent="center">
@@ -736,6 +744,8 @@ export default async () => {
 };
 
 function Dashboard() {
+  const [storefront, setStorefront] = useState('');
+  const [storefrontError, setStorefrontError] = useState(false);
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -765,6 +775,15 @@ function Dashboard() {
 
     refreshCustomer(true);
 
+    // General account pages have no shopify.shop target API. Resolve the
+    // storefront through authenticated Customer Account GraphQL instead.
+    loadCustomerAccountStorefront()
+      .then((origin) => { if (active) { setStorefront(origin); setStorefrontError(false); } })
+      .catch((error) => {
+        console.warn('JILL storefront identity lookup failed', error);
+        if (active) setStorefrontError(true);
+      });
+
     // Live rewards heartbeat: if an admin deletes/repairs a reward coupon,
     // the open Dashboard self-refreshes instead of waiting for a page reload.
     const refreshTimer = setInterval(() => refreshCustomer(false), REWARDS_REFRESH_MS);
@@ -775,6 +794,7 @@ function Dashboard() {
     };
   }, []);
 
+  const STORE = storefront;
   const meta = metaMap(customer);
   const firstName = customer?.firstName || customer?.displayName?.split(' ')?.[0] || '';
   const orders = customer?.orders?.nodes || [];
@@ -798,7 +818,7 @@ function Dashboard() {
       heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
       subheading="Your celebrations, custom requests, saved details, and orders in one place."
     >
-      <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>
+      {STORE && <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>}
 
       <s-stack direction="block" gap="base">
         {loadError && (
@@ -807,7 +827,10 @@ function Dashboard() {
           </s-banner>
         )}
 
-        <RewardsCard customer={customer} meta={meta} loading={loading} stale={rewardsStale} onCustomerUpdate={setCustomer} />
+        {storefrontError && (
+          <s-banner tone="critical">Storefront links are unavailable. Rewards remain safe; refresh to restore checkout links.</s-banner>
+        )}
+        <RewardsCard customer={customer} meta={meta} loading={loading} stale={rewardsStale} onCustomerUpdate={setCustomer} store={STORE} />
 
         <s-section>
           <s-stack direction="block" gap="base">
@@ -816,7 +839,7 @@ function Dashboard() {
               <s-text color="subdued">Jump straight into your favorite collections.</s-text>
             </s-stack>
             <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
-              {COLLECTIONS.map(([emoji, label, path]) => (
+              {STORE && COLLECTIONS.map(([emoji, label, path]) => (
                 <s-button key={path} href={`${STORE}${path}`}>{emoji} {label}</s-button>
               ))}
             </s-grid>

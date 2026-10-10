@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {execFileSync} from 'node:child_process';
+import {assertRewardsWorkConfig, WORK_CLIENT_ID, LIVE_CLIENT_ID, WORK_STORE} from './verify-rewards-work-target.mjs';
 import {
   REWARDS_REFRESH_MS,
   buildRewardJourney,
@@ -12,6 +14,10 @@ import {
 } from '../shared/rewards.mjs';
 
 const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+assert.match(source, /loadCustomerAccountStorefront\(\)/, 'Dashboard must query the account shop identity after rendering');
+assert.doesNotMatch(source, /storefrontOrigin\(shopify\.shop\)/, 'Shopify shop API is not available on generic full pages');
+assert.doesNotMatch(source, /const STORE = 'https:\/\/jillonlinestore\.com'/, 'Dashboard must never hard-code LIVE store');
+
 // Execute the actual transport and handler with controlled Shopify responses and
 // hook setters. No production network calls or real-time polling in these tests.
 function between(start, end) {
@@ -55,14 +61,56 @@ assert.equal(rewardRequestOutcome(meta(0, `consumed:${nonce}`, [coupon]), nonce)
 assert.equal(rewardRequestOutcome(meta(0, 'consumed:older'), nonce).status, 'waiting');
 assert.ok(source.includes('rewardRequestOutcome(meta, lastRequest.nonce)'));
 assert.ok(source.includes('Rewards may be out of date.'));
-assert.match(source, /<s-modal[\s\S]*?If you redeem these points, your coupon will expire in/);
-assert.match(source, /No, keep my points/);
-assert.match(source, /Yes, redeem/);
-assert.match(source, /generating: 'Generating coupon'/);
-assert.match(source, /setting_up: 'Setting up code'/);
-assert.match(source, /redeemed: 'Code redeemed'/);
+// The live modal must expose platform-native, actionable footer buttons.
+const modal = between('          <s-modal', '          </s-modal>');
+assert.match(modal, /Your coupon expires \{REWARD_COUPON_POLICY\.expirationDays\} days after redemption/);
+assert.match(modal, /<s-button[\s\S]*?slot="secondary-actions"[\s\S]*?command="--hide"[\s\S]*?Keep my points/);
+assert.match(modal, /<s-button[\s\S]*?slot="primary-action"[\s\S]*?onClick=\{\(\) => \{[\s\S]*?hideOverlay\(\);[\s\S]*?handleRedeem\(tier\)/);
+assert.doesNotMatch(modal, /<s-clickable/, 'confirmation controls must not be clickable-card imitations');
+assert.match(source, /stage === 'redeemed'[\s\S]*?<s-icon type="check-circle-filled" tone="success" \/>/);
+assert.match(source, /stage === 'setting_up' \? 'Setting up code' : 'Generating coupon'/);
+assert.match(source, /if \(coupon\)[\s\S]*?Use Now/);
 assert.match(source, />\s*Use Now\s*<\/s-button>/);
+assert.match(source, /setRedemptionStage\(null\);\s*setLastRequest\(null\);\s*return;/);
+assert.match(source, /\{redeemError && <s-banner tone="critical">\{redeemError\}<\/s-banner>\}/);
+assert.match(source, /const featuredReward = journey\.items\.find\(\(item\) => item\.tier\.points === Number\(featuredPoints\)\)/);
+assert.match(source, /const collapsedReward = featuredReward \|\| journey\.collapsed/);
+assert.match(source, /\[collapsedReward\]/, 'a confirmed new coupon stays on screen until Use Now');
+assert.match(source, /redemptionStage\.status !== 'redeemed'/);
+assert.equal(source.includes('const isGeneratingReward = Boolean(pendingPoints) && !redeemError;'), false);
 assert.doesNotMatch(source, /\{isThisConfirming && \(/);
+
+ 
+// Execute the real confirmation callback found in the Preact modal, not a
+// synthetic invocation of handleRedeem.  A modal can look correct and still
+// fail to call the transaction handler (the original production regression).
+{
+  const primary = modal.match(
+    /<s-button\s+slot="primary-action"[\s\S]*?onClick=\{\(\) => \{([\s\S]*?)\}\}\s*>/,
+  );
+  assert.ok(primary, 'native modal action must have an executable click handler');
+  const tier = {points: 10, value: 5, minimum: 25};
+  const events = [];
+  const context = {
+    tier,
+    rewardModalRefs: {
+      current: {
+        10: {hideOverlay: () => events.push('modal closed')},
+      },
+    },
+    handleRedeem: (value) => {
+      assert.equal(value, tier);
+      events.push('redemption requested');
+    },
+  };
+  vm.runInNewContext(`(() => {${primary[1]}})()`, context);
+  assert.deepEqual(events, ['modal closed', 'redemption requested']);
+
+  // Cancelling never invokes the redemption callback.
+  assert.match(modal, /slot="secondary-actions"[\s\S]*?command="--hide"[\s\S]*?Keep my points/);
+  assert.equal(events.length, 2);
+}
+
 
 function harness(overrides = {}) {
   const state = {};
@@ -142,21 +190,28 @@ for (const overrides of [
 }
 
 // Validate actual mutation variables, CAS behavior and all error/acknowledgment branches.
-const api = vm.createContext({API: 'shopify://customer-account/api/2026-07/graphql.json', QUERY: 'query {}'});
+const READ_API = 'shopify://customer-account/api/2026-07/graphql.json';
+const WRITE_API = READ_API;
+assert.match(source, /const API = 'shopify:\/\/customer-account\/api\/2026-07\/graphql\.json'/);
+assert.match(source, /const WRITE_API = API;/, 'Rewards writes and reads use one documented Customer Account GraphQL endpoint');
+assert.doesNotMatch(source, /shopify:customer-account\/api\//, 'Invalid single-colon Customer Account mutation transport must never recur');
+const api = vm.createContext({API: READ_API, WRITE_API, QUERY: 'query {}'});
 vm.runInContext(mutation + transport, api);
 const writableCustomer = customer({
   redeem_request_points: '0',
   redeem_request_nonce: 'consumed:older',
 });
 let calls = 0;
-api.fetch = async (_url, options) => {
+api.fetch = async (url, options) => {
   const body = JSON.parse(options.body);
   calls += 1;
 
   if (body.query === 'query {}') {
+    assert.equal(url, READ_API, 'customer read must use the read transport');
     return {ok: true, json: async () => ({data: {customer: writableCustomer}})};
   }
 
+  assert.equal(url, WRITE_API, 'redemption write must use Shopify documented write transport');
   const {variables} = body;
   assert.deepEqual(variables.metafields.map((f) => f.key), ['redeem_request_points', 'redeem_request_nonce']);
   assert.ok(variables.metafields.every((f) => f.ownerId === 'gid://shopify/Customer/1'));
@@ -469,3 +524,244 @@ console.log('JILL Rewards topic-scoped webhook ingress contract passed.');
   }
 }
 console.log('JILL Rewards retired Rewards schema contract passed.');
+
+
+// WORK Preview must remain tied to the independently created dev app and store.
+{
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  assert.notEqual(WORK_CLIENT_ID, LIVE_CLIENT_ID);
+  assert.equal(WORK_STORE, 'jill-work.myshopify.com');
+  assert.equal(pkg.scripts['rewards:work:link'],
+    `shopify app config link --client-id ${WORK_CLIENT_ID} --file-name work`);
+  assert.equal(pkg.scripts['rewards:work:preview'],
+    `node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app dev --config work --store ${WORK_STORE}`);
+
+  const scopes = 'customer_read_customers,customer_write_customers,customer_read_orders,read_customers,write_customers,read_orders,write_orders,read_discounts,write_discounts';
+  const source = `name = "JILL WORK Rewards"
+client_id = "${WORK_CLIENT_ID}"
+application_url = "https://example.com"
+embedded = false
+
+[access_scopes]
+scopes = "${scopes}"
+`;
+  assert.equal(assertRewardsWorkConfig(source).clientId, WORK_CLIENT_ID);
+  assert.throws(() => assertRewardsWorkConfig(source.replace(WORK_CLIENT_ID, LIVE_CLIENT_ID)), /Client ID/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('JILL WORK Rewards', 'JILL Custom Form')), /app name/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('customer_write_customers,', '')), /missing Rewards scopes/);
+  assert.throws(() => assertRewardsWorkConfig(source.replace('https://example.com', 'https://jillonlinestore.com')), /LIVE store/);
+  assert.throws(() => assertRewardsWorkConfig(''), /Missing WORK app configuration/);
+}
+console.log('JILL Rewards WORK app isolation contract passed.');
+
+
+// WORK backend must be built from the canonical engine rather than maintained
+// as a separate Rewards implementation. Never upload production identifiers.
+{
+  execFileSync(process.execPath,['scripts/build-rewards-work-backend.mjs'],{stdio:'pipe'});
+  const work = fs.readFileSync('.work-backend/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const canonical = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  assert.match(canonical, /const JILL_REWARDS_RUNTIME = 'LIVE';/);
+  assert.match(work, /const JILL_REWARDS_RUNTIME = 'WORK';/);
+  assert.match(work, /assertJillRewardsRuntimeTarget_\(\)/);
+  assert.match(work, /shop !== 'jill-work.myshopify.com'/);
+  assert.match(work, /app !== 'f8e1ebdbae84490dc8ea5b133637e6c0'/);
+  assert.doesNotMatch(work, /jillonlinestore\.com|jqtdgr-1y\.myshopify\.com|1xVG4Jvh-vLB6BH5QitNcLQuaLj6DkXeSlFHg_LkECT8/);
+  assert.match(work, /WORK Rewards worker cannot access the Custom Order sheet/);
+  assert.match(work, /WORK backend accepts Rewards webhooks only/);
+  assert.match(work, /function processPendingJillRewardRequests\(\)/);
+  assert.match(work, /function createRewardDiscount_\(/);
+  const manifest = JSON.parse(fs.readFileSync('.work-backend/appsscript.json','utf8'));
+  assert.equal(manifest.runtimeVersion,'V8');
+  assert.equal(manifest.webapp.access,'ANYONE_ANONYMOUS');
+  assert.equal(manifest.webapp.executeAs,'USER_DEPLOYING');
+  const bootstrap = fs.readFileSync('scripts/bootstrap-rewards-work-backend.mjs','utf8');
+  assert.match(bootstrap, /assertRewardsWorkConfig/);
+  assert.match(bootstrap,
+    /execFileSync\(process\.execPath,\['scripts\/prepare-rewards-work-config\.mjs'\]/,
+    'WORK bootstrap must prepare local scopes before validation');
+  assert.ok(bootstrap.indexOf("prepare-rewards-work-config.mjs") <
+    bootstrap.indexOf("assertRewardsWorkConfig(fs.readFileSync"),
+    'WORK scope preparation must precede all bootstrap configuration verification');
+
+  assert.match(bootstrap, /jill\/rewards-work/);
+  assert.match(bootstrap, /record\.clientId !== WORK_CLIENT_ID/);
+  assert.match(bootstrap, /record\.shop !== WORK_STORE/);
+  assert.match(bootstrap, /runClasp\('push','--force'\)/);
+  // Exercise the exact Windows cmd.exe argument quoting that previously
+  // broke --title "JILL WORK Rewards Engine" into extra positional tokens.
+  const quoteFunction = bootstrap.match(/^function windowsClaspArg\(value\) \{[\s\S]*?^\}/m)?.[0];
+  assert.ok(quoteFunction, 'Windows clasp shell argument encoder must be present');
+  const quoteWindows = vm.runInNewContext(`${quoteFunction}\nwindowsClaspArg`);
+  assert.equal(quoteWindows('JILL WORK Rewards Engine'), '"JILL WORK Rewards Engine"');
+  assert.equal(quoteWindows('create-script'), 'create-script');
+  assert.equal(quoteWindows('--title'), '--title');
+  assert.throws(() => quoteWindows('bad & shell'), /Unsafe Windows clasp argument/);
+  assert.throws(() => quoteWindows('bad" quote'), /Unsafe Windows clasp argument/);
+
+  assert.match(bootstrap, /JSON\.parse\(authCheck\.stdout\.trim\(\)\)\.loggedIn === true/);
+  assert.match(bootstrap, /runClasp\('login'\)/);
+
+  assert.doesNotMatch(bootstrap, /runClasp\('create-deployment'/);
+  const workPackage = JSON.parse(fs.readFileSync('package.json','utf8'));
+  assert.equal(workPackage.scripts['rewards:work:backend:bootstrap'],
+    'node scripts/bootstrap-rewards-work-backend.mjs');
+  assert.equal(workPackage.scripts['rewards:work:backend:update'],
+    'node scripts/update-rewards-work-deployment.mjs');
+  const deploymentUpdater = fs.readFileSync('scripts/update-rewards-work-deployment.mjs','utf8');
+  assert.match(deploymentUpdater, /assertRewardsWorkConfig/);
+  assert.match(deploymentUpdater, /project.clientId !== WORK_CLIENT_ID/);
+  assert.match(deploymentUpdater, /project.shop !== WORK_STORE/);
+  assert.match(deploymentUpdater, /clasp.scriptId !== project.scriptId/);
+  assert.match(deploymentUpdater, /claspRun\('list-deployments'\)/);
+  assert.match(deploymentUpdater, /existing.includes\(WORK_DEPLOYMENT_ID\)/);
+  assert.match(deploymentUpdater, /claspRun\('update-deployment',WORK_DEPLOYMENT_ID\)/);
+  assert.doesNotMatch(deploymentUpdater, /claspRun\('create-deployment'/);
+  assert.doesNotMatch(deploymentUpdater, /claspRun\('run-function'/);
+
+
+}
+console.log('JILL WORK canonical backend packaging and isolation passed.');
+
+
+// The deployed WORK webhook must propagate the original processing error,
+// rather than obscuring it with an undeclared verifiedRewardHook ReferenceError.
+{
+  const backend = fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+  const start = backend.indexOf('function doPost(e) {');
+  const end = backend.indexOf('/* ---------------------------\n   JILL REWARDS', start);
+  assert.ok(start >= 0 && end > start);
+  const postSource = backend.slice(start, end);
+  const originalError = new Error('WORK backend test: Shopify webhook failed');
+  let released = false;
+  const context = {
+    JILL_REWARDS_RUNTIME: 'WORK',
+    LockService: {getScriptLock: () => ({
+      waitLock() {},
+      releaseLock() {released = true;},
+    })},
+    clean_: value => String(value ?? '').trim(),
+    rewardWebhookSubscriptionForKey_: key => ({key}),
+    constantTimeEqual_: (a,b) => a === b,
+    rewardWebhookSecret_: () => 'test-hook-token',
+    handleJillRewardsWebhook_: () => {throw originalError;},
+    json_: value => value,
+    console: {error() {}},
+  };
+  const doPost = vm.runInNewContext(postSource + '\ndoPost', context);
+  const event = {parameter: {
+    jill_rewards_topic: 'customers_update',
+    jill_rewards_hook: 'test-hook-token',
+  }};
+  assert.throws(() => doPost(event), error => error === originalError);
+  assert.equal(released, true, 'Webhook lock should be released after a failure');
+  const rejected = doPost({parameter: {...event.parameter,jill_rewards_hook:'wrong'}});
+  assert.equal(rejected.ok,false);
+  assert.equal(rejected.error,'Invalid rewards webhook');
+  const customOrderRejected = doPost({parameter:{}});
+  assert.equal(customOrderRejected.ok,false);
+  assert.match(customOrderRejected.error,/WORK backend accepts Rewards webhooks only/);
+}
+
+
+// Schema-level regression: Shopify basic discounts cannot receive tags.
+// Exercise the actual backend function with mocked Shopify responses.
+{
+  const source = fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const discountSource = source.slice(
+    source.indexOf('function createRewardDiscount_(customer, points, tier) {'),
+    source.indexOf('function deleteRewardDiscount_(discountId)')
+  );
+  let input;
+  const context = {
+    rewardCode_: ()=>'JILL5-SCHEMA',
+    JILL_REWARD_COUPON_DAYS:30,
+    JILL_REWARD_USAGE_LIMIT:1,
+    JILL_REWARD_APPLIES_ONCE_PER_CUSTOMER:true,
+    JILL_REWARD_ORDER_STACKING:false,
+    JILL_REWARD_PRODUCT_STACKING:false,
+    JILL_REWARD_SHIPPING_STACKING:false,
+    JILL_REWARDS_ENGINE_VERSION:'13',
+    shopifyGraphQL_: (_query, variables)=>{
+      input = variables.input;
+      return {discountCodeBasicCreate:{
+        codeDiscountNode:{id:'gid://shopify/DiscountCodeNode/1',
+          codeDiscount:{codes:{nodes:[{code:'JILL5-SCHEMA'}]}}},
+        userErrors:[],
+      }};
+    },
+  };
+  const create = vm.runInNewContext(discountSource+'\ncreateRewardDiscount_',context);
+  const result = create({id:'gid://shopify/Customer/1'},10,{value:5,minimum:25});
+  assert.equal(result.code,'JILL5-SCHEMA');
+  // Keys confirmed in the Shopify 2026-07 DiscountCodeBasicInput schema.
+  assert.deepEqual(Object.keys(input).sort(), [
+    'title','code','startsAt','endsAt','context','customerGets',
+    'minimumRequirement','usageLimit','appliesOncePerCustomer','combinesWith',
+  ].sort());
+  assert.equal(input.customerGets.value.discountAmount.amount,'5');
+  assert.equal(input.minimumRequirement.subtotal.greaterThanOrEqualToSubtotal,'25');
+  assert.equal(input.context.customers.add[0],'gid://shopify/Customer/1');
+}
+
+// The Shopify 2026-07 LineItem type has no
+// priceAfterAllDiscountsBeforeTaxesSet field. Use an available price which
+// accounts for order discounts times currentQuantity (surviving units).
+{
+  const source=fs.readFileSync(
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const start=source.indexOf('function reconcileRewardsOrder_(orderId, allowInitialCredit) {');
+  const end=source.indexOf('function setRewardLedger_(',start);
+  assert.ok(start>=0 && end>start);
+  const fn=source.slice(start,end);
+  assert.doesNotMatch(fn,/priceAfterAllDiscountsBeforeTaxesSet/);
+  assert.match(fn,/discountedUnitPriceAfterAllDiscountsSet/);
+  assert.match(fn,/currentQuantity/);
+  let recorded;
+  const order={
+    id:'gid://shopify/Order/1',
+    cancelledAt:null,
+    customer:{
+      id:'gid://shopify/Customer/1',
+      eligibleSpend:{value:'3750'},
+      pointsEarned:{value:'3'},
+      pointsRedeemed:{value:'0'},
+      pointsBalance:{value:'3'},
+      coupons:{value:'[]'}
+    },
+    creditedCents:{value:'3750'},
+    lineItems:{nodes:[
+      {isGiftCard:false,currentQuantity:2,
+        discountedUnitPriceAfterAllDiscountsSet:{
+          shopMoney:{amount:'12.50',currencyCode:'USD'}}},
+      {isGiftCard:true,currentQuantity:1,
+        discountedUnitPriceAfterAllDiscountsSet:{
+          shopMoney:{amount:'999',currencyCode:'USD'}}},
+    ]},
+    discountApplications:{nodes:[]},
+  };
+  const context={
+    shopifyGraphQL_:()=>({order}),
+    rewardInt_: x=>Number(x?.value||0),
+    rewardWallet_:()=>[],
+    normalizeRewardCoupons_:wallet=>wallet,
+    markRewardCouponsUsedInWallet_:()=>false,
+    revokeActiveRewardsForSolvency_:()=>({revoked_points:0}),
+    rewardCommittedPoints_:()=>0,
+    setRewardLedger_:(...args)=>{recorded=args},
+    JILL_REWARD_SPEND_CENTS_PER_POINT:1000,
+    JILL_REWARDS_ENGINE_VERSION:'13',
+  };
+  const reconcile=vm.runInNewContext(fn+'\nreconcileRewardsOrder_',context);
+  const result=reconcile(order.id,false);
+  assert.equal(result.eligible_cents,2500);
+  assert.equal(result.delta_cents,-1250);
+  assert.equal(result.points_earned,2);
+  assert.equal(result.points_balance,2);
+  assert.equal(recorded[2],2500);
+  assert.equal(recorded[3],2);
+  assert.equal(recorded[5],2);
+  assert.equal(recorded[6],2500);
+}

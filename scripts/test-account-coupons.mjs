@@ -19,6 +19,7 @@ const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
 const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 const profileConfig = read('extensions/jill-account-home/shopify.extension.toml');
+const profileSource = read('extensions/jill-account-home/src/AccountHome.jsx');
 const promotionBackend = read('backend/google-apps-script/JILL_Public_Promotions.gs');
 
 includesAll(config, 'Coupons extension config', [
@@ -40,6 +41,11 @@ includesAll(source, 'Coupons runtime', [
   'PROMOTION_SNAPSHOT_MAX_AGE_MS',
   'rewardWallet',
   'rewardCouponStatus',
+  'discountCartUrl',
+  'loadCustomerAccountStorefront',
+  'href={store ? discountCartUrl(store, offer.code) : undefined}',
+  'href={store ? discountCartUrl(store, coupon.code) : undefined}',
+  'disabled={!store}',
   'REWARDS_REFRESH_MS',
   'refreshRewards(false)',
   'clearInterval(rewardsRefreshTimer)',
@@ -54,6 +60,10 @@ includesAll(source, 'Coupons runtime', [
 ]);
 
 for (const forbidden of [
+  'function discountUrl(',
+  "const STORE = 'https://jillonlinestore.com'",
+
+  '/discount/${encodeURIComponent',
   'PARTY10',
   'PARTY5',
   'SUBSCRIBE10',
@@ -113,9 +123,40 @@ includesAll(dashboardConfig, 'Dashboard extension identity', [
   'uid = "2f093e56-265e-4263-57fc-eb7b7a8a3f49ccd3b19a"',
 ]);
 
+includesAll(profileSource, 'WORK-safe Settings profile block', [
+  'loadCustomerAccountStorefront',
+  "extension:jill-account-dashboard/",
+  'href={store}',
+]);
+for (const [name, contents] of [
+  ['My JILL', read('extensions/jill-account-dashboard/src/Dashboard.jsx')],
+  ['Coupons', source],
+  ['JILL Settings', profileSource],
+]) {
+  if (contents.includes('storefrontOrigin(shopify.shop)') || contents.includes('= shopify.shop')) {
+    fail(name + ' must not access order-only shopify.shop on general account pages.');
+  }
+  if (!contents.includes('loadCustomerAccountStorefront')) {
+    fail(name + ' must resolve the store from authenticated Customer Account GraphQL.');
+  }
+}
+if (profileSource.includes("const STORE = 'https://jillonlinestore.com'")) {
+  fail('Settings profile block must not send WORK users to LIVE.');
+}
+
 includesAll(profileConfig, 'Settings extension identity', [
   'handle = "jill-account-home"',
   'uid = "923e30e6-dbf9-f48a-57a6-0dbd1ab57763f55ebbde"',
 ]);
+
+const rootPackage = JSON.parse(read('package.json'));
+const workDeploy = rootPackage.scripts['rewards:work:app:deploy'];
+if (workDeploy !==
+  'node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app deploy --config work') {
+  fail('WORK app deploy must verify store and app identity before an interactive --config work release.');
+}
+if (/--force|--allow-deletes|--allow-updates/.test(workDeploy)) {
+  fail('WORK release must remain interactive and prohibit deletion/confirmation bypass flags.');
+}
 
 console.log('Customer account Coupons Shopify source-of-truth contract passed.');

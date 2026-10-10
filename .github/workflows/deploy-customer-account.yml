@@ -1,27 +1,55 @@
 name: Deploy JILL customer account
 
+# Account extensions are a production app deployment, not a DEVELOPMENT theme.
+# No push or PR event may release them to LIVE. WORK is validated in PR CI.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - jill/theme-core
-    paths:
-      - 'extensions/**'
-      - 'shared/**'
-      - 'scripts/**'
-      - 'package.json'
-      - '.github/workflows/deploy-customer-account.yml'
+    inputs:
+      confirm_live:
+        description: 'Type DEPLOY JILL ACCOUNT LIVE to authorize release'
+        required: true
+        type: string
+      expected_sha:
+        description: 'Full 40-character certified jill/theme-core commit SHA'
+        required: true
+        type: string
 
 jobs:
   deploy:
-    name: Deploy customer account extensions
+    name: Deploy customer account extensions to LIVE
+    if: ${{ github.ref == 'refs/heads/jill/theme-core' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: jill-account-live-deploy
+      cancel-in-progress: false
+    environment: JILL-ACCOUNT-LIVE
     env:
       SHOPIFY_CLIENT_ID: ebf1a69d82f46619d2f2945faab78afa
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Confirm exact certified LIVE release
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm_live }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != 'DEPLOY JILL ACCOUNT LIVE' ]; then
+            echo 'LIVE authorization text was not supplied.' >&2
+            exit 1
+          fi
+          if ! [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'A full 40-character certified commit SHA is required.' >&2
+            exit 1
+          fi
+          if [ "$EXPECTED_SHA" != "$SOURCE_SHA" ]; then
+            echo 'LIVE release SHA does not match the checked-out canonical commit.' >&2
+            exit 1
+          fi
 
       - name: Check Shopify deployment token
         id: auth
@@ -98,4 +126,4 @@ jobs:
           --allow-updates
           --source-control-url "$COMMIT_URL"
 
-# Canonical customer-account deploy owner follows jill/theme-core, not the stale main branch.
+# Manual LIVE authorization is the sole Customer Account deployment path from jill/theme-core.

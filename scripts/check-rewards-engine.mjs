@@ -8,6 +8,7 @@ const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Au
 const promotionBackend = fs.readFileSync('backend/google-apps-script/JILL_Public_Promotions.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
 const backendDeploy = fs.readFileSync('.github/workflows/deploy-rewards-backend.yml', 'utf8');
+const accountDeploy = fs.readFileSync('.github/workflows/deploy-customer-account.yml', 'utf8');
 
 try {
   // Parse the Apps Script source as JavaScript without executing Apps Script APIs.
@@ -213,8 +214,16 @@ if (backend.includes("suppliedRewardSecret === rewardWebhookSecret_()")) {
   throw new Error('Rewards webhook ingress reintroduced the global query secret.');
 }
 
-if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
-  throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');
+if (
+  backend.includes('priceAfterAllDiscountsBeforeTaxesSet') ||
+  !backend.includes('discountedUnitPriceAfterAllDiscountsSet') ||
+  !backend.includes('currentQuantity') ||
+  !backend.includes('unitAmount * remaining * 100')
+) {
+  throw new Error('Eligible spend must use supported Shopify post-discount surviving-unit accounting.');
+}
+if (/tags\s*:\s*\[/.test(backend.slice(backend.indexOf('function createRewardDiscount_('), backend.indexOf('function deleteRewardDiscount_(')))) {
+  throw new Error('DiscountCodeBasicInput does not accept a tags field.');
 }
 if (!backend.includes("revoked_reason = 'refund_solvency'")) {
   throw new Error('Refund solvency revocation guard is missing.');
@@ -317,6 +326,32 @@ for (const marker of [
   }
 }
 
+// Customer Account extensions share the production Shopify app.  A
+// repository push must never silently publish a WORK/KEEP candidate to LIVE.
+const accountDeployTriggers = accountDeploy.slice(
+  accountDeploy.indexOf('\non:\n'),
+  accountDeploy.indexOf('\njobs:\n'),
+);
+if (
+  !accountDeployTriggers.includes('workflow_dispatch:') ||
+  /^\s+push:/m.test(accountDeployTriggers) ||
+  /^\s+pull_request:/m.test(accountDeployTriggers)
+) {
+  throw new Error('Customer Account LIVE deploy must be manual-only.');
+}
+for (const marker of [
+  "github.ref == 'refs/heads/jill/theme-core'",
+  'DEPLOY JILL ACCOUNT LIVE',
+  'EXPECTED_SHA',
+  'SOURCE_SHA',
+  'JILL-ACCOUNT-LIVE',
+  'jill-account-live-deploy',
+]) {
+  if (!accountDeploy.includes(marker)) {
+    throw new Error(`Customer Account LIVE release gate missing: ${marker}`);
+  }
+}
+
 const legacyRewardKeys = [
   'active_coupon_code',
   'active_coupon_value_cents',
@@ -340,19 +375,54 @@ if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
 }
 for (const marker of [
   '<s-modal',
-  'If you redeem these points, your coupon will expire in',
-  'No, keep my points',
+  'Your coupon expires {REWARD_COUPON_POLICY.expirationDays} days after redemption',
+  'slot="secondary-actions"',
+  'command="--hide"',
+  'Keep my points',
+  'slot="primary-action"',
+  'handleRedeem(tier)',
   'Yes, redeem',
-  "generating: 'Generating coupon'",
-  "setting_up: 'Setting up code'",
-  "redeemed: 'Code redeemed'",
+  "stage === 'redeemed'",
+  "stage === 'setting_up'",
+  'Generating coupon',
+  'Setting up code',
+  'Code redeemed',
+  'const collapsedReward = featuredReward || journey.collapsed',
   'Use Now',
-  '/discount/',
+  'discountCartUrl(STORE, coupon.code)',
 ]) {
   if (!dashboard.includes(marker)) {
     throw new Error(`Reward redemption lifecycle missing: ${marker}`);
   }
 }
+
+if (
+  !ui.includes('function storefrontOrigin(shop)') ||
+  !ui.includes('shop?.url') ||
+  !ui.includes('shop?.myshopifyDomain') ||
+  !ui.includes('async function loadCustomerAccountStorefront()') ||
+  !ui.includes('query JillCustomerAccountShop { shop { url myshopifyDomain } }')
+) {
+  throw new Error('Customer Account storefront links must use the authenticated Shop GraphQL query.');
+}
+for (const owner of [dashboard, coupons]) {
+  if (!owner.includes('loadCustomerAccountStorefront')) {
+    throw new Error('Customer Account page lacks authenticated shop identity resolution.');
+  }
+  if (owner.includes('storefrontOrigin(shopify.shop)') || owner.includes("const STORE = 'https://jillonlinestore.com'")) {
+    throw new Error('Customer Account full pages must not use an unavailable target API or LIVE URL.');
+  }
+}
+
+if (!ui.includes('function discountCartUrl(') || !ui.includes('/discount/')) {
+  throw new Error('Shareable discount-to-cart URLs must have one canonical owner.');
+}
+for (const owner of [dashboard, coupons]) {
+  if (!owner.includes('discountCartUrl')) {
+    throw new Error('Customer Account Use Now must consume the shared cart URL.');
+  }
+}
+
 if (dashboard.includes('{isThisConfirming && (')) {
   throw new Error('Reward confirmation must not render inline; use the modal owner.');
 }
