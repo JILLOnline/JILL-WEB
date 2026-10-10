@@ -217,3 +217,16 @@ Shopify Customer Account full-page extension versions are app-scoped. To preview
 8. Record the exact working app-version evidence, source SHA, backend build SHA, isolated test data cleanup, and explicit LIVE approval before release.
 
 Until these are checked on the actual Shopify runtime, do not mark Rewards redemption end-to-end certified or move the draft PR to LIVE.
+
+
+### Verified WORK Shopify fixture — October 9, 2026
+
+Verified directly through the connected WORK Shopify Admin API (`jill-work.myshopify.com`), not inferred from GitHub tests:
+
+- `JILL WORK Rewards` is installed in the WORK store. Shopify CLI locally built `jill-account-dashboard`, `jill-account-coupons`, and `jill-account-home`, and the Coupons preview rendered under WORK Customer Accounts.
+- Customer metafield definitions: `points_balance`, `eligible_spend_cents`, `points_earned_lifetime`, `points_redeemed_lifetime`, `redeem_request_points`, `redeem_request_nonce`, `coupons`. The two redemption-request keys have `customerAccount: READ_WRITE`; other customer keys have `READ`. Order metafield `jill_rewards.credited_cents` also exists.
+- An isolated merchant-associated WORK test customer has a manually seeded QA wallet and a real WORK-only Shopify discount `JILLWORK5-QA-20261009` with $5 off, $25 minimum, single use, once/customer, no stacking, customer-specific eligibility, and an expiration of 2026-11-08T23:00:00Z.
+- The stored QA ledger verifies `points_earned_lifetime=10`, `points_redeemed_lifetime=10`, `points_balance=0`, wallet exactly one matching active code, and `redeem_request_points=0`. No stranded request. This coupon is a **manual test fixture**, not evidence that the redemption handler/worker executed.
+- No automatic WORK backend, minute sweep, webhook registration, or test-order/refund processing has been certified. The Google Apps Script production backend must NOT be pointed at WORK and no production credentials or project IDs may be reused for a WORK deployment.
+- Separate runtime identity and authorization are required before any customer-triggered redemption is called end-to-end functional. The existing WORK preview can show the fixture coupon, but a user click on Redeem must not be used as proof of backend processing.
+
