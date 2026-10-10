@@ -8,6 +8,13 @@ const targets=[
   ['jill-account-home','AccountHome.jsx','JILL Settings'],
 ];
 for (const [handle,filename] of targets) {
+  const tsconfig = JSON.parse(fs.readFileSync('extensions/' + handle + '/tsconfig.json','utf8'));
+  assert.equal(tsconfig.compilerOptions.jsx, 'react-jsx',
+    handle + ' must compile modern JSX');
+  assert.equal(tsconfig.compilerOptions.jsxImportSource, 'preact',
+    handle + ' must resolve to preact/jsx-runtime, never react/jsx-runtime');
+  assert.deepEqual(tsconfig.include, ['./src','./shopify.d.ts']);
+
   for (const mode of ['minimal','hub']) {
     const code=makeCanaryModule(handle,mode);
     assert.match(code,/import '@shopify\/ui-extensions\/preact';/);
@@ -25,6 +32,14 @@ for (const [handle,filename] of targets) {
     }
   }
 }
+// The preview copies sources into an isolated folder; extension-local
+// tsconfig MUST follow them or Shopify chooses React's missing JSX runtime.
+const preparer=fs.readFileSync('scripts/prepare-account-hub-canary.mjs','utf8');
+assert.match(preparer, /path\.join\(base,'tsconfig\.json'\)/);
+assert.match(preparer, /jsxConfig\.compilerOptions\?\.jsxImportSource !== 'preact'/);
+assert.match(preparer, /fs\.copyFileSync\(jsxConfigFile,path\.join\(dest,'tsconfig\.json'\)\)/);
+assert.doesNotMatch(preparer, /react\/jsx-runtime/);
+
 const actualHub=fs.readFileSync('extensions/jill-account-dashboard/src/hub/AccountHub.jsx','utf8');
 assert.match(actualHub,/<s-page heading="My JILL"/);
 assert.match(actualHub,/<s-section>/);
