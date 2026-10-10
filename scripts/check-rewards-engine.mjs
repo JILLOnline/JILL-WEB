@@ -214,8 +214,16 @@ if (backend.includes("suppliedRewardSecret === rewardWebhookSecret_()")) {
   throw new Error('Rewards webhook ingress reintroduced the global query secret.');
 }
 
-if (!backend.includes('priceAfterAllDiscountsBeforeTaxesSet')) {
-  throw new Error('Eligible spend must use Shopify post-discount pre-tax line totals.');
+if (
+  backend.includes('priceAfterAllDiscountsBeforeTaxesSet') ||
+  !backend.includes('discountedUnitPriceAfterAllDiscountsSet') ||
+  !backend.includes('currentQuantity') ||
+  !backend.includes('unitAmount * remaining * 100')
+) {
+  throw new Error('Eligible spend must use supported Shopify post-discount surviving-unit accounting.');
+}
+if (/tags\s*:\s*\[/.test(backend.slice(backend.indexOf('function createRewardDiscount_('), backend.indexOf('function deleteRewardDiscount_(')))) {
+  throw new Error('DiscountCodeBasicInput does not accept a tags field.');
 }
 if (!backend.includes("revoked_reason = 'refund_solvency'")) {
   throw new Error('Refund solvency revocation guard is missing.');
