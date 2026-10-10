@@ -13,14 +13,13 @@ import {
   rewardRequestOutcome,
   rewardWallet,
   discountCartUrl,
-  storefrontOrigin,
+  loadCustomerAccountStorefront,
   toRewardInteger,
 } from '../../../shared/rewards.mjs';
 
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 // Shopify's Customer Account metafield-write route, distinct from the read protocol.
 const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
-const STORE = storefrontOrigin(shopify.shop);
 
 const JILL_KEYS = [
   'last_custom_request_at',
@@ -302,7 +301,8 @@ function SavedDetail({label, value}) {
   );
 }
 
-function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
+function RewardsCard({customer, meta, loading, stale, onCustomerUpdate, store}) {
+  const STORE = store;
   const redemptionInFlight = useRef(false);
   const rewardModalRefs = useRef({});
   const [submittingPoints, setSubmittingPoints] = useState(0);
@@ -481,7 +481,8 @@ function RewardsCard({customer, meta, loading, stale, onCustomerUpdate}) {
       return (
         <s-button
           variant="primary"
-          href={discountCartUrl(STORE, coupon.code)}
+          href={STORE ? discountCartUrl(STORE, coupon.code) : undefined}
+          disabled={!STORE}
           accessibilityLabel={`Use your $${tier.value} OFF coupon now`}
         >
           Use Now
@@ -742,6 +743,8 @@ export default async () => {
 };
 
 function Dashboard() {
+  const [storefront, setStorefront] = useState('');
+  const [storefrontError, setStorefrontError] = useState(false);
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -771,6 +774,15 @@ function Dashboard() {
 
     refreshCustomer(true);
 
+    // General account pages have no shopify.shop target API. Resolve the
+    // storefront through authenticated Customer Account GraphQL instead.
+    loadCustomerAccountStorefront()
+      .then((origin) => { if (active) { setStorefront(origin); setStorefrontError(false); } })
+      .catch((error) => {
+        console.warn('JILL storefront identity lookup failed', error);
+        if (active) setStorefrontError(true);
+      });
+
     // Live rewards heartbeat: if an admin deletes/repairs a reward coupon,
     // the open Dashboard self-refreshes instead of waiting for a page reload.
     const refreshTimer = setInterval(() => refreshCustomer(false), REWARDS_REFRESH_MS);
@@ -781,6 +793,7 @@ function Dashboard() {
     };
   }, []);
 
+  const STORE = storefront;
   const meta = metaMap(customer);
   const firstName = customer?.firstName || customer?.displayName?.split(' ')?.[0] || '';
   const orders = customer?.orders?.nodes || [];
@@ -804,7 +817,7 @@ function Dashboard() {
       heading={firstName ? `Welcome back, ${firstName} ✨` : 'Welcome to JILL ✨'}
       subheading="Your celebrations, custom requests, saved details, and orders in one place."
     >
-      <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>
+      {STORE && <s-button slot="primary-action" variant="primary" href={STORE}>Back to JILL</s-button>}
 
       <s-stack direction="block" gap="base">
         {loadError && (
@@ -813,7 +826,10 @@ function Dashboard() {
           </s-banner>
         )}
 
-        <RewardsCard customer={customer} meta={meta} loading={loading} stale={rewardsStale} onCustomerUpdate={setCustomer} />
+        {storefrontError && (
+          <s-banner tone="critical">Storefront links are unavailable. Rewards remain safe; refresh to restore checkout links.</s-banner>
+        )}
+        <RewardsCard customer={customer} meta={meta} loading={loading} stale={rewardsStale} onCustomerUpdate={setCustomer} store={STORE} />
 
         <s-section>
           <s-stack direction="block" gap="base">
@@ -822,7 +838,7 @@ function Dashboard() {
               <s-text color="subdued">Jump straight into your favorite collections.</s-text>
             </s-stack>
             <s-grid gridTemplateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap="small-400">
-              {COLLECTIONS.map(([emoji, label, path]) => (
+              {STORE && COLLECTIONS.map(([emoji, label, path]) => (
                 <s-button key={path} href={`${STORE}${path}`}>{emoji} {label}</s-button>
               ))}
             </s-grid>
