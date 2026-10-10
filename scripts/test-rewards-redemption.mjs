@@ -580,7 +580,8 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   assert.match(bootstrap, /record\.shop !== WORK_STORE/);
   assert.match(bootstrap, /runClasp\('push','--force'\)/);
   assert.doesNotMatch(bootstrap, /runClasp\('create-deployment'/);
-  assert.equal(pkg.scripts['rewards:work:backend:bootstrap'],
+  const workPackage = JSON.parse(fs.readFileSync('package.json','utf8'));
+  assert.equal(workPackage.scripts['rewards:work:backend:bootstrap'],
     'node scripts/bootstrap-rewards-work-backend.mjs');
 
 }
