@@ -36,9 +36,21 @@ if (hadClasp !== hadRecord) {
 if (!hadClasp) {
   // Creating a project requires an interactive Google OAuth login. This is
   // the user's own Google account; no token or secret passes through GitHub.
-  try {
-    runClasp('show-authorized-user');
-  } catch {
+  // clasp show-authorized-user exits successfully even when its output
+  // says "Not logged in". Parse the actual auth status, not only exit code.
+  const binary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const authCheck = spawnSync(binary, [
+    '--yes','@google/clasp@3.4.1','show-authorized-user','--json'
+  ], {cwd:output,encoding:'utf8',shell:process.platform === 'win32'});
+  let googleLoggedIn = false;
+  if (authCheck.status === 0) {
+    try {
+      googleLoggedIn = JSON.parse(authCheck.stdout.trim()).loggedIn === true;
+    } catch {
+      console.log('Could not verify existing Google authorization.');
+    }
+  }
+  if (!googleLoggedIn) {
     console.log('Google clasp login is required. Complete the browser authorization.');
     runClasp('login');
   }
