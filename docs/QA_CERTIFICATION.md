@@ -257,6 +257,14 @@ Verified directly through the connected WORK Shopify Admin API (`jill-work.mysho
 
 **Current stop point:** A, backend build artifact, and a manual QA coupon have supporting evidence. B/C are not deployed or authorized; D/E/F cannot be marked passed. Only actions requiring an authenticated Google or Shopify permission/secret prompt should be surfaced to the user.
 
+### WORK backend project created and source uploaded (2026-10-09)
+
+A user terminal run of `npm.cmd run rewards:work:backend:bootstrap` confirmed a **new, separate** Google Apps Script project was created using the authorized Google account and exactly three files were pushed: `appsscript.json`, `JILL_Custom_Order_Automation_REWARDS.gs`, `JILL_Public_Promotions.gs`. Source build SHA was `a91f5136527e3ae9f312e93ff8eb260809785bb4`. This evidence confirms **source upload only**, not an authorized/active web-app deployment; no `/exec` deployment, WORK Script Properties, trigger, webhook, or actual redemption is yet verified.
+
+Shopify WORK installation query on the same date confirmed `JILL WORK Rewards` has `customer_read_customers`, `customer_write_customers`, `customer_read_orders`, `read_customers`, `write_customers`, `read_orders`, `read_discounts`, and `write_discounts` actually granted, but **does not yet grant `write_orders`**. The locally edited `shopify.app.work.toml` requests `write_orders`; Shopify's own app-installation scope evidence must show that permission before order credit/reconciliation is certified. Re-run only the isolated WORK preview and approve the updated WORK scopes, never LIVE.
+
+Do not execute `setupJillRewards()` or install subscriptions until WORK scope is actually granted, WORK Script Properties are set securely, a distinct authorized `/exec` deployment exists, and preflight identity/health are verified. The Apps Script editor must not receive LIVE credentials; the WORK Shopify Client Secret must not be copied into GitHub or conversation text.
+
 ### WORK Google project bootstrap — prepared, not executed
 
 The first local Google Apps Script setup is consolidated into `npm run rewards:work:backend:bootstrap` (on Windows: `npm.cmd run rewards:work:backend:bootstrap`). Prerequisite: authenticated developer checkout of branch `jill/rewards-work`, locally linked `shopify.app.work.toml` pointing to Client ID `f8e1ebdbae84490dc8ea5b133637e6c0`, and Google's Apps Script API enabled in the Google account.
