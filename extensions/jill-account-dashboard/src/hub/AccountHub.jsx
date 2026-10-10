@@ -10,10 +10,12 @@ export default function AccountHub({accountState = null}) {
           <s-text>
             Your rewards, coupons, custom orders and celebrations belong together.
           </s-text>
-          <s-banner tone="info">
-            The account hub is loading its foundation. Customer information and
-            reward actions will be connected after this page passes WORK preview.
-          </s-banner>
+          {!accountState && (
+            <s-banner tone="info">
+              The account hub is loading its foundation. Customer information and
+              reward actions will be connected after this page passes WORK preview.
+            </s-banner>
+          )}
         </s-stack>
       </s-section>
       {accountState?.status === 'loading' && (
