@@ -41,13 +41,15 @@ assert.match(rewards,/REWARD_TIERS/);
 assert.match(rewards,/REWARD_COUPON_POLICY/);
 assert.match(rewards,/Redemption is not enabled/);
 const coupons=read(root+'pages/Coupons.jsx');
-assert.match(coupons,/No wallet data has been loaded/);
+assert.match(coupons,/loadPersonalCoupons/);
+assert.match(coupons,/loadPublicPromotions/);
+assert.match(coupons,/We couldn\\'t verify your personal coupons/);
 assert.doesNotMatch(coupons,/Use Now.*onClick|discountCartUrl\(/);
 assert.match(read(root+'pages/Celebrations.jsx'),/Reminders will be optional and off/);
 assert.match(read(root+'pages/CustomOrders.jsx'),/history is not connected yet/);
 const preparer=read('scripts/prepare-account-hub-canary.mjs');
 assert.match(preparer,/mode === 'read' \|\| mode === 'template'/);
-assert.match(preparer,/fs\.copyFileSync\(path\.join\(root,'shared','rewards\.mjs'\)/);
+assert.match(preparer,/\'rewards\.mjs\',\'customer-account-api\.mjs\',\'customer-coupons\.mjs\'/);
 for (const file of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
   'Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
   assert.ok(preparer.includes("'"+file+"'"),'Canary does not copy '+file);
