@@ -148,6 +148,46 @@ the actual Shopify browser. Capture a screenshot of the navigation and every
 page before we connect any additional backend domain or release the app.
 Never run `shopify app deploy` from this throwaway preview directory.
 
+### WORK read-only Coupons integration (no redemption)
+
+The approved My JILL seven-section layout now has **two real, independent,
+read-only Coupons feeds** inside its internal Coupons tab:
+
+1. Authenticated Shopify Customer Account API read of the signed-in customer's
+   `jill_rewards.coupons` wallet, with strict JSON/status/date validation and
+   the existing canonical Rewards status helper. No customer ID is supplied
+   from UI inputs and no customer writes occur.
+2. Shopify Storefront API read of sanitized
+   `jill_promotions.active_public_codes` (version 1) with a **10-minute**
+   freshness requirement. Personal and public reads have separate loading,
+   error and empty states. One failing must not conceal the other's data.
+
+On independent WORK Admin read, the synthetic QA customer had `coupons=[]`
+and the public snapshot contained a **FREESHIPPING2026** free-shipping offer.
+This is source data verification, **not** proof the customer-account extension
+read works in the browser. Both GraphQL queries were separately validated
+against Shopify's 2026-07 **customer** and **storefront** schemas.
+
+Preview this through the unchanged, WORK-only command:
+
+```powershell
+npm.cmd run rewards:work:hub:template
+```
+
+Navigate to **Coupons**. The expected signed-in QA result is **no personal
+Rewards coupons yet** and the real public free-shipping offer, provided the
+promotion snapshot is still fresh. If either source fails, the corresponding
+panel shows a recoverable error rather than inventing an empty result.
+Do not redeem points, generate coupons or click Use Now at this stage:
+**there is no redeem or Use Now button in this read-only template**.
+Capture the complete browser view and any first Shopify Dev Console errors
+before starting the later backend transaction phase.
+
+Regression test: `npm.cmd run test:customer-coupons`.
+The original published WORK extensions, Apps Script worker and LIVE are
+intentionally unchanged. This module will replace the standalone Coupons
+page only *after* WORK account integration and release parity is certified.
+
 Shopify WORK normal local preview (original code, no LIVE changes):
 
 ```powershell
