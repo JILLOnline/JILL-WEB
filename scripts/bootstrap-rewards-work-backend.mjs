@@ -36,7 +36,12 @@ if (hadClasp !== hadRecord) {
 if (!hadClasp) {
   // Creating a project requires an interactive Google OAuth login. This is
   // the user's own Google account; no token or secret passes through GitHub.
-  runClasp('show-authorized-user');
+  try {
+    runClasp('show-authorized-user');
+  } catch {
+    console.log('Google clasp login is required. Complete the browser authorization.');
+    runClasp('login');
+  }
   runClasp('create-script','--type','standalone','--title','JILL WORK Rewards Engine');
   if (!fs.existsSync(claspFile)) throw new Error('Google did not return a WORK Apps Script ID.');
   const {scriptId} = JSON.parse(fs.readFileSync(claspFile,'utf8'));
@@ -44,8 +49,9 @@ if (!hadClasp) {
 
   // clasp create-script can pull a boilerplate Code.gs; never upload it
   // alongside the two canonical JILL sources.
-  const starter = path.join(output,'Code.gs');
-  if (fs.existsSync(starter)) {
+  for (const filename of ['Code.gs','Code.js']) {
+    const starter = path.join(output,filename);
+    if (!fs.existsSync(starter)) continue;
     const code = fs.readFileSync(starter,'utf8').replace(/\s+/g,'').replace(/;+/g,';');
     if (!['','functionmyFunction(){}','functionmyFunction(){;}'].includes(code)) {
       throw new Error('Unexpected starter script from Google. Refusing to overwrite or delete unknown source.');
