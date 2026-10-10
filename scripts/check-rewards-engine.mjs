@@ -396,15 +396,21 @@ for (const marker of [
   }
 }
 
-if (!ui.includes('function storefrontOrigin(shop)') || !ui.includes('shop?.storefrontUrl') || !ui.includes('shop?.myshopifyDomain')) {
-  throw new Error('Customer Account storefront links must resolve Shopify active shop context.');
+if (
+  !ui.includes('function storefrontOrigin(shop)') ||
+  !ui.includes('shop?.url') ||
+  !ui.includes('shop?.myshopifyDomain') ||
+  !ui.includes('async function loadCustomerAccountStorefront()') ||
+  !ui.includes('query JillCustomerAccountShop { shop { url myshopifyDomain } }')
+) {
+  throw new Error('Customer Account storefront links must use the authenticated Shop GraphQL query.');
 }
 for (const owner of [dashboard, coupons]) {
-  if (!owner.includes('const STORE = storefrontOrigin(shopify.shop);')) {
-    throw new Error('Customer Account page still lacks active Shopify store context.');
+  if (!owner.includes('loadCustomerAccountStorefront')) {
+    throw new Error('Customer Account page lacks authenticated shop identity resolution.');
   }
-  if (owner.includes("const STORE = 'https://jillonlinestore.com'")) {
-    throw new Error('Customer Account must not send WORK users to LIVE.');
+  if (owner.includes('storefrontOrigin(shopify.shop)') || owner.includes("const STORE = 'https://jillonlinestore.com'")) {
+    throw new Error('Customer Account full pages must not use an unavailable target API or LIVE URL.');
   }
 }
 
