@@ -38,8 +38,12 @@ export function parsePersonalWallet(field, now = Date.now()) {
   const array = Array.isArray(decoded) ? decoded :
     (Array.isArray(decoded?.coupons) ? decoded.coupons : null);
   if (!array) throw new Error('Personal Rewards wallet has an unsupported format.');
-  // Reuse the engine's canonical wallet/status helpers after validating the
-  // serialized metafield; malformed input must never appear as zero coupons.
+  // Reuse the engine's canonical wallet/status helpers, but validate before
+  // its tolerant filtering. Malformed items can never be silently discarded.
+  if (array.some((item)=>!item || typeof item !== 'object' || Array.isArray(item) ||
+      !['active','used','expired','revoked'].includes(String(item.status || 'active').toLowerCase()))) {
+    throw new Error('Personal Rewards wallet contains an invalid coupon status.');
+  }
   return rewardWallet(array).map((coupon) => {
     if (!coupon || typeof coupon !== 'object' ||
         typeof coupon.code !== 'string' || !coupon.code.trim() ||
