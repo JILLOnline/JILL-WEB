@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {execFileSync} from 'node:child_process';
 import {assertRewardsWorkConfig, WORK_CLIENT_ID, LIVE_CLIENT_ID, WORK_STORE} from './verify-rewards-work-target.mjs';
 import {
   REWARDS_REFRESH_MS,
@@ -550,3 +551,25 @@ scopes = "${scopes}"
   assert.throws(() => assertRewardsWorkConfig(''), /Missing WORK app configuration/);
 }
 console.log('JILL Rewards WORK app isolation contract passed.');
+
+
+// WORK backend must be built from the canonical engine rather than maintained
+// as a separate Rewards implementation. Never upload production identifiers.
+{
+  execFileSync(process.execPath,['scripts/build-rewards-work-backend.mjs'],{stdio:'pipe'});
+  const work = fs.readFileSync('.work-backend/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  const canonical = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
+  assert.match(canonical, /const JILL_REWARDS_RUNTIME = 'LIVE';/);
+  assert.match(work, /const JILL_REWARDS_RUNTIME = 'WORK';/);
+  assert.match(work, /assertJillRewardsRuntimeTarget_\(\)/);
+  assert.match(work, /shop !== 'jill-work.myshopify.com'/);
+  assert.match(work, /app !== 'f8e1ebdbae84490dc8ea5b133637e6c0'/);
+  assert.doesNotMatch(work, /jillonlinestore\.com|jqtdgr-1y\.myshopify\.com|1xVG4Jvh-vLB6BH5QitNcLQuaLj6DkXeSlFHg_LkECT8/);
+  assert.match(work, /WORK Rewards worker cannot access the Custom Order sheet/);
+  assert.match(work, /WORK backend accepts Rewards webhooks only/);
+  assert.match(work, /function processPendingJillRewardRequests\(\)/);
+  assert.match(work, /function createRewardDiscount_\(/);
+  const manifest = JSON.parse(fs.readFileSync('.work-backend/appsscript.json','utf8'));
+  assert.equal(manifest.runtimeVersion,'V8');
+}
+console.log('JILL WORK canonical backend packaging and isolation passed.');
