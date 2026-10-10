@@ -191,9 +191,10 @@ for (const overrides of [
 
 // Validate actual mutation variables, CAS behavior and all error/acknowledgment branches.
 const READ_API = 'shopify://customer-account/api/2026-07/graphql.json';
-const WRITE_API = 'shopify:customer-account/api/2026-07/graphql.json';
+const WRITE_API = READ_API;
 assert.match(source, /const API = 'shopify:\/\/customer-account\/api\/2026-07\/graphql\.json'/);
-assert.match(source, /const WRITE_API = 'shopify:customer-account\/api\/2026-07\/graphql\.json'/);
+assert.match(source, /const WRITE_API = API;/, 'Rewards writes and reads use one documented Customer Account GraphQL endpoint');
+assert.doesNotMatch(source, /shopify:customer-account\/api\//, 'Invalid single-colon Customer Account mutation transport must never recur');
 const api = vm.createContext({API: READ_API, WRITE_API, QUERY: 'query {}'});
 vm.runInContext(mutation + transport, api);
 const writableCustomer = customer({
