@@ -1,7 +1,9 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
 
-const STORE = 'https://jillonlinestore.com';
+import {storefrontOrigin} from '../../../shared/rewards.mjs';
+
+const STORE = storefrontOrigin(shopify.shop);
 
 export default function extension() {
   render(<JillSettingsHeader />, document.body);
