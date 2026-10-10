@@ -382,3 +382,12 @@ Architecture approved: [`CUSTOMER_ACCOUNT_HYBRID.md`](CUSTOMER_ACCOUNT_HYBRID.md
 
 UI-only changes should not redeploy the separate WORK Google Apps Script backend. Neither a healthy watchdog nor a Shopify CLI build supersedes a real, browser-backed account smoke check.
 
+
+## My JILL Phase 0 — isolated WORK canary harness (2026-10-10)
+
+Created `extensions/jill-account-dashboard/src/hub/AccountHub.jsx` as a real, intentionally data-free Shopify `s-page` shell. It is **not** yet wired into the released `Dashboard.jsx`. Until it renders in WORK dev preview, moving Rewards into hub pages would be premature. No voucher generation or customer mutation is used by this shell.
+
+Introduced `scripts/prepare-account-hub-canary.mjs` with two WORK-only modes (`minimal` and `hub`), `scripts/test-account-hub-canary.mjs`, and `rewards:work:hub:canary` / `rewards:work:hub:preview` npm commands. This harness: (1) fails closed unless `shopify.app.work.toml` exactly matches the linked isolated WORK app ID and all required scopes, (2) creates a **gitignored copy** of the app under `.work-account-canary/` with the existing three released extension manifests/UIDs, (3) substitutes a minimal Shopify Preact page without network/privileged operations for My JILL and Coupons, (4) in the second mode substitutes the actual `AccountHub.jsx` for My JILL, and (5) previews via Shopify documented `shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com`. Original Dashboard, Coupons, Profile code and active WORK app version are not overwritten; this is NOT `shopify app deploy`.
+
+**Evidence pending:** Real Shopify Dev Console web render results for both modes and the first browser/worker error if the *minimal* official-style page fails. Successful source guard and GitHub CI are not enough. Next implementation decision is binary: minimal fails → investigate app extension host/asset/runtime mapping; minimal works → test AccountHub shell and isolate current application startup imports/render tree. Only after hub renders may authenticated read adapters and Rewards/Coupons be connected. No LIVE/KEEP actions.
+
