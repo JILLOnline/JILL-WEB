@@ -135,14 +135,15 @@ export function prepareCanary(mode) {
           path.join(dest,'src','pages',page));
       }
       fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
-      fs.copyFileSync(path.join(root,'shared','rewards.mjs'),
-        path.join(workdir,'shared','rewards.mjs'));
+      for (const filename of [
+        'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
+      ]) {
+        fs.copyFileSync(path.join(root,'shared',filename),
+          path.join(workdir,'shared',filename));
+      }
       if (mode === 'read' || mode === 'template') {
         fs.copyFileSync(path.join(base,'src','hub','ConnectedHub.jsx'),
           path.join(dest,'src','hub','ConnectedHub.jsx'));
-        fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
-        fs.copyFileSync(path.join(root,'shared','customer-account-api.mjs'),
-          path.join(workdir,'shared','customer-account-api.mjs'));
       }
     }
   }
