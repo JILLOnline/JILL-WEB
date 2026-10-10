@@ -391,3 +391,12 @@ Introduced `scripts/prepare-account-hub-canary.mjs` with two WORK-only modes (`m
 
 **Evidence pending:** Real Shopify Dev Console web render results for both modes and the first browser/worker error if the *minimal* official-style page fails. Successful source guard and GitHub CI are not enough. Next implementation decision is binary: minimal fails → investigate app extension host/asset/runtime mapping; minimal works → test AccountHub shell and isolate current application startup imports/render tree. Only after hub renders may authenticated read adapters and Rewards/Coupons be connected. No LIVE/KEEP actions.
 
+
+### WORK minimal-canary build abort — React JSX runtime failure
+
+Merchant executed `npm.cmd run rewards:work:hub:canary` and supplied the exact Shopify CLI diagnostics (12:22:52): `Could not resolve "react/jsx-runtime"` at JSX expressions in the temporary `.work-account-canary/extensions/jill-account-home/src/AccountHome.jsx`, `jill-account-coupons/src/Coupons.jsx` and `jill-account-dashboard/src/Dashboard.jsx`. Dev preview aborted **at build time**. This observation cannot establish whether either published WORK v3 page can render, because the canary never reached a running preview.
+
+**Confirmed single owner/fix:** each original extension already has a Preact `tsconfig.json` with `compilerOptions.jsx="react-jsx"` and `jsxImportSource="preact"`, but the disposable WORK canary generator had copied only the TOML and extension package metadata. With no extension-local JSX config the CLI bundler defaulted to React's missing `react/jsx-runtime`. `scripts/prepare-account-hub-canary.mjs` now validates and copies each extension's `tsconfig.json`, and `scripts/test-account-hub-canary.mjs` enforces it on all three extension targets, including source-level proof of copying. There is **no React dependency**, no change to original published source modules, and no reason to add React.
+
+**Next evidence:** stop aborted CLI session with `q`, fast-forward local `jill/rewards-work`, rerun `npm.cmd run rewards:work:hub:canary`. Confirm all three bundles are built, then open Shopify Dev Console My JILL/Coupons Web previews. If both render, follow with `npm.cmd run rewards:work:hub:preview` for the new AccountHub. If compilation still fails, capture fresh exact CLI error and stop; no WORK app release, no backend changes, no rewards redemption, and absolutely no LIVE change.
+
