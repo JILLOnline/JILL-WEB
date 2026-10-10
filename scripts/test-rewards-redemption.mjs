@@ -532,9 +532,9 @@ console.log('JILL Rewards retired Rewards schema contract passed.');
   assert.equal(pkg.scripts['rewards:work:link'],
     `shopify app config link --client-id ${WORK_CLIENT_ID} --file-name work`);
   assert.equal(pkg.scripts['rewards:work:preview'],
-    `node scripts/verify-rewards-work-target.mjs && shopify app dev --config work --store ${WORK_STORE}`);
+    `node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app dev --config work --store ${WORK_STORE}`);
 
-  const scopes = 'customer_read_customers,customer_write_customers,customer_read_orders,read_customers,write_customers,read_orders,read_discounts,write_discounts';
+  const scopes = 'customer_read_customers,customer_write_customers,customer_read_orders,read_customers,write_customers,read_orders,write_orders,read_discounts,write_discounts';
   const source = `name = "JILL WORK Rewards"
 client_id = "${WORK_CLIENT_ID}"
 application_url = "https://example.com"
