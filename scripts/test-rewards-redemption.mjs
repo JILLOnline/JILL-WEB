@@ -579,6 +579,9 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   assert.match(bootstrap, /record\.clientId !== WORK_CLIENT_ID/);
   assert.match(bootstrap, /record\.shop !== WORK_STORE/);
   assert.match(bootstrap, /runClasp\('push','--force'\)/);
+  assert.match(bootstrap, /JSON\.parse\(authCheck\.stdout\.trim\(\)\)\.loggedIn === true/);
+  assert.match(bootstrap, /runClasp\('login'\)/);
+
   assert.doesNotMatch(bootstrap, /runClasp\('create-deployment'/);
   const workPackage = JSON.parse(fs.readFileSync('package.json','utf8'));
   assert.equal(workPackage.scripts['rewards:work:backend:bootstrap'],
