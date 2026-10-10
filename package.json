@@ -12,6 +12,7 @@
     "link": "shopify app config link",
     "rewards:work:link": "shopify app config link --client-id f8e1ebdbae84490dc8ea5b133637e6c0 --file-name work",
     "rewards:work:preview": "node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app dev --config work --store jill-work.myshopify.com",
+    "rewards:work:app:deploy": "node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs && shopify app deploy --config work",
     "rewards:work:backend:bundle": "node scripts/build-rewards-work-backend.mjs",
     "rewards:work:backend:bootstrap": "node scripts/bootstrap-rewards-work-backend.mjs",
     "rewards:work:backend:update": "node scripts/update-rewards-work-deployment.mjs",
