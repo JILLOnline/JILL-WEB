@@ -575,6 +575,13 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   assert.equal(manifest.webapp.executeAs,'USER_DEPLOYING');
   const bootstrap = fs.readFileSync('scripts/bootstrap-rewards-work-backend.mjs','utf8');
   assert.match(bootstrap, /assertRewardsWorkConfig/);
+  assert.match(bootstrap,
+    /execFileSync\(process\.execPath,\['scripts\/prepare-rewards-work-config\.mjs'\]/,
+    'WORK bootstrap must prepare local scopes before validation');
+  assert.ok(bootstrap.indexOf("prepare-rewards-work-config.mjs") <
+    bootstrap.indexOf("assertRewardsWorkConfig(fs.readFileSync"),
+    'WORK scope preparation must precede all bootstrap configuration verification');
+
   assert.match(bootstrap, /jill\/rewards-work/);
   assert.match(bootstrap, /record\.clientId !== WORK_CLIENT_ID/);
   assert.match(bootstrap, /record\.shop !== WORK_STORE/);
