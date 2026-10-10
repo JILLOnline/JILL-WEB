@@ -45,16 +45,25 @@ export function normalizeAccountHubSummary(data) {
   };
 }
 
-export async function loadAccountHubSummary(request = fetch) {
+// Single authenticated Customer Account API query transport for all My JILL
+// reads. All personal coupon queries use this owner rather than a second client.
+export async function queryCustomerAccount(query, request = fetch) {
   const response = await request(CUSTOMER_ACCOUNT_API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({query: ACCOUNT_HUB_SUMMARY_QUERY}),
+    body: JSON.stringify({query}),
   });
   if (!response?.ok) throw new Error('Customer Account API unavailable.');
   const payload = await response.json();
   if (payload?.errors?.length) {
-    throw new Error('Customer Account API rejected the account summary query.');
+    throw new Error('Customer Account API rejected the account query.');
   }
-  return normalizeAccountHubSummary(payload?.data);
+  if (!payload?.data) throw new Error('Customer Account API response missing data.');
+  return payload.data;
+}
+
+export async function loadAccountHubSummary(request = fetch) {
+  return normalizeAccountHubSummary(
+    await queryCustomerAccount(ACCOUNT_HUB_SUMMARY_QUERY, request),
+  );
 }
