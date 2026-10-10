@@ -760,5 +760,6 @@ console.log('JILL WORK canonical backend packaging and isolation passed.');
   assert.equal(result.points_balance,2);
   assert.equal(recorded[2],2500);
   assert.equal(recorded[3],2);
-  assert.equal(recorded[6],2);
+  assert.equal(recorded[5],2);
+  assert.equal(recorded[6],2500);
 }
