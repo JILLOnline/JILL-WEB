@@ -353,3 +353,32 @@ Evidence-backed findings:
 
 No further WORK deployment was triggered by this audit; Google backend, trigger, customer points and existing coupons remain unchanged.
 
+
+## Hybrid My JILL hub — phase-zero Shopify proof and migration gates (2026-10-10)
+
+Architecture approved: [`CUSTOMER_ACCOUNT_HYBRID.md`](CUSTOMER_ACCOUNT_HYBRID.md). This QA entry supersedes **status claims**, not older historical evidence. Root README, `FEATURE_CONTRACTS.md`, `DOMAIN_OWNERSHIP.md` and `DECISIONS.md` now point to a single Shopify-native hybrid account design. Existing `jill-account-dashboard` page UID is retained; the independently published Coupons page is transitional; JILL Settings is a distinct native Profile block. WORK backend v13 and all real customer ledger state remain unchanged by this architecture batch.
+
+**Current independent Shopify Admin queries (2026-10-10):**
+
+- Connected `jill-work.myshopify.com`; `customerAccountsV2.customerAccountsVersion=NEW_CUSTOMER_ACCOUNTS`; native login links enabled.
+- Installed app `JILL WORK Rewards` has **all nine** expected scopes: `customer_read_customers`, `customer_read_orders`, `customer_write_customers`, `read_customers`, `read_discounts`, `read_orders`, `write_customers`, `write_discounts`, `write_orders`.
+- Exactly **seven** Customer `jill_rewards` definitions: `points_balance`, `eligible_spend_cents`, `points_earned_lifetime`, `points_redeemed_lifetime`, `redeem_request_points`, `redeem_request_nonce`, `coupons`. Only request points/nonce expose `customerAccount=READ_WRITE`, remaining fields `READ`. Shop `jill_promotions.active_public_codes` is `storefront=PUBLIC_READ`.
+- Customer `jill` preference/celebration/custom-request definition query returned **zero entries**; do not claim these sections have storage parity. Detailed history and consent contracts must be built and verified before exposing edit controls.
+- The earlier connected WORK QA customer query confirmed **30 available, 0 redeemed, 0 coupons, 0 pending** and no orders. The user-provided WORK v13 watchdog indicated 6/6 webhooks and healthy sweeps; scheduled worker is intentionally not redeployed here.
+- Existing app release `jill-work-rewards-3` registered the My JILL/Coupons menu entries, but browser runtime still shows Shopify's generic failure on **both** pages. The first worker/DevTools exception is not captured. No browser end-to-end certification is claimed.
+- `jill/rewards-keep` is a readable Git baseline only; Shopify KEEP app/store and credentials **not verified**, and must not be treated as an automated middle release environment.
+- WORK branch PR #39 is still **draft/open**. This architecture plan does not authorize merging or publishing the WORK application to the LIVE app.
+
+**New non-mutating guard:** `npm run check:account-hub` verifies existing extension target/handle/UID uniqueness, WORK-scoped release command and architecture documentation. It is included in normal `postinstall`. It validates source ownership only; it neither loads a Shopify page nor writes customer data.
+
+**Required gates before implementation acceptance:**
+1. A minimal Shopify WORK full-page canary, under the existing My JILL UID and dev preview, renders; capture first runtime exception if it cannot. No new extension or LIVE deploy.
+2. Single hub shell/router renders cold, reloaded and on mobile; native Orders/Profile still work.
+3. WORK authenticated reads and metafield definition access succeed with partial-data failures isolated to the affected module.
+4. Rewards/Coupons earn/redemption/use-cart E2E tests and adversarial cases pass, with source-layer Shopify and Google evidence.
+5. Define and provision missing Custom Order history/preferences/reminder consent contracts before showing additional pages as operational.
+6. Retire the separate Coupons target **after** migration parity, WORK menu cleanup and explicit checkout proof; verify no dead links or duplicate owners.
+7. Explicitly authorize any promotion beyond WORK; all app IDs, environments, and SHAs must be reverified at release time.
+
+UI-only changes should not redeploy the separate WORK Google Apps Script backend. Neither a healthy watchdog nor a Shopify CLI build supersedes a real, browser-backed account smoke check.
+
