@@ -232,3 +232,14 @@ Add a new entry only for a real architectural/product-system decision. Routine i
 **Why:** The former Customer Account workflow published every matching `jill/theme-core` push into the production app. That defeats isolated Rewards experiments and makes a code-only test appear equivalent to end-to-end commerce certification.
 
 **Consequence:** The Customer Account workflow under review is manual-only, requires `jill/theme-core`, an exact source commit SHA and an explicit typed LIVE authorization, and uses a noncanceling deploy concurrency group. The draft PR validates but never deploys; actual coupon/cart certification remains blocked until an isolated development app/store runtime exists. Existing `main` workflow and any out-of-band deployment routes must also be audited before claiming universal LIVE isolation.
+
+## 2026-10-10 — My JILL becomes a hybrid account hub, not another account platform
+
+**Decision:** Maintain Shopify native Customer Accounts for authentication, Orders, Profile, addresses, cart and checkout. Reuse the existing `jill-account-dashboard` full-page extension UID for one modular My JILL hub (Overview, Rewards, Coupons, Custom Orders, Celebrations, Saved Preferences, JILL Settings). Keep the distinct native Profile block as a shortcut. Migrate, certify, and eventually retire the standalone Coupons full-page extension; do not create duplicate installed page targets.
+
+**Why:** The Shopify WORK Rewards engine, permissions and seven customer metafield definitions are verified, but the released My JILL/Coupons pages fail to render. Their independent page shells complicate diagnosis and future integration. A single hub entrypoint plus feature modules allows isolated fallbacks, shared authenticated API transport and one navigation owner without cloning Shopify's commerce.
+
+**Boundaries:** `jill/rewards-work` and `jill-work.myshopify.com` remain the only active execution targets for this redesign. KEEP is a Git baseline only until a separate KEEP Shopify environment is provisioned and independently proven. The backend v13 ledger and existing WORK code generation remain authoritative; no LIVE deployment or points mutation is authorized by architecture work. Any missing `jill` custom-event/preference metafields require a business/storage contract before creation.
+
+**Proof and file map:** `docs/CUSTOMER_ACCOUNT_HYBRID.md` owns the staged roadmap. Contract semantics stay in `FEATURE_CONTRACTS.md`, file/domain ownership stays in `DOMAIN_OWNERSHIP.md`, evidence stays in `QA_CERTIFICATION.md`.
+
