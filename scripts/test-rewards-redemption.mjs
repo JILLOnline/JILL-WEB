@@ -615,7 +615,7 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   assert.match(deploymentUpdater, /existing.includes\(WORK_DEPLOYMENT_ID\)/);
   assert.match(deploymentUpdater, /claspRun\('update-deployment',WORK_DEPLOYMENT_ID\)/);
   assert.doesNotMatch(deploymentUpdater, /claspRun\('create-deployment'/);
-  assert.doesNotMatch(deploymentUpdater, /setupJillRewards\(\)/);
+  assert.doesNotMatch(deploymentUpdater, /claspRun\('run-function'/);
 
 
 }
