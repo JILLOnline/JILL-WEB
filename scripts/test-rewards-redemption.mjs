@@ -604,6 +604,19 @@ console.log('JILL Rewards WORK app isolation contract passed.');
   const workPackage = JSON.parse(fs.readFileSync('package.json','utf8'));
   assert.equal(workPackage.scripts['rewards:work:backend:bootstrap'],
     'node scripts/bootstrap-rewards-work-backend.mjs');
+  assert.equal(workPackage.scripts['rewards:work:backend:update'],
+    'node scripts/update-rewards-work-deployment.mjs');
+  const deploymentUpdater = fs.readFileSync('scripts/update-rewards-work-deployment.mjs','utf8');
+  assert.match(deploymentUpdater, /assertRewardsWorkConfig/);
+  assert.match(deploymentUpdater, /project.clientId !== WORK_CLIENT_ID/);
+  assert.match(deploymentUpdater, /project.shop !== WORK_STORE/);
+  assert.match(deploymentUpdater, /clasp.scriptId !== project.scriptId/);
+  assert.match(deploymentUpdater, /claspRun\('list-deployments'\)/);
+  assert.match(deploymentUpdater, /existing.includes\(WORK_DEPLOYMENT_ID\)/);
+  assert.match(deploymentUpdater, /claspRun\('update-deployment',WORK_DEPLOYMENT_ID\)/);
+  assert.doesNotMatch(deploymentUpdater, /claspRun\('create-deployment'/);
+  assert.doesNotMatch(deploymentUpdater, /setupJillRewards\(\)/);
+
 
 }
 console.log('JILL WORK canonical backend packaging and isolation passed.');
