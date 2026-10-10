@@ -72,6 +72,15 @@ assert.throws(()=>parsePublicPromotionSnapshot(JSON.stringify({
 assert.throws(()=>parsePublicPromotionSnapshot(JSON.stringify({
   version:1,synced_at:'2026-10-10T20:08:42Z',offers:[{}],
 }),now),/invalid offer/);
+const datedOffers = JSON.stringify({version:1,synced_at:'2026-10-10T20:08:42Z',offers:[
+  {code:'CURRENT',summary:'Current',starts_at:'2026-10-09T00:00:00Z',ends_at:'2026-10-11T00:00:00Z'},
+  {code:'FUTURE',summary:'Future',starts_at:'2026-10-11T00:00:00Z'},
+  {code:'ENDED',summary:'Expired',ends_at:'2026-10-09T00:00:00Z'},
+]});
+assert.deepEqual(parsePublicPromotionSnapshot(datedOffers,now).map(x=>x.code),['CURRENT']);
+assert.throws(()=>parsePublicPromotionSnapshot(JSON.stringify({
+  version:1,synced_at:'2026-10-10T20:08:42Z',offers:[{code:'X',summary:'Bad',ends_at:'bogus'}],
+}),now),/invalid offer date/);
 let publicCalls=0;
 const publicRequest=async(url,opts)=>{
   ++publicCalls;
