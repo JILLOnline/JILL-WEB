@@ -39,7 +39,8 @@ const preparer=fs.readFileSync('scripts/prepare-account-hub-canary.mjs','utf8');
 assert.match(preparer, /path\.join\(base,'tsconfig\.json'\)/);
 assert.match(preparer, /jsxConfig\.compilerOptions\?\.jsxImportSource !== 'preact'/);
 assert.match(preparer, /fs\.copyFileSync\(jsxConfigFile,path\.join\(dest,'tsconfig\.json'\)\)/);
-assert.match(preparer, /'shared','customer-account-api.mjs'/);
+assert.match(preparer, /'rewards\\.mjs','customer-account-api\\.mjs','customer-coupons\\.mjs'/);
+assert.match(preparer, /path\\.join\\(workdir,'shared',filename\\)/);
 assert.match(preparer, /'src','hub','ConnectedHub.jsx'/);
 
 
