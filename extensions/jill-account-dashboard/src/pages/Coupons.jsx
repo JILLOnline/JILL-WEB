@@ -1,10 +1,11 @@
 import {useEffect, useState} from 'preact/hooks';
 import {loadPersonalCoupons, loadPublicPromotions} from '../../../../shared/customer-coupons.mjs';
+import {discountCartUrl,loadCustomerAccountStorefront} from '../../../../shared/rewards.mjs';
 
 // Distinct data boundaries: a public-promotion outage cannot erase the
 // authenticated personal wallet, and wallet failure never means zero coupons.
 const initial = {status:'loading',items:[]};
-function CouponFeed({title,feed,emptyLabel,kind}) {
+function CouponFeed({title,feed,emptyLabel,kind,store}) {
   return (
     <s-section heading={title}>
       <s-stack direction="block" gap="base">
@@ -31,6 +32,13 @@ function CouponFeed({title,feed,emptyLabel,kind}) {
               </s-text>
             )}
             {kind==='public' && item.details && <s-text>{item.details}</s-text>}
+            {(kind==='public' || item.status==='active') && (
+              <s-button variant={kind==='wallet' ? 'primary' : 'secondary'}
+                href={store ? discountCartUrl(store,item.code) : undefined}
+                disabled={!store}>
+                {kind==='wallet' ? 'Use Now' : 'Use Offer'}
+              </s-button>
+            )}
             {(kind==='wallet' ? item.expiresAt : item.endsAt) && (
               <s-text>
                 {kind==='wallet' ? 'Expires' : 'Offer ends'}:
@@ -40,10 +48,10 @@ function CouponFeed({title,feed,emptyLabel,kind}) {
           </s-stack>
         ))}
         {kind==='wallet' && (
-          <s-banner tone="info">
-            Coupon activation and Use Now are disabled until the WORK redemption
-            and checkout tests pass. Viewing codes does not spend points.
-          </s-banner>
+          <s-text>
+            Using a code opens your Shopify cart. Discounts remain controlled by
+            Shopify's cart and checkout rules until removed, used or expired.
+          </s-text>
         )}
       </s-stack>
     </s-section>
@@ -53,8 +61,13 @@ function CouponFeed({title,feed,emptyLabel,kind}) {
 export default function Coupons({onNavigate}) {
   const [wallet,setWallet] = useState(initial);
   const [publicOffers,setPublicOffers] = useState(initial);
+  const [store,setStore] = useState('');
+  const [storeError,setStoreError] = useState(false);
   useEffect(()=>{
     let active=true;
+    loadCustomerAccountStorefront()
+      .then((origin)=>{if(active){setStore(origin);setStoreError(false);}})
+      .catch(()=>{if(active)setStoreError(true);});
     loadPersonalCoupons()
       .then((items)=>{if(active)setWallet({status:'ready',items});})
       .catch(()=>{if(active)setWallet({status:'error',items:[]});});
@@ -65,10 +78,11 @@ export default function Coupons({onNavigate}) {
   },[]);
   return (
     <s-stack direction="block" gap="base">
+      {storeError && <s-banner tone="critical">Shopify storefront identity is unavailable. Coupon Use Now links are disabled.</s-banner>}
       <CouponFeed title="For you" kind="wallet" feed={wallet}
-        emptyLabel="You do not have any personal Rewards coupons yet." />
+        emptyLabel="You do not have any personal Rewards coupons yet." store={store} />
       <CouponFeed title="Storewide offers" kind="public" feed={publicOffers}
-        emptyLabel="No verified storewide promotions are available right now." />
+        emptyLabel="No verified storewide promotions are available right now." store={store} />
       <s-button onClick={()=>onNavigate('rewards')}>View Rewards</s-button>
     </s-stack>
   );
