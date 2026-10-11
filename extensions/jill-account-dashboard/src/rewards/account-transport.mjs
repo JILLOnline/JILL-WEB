@@ -1,6 +1,8 @@
 // Single authenticated Customer Account data + redemption request transport.
 // This module writes only Shopify's customer-owned request metafields; the
 // existing Apps Script v13 backend remains the only coupon/ledger owner.
+import {readNonnegativePoints} from '../../../../shared/customer-account-api.mjs';
+import {parsePersonalWallet} from '../../../../shared/customer-coupons.mjs';
 const API = 'shopify://customer-account/api/2026-07/graphql.json';
 // Shopify Customer Account GraphQL uses the same authenticated fetch
 // endpoint for read queries and metafieldsSet mutations.
@@ -235,5 +237,22 @@ export function metaMap(customer) {
   return Object.fromEntries(
     (customer?.metafields || []).filter(Boolean).map((item) => [item.key, item.value]),
   );
+}
+
+export function rewardsAccountReady(customer) {
+  if (typeof customer?.id !== 'string' ||
+      !/^gid:\/\/shopify\/Customer\/[0-9]+$/.test(customer.id)) return false;
+  const meta = metaMap(customer);
+  try {
+    if (readNonnegativePoints({value:meta.points_balance}) === null ||
+        typeof meta.redeem_request_points !== 'string' ||
+        readNonnegativePoints({value:meta.redeem_request_points}) === null ||
+        typeof meta.redeem_request_nonce !== 'string' ||
+        typeof meta.coupons !== 'string') return false;
+    parsePersonalWallet({value:meta.coupons});
+    return true;
+  } catch {
+    return false;
+  }
 }
 
