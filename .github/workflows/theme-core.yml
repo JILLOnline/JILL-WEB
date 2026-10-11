@@ -5,6 +5,16 @@ on:
   push:
     branches:
       - jill/theme-core
+    paths:
+      - 'theme/**'
+      - 'contracts/**'
+      - 'merchant/**'
+      - 'scripts/check-theme-core.mjs'
+      - 'scripts/verify-shopify-theme-target.mjs'
+      - 'scripts/verify-shopify-theme-push.mjs'
+      - 'scripts/test-shopify-theme-push.mjs'
+      - 'package.json'
+      - '.github/workflows/theme-core.yml'
   pull_request:
     branches:
       - jill/theme-core
@@ -18,9 +28,11 @@ concurrency:
 
 env:
   SHOPIFY_STORE: jqtdgr-1y.myshopify.com
-  SHOPIFY_THEME_ID: '165639192819'
-  SHOPIFY_THEME_NAME: JILL Theme Core DEV
-  SHOPIFY_THEME_ROLE: development
+  # Verified against the production shop's read-only theme inventory on 2026-10-11.
+  # JILL WORK is UNPUBLISHED; the current LIVE theme must never be a write target.
+  SHOPIFY_THEME_ID: '165562941683'
+  SHOPIFY_THEME_NAME: JILL WORK
+  SHOPIFY_THEME_ROLE: unpublished
 
 jobs:
   validate:
@@ -38,6 +50,9 @@ jobs:
 
       - name: Install dependencies and run repository guards
         run: npm install
+
+      - name: Test fail-closed Shopify theme push certification
+        run: node scripts/test-shopify-theme-push.mjs
 
       - name: Run Theme Core architecture guard
         run: npm run check:theme
@@ -157,7 +172,7 @@ jobs:
           retention-days: 30
 
   deploy:
-    name: Deploy canonical Shopify development theme
+    name: Deploy canonical Shopify unpublished WORK theme
     needs:
       - validate
       - package
@@ -187,7 +202,7 @@ jobs:
       - name: Install Shopify CLI without rerunning repository postinstall
         run: npm install --ignore-scripts
 
-      - name: Verify canonical DEVELOPMENT target before write
+      - name: Verify canonical UNPUBLISHED WORK target before write
         shell: bash
         run: |
           set -euo pipefail
@@ -218,11 +233,12 @@ jobs:
             --theme "$SHOPIFY_THEME_ID" \
             --path theme \
             --strict \
+            --nodelete \
             --password "$SHOPIFY_CLI_THEME_TOKEN" \
             --json > "$RUNNER_TEMP/jill-theme-push.json"
-          cat "$RUNNER_TEMP/jill-theme-push.json"
+          node scripts/verify-shopify-theme-push.mjs "$RUNNER_TEMP/jill-theme-push.json"
 
-      - name: Reverify DEVELOPMENT target after write
+      - name: Reverify UNPUBLISHED WORK target after write
         shell: bash
         run: |
           set -euo pipefail
@@ -233,5 +249,5 @@ jobs:
           node scripts/verify-shopify-theme-target.mjs "$RUNNER_TEMP/jill-themes-after.json"
 
 # Canonical delivery invariant:
-# jill/theme-core -> validate -> package -> JILL Theme Core DEV (DEVELOPMENT only).
+# jill/theme-core -> validate -> package -> JILL WORK (UNPUBLISHED only).
 # This workflow never uses --allow-live and refuses a target name/role mismatch.
