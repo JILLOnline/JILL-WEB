@@ -37,8 +37,10 @@ for (const name of pages) {
   assert.doesNotMatch(source, /jillonlinestore\.com|jqtdgr-1y\.myshopify\.com/);
 }
 const rewards=read(root+'pages/Rewards.jsx');
-assert.match(rewards,/REWARD_TIERS/);
-assert.match(rewards,/REWARD_COUPON_POLICY/);
+const rewardComponent=read(root+'rewards/RewardsCard.jsx');
+assert.match(rewards,/RewardsCard/);
+assert.match(rewardComponent,/REWARD_COUPON_POLICY/);
+assert.match(rewardComponent,/buildRewardJourney/);
 assert.match(rewards,/import RewardsCard from '\.\.\/rewards\/RewardsCard\.jsx'/);
 assert.match(rewards,/hasVerifiedLedger/);
 assert.match(rewards,/onNavigate\('coupons'\)/);
