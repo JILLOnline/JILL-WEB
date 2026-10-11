@@ -39,7 +39,10 @@ for (const name of pages) {
 const rewards=read(root+'pages/Rewards.jsx');
 assert.match(rewards,/REWARD_TIERS/);
 assert.match(rewards,/REWARD_COUPON_POLICY/);
-assert.match(rewards,/Redemption is not enabled/);
+assert.match(rewards,/import RewardsCard from '\.\.\/rewards\/RewardsCard\.jsx'/);
+assert.match(rewards,/hasVerifiedLedger/);
+assert.match(rewards,/onNavigate\('coupons'\)/);
+assert.doesNotMatch(rewards,/const REQUEST_REWARD_MUTATION|discountCodeBasicCreate/);
 const coupons=read(root+'pages/Coupons.jsx');
 assert.match(coupons,/loadPersonalCoupons/);
 assert.match(coupons,/loadPublicPromotions/);
