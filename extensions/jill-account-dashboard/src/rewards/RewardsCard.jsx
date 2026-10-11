@@ -103,7 +103,10 @@ export default function RewardsCard({customer, meta, loading, stale, onCustomerU
         await wait(attempt === 0 ? 900 : 1500);
 
         const nextCustomer = await loadData();
-        if (nextCustomer) onCustomerUpdate(nextCustomer);
+        if (!nextCustomer?.id || nextCustomer.id !== customer.id) {
+          throw new Error('Your signed-in Shopify account changed. Reload My JILL before using Rewards.');
+        }
+        onCustomerUpdate(nextCustomer);
 
         const nextMeta = metaMap(nextCustomer);
         const nextWallet = rewardWallet(nextMeta.coupons);
