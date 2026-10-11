@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadCustomerAccountStorefront,REWARDS_REFRESH_MS} from '../../../../shared/rewards.mjs';
-import {loadData,metaMap} from '../rewards/account-transport.mjs';
+import {loadData,metaMap,rewardsAccountReady} from '../rewards/account-transport.mjs';
 import RewardsCard from '../rewards/RewardsCard.jsx';
 
 // The new My JILL hub reuses the canonical Dashboard Rewards transaction UI.
@@ -46,10 +46,7 @@ export default function Rewards({onNavigate}) {
   },[]);
 
   const meta=metaMap(customer);
-  const hasVerifiedLedger=Boolean(customer?.id && /^(0|[1-9][0-9]*)$/.test(String(meta.points_balance ?? '')) &&
-    typeof meta.coupons==='string' &&
-    meta.redeem_request_points!==undefined &&
-    meta.redeem_request_nonce!==undefined);
+  const hasVerifiedLedger=rewardsAccountReady(customer);
   return (
     <s-stack direction="block" gap="base">
       {error && <s-banner tone="critical">{error}</s-banner>}
