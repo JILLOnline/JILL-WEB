@@ -5,6 +5,16 @@ on:
   push:
     branches:
       - jill/theme-core
+    paths:
+      - 'theme/**'
+      - 'contracts/**'
+      - 'merchant/**'
+      - 'scripts/check-theme-core.mjs'
+      - 'scripts/verify-shopify-theme-target.mjs'
+      - 'scripts/verify-shopify-theme-push.mjs'
+      - 'scripts/test-shopify-theme-push.mjs'
+      - 'package.json'
+      - '.github/workflows/theme-core.yml'
   pull_request:
     branches:
       - jill/theme-core
