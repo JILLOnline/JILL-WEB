@@ -30,7 +30,7 @@ jobs:
           node-version: '22'
 
       - name: Install repository-pinned Shopify CLI for read-only inventory
-        run: npm ci --ignore-scripts
+        run: npm install --ignore-scripts
 
       - name: Report credential presence without disclosure
         env:
