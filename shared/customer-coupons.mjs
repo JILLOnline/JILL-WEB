@@ -176,5 +176,12 @@ export async function loadPublicPromotions(request=fetch,now=Date.now()) {
 }
 
 export async function loadPublicPromotionCatalog(request=fetch,now=Date.now()) {
-  return parsePublicPromotionCatalog(await fetchPublicPromotionValue(request),now);
+  const value=await fetchPublicPromotionValue(request);
+  const offers=parsePublicPromotionSnapshot(value,now);
+  // An invalid optional upcoming projection must never hide today's usable offers.
+  try {
+    return {offers,upcoming:parseUpcomingPromotions(value,now),upcomingError:false};
+  } catch {
+    return {offers,upcoming:[],upcomingError:true};
+  }
 }
