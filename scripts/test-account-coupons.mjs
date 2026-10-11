@@ -129,7 +129,7 @@ includesAll(profileSource, 'WORK-safe Settings profile block', [
   'href={store}',
 ]);
 for (const [name, contents] of [
-  ['My JILL', read('extensions/jill-account-dashboard/src/Dashboard.jsx')],
+  ['My JILL Rewards', read('extensions/jill-account-dashboard/src/pages/Rewards.jsx')],
   ['Coupons', source],
   ['JILL Settings', profileSource],
 ]) {
