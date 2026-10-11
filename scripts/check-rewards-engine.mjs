@@ -2,6 +2,8 @@ import fs from 'node:fs';
 
 const config = JSON.parse(fs.readFileSync('rewards.config.json', 'utf8'));
 const dashboard = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+const rewardsCard = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/RewardsCard.jsx', 'utf8');
+const rewardsTransport = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/account-transport.mjs', 'utf8');
 const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
 const coupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
 const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
@@ -112,6 +114,11 @@ if (
 
 if (fs.existsSync('extensions/jill-account-dashboard/src/rewards.mjs')) {
   throw new Error('Dashboard-local Rewards module must not coexist with shared/rewards.mjs.');
+}
+if (!dashboard.includes("from './rewards/RewardsCard.jsx'") ||
+    !rewardsCard.includes("from './account-transport.mjs'") ||
+    !rewardsTransport.includes('export async function requestReward(')) {
+  throw new Error('Rewards transaction transport/UI must have one canonical reusable owner.');
 }
 if (!dashboard.includes("from '../../../shared/rewards.mjs'")) {
   throw new Error('Dashboard is not using the canonical shared Rewards module.');
@@ -370,7 +377,7 @@ for (const key of legacyRewardKeys) {
   }
 }
 
-if (!dashboard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
+if (!rewardsCard.includes('rewardRequestIsComplete(nextMeta, requestNonce)')) {
   throw new Error('Redemption completion must match the request nonce and cleared points.');
 }
 for (const marker of [
@@ -391,7 +398,7 @@ for (const marker of [
   'Use Now',
   'discountCartUrl(STORE, coupon.code)',
 ]) {
-  if (!dashboard.includes(marker)) {
+  if (!rewardsCard.includes(marker)) {
     throw new Error(`Reward redemption lifecycle missing: ${marker}`);
   }
 }
@@ -423,7 +430,7 @@ for (const owner of [dashboard, coupons]) {
   }
 }
 
-if (dashboard.includes('{isThisConfirming && (')) {
+if (rewardsCard.includes('{isThisConfirming && (')) {
   throw new Error('Reward confirmation must not render inline; use the modal owner.');
 }
 
