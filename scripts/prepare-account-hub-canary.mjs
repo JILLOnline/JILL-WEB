@@ -134,6 +134,13 @@ export function prepareCanary(mode) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
       }
+      // Reuse the one canonical Rewards UI and Customer Account transaction
+      // transport in the WORK-only hub preview (no copied backend engine).
+      fs.mkdirSync(path.join(dest,'src','rewards'),{recursive:true});
+      for (const module of ['RewardsCard.jsx','account-transport.mjs']) {
+        fs.copyFileSync(path.join(base,'src','rewards',module),
+          path.join(dest,'src','rewards',module));
+      }
       fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
       for (const filename of [
         'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
