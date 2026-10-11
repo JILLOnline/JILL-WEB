@@ -93,6 +93,103 @@ From a local Git checkout on `jill/rewards-work`:
 9. Visual: 390/768/1440 widths, focus/keyboard, overlays, clear busy status,
    checkout links and Shopify native account navigation.
 
+
+## WORK Rewards transactional evidence — October 11, 2026
+
+The merchant's signed-in WORK preview confirmed navigation among Overview,
+Rewards, Coupons, native confirmation modal, and post-redemption Use Now.
+An independent connected Shopify WORK Admin API reconciliation subsequently
+confirmed the exact synthetic customer's authoritative state:
+
+- 30 points earned, 10 redeemed, **20 available**, request points **0**,
+  consumed request nonce.
+- Wallet contains one active **$5 / $25-minimum** discount from the 10-point
+  redemption, 30-day expiration ending **2026-11-10**.
+- Corresponding Shopify discount exists with status ACTIVE and customer-specific
+  `DiscountCustomers` context, NOT all-customer public promotion scope.
+- User confirmed Use Now navigates to the Shopify cart. **Discount applied
+  in a qualifying checkout has not yet been independently certified.**
+- No additional QA points were redeemed or discount codes created by the
+  source/deployment audits described below.
+
+## Upcoming Offers — opted-in WORK staging
+
+WORK already contained two Shopify **SCHEDULED** all-customer campaigns:
+Black Friday (starts 2026-11-27) and Summer BOGO (starts 2027-06-01).
+Both were retitled in the **WORK store only** with the opt-in
+`[JILL UPCOMING] ` marker; their original codes, audience, values,
+activation and expiration were NOT changed. No duplicate discounts were
+created. Nothing was written to production Shopify.
+
+Canonical `JILL_Public_Promotions.gs` now queries ACTIVE and SCHEDULED
+discounts independently, but projects scheduled records only when their
+merchant-controlled title includes the opt-in marker, context is all buyers,
+one code exists, and the launch schedule is valid. The optional
+`upcoming` collection is added to the existing v1 public snapshot without
+codes, discount IDs, buyer IDs or early redemption URLs. The active
+`offers` collection and compatibility reader are unchanged. Missing
+upcoming records remain a valid empty state.
+
+The new My JILL Coupons page shows **Upcoming offers** with a start date,
+description and explicit "Coming soon" text; **no Use Now** for upcoming
+records. Malformed upcoming records cannot hide active public offers.
+The active and personal feeds remain independent.
+
+**Current deployment boundary:** The GitHub source and Shopify scheduled
+discount titles have been updated, but the Google WORK Apps Script deployment
+is not updated by a GitHub source commit. The current live WORK shop metafield
+will not expose the `upcoming` array until the existing WORK Google web-app
+deployment is updated and the next promotion synchronization succeeds.
+
+Only from the merchant's existing verified local WORK checkout:
+
+```powershell
+git switch jill/rewards-work
+git pull --ff-only
+npm.cmd install
+npm.cmd run rewards:work:backend:update
+```
+
+This helper verifies the WORK app/store and Google project identities, an
+unmodified tracked worktree, exact `origin/jill/rewards-work` SHA and the
+**existing** WORK Apps Script deployment ID. It uploads only the two
+canonical .gs files and updates the *same* deployment, with no duplicate
+web-app URL. Do not use the production Apps Script commands or production
+Shopify credentials.
+
+After backend update, verify its `?jill_rewards_watchdog=1` response
+references the exact deployed commit/engine v13, and inspect the WORK Shopify
+shop metafield `jill_promotions.active_public_codes` after the next minute
+worker. It must contain `offers` plus two opt-in `upcoming` items with
+future start dates and **no `code` property**. Refresh Coupons in a signed-in
+WORK account to validate UI. If the record stays old or the watchdog is
+stale, keep the release blocked and inspect Google triggers/Script Properties.
+
+## Transfer safety reconciliation
+
+WORK branch release YAMLs have been synchronized to the protected
+`jill/theme-core` release baseline. The production account app and
+Apps Script backend no longer auto-deploy on a Git push; both require an
+explicit manual dispatch, exact certified commit SHA and release environment.
+The Theme Core pipeline remains pinned to the verified UNPUBLISHED
+`JILL WORK` theme on the **production** store, with clean-JSON push
+certification and **never** `--allow-live`. The separate `jill-work`
+Shopify dev store is not this theme.
+
+`npm run check:account-transfer` now fails source CI if any of those
+ownership/release boundaries drift.
+
+Before LIVE Accounts transfer, still verify on the production Shopify
+connection: all seven `jill_rewards` Customer Account field permissions,
+the PUBLIC_READ promotions definition, the installed production app scopes
+and extension UIDs, the precise production Apps Script deployment identity
+and credentials, balance integrity, old Coupons-page navigation retirement,
+customer-by-customer isolation, and real qualifying/nonqualifying checkout.
+The storefront theme can remain unpublished during Account release, but
+**Shopify customer account extensions are live customer-facing software**:
+release can affect current account navigation without a theme publish.
+
+
 ## Release blockers
 
 - **WORK browser rendering is not yet certified** for the current hub source.
