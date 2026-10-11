@@ -51,52 +51,40 @@ jobs:
             exit 1
           fi
 
-      - name: Check Shopify deployment token
-        id: auth
+      - name: Require Shopify deployment token
         env:
           TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         shell: bash
         run: |
-          if [ -n "$TOKEN" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Shopify deployment token is configured."
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "SHOPIFY_APP_AUTOMATION_TOKEN is not configured yet; deployment will be skipped safely."
+          if [ -z "$TOKEN" ]; then
+            echo "Missing SHOPIFY_APP_AUTOMATION_TOKEN; refusing to call this a successful release." >&2
+            exit 1
           fi
 
       - name: Set up Node.js
-        if: steps.auth.outputs.ready == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install dependencies
-        if: steps.auth.outputs.ready == 'true'
         run: npm install
 
       - name: Run Rewards architecture guard
-        if: steps.auth.outputs.ready == 'true'
         run: npm run check:rewards
 
       - name: Run Rewards state and accounting tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:rewards
 
       - name: Run Rewards redemption transaction tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:rewards-redemption
 
       - name: Run Public Promotions tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:public-promotions
 
       - name: Run Customer Account Coupons tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:account-coupons
 
       - name: Pull current JILL Custom Form app configuration
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: >-
@@ -106,17 +94,14 @@ jobs:
           --force
 
       - name: Preserve current scopes and add Customer Account scopes
-        if: steps.auth.outputs.ready == 'true'
         run: node scripts/merge-shopify-scopes.mjs shopify.app.production.toml
 
       - name: Validate Shopify configuration and extensions
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: npx shopify app config validate --config production
 
       - name: Deploy JILL customer account extensions
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
