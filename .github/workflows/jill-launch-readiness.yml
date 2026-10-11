@@ -1,0 +1,93 @@
+name: JILL launch readiness (read-only)
+
+# A diagnostic lane: never builds a release, writes to Shopify, deploys a
+# backend, or changes a customer's ledger. WORK branch only.
+on:
+  push:
+    branches:
+      - jill/rewards-work
+    paths:
+      - '.github/workflows/jill-launch-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    name: Verify production theme inventory and release credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SHOPIFY_STORE: jqtdgr-1y.myshopify.com
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Shopify CLI for read-only inventory
+        run: npm install --global @shopify/cli@3.85.2
+
+      - name: Report credential presence without disclosure
+        env:
+          SHOPIFY_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in SHOPIFY_THEME_TOKEN CLASPRC_JSON CLASP_JSON SHOPIFY_APP_AUTOMATION_TOKEN; do
+            if [ -n "${!key}" ]; then
+              echo "$key: configured"
+            else
+              echo "$key: MISSING"
+            fi
+          done
+          if [ -z "$SHOPIFY_THEME_TOKEN" ]; then
+            echo 'Cannot read the Shopify theme inventory without SHOPIFY_THEME_TOKEN.' >&2
+            exit 1
+          fi
+
+      - name: Query Shopify production theme inventory (READ ONLY)
+        env:
+          SHOPIFY_THEME_TOKEN: ${{ secrets.SHOPIFY_THEME_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopify theme list \
+            --store "$SHOPIFY_STORE" \
+            --password "$SHOPIFY_THEME_TOKEN" \
+            --json > "$RUNNER_TEMP/jill-theme-inventory.json"
+          JILL_THEME_INVENTORY="$RUNNER_TEMP/jill-theme-inventory.json" node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const payload = JSON.parse(fs.readFileSync(process.env.JILL_THEME_INVENTORY, 'utf8'));
+          const themes = Array.isArray(payload) ? payload :
+            (Array.isArray(payload?.themes) ? payload.themes :
+            (Array.isArray(payload?.themes?.nodes) ? payload.themes.nodes :
+            (Array.isArray(payload?.nodes) ? payload.nodes :
+            (Array.isArray(payload?.data?.themes) ? payload.data.themes :
+            (Array.isArray(payload?.data?.themes?.nodes) ? payload.data.themes.nodes : [])))));
+          const normalize = (value) => String(value ?? '').toLowerCase().replace(/[^a-z]/g,'');
+          const idTail = (value) => String(value ?? '').split('/').pop();
+          if (!themes.length) throw new Error('Shopify returned no readable theme inventory.');
+          const publicInventory = themes.map((t)=>({
+            name: String(t.name ?? ''),
+            id: idTail(t.id),
+            role: normalize(t.role),
+          }));
+          console.log('Shopify theme inventory (names, IDs and roles only):');
+          console.log(JSON.stringify(publicInventory, null, 2));
+          const work = publicInventory.filter((t)=>t.name==='JILL WORK');
+          if (work.length !== 1 || !work[0].id ||
+              !['development','unpublished'].includes(work[0].role)) {
+            throw new Error('Exactly one non-live JILL WORK theme with a known role is required.');
+          }
+          const live = publicInventory.filter((t)=>t.role==='main');
+          if (live.length !== 1) throw new Error('Expected exactly one MAIN theme.');
+          console.log('Eligible preview-only theme: '+work[0].name+
+            ' ('+work[0].id+') ['+work[0].role+']');
+          console.log('Current MAIN theme (DO NOT WRITE): '+live[0].name+' ('+live[0].id+')');
+          console.log('No theme changes, publishing, or backend/customer mutations performed.');
+          NODE
