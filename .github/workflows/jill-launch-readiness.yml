@@ -21,13 +21,16 @@ jobs:
     env:
       SHOPIFY_STORE: jqtdgr-1y.myshopify.com
     steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install Shopify CLI for read-only inventory
-        run: npm install --global @shopify/cli@3.85.2
+      - name: Install repository-pinned Shopify CLI for read-only inventory
+        run: npm ci --ignore-scripts
 
       - name: Report credential presence without disclosure
         env:
@@ -56,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopify theme list \
+          npx shopify theme list \
             --store "$SHOPIFY_STORE" \
             --password "$SHOPIFY_THEME_TOKEN" \
             --json > "$RUNNER_TEMP/jill-theme-inventory.json"
