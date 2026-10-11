@@ -47,7 +47,7 @@ assert.match(rewards,/onNavigate\('coupons'\)/);
 assert.doesNotMatch(rewards,/const REQUEST_REWARD_MUTATION|discountCodeBasicCreate/);
 const coupons=read(root+'pages/Coupons.jsx');
 assert.match(coupons,/loadPersonalCoupons/);
-assert.match(coupons,/loadPublicPromotions/);
+assert.match(coupons,/loadPublicPromotionCatalog/);
 assert.match(coupons,/We couldn\\'t verify your personal coupons/);
 assert.match(coupons,/discountCartUrl\(store,item\.code\)/);
 assert.match(coupons,/loadCustomerAccountStorefront\(\)/);
