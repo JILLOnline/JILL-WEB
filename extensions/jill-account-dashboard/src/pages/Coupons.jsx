@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'preact/hooks';
-import {loadPersonalCoupons, loadPublicPromotions} from '../../../../shared/customer-coupons.mjs';
+import {loadPersonalCoupons, loadPublicPromotionCatalog} from '../../../../shared/customer-coupons.mjs';
 import {discountCartUrl,loadCustomerAccountStorefront} from '../../../../shared/rewards.mjs';
 
 // Distinct data boundaries: a public-promotion outage cannot erase the
@@ -14,17 +14,27 @@ function CouponFeed({title,feed,emptyLabel,kind,store}) {
           <s-banner tone="critical">
             {kind==='wallet'
               ? 'We couldn\'t verify your personal coupons. Refresh to try again.'
-              : 'Current storewide offers are temporarily unavailable. Refresh to try again.'}
+              : kind==='upcoming'
+                ? 'Upcoming offers are temporarily unavailable. Refresh to try again.'
+                : 'Current storewide offers are temporarily unavailable. Refresh to try again.'}
           </s-banner>
         )}
         {feed.status==='ready' && feed.items.length===0 && <s-text>{emptyLabel}</s-text>}
         {feed.status==='ready' && feed.items.map((item)=>(
           <s-stack direction="block" gap="small" key={kind+'-'+item.code}>
             <s-heading>{kind==='wallet'
-              ? (item.value === null ? 'JILL Rewards coupon' : `$${item.value} OFF`)
-              : item.summary}
+              ? (item.value === null ? 'JILL Rewards coupon' : `${item.value} OFF`)
+              : kind==='upcoming' ? item.title : item.summary}
             </s-heading>
-            <s-text>Code: {item.code}</s-text>
+            {kind!=='upcoming' && <s-text>Code: {item.code}</s-text>}
+            {kind==='upcoming' && (
+              <s-stack direction="block" gap="small">
+                <s-text>{item.summary}</s-text>
+                <s-text>Starts: {String(item.startsAt).slice(0,10)}</s-text>
+                {item.endsAt && <s-text>Ends: {String(item.endsAt).slice(0,10)}</s-text>}
+                <s-text>Coming soon — code not available until launch.</s-text>
+              </s-stack>
+            )}
             {kind==='wallet' && (
               <s-text>
                 {item.points} points · {item.status} ·
@@ -32,7 +42,7 @@ function CouponFeed({title,feed,emptyLabel,kind,store}) {
               </s-text>
             )}
             {kind==='public' && item.details && <s-text>{item.details}</s-text>}
-            {(kind==='public' || item.status==='active') && (
+            {kind!=='upcoming' && (kind==='public' || item.status==='active') && (
               <s-button variant={kind==='wallet' ? 'primary' : 'secondary'}
                 href={store ? discountCartUrl(store,item.code) : undefined}
                 disabled={!store}>
@@ -61,6 +71,7 @@ function CouponFeed({title,feed,emptyLabel,kind,store}) {
 export default function Coupons({onNavigate}) {
   const [wallet,setWallet] = useState(initial);
   const [publicOffers,setPublicOffers] = useState(initial);
+  const [upcomingOffers,setUpcomingOffers] = useState(initial);
   const [store,setStore] = useState('');
   const [storeError,setStoreError] = useState(false);
   useEffect(()=>{
@@ -71,9 +82,20 @@ export default function Coupons({onNavigate}) {
     loadPersonalCoupons()
       .then((items)=>{if(active)setWallet({status:'ready',items});})
       .catch(()=>{if(active)setWallet({status:'error',items:[]});});
-    loadPublicPromotions()
-      .then((items)=>{if(active)setPublicOffers({status:'ready',items});})
-      .catch(()=>{if(active)setPublicOffers({status:'error',items:[]});});
+    loadPublicPromotionCatalog()
+      .then(({offers,upcoming,upcomingError})=>{
+        if (!active) return;
+        setPublicOffers({status:'ready',items:offers});
+        setUpcomingOffers(upcomingError
+          ? {status:'error',items:[]}
+          : {status:'ready',items:upcoming});
+      })
+      .catch(()=>{
+        if(active){
+          setPublicOffers({status:'error',items:[]});
+          setUpcomingOffers({status:'error',items:[]});
+        }
+      });
     return ()=>{active=false;};
   },[]);
   return (
@@ -83,6 +105,8 @@ export default function Coupons({onNavigate}) {
         emptyLabel="You do not have any personal Rewards coupons yet." store={store} />
       <CouponFeed title="Storewide offers" kind="public" feed={publicOffers}
         emptyLabel="No verified storewide promotions are available right now." store={store} />
+      <CouponFeed title="Upcoming offers" kind="upcoming" feed={upcomingOffers}
+        emptyLabel="No scheduled JILL offers have been announced yet." store={store} />
       <s-button onClick={()=>onNavigate('rewards')}>View Rewards</s-button>
     </s-stack>
   );
