@@ -133,6 +133,18 @@ async function writeRewardRequest(customer, points, nonce) {
     throw new Error('Your reward request state could not be verified. Refresh the page and try again.');
   }
 
+  // Re-read and check the authoritative request slot before every CAS write.
+  // Two tabs can see stale balances; a digest retry must never overwrite an
+  // already pending request owned by the existing v13 worker.
+  const pendingRaw = String(pointsField.value ?? '');
+  if (!/^(0|[1-9][0-9]*)$/.test(pendingRaw) ||
+      !Number.isSafeInteger(Number(pendingRaw))) {
+    throw new Error('Your reward request is unavailable. Refresh before redeeming.');
+  }
+  if (Number(pendingRaw) > 0) {
+    throw new Error('A previous reward request is still processing. Refresh your rewards before trying again.');
+  }
+
   const response = await fetch(WRITE_API, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
