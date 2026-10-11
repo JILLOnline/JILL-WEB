@@ -4,6 +4,7 @@ import {
   STOREFRONT_API,PROMOTIONS_MAX_AGE_MS,PERSONAL_WALLET_QUERY,
   PUBLIC_PROMOTIONS_QUERY,parsePersonalWallet,loadPersonalCoupons,
   parsePublicPromotionSnapshot,loadPublicPromotions,
+  parseUpcomingPromotions,parsePublicPromotionCatalog,loadPublicPromotionCatalog,
 } from '../shared/customer-coupons.mjs';
 import {CUSTOMER_ACCOUNT_API} from '../shared/customer-account-api.mjs';
 
@@ -103,6 +104,32 @@ assert.deepEqual(parsePublicPromotionSnapshot(datedOffers,now).map(x=>x.code),['
 assert.throws(()=>parsePublicPromotionSnapshot(JSON.stringify({
   version:1,synced_at:'2026-10-10T20:08:42Z',offers:[{code:'X',summary:'Bad',ends_at:'bogus'}],
 }),now),/invalid offer date/);
+const upcomingSnapshot=JSON.stringify({
+  version:1,synced_at:'2026-10-10T20:08:42.379Z',
+  offers:[{code:'CURRENT',summary:'Current active'}],
+  upcoming:[
+    {kind:'basic',title:'Black Friday preview',summary:'Upcoming discount',
+      starts_at:'2026-11-27T00:00:00Z',ends_at:'2026-11-28T00:00:00Z'},
+    {kind:'bxgy',title:'Summer BOGO preview',summary:'Upcoming BOGO',
+      starts_at:'2027-06-01T00:00:00Z',ends_at:'2027-07-31T00:00:00Z'},
+  ],
+});
+assert.deepEqual(parseUpcomingPromotions(upcomingSnapshot,now).map(x=>x.title),
+  ['Black Friday preview','Summer BOGO preview']);
+assert.equal(parsePublicPromotionCatalog(upcomingSnapshot,now).offers.length,1);
+assert.equal(parsePublicPromotionCatalog(upcomingSnapshot,now).upcoming.length,2);
+assert.deepEqual(parseUpcomingPromotions(publicSnapshot,now),[]);
+const invalidUpcoming=JSON.stringify({
+  version:1,synced_at:'2026-10-10T20:08:42.379Z',
+  offers:[{code:'ACTIVE',summary:'Active promotion'}],
+  upcoming:[{title:'Leaky',summary:'Private',starts_at:'2026-11-27T00:00:00Z',code:'SECRET'}],
+});
+assert.throws(()=>parseUpcomingPromotions(invalidUpcoming,now),/private data/);
+assert.deepEqual(parsePublicPromotionSnapshot(invalidUpcoming,now).map(x=>x.code),['ACTIVE']);
+assert.deepEqual(parseUpcomingPromotions(JSON.stringify({
+  version:1,synced_at:'2026-10-10T20:08:42.379Z',offers:[],
+  upcoming:[{title:'Old',summary:'Old',starts_at:'2026-10-01T00:00:00Z'}],
+}),now),[]);
 let publicCalls=0;
 const publicRequest=async(url,opts)=>{
   ++publicCalls;
@@ -113,14 +140,33 @@ const publicRequest=async(url,opts)=>{
 };
 assert.equal((await loadPublicPromotions(publicRequest,now))[0].code,'FREESHIPPING2026');
 assert.equal(publicCalls,1);
+const catalogRequest=async(url,opts)=>{
+  assert.equal(url,STOREFRONT_API);
+  assert.equal(JSON.parse(opts.body).query,PUBLIC_PROMOTIONS_QUERY);
+  return {ok:true,json:async()=>({data:{shop:{promotionSnapshot:{value:upcomingSnapshot}}}})};
+};
+const catalog=await loadPublicPromotionCatalog(catalogRequest,now);
+assert.equal(catalog.offers.length,1);
+assert.equal(catalog.upcoming.length,2);
+assert.equal(catalog.upcomingError,false);
+const invalidCatalog=await loadPublicPromotionCatalog(async()=>({
+  ok:true,json:async()=>({data:{shop:{promotionSnapshot:{value:invalidUpcoming}}}}),
+}),now);
+assert.equal(invalidCatalog.offers[0].code,'ACTIVE');
+assert.equal(invalidCatalog.upcomingError,true);
+
 await assert.rejects(loadPublicPromotions(async()=>({ok:false,json:async()=>({})}),now),/unavailable/);
 await assert.rejects(loadPublicPromotions(async()=>({ok:true,json:async()=>({errors:[{message:'fail'}]})}),now),/failed/);
 
 const coupons=fs.readFileSync('extensions/jill-account-dashboard/src/pages/Coupons.jsx','utf8');
 assert.match(coupons,/loadPersonalCoupons\(\)/);
-assert.match(coupons,/loadPublicPromotions\(\)/);
+assert.match(coupons,/loadPublicPromotionCatalog\(\)/);
+assert.match(coupons,/kind==='upcoming'/);
+assert.match(coupons,/kind!=='upcoming' &&/);
+assert.match(coupons,/Coming soon/);
 assert.match(coupons,/setWallet\(\{status:'error',items:\[\]\}\)/);
 assert.match(coupons,/setPublicOffers\(\{status:'error',items:\[\]\}\)/);
+assert.match(coupons,/setUpcomingOffers\(\{status:'error',items:\[\]\}\)/);
 assert.match(coupons,/loadCustomerAccountStorefront\(\)/);
 assert.match(coupons,/discountCartUrl\(store,item\.code\)/);
 assert.match(coupons,/item\.status==='active'/);
