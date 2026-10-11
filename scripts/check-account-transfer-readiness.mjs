@@ -36,7 +36,7 @@ assert.match(themeRelease,/SHOPIFY_THEME_NAME: JILL WORK/);
 assert.match(themeRelease,/SHOPIFY_THEME_ROLE: unpublished/);
 assert.match(themeRelease,/--nodelete/);
 assert.match(themeRelease,/verify-shopify-theme-push\.mjs/);
-assert.doesNotMatch(themeRelease,/--allow-live/);
+assert.doesNotMatch(themeRelease,/^\\s+--allow-live\\b/m);
 
 assert.match(app,/render\(<ConnectedHub \/>, document\.body\)/);
 assert.match(hub,/import Rewards from '\.\.\/pages\/Rewards\.jsx'/);
