@@ -1,21 +1,28 @@
 name: Deploy JILL customer account
 
+# Account extensions are a production app deployment, not a DEVELOPMENT theme.
+# No push or PR event may release them to LIVE. WORK is validated in PR CI.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - jill/theme-core
-    paths:
-      - 'extensions/**'
-      - 'shared/**'
-      - 'scripts/**'
-      - 'package.json'
-      - '.github/workflows/deploy-customer-account.yml'
+    inputs:
+      confirm_live:
+        description: 'Type DEPLOY JILL ACCOUNT LIVE to authorize release'
+        required: true
+        type: string
+      expected_sha:
+        description: 'Full 40-character certified jill/theme-core commit SHA'
+        required: true
+        type: string
 
 jobs:
   deploy:
-    name: Deploy customer account extensions
+    name: Deploy customer account extensions to LIVE
+    if: ${{ github.ref == 'refs/heads/jill/theme-core' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: jill-account-live-deploy
+      cancel-in-progress: false
+    environment: JILL-ACCOUNT-LIVE
     env:
       SHOPIFY_CLIENT_ID: ebf1a69d82f46619d2f2945faab78afa
 
@@ -23,52 +30,61 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check Shopify deployment token
-        id: auth
+      - name: Confirm exact certified LIVE release
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm_live }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != 'DEPLOY JILL ACCOUNT LIVE' ]; then
+            echo 'LIVE authorization text was not supplied.' >&2
+            exit 1
+          fi
+          if ! [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'A full 40-character certified commit SHA is required.' >&2
+            exit 1
+          fi
+          if [ "$EXPECTED_SHA" != "$SOURCE_SHA" ]; then
+            echo 'LIVE release SHA does not match the checked-out canonical commit.' >&2
+            exit 1
+          fi
+
+      - name: Require Shopify deployment token
         env:
           TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         shell: bash
         run: |
-          if [ -n "$TOKEN" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Shopify deployment token is configured."
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "SHOPIFY_APP_AUTOMATION_TOKEN is not configured yet; deployment will be skipped safely."
+          if [ -z "$TOKEN" ]; then
+            echo "Missing SHOPIFY_APP_AUTOMATION_TOKEN; refusing to call this a successful release." >&2
+            exit 1
           fi
 
       - name: Set up Node.js
-        if: steps.auth.outputs.ready == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install dependencies
-        if: steps.auth.outputs.ready == 'true'
         run: npm install
 
       - name: Run Rewards architecture guard
-        if: steps.auth.outputs.ready == 'true'
         run: npm run check:rewards
 
       - name: Run Rewards state and accounting tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:rewards
 
       - name: Run Rewards redemption transaction tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:rewards-redemption
 
       - name: Run Public Promotions tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:public-promotions
 
       - name: Run Customer Account Coupons tests
-        if: steps.auth.outputs.ready == 'true'
         run: npm run test:account-coupons
 
       - name: Pull current JILL Custom Form app configuration
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: >-
@@ -78,17 +94,14 @@ jobs:
           --force
 
       - name: Preserve current scopes and add Customer Account scopes
-        if: steps.auth.outputs.ready == 'true'
         run: node scripts/merge-shopify-scopes.mjs shopify.app.production.toml
 
       - name: Validate Shopify configuration and extensions
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: npx shopify app config validate --config production
 
       - name: Deploy JILL customer account extensions
-        if: steps.auth.outputs.ready == 'true'
         env:
           SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
@@ -98,4 +111,4 @@ jobs:
           --allow-updates
           --source-control-url "$COMMIT_URL"
 
-# Canonical customer-account deploy owner follows jill/theme-core, not the stale main branch.
+# Manual LIVE authorization is the sole Customer Account deployment path from jill/theme-core.
