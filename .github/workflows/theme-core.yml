@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies and run repository guards
         run: npm install
 
+      - name: Test fail-closed Shopify theme push certification
+        run: node scripts/test-shopify-theme-push.mjs
+
       - name: Run Theme Core architecture guard
         run: npm run check:theme
 
@@ -220,9 +223,10 @@ jobs:
             --theme "$SHOPIFY_THEME_ID" \
             --path theme \
             --strict \
+            --nodelete \
             --password "$SHOPIFY_CLI_THEME_TOKEN" \
             --json > "$RUNNER_TEMP/jill-theme-push.json"
-          cat "$RUNNER_TEMP/jill-theme-push.json"
+          node scripts/verify-shopify-theme-push.mjs "$RUNNER_TEMP/jill-theme-push.json"
 
       - name: Reverify UNPUBLISHED WORK target after write
         shell: bash
