@@ -13,7 +13,12 @@ import {
   rewardWallet,
 } from '../shared/rewards.mjs';
 
-const source = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+const rewardsTransportSource = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/account-transport.mjs', 'utf8');
+const rewardsCardSource = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/RewardsCard.jsx', 'utf8');
+const dashboardSourceForTests = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
+// One canonical transport and Rewards component are reused in both account entrypoints.
+const source = [rewardsTransportSource,rewardsCardSource,dashboardSourceForTests].join('\n');
+assert.match(dashboardSourceForTests,/import RewardsCard from '\.\/rewards\/RewardsCard\.jsx'/);
 assert.match(source, /loadCustomerAccountStorefront\(\)/, 'Dashboard must query the account shop identity after rendering');
 assert.doesNotMatch(source, /storefrontOrigin\(shopify\.shop\)/, 'Shopify shop API is not available on generic full pages');
 assert.doesNotMatch(source, /const STORE = 'https:\/\/jillonlinestore\.com'/, 'Dashboard must never hard-code LIVE store');
@@ -24,8 +29,8 @@ function between(start, end) {
   assert.ok(source.includes(start) && source.includes(end));
   return source.slice(source.indexOf(start), source.indexOf(end));
 }
-const transport = between('async function loadData()', 'function wait(');
-const mutation = between('const REQUEST_REWARD_MUTATION', 'const COLLECTIONS');
+const transport = between('async function loadData()', 'function wait(').replaceAll('export async function', 'async function');
+const mutation = between('const REQUEST_REWARD_MUTATION', 'async function loadData()').replace(/export\s*$/, '');
 const handler = between('  async function handleRedeem(tier)', '  function rewardStatusControl(');
 const nonce = 'request-1';
 const tier = {points: 10, value: 5, minimum: 25};
