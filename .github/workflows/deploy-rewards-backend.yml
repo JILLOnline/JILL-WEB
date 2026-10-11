@@ -1,17 +1,18 @@
 name: Deploy JILL Rewards backend
 
+# Never deploy privileged Rewards/Google Apps Script code on a push.
+# Require explicit approval at the exact certified commit.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - jill/theme-core
-    paths:
-      - 'backend/google-apps-script/**'
-      - 'rewards.config.json'
-      - 'scripts/check-rewards-engine.mjs'
-      - 'scripts/test-rewards-engine.mjs'
-      - 'scripts/test-rewards-redemption.mjs'
-      - '.github/workflows/deploy-rewards-backend.yml'
+    inputs:
+      confirm_backend:
+        description: 'Type DEPLOY JILL REWARDS BACKEND LIVE to authorize release'
+        type: string
+        required: true
+      expected_sha:
+        description: 'Full 40-character certified jill/theme-core commit SHA'
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -28,10 +29,29 @@ env:
 jobs:
   deploy:
     name: Deploy canonical Apps Script backend
+    if: ${{ github.ref == 'refs/heads/jill/theme-core' }}
+    environment: JILL-REWARDS-LIVE
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
+      - name: Verify exact authorized backend release
+        env:
+          CONFIRM: ${{ inputs.confirm_backend }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != 'DEPLOY JILL REWARDS BACKEND LIVE' ]; then
+            echo 'Backend LIVE authorization missing.' >&2
+            exit 1
+          fi
+          if ! [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || [ "$EXPECTED_SHA" != "$SOURCE_SHA" ]; then
+            echo 'Backend release commit must equal the exact certified SHA.' >&2
+            exit 1
+          fi
+
       - name: Checkout canonical source
         uses: actions/checkout@v4
 
