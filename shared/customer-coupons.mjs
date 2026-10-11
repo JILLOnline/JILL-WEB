@@ -72,7 +72,7 @@ export async function loadPersonalCoupons(request = fetch, now = Date.now()) {
   return parsePersonalWallet(data.customer.coupons, now);
 }
 
-export function parsePublicPromotionSnapshot(value, now = Date.now()) {
+function readPublicPromotionSnapshot(value, now = Date.now()) {
   if (typeof value !== 'string' || !value.trim()) {
     throw new Error('Public promotions have not synchronized.');
   }
@@ -87,6 +87,11 @@ export function parsePublicPromotionSnapshot(value, now = Date.now()) {
   if (!Number.isFinite(syncedAt) || age > PROMOTIONS_MAX_AGE_MS || age < -120000) {
     throw new Error('Public promotions are waiting for a fresh Shopify sync.');
   }
+  return snapshot;
+}
+
+export function parsePublicPromotionSnapshot(value, now = Date.now()) {
+  const snapshot = readPublicPromotionSnapshot(value,now);
   return snapshot.offers.filter((offer) => {
     // Never display a scheduled, ended, or malformed offer even if a
     // publisher supplied an inconsistent ACTIVE status.
@@ -112,7 +117,47 @@ export function parsePublicPromotionSnapshot(value, now = Date.now()) {
   });
 }
 
-export async function loadPublicPromotions(request = fetch, now = Date.now()) {
+
+export function parseUpcomingPromotions(value, now = Date.now()) {
+  const snapshot = readPublicPromotionSnapshot(value,now);
+  if (snapshot.upcoming === undefined) return [];
+  if (!Array.isArray(snapshot.upcoming) || snapshot.upcoming.length > 20) {
+    throw new Error('Upcoming public offers contain an invalid list.');
+  }
+  const items = snapshot.upcoming.map((offer) => {
+    if (!offer || typeof offer !== 'object' || Array.isArray(offer) ||
+        Object.hasOwn(offer,'code') || Object.hasOwn(offer,'discount_id') ||
+        typeof offer.title !== 'string' || !offer.title.trim() ||
+        typeof offer.summary !== 'string' || !offer.summary.trim() ||
+        typeof offer.starts_at !== 'string') {
+      throw new Error('Upcoming public offers contain invalid or private data.');
+    }
+    const starts = Date.parse(offer.starts_at);
+    const ends = offer.ends_at == null ? null : Date.parse(offer.ends_at);
+    if (!Number.isFinite(starts) ||
+        (offer.ends_at != null && !Number.isFinite(ends)) ||
+        (ends !== null && ends <= starts)) {
+      throw new Error('Upcoming public offers contain an invalid schedule.');
+    }
+    return {
+      title:offer.title.trim().slice(0,120),
+      summary:offer.summary.trim().slice(0,300),
+      startsAt:offer.starts_at,
+      endsAt:typeof offer.ends_at === 'string' ? offer.ends_at : null,
+      kind:['basic','bxgy','free_shipping'].includes(offer.kind) ? offer.kind : 'basic',
+    };
+  }).filter((offer)=>Date.parse(offer.startsAt)>now);
+  return items.sort((a,b)=>Date.parse(a.startsAt)-Date.parse(b.startsAt));
+}
+
+export function parsePublicPromotionCatalog(value,now=Date.now()) {
+  return {
+    offers:parsePublicPromotionSnapshot(value,now),
+    upcoming:parseUpcomingPromotions(value,now),
+  };
+}
+
+async function fetchPublicPromotionValue(request) {
   const response = await request(STOREFRONT_API, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -123,7 +168,13 @@ export async function loadPublicPromotions(request = fetch, now = Date.now()) {
   if (payload?.errors?.length || !payload?.data?.shop) {
     throw new Error('Shopify public promotions query failed.');
   }
-  return parsePublicPromotionSnapshot(
-    payload.data.shop.promotionSnapshot?.value, now,
-  );
+  return payload.data.shop.promotionSnapshot?.value;
+}
+
+export async function loadPublicPromotions(request=fetch,now=Date.now()) {
+  return parsePublicPromotionSnapshot(await fetchPublicPromotionValue(request),now);
+}
+
+export async function loadPublicPromotionCatalog(request=fetch,now=Date.now()) {
+  return parsePublicPromotionCatalog(await fetchPublicPromotionValue(request),now);
 }
