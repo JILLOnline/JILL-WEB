@@ -29,7 +29,7 @@ function between(start, end) {
   assert.ok(source.includes(start) && source.includes(end));
   return source.slice(source.indexOf(start), source.indexOf(end));
 }
-const transport = between('async function loadData()', 'function wait(').replaceAll('export async function', 'async function');
+const transport = between('async function loadData()', 'function wait(').replaceAll('export async function', 'async function').replace(/export\s*$/, '');
 const mutation = between('const REQUEST_REWARD_MUTATION', 'async function loadData()').replace(/export\s*$/, '');
 const handler = between('  async function handleRedeem(tier)', '  function rewardStatusControl(');
 const nonce = 'request-1';
