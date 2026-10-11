@@ -87,10 +87,10 @@ jobs:
               !['development','unpublished'].includes(work[0].role)) {
             throw new Error('Exactly one non-live JILL WORK theme with a known role is required.');
           }
-          const live = publicInventory.filter((t)=>t.role==='main');
-          if (live.length !== 1) throw new Error('Expected exactly one MAIN theme.');
+          const live = publicInventory.filter((t)=>t.role==='live');
+          if (live.length !== 1) throw new Error('Expected exactly one LIVE theme.');
           console.log('Eligible preview-only theme: '+work[0].name+
             ' ('+work[0].id+') ['+work[0].role+']');
-          console.log('Current MAIN theme (DO NOT WRITE): '+live[0].name+' ('+live[0].id+')');
+          console.log('Current LIVE theme (DO NOT WRITE): '+live[0].name+' ('+live[0].id+')');
           console.log('No theme changes, publishing, or backend/customer mutations performed.');
           NODE
