@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const config = JSON.parse(fs.readFileSync('rewards.config.json', 'utf8'));
 const dashboard = fs.readFileSync('extensions/jill-account-dashboard/src/Dashboard.jsx', 'utf8');
 const rewardsCard = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/RewardsCard.jsx', 'utf8');
+const rewardsPage = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Rewards.jsx', 'utf8');
 const rewardsTransport = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/account-transport.mjs', 'utf8');
 const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
 const coupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
@@ -115,7 +116,7 @@ if (
 if (fs.existsSync('extensions/jill-account-dashboard/src/rewards.mjs')) {
   throw new Error('Dashboard-local Rewards module must not coexist with shared/rewards.mjs.');
 }
-if (!dashboard.includes("from './rewards/RewardsCard.jsx'") ||
+if (!rewardsPage.includes("from '../rewards/RewardsCard.jsx'") ||
     !rewardsCard.includes("from './account-transport.mjs'") ||
     !rewardsTransport.includes('export async function requestReward(')) {
   throw new Error('Rewards transaction transport/UI must have one canonical reusable owner.');
@@ -415,7 +416,6 @@ if (
 ) {
   throw new Error('Customer Account storefront links must use the authenticated Shop GraphQL query.');
 }
-const rewardsPage = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Rewards.jsx', 'utf8');
 for (const owner of [rewardsPage, coupons]) {
   if (!owner.includes('loadCustomerAccountStorefront')) {
     throw new Error('Customer Account page lacks authenticated shop identity resolution.');
