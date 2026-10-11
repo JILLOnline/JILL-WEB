@@ -280,6 +280,24 @@ assert.equal(calls, 2);
   assert.equal(mutationCalls, 2);
 }
 
+// A second tab must never replace a pending reward, even on CAS retry.
+{
+  let attemptedWrites = 0;
+  api.fetch = async (_url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.query === 'query {}') {
+      return {ok:true,json:async()=>({data:{customer:customer({
+        redeem_request_points:'10',
+        redeem_request_nonce:'jill:other-tab',
+      })}})};
+    }
+    attemptedWrites += 1;
+    return {ok:true,json:async()=>({data:{metafieldsSet:{metafields:[],userErrors:[]}}})};
+  };
+  await assert.rejects(api.requestReward('gid://shopify/Customer/1',10), /previous reward request is still processing/);
+  assert.equal(attemptedWrites,0);
+}
+
 // Authorization and business errors are surfaced with the Shopify error code.
 api.fetch = async (_url, options) => {
   const body = JSON.parse(options.body);
