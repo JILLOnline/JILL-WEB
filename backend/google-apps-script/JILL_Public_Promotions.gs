@@ -461,6 +461,10 @@ function jillPublicPromotionsHealth_() {
       snapshot && Array.isArray(snapshot.offers)
         ? snapshot.offers.length
         : 0,
+    upcoming_count:
+      snapshot && Array.isArray(snapshot.upcoming)
+        ? snapshot.upcoming.length
+        : 0,
     trigger_count: triggerCount,
     trigger_ok: triggerCount === 1
   };
