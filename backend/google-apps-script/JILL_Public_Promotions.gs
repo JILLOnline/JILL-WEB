@@ -104,18 +104,26 @@ function ensureJillPublicPromotionsInfrastructure_(force) {
 }
 
 function syncJillPublicPromotions() {
-  const pageData = fetchJillPublicDiscountNodes_();
+  const pageData = fetchJillPublicDiscountNodes_('status:active method:code');
+  const upcomingData = fetchJillPublicDiscountNodes_('status:scheduled method:code');
   const shopId = clean_(pageData.shop_id);
+  if (shopId !== clean_(upcomingData.shop_id)) {
+    throw new Error('Shopify public and upcoming promotion sources returned different shops.');
+  }
 
   if (!shopId) {
     throw new Error('Shopify public promotions sync returned no Shop ID.');
   }
 
   const offers = collectJillPublicOffers_(pageData.nodes);
+  // Upcoming offers must be explicitly merchant opted-in via title;
+  // only the public launch date/description are projected, NEVER a code.
+  const upcoming = collectJillUpcomingOffers_(upcomingData.nodes);
   const snapshot = {
     version: JILL_PUBLIC_PROMOTIONS.VERSION,
     synced_at: new Date().toISOString(),
-    offers: offers
+    offers: offers,
+    upcoming: upcoming
   };
 
   writeJillPublicPromotionSnapshot_(shopId, snapshot);
@@ -124,8 +132,9 @@ function syncJillPublicPromotions() {
     ok: true,
     version: JILL_PUBLIC_PROMOTIONS.VERSION,
     offer_count: offers.length,
-    pages_scanned: pageData.pages_scanned,
-    discounts_scanned: pageData.nodes.length,
+    upcoming_count: upcoming.length,
+    pages_scanned: pageData.pages_scanned + upcomingData.pages_scanned,
+    discounts_scanned: pageData.nodes.length + upcomingData.nodes.length,
     codes: offers.map(function(offer) {
       return offer.code;
     }),
@@ -136,14 +145,18 @@ function syncJillPublicPromotions() {
   return response;
 }
 
-function fetchJillPublicDiscountNodes_() {
+function fetchJillPublicDiscountNodes_(filter) {
+  if (filter !== 'status:active method:code' &&
+      filter !== 'status:scheduled method:code') {
+    throw new Error('Unrecognized public promotion search filter.');
+  }
   const query = `
-    query JillPublicDiscountSnapshot($first: Int!, $after: String) {
+    query JillPublicDiscountSnapshot($first: Int!, $after: String, $filter: String!) {
       shop { id }
       discountNodes(
         first: $first,
         after: $after,
-        query: "status:active method:code",
+        query: $filter,
         sortKey: UPDATED_AT,
         reverse: true
       ) {
@@ -207,7 +220,8 @@ function fetchJillPublicDiscountNodes_() {
 
     const data = shopifyGraphQL_(query, {
       first: JILL_PUBLIC_PROMOTIONS.PAGE_SIZE,
-      after: after
+      after: after,
+      filter: filter
     });
 
     if (!shopId) {
@@ -302,6 +316,54 @@ function collectJillPublicOffers_(nodes) {
   });
 
   return offers;
+}
+
+function collectJillUpcomingOffers_(nodes) {
+  const upcoming = [];
+  const prefix = '[JILL UPCOMING] ';
+  const now = Date.now();
+
+  (Array.isArray(nodes) ? nodes : []).forEach(function(node) {
+    const discount = node && node.discount;
+    if (!discount || discount.status !== 'SCHEDULED') return;
+    if (!discount.context ||
+        discount.context.__typename !== 'DiscountBuyerSelectionAll') return;
+
+    const title = clean_(discount.title);
+    // Never reveal Shopify's private/unannounced scheduled campaigns. A
+    // merchant must deliberately opt a campaign in by adding this title tag.
+    if (title.slice(0, prefix.length) !== prefix) return;
+
+    const starts = Date.parse(discount.startsAt || '');
+    const ends = discount.endsAt ? Date.parse(discount.endsAt) : null;
+    if (!Number.isFinite(starts) || starts <= now ||
+        (discount.endsAt && !Number.isFinite(ends)) ||
+        (ends !== null && ends <= starts)) return;
+
+    const codes = discount.codes && Array.isArray(discount.codes.nodes)
+      ? discount.codes.nodes.filter(function(c) { return Boolean(clean_(c && c.code)); })
+      : [];
+    if (codes.length !== 1) return;
+
+    const summary = clean_(discount.shortSummary) ||
+      clean_(discount.summary) || clean_(title.slice(prefix.length));
+    if (!summary) return;
+
+    upcoming.push({
+      kind: discount.__typename === 'DiscountCodeFreeShipping' ? 'free_shipping' :
+        discount.__typename === 'DiscountCodeBxgy' ? 'bxgy' : 'basic',
+      title: clean_(title.slice(prefix.length)).slice(0, 120),
+      summary: summary.slice(0, 300),
+      starts_at: new Date(starts).toISOString(),
+      ends_at: ends === null ? null : new Date(ends).toISOString()
+    });
+    // NO CODE, customer IDs, customer segments, IDs or redemption URLs here.
+  });
+
+  upcoming.sort(function(a,b) {
+    return Date.parse(a.starts_at) - Date.parse(b.starts_at);
+  });
+  return upcoming.slice(0, 20);
 }
 
 function writeJillPublicPromotionSnapshot_(shopId, snapshot) {
