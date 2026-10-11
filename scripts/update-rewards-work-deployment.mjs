@@ -14,6 +14,23 @@ const claspFile = path.join(output, '.clasp.json');
 if (execFileSync('git',['branch','--show-current'],{cwd:root,encoding:'utf8'}).trim() !== 'jill/rewards-work') {
   throw new Error('Refusing Google WORK deployment update outside jill/rewards-work.');
 }
+const trackedChanges = execFileSync('git',['status','--porcelain','--untracked-files=no'],
+  {cwd:root,encoding:'utf8'}).trim();
+if (trackedChanges) {
+  throw new Error('Refusing WORK backend deploy with uncommitted tracked source changes.');
+}
+const localSha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
+let branchSha;
+try {
+  branchSha=execFileSync('git',['rev-parse','refs/remotes/origin/jill/rewards-work'],
+    {cwd:root,encoding:'utf8'}).trim();
+} catch {
+  throw new Error('Missing verified origin/jill/rewards-work ref; git fetch origin first.');
+}
+if (localSha !== branchSha) {
+  throw new Error('Local WORK commit differs from origin/jill/rewards-work. Pull and certify before updating Google.');
+}
+
 if (!fs.existsSync(WORK_CONFIG_FILE)) throw new Error('Missing WORK Shopify app config.');
 execFileSync(process.execPath,['scripts/prepare-rewards-work-config.mjs'],{cwd:root,stdio:'inherit'});
 assertRewardsWorkConfig(fs.readFileSync(WORK_CONFIG_FILE,'utf8'));
