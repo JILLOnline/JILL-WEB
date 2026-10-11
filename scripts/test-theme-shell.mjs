@@ -246,7 +246,16 @@ const accountCoupons = read('extensions/jill-account-coupons/src/Coupons.jsx');
 includesAll(accountDashboardConfig, 'account dashboard target', ['customer-account.page.render']);
 includesAll(accountCouponsConfig, 'account coupons target', ['customer-account.page.render']);
 includesAll(accountProfileConfig, 'account profile target', ['customer-account.profile.block.render']);
-includesAll(accountDashboard, 'account dashboard page shell', ['<s-page', 'Back to JILL']);
+const accountHub = read('extensions/jill-account-dashboard/src/hub/AccountHub.jsx');
+includesAll(accountDashboard,'My JILL page entrypoint',[
+  "import ConnectedHub from './hub/ConnectedHub.jsx'",
+  'render(<ConnectedHub />, document.body)',
+]);
+includesAll(accountHub,'My JILL page shell',[
+  '<s-page heading="My JILL"',
+  'shopify:customer-account/orders',
+  'shopify:customer-account/profile',
+]);
 includesAll(accountCoupons, 'account coupon page shell', ['<s-page', 'heading="Coupons"']);
 for (const source of [accountDashboard, accountCoupons]) {
   if (source.includes('theme.liquid') || source.includes('jill-site-header') || source.includes('jill-site-footer')) {
