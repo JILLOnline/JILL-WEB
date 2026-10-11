@@ -120,8 +120,9 @@ if (!dashboard.includes("from './rewards/RewardsCard.jsx'") ||
     !rewardsTransport.includes('export async function requestReward(')) {
   throw new Error('Rewards transaction transport/UI must have one canonical reusable owner.');
 }
-if (!dashboard.includes("from '../../../shared/rewards.mjs'")) {
-  throw new Error('Dashboard is not using the canonical shared Rewards module.');
+if (!dashboard.includes("import ConnectedHub from './hub/ConnectedHub.jsx'") ||
+    !rewardsCard.includes("from '../../../../shared/rewards.mjs'")) {
+  throw new Error('The My JILL entrypoint must own the hub and reuse shared Rewards rules.');
 }
 if (!coupons.includes("from '../../../shared/rewards.mjs'")) {
   throw new Error('Coupons is not using the canonical shared Rewards module.');
@@ -131,16 +132,16 @@ const refreshMs = Number(mustMatch(ui, /REWARDS_REFRESH_MS = (\d+)/, 'Rewards re
 if (refreshMs !== 25000) {
   throw new Error('Rewards refresh cadence changed without contract review.');
 }
-if (dashboard.includes('const REWARDS_REFRESH_MS =') || coupons.includes('const REWARDS_REFRESH_MS =')) {
+if (rewardsCard.includes('const REWARDS_REFRESH_MS =') || coupons.includes('const REWARDS_REFRESH_MS =')) {
   throw new Error('Rewards refresh cadence must have one owner in shared/rewards.mjs.');
 }
-if (dashboard.includes('const REWARD_TIERS = [')) {
+if (rewardsCard.includes('const REWARD_TIERS = [')) {
   throw new Error('Dashboard reintroduced a duplicate reward tier table.');
 }
-if (dashboard.includes(': !isAvailable\n                      ? ` · ${pointsRemaining}')) {
+if (rewardsCard.includes(': !isAvailable\n                      ? ` · ${pointsRemaining}')) {
   throw new Error('Locked tiers are incorrectly displaying pts-left copy.');
 }
-if (dashboard.includes('Expires 30 days') || dashboard.includes('every $10')) {
+if (rewardsCard.includes('Expires 30 days') || rewardsCard.includes('every $10')) {
   throw new Error('Dashboard reintroduced hard-coded Rewards policy copy.');
 }
 
@@ -366,7 +367,9 @@ const legacyRewardKeys = [
 ];
 for (const key of legacyRewardKeys) {
   for (const [owner, source] of [
-    ['Dashboard', dashboard],
+    ['Dashboard entrypoint', dashboard],
+    ['Rewards component', rewardsCard],
+    ['Rewards transport', rewardsTransport],
     ['Coupons', coupons],
     ['shared Rewards', ui],
     ['Rewards backend', backend],
@@ -412,7 +415,8 @@ if (
 ) {
   throw new Error('Customer Account storefront links must use the authenticated Shop GraphQL query.');
 }
-for (const owner of [dashboard, coupons]) {
+const rewardsPage = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Rewards.jsx', 'utf8');
+for (const owner of [rewardsPage, coupons]) {
   if (!owner.includes('loadCustomerAccountStorefront')) {
     throw new Error('Customer Account page lacks authenticated shop identity resolution.');
   }
@@ -424,7 +428,7 @@ for (const owner of [dashboard, coupons]) {
 if (!ui.includes('function discountCartUrl(') || !ui.includes('/discount/')) {
   throw new Error('Shareable discount-to-cart URLs must have one canonical owner.');
 }
-for (const owner of [dashboard, coupons]) {
+for (const owner of [rewardsCard, coupons]) {
   if (!owner.includes('discountCartUrl')) {
     throw new Error('Customer Account Use Now must consume the shared cart URL.');
   }
