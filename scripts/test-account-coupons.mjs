@@ -16,6 +16,8 @@ function includesAll(source, owner, markers) {
 }
 
 const source = read('extensions/jill-account-coupons/src/Coupons.jsx');
+const canonical = read('extensions/jill-account-dashboard/src/pages/Coupons.jsx');
+const wallet = read('shared/customer-coupons.mjs');
 const config = read('extensions/jill-account-coupons/shopify.extension.toml');
 const dashboardConfig = read('extensions/jill-account-dashboard/shopify.extension.toml');
 const profileConfig = read('extensions/jill-account-home/shopify.extension.toml');
@@ -31,32 +33,45 @@ includesAll(config, 'Coupons extension config', [
   'api_access = true',
 ]);
 
-includesAll(source, 'Coupons runtime', [
-  'shopify://storefront/api/2026-07/graphql.json',
-  'shopify://customer-account/api/2026-07/graphql.json',
-  'namespace: "jill_promotions"',
-  'key: "active_public_codes"',
-  'namespace: "jill_rewards"',
-  'key: "coupons"',
-  'PROMOTION_SNAPSHOT_MAX_AGE_MS',
-  'rewardWallet',
-  'rewardCouponStatus',
-  'discountCartUrl',
+includesAll(source, 'Legacy Coupons compatibility route', [
+  "from '../../jill-account-dashboard/src/pages/Coupons.jsx'",
+  '<s-page heading="Coupons"',
+  'href="extension:jill-account-dashboard/"',
+  'render(<LegacyCoupons />, document.body)',
+  '<Coupons onNavigate={returnToHub} />',
+]);
+for (const forbidden of [
+  'shopify://storefront/api/',
+  'shopify://customer-account/api/',
+  'query JillPersonalCoupons',
+  'query JillPublicPromotions',
+  'function parsePromotionSnapshot(',
+  'function loadRewardCoupons(',
+  'function RewardCoupon(',
+  'function StorewideOffer(',
+  'setInterval(',
+  'discountCartUrl(',
+]) {
+  if (source.includes(forbidden)) fail('Legacy Coupons must not duplicate wallet/promotion ownership: '+forbidden);
+}
+includesAll(canonical, 'Canonical My JILL Coupons', [
+  'loadPersonalCoupons',
+  'loadPublicPromotionCatalog',
   'loadCustomerAccountStorefront',
-  'href={store ? discountCartUrl(store, offer.code) : undefined}',
-  'href={store ? discountCartUrl(store, coupon.code) : undefined}',
-  'disabled={!store}',
+  'discountCartUrl',
   'REWARDS_REFRESH_MS',
-  'refreshRewards(false)',
-  'clearInterval(rewardsRefreshTimer)',
-  'setRewardsStale(true)',
-  'Your last confirmed coupons are still shown while we refresh automatically.',
+  'clearInterval(timer)',
   'Storewide offers',
-  'Current Shopify promotions available to everyone.',
-  'Personal JILL Rewards coupons generated from your Dashboard.',
-  'No storewide promotions right now.',
-  'extension:jill-account-dashboard/',
-  'render(<Coupons />, document.body)',
+  'For you',
+  'Upcoming offers',
+  'Use Now',
+  'Use Offer',
+]);
+includesAll(wallet, 'One strict wallet and public offers parser', [
+  'PERSONAL_WALLET_QUERY',
+  'PUBLIC_PROMOTIONS_QUERY',
+  'parsePersonalWallet',
+  'parsePublicPromotionCatalog',
 ]);
 
 for (const forbidden of [
@@ -132,7 +147,7 @@ includesAll(profileSource, 'WORK-safe Settings profile block', [
 ]);
 for (const [name, contents] of [
   ['My JILL Rewards', read('extensions/jill-account-dashboard/src/pages/Rewards.jsx')],
-  ['Coupons', source],
+  ['Canonical Coupons', canonical],
   ['JILL Settings', profileSource],
 ]) {
   if (contents.includes('storefrontOrigin(shopify.shop)') || contents.includes('= shopify.shop')) {
