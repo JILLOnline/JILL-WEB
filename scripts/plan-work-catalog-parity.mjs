@@ -55,6 +55,19 @@ export function planCatalogParity(source,work){
     'source catalog drift: missing='+missingCanonical.join(',')+' extra='+notCanonical.join(','));
   const ca=collectionsMap(source.collections,'source collections');
   const cb=collectionsMap(work.collections,'WORK collections');
+  required(source.profileDefinition?.type==='jill_personalization_profile',
+    'LIVE personalization definition missing or invalid');
+  const pa=uniqueByHandle(source.personalizationProfiles,'LIVE personalization profiles');
+  const pb=uniqueByHandle(work.personalizationProfiles||[],'WORK personalization profiles');
+  const profileDefinitionAction=work.profileDefinition?.type==='jill_personalization_profile'
+    ? 'EXISTS' : 'CREATE_IN_WORK';
+  const profiles=[];
+  for(const [handle,p] of pa){
+    const dest=pb.get(handle);
+    const status=!dest?'CREATE_IN_WORK':p.type!==dest.type||
+      JSON.stringify(p.fields)!==JSON.stringify(dest.fields)?'CONFLICT':'MATCH';
+    profiles.push({handle,action:status});
+  }
   const products=[];
   for(const [handle,p] of a){
     const target=b.get(handle);
@@ -64,6 +77,8 @@ export function planCatalogParity(source,work){
       'LIVE capability drift from repository: '+handle);
     required(p.personalizationProfileHandle!==null || !Object.hasOwn(p,'personalizationProfileHandle'),
       'LIVE personalization profile unresolved: '+handle);
+    required(!p.personalizationProfileHandle || pa.has(p.personalizationProfileHandle),
+      'LIVE product refers to missing personalization profile: '+handle);
     if(!target){
       products.push({handle,action:'CREATE_DRAFT',variantCount:values(p.variants).length,profileId:capability.profile.id});
       continue;
@@ -104,8 +119,11 @@ export function planCatalogParity(source,work){
       conflictingProducts:products.filter(x=>x.action==='CONFLICT').length,
       reviewProducts:products.filter(x=>x.action==='REVIEW_UPDATE').length,
       createCollections:collections.filter(x=>x.action==='CREATE_UNPUBLISHED').length,
+      createProfiles:profiles.filter(x=>x.action==='CREATE_IN_WORK').length,
+      conflictingProfiles:profiles.filter(x=>x.action==='CONFLICT').length,
+      profileDefinitionAction,
       unrelatedWorkProducts:[...b.keys()].filter(h=>!a.has(h))},
-    products,collections,
+    products,collections,profiles,
     notes:['No inventory, customers, orders, or production IDs may be migrated.',
       'CREATES must remain draft and collections unpublished until validated.',
       'Shopify metaobject references require independent destination IDs.',
