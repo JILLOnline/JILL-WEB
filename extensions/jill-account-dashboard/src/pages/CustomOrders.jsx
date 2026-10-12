@@ -53,10 +53,6 @@ export default function CustomOrders() {
           </s-section>
         ))}
       </s-section>
-      <s-section heading="Your Shopify account">
-        <s-text>Standard purchases and delivery details stay in your Shopify Orders page. Custom Order requests are a separate timeline.</s-text>
-        <s-link href="shopify:customer-account/orders">View Shopify orders</s-link>
-      </s-section>
     </s-stack>
   );
 }
