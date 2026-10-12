@@ -28,9 +28,23 @@ assert(asset.includes("gateway.pathname!=='/apps/jill-custom-order'"),'Missing s
 assert(asset.includes('receipt?.verified!==true'),'Missing verified receipt check');
 assert(asset.includes('requestSentOnce'),'Missing replay protections');
 if(fs.existsSync(dest)){
-  assert(fs.existsSync(sentinel),'Refusing to replace an unknown directory');
-  const old=JSON.parse(read(sentinel));
-  assert(old.owner==='jill-work-custom-order-theme'&&old.shop===shop,'Wrong staging owner');
+  if (fs.existsSync(sentinel)) {
+    const old=JSON.parse(read(sentinel));
+    assert(old.owner==='jill-work-custom-order-theme'&&old.shop===shop,'Wrong staging owner');
+  } else {
+    // A failed previous build may leave a partial ignored staging copy.
+    // Recover ONLY when it contains our two exact canonical theme files,
+    // no non-theme top-level entries, and is inside this repository.
+    const allowed=new Set(['assets','config','layout','locales','sections',
+      'snippets','templates','.jill-work-theme.json']);
+    const entries=fs.readdirSync(dest);
+    assert(entries.length>0&&entries.every(name=>allowed.has(name)),
+      'Unrecognized incomplete WORK stage; refusing removal');
+    assert(fs.existsSync(path.join(dest,'templates/page.custom-order.json'))&&
+      fs.existsSync(path.join(dest,'assets/jill-custom-order.js')),
+      'Incomplete stage identity cannot be established');
+    console.log('Recovering identified incomplete WORK staging copy.');
+  }
   fs.rmSync(dest,{recursive:true,force:true});
 }
 fs.cpSync(source,dest,{recursive:true});
