@@ -84,6 +84,7 @@ assert.ok(start>=0&&stop>start);
 const properties={JILL_CUSTOM_ORDER_GATEWAY_SECRET:secret,JILL_CUSTOM_ORDER_REQUIRE_GATEWAY:'1'};
 const sandbox={
   JILL_REWARDS_RUNTIME:'LIVE',
+  JILL_CUSTOM_ORDER_SANDBOX:false,
   PropertiesService:{getScriptProperties:()=>({getProperty:k=>properties[k]||''})},
   Utilities:{computeHmacSha256Signature:(message,key)=>
     [...createHmac('sha256',key).update(message).digest()].map(x=>x>127?x-256:x)},
