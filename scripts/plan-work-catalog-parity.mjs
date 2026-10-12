@@ -60,6 +60,10 @@ export function planCatalogParity(source,work){
     const target=b.get(handle);
     const capability=JILL_CATALOG_CAPABILITIES.find(x=>x.handle===handle);
     required(capability?.profile?.id,'no canonical capability profile for '+handle);
+    required(!p.jillCapabilityProfileId || p.jillCapabilityProfileId===capability.profile.id,
+      'LIVE capability drift from repository: '+handle);
+    required(p.personalizationProfileHandle!==null || !Object.hasOwn(p,'personalizationProfileHandle'),
+      'LIVE personalization profile unresolved: '+handle);
     if(!target){
       products.push({handle,action:'CREATE_DRAFT',variantCount:values(p.variants).length,profileId:capability.profile.id});
       continue;
@@ -71,6 +75,14 @@ export function planCatalogParity(source,work){
     if(p.descriptionHtml!==target.descriptionHtml)attrs.push('description');
     const targetProfile=target.jillCapabilityProfileId;
     if(targetProfile!==capability.profile.id)attrs.push('jill_capabilities');
+    if(p.personalizationProfileHandle &&
+       p.personalizationProfileHandle!==target.personalizationProfileHandle)
+      attrs.push('personalization_profile');
+    if(values(p.images).length===values(target.images).length){
+      const names=items=>items.map(x=>{try{return new URL(x.url).pathname.split('/').pop();}catch{return '';}}).sort();
+      if(JSON.stringify(names(values(p.images)))!==JSON.stringify(names(values(target.images))))
+        attrs.push('media_identity');
+    }
     products.push({handle,action:variants.length?'CONFLICT':attrs.length?'REVIEW_UPDATE':'MATCH',
       differences:attrs,variantKeys:variants,profileId:capability.profile.id});
   }
@@ -81,7 +93,8 @@ export function planCatalogParity(source,work){
     const sourceMembers=values(c.productHandles).slice().sort();
     const destMembers=values(target.productHandles).slice().sort();
     const same=JSON.stringify(sourceMembers)===JSON.stringify(destMembers);
-    collections.push({handle,action:same?'MATCH':'REVIEW_MEMBERSHIP',
+    const sameRules=JSON.stringify(c.ruleSet||null)===JSON.stringify(target.ruleSet||null);
+    collections.push({handle,action:!sameRules?'CONFLICT_RULES':same?'MATCH':'REVIEW_MEMBERSHIP',
       sourceCount:sourceMembers.length,workCount:destMembers.length});
   }
   return {schema:'jill.catalog-parity-plan.v1',sourceShop:SOURCE_SHOP,destinationShop:WORK_SHOP,
