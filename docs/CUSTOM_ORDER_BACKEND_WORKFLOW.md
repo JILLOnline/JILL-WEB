@@ -240,3 +240,53 @@ Receipt != account ownership: logged-in customer linkage requires a distinct
 Customer Account session-token signature, expiry, audience and sub check.
 Do not claim a guest request by email match. No customer status/approval
 endpoint, paid invoice or shipment transition is enabled in this phase.
+
+## Dedicated WORK Custom Orders QA backend — provisioned data store
+
+A NEW EMPTY Google WORK QA spreadsheet has been created independently of
+the production Submissions sheet. It has canonical Submissions (22 columns),
+CustomOrderEvents (11 columns) and CustomOrderDesk (10 columns) headers,
+with frozen header rows and validated merchant status dropdowns. No LIVE
+requests or customer records were copied. The QA spreadsheet ID belongs in
+your local environment/config, not in this public GitHub repository.
+
+Build/runtime files:
+- scripts/build-custom-order-work-backend.mjs: derived from the existing
+  source-safe WORK Rewards compiler but writes .work-custom-orders (ignored).
+  It requires JILL_CUSTOM_ORDER_WORK_SHEET_ID and refuses the LIVE Sheet ID.
+- scripts/bootstrap-custom-order-work-backend.mjs: creates a NEW standalone
+  Google Apps Script project, records its .clasp identity outside Git and
+  uploads only the single canonical GS source. It does NOT create a web
+  app deployment, secret, triggers, rewards ledger or Shopify discount.
+  A subsequent upload first audits Google remote files and refuses unknown
+  scripts. It may require Google clasp OAuth authorization in a browser.
+- The generated runtime has JILL_REWARDS_RUNTIME=WORK AND
+  JILL_CUSTOM_ORDER_SANDBOX=true. This is a distinctly isolated Custom Order
+  QA project, NOT the existing WORK Rewards backend.
+
+In the Custom Order QA runtime:
+- Rewards webhooks, setup, sweep tasks and Google OAuth callbacks are blocked.
+- Shopify customer synchronization and all outbound emails are bypassed.
+- Custom Order intake/receipt/history are allowed ONLY with valid gateway
+  HMAC signatures; anonymous direct POSTs are always denied, regardless of
+  the JILL_CUSTOM_ORDER_REQUIRE_GATEWAY property.
+- The canonical WORK Rewards deployment retains SANDBOX=false, so it
+  continues refusing all Custom Order POSTs. No changes to its URL or data.
+
+After pulling the certified jill/rewards-work commit in Windows PowerShell,
+set JILL_CUSTOM_ORDER_WORK_SHEET_ID locally to the NEW isolated QA spreadsheet
+ID (found in the QA spreadsheet URL) and run:
+
+  npm.cmd run custom-orders:work:backend:bundle
+  npm.cmd run custom-orders:work:backend:bootstrap
+
+These steps require Google clasp authorization and do not deploy a web app.
+Before web deployment, provision a separate Script Property
+JILL_CUSTOM_ORDER_GATEWAY_SECRET (32+ random characters, same key held only
+by hosted WORK app-proxy server). Do not paste or commit it. Verify the
+new Google project and QA spreadsheet IDs, then explicitly deploy the
+QA web app from its own project after work-scope approval.
+
+Only after the corresponding WORK Shopify app proxy is hosted with real
+Shopify signature verification and rate limiting can we perform a real
+shopper submission. The browser theme setting stays blank until that point.
