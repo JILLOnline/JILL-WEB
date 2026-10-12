@@ -290,3 +290,43 @@ QA web app from its own project after work-scope approval.
 Only after the corresponding WORK Shopify app proxy is hosted with real
 Shopify signature verification and rate limiting can we perform a real
 shopper submission. The browser theme setting stays blank until that point.
+
+
+## QA predeployment verification and first deployment
+
+Once the new QA project has `JILL_CUSTOM_ORDER_GATEWAY_SECRET` and
+`JILL_CUSTOM_ORDER_ADMINS` saved securely in its **own** Script Properties,
+re-pull the latest certified WORK branch and rerun
+`npm.cmd run custom-orders:work:backend:bootstrap` with the existing
+`JILL_CUSTOM_ORDER_WORK_SHEET_ID`. This updates the *same* Google QA project.
+Its Script Properties are managed separately from clasp source uploads.
+
+The QA `appsscript.json` manifest explicitly limits Google OAuth permissions
+to `spreadsheets` and `userinfo.email`. Shared source references to email,
+OAuth callbacks or Shopify operations must NOT expand the QA project's scopes.
+In Google Apps Script > Overview, check the displayed OAuth scopes and stop
+if Google unexpectedly requests Mail/Gmail, Drive-wide administration or
+other privileged access.
+
+Before deploying, open the QA project code editor, choose the read-only
+`jillCustomOrderQaPreflight` function and click Run. Review the execution
+log: it must return `ok:true`, `scope:WORK_CUSTOM_ORDERS_QA`,
+`gateway_secret_configured:true`, `merchant_operator_authorized:true`,
+and `qa_sheet_headers_verified:true`. It neither logs the secret nor changes
+customer orders; any failure **blocks deployment**.
+
+If all checks pass, select **Deploy > New deployment > Web app**:
+- Description: `JILL WORK Custom Orders QA — signed intake`
+- Execute as: `Me` (the QA project deploying operator)
+- Who has access: `Anyone` (the eventual Shopify server must be able
+  to call it without a Google interactive login)
+- Deploy, review requested permissions, and save the newly created `/exec`
+  URL. The QA doGet must return only `JILL WORK Custom Orders QA online.`
+  This GET check establishes only web-app reachability, **not** a verified
+  signed POST or a working Shopify gateway.
+
+Do not configure the production Custom Order theme, production Scripts,
+WORK Rewards endpoint, or run `setupJillRewards`. Do not set the
+`verified_submission_endpoint` theme setting until an actual Shopify app
+proxy with verified shop auth and rate limiting has passed a real synthetic
+order submission plus separate receipt verification.
