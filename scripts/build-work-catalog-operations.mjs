@@ -51,7 +51,7 @@ export function buildWorkCatalogOperations(source,work){
     'Unexpected default/explicit option mix: '+p.handle);
   const variants=p.variants.map(v=>{
    guard(Array.isArray(v.selectedOptions),'Missing option definitions for '+p.handle);
-   const optionValues=defaultOnly?[]:v.selectedOptions.map(o=>({optionName:o.name,name:o.value}));
+   const optionValues=v.selectedOptions.map(o=>({optionName:o.name,name:o.value}));
    guard(defaultOnly||optionValues.length===sourceOptions.length,
      'Variant missing selected options: '+p.handle+'/'+v.title);
    return {price:String(v.price),compareAtPrice:v.compareAtPrice??undefined,
@@ -70,7 +70,7 @@ export function buildWorkCatalogOperations(source,work){
   operations.push({stage:'02_PRODUCTS',kind:'product.draft.create',handle:p.handle,
    input:{title:p.title,handle:p.handle,status:'DRAFT',vendor:p.vendor,productType:p.productType,
     descriptionHtml:p.descriptionHtml,tags:p.tags,files,
-    productOptions:defaultOnly?[]:sourceOptions.map((o,i)=>({name:o.name,position:i+1,
+    productOptions:sourceOptions.map((o,i)=>({name:o.name,position:i+1,
       values:o.values.map(value=>({name:value}))})),
     variants,metafields}});
   if(p.personalizationProfileHandle){
