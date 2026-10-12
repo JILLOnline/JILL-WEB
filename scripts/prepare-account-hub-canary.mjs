@@ -144,6 +144,7 @@ export function prepareCanary(mode) {
       fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
       for (const filename of [
         'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
+        'customer-custom-orders.mjs',
       ]) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));
