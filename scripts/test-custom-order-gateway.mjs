@@ -109,6 +109,10 @@ tampered.parameter.raw_payload='{"attacker":true}';
 assert.equal(sandbox.jillCustomOrderGatewayVerified_(tampered,'submit'),false);
 sandbox.JILL_REWARDS_RUNTIME='WORK';
 assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('submit',JSON.stringify(raw)),'submit'),false);
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=true;
+assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('submit',JSON.stringify(raw)),'submit'),true,
+  'isolated Custom Order QA accepts its own signed gateway only');
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=false;
 sandbox.JILL_REWARDS_RUNTIME='LIVE';
 properties.JILL_CUSTOM_ORDER_REQUIRE_GATEWAY='';
 assert.equal(sandbox.jillCustomOrderGatewaySubmissionAllowed_({parameter:{submission_id:id}}),true);
