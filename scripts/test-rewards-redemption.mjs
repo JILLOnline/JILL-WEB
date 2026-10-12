@@ -653,7 +653,8 @@ console.log('JILL WORK canonical backend packaging and isolation passed.');
 // rather than obscuring it with an undeclared verifiedRewardHook ReferenceError.
 {
   const backend = fs.readFileSync(
-    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
+    'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8')
+    .replace(/\r\n?/g, '\n');
   const start = backend.indexOf('function doPost(e) {');
   const end = backend.indexOf('/* ---------------------------\n   JILL REWARDS', start);
   assert.ok(start >= 0 && end > start);
