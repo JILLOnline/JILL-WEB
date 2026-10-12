@@ -17,7 +17,7 @@ const productQuery=`query SafeJillProducts($after:String) {
  products(first:50,after:$after){
   nodes{handle title status descriptionHtml vendor productType tags
    options{name values}
-   variants(first:100){nodes{title price compareAtPrice selectedOptions{name value}} pageInfo{hasNextPage}}
+   variants(first:100){nodes{title sku taxable inventoryPolicy price compareAtPrice selectedOptions{name value}} pageInfo{hasNextPage}}
    media(first:100){nodes{__typename ... on MediaImage{alt image{url altText}}} pageInfo{hasNextPage}}
    profile:metafield(namespace:"jill",key:"personalization_profile"){reference{__typename ... on Metaobject{handle type}}}
    capability:metafield(namespace:"custom",key:"jill_product_capabilities"){value}
