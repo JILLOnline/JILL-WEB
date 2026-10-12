@@ -59,6 +59,7 @@ const sandbox={
   getSheet_:()=>original,
   findSubmissionRow_:(sheet,id)=>sheet.rows.findIndex((row,i)=>i>0&&row[0]===id)+1,
   get JILL_REWARDS_RUNTIME(){return runtime;},
+  JILL_CUSTOM_ORDER_SANDBOX:false,
   Date,JSON,Number,String,Math,Array,Object,Error,isNaN,console
 };
 vm.createContext(sandbox);
