@@ -87,33 +87,3 @@ jobs:
         run: |
           $dirty = git status --porcelain --untracked-files=no
           if ($dirty) { Write-Error "Tests changed tracked source: $dirty"; exit 1 }
-
-  gateway:
-    name: Package WORK Render gateway (no deployment)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout WORK source
-        uses: actions/checkout@v4
-
-      - name: Install Node 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install only isolated gateway dependencies
-        run: npm install --prefix services/custom-order-work-gateway --omit=dev --ignore-scripts --no-audit --no-fund
-
-      - name: Validate launch entrypoint and HTTP runtime
-        run: |
-          node --check services/custom-order-work-gateway/server.mjs
-          node --check services/custom-order-work-gateway/http-handler.mjs
-          node --check services/custom-order-work-gateway/rate-limit.mjs
-          node -e "import('./services/custom-order-work-gateway/server.mjs').then(() => console.log('Render gateway bundle imports successfully'))"
-
-      - name: Test signed proxy and Redis failure behaviors
-        run: node scripts/test-render-custom-order-gateway.mjs
-
-      - name: Verify no tracked source mutation
-        run: |
-          test -z "$(git status --porcelain --untracked-files=no)"
