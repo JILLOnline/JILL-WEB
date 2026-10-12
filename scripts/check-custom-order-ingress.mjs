@@ -33,8 +33,11 @@ assert.match(gateway,/confirmation\.revision!==1/);
 assert.match(gateway,/result\.submission_id!==id/);
 assert.match(gateway,/cache-control':'no-store'/);
 assert.doesNotMatch(gateway,/myshopify\.com\/admin|X-Shopify-Access-Token/i);
-assert.doesNotMatch(backend,/function doGet\([^]*?jill_order_receipt/,
-  'The signed receipt must not be exposed through an unauthenticated GET route.');
+const getHandler=backend.slice(backend.indexOf('function doGet(e) {'),
+  backend.indexOf('function doPost(e) {'));
+assert.doesNotMatch(getHandler,/jill_order_receipt/,
+  'Signed receipt cannot be exposed through the public GET route.');
+
 const deploy=read('scripts/build-rewards-work-backend.mjs');
 assert.match(deploy,/JILL_REWARDS_RUNTIME = 'WORK'/);
 assert.match(backend,/if \(JILL_REWARDS_RUNTIME==='WORK'\) return false;/);
