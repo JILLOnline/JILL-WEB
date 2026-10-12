@@ -330,3 +330,41 @@ WORK Rewards endpoint, or run `setupJillRewards`. Do not set the
 `verified_submission_endpoint` theme setting until an actual Shopify app
 proxy with verified shop auth and rate limiting has passed a real synthetic
 order submission plus separate receipt verification.
+
+
+## Clasp round-trip recovery on Windows (2026-10-12)
+
+Google clasp may upload the canonical source as
+`JILL_Custom_Order_Automation_REWARDS.gs`, but download the same Apps
+Script source as `JILL_Custom_Order_Automation_REWARDS.js`.
+The initial second-run bootstrap incorrectly rejected the `.js` suffix as
+an unknown remote script. **It failed before push; it did not replace the QA
+project or its saved Script Properties.**
+
+The repaired bootstrap now performs `clasp pull` in a disposable audit
+directory, not the canonical local bundle. It accepts exactly **one**
+script with the canonical base filename and either `.js` or `.gs`,
+reads the embedded certified Git source SHA, reconstructs that historical
+WORK QA source at the exact isolated Sheet ID, and compares normalized
+SHA-256 content before touching the upload directory. Any extra
+`.js`/`.gs`/HTML file, wrong Sheet ID, incorrect sandbox flags,
+or remote code drift **blocks the upload**. No remote changes are erased.
+
+If the failed pull left the same canonical `.js` alongside local
+`.gs`, bootstrap deletes that local `.js` **only after it matches**
+the separately verified remote contents. Then it rebuilds one canonical
+`.gs` plus the restricted `appsscript.json` manifest and pushes to
+the existing `.qa-project.json` project ID. No new Google project is
+created. This is regression-tested on Windows Node 24 and Linux.
+
+From PowerShell after passing CI and `git pull --ff-only`, use the
+existing, nonproduction `JILL_CUSTOM_ORDER_WORK_SHEET_ID` and rerun
+`npm.cmd run custom-orders:work:backend:bootstrap`. Expect:
+`QA Google remote matches historical certified source`, followed
+by `WORK Custom Orders QA source pushed` and `NOT DEPLOYED`.
+Then choose `jillCustomOrderQaPreflight` in the QA Google Apps Script
+editor and run it manually before deploying the QA web app.
+
+Never delete the entire `.work-custom-orders` directory or create a
+replacement Apps Script project to work around this extension issue:
+that directory contains the local, isolated project binding.
