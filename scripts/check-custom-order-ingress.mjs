@@ -38,6 +38,16 @@ const getHandler=backend.slice(backend.indexOf('function doGet(e) {'),
 assert.doesNotMatch(getHandler,/jill_order_receipt/,
   'Signed receipt cannot be exposed through the public GET route.');
 
+const qaBuilder=read('scripts/build-custom-order-work-backend.mjs');
+const qaBootstrap=read('scripts/bootstrap-custom-order-work-backend.mjs');
+assert.match(qaBuilder,/JILL_CUSTOM_ORDER_SANDBOX = true/);
+assert.match(qaBuilder,/JILL_CUSTOM_ORDER_WORK_SHEET_ID/);
+assert.match(qaBuilder,/production sheet is prohibited/);
+assert.match(qaBootstrap,/project.sheetId!==sheetId/);
+assert.match(qaBootstrap,/separate Custom Order QA clasp create-script/);
+assert.match(backend,/Rewards setup is forbidden in the Custom Order QA project/);
+assert.match(backend,/Rewards sweeps are forbidden in the Custom Order QA project/);
+assert.match(backend,/Custom Order QA project does not accept Rewards webhooks/);
 const deploy=read('scripts/build-rewards-work-backend.mjs');
 assert.match(deploy,/JILL_REWARDS_RUNTIME = 'WORK'/);
 assert.match(backend,/JILL_REWARDS_RUNTIME==='WORK' && !JILL_CUSTOM_ORDER_SANDBOX/);
