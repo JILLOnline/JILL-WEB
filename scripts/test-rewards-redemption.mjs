@@ -664,6 +664,7 @@ console.log('JILL WORK canonical backend packaging and isolation passed.');
   let released = false;
   const context = {
     JILL_REWARDS_RUNTIME: 'WORK',
+    JILL_CUSTOM_ORDER_SANDBOX: false,
     LockService: {getScriptLock: () => ({
       waitLock() {},
       releaseLock() {released = true;},
