@@ -36,6 +36,11 @@ export function validateCustomOrderPayload(formBody) {
   const unique=new Set();
   for(const [key] of params) {
     if(unique.has(key))throw new Error('Duplicate Custom Order fields are not allowed.');
+    // All internal Google and Shopify account identity fields belong to
+    // the gateway AFTER signed app-proxy authentication, never the form.
+    if(/^jill_order_/i.test(key) ||
+       ['logged_in_customer_id','owner_gid','customer_id'].includes(key))
+      throw new Error('Reserved Custom Order authentication field.');
     unique.add(key);
   }
   if(params.get('source')!=='JILL custom order' ||
