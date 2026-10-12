@@ -32,6 +32,9 @@ jobs:
           node --check scripts/export-jill-safe-catalog.mjs
           node --check scripts/plan-work-catalog-parity.mjs
           node scripts/test-jill-safe-catalog-export.mjs
+          node --check scripts/export-jill-safe-site-shell.mjs
+          node --check scripts/plan-work-site-shell.mjs
+          node scripts/test-work-site-shell.mjs
       - name: Build isolated WORK QA theme
         run: node scripts/prepare-work-custom-order-theme.mjs
       - name: Audit static dependencies
