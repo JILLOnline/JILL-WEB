@@ -84,6 +84,8 @@ async function readBackendResult(backendFetch,url,body) {
  * @param {{
  * request: Request,
  * authenticateProxy: (request: Request) => Promise<{shop:string}>,
+ * rateLimit: ({shop:string,request:Request}) => Promise<boolean>,
+ * allowedOrigins: string[],
  * backendFetch?: typeof fetch,
  * expectedShop:string, appsScriptEndpoint:string, receiptSecret:string,
  * now?:()=>number
@@ -91,6 +93,12 @@ async function readBackendResult(backendFetch,url,body) {
  */
 export async function handleCustomOrderProxy(args) {
   if(typeof args?.authenticateProxy!=='function' ||
+      typeof args?.rateLimit!=='function' ||
+      !Array.isArray(args?.allowedOrigins) || !args.allowedOrigins.length ||
+      args.allowedOrigins.some(origin=>{
+        try {return new URL(origin).origin!==origin || !origin.startsWith('https://');}
+        catch{return true;}
+      }) ||
       typeof args?.backendFetch!=='function' && args?.backendFetch!==undefined ||
       typeof args?.receiptSecret!=='string' || args.receiptSecret.length<32 ||
       !STORE.test(args.expectedShop||'') ||
@@ -104,6 +112,12 @@ export async function handleCustomOrderProxy(args) {
   try {auth=await authenticateProxy(request);}
   catch{return failure(401,'unauthenticated_proxy');}
   if(!auth || auth.shop!==expectedShop)return failure(403,'wrong_shop');
+  if(!args.allowedOrigins.includes(request.headers.get('origin')))
+    return failure(403,'invalid_origin');
+  let permitted=false;
+  try {permitted=await args.rateLimit({shop:auth.shop,request});}
+  catch{return failure(503,'rate_limit_unavailable',true);}
+  if(permitted!==true)return failure(429,'rate_limited',true);
   const size=Number(request.headers.get('content-length')||0);
   if(!Number.isFinite(size)||size<0||size>MAX_BYTES)
     return failure(413,'payload_too_large');
