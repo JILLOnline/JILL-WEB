@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install source-validation dependencies without postinstall or deployment
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Verify canonical form and backend contracts
         run: |
           node scripts/check-theme-core.mjs
