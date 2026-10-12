@@ -9,7 +9,7 @@ const root=process.cwd();
 const source=path.join(root,'theme');
 const dest=path.join(root,'.work-custom-order-theme');
 const sentinel=path.join(dest,'.jill-work-theme.json');
-const branch='jill/governance-release-boundaries';
+const branch='jill/work-custom-order-integration';
 const shop='jill-work.myshopify.com';
 const read=(p)=>fs.readFileSync(p,'utf8');
 function assert(ok,msg){if(!ok)throw Error(msg);}
@@ -45,6 +45,27 @@ const needle='"id": "verified_submission_endpoint",';
 assert(staged.includes(needle),'Verified field not found');
 staged=staged.replace(needle,needle+'\n      "default": "/apps/jill-custom-order",');
 fs.writeFileSync(stagedFile,staged);
+// Force the QA theme's browser transport to fail closed. The WEBSITE owner
+// remains untouched: this replacement is confined to the ignored WORK package.
+const stagedJSFile=path.join(dest,'assets/jill-custom-order.js');
+let stagedJS=read(stagedJSFile);
+const before=`    const endpoint = String(root.dataset.submitEndpoint || '').trim();
+    if (!endpoint) fail('submission is temporarily unavailable');`;
+const after=`    // WORK QA must never use the legacy direct-Google transport.
+    const endpoint = '/apps/jill-custom-order';`;
+assert(stagedJS.includes(before),'WORK JS endpoint guard changed; review source');
+stagedJS=stagedJS.replace(before,after);
+const fallback=`    if (!verifiedPath) {
+      await fetch(endpoint,{method:'POST',mode:'no-cors',keepalive:true,body});
+      return; // Legacy transport; must be retired after gateway launch.
+    }`;
+assert(stagedJS.includes(fallback),'WORK JS legacy fallback changed; review source');
+stagedJS=stagedJS.replace(fallback,`    if (verifiedPath !== endpoint) {
+      fail('WORK verified Shopify app proxy is not configured');
+    }`);
+assert(!stagedJS.includes('mode:\'no-cors\''),'Unverified submission transport remains');
+fs.writeFileSync(stagedJSFile,stagedJS);
+
 // Only change the homepage link in the isolated QA package; website lane remains canonical.
 const homeFile=path.join(dest,'templates/index.json');
 const home=JSON.parse(read(homeFile));
