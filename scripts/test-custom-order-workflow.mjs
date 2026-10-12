@@ -138,7 +138,9 @@ sheets.CustomOrderEvents.rows[3][2]=999;
 assert.throws(()=>read('jill:QA-ORDER-1'),/inconsistent/);
 sheets.CustomOrderEvents.rows[3][2]=3;
 assert.equal(read('jill:QA-ORDER-1').revision,7);
-assert.deepEqual(js(backfill(3)),{scanned:1,created:0});
+assert.deepEqual(js(backfill(0,3)),{scanned:1,created:0,next_offset:null});
+assert.deepEqual(js(backfill(1,3)),{scanned:0,created:0,next_offset:null});
+assert.throws(()=>backfill(-1,2),/nonnegative row offset/);
 assert.equal(sheets.CustomOrderEvents.rows.length,8);
 
 // Authorized spreadsheet controls, no public status endpoint or timed worker.
