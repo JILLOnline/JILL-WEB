@@ -140,6 +140,11 @@ allowed='staff@jill.example';
 runtime='WORK';
 assert.throws(()=>create('jill:QA-ORDER-1','2026-10-11T13:00:00Z'),/disabled/);
 assert.throws(()=>read('jill:QA-ORDER-1'),/disabled/);
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=true;
+assert.equal(read('jill:QA-ORDER-1').revision,7,
+  'dedicated WORK Custom Order QA must permit isolated sheet workflow');
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=false;
+assert.throws(()=>read('jill:QA-ORDER-1'),/disabled/);
 runtime='LIVE';
 assert.throws(()=>update({...request,operation_id:'jill:op-00013',
   submission_id:'jill:missing',expected_revision:1}),/does not exist/);
