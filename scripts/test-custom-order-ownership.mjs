@@ -155,6 +155,13 @@ assert.equal(list(spoof).ok,false,'Tampered owner denied');
 const guestSigned=signedCustomerRequest(gidA);
 guestSigned.parameter.jill_order_gateway_sig='f'.repeat(64);
 assert.equal(list(guestSigned).ok,false,'Forged HMAC denied');
+// Simulate sheet corruption: a second customer is manually assigned the
+// SAME submission. A/B account reads must fail closed, never cross-leak.
+ownerSheet().appendRow([id1,gidB,ownerSheet().rows[1][2],new Date().toISOString()]);
+assert.equal(norm(list(signedCustomerRequest(gidB))).ok,false,
+  'Globally duplicate owner rows must block B, even if B is in the index');
+assert.equal(norm(list(signedCustomerRequest(gidA))).ok,false,
+  'Corrupt owner index must also block A until reconciled');
 const before=ownerSheet().rows.length;
 box.JILL_CUSTOM_ORDER_SANDBOX=false;
 assert.throws(()=>bind('jill:qa:disabled',gidA,raw1,false),/WORK QA only/);
