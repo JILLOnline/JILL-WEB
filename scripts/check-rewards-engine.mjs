@@ -6,7 +6,13 @@ const rewardsCard = fs.readFileSync('extensions/jill-account-dashboard/src/rewar
 const rewardsPage = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Rewards.jsx', 'utf8');
 const rewardsTransport = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/account-transport.mjs', 'utf8');
 const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
-const coupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
+const coupons = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Coupons.jsx', 'utf8');
+const legacyCoupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
+if (!legacyCoupons.includes("from '../../jill-account-dashboard/src/pages/Coupons.jsx'") ||
+    legacyCoupons.includes('query JillPersonalCoupons') ||
+    legacyCoupons.includes('query JillPublicPromotions')) {
+  throw new Error('Legacy Coupons must remain a thin compatibility wrapper, not a second data owner.');
+}
 const backend = fs.readFileSync('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs', 'utf8');
 const promotionBackend = fs.readFileSync('backend/google-apps-script/JILL_Public_Promotions.gs', 'utf8');
 const watchdog = fs.readFileSync('.github/workflows/rewards-watchdog.yml', 'utf8');
