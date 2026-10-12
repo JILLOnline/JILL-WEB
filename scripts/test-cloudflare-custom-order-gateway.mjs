@@ -92,8 +92,21 @@ assert.equal(slashRoot.status,400,
 assert.equal((await slashRoot.json()).error.code,'invalid_submission');
 const badChild=signedUrl();
 badChild.pathname='/jill-custom-order-proxy/child';
-assert.equal((await handleCloudflareCustomOrderWork(req(badChild,probe),env)).status,404,
-  'Other child paths stay blocked');
+const unexpected=await handleCloudflareCustomOrderWork(req(badChild,probe),env);
+assert.equal(unexpected.status,404,'Other child paths stay blocked');
+const unexpectedJson=await unexpected.json();
+assert.deepEqual(unexpectedJson.work_route_diagnostic,{
+  method:'POST',path:'/jill-custom-order-proxy/child',
+});
+assert.ok(!JSON.stringify(unexpectedJson).includes('signature='),
+  'WORK diagnostic must NEVER include Shopify signed query strings');
+assert.ok(!JSON.stringify(unexpectedJson).includes(shopifySecret),
+  'WORK diagnostic must never contain credentials');
+const weird=new URL(signedUrl());
+weird.pathname='/jill-custom-order-proxy/%40customer%2Eexample';
+const sanitized=await handleCloudflareCustomOrderWork(req(weird,probe),env);
+assert.equal((await sanitized.json()).work_route_diagnostic.path,'redacted',
+  'Unknown paths containing encoded/personal details must not be reflected');
 const fakeSlash=signedUrl();
 fakeSlash.pathname='/jill-custom-order-proxy-other';
 assert.equal((await handleCloudflareCustomOrderWork(req(fakeSlash,probe),env)).status,404);
