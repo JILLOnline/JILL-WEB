@@ -11,15 +11,22 @@ const REQUEST_ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const STORE=/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
 const BACKEND=/^https:\/\/script\.google\.com\/macros\/s\/AKfycb[A-Za-z0-9_-]+\/exec$/;
 
-export function receiptSignature({action,id,timestamp,rawPayload='',secret}) {
-  if (!['submit','receipt'].includes(action) ||
+export function receiptSignature({action,id,timestamp,rawPayload='',secret,ownerGid=''}) {
+  if (!['submit','receipt','customer_list'].includes(action) ||
       !REQUEST_ID.test(String(id)) || !/^[0-9]{13}$/.test(String(timestamp)) ||
       typeof secret!=='string' || secret.length<32) {
     throw new Error('Invalid Custom Order gateway signature input.');
   }
+  if(ownerGid && (action!=='submit' ||
+      !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(ownerGid))) {
+    throw new Error('Invalid signed Custom Order owner.');
+  }
+  // For authenticated submissions, bind the trusted Shopify customer ID
+  // into the Google HMAC. The unowned v1 guest signature is unchanged.
+  const signedParts=[action,id,String(timestamp),rawPayload];
+  if(ownerGid)signedParts.push(ownerGid);
   return createHmac('sha256',secret)
-    .update([action,id,String(timestamp),rawPayload].join('\n'),'utf8')
-    .digest('hex');
+    .update(signedParts.join('\n'),'utf8').digest('hex');
 }
 
 export function validateCustomOrderPayload(formBody) {
@@ -126,11 +133,23 @@ export async function handleCustomOrderProxy(args) {
   catch{return failure(400,'invalid_submission');}
   const {params,id}=submitted;
   const timestamp=String(now());
+  // Shopify's signed app proxy authenticates the shop and may supply a
+  // logged-in customer number. Never use a form customer_id or email as
+  // proof of account ownership. The guest/anonymous case remains unowned.
+  let ownerGid='';
+  if(auth.loggedInCustomerId!==null && auth.loggedInCustomerId!==undefined &&
+     auth.loggedInCustomerId!=='') {
+    const numeric=String(auth.loggedInCustomerId);
+    if(!/^[1-9][0-9]*$/.test(numeric))
+      return failure(401,'unauthenticated_proxy');
+    ownerGid='gid://shopify/Customer/'+numeric;
+  }
   const signed=new URLSearchParams(params);
+  if(ownerGid)signed.set('jill_order_owner_gid',ownerGid);
   signed.set('jill_order_gateway_ts',timestamp);
   signed.set('jill_order_gateway_sig',receiptSignature({
     action:'submit',id,timestamp,
-    rawPayload:params.get('raw_payload'),secret:receiptSecret,
+    rawPayload:params.get('raw_payload'),secret:receiptSecret,ownerGid,
   }));
   let result;
   try {result=await readBackendResult(backendFetch,appsScriptEndpoint,signed);}
