@@ -76,6 +76,34 @@ assert.equal((await handleCloudflareCustomOrderWork(new Request('https://example
 })).status,503);
 assert.equal((await handleCloudflareCustomOrderWork(
   new Request('https://example.workers.dev/other'),env)).status,404);
+// Shopify app proxies append a trailing slash to their configured upstream
+// path. This was previously a Worker-generated 404 even when the Shopify
+// app version declared the correct proxy destination. A signed, deliberately
+// invalid POST must get the SAME authenticated 400 on both root spellings.
+const probe=new URLSearchParams({probe:'1'});
+const directRoot=await handleCloudflareCustomOrderWork(req(signedUrl(),probe),env);
+assert.equal(directRoot.status,400);
+assert.equal((await directRoot.json()).error.code,'invalid_submission');
+const slashUrl=signedUrl();
+slashUrl.pathname='/jill-custom-order-proxy/';
+const slashRoot=await handleCloudflareCustomOrderWork(req(slashUrl,probe),env);
+assert.equal(slashRoot.status,400,
+  'Shopify app-proxy trailing slash must be accepted and HMAC checked');
+assert.equal((await slashRoot.json()).error.code,'invalid_submission');
+const badChild=signedUrl();
+badChild.pathname='/jill-custom-order-proxy/child';
+assert.equal((await handleCloudflareCustomOrderWork(req(badChild,probe),env)).status,404,
+  'Other child paths stay blocked');
+const fakeSlash=signedUrl();
+fakeSlash.pathname='/jill-custom-order-proxy-other';
+assert.equal((await handleCloudflareCustomOrderWork(req(fakeSlash,probe),env)).status,404);
+const slashGet=await handleCloudflareCustomOrderWork(new Request(slashUrl),env);
+assert.equal(slashGet.status,404,'Gateway remains POST-only, even with a slash');
+const slashForged=signedUrl();
+slashForged.pathname='/jill-custom-order-proxy/';
+slashForged.searchParams.set('signature','f'.repeat(64));
+assert.equal((await handleCloudflareCustomOrderWork(req(slashForged,probe),env)).status,401,
+  'Slash route must not bypass Shopify signature verification');
 assert.equal((await handleCloudflareCustomOrderWork(req(),{
   ...env,SHOPIFY_WORK_APP_SECRET:'',
 })).status,503);
@@ -89,4 +117,4 @@ assert.equal((await handleCloudflareCustomOrderWork(req(),{
 assert.equal((await handleCloudflareCustomOrderWork(req(),{
   ...env,RATE_LIMITER:{getByName:()=>({allow:async()=>{throw Error('storage down');}})},
 })).status,503);
-console.log('Cloudflare WORK signed proxy, no-card SQL DO quotas, health, forbidden routes and fail-closed tests passed.');
+console.log('Cloudflare WORK proxy signed POST + Shopify root slash handling, SQL DO quotas, health, forged/child routes and fail-closed tests passed.');
