@@ -13,7 +13,8 @@ if(execFileSync('git',['branch','--show-current'],{cwd:root,encoding:'utf8'}).tr
   throw new Error('Custom Order QA bootstrap requires the jill/rewards-work branch.');
 const dirty=execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:root,encoding:'utf8'}).trim();
 if(dirty)throw new Error('Custom Order QA bootstrap refuses uncommitted tracked changes.');
-execFileSync(process.execPath,['scripts/build-custom-order-work-backend.mjs'],{cwd:root,stdio:'inherit'});
+// An existing Google QA project must be verified and any canonical clasp
+// .js duplicate reconciled BEFORE invoking the strict bundle builder.
 const run=(cwd,...args)=>{
   if(args.some(x=>/[\r\n"&|<>^%!]/.test(x)))throw new Error('Unsafe clasp argument.');
   const windows=process.platform==='win32';
@@ -28,6 +29,10 @@ if(fs.existsSync(claspFile)!==fs.existsSync(recordFile))
   throw new Error('Incomplete QA project identity; refusing clasp write.');
 const previouslyBootstrapped=fs.existsSync(claspFile);
 if(!fs.existsSync(claspFile)){
+  // A brand-new project has no remote source to reconcile; generate its
+  // initial isolated WORK QA bundle before clasp create-script.
+  execFileSync(process.execPath,['scripts/build-custom-order-work-backend.mjs'],
+    {cwd:root,stdio:'inherit'});
   // Only a NEW independent QA Apps Script is ever created here. No source
   // can be pushed to the existing WORK Rewards or LIVE Apps Script project.
   run(output,'create-script','--type','standalone','--title','JILL WORK Custom Orders QA');
