@@ -38,6 +38,16 @@ const collectionQuery=`query SafeJillCollections($after:String){
   pageInfo{hasNextPage endCursor}
  }
 }`;
+const personalizationQuery=`query SafeJillPersonalization {
+ shop{myshopifyDomain}
+ metaobjectDefinitionByType(type:"jill_personalization_profile"){
+   type fieldDefinitions{key name type{name} required}
+ }
+ metaobjects(type:"jill_personalization_profile",first:50){
+   nodes{handle type fields{key type value}}
+   pageInfo{hasNextPage}
+ }
+}`;
 async function query(query,variables){
  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',
    'X-Shopify-Access-Token':token},body:JSON.stringify({query,variables}),signal:AbortSignal.timeout(30000)});
@@ -80,8 +90,19 @@ try{
   }
   after=data.collections.pageInfo.hasNextPage?data.collections.pageInfo.endCursor:null;
  }while(after);
+ const profileData=await query(personalizationQuery,{});
+ if(profileData.metaobjects.pageInfo.hasNextPage)
+   throw new Error('Personalization profile pagination would lose entries');
+ const profileDefinition=profileData.metaobjectDefinitionByType
+   ?{type:profileData.metaobjectDefinitionByType.type,
+      fields:profileData.metaobjectDefinitionByType.fieldDefinitions.map(f=>({
+        key:f.key,name:f.name,type:f.type.name,required:f.required}))}:null;
+ const personalizationProfiles=profileData.metaobjects.nodes.map(p=>({
+    handle:p.handle,type:p.type,fields:Object.fromEntries(p.fields
+      .filter(f=>['name','code'].includes(f.key)).map(f=>[f.key,f.value]))}));
  const output={schema:'jill.catalog-safe.v1',shop:target.shop,sourceMyshopifyDomain:target.host,
-    readOnly:true,productCount:products.length,collectionCount:collections.length,products,collections};
+    readOnly:true,productCount:products.length,collectionCount:collections.length,
+    products,collections,profileDefinition,personalizationProfiles};
  // Store locally only. This directory is gitignored; never upload raw snapshots to GitHub.
  const dir=path.join(process.cwd(),'.work-catalog-parity');
  fs.mkdirSync(dir,{recursive:true,mode:0o700});
