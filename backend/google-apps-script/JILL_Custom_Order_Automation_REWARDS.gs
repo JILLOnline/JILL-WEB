@@ -919,8 +919,13 @@ function jillCustomOrderGatewayCustomerList_(e) {
   lock.waitLock(10000);
   try {
     const owners=jillCustomOrderOwnersSheet_(false);
-    const matches=jillCustomOrderOwnerRows_(owners)
-      .filter(function(row){return row.gid===gid;});
+    const allOwners=jillCustomOrderOwnerRows_(owners);
+    // A manually corrupted index must never allow two different customers
+    // to see a single submission. Reject duplicate IDs GLOBALLY.
+    if(allOwners.length>5000 ||
+       new Set(allOwners.map(function(row){return row.id;})).size!==allOwners.length)
+      throw new Error('Conflicting owner index.');
+    const matches=allOwners.filter(function(row){return row.gid===gid;});
     // Fail closed on owner-ledger corruption or unbounded scan.
     if(matches.length>20 ||
        new Set(matches.map(function(row){return row.id;})).size!==matches.length)
