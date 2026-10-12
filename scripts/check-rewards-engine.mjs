@@ -131,7 +131,7 @@ if (!dashboard.includes("import ConnectedHub from './hub/ConnectedHub.jsx'") ||
     !rewardsCard.includes("from '../../../../shared/rewards.mjs'")) {
   throw new Error('The My JILL entrypoint must own the hub and reuse shared Rewards rules.');
 }
-if (!coupons.includes("from '../../../shared/rewards.mjs'")) {
+if (!coupons.includes("from '../../../../shared/rewards.mjs'")) {
   throw new Error('Coupons is not using the canonical shared Rewards module.');
 }
 
