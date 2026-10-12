@@ -8,6 +8,29 @@ import {
   removeVerifiedStaleClaspJs,
 } from './verify-custom-order-qa-remote.mjs';
 
+
+// Regression for the real Windows failure: the previous bootstrap invoked
+// the strict builder before auditing the .js left by clasp pull. Never again.
+const bootstrap=fs.readFileSync(
+  'scripts/bootstrap-custom-order-work-backend.mjs','utf8').replace(/\r\n?/g,'\n');
+const builder=fs.readFileSync(
+  'scripts/build-custom-order-work-backend.mjs','utf8').replace(/\r\n?/g,'\n');
+const existingCheck=bootstrap.indexOf('const previouslyBootstrapped=fs.existsSync(claspFile);');
+const freshBranch=bootstrap.indexOf('if(!fs.existsSync(claspFile)){',existingCheck);
+const existingBranch=bootstrap.indexOf('if(previouslyBootstrapped) {',freshBranch);
+const sourceAudit=bootstrap.indexOf('auditPulledCustomOrderQa({',existingBranch);
+const staleCleanup=bootstrap.indexOf('removeVerifiedStaleClaspJs(output,verified)',sourceAudit);
+const existingBuild=bootstrap.indexOf("execFileSync(process.execPath,['scripts/build-custom-order-work-backend.mjs']",staleCleanup);
+const initialBuild=bootstrap.indexOf("execFileSync(process.execPath,['scripts/build-custom-order-work-backend.mjs']");
+assert.ok(existingCheck>0 && freshBranch>existingCheck &&
+  existingBranch>freshBranch && sourceAudit>existingBranch &&
+  staleCleanup>sourceAudit && existingBuild>staleCleanup,
+  'Remote audit and stale clasp JS removal must precede existing-project bundle build');
+assert.ok(initialBuild>freshBranch && initialBuild<existingBranch,
+  'Fresh project only may build before clasp project verification');
+assert.match(builder,/Unknown QA project code files/);
+assert.match(bootstrap,/project\.sheetId!==sheetId/);
+
 const root=process.cwd();
 const commit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
 const historical=fs.readFileSync(
