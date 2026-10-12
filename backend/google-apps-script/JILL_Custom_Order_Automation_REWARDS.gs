@@ -803,6 +803,52 @@ function jillCustomOrderGatewayReceipt_(e) {
   } finally {lock.releaseLock();}
 }
 
+
+// Run this function in the isolated QA Apps Script editor BEFORE any
+// web-app deployment. It is read-only and never emits secret values.
+function jillCustomOrderQaPreflight() {
+  if (JILL_REWARDS_RUNTIME !== 'WORK' || JILL_CUSTOM_ORDER_SANDBOX !== true) {
+    throw new Error('QA preflight refused: this is not the isolated Custom Order WORK runtime.');
+  }
+  const props=PropertiesService.getScriptProperties();
+  const secret=String(props.getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'');
+  if (secret.length < 32) {
+    throw new Error('QA gateway secret is missing or too short.');
+  }
+  const allowed=String(props.getProperty(JILL_CUSTOM_WORKFLOW.ADMIN_PROPERTY)||'')
+    .toLowerCase().split(',').map(function(x){return x.trim();}).filter(Boolean);
+  const operator=String(Session.getActiveUser().getEmail()||'').toLowerCase().trim();
+  if (!operator || allowed.indexOf(operator)===-1) {
+    throw new Error('QA operator identity does not match the authorized Google account.');
+  }
+  if (!JILL.SHEET_ID || !JILL.SHEET_NAME) {
+    throw new Error('QA spreadsheet is not configured.');
+  }
+  const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+  [
+    {name:JILL.SHEET_NAME,headers:HEADERS},
+    {name:JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,headers:JILL_CUSTOM_WORKFLOW.HEADERS},
+    {name:JILL_CUSTOM_ORDER_DESK.SHEET,headers:JILL_CUSTOM_ORDER_DESK.HEADERS},
+  ].forEach(function(entry) {
+    const sheet=spreadsheet.getSheetByName(entry.name);
+    if (!sheet) throw new Error('Missing QA sheet: '+entry.name);
+    const actual=sheet.getRange(1,1,1,entry.headers.length).getValues()[0];
+    if (JSON.stringify(actual)!==JSON.stringify(entry.headers)) {
+      throw new Error('QA spreadsheet header mismatch in '+entry.name);
+    }
+  });
+  const result={
+    ok:true,
+    scope:'WORK_CUSTOM_ORDERS_QA',
+    gateway_secret_configured:true,
+    merchant_operator_authorized:true,
+    qa_sheet_headers_verified:true,
+    web_app_deployed:false,
+  };
+  Logger.log(JSON.stringify(result));
+  return result;
+}
+
 /* END CUSTOM ORDER WORKFLOW V1 */
 
 /* ---------------------------
