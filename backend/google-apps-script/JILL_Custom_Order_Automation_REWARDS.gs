@@ -7,6 +7,10 @@ const JILL = {
   SHOPIFY_API_VERSION: '2026-07'
 };
 
+// False in canonical production and WORK Rewards builds. Only the dedicated
+// isolated Custom Orders QA bundle may change this to true.
+const JILL_CUSTOM_ORDER_SANDBOX = false;
+
 const HEADERS = [
   'submission_id',
   'status',
@@ -38,7 +42,7 @@ const HEADERS = [
 ---------------------------- */
 
 function setupJill() {
-  if (JILL_REWARDS_RUNTIME === 'WORK') {
+  if (JILL_REWARDS_RUNTIME === 'WORK' && !JILL_CUSTOM_ORDER_SANDBOX) {
     throw new Error('WORK Rewards worker cannot access the Custom Order sheet.');
   }
   const ss = SpreadsheetApp.openById(JILL.SHEET_ID);
@@ -116,8 +120,13 @@ function doPost(e) {
   let verifiedRewardHook = false;
 
   // An isolated WORK Rewards deployment does not accept Custom Order writes.
-  if (JILL_REWARDS_RUNTIME === 'WORK' && !(suppliedRewardSecret && suppliedRewardTopic)) {
-    return json_({ok: false, error: 'WORK backend accepts Rewards webhooks only.'});
+  if (JILL_REWARDS_RUNTIME === 'WORK') {
+    if (JILL_CUSTOM_ORDER_SANDBOX && (suppliedRewardSecret || suppliedRewardTopic)) {
+      return json_({ok:false,error:'Custom Order QA project does not accept Rewards webhooks.'});
+    }
+    if (!JILL_CUSTOM_ORDER_SANDBOX && !(suppliedRewardSecret && suppliedRewardTopic)) {
+      return json_({ok:false,error:'WORK Rewards backend accepts Rewards webhooks only.'});
+    }
   }
 
   try {
@@ -217,6 +226,13 @@ function doPost(e) {
     // a successful delivery or duplicating an event.
     jillCustomOrderEnsureReceived_(submissionId, data.submitted_at);
     const state = submissionState_(currentStatus);
+
+    // The dedicated QA project proves receipt, deduplication and workflow
+    // history only. It NEVER syncs Shopify customers or sends merchant/
+    // customer emails. The Rewards WORK project keeps this flag false.
+    if (JILL_CUSTOM_ORDER_SANDBOX) {
+      return customOrderSuccess_(submissionId, duplicate);
+    }
 
     if (!existingRow) {
       writeSubmissionStatus_(sheet, row, statusColumn, state);
@@ -364,7 +380,8 @@ const JILL_CUSTOM_WORKFLOW = Object.freeze({
 });
 
 function jillCustomOrderAssertLive_() {
-  if (JILL_REWARDS_RUNTIME !== 'LIVE') {
+  if (JILL_REWARDS_RUNTIME !== 'LIVE' &&
+      !(JILL_REWARDS_RUNTIME === 'WORK' && JILL_CUSTOM_ORDER_SANDBOX)) {
     throw new Error('Custom Order workflow is disabled in the isolated WORK Rewards backend.');
   }
   if (!JILL.SHEET_ID || !JILL.SHEET_NAME) {
@@ -723,7 +740,7 @@ function jillCustomOrderGatewaySignature_(action,id,timestamp,rawPayload,secret)
 }
 
 function jillCustomOrderGatewayVerified_(e,action) {
-  if (JILL_REWARDS_RUNTIME==='WORK') return false;
+  if (JILL_REWARDS_RUNTIME==='WORK' && !JILL_CUSTOM_ORDER_SANDBOX) return false;
   const values=e&&e.parameter||{};
   const id=clean_(values.submission_id);
   const timestamp=clean_(values.jill_order_gateway_ts);
