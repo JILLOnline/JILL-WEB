@@ -40,5 +40,5 @@ assert.doesNotMatch(getHandler,/jill_order_receipt/,
 
 const deploy=read('scripts/build-rewards-work-backend.mjs');
 assert.match(deploy,/JILL_REWARDS_RUNTIME = 'WORK'/);
-assert.match(backend,/if \(JILL_REWARDS_RUNTIME==='WORK'\) return false;/);
+assert.match(backend,/JILL_REWARDS_RUNTIME==='WORK' && !JILL_CUSTOM_ORDER_SANDBOX/);
 console.log('Custom Order verified gateway cutover guards passed (not deployed).');
