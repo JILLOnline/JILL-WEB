@@ -432,6 +432,28 @@ function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
   return received;
 }
 
+function jillCustomOrderCustomerProjection_(submissionId,events) {
+  // Internal-only projection; NEVER expose through public doGet/doPost.
+  // A future authenticated endpoint must first verify the session-token
+  // customer ID and explicit request ownership before calling this.
+  const history=Array.isArray(events)?events:[];
+  if (!history.length)return null;
+  const latest=history[history.length-1];
+  return {
+    submission_id:submissionId,
+    revision:Number(latest.revision),
+    status:latest.customer_status,
+    updated_at:latest.occurred_at,
+    timeline:history.map(function(event) {
+      return {
+        status:event.customer_status,
+        note:event.public_note||'',
+        occurred_at:event.occurred_at
+      };
+    })
+  };
+}
+
 function jillCustomOrderMerchantRead(submissionId) {
   jillCustomOrderActor_();
   const id=String(submissionId || '').trim();
