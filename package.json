@@ -16,6 +16,7 @@
     "rewards:work:backend:bundle": "node scripts/build-rewards-work-backend.mjs",
     "custom-orders:work:backend:bundle": "node scripts/build-custom-order-work-backend.mjs",
     "custom-orders:work:backend:bootstrap": "node scripts/bootstrap-custom-order-work-backend.mjs",
+    "custom-orders:work:backend:update": "node scripts/update-custom-order-work-deployment.mjs",
     "rewards:work:backend:bootstrap": "node scripts/bootstrap-rewards-work-backend.mjs",
     "rewards:work:backend:update": "node scripts/update-rewards-work-deployment.mjs",
     "build": "shopify app build",
