@@ -87,3 +87,29 @@ jobs:
         run: |
           $dirty = git status --porcelain --untracked-files=no
           if ($dirty) { Write-Error "Tests changed tracked source: $dirty"; exit 1 }
+
+  cloudflare:
+    name: Package WORK Cloudflare Worker (dry run only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout WORK branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Workers bundler
+        run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund
+
+      - name: Dry-run compile Worker and SQLite Durable Object (no account login)
+        working-directory: services/custom-order-cloudflare
+        run: npm run build
+
+      - name: Check signed WORK gateway and shared SQLite quotas
+        run: node scripts/test-cloudflare-custom-order-gateway.mjs
+
+      - name: Verify no tracked files changed
+        run: test -z "$(git status --porcelain --untracked-files=no)"
