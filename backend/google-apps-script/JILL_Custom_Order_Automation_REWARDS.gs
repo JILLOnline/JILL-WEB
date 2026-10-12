@@ -843,7 +843,6 @@ function jillCustomOrderQaPreflight() {
     gateway_secret_configured:true,
     merchant_operator_authorized:true,
     qa_sheet_headers_verified:true,
-    web_app_deployed:false,
   };
   Logger.log(JSON.stringify(result));
   return result;
