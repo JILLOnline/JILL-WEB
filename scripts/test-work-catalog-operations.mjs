@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {JILL_CATALOG_CAPABILITIES} from '../merchant/jill-catalog-capabilities.mjs';
 import {buildWorkCatalogOperations} from './build-work-catalog-operations.mjs';
 const products=JILL_CATALOG_CAPABILITIES.map(x=>({
- handle:x.handle,title:x.title,vendor:'JILL',productType:'custom',tags:['test'],
+ handle:x.handle,title:x.title,status:'ACTIVE',vendor:'JILL',productType:'custom',tags:['test'],
  descriptionHtml:'<p>QA</p>',options:[{name:'Title',values:['Default Title']}],
  variants:[{title:'Default Title',price:'24.99',sku:null,taxable:true,inventoryPolicy:'CONTINUE',
    selectedOptions:[{name:'Title',value:'Default Title'}]}],
@@ -44,6 +44,15 @@ assert.equal(result.operations.filter(x=>x.kind==='collection.create_unpublished
 assert.ok(result.operations.filter(x=>x.kind==='product.draft.create')
  .every(x=>x.input.status==='DRAFT'&&!Object.hasOwn(x.input,'id')));
 assert.ok(result.operations.every(x=>JSON.stringify(x).indexOf('gid://shopify/Product/')===-1));
+const missingVendor=structuredClone(source);
+missingVendor.products[0].vendor='JILL WORK';
+assert.throws(()=>buildWorkCatalogOperations(missingVendor,work),/vendor differs from JILL/);
+const missingGallery=structuredClone(source);
+missingGallery.products[0].images=[];
+assert.throws(()=>buildWorkCatalogOperations(missingGallery,work),/Missing LIVE image gallery/);
+const invalidPrice=structuredClone(source);
+invalidPrice.products[0].variants[0].price='not-a-price';
+assert.throws(()=>buildWorkCatalogOperations(invalidPrice,work),/Invalid LIVE variant price/);
 const bad=structuredClone(source);
 bad.products[0].images[0].url='http://untrusted.example/image.jpg';
 assert.throws(()=>buildWorkCatalogOperations(bad,work),/Unexpected image host/);
