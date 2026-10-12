@@ -537,16 +537,20 @@ function jillCustomOrderMerchantUpdate(command) {
   } finally {lock.releaseLock();}
 }
 
-function jillCustomOrderMerchantBackfill(limit) {
+function jillCustomOrderMerchantBackfill(offset,limit) {
   jillCustomOrderActor_();
-  const maximum=Math.max(1,Math.min(100,Number(limit)||20));
+  const start=Number(offset);
+  if (!Number.isSafeInteger(start) || start < 0) {
+    throw new Error('Custom Order backfill requires a nonnegative row offset.');
+  }
+  const maximum=Math.max(1,Math.min(100,Math.floor(Number(limit)||20)));
   const lock=LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const sheet=getSheet_();
     const count=Math.max(0,sheet.getLastRow()-1);
-    if (!count)return {scanned:0,created:0};
-    const rows=sheet.getRange(2,1,Math.min(count,maximum),HEADERS.length)
+    if (start>=count)return {scanned:0,created:0,next_offset:null};
+    const rows=sheet.getRange(start+2,1,Math.min(count-start,maximum),HEADERS.length)
       .getValues();
     let created=0;
     rows.forEach(function(row) {
@@ -561,7 +565,8 @@ function jillCustomOrderMerchantBackfill(limit) {
         created++;
       }
     });
-    return {scanned:rows.length,created:created};
+    return {scanned:rows.length,created:created,
+      next_offset:start+rows.length<count ? start+rows.length : null};
   } finally {lock.releaseLock();}
 }
 
