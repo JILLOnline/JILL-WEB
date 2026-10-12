@@ -7,6 +7,7 @@ const rewardsPage = fs.readFileSync('extensions/jill-account-dashboard/src/pages
 const rewardsTransport = fs.readFileSync('extensions/jill-account-dashboard/src/rewards/account-transport.mjs', 'utf8');
 const ui = fs.readFileSync('shared/rewards.mjs', 'utf8');
 const coupons = fs.readFileSync('extensions/jill-account-dashboard/src/pages/Coupons.jsx', 'utf8');
+const couponProjection = fs.readFileSync('shared/customer-coupons.mjs','utf8');
 const legacyCoupons = fs.readFileSync('extensions/jill-account-coupons/src/Coupons.jsx', 'utf8');
 if (!legacyCoupons.includes("from '../../jill-account-dashboard/src/pages/Coupons.jsx'") ||
     legacyCoupons.includes('query JillPersonalCoupons') ||
@@ -277,9 +278,9 @@ const promotionBackendMaxAgeMinutes = Number(mustMatch(
   'Public promotions backend freshness window',
 ));
 const couponPromotionMaxAgeMinutes = Number(mustMatch(
-  coupons,
-  /PROMOTION_SNAPSHOT_MAX_AGE_MS = (\d+) \* 60 \* 1000/,
-  'Coupons promotion freshness window',
+  couponProjection,
+  /PROMOTIONS_MAX_AGE_MS = (\d+) \* 60 \* 1000/,
+  'Canonical public promotion freshness window',
 ));
 if (promotionBackendMaxAgeMinutes !== couponPromotionMaxAgeMinutes) {
   throw new Error('Public promotion freshness policy drifted between backend and Coupons.');
