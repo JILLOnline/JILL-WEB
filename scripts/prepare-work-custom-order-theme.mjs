@@ -78,6 +78,21 @@ const schema=staged.match(/{% schema %}([\s\S]*?){% endschema %}/);
 assert(schema,'Missing Liquid schema');
 JSON.parse(schema[1]);
 assert(!read(stagedFile).includes('script.google.com/macros/s/'),'Google Script fallback still present');
+// The published store can override section defaults using templates/settings data.
+ // Refuse staging an inherited template that points at a different endpoint.
+const template=JSON.parse(read(path.join(dest,'templates/page.custom-order.json')));
+const settings=template.sections?.main?.settings||{};
+assert(!settings.submission_endpoint,'Unexpected explicit legacy submission override');
+assert(!settings.verified_submission_endpoint ||
+  settings.verified_submission_endpoint==='/apps/jill-custom-order',
+  'Unexpected verified endpoint override');
+template.sections.main.settings={
+  ...settings,
+  submission_endpoint:'',
+  verified_submission_endpoint:'/apps/jill-custom-order',
+};
+fs.writeFileSync(path.join(dest,'templates/page.custom-order.json'),
+  JSON.stringify(template,null,2)+'\n');
 const info={owner:'jill-work-custom-order-theme',shop,sourceCommit:git('rev-parse','HEAD'),endpoint:'/apps/jill-custom-order',kind:'unpublished-preview-only'};
 fs.writeFileSync(sentinel,JSON.stringify(info,null,2)+'\n');
 console.log('Prepared isolated WORK staging theme at .work-custom-order-theme/');
