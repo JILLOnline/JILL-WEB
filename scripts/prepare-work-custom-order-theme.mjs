@@ -45,6 +45,14 @@ const needle='"id": "verified_submission_endpoint",';
 assert(staged.includes(needle),'Verified field not found');
 staged=staged.replace(needle,needle+'\n      "default": "/apps/jill-custom-order",');
 fs.writeFileSync(stagedFile,staged);
+// Only change the homepage link in the isolated QA package; website lane remains canonical.
+const homeFile=path.join(dest,'templates/index.json');
+const home=JSON.parse(read(homeFile));
+assert(home.sections?.custom?.settings?.button_link==='/pages/quote?view=custom-order',
+  'Homepage link differs from certified old route; inspect before changing');
+home.sections.custom.settings.button_link='/pages/custom-order';
+fs.writeFileSync(homeFile,JSON.stringify(home,null,2)+'\n');
+
 const schema=staged.match(/{% schema %}([\s\S]*?){% endschema %}/);
 assert(schema,'Missing Liquid schema');
 JSON.parse(schema[1]);
