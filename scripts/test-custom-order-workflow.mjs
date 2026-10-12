@@ -20,6 +20,7 @@ class Range {
   getValues(){return Array.from({length:this.count},(_,i)=>
     Array.from({length:this.span},(_,j)=>this.sheet.rows[this.start+i-1]?.[this.col+j-1]??''));}
   getValue(){return this.sheet.rows[this.start-1]?.[this.col-1]??'';}
+  setDataValidation(){return this;}
   setValues(values){values.forEach((row,i)=>row.forEach((v,j)=>{
     const target=this.start+i-1;
     while(this.sheet.rows.length<=target)this.sheet.rows.push([]);
@@ -29,7 +30,11 @@ class Range {
 class Sheet {
   constructor(rows){this.rows=rows;}
   getLastRow(){return this.rows.length;}
-  getRange(start,col,count=1,span=1){return new Range(this,start,col,count,span);}
+  getRange(start,col,count=1,span=1){
+    if(typeof start==='string')return {setDataValidation:()=>{}};
+    return new Range(this,start,col,count,span);
+  }
+  getName(){return Object.entries(sheets).find(([,value])=>value===this)?.[0]||'';}
   setFrozenRows(){return this;}
   appendRow(row){this.rows.push([...row]);}
 }
@@ -41,7 +46,8 @@ const spreadsheet={
 };
 let actor='staff@jill.example',allowed='staff@jill.example',runtime='LIVE',locks=0;
 const sandbox={
-  SpreadsheetApp:{openById:id=>{assert.equal(id,'QA-SHEET');return spreadsheet;},flush(){}},
+  SpreadsheetApp:{openById:id=>{assert.equal(id,'QA-SHEET');return spreadsheet;},flush(){},
+    newDataValidation:()=>({requireValueInList(){return this;},setAllowInvalid(){return this;},build(){return {};}})},
   Session:{getActiveUser:()=>({getEmail:()=>actor})},
   PropertiesService:{getScriptProperties:()=>({getProperty:()=>allowed})},
   LockService:{getScriptLock:()=>({
@@ -61,6 +67,8 @@ const create=sandbox.jillCustomOrderEnsureReceived_;
 const read=sandbox.jillCustomOrderMerchantRead;
 const update=sandbox.jillCustomOrderMerchantUpdate;
 const backfill=sandbox.jillCustomOrderMerchantBackfill;
+const setupDesk=sandbox.jillCustomOrderMerchantSetupDesk;
+const processDesk=sandbox.jillCustomOrderMerchantProcessDesk;
 const js=(x)=>JSON.parse(JSON.stringify(x));
 let event=create('jill:QA-ORDER-1','2026-10-11T13:00:00Z');
 assert.equal(event.revision,1);
@@ -132,4 +140,34 @@ sheets.CustomOrderEvents.rows[3][2]=3;
 assert.equal(read('jill:QA-ORDER-1').revision,7);
 assert.deepEqual(js(backfill(3)),{scanned:1,created:0});
 assert.equal(sheets.CustomOrderEvents.rows.length,8);
+
+// Authorized spreadsheet controls, no public status endpoint or timed worker.
+const setup=setupDesk();
+assert.equal(setup.ok,true);
+assert.equal(setup.sheet,'CustomOrderDesk');
+const desk=sheets.CustomOrderDesk;
+assert.equal(desk.getLastRow(),1);
+desk.appendRow([
+  'jill:desk-00001','jill:QA-ORDER-1',7,'reviewing','','Attempt to reopen','','','','',
+]);
+const rejected=processDesk();
+assert.deepEqual(js(rejected),{processed:1,succeeded:0,rejected:1});
+assert.match(String(desk.rows[1][8]),/^REJECTED:/);
+assert.equal(read('jill:QA-ORDER-1').revision,7);
+sourceRows.push(['jill:QA-ORDER-2','RECEIVED','2026-10-11T13:02:00Z']);
+create('jill:QA-ORDER-2','2026-10-11T13:02:00Z');
+desk.appendRow([
+  'jill:desk-00002','jill:QA-ORDER-2',1,'reviewing','needs_quote',
+  'We have your request.','Check inventory.','','','',
+]);
+const applied=processDesk();
+assert.deepEqual(js(applied),{processed:1,succeeded:1,rejected:0});
+assert.match(String(desk.rows[2][8]),/^APPLIED revision 2$/);
+assert.equal(read('jill:QA-ORDER-2').revision,2);
+desk.rows[2][8]='';
+const retry=processDesk();
+assert.deepEqual(js(retry),{processed:1,succeeded:1,rejected:0});
+assert.equal(read('jill:QA-ORDER-2').revision,2);
+assert.equal(locks,0,'command processor must release every lock');
+
 console.log('Custom Order backend event log, merchant ACL, CAS, idempotency, transitions and isolation passed.');
