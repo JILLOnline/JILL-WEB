@@ -180,6 +180,20 @@ function doPost(e) {
       currentStatus = clean_(
         sheet.getRange(existingRow, statusColumn).getValue()
       );
+      // Once a submission ID is accepted, its persisted request payload is
+      // immutable. Retrying with different content must never masquerade as
+      // a previously received order. Compare the canonical transported
+      // payload, not mutable Shopify/email integration status fields.
+      const payloadColumn=HEADERS.indexOf('raw_payload')+1;
+      const storedRaw=String(sheet.getRange(existingRow,payloadColumn).getValue()||'');
+      const suppliedRaw=String(data.raw_payload||'');
+      if (!storedRaw || !suppliedRaw || storedRaw!==suppliedRaw) {
+        return customOrderFailure_(
+          'submission_conflict',
+          'This request ID already belongs to a different submitted request.',
+          false
+        );
+      }
     }
 
     const row = existingRow || saveSubmission_(sheet, data);
