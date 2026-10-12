@@ -69,6 +69,7 @@ const update=sandbox.jillCustomOrderMerchantUpdate;
 const backfill=sandbox.jillCustomOrderMerchantBackfill;
 const setupDesk=sandbox.jillCustomOrderMerchantSetupDesk;
 const processDesk=sandbox.jillCustomOrderMerchantProcessDesk;
+const customerProjection=sandbox.jillCustomOrderCustomerProjection_;
 const js=(x)=>JSON.parse(JSON.stringify(x));
 let event=create('jill:QA-ORDER-1','2026-10-11T13:00:00Z');
 assert.equal(event.revision,1);
@@ -93,6 +94,15 @@ assert.deepEqual(js(update(request)),{
 assert.equal(update(request).duplicate,true,'retry is idempotent');
 assert.equal(sheets.CustomOrderEvents.rows.length,3);
 assert.equal(read('jill:QA-ORDER-1').history[1].internal_note,'Check paper stock.');
+const customerSafe=customerProjection('jill:QA-ORDER-1',
+  sandbox.jillCustomOrderEventsFor_(sheets.CustomOrderEvents,'jill:QA-ORDER-1'));
+assert.equal(customerSafe.status,'reviewing');
+assert.equal(customerSafe.timeline.length,2);
+assert.equal(customerSafe.timeline[1].note,'We are reviewing your request.');
+assert.equal(JSON.stringify(customerSafe).includes('Check paper stock.'),false);
+assert.equal(JSON.stringify(customerSafe).includes('staff@jill.example'),false);
+assert.equal(JSON.stringify(customerSafe).includes('needs_quote'),false);
+
 assert.throws(()=>update({...request,public_note:'Changed'}),/Idempotency key/);
 assert.throws(()=>update({...request,operation_id:'jill:op-00002'}),/reload current revision/);
 assert.throws(()=>update({...request,operation_id:'jill:op-00003',
