@@ -20,3 +20,9 @@ extensions/*/shopify.d.ts
 
 # Separate WORK Custom Orders Google project and QA spreadsheet credentials.
 .work-custom-orders/
+
+# Cloudflare local QA credentials and dry-run output (not source-controlled).
+services/custom-order-cloudflare/.dev.vars*
+services/custom-order-cloudflare/.wrangler/
+services/custom-order-cloudflare/.wrangler-dist/
+services/custom-order-cloudflare/node_modules/
