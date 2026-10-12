@@ -219,3 +219,26 @@ The temporary diagnostic `work_route_diagnostic` was removed from
 GitHub after the successful browser POST. The cleaned Worker source
 must be redeployed in WORK before the public QA gateway is considered
 free of temporary debug response fields.
+
+
+## Duplicate and conflict real browser QA — October 12, 2026
+
+For submission `jill:qa:a97454fa-0984-49f0-b431-725b77c11047`,
+the original immutable JSON payload was reconstructed from the isolated
+Submissions row and replayed through the unlocked WORK Shopify storefront.
+
+- Exact same payload: HTTP 200, ok=true, duplicate=true.
+- Same submission ID with changed item title: HTTP 409, ok=false.
+- Connected Google Sheets read AFTER both requests found exactly ONE
+  Submissions row, ONE CustomOrderEvents row (revision 1, received/new),
+  and ZERO queued CustomOrderDesk commands.
+
+The browser's 409 response error details were not expanded, but the
+gateway source maps nonretryable Google intake rejection to HTTP 409.
+No additional Shopify customer was written and QA mail/Shopify sync are
+blocked in this isolated runtime.
+
+Next gate: authorized merchant command `received -> reviewing` using
+CustomOrderDesk, verify append-only revision 2, read-side merchant
+projection, and command replay/no-duplicate event. Do not treat account
+customer order-ownership projection as live without separate auth checks.
