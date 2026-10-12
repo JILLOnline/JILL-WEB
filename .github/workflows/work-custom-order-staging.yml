@@ -1,0 +1,36 @@
+name: WORK Custom Order staging certification
+
+on:
+  push:
+    branches:
+      - jill/work-custom-order-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify canonical form and backend contracts
+        run: |
+          node scripts/check-theme-core.mjs
+          node scripts/check-theme-settings.mjs
+          node scripts/test-theme-shell.mjs
+          node scripts/test-custom-order-integration.mjs
+          node scripts/test-custom-order-workflow.mjs
+          node scripts/test-custom-order-gateway.mjs
+          node scripts/test-custom-order-account-read.mjs
+      - name: Build isolated WORK QA theme
+        run: node scripts/prepare-work-custom-order-theme.mjs
+      - name: Audit static dependencies
+        run: node scripts/audit-theme-dependencies.mjs .work-custom-order-theme
+      - name: Certify fail-closed transport and navigation
+        run: node scripts/test-work-custom-order-theme.mjs
+      - name: Ensure source stays unchanged
+        run: test -z "$(git status --porcelain --untracked-files=no)"
