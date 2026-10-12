@@ -43,6 +43,11 @@ const qaBootstrap=read('scripts/bootstrap-custom-order-work-backend.mjs');
 assert.match(qaBuilder,/JILL_CUSTOM_ORDER_SANDBOX = true/);
 assert.match(qaBuilder,/JILL_CUSTOM_ORDER_WORK_SHEET_ID/);
 assert.match(qaBuilder,/production sheet is prohibited/);
+assert.match(qaBuilder,/oauthScopes:\[/);
+assert.match(qaBuilder,/https:\/\/www.googleapis.com\/auth\/spreadsheets/);
+assert.match(qaBuilder,/https:\/\/www.googleapis.com\/auth\/userinfo.email/);
+assert.doesNotMatch(qaBuilder,/https:\/\/mail.google.com|https:\/\/www.googleapis.com\/auth\/gmail|https:\/\/www.googleapis.com\/auth\/script.send_mail/);
+
 assert.match(qaBootstrap,/project.sheetId!==sheetId/);
 assert.match(qaBootstrap,/separate Custom Order QA clasp create-script/);
 assert.match(backend,/Rewards setup is forbidden in the Custom Order QA project/);
