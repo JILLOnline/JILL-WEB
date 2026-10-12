@@ -185,3 +185,37 @@ routing check using npx.cmd wrangler tail jill-work-custom-orders-qa
 while repeating the browser test. Do not uninstall WORK Rewards.
 
 An invalid probe response does not verify a durable order/receipt.
+
+
+## First real QA storefront submission — independently verified October 12, 2026
+
+Signed Shopify WORK -> Cloudflare -> isolated Google QA end-to-end POST
+completed with browser HTTP 200. A connected Google Sheets read independently
+verified the durable row in the isolated spreadsheet
+`1T3xe_I3kfM6HtluXxq9PLjWp9XUBw1wvEOAAhiTq7OA`: 
+
+- Submissions: one synthetic record
+  `jill:qa:a97454fa-0984-49f0-b431-725b77c11047`,
+  submitted `2026-10-12T18:34:38.283Z`, clearly marked
+  `QA TEST ONLY — DO NOT FULFILL`.
+- CustomOrderEvents: one `received:` event for that exact submission,
+  `revision=1`, `customer_status=received`, `internal_status=new`,
+  `actor=system:intake` and `source=intake`.
+- CustomOrderDesk: header only, no merchant commands pending.
+
+This confirms real WORK proxy auth, bounded gateway transit, Google
+persisted intake, event append, and receipt verification. It does NOT
+yet verify duplicate-safe replay, conflicting submission-ID rejection,
+merchant status updates or customer-visible account projection. Those
+are required release gates. LIVE remains untouched.
+
+Shopify's installed app scope introspection did not list `write_app_proxy`
+after the version release, yet the actual password-unlocked storefront
+submitted successfully via `/apps/jill-custom-order`. Treat the observed
+real routing/receipt test as the functional proof; do not infer proxy
+breakage solely from scope-list discrepancy.
+
+The temporary diagnostic `work_route_diagnostic` was removed from
+GitHub after the successful browser POST. The cleaned Worker source
+must be redeployed in WORK before the public QA gateway is considered
+free of temporary debug response fields.
