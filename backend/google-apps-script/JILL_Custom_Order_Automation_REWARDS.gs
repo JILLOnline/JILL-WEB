@@ -312,7 +312,7 @@ const JILL_CUSTOM_WORKFLOW = Object.freeze({
   ADMIN_PROPERTY: 'JILL_CUSTOM_ORDER_ADMINS',
   HEADERS: [
     'event_id','submission_id','revision','customer_status','internal_status',
-    'public_note','internal_note','actor','occurred_at','source'
+    'public_note','internal_note','evidence_ref','actor','occurred_at','source'
   ],
   STATUSES: [
     'received','reviewing','awaiting_approval','in_production',
@@ -421,7 +421,7 @@ function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
   const received = {
     event_id:'received:'+submissionId,
     submission_id:submissionId,revision:1,customer_status:'received',
-    internal_status:'new',public_note:'',internal_note:'',
+    internal_status:'new',public_note:'',internal_note:'',evidence_ref:'',
     actor:'system:intake',
     occurred_at:!isNaN(Date.parse(submittedAt)) ?
       new Date(submittedAt).toISOString() : new Date().toISOString(),
@@ -455,8 +455,8 @@ function jillCustomOrderMerchantRead(submissionId) {
         return {
           revision:Number(event.revision),customer_status:event.customer_status,
           internal_status:event.internal_status,public_note:event.public_note,
-          internal_note:event.internal_note,actor:event.actor,
-          occurred_at:event.occurred_at,source:event.source
+          internal_note:event.internal_note,evidence_ref:event.evidence_ref,
+          actor:event.actor,occurred_at:event.occurred_at,source:event.source
         };
       })
     };
@@ -472,16 +472,17 @@ function jillCustomOrderMerchantUpdate(command) {
   const internal=String(data.internal_status || '').trim();
   const note=String(data.public_note || '').trim();
   const privateNote=String(data.internal_note || '').trim();
+  const evidence=String(data.handoff_reference || '').trim();
   const expected=Number(data.expected_revision);
   if (!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
       !/^[A-Za-z0-9._:-]{8,128}$/.test(op) ||
       !Number.isSafeInteger(expected) || expected < 1 ||
       JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(status) === -1 ||
       (internal && JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(internal) === -1) ||
-      note.length > 500 || privateNote.length > 2000) {
+      note.length > 500 || privateNote.length > 2000 || evidence.length > 256) {
     throw new Error('Invalid Custom Order update command.');
   }
-  if (status==='completed' && !String(data.handoff_reference||'').trim()) {
+  if (status==='completed' && !evidence) {
     throw new Error('Completion requires a recorded merchant handoff reference.');
   }
   const lock=LockService.getScriptLock();
@@ -501,7 +502,8 @@ function jillCustomOrderMerchantUpdate(command) {
     if (duplicate) {
       if (duplicate.customer_status!==status ||
           (internal && duplicate.internal_status!==internal) ||
-          duplicate.public_note!==note || duplicate.internal_note!==privateNote) {
+          duplicate.public_note!==note || duplicate.internal_note!==privateNote ||
+          duplicate.evidence_ref!==evidence) {
         throw new Error('Idempotency key was reused for different content.');
       }
       return {ok:true,duplicate:true,revision:Number(duplicate.revision),
@@ -522,7 +524,7 @@ function jillCustomOrderMerchantUpdate(command) {
     const event={
       event_id:op,submission_id:id,revision:expected+1,
       customer_status:status,internal_status:internal||current.internal_status,
-      public_note:note,internal_note:privateNote,
+      public_note:note,internal_note:privateNote,evidence_ref:evidence,
       actor:actor,occurred_at:new Date().toISOString(),
       source:'merchant'
     };
