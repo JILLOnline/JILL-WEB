@@ -15,7 +15,7 @@ const endpoint='https://'+target.host+'/admin/api/2026-07/graphql.json';
 const productQuery=`query SafeJillProducts($after:String) {
  shop {myshopifyDomain}
  products(first:50,after:$after){
-  nodes{handle title status descriptionHtml
+  nodes{handle title status descriptionHtml vendor productType tags
    options{name values}
    variants(first:100){nodes{title price compareAtPrice selectedOptions{name value}} pageInfo{hasNextPage}}
    media(first:100){nodes{__typename ... on MediaImage{alt image{url altText}}} pageInfo{hasNextPage}}
@@ -67,6 +67,7 @@ try{
    if(p.variants.pageInfo.hasNextPage||p.media.pageInfo.hasNextPage)
      throw new Error('Nested product pagination unsupported: '+p.handle);
    products.push({handle:p.handle,title:p.title,status:p.status,descriptionHtml:p.descriptionHtml,
+    vendor:p.vendor,productType:p.productType,tags:p.tags,
     variants:p.variants.nodes,options:p.options,
     images:p.media.nodes.filter(m=>m.__typename==='MediaImage'&&m.image?.url)
       .map(m=>({url:m.image.url,alt:m.alt||m.image.altText||''})),
