@@ -26,7 +26,7 @@ assert.equal(result.mutationsExecuted,0);
 assert.equal(result.target,'jill-work.myshopify.com');
 assert.equal(result.operations.filter(x=>x.kind==='product.draft.create').length,15);
 assert.ok(result.operations.filter(x=>x.kind==='product.draft.create').every(x=>
-  x.input.productOptions.length===0&&x.input.variants[0].optionValues.length===0));
+  x.input.productOptions.length===1&&x.input.productOptions[0].name==='Title'&&x.input.variants[0].optionValues.length===1));
 const explicit=structuredClone(source);
 explicit.products[0].options=[{name:'Size',values:['S','M']}];
 explicit.products[0].variants=[
