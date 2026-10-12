@@ -112,6 +112,10 @@ assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('submit',JSON.string
 sandbox.JILL_CUSTOM_ORDER_SANDBOX=true;
 assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('submit',JSON.stringify(raw)),'submit'),true,
   'isolated Custom Order QA accepts its own signed gateway only');
+properties.JILL_CUSTOM_ORDER_REQUIRE_GATEWAY='';
+assert.equal(sandbox.jillCustomOrderGatewaySubmissionAllowed_({parameter:{submission_id:id}}),false,
+  'QA cannot accept anonymous direct POST even before merchant policy rollout');
+properties.JILL_CUSTOM_ORDER_REQUIRE_GATEWAY='1';
 sandbox.JILL_CUSTOM_ORDER_SANDBOX=false;
 sandbox.JILL_REWARDS_RUNTIME='LIVE';
 properties.JILL_CUSTOM_ORDER_REQUIRE_GATEWAY='';
