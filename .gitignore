@@ -26,3 +26,6 @@ services/custom-order-cloudflare/.dev.vars*
 services/custom-order-cloudflare/.wrangler/
 services/custom-order-cloudflare/.wrangler-dist/
 services/custom-order-cloudflare/node_modules/
+
+# Disposable QA-only theme package (never commit or deploy to LIVE).
+.work-custom-order-theme/
