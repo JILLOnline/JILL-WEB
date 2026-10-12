@@ -72,7 +72,9 @@ const failure=(status,code,retryable=false)=>response(status,{
     retryable},
 });
 
-async function readBackendResult(backendFetch,url,body) {
+export async function readBackendResult(backendFetch,url,body,maxBytes=8192) {
+  if(!Number.isSafeInteger(maxBytes)||maxBytes<1024||maxBytes>131072)
+    throw new Error('Invalid backend response limit.');
   const result=await backendFetch(url,{
     method:'POST',body,
     headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8',
@@ -82,7 +84,7 @@ async function readBackendResult(backendFetch,url,body) {
   });
   if(!result || !result.ok)throw new Error('Google backend unavailable.');
   const bytes=await result.text();
-  if(bytes.length>8192)throw new Error('Invalid backend response size.');
+  if(bytes.length>maxBytes)throw new Error('Invalid backend response size.');
   try{return JSON.parse(bytes);}
   catch{throw new Error('Backend returned no verified JSON result.');}
 }
