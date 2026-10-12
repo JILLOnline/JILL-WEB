@@ -764,7 +764,8 @@ function jillCustomOrderGatewayVerified_(e,action) {
 
 function jillCustomOrderGatewaySubmissionAllowed_(e) {
   const props=PropertiesService.getScriptProperties();
-  const required=props.getProperty('JILL_CUSTOM_ORDER_REQUIRE_GATEWAY')==='1';
+  const required=JILL_CUSTOM_ORDER_SANDBOX ||
+    props.getProperty('JILL_CUSTOM_ORDER_REQUIRE_GATEWAY')==='1';
   const values=e&&e.parameter||{};
   const signed=Boolean(values.jill_order_gateway_sig ||
     values.jill_order_gateway_ts);
