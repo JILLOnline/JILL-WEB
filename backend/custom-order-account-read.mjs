@@ -83,9 +83,11 @@ export async function handleWorkCustomOrderAccountRead(request,{
      !BACKEND.test(googleQaEndpoint||'')||
      typeof rateLimit!=='function'||typeof backendFetch!=='function'||
      typeof now!=='function')return failure(503,'account_service_unavailable');
-  // No caller-provided submission ID, email, owner ID or arbitrary filter.
-  if((Number(request.headers.get('content-length')||0)>0)||
-     (await request.text()).length>0)return failure(400,'invalid_request');
+  // Do not buffer an arbitrary public POST body while checking identity.
+  // This endpoint has no caller-selectable IDs, pagination or filters.
+  const length=request.headers.get('content-length');
+  if(length!==null&&(!/^[0-9]{1,9}$/.test(length)||Number(length)>0))
+    return failure(400,'invalid_request');
   const authorization=request.headers.get('authorization')||'';
   if(!authorization.startsWith('Bearer ')||authorization.length>8300)
     return failure(401,'unauthenticated_account');
@@ -96,6 +98,19 @@ export async function handleWorkCustomOrderAccountRead(request,{
     });
   } catch {
     return failure(401,'unauthenticated_account');
+  }
+  // Verify the session first, then reject any nonempty body WITHOUT
+  // allocating it; one stream read is enough to detect injected filters.
+  if(request.body) {
+    try {
+      const reader=request.body.getReader();
+      const first=await reader.read();
+      await reader.cancel();
+      if(!first.done||first.value?.byteLength)
+        return failure(400,'invalid_request');
+    } catch {
+      return failure(400,'invalid_request');
+    }
   }
   let permitted;
   try {permitted=await rateLimit({shop:identity.shop,customer:identity.customerGid});}
