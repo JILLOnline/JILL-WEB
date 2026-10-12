@@ -1871,6 +1871,7 @@
     root.dataset.jillCustomOrderInitialized = 'true';
     root.dataset.jillOptionsFinished = 'false';
     let request = null;
+    let requestSentOnce = false;
     let editScroll = 0;
 
     for (const item of root.querySelectorAll('[data-jill-custom-order-item]')) initializeVariantAllocation(item);
@@ -2077,6 +2078,7 @@
       if (note) note.hidden = true;
       try {
         request = cleanUndefined(buildRequest(root));
+        requestSentOnce = false;
         editScroll = globalThis.scrollY || 0;
         renderReview(root, request);
         root.dataset.jillCustomOrderRequest = JSON.stringify(request);
@@ -2099,6 +2101,7 @@
       requestSubmit.disabled = true;
       requestSubmit.setAttribute('aria-disabled', 'true');
       request = null;
+      requestSentOnce = false;
       delete root.dataset.jillCustomOrderRequest;
       syncProgression(root);
       setTimeout(() => globalThis.scrollTo?.({top: editScroll, behavior: 'smooth'}), 0);
@@ -2111,10 +2114,18 @@
       requestSubmit.textContent = root.dataset.sendingLabel || 'Sending request…';
       setStatus('');
       try {
-        const submissionId = request.submission_id;
-        const nextRequest = cleanUndefined(buildRequest(root));
-        nextRequest.submission_id = submissionId;
-        request = nextRequest;
+        // Retries MUST replay the exact first-attempt payload and ID.
+        // Rebuilding timestamp or payload after a network timeout would turn
+        // an accepted request into a dangerous ID/content collision.
+        if (!requestSentOnce) {
+          const submissionId = request.submission_id;
+          const submittedAt = request.submitted_at;
+          const nextRequest = cleanUndefined(buildRequest(root));
+          nextRequest.submission_id = submissionId;
+          nextRequest.submitted_at = submittedAt;
+          request = nextRequest;
+          requestSentOnce = true;
+        }
         await submitRequest(root, request);
         setVisible(review, false);
         setVisible(success, true);
