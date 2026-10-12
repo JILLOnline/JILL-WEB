@@ -18,7 +18,7 @@ const form=()=>new URLSearchParams({
   raw_payload:JSON.stringify(raw),
 });
 const request=(body=form())=>new Request('https://jill-work.myshopify.com/apps/jill-custom-order',
-  {method:'POST',body});
+  {method:'POST',headers:{origin:'https://jill-work.myshopify.com'},body});
 const validResult=data=>new Response(JSON.stringify(data),{status:200});
 const calls=[];
 const upstream=async(_url,opts)=>{
@@ -34,7 +34,8 @@ const upstream=async(_url,opts)=>{
     : {operation:'custom_order.receipt.result',ok:true,submission_id:id,status:'received',revision:1});
 };
 const config={expectedShop:shop,appsScriptEndpoint:endpoint,receiptSecret:secret,
-  authenticateProxy:async()=>({shop}),backendFetch:upstream,now:()=>1791741600000};
+  authenticateProxy:async()=>({shop}),rateLimit:async()=>true,
+  allowedOrigins:['https://jill-work.myshopify.com'],backendFetch:upstream,now:()=>1791741600000};
 const run=(req=request(),extra={})=>handleCustomOrderProxy({...config,...extra,request:req});
 const response=await run();
 assert.equal(response.status,200);
@@ -51,6 +52,10 @@ assert.equal((await run(request(new URLSearchParams({source:'JILL custom order'}
 assert.equal((await run(request(new URLSearchParams([...form(),['submission_id',id]])))).status,400);
 assert.equal((await run(request(),{authenticateProxy:async()=>{throw Error('bad signature');}})).status,401);
 assert.equal((await run(request(),{authenticateProxy:async()=>({shop:'other.myshopify.com'})})).status,403);
+assert.equal((await run(request(),{rateLimit:async()=>false})).status,429);
+assert.equal((await run(request(),{rateLimit:async()=>{throw Error('redis down');}})).status,503);
+assert.equal((await run(request(),{allowedOrigins:['https://other.myshopify.com']})).status,403);
+await assert.rejects(run(request(),{rateLimit:undefined}),/missing secure configuration/);
 await assert.rejects(run(request(),{receiptSecret:'short'}),/missing secure configuration/);
 await assert.rejects(run(request(),{appsScriptEndpoint:'https://attacker.example/exec'}),/missing secure configuration/);
 const changed=form();
