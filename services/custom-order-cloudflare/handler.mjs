@@ -74,7 +74,8 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     // Temporary WORK-only routing diagnostic. Never expose the signed
     // query string, client headers, body, customer data or any secret.
     // Only reflect a short, strictly sanitized pathname to the caller.
-    const observed=/^\\/[A-Za-z0-9/_-]{0,159}$/.test(pathname)
+    const observed=pathname.startsWith('/') && pathname.length<=160 &&
+      pathname.slice(1).split('/').every(part=>/^[A-Za-z0-9_-]*$/.test(part))
       ? pathname : 'redacted';
     return reply(404,{ok:false,error:'not_found',
       work_route_diagnostic:{method:request.method,path:observed}});
