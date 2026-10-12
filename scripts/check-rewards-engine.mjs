@@ -337,9 +337,17 @@ for (const marker of [
 
 // Customer Account extensions share the production Shopify app.  A
 // repository push must never silently publish a WORK/KEEP candidate to LIVE.
-const accountDeployTriggers = accountDeploy.slice(
-  accountDeploy.indexOf('\non:\n'),
-  accountDeploy.indexOf('\njobs:\n'),
+// Git checkout on Windows uses CRLF; policy guards must inspect normalized
+// workflow lines rather than mistaking line endings for missing release gates.
+const accountDeployNormalized = accountDeploy.replace(/\r\n?/g, '\n');
+const accountTriggerStart = accountDeployNormalized.indexOf('\non:\n');
+const accountTriggerEnd = accountDeployNormalized.indexOf('\njobs:\n');
+if (accountTriggerStart < 0 || accountTriggerEnd <= accountTriggerStart) {
+  throw new Error('Customer Account LIVE workflow has no valid trigger section.');
+}
+const accountDeployTriggers = accountDeployNormalized.slice(
+  accountTriggerStart,
+  accountTriggerEnd,
 );
 if (
   !accountDeployTriggers.includes('workflow_dispatch:') ||
