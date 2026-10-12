@@ -688,7 +688,7 @@ console.log('JILL WORK canonical backend packaging and isolation passed.');
   assert.equal(rejected.error,'Invalid rewards webhook');
   const customOrderRejected = doPost({parameter:{}});
   assert.equal(customOrderRejected.ok,false);
-  assert.match(customOrderRejected.error,/WORK backend accepts Rewards webhooks only/);
+  assert.match(customOrderRejected.error,/WORK Rewards backend accepts Rewards webhooks only/);
 }
 
 
