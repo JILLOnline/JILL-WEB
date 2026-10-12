@@ -30,7 +30,7 @@ const path='https://qa.workers.dev/jill-custom-order-account';
 function req(token=jwt(),body='') {
   return new Request(path,{method:'POST',
     headers:{'authorization':'Bearer '+token,'content-type':'application/json'},
-    body:body||undefined,
+    body, // Model the real extension's explicit empty-string POST body.
   });
 }
 const publicOrder={
