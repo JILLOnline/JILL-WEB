@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createCustomOrderWorkProxyRoute} from '../../backend/custom-order-work-proxy-route.mjs';
+import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-account-read.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -64,6 +65,28 @@ export async function handleCloudflareCustomOrderWork(request,env) {
       return reply(200,{ok:true,environment:'WORK_CUSTOM_ORDERS_QA'});
     } catch {
       return reply(503,{ok:false});
+    }
+  }
+  // Account reads are a distinct, bearer-JWT-authenticated endpoint.
+  // Unlike Shopify app-proxy submissions, extension fetches do NOT pass
+  // through the storefront and may originate in a null-origin sandbox.
+  if(pathname==='/jill-custom-order-account') {
+    let settings;
+    try {settings=config(env);}
+    catch {return handleWorkCustomOrderAccountRead(request,{});}
+    try {
+      const limiter=env.RATE_LIMITER.getByName('jill-work-custom-orders-global');
+      return await handleWorkCustomOrderAccountRead(request,{
+        ...settings,
+        shopifyAppSecret:settings.shopifyAppSecret,
+        googleGatewaySecret:settings.googleGatewaySecret,
+        googleQaEndpoint:settings.googleQaEndpoint,
+        rateLimit:async({shop})=>limiter.allow({
+          shop,client:clientId(request),minute:Math.floor(Date.now()/60000),
+        }),
+      });
+    } catch {
+      return handleWorkCustomOrderAccountRead(request,{});
     }
   }
   // Shopify may append "/" to the app-proxy destination when the
