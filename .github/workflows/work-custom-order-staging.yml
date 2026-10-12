@@ -26,6 +26,7 @@ jobs:
           node scripts/test-custom-order-workflow.mjs
           node scripts/test-custom-order-gateway.mjs
           node scripts/test-custom-order-account-read.mjs
+          node scripts/test-work-catalog-parity.mjs
       - name: Build isolated WORK QA theme
         run: node scripts/prepare-work-custom-order-theme.mjs
       - name: Audit static dependencies
