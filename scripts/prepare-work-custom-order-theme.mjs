@@ -49,20 +49,18 @@ fs.writeFileSync(stagedFile,staged);
 // remains untouched: this replacement is confined to the ignored WORK package.
 const stagedJSFile=path.join(dest,'assets/jill-custom-order.js');
 let stagedJS=read(stagedJSFile);
-const before=`    const endpoint = String(root.dataset.submitEndpoint || '').trim();
-    if (!endpoint) fail('submission is temporarily unavailable');`;
-const after=`    // WORK QA must never use the legacy direct-Google transport.
-    const endpoint = '/apps/jill-custom-order';`;
-assert(stagedJS.includes(before),'WORK JS endpoint guard changed; review source');
-stagedJS=stagedJS.replace(before,after);
-const fallback=`    if (!verifiedPath) {
-      await fetch(endpoint,{method:'POST',mode:'no-cors',keepalive:true,body});
-      return; // Legacy transport; must be retired after gateway launch.
-    }`;
-assert(stagedJS.includes(fallback),'WORK JS legacy fallback changed; review source');
-stagedJS=stagedJS.replace(fallback,`    if (verifiedPath !== endpoint) {
-      fail('WORK verified Shopify app proxy is not configured');
-    }`);
+// Restrict replacement to the canonical submitRequest body, but tolerate
+// whitespace and formatting differences between website and WORK branches.
+const endpointPattern=/const endpoint\s*=\s*String\(root\.dataset\.submitEndpoint\s*\|\|\s*''\)\.trim\(\);\s*if\s*\(!endpoint\)\s*fail\('submission is temporarily unavailable'\);/g;
+const hits=[...stagedJS.matchAll(endpointPattern)];
+assert(hits.length===1,'Expected exactly one legacy endpoint guard, got '+hits.length);
+stagedJS=stagedJS.replace(endpointPattern,
+  "const endpoint = '/apps/jill-custom-order';");
+const fallbackPattern=/if\s*\(!verifiedPath\)\s*\{\s*await fetch\(endpoint,\s*\{method:'POST',mode:'no-cors',keepalive:true,body\}\);\s*return;[^\n]*\n\s*\}/g;
+const fallbacks=[...stagedJS.matchAll(fallbackPattern)];
+assert(fallbacks.length===1,'Expected exactly one legacy fetch fallback, got '+fallbacks.length);
+stagedJS=stagedJS.replace(fallbackPattern,
+  "if (verifiedPath !== endpoint) { fail('WORK verified Shopify app proxy is not configured'); }");
 assert(!stagedJS.includes('mode:\'no-cors\''),'Unverified submission transport remains');
 fs.writeFileSync(stagedJSFile,stagedJS);
 
