@@ -181,3 +181,62 @@ on both Linux and Windows Node 24 CI.
 - [ ] Explicit production release authorization
 
 No step here authorizes a production deployment.
+
+## Phase 2: verified intake gateway and durable receipt — source only
+
+Implementation exists on jill/rewards-work. It is not hosted, not enabled,
+not integrated with a real app proxy or a separate Custom Order WORK Sheet.
+Existing WORK Rewards and LIVE must not be deployed from these sources.
+
+Ownership:
+- backend/custom-order-gateway.mjs: portable Node Shopify App Proxy handler;
+  the host MUST supply a verified Shopify app-proxy authentication adapter,
+  durable rateLimit adapter, origin allowlist, expectedShop, Apps Script URL
+  and a 32+-character secret. This is not a self-hosting HTTP route.
+- theme/assets/jill-custom-order.js: first attempted request stays immutable
+  across retries (ID, timestamp, raw payload). A verified response must
+  contain ok=true, verified=true, matching ID and received status.
+- theme/sections/main-custom-order.liquid: verified_submission_endpoint
+  remains BLANK by default. It may later be set to /apps/jill-custom-order
+  only after a real signed proxy and backend are running.
+- backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs:
+  gateway HMAC-SHA256 validation uses Script Property
+  JILL_CUSTOM_ORDER_GATEWAY_SECRET. An optional separate
+  JILL_CUSTOM_ORDER_REQUIRE_GATEWAY=1 switch can block direct legacy POSTs
+  only AFTER the merchant has certified the hosted proxy end to end.
+
+Protocol:
+1. Existing URL-encoded Custom Order request is sent to same-origin app proxy.
+2. Host verifies Shopify proxy signature using supported Shopify auth SDK;
+   a claimed shop/email/customer ID is not sufficient. Guest intake is
+   allowed but does not grant authenticated My JILL account ownership.
+3. Host checks origin, shop, request body, unique form fields and shared
+   per-store/per-IP rate limiter. Limiter failure rejects submissions.
+4. Gateway signs submit + newline + ID + newline + millisecond timestamp
+   + newline + canonical raw_payload using HMAC-SHA256. Secret stays
+   server-side and in Google Script Properties; timestamp max 2 minutes.
+5. Existing Apps Script doPost persists intake and revision-1 received
+   event, or returns a failure. An existing ID with a different raw_payload
+   returns submission_conflict (not a misleading duplicate success).
+6. Gateway obtains separate signed receipt evidence via Apps Script doPost,
+   verifying BOTH the persisted Submissions row and first history event.
+7. Only when both backend actions return matching ID and true receipt may
+   the gateway send browser response verified=true and received status.
+8. Network failures return unconfirmed and the browser can retry the
+   IDENTICAL first-attempt payload. Opaque no-cors fetches are not proof.
+
+WORK activation gates (NOT completed):
+- Provision independent WORK Custom Order Google project and test spreadsheet;
+  never point WORK Rewards at the production Custom Order sheet.
+- Provision an HTTPS Shopify App Proxy host for WORK, verified authenticator,
+  durable rate limiter, isolated HMAC secret and allowed storefront origin.
+- Verify forged signature, rate-limited requests, changed ID payload,
+  backend timeout and replay tests against actual isolated Google Sheets.
+- Enable the verified theme setting on WORK only after backend proof.
+- Flip gateway-only enforcement in WORK ONLY after browser verified receipt.
+- Audit production separately, then obtain explicit LIVE deployment approval.
+
+Receipt != account ownership: logged-in customer linkage requires a distinct
+Customer Account session-token signature, expiry, audience and sub check.
+Do not claim a guest request by email match. No customer status/approval
+endpoint, paid invoice or shipment transition is enabled in this phase.
