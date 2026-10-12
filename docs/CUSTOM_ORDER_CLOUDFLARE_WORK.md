@@ -242,3 +242,35 @@ Next gate: authorized merchant command `received -> reviewing` using
 CustomOrderDesk, verify append-only revision 2, read-side merchant
 projection, and command replay/no-duplicate event. Do not treat account
 customer order-ownership projection as live without separate auth checks.
+
+
+## Merchant command safety checks — verified live WORK QA October 12, 2026
+
+The merchant ran `jillCustomOrderMerchantProcessDesk()` as the allowlisted
+Google operator. A connected read of all three isolated QA spreadsheet tabs
+independently verified four staged commands following the first valid
+`received -> reviewing` transition:
+
+- Exact replay of operation `jill:qa:merchant-review:a97454fa`:
+  `APPLIED revision 2` (duplicate recognized; no new event).
+- New operation with `expected_revision=1` after revision 2:
+  `REJECTED: Custom Order was updated elsewhere; reload current revision.`
+- Invalid `reviewing -> completed` transition with evidence:
+  `REJECTED: Invalid Custom Order status transition.`
+- Reuse of operation ID with changed public note:
+  `REJECTED: Idempotency key was reused for different content.`
+
+Persisted rows after all tests: one Submissions record; two append-only
+CustomOrderEvents (revision 1 received/new, revision 2 reviewing/needs_quote);
+one original plus four QA-only rows in CustomOrderDesk. No additional
+workflow event, Shopify customer sync, or mail was created by this QA runtime.
+
+**Unresolved release gate:** `extensions/jill-account-dashboard/src/pages/CustomOrders.jsx`
+remains an intentional disconnected placeholder. Its source explicitly
+refuses email-only customer ownership; the Apps Script
+`jillCustomOrderCustomerProjection_` is internal only and MUST NOT be
+exposed through public doGet/doPost. Before activating account timelines,
+design and verify signed-in Shopify customer ID binding, explicit
+submission ownership at intake, an authenticated read contract, and
+cross-customer denial. The synthetic `qa@example.invalid` entry is
+not owned by a real customer and is not sufficient proof of account linkage.
