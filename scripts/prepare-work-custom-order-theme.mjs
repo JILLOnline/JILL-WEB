@@ -38,7 +38,7 @@ const stagedFile=path.join(dest,'sections/main-custom-order.liquid');
 let staged=read(stagedFile);
 assert(staged.split(legacy).length===2,'Unexpected legacy URL count');
 // Remove the default entirely so the staged form can NEVER silently POST to legacy Google.
-staged=staged.replace(/\s*"default":\s*"https:\/\/script\.google\.com\/macros\/s\/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA\/exec"\s*,?/,'');
+staged=staged.replace(/,\s*"default":\s*"https:\/\/script\.google\.com\/macros\/s\/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA\/exec"\s*,?/,'');
 assert(!staged.includes(legacy),'Legacy URL still present');
 // Enable same-origin proxy only on the isolated staging copy.
 const needle='"id": "verified_submission_endpoint",';
