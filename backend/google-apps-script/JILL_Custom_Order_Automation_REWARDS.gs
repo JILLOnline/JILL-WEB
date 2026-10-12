@@ -183,6 +183,10 @@ function doPost(e) {
     }
 
     const row = existingRow || saveSubmission_(sheet, data);
+    // A receipt event is written while the existing POST lock is held.
+    // If it fails, retries reconcile by submission_id rather than inventing
+    // a successful delivery or duplicating an event.
+    jillCustomOrderEnsureReceived_(submissionId, data.submitted_at);
     const state = submissionState_(currentStatus);
 
     if (!existingRow) {
@@ -295,6 +299,270 @@ function doPost(e) {
 }
 
 
+
+/* ---------------------------
+   CUSTOM ORDER WORKFLOW V1 — MERCHANT-AUTHORIZED EVENT LOG
+   Does not accept commands through public doGet/doPost.
+   WORK Rewards deployments reject all workflow writes.
+   The existing Submissions sheet remains the intake source.
+---------------------------- */
+
+const JILL_CUSTOM_WORKFLOW = Object.freeze({
+  EVENTS_SHEET: 'CustomOrderEvents',
+  ADMIN_PROPERTY: 'JILL_CUSTOM_ORDER_ADMINS',
+  HEADERS: [
+    'event_id','submission_id','revision','customer_status','internal_status',
+    'public_note','internal_note','actor','occurred_at','source'
+  ],
+  STATUSES: [
+    'received','reviewing','awaiting_approval','in_production',
+    'ready_pickup','on_hold','cancelled','completed'
+  ],
+  INTERNAL: [
+    'new','needs_quote','waiting_customer','materials_ordered',
+    'proof_revision','printing','assembly','quality_check','ready','none'
+  ],
+  TRANSITIONS: {
+    received: ['reviewing','on_hold','cancelled'],
+    reviewing: ['awaiting_approval','in_production','on_hold','cancelled'],
+    awaiting_approval: ['reviewing','on_hold','cancelled'],
+    in_production: ['ready_pickup','on_hold','cancelled'],
+    ready_pickup: ['completed','on_hold'],
+    on_hold: ['reviewing','in_production','cancelled'],
+    cancelled: [],
+    completed: []
+  }
+});
+
+function jillCustomOrderAssertLive_() {
+  if (JILL_REWARDS_RUNTIME !== 'LIVE') {
+    throw new Error('Custom Order workflow is disabled in the isolated WORK Rewards backend.');
+  }
+  if (!JILL.SHEET_ID || !JILL.SHEET_NAME) {
+    throw new Error('Canonical Custom Order spreadsheet is not configured.');
+  }
+}
+
+function jillCustomOrderActor_() {
+  jillCustomOrderAssertLive_();
+  // No caller-provided identity, access by email, or web-app query argument.
+  // Missing Google identity or allowlist fails closed.
+  const props = PropertiesService.getScriptProperties();
+  const allowed = String(props.getProperty(JILL_CUSTOM_WORKFLOW.ADMIN_PROPERTY) || '')
+    .toLowerCase().split(',').map(function(x) { return x.trim(); }).filter(Boolean);
+  const email = String(Session.getActiveUser().getEmail() || '').toLowerCase().trim();
+  if (!email || allowed.indexOf(email) === -1) {
+    throw new Error('Custom Order operator is not authorized.');
+  }
+  return email;
+}
+
+function jillCustomOrderEventsSheet_() {
+  jillCustomOrderAssertLive_();
+  const spreadsheet = SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet = spreadsheet.getSheetByName(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+    sheet.getRange(1,1,1,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+      .setValues([JILL_CUSTOM_WORKFLOW.HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers = sheet.getRange(1,1,1,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+    .getValues()[0];
+  if (JSON.stringify(headers) !== JSON.stringify(JILL_CUSTOM_WORKFLOW.HEADERS)) {
+    throw new Error('Custom Order event ledger headers drifted; refusing writes.');
+  }
+  return sheet;
+}
+
+function jillCustomOrderEventsFor_(sheet, submissionId) {
+  const count = sheet.getLastRow() - 1;
+  if (count <= 0) return [];
+  const values = sheet.getRange(2,1,count,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+    .getValues();
+  const out = [];
+  values.forEach(function(row) {
+    if (String(row[1]) !== submissionId) return;
+    const result = {};
+    JILL_CUSTOM_WORKFLOW.HEADERS.forEach(function(key,index) {
+      result[key] = String(row[index] == null ? '' : row[index]);
+    });
+    const revision = Number(result.revision);
+    if (!Number.isSafeInteger(revision) || revision !== out.length + 1 ||
+        JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(result.customer_status) === -1 ||
+        !result.event_id) {
+      throw new Error('Custom Order event history is inconsistent; refusing updates.');
+    }
+    out.push(result);
+  });
+  return out;
+}
+
+function jillCustomOrderAppendEvent_(sheet, event) {
+  const row = JILL_CUSTOM_WORKFLOW.HEADERS.map(function(field) {
+    return String(event[field] == null ? '' : event[field]);
+  });
+  sheet.appendRow(row);
+  SpreadsheetApp.flush();
+}
+
+function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
+  jillCustomOrderAssertLive_();
+  if (!/^jill:[A-Za-z0-9._:-]{4,125}$/.test(String(submissionId))) {
+    // Historical submissions may use older IDs; still require a strict
+    // opaque identifier and do not attempt to derive customer identity.
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(String(submissionId))) {
+      throw new Error('Invalid Custom Order submission identifier.');
+    }
+  }
+  const sheet = jillCustomOrderEventsSheet_();
+  const existing = jillCustomOrderEventsFor_(sheet,String(submissionId));
+  if (existing.length) return existing[existing.length-1];
+  const received = {
+    event_id:'received:'+submissionId,
+    submission_id:submissionId,revision:1,customer_status:'received',
+    internal_status:'new',public_note:'',internal_note:'',
+    actor:'system:intake',
+    occurred_at:!isNaN(Date.parse(submittedAt)) ?
+      new Date(submittedAt).toISOString() : new Date().toISOString(),
+    source:'intake'
+  };
+  jillCustomOrderAppendEvent_(sheet,received);
+  return received;
+}
+
+function jillCustomOrderMerchantRead(submissionId) {
+  jillCustomOrderActor_();
+  const id=String(submissionId || '').trim();
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(id)) throw new Error('Invalid submission ID.');
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const source=getSheet_();
+    const row=findSubmissionRow_(source,id);
+    if (!row) return null;
+    const sheet=jillCustomOrderEventsSheet_();
+    const events=jillCustomOrderEventsFor_(sheet,id);
+    if (!events.length) return {submission_id:id,needs_backfill:true};
+    const current=events[events.length-1];
+    return {
+      submission_id:id,revision:events.length,
+      customer_status:current.customer_status,
+      internal_status:current.internal_status,
+      public_note:current.public_note,
+      last_updated_at:current.occurred_at,
+      history:events.map(function(event) {
+        return {
+          revision:Number(event.revision),customer_status:event.customer_status,
+          internal_status:event.internal_status,public_note:event.public_note,
+          internal_note:event.internal_note,actor:event.actor,
+          occurred_at:event.occurred_at,source:event.source
+        };
+      })
+    };
+  } finally {lock.releaseLock();}
+}
+
+function jillCustomOrderMerchantUpdate(command) {
+  const actor=jillCustomOrderActor_();
+  const data=command || {};
+  const id=String(data.submission_id || '').trim();
+  const op=String(data.operation_id || '').trim();
+  const status=String(data.customer_status || '').trim();
+  const internal=String(data.internal_status || '').trim();
+  const note=String(data.public_note || '').trim();
+  const privateNote=String(data.internal_note || '').trim();
+  const expected=Number(data.expected_revision);
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+      !/^[A-Za-z0-9._:-]{8,128}$/.test(op) ||
+      !Number.isSafeInteger(expected) || expected < 1 ||
+      JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(status) === -1 ||
+      (internal && JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(internal) === -1) ||
+      note.length > 500 || privateNote.length > 2000) {
+    throw new Error('Invalid Custom Order update command.');
+  }
+  if (status==='completed' && !String(data.handoff_reference||'').trim()) {
+    throw new Error('Completion requires a recorded merchant handoff reference.');
+  }
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const source=getSheet_();
+    const row=findSubmissionRow_(source,id);
+    if (!row) throw new Error('Custom Order request does not exist.');
+    const sheet=jillCustomOrderEventsSheet_();
+    let events=jillCustomOrderEventsFor_(sheet,id);
+    if (!events.length) {
+      const at=source.getRange(row,HEADERS.indexOf('submitted_at')+1).getValue();
+      jillCustomOrderEnsureReceived_(id,String(at||''));
+      events=jillCustomOrderEventsFor_(sheet,id);
+    }
+    const duplicate=events.find(function(item){return item.event_id===op;});
+    if (duplicate) {
+      if (duplicate.customer_status!==status ||
+          (internal && duplicate.internal_status!==internal) ||
+          duplicate.public_note!==note || duplicate.internal_note!==privateNote) {
+        throw new Error('Idempotency key was reused for different content.');
+      }
+      return {ok:true,duplicate:true,revision:Number(duplicate.revision),
+        customer_status:duplicate.customer_status};
+    }
+    const current=events[events.length-1];
+    if (events.length!==expected) {
+      throw new Error('Custom Order was updated elsewhere; reload current revision.');
+    }
+    if (status!==current.customer_status &&
+        (JILL_CUSTOM_WORKFLOW.TRANSITIONS[current.customer_status]||[])
+          .indexOf(status)===-1) {
+      throw new Error('Invalid Custom Order status transition.');
+    }
+    if (status===current.customer_status && !internal && !note && !privateNote) {
+      throw new Error('Empty Custom Order update.');
+    }
+    const event={
+      event_id:op,submission_id:id,revision:expected+1,
+      customer_status:status,internal_status:internal||current.internal_status,
+      public_note:note,internal_note:privateNote,
+      actor:actor,occurred_at:new Date().toISOString(),
+      source:'merchant'
+    };
+    // One canonical append-only event is the commit. No mirrored mutable
+    // status cell exists to get out of sync with this revision.
+    jillCustomOrderAppendEvent_(sheet,event);
+    return {ok:true,duplicate:false,revision:event.revision,
+      customer_status:status};
+  } finally {lock.releaseLock();}
+}
+
+function jillCustomOrderMerchantBackfill(limit) {
+  jillCustomOrderActor_();
+  const maximum=Math.max(1,Math.min(100,Number(limit)||20));
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet=getSheet_();
+    const count=Math.max(0,sheet.getLastRow()-1);
+    if (!count)return {scanned:0,created:0};
+    const rows=sheet.getRange(2,1,Math.min(count,maximum),HEADERS.length)
+      .getValues();
+    let created=0;
+    rows.forEach(function(row) {
+      const id=String(row[HEADERS.indexOf('submission_id')]||'').trim();
+      if (!id)return;
+      const eventSheet=jillCustomOrderEventsSheet_();
+      const existing=jillCustomOrderEventsFor_(eventSheet,id);
+      if (!existing.length) {
+        jillCustomOrderEnsureReceived_(
+          id,String(row[HEADERS.indexOf('submitted_at')]||'')
+        );
+        created++;
+      }
+    });
+    return {scanned:rows.length,created:created};
+  } finally {lock.releaseLock();}
+}
+
+/* END CUSTOM ORDER WORKFLOW V1 */
 
 /* ---------------------------
    JILL REWARDS
