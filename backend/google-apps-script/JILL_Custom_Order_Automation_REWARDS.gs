@@ -393,6 +393,7 @@ function jillCustomOrderEventsFor_(sheet, submissionId) {
         !result.event_id) {
       throw new Error('Custom Order event history is inconsistent; refusing updates.');
     }
+    result.revision = revision;
     out.push(result);
   });
   return out;
