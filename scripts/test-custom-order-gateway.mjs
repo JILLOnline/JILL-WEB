@@ -50,6 +50,51 @@ assert.equal(receiptSignature({action:'receipt',id,timestamp:'1791741600000',sec
 assert.equal((await run(new Request('https://jill-work.myshopify.com/apps/jill-custom-order'))).status,405);
 assert.equal((await run(request(new URLSearchParams({source:'JILL custom order'})))).status,400);
 assert.equal((await run(request(new URLSearchParams([...form(),['submission_id',id]])))).status,400);
+for(const key of ['jill_order_owner_gid','jill_order_customer_list',
+  'jill_order_gateway_ts','jill_order_gateway_sig','owner_gid',
+  'logged_in_customer_id','customer_id']) {
+  const forgedForm=form();
+  forgedForm.set(key,key==='jill_order_owner_gid'?'gid://shopify/Customer/999':'spoof');
+  assert.equal((await run(request(forgedForm))).status,400,
+    'Client may not inject reserved gateway identity field: '+key);
+}
+// An authenticated Shopify app-proxy query may bind the owner; the owner's
+// GID is a mandatory fifth Google HMAC segment and is never copied from form.
+const ownerGid='gid://shopify/Customer/123456';
+const ownerCalls=[];
+const authenticated=await run(request(),{
+  authenticateProxy:async()=>({shop,loggedInCustomerId:'123456'}),
+  backendFetch:async(_url,opts)=>{
+    const params=new URLSearchParams(opts.body);
+    ownerCalls.push(params);
+    const action=params.has('jill_order_receipt')?'receipt':'submit';
+    if(action==='submit') {
+      assert.equal(params.get('jill_order_owner_gid'),ownerGid);
+      const signed=receiptSignature({
+        action,id,timestamp:params.get('jill_order_gateway_ts'),
+        rawPayload:params.get('raw_payload'),ownerGid,secret,
+      });
+      assert.equal(params.get('jill_order_gateway_sig'),signed);
+      assert.notEqual(signed,receiptSignature({
+        action,id,timestamp:params.get('jill_order_gateway_ts'),
+        rawPayload:params.get('raw_payload'),secret,
+      }), 'Logged-in owner is cryptographically bound');
+    } else {
+      assert.equal(params.has('jill_order_owner_gid'),false);
+    }
+    return validResult(action==='submit'
+      ? {operation:'custom_order.submit.result',ok:true,submission_id:id,
+         status:'received',duplicate:false}
+      : {operation:'custom_order.receipt.result',ok:true,submission_id:id,
+         status:'received',revision:1});
+  },
+});
+assert.equal(authenticated.status,200);
+assert.equal(ownerCalls.length,2);
+assert.equal((await run(request(),{
+  authenticateProxy:async()=>({shop,loggedInCustomerId:'gid://shopify/Customer/111'}),
+})).status,401,'Only validated numeric Shopify app-proxy customer IDs accepted');
+
 assert.equal((await run(request(),{authenticateProxy:async()=>{throw Error('bad signature');}})).status,401);
 assert.equal((await run(request(),{authenticateProxy:async()=>({shop:'other.myshopify.com'})})).status,403);
 assert.equal((await run(request(),{rateLimit:async()=>false})).status,429);
@@ -102,6 +147,17 @@ const signed=(action,payload='')=>({parameter:{
 }});
 assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('submit',JSON.stringify(raw)),'submit'),true);
 assert.equal(sandbox.jillCustomOrderGatewayVerified_(signed('receipt'),'receipt'),true);
+const signedOwner=signed('submit',JSON.stringify(raw));
+signedOwner.parameter.jill_order_owner_gid=ownerGid;
+signedOwner.parameter.jill_order_gateway_sig=receiptSignature({
+  action:'submit',id,timestamp:now,rawPayload:JSON.stringify(raw),
+  ownerGid,secret,
+});
+assert.equal(sandbox.jillCustomOrderGatewayVerified_(signedOwner,'submit'),true);
+signedOwner.parameter.jill_order_owner_gid='gid://shopify/Customer/7890';
+assert.equal(sandbox.jillCustomOrderGatewayVerified_(signedOwner,'submit'),false,
+  'Altering owner in Google input fails the gateway signature');
+
 assert.equal(sandbox.jillCustomOrderGatewaySubmissionAllowed_(signed('submit',JSON.stringify(raw))),true);
 assert.equal(sandbox.jillCustomOrderGatewaySubmissionAllowed_({parameter:{submission_id:id}}),false);
 const tampered=signed('submit',JSON.stringify(raw));
