@@ -66,7 +66,11 @@ export async function handleCloudflareCustomOrderWork(request,env) {
       return reply(503,{ok:false});
     }
   }
-  if(pathname!==ROUTE||request.method!=='POST')
+  // Shopify may append "/" to the app-proxy destination when the
+  // storefront requests /apps/jill-custom-order. Treat only these two
+  // exact root spellings as the same route; never accept child paths,
+  // lookalike suffixes, or unrelated endpoints.
+  if((pathname!==ROUTE && pathname!==ROUTE+'/') || request.method!=='POST')
     return reply(404,{ok:false,error:'not_found'});
   let settings;
   try {settings=config(env);}
