@@ -565,6 +565,95 @@ function jillCustomOrderMerchantBackfill(limit) {
   } finally {lock.releaseLock();}
 }
 
+
+// Merchant controls: spreadsheet command desk only. No public HTTP handler,
+// account-page mutation, onEdit trigger or polling job processes these rows.
+// Authorized operator runs jillCustomOrderMerchantProcessDesk() explicitly.
+const JILL_CUSTOM_ORDER_DESK = Object.freeze({
+  SHEET: 'CustomOrderDesk',
+  HEADERS:[
+    'operation_id','submission_id','expected_revision','customer_status',
+    'internal_status','public_note','internal_note','handoff_reference',
+    'result','processed_at'
+  ]
+});
+
+function jillCustomOrderMerchantDeskSheet_() {
+  jillCustomOrderActor_();
+  const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet=spreadsheet.getSheetByName(JILL_CUSTOM_ORDER_DESK.SHEET);
+  if (!sheet) {
+    sheet=spreadsheet.insertSheet(JILL_CUSTOM_ORDER_DESK.SHEET);
+    sheet.getRange(1,1,1,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+      .setValues([JILL_CUSTOM_ORDER_DESK.HEADERS]);
+    sheet.setFrozenRows(1);
+    sheet.getRange('D2:D1000').setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(JILL_CUSTOM_WORKFLOW.STATUSES,true)
+        .setAllowInvalid(false).build()
+    );
+    sheet.getRange('E2:E1000').setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(JILL_CUSTOM_WORKFLOW.INTERNAL,true)
+        .setAllowInvalid(false).build()
+    );
+  }
+  const headers=sheet.getRange(1,1,1,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+    .getValues()[0];
+  if (JSON.stringify(headers)!==JSON.stringify(JILL_CUSTOM_ORDER_DESK.HEADERS)) {
+    throw new Error('Merchant command desk headers drifted; refusing edits.');
+  }
+  return sheet;
+}
+
+function jillCustomOrderMerchantSetupDesk() {
+  const actor=jillCustomOrderActor_();
+  const sheet=jillCustomOrderMerchantDeskSheet_();
+  return {ok:true,operator:actor,sheet:sheet.getName(),
+    command_columns:JILL_CUSTOM_ORDER_DESK.HEADERS.slice(0,8)};
+}
+
+function jillCustomOrderMerchantProcessDesk(limit) {
+  jillCustomOrderActor_();
+  const max=Math.max(1,Math.min(25,Math.floor(Number(limit)||10)));
+  const sheet=jillCustomOrderMerchantDeskSheet_();
+  const count=Math.max(0,sheet.getLastRow()-1);
+  if (!count)return {processed:0,succeeded:0,rejected:0};
+  const rows=sheet.getRange(2,1,count,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+    .getValues();
+  let processed=0,succeeded=0,rejected=0;
+  rows.forEach(function(values,index) {
+    if (processed>=max || !String(values[0]||'').trim() ||
+        String(values[8]||'').trim())return;
+    processed++;
+    try {
+      const result=jillCustomOrderMerchantUpdate({
+        operation_id:String(values[0]||''),
+        submission_id:String(values[1]||''),
+        expected_revision:values[2],
+        customer_status:String(values[3]||''),
+        internal_status:String(values[4]||''),
+        public_note:String(values[5]||''),
+        internal_note:String(values[6]||''),
+        handoff_reference:String(values[7]||'')
+      });
+      // Event append is authoritative. If writing this acknowledgement fails,
+      // a retry with the same operation_id is handled as a duplicate.
+      sheet.getRange(index+2,9,1,2)
+        .setValues([['APPLIED revision '+result.revision,new Date().toISOString()]]);
+      succeeded++;
+    } catch(err) {
+      // Keep the command as the operator entered it. The operator can
+      // correct or retry a rejected row; no status is silently forced.
+      const reason=String(err&&err.message||err).slice(0,240);
+      sheet.getRange(index+2,9,1,2)
+        .setValues([['REJECTED: '+reason,new Date().toISOString()]]);
+      rejected++;
+    }
+  });
+  return {processed:processed,succeeded:succeeded,rejected:rejected};
+}
+
 /* END CUSTOM ORDER WORKFLOW V1 */
 
 /* ---------------------------
