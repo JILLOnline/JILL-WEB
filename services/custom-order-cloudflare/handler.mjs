@@ -70,8 +70,15 @@ export async function handleCloudflareCustomOrderWork(request,env) {
   // storefront requests /apps/jill-custom-order. Treat only these two
   // exact root spellings as the same route; never accept child paths,
   // lookalike suffixes, or unrelated endpoints.
-  if((pathname!==ROUTE && pathname!==ROUTE+'/') || request.method!=='POST')
-    return reply(404,{ok:false,error:'not_found'});
+  if((pathname!==ROUTE && pathname!==ROUTE+'/') || request.method!=='POST') {
+    // Temporary WORK-only routing diagnostic. Never expose the signed
+    // query string, client headers, body, customer data or any secret.
+    // Only reflect a short, strictly sanitized pathname to the caller.
+    const observed=/^\\/[A-Za-z0-9/_-]{0,159}$/.test(pathname)
+      ? pathname : 'redacted';
+    return reply(404,{ok:false,error:'not_found',
+      work_route_diagnostic:{method:request.method,path:observed}});
+  }
   let settings;
   try {settings=config(env);}
   catch {return reply(503,{ok:false,error:'gateway_unavailable'});}
