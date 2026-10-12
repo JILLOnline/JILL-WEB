@@ -52,7 +52,12 @@ export function verifyWorkCustomerAccountSession(jwt,{
   const expected=createHmac('sha256',appSecret)
     .update(h+'.'+p,'utf8').digest();
   const signature=Buffer.from(s,'base64url');
-  if(signature.length!==expected.length||!timingSafeEqual(expected,signature))
+  // Reject alternate base64url spellings of the same HMAC bytes: the
+  // unused padding bits in a 43-character SHA-256 signature can otherwise
+  // be altered without changing the decoded signature.
+  if(signature.length!==expected.length||
+     signature.toString('base64url')!==s||
+     !timingSafeEqual(expected,signature))
     invalid();
   const claims=decodeJson(p);
   const current=Math.floor(now()/1000);
