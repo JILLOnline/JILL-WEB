@@ -146,3 +146,42 @@ Only after both proofs work should WORK theme form settings use
   long-term hosting durability and production requirements separately.
 - Google `/exec` may be online while POST receipts are still
   unverified; never claim success from the GET health check.
+
+
+## WORK storefront app-proxy 404 diagnosis (October 12, 2026)
+
+The merchant released WORK app version jill-work-rewards-4 with the correct
+Cloudflare destination and /apps/jill-custom-order path. However, a POST
+probe=1 from the unlocked WORK storefront returned an HTML 404.
+
+Shopify may forward that path to the upstream destination WITH a trailing
+slash: /jill-custom-order-proxy/ instead of /jill-custom-order-proxy.
+A Shopify developer engineer confirmed the same issue in August 2026:
+https://community.shopify.dev/t/app-proxy-registered-but-storefront-returns-404-reproduced-across-two-apps-and-all-install-methods/36800
+
+The WORK Worker now accepts BOTH exact upstream root spellings for signed
+POSTs, but still refuses GET, unexpected child routes and invalid HMAC.
+The regression test verifies an authenticated probe=1 returns 400
+invalid_submission for BOTH spellings, and forged requests return 401.
+
+After CI passes, update ONLY the existing WORK Cloudflare Worker:
+
+    cd C:\Users\itzen\JILL-WEB
+    git switch jill/rewards-work
+    git pull --ff-only
+    cd services/custom-order-cloudflare
+    npm.cmd run build
+    npm.cmd run deploy
+
+Existing Wrangler environment secrets and the SQLite Durable Object are
+preserved. No Shopify app version, permission approval, reinstall,
+password change, Google deployment or LIVE change is needed for this fix.
+
+From the unlocked WORK storefront browser, issue a harmless POST of
+probe=1 to /apps/jill-custom-order. JSON 400 with invalid_submission
+means Shopify signed and forwarded the request and the gateway rejected
+the incomplete input. A continuing 404 HTML warrants a separate
+routing check using npx.cmd wrangler tail jill-work-custom-orders-qa
+while repeating the browser test. Do not uninstall WORK Rewards.
+
+An invalid probe response does not verify a durable order/receipt.
