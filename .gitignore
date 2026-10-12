@@ -17,3 +17,6 @@ extensions/*/shopify.d.ts
 
 # Disposable WORK-only customer account canary; Shopify config remains local.
 .work-account-canary/
+
+# Separate WORK Custom Orders Google project and QA spreadsheet credentials.
+.work-custom-orders/
