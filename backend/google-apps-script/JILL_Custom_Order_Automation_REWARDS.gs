@@ -107,6 +107,10 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  // Private WORK QA account-list operation. Never a public guest lookup.
+  if (clean_(e && e.parameter && e.parameter.jill_order_customer_list) === '1') {
+    return jillCustomOrderGatewayCustomerList_(e);
+  }
   // Restricted server-to-server proof of an already-persisted request.
   // NOT a public customer lookup and NOT a status mutation.
   if (clean_(e && e.parameter && e.parameter.jill_order_receipt) === '1') {
@@ -224,6 +228,23 @@ function doPost(e) {
       }
     }
 
+    // Verified signed Shopify identity is bound before inserting the source
+    // row; an interrupted write leaves only an unusable orphan owner record
+    // which the EXACT same owner/payload may reconcile on retry. Replaying
+    // a previously guest-owned submission while signed-in cannot claim it.
+    if(JILL_CUSTOM_ORDER_SANDBOX) {
+      try {
+        jillCustomOrderOwnerBind_(submissionId,
+          String(e.parameter.jill_order_owner_gid||''),
+          String(data.raw_payload||''),duplicate);
+      } catch(ownerErr) {
+        return customOrderFailure_('owner_conflict',
+          'This Custom Order cannot be assigned to that account.',false);
+      }
+    } else if(e.parameter.jill_order_owner_gid) {
+      return customOrderFailure_('owner_not_enabled',
+        'Authenticated Custom Order ownership is not enabled.',false);
+    }
     const row = existingRow || saveSubmission_(sheet, data);
     // A receipt event is written while the existing POST lock is held.
     // If it fails, retries reconcile by submission_id rather than inventing
@@ -735,8 +756,13 @@ function jillCustomOrderMerchantProcessDesk(limit) {
 // Gateway authentication is deliberately separate from Rewards webhook
 // authentication. The secret lives ONLY in Script Properties and the
 // server-side Shopify app proxy; never expose it to Liquid or JS.
-function jillCustomOrderGatewaySignature_(action,id,timestamp,rawPayload,secret) {
-  const message=[action,id,timestamp,rawPayload||''].join('\n');
+function jillCustomOrderGatewaySignature_(action,id,timestamp,rawPayload,secret,ownerGid) {
+  // Backward-compatible guest envelope: four segments. Signed-in identity
+  // uses a fifth mandatory HMAC segment; client-supplied fields cannot
+  // rewrite the owner without the gateway's private signing secret.
+  const parts=[action,id,timestamp,rawPayload||''];
+  if(ownerGid)parts.push(ownerGid);
+  const message=parts.join('\n');
   const bytes=Utilities.computeHmacSha256Signature(message,secret);
   return bytes.map(function(value) {
     return ('0'+((value+256)%256).toString(16)).slice(-2);
@@ -754,10 +780,18 @@ function jillCustomOrderGatewayVerified_(e,action) {
   if (String(secret).length<32 || !/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
       !/^[0-9]{13}$/.test(timestamp) || !/^[a-f0-9]{64}$/.test(signature) ||
       Math.abs(Date.now()-Number(timestamp))>120000) return false;
-  const payload=action==='submit' ? String(values.raw_payload||'') : '';
+  const owner=String(values.jill_order_owner_gid||'');
+  if(owner && !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(owner))
+    return false;
+  if(action==='customer_list' && (id!=='jill:account-orders' || !owner))
+    return false;
+  const payload=action==='submit' ? String(values.raw_payload||'') :
+    action==='customer_list' ? owner : '';
   if (action==='submit' && !payload) return false;
+  // Signed submit owner is the additional HMAC segment, not a mutable
+  // customer field in the browser's raw Custom Order JSON.
   const expected=jillCustomOrderGatewaySignature_(
-    action,id,timestamp,payload,secret
+    action,id,timestamp,payload,secret,action==='submit'?owner:''
   );
   return constantTimeEqual_(signature,expected);
 }
@@ -803,6 +837,115 @@ function jillCustomOrderGatewayReceipt_(e) {
   } finally {lock.releaseLock();}
 }
 
+
+
+/* WORK CUSTOM ORDER OWNERSHIP V1 — QA ONLY, NO LIVE RETROCLAIM */
+const JILL_CUSTOM_OWNER_SHEET='CustomOrderOwners';
+const JILL_CUSTOM_OWNER_HEADERS=[
+  'submission_id','owner_gid','payload_sha256','bound_at'
+];
+function jillCustomOrderOwnerHash_(payload) {
+  const values=Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,String(payload));
+  return values.map(function(v){
+    return ('0'+((v+256)%256).toString(16)).slice(-2);
+  }).join('');
+}
+function jillCustomOrderOwnersSheet_(create) {
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet=ss.getSheetByName(JILL_CUSTOM_OWNER_SHEET);
+  if(!sheet && !create)return null;
+  if(!sheet) {
+    sheet=ss.insertSheet(JILL_CUSTOM_OWNER_SHEET);
+    sheet.getRange(1,1,1,4).setValues([JILL_CUSTOM_OWNER_HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers=sheet.getRange(1,1,1,4).getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(JILL_CUSTOM_OWNER_HEADERS))
+    throw new Error('Custom Order owner ledger headers drifted.');
+  return sheet;
+}
+function jillCustomOrderOwnerRows_(sheet) {
+  if(!sheet || sheet.getLastRow()<2)return [];
+  const values=sheet.getRange(2,1,sheet.getLastRow()-1,4).getValues();
+  return values.map(function(row){
+    return {id:String(row[0]),gid:String(row[1]),hash:String(row[2])};
+  });
+}
+function jillCustomOrderOwnerBind_(submissionId,ownerGid,rawPayload,duplicate) {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('Owner binding is isolated WORK QA only.');
+  if(!/^[A-Za-z0-9._:-]{8,128}$/.test(submissionId)||!rawPayload)
+    throw new Error('Invalid owner binding payload.');
+  if(ownerGid && !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(ownerGid))
+    throw new Error('Invalid owner identity.');
+  const sheet=jillCustomOrderOwnersSheet_(Boolean(ownerGid));
+  const rows=jillCustomOrderOwnerRows_(sheet)
+    .filter(function(row){return row.id===submissionId;});
+  if(rows.length>1)throw new Error('Duplicate owner records.');
+  const previous=rows[0]||null;
+  const hash=jillCustomOrderOwnerHash_(rawPayload);
+  if(duplicate) {
+    // Immutable previous GUEST intake must never be claimed by a new login.
+    if((previous?.gid||'')!==ownerGid ||
+       (previous && previous.hash!==hash))
+      throw new Error('Existing intake ownership cannot change.');
+    return Boolean(previous);
+  }
+  if(!ownerGid) {
+    if(previous)throw new Error('Orphaned owner collision.');
+    return false;
+  }
+  if(previous) {
+    if(previous.gid!==ownerGid||previous.hash!==hash)
+      throw new Error('Conflicting owner or original payload.');
+    return true;
+  }
+  // Caller holds the same script lock as canonical Submissions intake.
+  sheet.appendRow([submissionId,ownerGid,hash,new Date().toISOString()]);
+  SpreadsheetApp.flush();
+  return true;
+}
+function jillCustomOrderGatewayCustomerList_(e) {
+  // Access requires internal HMAC; the signing gateway MUST first verify
+  // Shopify's account-session JWT (aud,dest,sub,exp,signature).
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true ||
+     !jillCustomOrderGatewayVerified_(e,'customer_list')) {
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:false,error:{code:'unauthorized',retryable:false}});
+  }
+  const gid=String(e.parameter.jill_order_owner_gid);
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const owners=jillCustomOrderOwnersSheet_(false);
+    const matches=jillCustomOrderOwnerRows_(owners)
+      .filter(function(row){return row.gid===gid;});
+    // Fail closed on owner-ledger corruption or unbounded scan.
+    if(matches.length>20 ||
+       new Set(matches.map(function(row){return row.id;})).size!==matches.length)
+      throw new Error('Invalid customer ownership index.');
+    const source=getSheet_();
+    const events=jillCustomOrderEventsSheet_();
+    const result=matches.map(function(row){
+      const index=findSubmissionRow_(source,row.id);
+      if(!index)throw new Error('Owner refers to missing intake.');
+      const stored=String(source.getRange(index,HEADERS.indexOf('raw_payload')+1)
+        .getValue()||'');
+      if(!stored||jillCustomOrderOwnerHash_(stored)!==row.hash)
+        throw new Error('Owner refers to conflicting payload.');
+      const history=jillCustomOrderEventsFor_(events,row.id);
+      if(!history.length)throw new Error('Missing Custom Order status history.');
+      return jillCustomOrderCustomerProjection_(row.id,history);
+    });
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:true,orders:result});
+  } catch(err) {
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:false,error:{code:'private_read_unavailable',retryable:true}});
+  } finally {lock.releaseLock();}
+}
+/* END WORK CUSTOM ORDER OWNERSHIP V1 */
 
 // Run this function in the isolated QA Apps Script editor BEFORE any
 // web-app deployment. It is read-only and never emits secret values.
