@@ -44,12 +44,19 @@ export function buildWorkCatalogOperations(source,work){
      'Unexpected image host: '+p.handle);
    return {contentType:'IMAGE',originalSource:m.url,alt:m.alt||''};
   });
+  const sourceOptions=p.options||[];
+  const defaultOnly=sourceOptions.length===1&&sourceOptions[0].name==='Title'&&
+    JSON.stringify(sourceOptions[0].values)==='["Default Title"]'&&p.variants.length===1;
+  guard(defaultOnly||sourceOptions.every(o=>o.name!=='Title'),
+    'Unexpected default/explicit option mix: '+p.handle);
   const variants=p.variants.map(v=>{
    guard(Array.isArray(v.selectedOptions),'Missing option definitions for '+p.handle);
+   const optionValues=defaultOnly?[]:v.selectedOptions.map(o=>({optionName:o.name,name:o.value}));
+   guard(defaultOnly||optionValues.length===sourceOptions.length,
+     'Variant missing selected options: '+p.handle+'/'+v.title);
    return {price:String(v.price),compareAtPrice:v.compareAtPrice??undefined,
      sku:v.sku??undefined,taxable:v.taxable??undefined,
-     inventoryPolicy:v.inventoryPolicy??undefined,
-     optionValues:v.selectedOptions.map(o=>({optionName:o.name,name:o.value}))};
+     inventoryPolicy:v.inventoryPolicy??undefined,optionValues};
   });
   const metafields=[{namespace:'custom',key:'jill_product_capabilities',type:'json',
     value:JSON.stringify(canonical.profile)}];
@@ -63,7 +70,7 @@ export function buildWorkCatalogOperations(source,work){
   operations.push({stage:'02_PRODUCTS',kind:'product.draft.create',handle:p.handle,
    input:{title:p.title,handle:p.handle,status:'DRAFT',vendor:p.vendor,productType:p.productType,
     descriptionHtml:p.descriptionHtml,tags:p.tags,files,
-    productOptions:(p.options||[]).map((o,i)=>({name:o.name,position:i+1,
+    productOptions:defaultOnly?[]:sourceOptions.map((o,i)=>({name:o.name,position:i+1,
       values:o.values.map(value=>({name:value}))})),
     variants,metafields}});
   if(p.personalizationProfileHandle){
