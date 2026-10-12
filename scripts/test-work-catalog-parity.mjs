@@ -12,16 +12,28 @@ const collections=[
   {handle:'pinatas',productHandles:products.filter(p=>p.handle.includes('pinata')).map(p=>p.handle)},
   {handle:'jill',productHandles:products.map(p=>p.handle)},
 ];
-const source={schema:'jill.catalog-safe.v1',shop:'jillonlinestore.com',products,collections};
+const profileDefinition={type:'jill_personalization_profile',fields:[
+  {key:'name',type:'single_line_text_field',required:true},
+  {key:'code',type:'single_line_text_field',required:true},
+]};
+const personalizationProfiles=[
+  {handle:'pinata-number',type:'jill_personalization_profile',
+    fields:{name:'Piñata — Number',code:'pinata-number'}},
+];
+const source={schema:'jill.catalog-safe.v1',shop:'jillonlinestore.com',products,collections,
+  profileDefinition,personalizationProfiles};
 const work={schema:'jill.catalog-safe.v1',shop:'jill-work.myshopify.com',
-  products:[],collections:[]};
+  products:[],collections:[],profileDefinition:null,personalizationProfiles:[]};
 const a=planCatalogParity(source,work);
 assert.equal(a.dryRun,true);
 assert.equal(a.noWrites,true);
 assert.equal(a.summary.createProducts,15);
 assert.equal(a.summary.createCollections,2);
+assert.equal(a.summary.createProfiles,1);
+assert.equal(a.summary.profileDefinitionAction,'CREATE_IN_WORK');
 const mirrored=structuredClone(source);
 mirrored.shop=work.shop;
+mirrored.profileDefinition=structuredClone(profileDefinition);
 let b=planCatalogParity(source,mirrored);
 assert.equal(b.summary.createProducts,0);
 assert.equal(b.products.filter(p=>p.action==='MATCH').length,15);
