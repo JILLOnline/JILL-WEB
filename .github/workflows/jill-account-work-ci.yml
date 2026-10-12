@@ -54,3 +54,36 @@ jobs:
             git status --short
             exit 1
           fi
+
+  windows:
+    name: Verify WORK postinstall on Windows Node 24
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout WORK source
+        uses: actions/checkout@v4
+
+      - name: Match local Windows Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Print runtime versions
+        shell: pwsh
+        run: |
+          node --version
+          npm.cmd --version
+
+      - name: Reproduce Windows npm install and full postinstall guard
+        shell: pwsh
+        run: npm.cmd install
+
+      - name: Run new account-transfer preflight explicitly
+        shell: pwsh
+        run: node scripts/check-account-transfer-readiness.mjs
+
+      - name: Ensure tests did not change tracked source
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain --untracked-files=no
+          if ($dirty) { Write-Error "Tests changed tracked source: $dirty"; exit 1 }
