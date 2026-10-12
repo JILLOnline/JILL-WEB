@@ -36,7 +36,7 @@ if(fs.existsSync(dest)){
     // Recover ONLY when it contains our two exact canonical theme files,
     // no non-theme top-level entries, and is inside this repository.
     const allowed=new Set(['assets','config','layout','locales','sections',
-      'snippets','templates','.jill-work-theme.json']);
+      'snippets','templates','.theme-check.yml','.jill-work-theme.json']);
     const entries=fs.readdirSync(dest);
     assert(entries.length>0&&entries.every(name=>allowed.has(name)),
       'Unrecognized incomplete WORK stage; refusing removal');
