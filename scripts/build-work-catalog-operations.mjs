@@ -38,7 +38,14 @@ export function buildWorkCatalogOperations(source,work){
     JSON.stringify(stable(p.jillCapabilityProfile))===JSON.stringify(stable(canonical.profile)),
     'LIVE capability definition differs: '+p.handle);
   guard(Array.isArray(p.variants)&&p.variants.length,'No variants: '+p.handle);
+  guard(p.status==='ACTIVE','LIVE source product is not active: '+p.handle);
+  guard(p.vendor==='JILL','LIVE source vendor differs from JILL: '+p.handle);
+  guard(typeof p.descriptionHtml==='string','Missing LIVE description: '+p.handle);
+  guard(Array.isArray(p.tags),'Missing LIVE tags: '+p.handle);
+  guard(Array.isArray(p.options)&&p.options.length>=1,'Missing LIVE options: '+p.handle);
+  guard(Array.isArray(p.images)&&p.images.length>0,'Missing LIVE image gallery: '+p.handle);
   const files=(p.images||[]).map(m=>{
+   guard(typeof m.url==='string'&&m.url.startsWith('https://'),'Invalid image URL: '+p.handle);
    const u=new URL(m.url);
    guard(u.protocol==='https:'&&u.hostname==='cdn.shopify.com',
      'Unexpected image host: '+p.handle);
@@ -54,6 +61,8 @@ export function buildWorkCatalogOperations(source,work){
    const optionValues=v.selectedOptions.map(o=>({optionName:o.name,name:o.value}));
    guard(defaultOnly||optionValues.length===sourceOptions.length,
      'Variant missing selected options: '+p.handle+'/'+v.title);
+   guard(Number.isFinite(Number(v.price))&&Number(v.price)>0,
+     'Invalid LIVE variant price: '+p.handle+'/'+v.title);
    return {price:String(v.price),compareAtPrice:v.compareAtPrice??undefined,
      sku:v.sku??undefined,taxable:v.taxable??undefined,
      inventoryPolicy:v.inventoryPolicy??undefined,optionValues};
