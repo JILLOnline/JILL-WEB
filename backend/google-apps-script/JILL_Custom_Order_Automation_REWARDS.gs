@@ -67,6 +67,10 @@ function setupJill() {
 ---------------------------- */
 
 function doGet(e) {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    return ContentService.createTextOutput('JILL WORK Custom Orders QA online.')
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
   if (e && e.parameter && e.parameter.code) {
     return handleShopifyOAuthCallback_(e);
   }
@@ -855,6 +859,9 @@ const JILL_REWARD_SUBSCRIPTIONS = [
 ];
 
 function setupJillRewards() {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    throw new Error('Rewards setup is forbidden in the Custom Order QA project.');
+  }
   assertJillRewardsRuntimeTarget_();
   const infrastructure = ensureJillRewardsInfrastructure_(true);
   const reconciliation = processPendingJillRewardRequests();
@@ -995,6 +1002,9 @@ function ensureJillRewardsSweepTrigger_() {
 // same worker every minute, so a metafield-only redemption request cannot get
 // stranded even if Shopify does not emit CUSTOMERS_UPDATE for that write.
 function runJillRewardsSweep() {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    throw new Error('Rewards sweeps are forbidden in the Custom Order QA project.');
+  }
   return processPendingJillRewardRequests();
 }
 
