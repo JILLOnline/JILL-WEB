@@ -24,6 +24,7 @@ const run=(...args)=>{
 };
 if(fs.existsSync(claspFile)!==fs.existsSync(recordFile))
   throw new Error('Incomplete QA project identity; refusing clasp write.');
+const previouslyBootstrapped=fs.existsSync(claspFile);
 if(!fs.existsSync(claspFile)){
   // Only a NEW independent QA Apps Script is ever created here. No source
   // can be pushed to the existing WORK Rewards or LIVE Apps Script project.
@@ -53,6 +54,17 @@ if(!project.scriptId || clasp.scriptId!==project.scriptId ||
     project.shop!=='jill-work.myshopify.com' ||
     project.origin!=='separate Custom Order QA clasp create-script')
   throw new Error('Custom Order QA Google project or WORK sheet identity changed; refusing upload.');
+if(previouslyBootstrapped) {
+  // Audit Google remote source ownership before a subsequent force push.
+  // Never silently replace an unknown script that was edited outside Git.
+  run('pull');
+  const remoteFiles=fs.readdirSync(output).filter(x=>/\.(gs|js|html)$/.test(x));
+  if(remoteFiles.length!==1 ||
+      remoteFiles[0]!=='JILL_Custom_Order_Automation_REWARDS.gs')
+    throw new Error('QA remote source contains unknown scripts; refusing overwrite.');
+  execFileSync(process.execPath,['scripts/build-custom-order-work-backend.mjs'],
+    {cwd:root,stdio:'inherit'});
+}
 const sources=fs.readdirSync(output).filter(x=>/\.(gs|js|html)$/.test(x));
 if(sources.length!==1 || sources[0]!=='JILL_Custom_Order_Automation_REWARDS.gs')
   throw new Error('Unexpected code source in Custom Order QA project; refusing upload.');
