@@ -99,6 +99,11 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  // Restricted server-to-server proof of an already-persisted request.
+  // NOT a public customer lookup and NOT a status mutation.
+  if (clean_(e && e.parameter && e.parameter.jill_order_receipt) === '1') {
+    return jillCustomOrderGatewayReceipt_(e);
+  }
   const lock = LockService.getScriptLock();
   const suppliedRewardSecret = clean_(
     e && e.parameter ? e.parameter.jill_rewards_hook : ''
@@ -137,6 +142,16 @@ function doPost(e) {
       return handleJillRewardsWebhook_(e);
     }
 
+    // During migration, legacy direct submissions continue to work only
+    // until JILL_CUSTOM_ORDER_REQUIRE_GATEWAY is explicitly enabled.
+    // Once enabled, any direct browser POST without a valid gateway HMAC
+    // is refused. This toggle must be set only after gateway E2E QA.
+    if (!jillCustomOrderGatewaySubmissionAllowed_(e)) {
+      return customOrderFailure_(
+        'gateway_required',
+        'The Custom Order submission could not be authenticated.', false
+      );
+    }
     const data = parsePayload_(e);
 
     if (clean_(data.source) !== JILL.SOURCE) {
@@ -693,6 +708,77 @@ function jillCustomOrderMerchantProcessDesk(limit) {
     }
   });
   return {processed:processed,succeeded:succeeded,rejected:rejected};
+}
+
+
+// Gateway authentication is deliberately separate from Rewards webhook
+// authentication. The secret lives ONLY in Script Properties and the
+// server-side Shopify app proxy; never expose it to Liquid or JS.
+function jillCustomOrderGatewaySignature_(action,id,timestamp,rawPayload,secret) {
+  const message=[action,id,timestamp,rawPayload||''].join('\n');
+  const bytes=Utilities.computeHmacSha256Signature(message,secret);
+  return bytes.map(function(value) {
+    return ('0'+((value+256)%256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function jillCustomOrderGatewayVerified_(e,action) {
+  if (JILL_REWARDS_RUNTIME==='WORK') return false;
+  const values=e&&e.parameter||{};
+  const id=clean_(values.submission_id);
+  const timestamp=clean_(values.jill_order_gateway_ts);
+  const signature=clean_(values.jill_order_gateway_sig).toLowerCase();
+  const secret=PropertiesService.getScriptProperties()
+    .getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'';
+  if (String(secret).length<32 || !/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+      !/^[0-9]{13}$/.test(timestamp) || !/^[a-f0-9]{64}$/.test(signature) ||
+      Math.abs(Date.now()-Number(timestamp))>120000) return false;
+  const payload=action==='submit' ? String(values.raw_payload||'') : '';
+  if (action==='submit' && !payload) return false;
+  const expected=jillCustomOrderGatewaySignature_(
+    action,id,timestamp,payload,secret
+  );
+  return constantTimeEqual_(signature,expected);
+}
+
+function jillCustomOrderGatewaySubmissionAllowed_(e) {
+  const props=PropertiesService.getScriptProperties();
+  const required=props.getProperty('JILL_CUSTOM_ORDER_REQUIRE_GATEWAY')==='1';
+  const values=e&&e.parameter||{};
+  const signed=Boolean(values.jill_order_gateway_sig ||
+    values.jill_order_gateway_ts);
+  if (signed || required) return jillCustomOrderGatewayVerified_(e,'submit');
+  // Transition period only: retiring the unauthenticated ingress must be
+  // a separate, verified rollout (never an accidental Git deployment).
+  return true;
+}
+
+function jillCustomOrderGatewayReceipt_(e) {
+  if (!jillCustomOrderGatewayVerified_(e,'receipt')) {
+    return json_({version:1,operation:'custom_order.receipt.result',
+      ok:false,error:{code:'unauthorized_receipt',retryable:false}});
+  }
+  const id=String(e.parameter.submission_id);
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    // A verified receipt requires BOTH durable intake row and append-only
+    // workflow receipt event, not an email or a "maybe" HTTP response.
+    const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const sheet=spreadsheet.getSheetByName(JILL.SHEET_NAME);
+    const events=spreadsheet.getSheetByName(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+    if (!sheet || !events || !findSubmissionRow_(sheet,id)) {
+      return json_({version:1,operation:'custom_order.receipt.result',
+        ok:false,error:{code:'receipt_not_found',retryable:true}});
+    }
+    const matches=jillCustomOrderEventsFor_(events,id);
+    if (!matches.length || matches[0].customer_status!=='received') {
+      return json_({version:1,operation:'custom_order.receipt.result',
+        ok:false,error:{code:'receipt_not_ready',retryable:true}});
+    }
+    return json_({version:1,operation:'custom_order.receipt.result',
+      ok:true,submission_id:id,status:'received',revision:1});
+  } finally {lock.releaseLock();}
 }
 
 /* END CUSTOM ORDER WORKFLOW V1 */
