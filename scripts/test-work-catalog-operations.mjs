@@ -25,6 +25,19 @@ const result=buildWorkCatalogOperations(source,work);
 assert.equal(result.mutationsExecuted,0);
 assert.equal(result.target,'jill-work.myshopify.com');
 assert.equal(result.operations.filter(x=>x.kind==='product.draft.create').length,15);
+assert.ok(result.operations.filter(x=>x.kind==='product.draft.create').every(x=>
+  x.input.productOptions.length===0&&x.input.variants[0].optionValues.length===0));
+const explicit=structuredClone(source);
+explicit.products[0].options=[{name:'Size',values:['S','M']}];
+explicit.products[0].variants=[
+  {title:'S',price:'24.99',selectedOptions:[{name:'Size',value:'S'}]},
+  {title:'M',price:'29.99',selectedOptions:[{name:'Size',value:'M'}]},
+];
+const explicitOps=buildWorkCatalogOperations(explicit,work);
+const explicitProduct=explicitOps.operations.find(x=>x.kind==='product.draft.create'&&
+  x.handle===explicit.products[0].handle);
+assert.equal(explicitProduct.input.variants.length,2);
+assert.equal(explicitProduct.input.productOptions[0].values.length,2);
 assert.equal(result.operations.filter(x=>x.kind==='product.profile.attach').length,15);
 assert.equal(result.operations.filter(x=>x.kind==='metaobject.create').length,1);
 assert.equal(result.operations.filter(x=>x.kind==='collection.create_unpublished').length,1);
