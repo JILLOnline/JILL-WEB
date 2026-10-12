@@ -45,11 +45,13 @@ const spreadsheet={
   insertSheet:name=>(sheets[name]=new Sheet([])),
 };
 let actor='staff@jill.example',allowed='staff@jill.example',runtime='LIVE',locks=0;
+let gatewaySecret='qa-only-testing-secret-at-least-32-characters';
 const sandbox={
   SpreadsheetApp:{openById:id=>{assert.equal(id,'QA-SHEET');return spreadsheet;},flush(){},
     newDataValidation:()=>({requireValueInList(){return this;},setAllowInvalid(){return this;},build(){return {};}})},
   Session:{getActiveUser:()=>({getEmail:()=>actor})},
-  PropertiesService:{getScriptProperties:()=>({getProperty:()=>allowed})},
+  PropertiesService:{getScriptProperties:()=>({getProperty:(key)=>key==='JILL_CUSTOM_ORDER_GATEWAY_SECRET'?gatewaySecret:allowed})},
+  Logger:{log:()=>{}}, 
   LockService:{getScriptLock:()=>({
     waitLock:()=>{if(locks)throw Error('Concurrent update');locks++;},
     releaseLock:()=>{locks--;}
@@ -71,6 +73,7 @@ const backfill=sandbox.jillCustomOrderMerchantBackfill;
 const setupDesk=sandbox.jillCustomOrderMerchantSetupDesk;
 const processDesk=sandbox.jillCustomOrderMerchantProcessDesk;
 const customerProjection=sandbox.jillCustomOrderCustomerProjection_;
+const qaPreflight=sandbox.jillCustomOrderQaPreflight;
 const js=(x)=>JSON.parse(JSON.stringify(x));
 let event=create('jill:QA-ORDER-1','2026-10-11T13:00:00Z');
 assert.equal(event.revision,1);
@@ -188,4 +191,27 @@ assert.deepEqual(js(retry),{processed:1,succeeded:1,rejected:0});
 assert.equal(read('jill:QA-ORDER-2').revision,2);
 assert.equal(locks,0,'command processor must release every lock');
 
-console.log('Custom Order backend event log, merchant ACL, CAS, idempotency, transitions and isolation passed.');
+runtime='WORK';
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=true;
+const rowsBefore=Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.getLastRow()]));
+const qa=js(qaPreflight());
+assert.equal(qa.ok,true);
+assert.equal(qa.scope,'WORK_CUSTOM_ORDERS_QA');
+assert.equal(qa.gateway_secret_configured,true);
+assert.equal(qa.merchant_operator_authorized,true);
+assert.equal(qa.qa_sheet_headers_verified,true);
+assert.equal(Object.values(qa).some(v=>typeof v==='string'&&v.includes(gatewaySecret)),false);
+assert.deepEqual(Object.fromEntries(Object.entries(sheets).map(([k,v])=>[k,v.getLastRow()])),rowsBefore);
+gatewaySecret='short';
+assert.throws(()=>qaPreflight(),/secret is missing or too short/);
+gatewaySecret='qa-only-testing-secret-at-least-32-characters';
+actor='other@qa.example';
+assert.throws(()=>qaPreflight(),/does not match the authorized/);
+actor='staff@jill.example';
+sheets.CustomOrderDesk.rows[0][0]='WRONG';
+assert.throws(()=>qaPreflight(),/header mismatch/);
+sheets.CustomOrderDesk.rows[0][0]='operation_id';
+runtime='LIVE';
+assert.throws(()=>qaPreflight(),/not the isolated/);
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=false;
+console.log('Custom Order backend event log, merchant ACL, CAS, idempotency, transitions, QA preflight and isolation passed.');
