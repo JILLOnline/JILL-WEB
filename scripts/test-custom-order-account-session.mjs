@@ -28,8 +28,12 @@ assert.equal(verifyWorkCustomerAccountSession(
 const reject=(jwt,label)=>assert.throws(
   ()=>verifyWorkCustomerAccountSession(jwt,opts),
   /Invalid JILL WORK customer session/,label);
-reject(good.slice(0,-1)+'A','tampered signature');
-reject(good.replace(/.$/,'x'),'forged signature');
+const signature=good.split('.')[2];
+const wrongLast=signature.at(-1)==='A'?'B':'A';
+reject(good.slice(0,-1)+wrongLast,'tampered signature');
+const wrongFirst=signature[0]==='A'?'B':'A';
+reject(good.slice(0,-signature.length)+wrongFirst+signature.slice(1),
+  'forged signature');
 reject(token({...claims,aud:'ebf1a69d82f46619d2f2945faab78afa'}),'LIVE app audience');
 reject(token({...claims,dest:'jqtdgr-1y.myshopify.com'}),'LIVE shop');
 reject(token({...claims,dest:'evil.myshopify.com'}),'wrong shop');
