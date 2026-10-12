@@ -14,8 +14,8 @@ function dateLabel(value) {
     ? new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(time))
     : '';
 }
-function Money({value}) {
-  return <s-text>{Number(value).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2})}</s-text>;
+function formatUSD(value) {
+  return Number(value).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2});
 }
 function CouponCard({item,kind,store,canUse}) {
   const upcoming=kind==='upcoming';
@@ -52,7 +52,7 @@ function CouponCard({item,kind,store,canUse}) {
           {upcoming && <s-text>{item.summary}</s-text>}
           {personal && <s-text color="subdued">{item.points} points redeemed</s-text>}
           {personal && item.minimum!==null &&
-            <s-text color="subdued"><Money value={item.minimum}/> minimum order</s-text>}
+            <s-text color="subdued">{formatUSD(item.minimum)} minimum order</s-text>}
           {!personal && !upcoming && item.details && item.details!==item.summary &&
             <s-text color="subdued">{item.details}</s-text>}
           {upcoming && <s-text color="subdued">Starts {dateLabel(item.startsAt)}</s-text>}
