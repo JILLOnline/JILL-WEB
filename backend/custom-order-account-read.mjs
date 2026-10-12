@@ -105,8 +105,12 @@ export async function handleWorkCustomOrderAccountRead(request,{
     try {
       const reader=request.body.getReader();
       const first=await reader.read();
+      // Some runtimes produce a zero-byte chunk for an empty string body.
+      // Accept at most one such chunk, never a caller-selected payload.
+      const hasData=Boolean(first.value?.byteLength);
+      const second=!first.done&&!hasData ? await reader.read():null;
       await reader.cancel();
-      if(!first.done||first.value?.byteLength)
+      if(hasData || (second && (!second.done||second.value?.byteLength)))
         return failure(400,'invalid_request');
     } catch {
       return failure(400,'invalid_request');
