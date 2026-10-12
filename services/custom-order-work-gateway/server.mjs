@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {pathToFileURL} from 'node:url';
 import Redis from 'ioredis';
 import {createCustomOrderWorkProxyRoute} from '../../backend/custom-order-work-proxy-route.mjs';
 import {createCustomOrderWorkRateLimiter} from './rate-limit.mjs';
@@ -53,8 +54,7 @@ export async function startWorkGateway(env=process.env,{createRedis}={}) {
   return {server,redis};
 }
 
-if(process.argv[1] && import.meta.url===new URL(
-    'file://'+process.argv[1].replace(/\\/g,'/')).href) {
+if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   startWorkGateway().catch(()=>{
     console.error('JILL WORK gateway startup blocked by configuration or shared Redis.');
     process.exitCode=1;
