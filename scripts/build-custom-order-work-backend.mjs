@@ -33,6 +33,12 @@ fs.mkdirSync(output,{recursive:true});
 fs.writeFileSync(path.join(output,'JILL_Custom_Order_Automation_REWARDS.gs'),source);
 fs.writeFileSync(path.join(output,'appsscript.json'),JSON.stringify({
   timeZone:'America/New_York',exceptionLogging:'STACKDRIVER',runtimeVersion:'V8',
+  // Never auto-detect broad MailApp/Shopify OAuth scope references from the
+  // shared canonical file. QA is Sheets + Google operator identity only.
+  oauthScopes:[
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/userinfo.email',
+  ],
   webapp:{access:'ANYONE_ANONYMOUS',executeAs:'USER_DEPLOYING'}
 },null,2)+'\n');
 const unexpected=fs.readdirSync(output).filter(name=>
