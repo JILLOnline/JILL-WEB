@@ -368,3 +368,58 @@ editor and run it manually before deploying the QA web app.
 Never delete the entire `.work-custom-orders` directory or create a
 replacement Apps Script project to work around this extension issue:
 that directory contains the local, isolated project binding.
+
+
+## Shopify WORK proxy connection — source prepared, host pending
+
+The merchant verified that the QA Apps Script web app responds
+JILL WORK Custom Orders QA online. This proves only GET reachability,
+not signed POST or an authenticated customer submission.
+
+Read-only Shopify WORK audit: JILL WORK Rewards is installed on
+jill-work.myshopify.com without write_app_proxy. GitHub currently contains
+account extensions and gateway logic, NOT a hosted HTTPS Shopify app proxy.
+
+New canonical components:
+- backend/shopify-work-app-proxy-auth.mjs: validates Shopify's app proxy
+  query HMAC, the signed shop, exact proxy prefix, and five-minute timestamp.
+  A verified SHOP is not proof of a customer's ownership of an order.
+- backend/custom-order-work-proxy-route.mjs: composes signed Shopify WORK
+  proxy verification with the existing two-stage Google receipt gateway.
+  Hosting must supply a durable, distributed rate limiter. No optional
+  anonymous authenticator or in-memory fallback is accepted.
+- scripts/prepare-custom-order-work-proxy-config.mjs: on the correctly
+  linked JILL WORK Rewards config only, prepares write_app_proxy and
+  /apps/jill-custom-order once a real HTTPS destination is supplied.
+  It refuses an existing different proxy and does not deploy Shopify.
+
+Host requirements: a real HTTPS address with /jill-custom-order-proxy,
+the Shopify WORK app's PRIVATE shared secret, the DIFFERENT Google WORK
+Custom Order gateway secret from QA Script Properties, the QA Google
+/exec URL, the exact shop, and durable per-shop/client rate limiting.
+Keep both secrets in the host's encrypted environment; do not print,
+commit, paste into chat, or expose to Liquid or JavaScript.
+
+When an HTTPS host exists, set the local PowerShell environment variable
+JILL_WORK_CUSTOM_ORDER_PROXY_URL to that public HTTPS address ending
+/jill-custom-order-proxy, then run:
+
+    npm.cmd run custom-orders:work:proxy:prepare
+
+This only prepares the ignored shopify.app.work.toml. It does not
+deploy the app, grant new scopes, or modify LIVE. The later WORK app
+deployment/reauthorization is a separate deliberate release step.
+
+Still required before a verified browser submission:
+1. Host with Shopify proxy HMAC verification and distributed rate limits.
+2. Verify wrong-shop, bad-signature, expired-time and outage rejection.
+3. Deploy the WORK app proxy and grant write_app_proxy in WORK only.
+4. Send a synthetic test via Shopify WORK storefront, reconcile request
+   in Google Submissions and CustomOrderEvents, then verify duplicate
+   and conflicting-ID attempts against the real Google QA database.
+5. Only then enable the verified submission endpoint in WORK Theme Editor.
+6. Production remains independently blocked pending release approval.
+
+Shopify allows one app proxy route per app. Reference:
+https://shopify.dev/docs/apps/build/online-store/app-proxies
+https://shopify.dev/docs/apps/build/online-store/app-proxies/authenticate-app-proxies
