@@ -50,6 +50,21 @@ if(fs.existsSync(dest)){
 fs.cpSync(source,dest,{recursive:true});
 const stagedFile=path.join(dest,'sections/main-custom-order.liquid');
 let staged=read(stagedFile);
+// Catalog isolation: QA selects only the imported JILL smart collection, not
+// Shopify's unrelated preloaded snowboard/sample products.
+const globalProducts="assign all_products = collections['all']";
+assert(staged.includes(globalProducts),'Custom Order global catalog source changed');
+staged=staged.replace(globalProducts,
+  "assign all_products = collections['jill']\n  assign jill_work_allowed_collections = 'pinatas,catalog,apparel-gifts-dtf-sublimation,kid-activities,party-supplies' | split: ','");
+const collectionOpen='{% for catalog_collection in collections %}';
+const collectionClose='            {% endunless %}\n          {% endfor %}';
+assert(staged.includes(collectionOpen)&&staged.includes(collectionClose),
+  'Custom Order collection loop changed');
+staged=staged.replace(collectionOpen,
+  collectionOpen+'\n            {% if jill_work_allowed_collections contains catalog_collection.handle %}');
+staged=staged.replace(collectionClose,
+  '            {% endunless %}\n            {% endif %}\n          {% endfor %}');
+
 assert(staged.split(legacy).length===2,'Unexpected legacy URL count');
 // Remove the default entirely so the staged form can NEVER silently POST to legacy Google.
 staged=staged.replace(/,\s*"default":\s*"https:\/\/script\.google\.com\/macros\/s\/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA\/exec"\s*,?/,'');
