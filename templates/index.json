@@ -7,50 +7,50 @@
           "type": "category",
           "settings": {
             "collection": "pinatas",
-            "link": "/collections/pinatas",
             "title": "Piñatas",
             "subtitle": "CUSTOM-MADE MAGIC",
-            "monogram": "P"
+            "monogram": "P",
+            "media_key": "pinatas"
           }
         },
         "card_2": {
           "type": "category",
           "settings": {
             "collection": "catalog",
-            "link": "/collections/catalog",
             "title": "Party Favors",
             "subtitle": "SMALL GIFTS, BIG SMILES",
-            "monogram": "F"
+            "monogram": "F",
+            "media_key": "favors"
           }
         },
         "card_3": {
           "type": "category",
           "settings": {
             "collection": "kid-activities",
-            "link": "/collections/kid-activities",
             "title": "Kids Activities",
             "subtitle": "FUN TO MAKE & SHARE",
-            "monogram": "K"
+            "monogram": "K",
+            "media_key": "activities"
           }
         },
         "card_4": {
           "type": "category",
           "settings": {
             "collection": "party-supplies",
-            "link": "/collections/party-supplies",
             "title": "Party Supplies",
             "subtitle": "THE FINISHING DETAILS",
-            "monogram": "S"
+            "monogram": "S",
+            "media_key": "supplies"
           }
         },
         "card_5": {
           "type": "category",
           "settings": {
             "collection": "apparel-gifts-dtf-sublimation",
-            "link": "/collections/apparel-gifts-dtf-sublimation",
             "title": "Apparel & Gifts",
             "subtitle": "MADE JUST FOR YOU",
-            "monogram": "G"
+            "monogram": "G",
+            "media_key": "apparel"
           }
         }
       },
