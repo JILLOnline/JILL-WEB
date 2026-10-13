@@ -57,6 +57,10 @@ assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-hero.j
 assert.equal(home.sections.story?.type,'rich-text');
 assert.equal(JSON.parse(read('templates/page.our-story.json')).sections.main.type,'main-page');
 assert.ok(read('sections/main-page.liquid').includes('section.settings.fallback_body'));
+assert.ok(read('sections/rich-text.liquid').includes('section.settings.anchor_id'));
+assert.equal(home.sections.story?.settings?.anchor_id,'JillStory');
+assert.ok(read('sections/header.liquid').includes('{{ routes.root_url }}#JillStory'));
+assert.ok(read('sections/footer.liquid').includes('Every order means the world to us'));
 assert.ok(read('sections/header.liquid').includes("| default: '/pages/custom-order'"),'Header must point to WORK Custom Order');
 assert.ok(read('sections/main-contact.liquid').includes("| default: '/pages/custom-order'"),'Contact must point to WORK Custom Order');
 
@@ -71,6 +75,8 @@ const overlay=new Set([
  'assets/jill-storefront.css',
  'layout/theme.liquid',
  'sections/main-page.liquid',
+ 'sections/rich-text.liquid',
+ 'sections/footer.liquid',
 ]);
 const storeEditable=p=>p==='config/settings_data.json'||
   p==='sections/header-group.json'||p==='sections/footer-group.json'||
