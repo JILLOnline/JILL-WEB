@@ -4210,12 +4210,15 @@ function parsePayload_(e) {
     return JSON.parse(raw);
   }
 
-  // Fallback for form-encoded payloads.
+  // application/x-www-form-urlencoded: a raw + encodes SPACE, while
+  // %2B encodes a literal plus (valid in email aliases and personalization).
+  // Convert raw + BEFORE percent-decoding. Converting afterward corrupts
+  // jill+workqa@example.com into an invalid address containing a space.
   const data = {};
   raw.split('&').forEach(function(pair) {
     const parts = pair.split('=');
-    const key = decodeURIComponent(parts.shift() || '');
-    const value = decodeURIComponent(parts.join('=') || '').replace(/\+/g, ' ');
+    const key = decodeURIComponent((parts.shift() || '').replace(/\+/g, ' '));
+    const value = decodeURIComponent((parts.join('=') || '').replace(/\+/g, ' '));
     data[key] = value;
   });
   return data;
