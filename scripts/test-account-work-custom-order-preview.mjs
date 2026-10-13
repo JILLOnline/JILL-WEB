@@ -27,6 +27,12 @@ assert.equal(homepage.sections.home.settings.custom_order_link,'/pages/custom-or
 assert.ok(section.includes("request.page_type == 'index'"),'Homepage preview must gate scripts by template');
 assert.ok(section.includes("render 'jill-custom-order-runtime'"),'Use shared Custom Order scripts');
 assert.ok(section.includes('data-jill-catalog-unavailable'),'Draft product catalog limitation needs visible warning');
+assert.ok(section.includes('data-jill-collection-empty'),'Empty WORK collections must explain missing products inline');
+assert.ok(section.includes('work_selectable_collections | plus: 1'),'Availability must be based on selectable collections');
+assert.ok(section.includes('disabled aria-describedby="JillWorkCollectionsUnavailable"'),'Review must be disabled when no collections are available');
+const formStyles=read('assets/jill-forms.css');
+assert.ok(formStyles.includes('.jill-custom-order__customer {\\n    align-items: start;'),'Contact rows must top-align without phone help stretching email');
+assert.ok(formStyles.includes('.jill-custom-order__customer > .jill-field'),'Email and preferred contact must start aligned');
 assert.ok(section.includes('id="JillWorkCustomOrderPreview"'),'QA preview needs a stable anchor');
 assert.ok(section.includes("assign all_products = collections['jill']"),'WORK must be isolated to JILL catalog');
 assert.ok(section.includes('jill_work_allowed_collections'),'Only canonical WORK collections are allowed');
