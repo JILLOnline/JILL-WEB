@@ -1236,11 +1236,29 @@
       };
       const code = Object.prototype.hasOwnProperty.call(knownCodes, rawCode)
         ? rawCode : 'unclassified_response';
+      const safeReasons = {
+        gateway_required: 'WORK Google QA rejected the gateway signature; verify the Worker and Google QA signing secret match.',
+        invalid_source: 'WORK Google QA rejected the order source marker.',
+        invalid_email: 'WORK Google QA rejected the contact email.',
+        submission_conflict: 'This request ID already exists with different contents. Stop retrying and reconcile the existing QA record.',
+        owner_conflict: 'This request ID belongs to another identity or an existing guest request. Stop and verify QA ownership.',
+        owner_not_enabled: 'WORK Google QA account ownership is not enabled.',
+      };
+      const reason = typeof receipt?.error?.reason === 'string' &&
+        Object.prototype.hasOwnProperty.call(safeReasons, receipt.error.reason)
+        ? receipt.error.reason : '';
+      if (code === 'upstream_rejected' && reason) {
+        fail(safeReasons[reason] + ' (WORK 409 / ' + code +
+          ' / ' + reason + '). The request is not confirmed.');
+      }
       fail(knownCodes[code] ? knownCodes[code] +
         ' (WORK ' + result.status + ' / ' + code + '). ' +
-        'No receipt is confirmed; retry without changing this request.'
+        (result.status===409 ? 'Stop and inspect this rejection before attempting again.'
+          : 'No receipt is confirmed; retry without changing this request.')
         : 'JILL has not confirmed this request yet (WORK ' +
-          result.status + ' / ' + code + '). Retry without changing this request.');
+          result.status + ' / ' + code + '). ' +
+          (result.status===409 ? 'Stop and inspect this rejection before retrying.'
+            : 'Retry without changing this request.'));
     }
   }
 

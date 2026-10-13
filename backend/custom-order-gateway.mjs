@@ -69,13 +69,21 @@ const response=(status,body)=>new Response(JSON.stringify(body),{
   headers:{'content-type':'application/json; charset=utf-8',
     'cache-control':'no-store','x-content-type-options':'nosniff'},
 });
-const failure=(status,code,retryable=false)=>response(status,{
-  version:1,operation:'custom_order.submit.result',ok:false,
-  error:{code,message:retryable
+// The upstream's full response is untrusted. Only release finite QA
+// classification codes already part of our own Google Apps Script protocol.
+const QA_REJECTION_REASONS=new Set([
+  'gateway_required','invalid_source','invalid_email',
+  'submission_conflict','owner_conflict','owner_not_enabled',
+]);
+const failure=(status,code,retryable=false,reason='')=>{
+  const error={code,message:retryable
     ? 'Your request could not be confirmed. Retry with the same request ID.'
     : 'Your request could not be accepted. Check your details and try again.',
-    retryable},
-});
+    retryable};
+  if(status===409 && code==='upstream_rejected' && QA_REJECTION_REASONS.has(reason))
+    error.reason=reason;
+  return response(status,{version:1,operation:'custom_order.submit.result',ok:false,error});
+};
 
 export async function readBackendResult(backendFetch,url,body,maxBytes=8192) {
   if(!Number.isSafeInteger(maxBytes)||maxBytes<1024||maxBytes>131072)
@@ -165,7 +173,7 @@ export async function handleCustomOrderProxy(args) {
       result.ok!==true || result.submission_id!==id ||
       result.status!=='received') {
     if(result?.ok===false && result?.error?.retryable===false)
-      return failure(409,'upstream_rejected');
+      return failure(409,'upstream_rejected',false,result?.error?.code);
     return failure(503,'receipt_unconfirmed',true);
   }
   const receipt=new URLSearchParams({

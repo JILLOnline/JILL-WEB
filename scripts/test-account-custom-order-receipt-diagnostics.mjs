@@ -43,6 +43,21 @@ await assert.rejects(()=>submitRequest(root,request),
 set(401,{ok:false,error:{code:'unauthenticated_proxy'}});
 await assert.rejects(()=>submitRequest(root,request),
   /Shopify WORK did not authenticate the app proxy.*WORK 401 \/ unauthenticated_proxy/);
+set(409,{ok:false,error:{code:'upstream_rejected',reason:'gateway_required'}});
+await assert.rejects(()=>submitRequest(root,request),
+  /WORK Google QA rejected the gateway signature.*WORK 409 \/ upstream_rejected \/ gateway_required/);
+set(409,{ok:false,error:{code:'upstream_rejected',reason:'submission_conflict'}});
+await assert.rejects(()=>submitRequest(root,request),
+  /This request ID already exists with different contents.*WORK 409 \/ upstream_rejected \/ submission_conflict/);
+set(409,{ok:false,error:{code:'upstream_rejected',reason:'owner_conflict'}});
+await assert.rejects(()=>submitRequest(root,request),
+  /belongs to another identity.*WORK 409 \/ upstream_rejected \/ owner_conflict/);
+set(409,{ok:false,error:{code:'upstream_rejected',reason:'untrusted<script>'}});
+await assert.rejects(()=>submitRequest(root,request),err=>{
+  assert.ok(!err.message.includes('<script>'));
+  assert.match(err.message,/Stop and inspect this rejection before attempting again/);
+  return true;
+});
 set(503,{ok:false,error:{code:'gateway_unavailable'}});
 await assert.rejects(()=>submitRequest(root,request),
   /gateway is not fully configured or online.*WORK 503 \/ gateway_unavailable/);

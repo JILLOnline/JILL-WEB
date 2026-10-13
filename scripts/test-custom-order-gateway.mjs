@@ -116,8 +116,35 @@ assert.equal((await run(request(),{backendFetch:async(_url,opts)=>{
     : {operation:'custom_order.receipt.result',ok:false,error:{code:'not_found',retryable:true}});
 }})).status,503);
 assert.equal((await run(request(),{backendFetch:async()=>new Response('<html>login</html>')})).status,503);
-assert.equal((await run(request(),{backendFetch:async()=>validResult({
-  operation:'custom_order.submit.result',ok:false,error:{code:'submission_conflict',retryable:false}})})).status,409);
+const rejection=await run(request(),{backendFetch:async()=>validResult({
+  operation:'custom_order.submit.result',ok:false,
+  error:{code:'submission_conflict',retryable:false}})});
+assert.equal(rejection.status,409);
+assert.deepEqual((await rejection.json()).error,{
+  code:'upstream_rejected',
+  message:'Your request could not be accepted. Check your details and try again.',
+  retryable:false,
+  reason:'submission_conflict',
+});
+for(const safeCode of ['gateway_required','invalid_source','invalid_email',
+  'submission_conflict','owner_conflict','owner_not_enabled']){
+  const response=await run(request(),{backendFetch:async()=>validResult({
+    operation:'custom_order.submit.result',ok:false,
+    error:{code:safeCode,retryable:false},
+  })});
+  assert.equal(response.status,409);
+  assert.equal((await response.json()).error.reason,safeCode);
+}
+for(const untrusted of ['<script>alert(1)</script>','unknown_code','WORK_SECRET_PRIVATE']){
+  const response=await run(request(),{backendFetch:async()=>validResult({
+    operation:'custom_order.submit.result',ok:false,
+    error:{code:untrusted,retryable:false},
+  })});
+  assert.equal(response.status,409);
+  const out=await response.json();
+  assert.equal(out.error.reason,undefined,'Never echo unknown backend diagnostics');
+  assert.ok(!JSON.stringify(out).includes(untrusted));
+}
 
 // Same protocol in the actual Google Apps Script source, tested without
 // a second hand-coded verifier implementation.
