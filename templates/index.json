@@ -72,9 +72,19 @@
         "collections_heading": "Handmade for every happy moment",
         "image_alt": "Handmade personalized party details from JILL"
       }
+    },
+    "story": {
+      "type": "rich-text",
+      "settings": {
+        "heading": "Hi, we are JILL!",
+        "body": "<p><strong>Hi, We are JILL!</strong></p><p>We turn paper and passion into unforgettable memories. What started as a hobby in our home studio is now a joyful business making celebrations more colorful, personal, and fun.</p><p>Every piece is handmade with love—whether it’s a custom creation or a classic favorite. We believe parties deserve art, and your moments deserve magic.</p><p><strong>Let’s make your next celebration a hit—literally!</strong></p>",
+        "button_label": "",
+        "button_link": ""
+      }
     }
   },
   "order": [
-    "home"
+    "home",
+    "story"
   ]
 }
