@@ -1262,7 +1262,9 @@
         state.items.splice(index, 1);
         state.error = '';
         renderMedia(root);
-        root.dispatchEvent(new Event('change', {bubbles: true}));
+        // Synthetic change is dispatched from the section, not an input.
+        // Recalculate stages directly so removing an image can relock Step 5.
+        syncProgression(root);
       });
       card.append(thumb, meta, remove);
       grid.append(card);
@@ -1341,7 +1343,9 @@
       } finally {
         state.uploading = Math.max(0, state.uploading - 1);
         renderMedia(root);
-        root.dispatchEvent(new Event('change', {bubbles: true}));
+        // Upload callbacks are asynchronous; they must unlock/relock
+        // planning as soon as a verified media URL is available.
+        syncProgression(root);
       }
     }));
   }
@@ -1643,9 +1647,14 @@
     const no = root.querySelector('[data-jill-reference-choice][value="no"]');
     const note = root.querySelector('[data-jill-reference-requirement]');
     if (no) {
-      no.disabled = required;
-      no.setAttribute('aria-disabled', required ? 'true' : 'false');
-      if (required && no.checked) no.checked = false;
+      // Never trap the customer on Yes. No remains a reversible choice,
+      // but a product-required reference still blocks progression/review.
+      no.disabled = false;
+      no.removeAttribute('aria-disabled');
+      if (required) no.setAttribute('aria-describedby', 'JillReferenceRequirement');
+      else no.removeAttribute('aria-describedby');
+      if (required && no.checked) no.setAttribute('aria-invalid', 'true');
+      else no.removeAttribute('aria-invalid');
     }
     setVisible(note, required);
   }
@@ -2071,24 +2080,43 @@
     });
 
     function firstReviewIssue() {
+      const issue = (target, message) => ({target, message});
       const customer = validateControlGroup(root.querySelector('[data-jill-custom-order-customer]'), true);
-      if (!customer.valid) return customer.firstInvalid;
-      if (!readChecked(root, 'order_type')) return root.querySelector('[name="order_type"]');
-      if (!selectedCollectionChoices(root).length) return root.querySelector('[data-jill-collection-choice]');
-      if (!selectedChoices(root).length) return root.querySelector('[data-jill-custom-order-select]');
-      if (root.dataset.jillOptionsFinished !== 'true') {
-        return firstIncompleteItem(root)?.target || finishConfiguration;
-      }
+      if (!customer.valid) return issue(customer.firstInvalid, 'Step 1 — Check the required contact information.');
+      if (!readChecked(root, 'order_type'))
+        return issue(root.querySelector('[name="order_type"]'), 'Step 2 — Choose one item or multiple items.');
+      if (!selectedCollectionChoices(root).length)
+        return issue(root.querySelector('[data-jill-collection-choice]'), 'Step 2 — Choose at least one collection.');
+      if (!selectedChoices(root).length)
+        return issue(root.querySelector('[data-jill-custom-order-select]'), 'Step 3 — Select an item from the chosen collection.');
+      if (root.dataset.jillOptionsFinished !== 'true')
+        return issue(firstIncompleteItem(root)?.target || finishConfiguration,
+          'Step 4 — Finish the options for your selected items.');
       const design = validateControlGroup(root.querySelector('[data-jill-design-core]'), true);
-      if (!design.valid) return design.firstInvalid;
+      if (!design.valid) return issue(design.firstInvalid, 'Step 4 — Complete the required design details.');
       const completion = personalizationCompletion(root);
       const state = personalizationState(root);
-      if (!completion.complete || (state.mode !== 'none' && !state.finished)) return personalizationMode;
-      if (!referenceReady(root)) return root.querySelector('[data-jill-reference-choice]') || root.querySelector('[data-jill-media-input]');
+      if (!completion.complete || (state.mode !== 'none' && !state.finished))
+        return issue(personalizationMode, 'Step 4 — Finish personalization or select no personalization.');
+      if (!referenceReady(root)) {
+        const choice = readChecked(root, 'has_references');
+        const target = root.querySelector('[data-jill-reference-choice]:checked')
+          || root.querySelector('[data-jill-reference-choice]')
+          || root.querySelector('[data-jill-media]');
+        if (choice === 'no' && referenceRequired(root))
+          return issue(target, 'Step 4 — At least one selected item requires a reference image. Choose Yes and upload a photo, or change the selected item.');
+        if (choice === 'yes' && mediaState(root).uploading > 0)
+          return issue(target, 'Step 4 — Wait for your reference image to finish uploading.');
+        if (choice === 'yes')
+          return issue(target, 'Step 4 — Upload at least one reference photo successfully before continuing.');
+        return issue(target, 'Step 4 — Choose Yes or No for reference images.');
+      }
       const planning = validateControlGroup(root.querySelector('[data-jill-custom-order-planning]'), true);
-      if (!planning.valid) return planning.firstInvalid;
+      if (!planning.valid)
+        return issue(planning.firstInvalid, 'Step 5 — Complete the event date and shipping or pickup details.');
       const acknowledgment = root.querySelector('[data-jill-request-acknowledgment]');
-      if (!acknowledgment?.checked) return acknowledgment;
+      if (!acknowledgment?.checked)
+        return issue(acknowledgment, 'Step 6 — Accept the required request acknowledgment.');
       return null;
     }
 
@@ -2098,10 +2126,10 @@
       if (issue) {
         const note = root.querySelector('[data-jill-review-validation-note]');
         if (note) {
-          note.textContent = 'Please complete the highlighted required fields before reviewing your request.';
+          note.textContent = issue.message;
           note.hidden = false;
         }
-        scrollToTarget(issue);
+        scrollToTarget(issue.target);
         return;
       }
       const note = root.querySelector('[data-jill-review-validation-note]');

@@ -376,7 +376,7 @@
               <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="yes" data-jill-reference-choice required><span>{{ 'custom_order.common.yes' | t }}</span></label>
               <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="no" data-jill-reference-choice required><span>{{ 'custom_order.common.no' | t }}</span></label>
             </div>
-            <p class="jill-custom-order__help" data-jill-reference-requirement hidden>{{ 'custom_order.references.required_by_selection' | t }}</p>
+            <p class="jill-custom-order__help" id="JillReferenceRequirement" data-jill-reference-requirement hidden>{{ 'custom_order.references.required_by_selection' | t }}</p>
           </fieldset>
           <div class="jill-custom-order__reference-fields" data-jill-reference-fields hidden aria-hidden="true">
             <div class="jill-media" data-jill-media>
@@ -464,7 +464,7 @@
 
     <div class="jill-custom-order__stage-actions" data-jill-review-gate>
       <button class="jill-button" type="button" data-jill-review-open{% if work_selectable_collections == 0 %} disabled aria-describedby="JillWorkCollectionsUnavailable"{% endif %}>{{ 'custom_order.actions.review' | t }}</button>
-      <p class="jill-custom-order__help" data-jill-review-validation-note hidden></p>
+      <p class="jill-custom-order__help" data-jill-review-validation-note role="status" aria-live="polite" hidden></p>
     </div>
   </div>
 
