@@ -1,0 +1,134 @@
+{{ 'jill-home-showcase.css' | asset_url | stylesheet_tag }}
+
+<section class="jill-home" aria-labelledby="JillHomeHeading-{{ section.id }}">
+  {% liquid
+    assign hero_photo = section.settings.hero_image
+    if hero_photo == blank
+      assign hero_collection = collections['pinatas']
+      if hero_collection != blank and hero_collection.products_count > 0
+        assign hero_photo = hero_collection.products.first.featured_image
+      endif
+    endif
+    assign order_href = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
+  %}
+
+  <div class="jill-home__hero">
+    <div class="jill-home__hero-copy">
+      <p class="jill-home__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      <h1 class="jill-home__title" id="JillHomeHeading-{{ section.id }}">{{ section.settings.heading | escape }}</h1>
+      <div class="jill-home__description">{{ section.settings.intro }}</div>
+      <div class="jill-home__actions">
+        <a class="jill-home__button jill-home__button--primary" href="{{ order_href }}">{{ section.settings.button_label | escape }} <span aria-hidden="true">↗</span></a>
+        <a class="jill-home__button jill-home__button--secondary" href="{{ routes.all_products_collection_url }}">{{ section.settings.shop_label | escape }}</a>
+      </div>
+      <p class="jill-home__made"><span aria-hidden="true">✦</span> Handmade with heart in Jacksonville, Florida</p>
+    </div>
+    <div class="jill-home__hero-art" aria-label="JILL handmade celebrations">
+      {% if hero_photo != blank %}
+        {{ hero_photo | image_url: width: 1400 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '480, 720, 960, 1200, 1400', sizes: '(min-width: 990px) 48vw, 100vw', class: 'jill-home__hero-image', alt: section.settings.image_alt }}
+      {% else %}
+        <div class="jill-home__hero-placeholder" aria-hidden="true">
+          <span class="jill-home__art-spark jill-home__art-spark--one">✦</span>
+          <span class="jill-home__art-wordmark">JILL</span>
+          <span class="jill-home__art-caption">MADE FOR YOUR MOMENTS</span>
+          <span class="jill-home__art-spark jill-home__art-spark--two">✳</span>
+        </div>
+      {% endif %}
+      <span class="jill-home__hero-stamp">MADE JUST FOR YOU</span>
+    </div>
+  </div>
+
+  <div class="jill-home__collections jill-page-width">
+    <div class="jill-home__collections-heading">
+      <div>
+        <p class="jill-home__eyebrow">{{ section.settings.collections_eyebrow | escape }}</p>
+        <h2>{{ section.settings.collections_heading | escape }}</h2>
+      </div>
+      <a href="{{ routes.all_products_collection_url }}" class="jill-home__text-link">Explore everything <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="jill-home__grid">
+      {% for block in section.blocks %}
+        {% liquid
+          assign category = block.settings.collection
+          assign card_image = block.settings.image
+          if card_image == blank and category != blank
+            if category.image != blank
+              assign card_image = category.image
+            elsif category.products_count > 0
+              assign card_image = category.products.first.featured_image
+            endif
+          endif
+          assign card_url = block.settings.link
+          if card_url == blank and category != blank
+            assign card_url = category.url
+          endif
+          if card_url == blank
+            assign card_url = routes.all_products_collection_url
+          endif
+        %}
+        <a href="{{ card_url }}" class="jill-home__category jill-home__category--{{ forloop.index }}" {{ block.shopify_attributes }}>
+          <div class="jill-home__category-image">
+            {% if card_image != blank %}
+              {{ card_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '240, 360, 540, 720, 900', sizes: '(min-width: 990px) 24vw, (min-width: 600px) 48vw, 92vw', alt: block.settings.title }}
+            {% else %}
+              <span class="jill-home__category-monogram" aria-hidden="true">{{ block.settings.monogram | escape }}</span>
+            {% endif %}
+          </div>
+          <div class="jill-home__category-copy">
+            <span class="jill-home__category-sub">{{ block.settings.subtitle | escape }}</span>
+            <span class="jill-home__category-title">{{ block.settings.title | escape }} <span aria-hidden="true">↗</span></span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="jill-home__promise jill-page-width">
+    <div><span aria-hidden="true">✦</span><strong>Thoughtfully handmade</strong><small>Crafted with care for every celebration</small></div>
+    <div><span aria-hidden="true">✦</span><strong>Personalized your way</strong><small>Your colors, theme, name and special details</small></div>
+    <div><span aria-hidden="true">✦</span><strong>Local & nationwide</strong><small>Jacksonville pickup and U.S. shipping</small></div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "JILL home showcase",
+  "tag": "section",
+  "settings": [
+    {"type":"text","id":"eyebrow","label":"Hero eyebrow","default":"A little magic, made for you"},
+    {"type":"text","id":"heading","label":"Hero title","default":"Celebrate the little things. Make them unforgettable."},
+    {"type":"richtext","id":"intro","label":"Hero introduction","default":"<p>Handmade piñatas, party favors, activities and gifts, personalized for the people and moments you love.</p>"},
+    {"type":"image_picker","id":"hero_image","label":"Hero photograph"},
+    {"type":"text","id":"image_alt","label":"Hero image description","default":"Handmade party creations by JILL"},
+    {"type":"text","id":"button_label","label":"Primary button","default":"Create a custom order"},
+    {"type":"url","id":"custom_order_link","label":"Primary button link"},
+    {"type":"text","id":"shop_label","label":"Shop button","default":"Shop the collection"},
+    {"type":"text","id":"collections_eyebrow","label":"Collection eyebrow","default":"Shop what makes it special"},
+    {"type":"text","id":"collections_heading","label":"Collection heading","default":"Little details. Big celebrations."}
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Collection card",
+      "limit": 4,
+      "settings": [
+        {"type":"collection","id":"collection","label":"Collection"},
+        {"type":"image_picker","id":"image","label":"Card image override"},
+        {"type":"url","id":"link","label":"Link override"},
+        {"type":"text","id":"title","label":"Card title","default":"Piñatas"},
+        {"type":"text","id":"subtitle","label":"Small description","default":"HANDCRAFTED WITH LOVE"},
+        {"type":"text","id":"monogram","label":"Fallback letter","default":"J"}
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    {"name":"JILL home showcase","blocks":[
+      {"type":"category","settings":{"title":"Piñatas","monogram":"P"}},
+      {"type":"category","settings":{"title":"Party Favors","monogram":"F"}},
+      {"type":"category","settings":{"title":"Kids Activities","monogram":"K"}},
+      {"type":"category","settings":{"title":"Apparel & Gifts","monogram":"G"}}
+    ]}
+  ]
+}
+{% endschema %}
