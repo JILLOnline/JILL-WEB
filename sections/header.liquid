@@ -24,11 +24,11 @@
     <div class="jill-site-header__layout" data-header-layout="core">
       <div class="jill-site-header__left">
         <div class="jill-site-header__brand-stage" data-brand-stage="core">
-          <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+          <a class="jill-site-header__brand" href="{{ routes.root_url }}" aria-label="JILL homepage">
             {% if settings.brand_logo != blank %}
-              {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: shop.name, width: settings.brand_logo_width, loading: 'eager' }}
+              {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: 'JILL', width: settings.brand_logo_width, loading: 'eager' }}
             {% else %}
-              {{ shop.name }}
+              <span class="jill-site-header__brand-mark" aria-hidden="true"><strong>JILL</strong><small>ONLINE STORE</small></span>
             {% endif %}
           </a>
         </div>
