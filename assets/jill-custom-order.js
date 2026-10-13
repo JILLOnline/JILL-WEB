@@ -1244,13 +1244,23 @@
     state.items.forEach((item, index) => {
       const card = node('div', 'jill-media__item');
       const thumb = node('div', 'jill-media__thumb');
-      if (item.previewable && item.preview) {
+      const pending = item.status === 'Uploading…';
+      card.dataset.state = pending ? 'uploading' : item.url ? 'uploaded' : 'error';
+      if (pending) {
+        const loading = node('div', 'jill-media__loading');
+        loading.setAttribute('role', 'status');
+        loading.setAttribute('aria-label', `Uploading ${item.name}`);
+        const wheel = node('span', 'jill-media__spinner');
+        wheel.setAttribute('aria-hidden', 'true');
+        loading.append(wheel, node('span', 'jill-media__loading-label', 'Uploading…'));
+        thumb.append(loading);
+      } else if (item.url && item.previewable && item.preview) {
         const image = document.createElement('img');
         image.src = item.preview;
-        image.alt = `Reference image ${index + 1}`;
+        image.alt = `Uploaded reference image ${index + 1}`;
         thumb.append(image);
       } else {
-        thumb.append(node('span', 'jill-media__fallback', item.name));
+        thumb.append(node('span', 'jill-media__fallback', item.url ? item.name : 'Upload failed'));
       }
       const meta = node('div', 'jill-media__meta');
       meta.append(node('span', 'jill-media__name', item.name), node('span', 'jill-media__status', item.status));
@@ -1320,7 +1330,7 @@
       const item = {
         name: file.name,
         status: 'Uploading…',
-        preview: URL.createObjectURL(file),
+        preview: '',
         previewable: !['heic', 'heif'].includes(ext),
         url: '',
         publicId: '',
@@ -1336,6 +1346,9 @@
         if (!response.ok || !result.secure_url) throw new Error('upload failed');
         item.url = result.secure_url;
         item.publicId = result.public_id || '';
+        if (item.previewable) {
+          try { item.preview = URL.createObjectURL(file); } catch { item.preview = ''; }
+        }
         item.status = 'Uploaded';
       } catch (error) {
         item.status = 'Upload failed';
@@ -1889,6 +1902,15 @@
     if (referenceChoice !== 'yes') root.querySelector('[data-jill-media-input]')?.setAttribute('disabled', '');
     renderMedia(root);
     const configurationReady = personalizationReady && referenceReady(root);
+    // A user may have clicked Review while an upload was still processing.
+    // Remove that stale waiting message as soon as uploads settle; a fresh
+    // Review click can then identify any remaining required fields.
+    const reviewNote = root.querySelector('[data-jill-review-validation-note]');
+    if (reviewNote && !reviewNote.hidden && mediaState(root).uploading === 0 &&
+        reviewNote.textContent === 'Step 4 — Wait for your reference image to finish uploading.') {
+      reviewNote.textContent = '';
+      reviewNote.hidden = true;
+    }
 
     setVisible(planningStage, configurationReady);
     const planningReady = configurationReady && validateControlGroup(planning, false).valid;
