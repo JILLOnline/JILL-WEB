@@ -1,3 +1,8 @@
+{% comment %}The homepage QA section is disabled by default in index.json. Its assets load only if a reviewer enables it. On the real Custom Order page, the layout owns loading these assets.{% endcomment %}
+{% if request.page_type == 'index' %}
+  {{ 'jill-forms.css' | asset_url | stylesheet_tag }}
+  {% render 'jill-custom-order-runtime' %}
+{% endif %}
 {% liquid
   assign all_products = collections['jill']
   assign jill_work_allowed_collections = 'pinatas,catalog,apparel-gifts-dtf-sublimation,kid-activities,party-supplies' | split: ','
@@ -22,6 +27,7 @@
 %}
 
 <section
+  {% if request.page_type == 'index' %}id="JillWorkCustomOrderPreview"{% endif %}
   class="jill-custom-order jill-page-width"
   data-jill-custom-order
   data-submit-endpoint="{{ section.settings.submission_endpoint | escape }}"
@@ -49,6 +55,13 @@
     <h1 class="jill-custom-order__title">{{ 'custom_order.title' | t }}</h1>
     <p class="jill-custom-order__intro">{{ 'custom_order.intro' | t }}</p>
   </header>
+
+  {% if all_products == blank or all_products.products_count == 0 %}
+    <div class="jill-card jill-custom-order__catalog-note" role="status" data-jill-catalog-unavailable>
+      <strong>JILL WORK catalog preview</strong>
+      <p>Our personalized items are being prepared for testing. You can review the form layout, but product selection and submission won't be available until the WORK products are made visible.</p>
+    </div>
+  {% endif %}
 
   <div class="jill-custom-order__flow" data-jill-custom-order-edit>
     <section class="jill-custom-order__step jill-card" data-jill-stage="customer" data-stage-state="active">
