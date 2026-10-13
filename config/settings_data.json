@@ -15,6 +15,9 @@
     "button_radius": 24,
     "button_height": 48,
     "field_radius": 12,
-    "card_radius": 16
+    "card_radius": 16,
+    "social_instagram_url": "https://instagram.com/jillonlinestore_",
+    "social_facebook_url": "https://facebook.com/jillonlinestore",
+    "social_youtube_url": "https://www.youtube.com/@JillOnlineStore"
   }
 }
