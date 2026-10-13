@@ -156,6 +156,44 @@
     gap: calc(var(--jill-space-unit) * 2.5);
   }
 
+  /* Keep both contact fields aligned at the control's top edge.
+     The phone help below its input must not stretch the Email/Preferred
+     contact controls in the same CSS grid row. */
+  .jill-custom-order__customer {
+    align-items: start;
+  }
+  .jill-custom-order__customer > .jill-field,
+  .jill-custom-order__customer > .jill-phone-field {
+    min-width: 0;
+    align-self: start;
+    align-content: start;
+  }
+  .jill-custom-order__customer > .jill-field > .jill-field__control {
+    align-self: start;
+  }
+  .jill-custom-order__empty-collections {
+    display: grid;
+    gap: .35rem;
+    margin-top: 1rem;
+    padding: 1rem 1.2rem;
+    border: 1px solid color-mix(in srgb, var(--jill-color-accent) 35%, transparent);
+    border-radius: var(--jill-field-radius);
+    background: color-mix(in srgb, var(--jill-color-accent) 5%, var(--jill-color-background));
+    line-height: 1.55;
+  }
+  .jill-custom-order__empty-collections strong {
+    font-size: .95rem;
+  }
+  .jill-custom-order__empty-collections p {
+    margin: 0;
+    color: var(--jill-color-muted);
+  }
+  .jill-custom-order__stage-actions .jill-button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
   .jill-custom-order__choice-set {
     display: grid;
     gap: calc(var(--jill-space-unit) * 1.25);
