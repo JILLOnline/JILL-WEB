@@ -38,10 +38,18 @@ while(refs.size){
 }
 if(!liquid.includes('verified_submission_endpoint'))
   failures.push('Custom Order section lacks verified app-proxy setting');
+const runtimeSnippetName='jill-custom-order-runtime';
+const snippetInvocation="{% render '"+runtimeSnippetName+"' %}";
+const hasSharedLoader=mainLayout.includes(snippetInvocation);
+const sharedLoader=hasSharedLoader
+  ?read(path.join(root,'snippets',runtimeSnippetName+'.liquid')):'';
 for(const name of ['jill-custom-order.js','jill-custom-order-catalog-groups.js']){
   if(!fs.existsSync(path.join(root,'assets',name)))failures.push('Missing form JS: '+name);
-  if(!mainLayout.includes("'"+name+"'"))failures.push('Layout does not load form JS: '+name);
+  if(!mainLayout.includes("'"+name+"'") && !sharedLoader.includes("'"+name+"'"))
+    failures.push('Custom Order runtime does not load form JS: '+name);
 }
+if(hasSharedLoader && !liquid.includes(snippetInvocation))
+  failures.push('WORK homepage QA preview does not share the Custom Order runtime');
 console.log('Custom Order theme direct/recursive Liquid references: '+checked.size);
 console.log('Theme root: '+root);
 if(failures.length){for(const f of failures)console.error(f);process.exitCode=1;}
