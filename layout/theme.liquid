@@ -18,7 +18,7 @@
 
     {% liquid
       assign is_custom_order_template = false
-      if template.suffix == 'custom-order' or template.suffix == 'our-story'
+      if template.suffix == 'custom-order'
         assign is_custom_order_template = true
       endif
 
