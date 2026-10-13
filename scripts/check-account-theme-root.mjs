@@ -67,6 +67,9 @@ assert.ok(read('layout/theme.liquid').includes("'jill-brand-favicon.png' | asset
 assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-hero.jpg' | asset_url"),'LIVE hero not linked');
 assert.equal(home.sections.story?.type,'rich-text');
 assert.equal(JSON.parse(read('templates/page.our-story.json')).sections.main.type,'main-page');
+const layout=read('layout/theme.liquid');
+assert.ok(layout.includes("template.suffix == 'custom-order'"),'Custom Order must own its own template');
+assert.ok(!layout.includes("template.suffix == 'our-story'"),'Our Story must never load Custom Order assets');
 assert.ok(read('sections/main-page.liquid').includes('section.settings.fallback_body'));
 assert.ok(read('sections/rich-text.liquid').includes('section.settings.anchor_id'));
 assert.equal(home.sections.story?.settings?.anchor_id,'JillStory');
