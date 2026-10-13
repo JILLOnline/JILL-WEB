@@ -21,6 +21,8 @@ jobs:
         run: node scripts/check-account-theme-root.mjs
       - name: Certify WORK Custom Order root and editor preview
         run: node scripts/test-account-work-custom-order-preview.mjs
+      - name: Exercise WORK reference uploads and reversible Yes/No logic
+        run: node scripts/test-account-custom-order-reference-flow.mjs
       - name: Audit required Shopify Liquid, JS and CSS dependencies
         run: node scripts/audit-theme-dependencies.mjs .
       - name: Shopify Theme Check (Liquid, schema, theme assets)
