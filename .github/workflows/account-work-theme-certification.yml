@@ -54,6 +54,8 @@ jobs:
           node scripts/test-custom-order-work-proxy-config.mjs
       - name: Certify safe WORK gateway 409 receipt diagnostics
         run: node scripts/test-account-custom-order-receipt-diagnostics.mjs
+      - name: Cross-check WORK Node and Google QA authenticated signatures
+        run: node scripts/test-account-google-gateway-signature-interoperability.mjs
       - name: Certify Custom Order WORK gateway and customer ownership
         run: |
           node scripts/test-custom-order-gateway.mjs
