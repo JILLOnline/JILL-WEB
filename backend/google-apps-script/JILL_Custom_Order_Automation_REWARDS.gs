@@ -524,7 +524,7 @@ function jillCustomOrderAccountSummary_(rawPayload) {
   });
   const planning=request.planning||{};
   const date=typeof planning.date_needed==='string'?planning.date_needed:'';
-  if(date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(date))
+  if(date && !/^\d{4}-\d{2}-\d{2}$/.test(date))
     throw new Error('Invalid private Custom Order date.');
   const raw=typeof planning.fulfillment==='string'?
     planning.fulfillment.toLowerCase():'';
