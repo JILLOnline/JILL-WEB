@@ -67,3 +67,37 @@ try {
     error_class:error?.name||'Error'
   }));
 }
+
+const worker='https://jill-work-custom-orders-qa.jill-work-custom-orders.workers.dev';
+const classify=async (endpoint,method)=> {
+  try {
+    const response=await fetch(worker+endpoint,{
+      method,redirect:'manual',
+      headers:method==='POST'?{'content-type':'application/x-www-form-urlencoded'}:{},
+      ...(method==='POST'?{body:'jill_work_proxy_contract_probe=invalid_on_purpose'}:{}),
+      signal:AbortSignal.timeout(14000),
+    });
+    let code='non_json';
+    try {
+      const payload=await response.json();
+      if(endpoint==='/healthz') {
+        code=payload?.ok===true&&payload?.environment==='WORK_CUSTOM_ORDERS_QA'
+          ?'WORK_CUSTOM_ORDERS_QA':'health_unavailable';
+      }else{
+        const raw=payload?.error?.code||payload?.error;
+        code=typeof raw==='string'&&allowed.has(raw)?raw:'other_json';
+      }
+    }catch{}
+    const assessment=endpoint==='/healthz'&&response.status===200&&
+       code==='WORK_CUSTOM_ORDERS_QA'?'WORKER_READY':
+       endpoint!=='/healthz'&&response.status===401&&code==='unauthenticated_proxy'
+        ?'WORKER_ROUTE_REQUIRES_SHOPIFY_SIGNATURE':'CHECK_WORKER_RUNTIME';
+    console.log(JSON.stringify({probe:'WORKER_READ_ONLY_'+method,endpoint,http_status:response.status,
+      response_format:code,assessment}));
+  }catch(error){
+    console.log(JSON.stringify({probe:'WORKER_READ_ONLY_'+method,endpoint,
+      assessment:'WORKER_HEALTH_PROBE_UNAVAILABLE',error_class:error?.name||'Error'}));
+  }
+};
+await classify('/healthz','GET');
+await classify('/jill-custom-order-proxy','POST');
