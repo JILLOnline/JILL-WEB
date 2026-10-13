@@ -36,6 +36,16 @@
         "card_4": {
           "type": "category",
           "settings": {
+            "collection": "party-supplies",
+            "link": "/collections/party-supplies",
+            "title": "Party Supplies",
+            "subtitle": "THE FINISHING DETAILS",
+            "monogram": "S"
+          }
+        },
+        "card_5": {
+          "type": "category",
+          "settings": {
             "collection": "apparel-gifts-dtf-sublimation",
             "link": "/collections/apparel-gifts-dtf-sublimation",
             "title": "Apparel & Gifts",
@@ -48,7 +58,8 @@
         "card_1",
         "card_2",
         "card_3",
-        "card_4"
+        "card_4",
+        "card_5"
       ],
       "settings": {
         "eyebrow": "Personalized celebrations, made with heart",
