@@ -5,6 +5,7 @@
 {% endif %}
 {% liquid
   assign all_products = collections['jill']
+  assign work_selectable_collections = 0
   assign jill_work_allowed_collections = 'pinatas,catalog,apparel-gifts-dtf-sublimation,kid-activities,party-supplies' | split: ','
   assign excluded_collection_handles_setting = section.settings.excluded_collection_handles | default: 'all,frontpage,jill,shop-the-party'
   assign excluded_collection_handles = excluded_collection_handles_setting | downcase | remove: ' ' | split: ','
@@ -149,6 +150,7 @@
             {% if jill_work_allowed_collections contains catalog_collection.handle %}
               {% unless excluded_collection_handles contains catalog_collection.handle %}
                 {% if catalog_collection.products_count > 0 %}
+                {% assign work_selectable_collections = work_selectable_collections | plus: 1 %}
                 <label class="jill-custom-order__collection-choice">
                   <input
                     type="checkbox"
@@ -164,6 +166,12 @@
             {% endif %}
           {% endfor %}
         </div>
+        {% if work_selectable_collections == 0 %}
+          <div class="jill-custom-order__empty-collections" id="JillWorkCollectionsUnavailable" role="status" data-jill-collection-empty>
+            <strong>No collections available for selection yet.</strong>
+            <p>JILL WORK's product catalog is still in draft/testing status. The real Custom Order picker needs active products available to the WORK Online Store sales channel. Your entered contact details are safe to review, but product selection and submission cannot proceed until the WORK catalog is visible.</p>
+          </div>
+        {% endif %}
         <p class="jill-field__message" data-tone="error" data-jill-collection-error hidden>{{ 'custom_order.order.collection_error' | t }}</p>
       </div>
     </section>
@@ -454,7 +462,7 @@
     </section>
 
     <div class="jill-custom-order__stage-actions" data-jill-review-gate>
-      <button class="jill-button" type="button" data-jill-review-open>{{ 'custom_order.actions.review' | t }}</button>
+      <button class="jill-button" type="button" data-jill-review-open{% if work_selectable_collections == 0 %} disabled aria-describedby="JillWorkCollectionsUnavailable"{% endif %}>{{ 'custom_order.actions.review' | t }}</button>
       <p class="jill-custom-order__help" data-jill-review-validation-note hidden></p>
     </div>
   </div>
