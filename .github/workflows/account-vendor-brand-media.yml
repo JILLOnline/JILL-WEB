@@ -1,0 +1,41 @@
+name: Vendor JILL LIVE brand media into ACCOUNT theme
+
+on:
+  push:
+    branches: [ACCOUNT]
+    paths:
+      - scripts/vendor-jill-live-brand-media.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jill-account-brand-assets
+  cancel-in-progress: false
+
+jobs:
+  import-public-brand-media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Fetch and validate approved JILL public brand images
+        run: node scripts/vendor-jill-live-brand-media.mjs
+      - name: Commit branded theme assets to ACCOUNT only
+        shell: bash
+        run: |
+          git add -- assets/jill-brand-logo.png assets/jill-brand-favicon.png assets/jill-home-hero.jpg assets/jill-home-pinatas.jpg assets/jill-home-party-favors.jpg assets/jill-home-kids.jpg assets/jill-home-party-supplies.jpg assets/jill-home-apparel.jpg
+          if git diff --cached --quiet; then
+            echo "Brand assets already match; no commit needed."
+            exit 0
+          fi
+          git config user.name "JILL brand media bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "assets(account): vendor verified JILL LIVE logo, favicon and five product families"
+          git push origin HEAD:ACCOUNT
