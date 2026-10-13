@@ -35,6 +35,8 @@ function req(token=jwt(),body='') {
 }
 const publicOrder={
   submission_id:'jill:qa:order-111',revision:2,status:'reviewing',
+  summary:{items:[{title:'Coloring Books',quantity:1}],
+    date_needed:'2026-10-30',fulfillment:'pickup'},
   updated_at:'2026-10-12T19:00:00.000Z',
   timeline:[
     {status:'received',note:'',occurred_at:'2026-10-12T18:00:00.000Z'},
@@ -54,6 +56,14 @@ assert.deepEqual(safe,[publicOrder],'only the customer public projection may lea
 assert.equal(JSON.stringify(safe).includes('NEVER'),false);
 assert.equal(JSON.stringify(safe).includes('HIDDEN'),false);
 assert.equal(JSON.stringify(safe).includes('another-person'),false);
+assert.deepEqual(safe[0].summary,publicOrder.summary);
+assert.throws(()=>onlyPublicCustomOrderProjection([{
+  ...publicOrder,summary:{...publicOrder.summary,
+    items:[{title:'private',quantity:0}]}
+}]),/summary|item/);
+assert.throws(()=>onlyPublicCustomOrderProjection([{
+  ...publicOrder,summary:{...publicOrder.summary,date_needed:'bad'}
+}]),/summary/);
 assert.throws(()=>onlyPublicCustomOrderProjection([{...publicOrder,revision:3}]),/projection/);
 assert.throws(()=>onlyPublicCustomOrderProjection([publicOrder,publicOrder]),/projection/);
 assert.throws(()=>onlyPublicCustomOrderProjection([{...publicOrder,timeline:[]}]),/projection/);

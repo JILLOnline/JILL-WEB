@@ -6,6 +6,8 @@ const token='a'.repeat(55);
 let requests=0,gets=0;
 const sessionToken={get:async()=>{gets++;return token;}};
 const order={submission_id:'jill:qa:owned-111',status:'reviewing',revision:2,
+ summary:{items:[{title:'Coloring Books',quantity:1}],
+  date_needed:'2026-10-30',fulfillment:'pickup'},
  updated_at:'2026-10-12T19:00:00.000Z',timeline:[
   {status:'received',note:'',occurred_at:'2026-10-12T18:00:00.000Z'},
   {status:'reviewing',note:'Your request is under review.',
@@ -31,6 +33,8 @@ assert.equal(requests,1);
 assert.deepEqual(loaded,[order]);
 assert.equal(JSON.stringify(loaded).includes('DO NOT DISPLAY'),false);
 assert.equal(JSON.stringify(loaded).includes('actor'),false);
+assert.deepEqual(loaded[0].summary,order.summary);
+assert.ok(!JSON.stringify(loaded).includes('another-person@example.test'));
 await assert.rejects(()=>loadWorkCustomerCustomOrders({
  sessionToken:{get:async()=>''},request:fetchMock,
 }),/verify your current session/);
