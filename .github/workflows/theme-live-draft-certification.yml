@@ -1,0 +1,38 @@
+name: THEME LIVE draft safety certification
+
+on:
+  push:
+    branches:
+      - THEME
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  certify-live-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate root Shopify theme and fail-closed LIVE draft
+        run: |
+          node --check assets/jill-custom-order.js
+          node --input-type=module <<'EOF'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          for(const file of ['config/settings_schema.json','layout/theme.liquid','sections/header.liquid','sections/main-custom-order.liquid','templates/page.custom-order.json','templates/index.json']){
+            assert.ok(fs.existsSync(file), 'Missing Shopify root theme file: '+file);
+          }
+          const js=fs.readFileSync('assets/jill-custom-order.js','utf8');
+          const liquid=fs.readFileSync('sections/main-custom-order.liquid','utf8');
+          assert.ok(js.includes('Custom Order submissions are disabled in this LIVE draft preview'));
+          assert.ok(!js.includes("mode:'no-cors'"), 'Legacy unverified transport forbidden');
+          assert.ok(!liquid.includes('script.google.com/macros/s/'), 'Legacy endpoint forbidden');
+          const data=JSON.parse(fs.readFileSync('templates/page.custom-order.json','utf8'));
+          assert.equal(data.sections.main.settings.submission_endpoint,'');
+          assert.equal(data.sections.main.settings.verified_submission_endpoint,'');
+          console.log('THEME LIVE draft fail-closed guard PASS; no Shopify publishing performed.');
+          EOF
