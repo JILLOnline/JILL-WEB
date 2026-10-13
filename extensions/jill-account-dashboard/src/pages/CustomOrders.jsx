@@ -39,10 +39,24 @@ export default function CustomOrders() {
           <s-banner tone="info">No Custom Orders are connected to this signed-in account yet. Guest requests are not automatically linked by email.</s-banner>
         )}
         {state.status==='ready' && state.orders.map(order=>(
-          <s-section key={order.submission_id} heading={order.submission_id}>
+          <s-section key={order.submission_id}
+            heading={order.summary.items[0]?.title || 'Custom Order request'}>
             <s-stack direction="block" gap="small">
-              <s-text>Current status: {order.status} · Revision {order.revision}</s-text>
-              <s-text>Updated: {order.updated_at}</s-text>
+              <s-text>Current status: {order.status.replaceAll('_',' ')} · Revision {order.revision}</s-text>
+              <s-text>Request ID: {order.submission_id}</s-text>
+              {order.summary.items.map((item,index)=>(
+                <s-text key={order.submission_id+'-item-'+index}>
+                  {item.title} · Quantity {item.quantity}
+                </s-text>
+              ))}
+              {order.summary.date_needed && (
+                <s-text>Needed by: {order.summary.date_needed}</s-text>
+              )}
+              {order.summary.fulfillment && (
+                <s-text>Fulfillment: {order.summary.fulfillment==='pickup'?'Jacksonville pickup':'Shipping'}</s-text>
+              )}
+              <s-text>Last updated: {order.updated_at}</s-text>
+              <s-text>Tracking history</s-text>
               {order.timeline.map((event,index)=>(
                 <s-stack key={order.submission_id+'-'+index} direction="block" gap="none">
                   <s-text>{index+1}. {event.status} — {event.occurred_at}</s-text>
