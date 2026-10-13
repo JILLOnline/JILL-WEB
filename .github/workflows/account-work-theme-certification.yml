@@ -1,0 +1,25 @@
+name: ACCOUNT Shopify WORK theme certification
+
+on:
+  push:
+    branches:
+      - ACCOUNT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-work-theme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify account theme root and WORK-specific isolation
+        run: node scripts/check-account-theme-root.mjs
+      - name: Audit required Shopify Liquid, JS and CSS dependencies
+        run: node scripts/audit-theme-dependencies.mjs .
+      - name: Verify source tree stays unchanged
+        run: test -z "$(git status --porcelain --untracked-files=no)"
