@@ -65,7 +65,7 @@ assert.equal(referenceReady(root),true);
 assert.ok(code.includes('state.items.splice(index, 1);\n        state.error = \'\';\n        renderMedia(root);\n        // Synthetic change is dispatched from the section'),
   'Removing media must refresh the form state');
 assert.ok(code.includes('renderMedia(root);\n        // Upload callbacks are asynchronous;'), 'Async upload completion must explicitly refresh progression');
-assert.match(code,/\/\/ Async upload callbacks are asynchronous;[\s\S]{0,190}syncProgression\(root\);/);
+assert.match(code,/\/\/ Upload callbacks are asynchronous;[\s\S]{0,190}syncProgression\(root\);/);
 assert.match(code,/\/\/ Recalculate stages directly so removing an image can relock Step 5\.[\s\S]{0,70}syncProgression\(root\);/);
 assert.ok(!code.includes('no.disabled = required'),'Required flag must never disable No');
 assert.ok(code.includes('note.textContent = issue.message;'),'Review must describe exact incomplete step');
