@@ -64,7 +64,8 @@ delete missingOwner.parameter.jill_order_owner_gid;
 assert.equal(googleVerify(missingOwner,'submit'),false,'Signed-in signature must not verify as guest');
 assert.equal(googleVerify(request(fakeSecret+'-DIFFERENT',ownerGid),'submit'),false,
   'Mismatched Worker/Google secrets must fail despite both being configured');
+const staleRequest=request(fakeSecret,ownerGid);
 simulatedNow+=121000;
-assert.equal(googleVerify(request(fakeSecret,ownerGid),'submit'),false,
+assert.equal(googleVerify(staleRequest,'submit'),false,
   'Out-of-window signatures must fail');
 console.log('WORK Node/Google QA HMAC interop PASS: guest, owned, encoded fields, tampering, mismatched secret and expiry.');
