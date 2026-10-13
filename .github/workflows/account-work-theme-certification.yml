@@ -21,5 +21,10 @@ jobs:
         run: node scripts/check-account-theme-root.mjs
       - name: Audit required Shopify Liquid, JS and CSS dependencies
         run: node scripts/audit-theme-dependencies.mjs .
+      - name: Shopify Theme Check (Liquid, schema, theme assets)
+        uses: shopify/theme-check-action@v2
+        with:
+          theme_root: '.'
+          flags: '--fail-level error'
       - name: Verify source tree stays unchanged
         run: test -z "$(git status --porcelain --untracked-files=no)"
