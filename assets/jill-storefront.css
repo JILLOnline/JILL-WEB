@@ -1453,3 +1453,19 @@
     object-fit: contain;
   }
 }
+
+@layer storefront {
+  .jill-site-footer__thanks {
+    max-width: 40ch;
+    margin-block: .75rem;
+    color: var(--jill-color-muted);
+    font-size: .88rem;
+    line-height: 1.6;
+  }
+  .jill-site-footer__thanks span {
+    display: block;
+    margin-block-start: .3rem;
+    color: var(--jill-color-foreground);
+    font-weight: 700;
+  }
+}
