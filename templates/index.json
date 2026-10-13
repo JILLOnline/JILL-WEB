@@ -82,10 +82,20 @@
         "button_link": "",
         "anchor_id": "JillStory"
       }
+    },
+    "work_custom_order_preview": {
+      "type": "main-custom-order",
+      "disabled": true,
+      "settings": {
+        "excluded_collection_handles": "all,frontpage,jill,shop-the-party",
+        "submission_endpoint": "",
+        "verified_submission_endpoint": "/apps/jill-custom-order"
+      }
     }
   },
   "order": [
     "home",
-    "story"
+    "story",
+    "work_custom_order_preview"
   ]
 }
