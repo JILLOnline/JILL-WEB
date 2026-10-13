@@ -4,6 +4,29 @@
 export const WORK_CUSTOM_ORDER_ACCOUNT_URL=
   'https://jill-work-custom-orders-qa.jill-work-custom-orders.workers.dev/jill-custom-order-account';
 
+// This is display-only, after the Worker has already verified JWT owner and
+// stripped all private fields. Never allow the customer to choose an owner.
+export function readAccountOrderSummary(value) {
+  if(value===undefined)return {items:[],date_needed:'',fulfillment:''};
+  if(!value||typeof value!=='object'||Array.isArray(value)||
+    !Array.isArray(value.items)||value.items.length>20||
+    typeof value.date_needed!=='string'||
+    (value.date_needed!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(value.date_needed))||
+    !['','pickup','shipping'].includes(value.fulfillment))
+    throw Error('Invalid Custom Order item summary.');
+  return {
+    items:value.items.map(item=>{
+      if(!item||typeof item.title!=='string'||item.title.length>120||
+         !item.title.trim()||!Number.isSafeInteger(item.quantity)||
+         item.quantity<1||item.quantity>999)
+        throw Error('Invalid Custom Order item summary.');
+      return {title:item.title,quantity:item.quantity};
+    }),
+    date_needed:value.date_needed,
+    fulfillment:value.fulfillment,
+  };
+}
+
 export async function loadWorkCustomerCustomOrders({
   sessionToken,request=fetch,endpoint=WORK_CUSTOM_ORDER_ACCOUNT_URL,
 }={}) {
@@ -42,6 +65,7 @@ export async function loadWorkCustomerCustomOrders({
       throw new Error('Invalid Custom Order history.');
     return {
       submission_id:item.submission_id,
+      summary:readAccountOrderSummary(item.summary),
       status:item.status,
       revision:item.revision,
       updated_at:String(item.updated_at||''),
