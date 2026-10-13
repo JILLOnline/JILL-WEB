@@ -1,30 +1,69 @@
 {
   "sections": {
-    "hero": {
-      "type": "rich-text",
+    "home": {
+      "type": "jill-home-showcase",
+      "blocks": {
+        "card_1": {
+          "type": "category",
+          "settings": {
+            "collection": "pinatas",
+            "link": "/collections/pinatas",
+            "title": "Piñatas",
+            "subtitle": "CUSTOM-MADE MAGIC",
+            "monogram": "P"
+          }
+        },
+        "card_2": {
+          "type": "category",
+          "settings": {
+            "collection": "catalog",
+            "link": "/collections/catalog",
+            "title": "Party Favors",
+            "subtitle": "SMALL GIFTS, BIG SMILES",
+            "monogram": "F"
+          }
+        },
+        "card_3": {
+          "type": "category",
+          "settings": {
+            "collection": "kid-activities",
+            "link": "/collections/kid-activities",
+            "title": "Kids Activities",
+            "subtitle": "FUN TO MAKE & SHARE",
+            "monogram": "K"
+          }
+        },
+        "card_4": {
+          "type": "category",
+          "settings": {
+            "collection": "apparel-gifts-dtf-sublimation",
+            "link": "/collections/apparel-gifts-dtf-sublimation",
+            "title": "Apparel & Gifts",
+            "subtitle": "MADE JUST FOR YOU",
+            "monogram": "G"
+          }
+        }
+      },
+      "block_order": [
+        "card_1",
+        "card_2",
+        "card_3",
+        "card_4"
+      ],
       "settings": {
-        "heading": "Celebrate it your way.",
-        "body": "<p>Custom piñatas, party favors, activities, supplies, apparel and gifts—made around the details that make your celebration yours.</p>",
-        "button_label": ""
-      }
-    },
-    "custom": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Have an idea that needs the JILL touch?",
-        "body": "<p>Tell us what you’re planning, choose what you need, and send the details through one guided custom order request.</p>",
-        "button_label": "Request a custom order",
-        "button_link": "/pages/quote?view=custom-order"
-      }
-    },
-    "local": {
-      "type": "rich-text",
-      "settings": {
-        "heading": "Made by JILL in Jacksonville.",
-        "body": "<p>Handmade and personalized with local pickup available, plus shipping for celebrations farther away.</p>",
-        "button_label": ""
+        "eyebrow": "Personalized celebrations, made with heart",
+        "heading": "Celebrate the little things. Make them unforgettable.",
+        "intro": "<p>Handmade piñatas, party favors, activities and gifts—designed around your story, your colors and the people you love.</p>",
+        "button_label": "Create a custom order",
+        "custom_order_link": "/pages/quote?view=custom-order",
+        "shop_label": "Shop our collections",
+        "collections_eyebrow": "Explore JILL",
+        "collections_heading": "Handmade for every happy moment",
+        "image_alt": "Handmade personalized party details from JILL"
       }
     }
   },
-  "order": ["hero", "custom", "local"]
+  "order": [
+    "home"
+  ]
 }
