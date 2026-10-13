@@ -28,3 +28,25 @@ jobs:
           flags: '--fail-level error'
       - name: Verify source tree stays unchanged
         run: test -z "$(git status --porcelain --untracked-files=no)"
+
+  validate-account-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Certify My JILL account and coupons boundaries
+        run: |
+          node scripts/test-account-hub-canary.mjs
+          node scripts/test-account-rewards-readiness.mjs
+          node scripts/test-account-coupons.mjs
+          node scripts/test-customer-coupons.mjs
+      - name: Certify WORK Custom Order session and app-proxy routing
+        run: |
+          node scripts/test-custom-order-account-session.mjs
+          node scripts/test-custom-order-work-proxy-config.mjs
+      - name: Certify points and redemption logic without Shopify writes
+        run: |
+          node scripts/test-rewards-engine.mjs
+          node scripts/test-rewards-redemption.mjs
