@@ -40,7 +40,11 @@ const page=JSON.parse(read('templates/page.custom-order.json'));
 assert.equal(page.sections?.main?.settings?.verified_submission_endpoint,'/apps/jill-custom-order');
 assert.equal(page.sections?.main?.settings?.submission_endpoint,'');
 const home=JSON.parse(read('templates/index.json'));
-assert.equal(home.sections?.custom?.settings?.button_link,'/pages/custom-order');
+assert.equal(home.sections?.home?.type,'jill-home-showcase');
+assert.equal(home.sections?.home?.settings?.custom_order_link,'/pages/custom-order');
+assert.equal(Object.keys(home.sections?.home?.blocks||{}).length,4);
+assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-showcase.css'"));
+assert.ok(fs.existsSync(path.join(root,'assets/jill-home-showcase.css')));
 assert.ok(read('sections/header.liquid').includes("| default: '/pages/custom-order'"),'Header must point to WORK Custom Order');
 assert.ok(read('sections/main-contact.liquid').includes("| default: '/pages/custom-order'"),'Contact must point to WORK Custom Order');
 
