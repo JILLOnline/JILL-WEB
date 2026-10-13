@@ -1443,3 +1443,13 @@
     }
   }
 }
+
+@layer storefront {
+  .jill-site-header__brand-image {
+    display: block;
+    width: auto;
+    max-width: min(10rem, 100%);
+    height: clamp(3rem, 5vw, 3.8rem);
+    object-fit: contain;
+  }
+}
