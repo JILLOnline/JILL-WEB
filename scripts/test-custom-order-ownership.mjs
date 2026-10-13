@@ -10,7 +10,7 @@ const slice=(begin,end)=>{
   return gs.slice(a,b);
 };
 const source=[
-  slice('function jillCustomOrderCustomerProjection_','function jillCustomOrderMerchantRead'),
+  slice('function jillCustomOrderAccountSummary_','function jillCustomOrderMerchantRead'),
   slice('function jillCustomOrderGatewaySignature_','function jillCustomOrderGatewaySubmissionAllowed_'),
   slice('/* WORK CUSTOM ORDER OWNERSHIP V1','/* END WORK CUSTOM ORDER OWNERSHIP V1 */')
 ].join('\n');
@@ -48,7 +48,9 @@ const spreadsheet={
   },
 };
 const id1='jill:qa:account-111',id2='jill:qa:guest-222';
-const raw1=JSON.stringify({submission_id:id1,customer:{email:'a@example.test'}});
+const raw1=JSON.stringify({submission_id:id1,customer:{email:'a@example.test'},
+  items:[{title:'Coloring Books',quantity:2}],
+  planning:{date_needed:'2026-10-30',fulfillment:'pickup'}});
 const raw2=JSON.stringify({submission_id:id2,customer:{email:'b@example.test'}});
 const gidA='gid://shopify/Customer/111';
 const gidB='gid://shopify/Customer/222';
@@ -139,6 +141,12 @@ assert.equal(readA.orders[0].submission_id,id1);
 assert.equal(readA.orders[0].status,'reviewing');
 assert.equal(readA.orders[0].revision,2);
 assert.equal(readA.orders[0].timeline.length,2);
+assert.deepEqual(readA.orders[0].summary,{
+  items:[{title:'Coloring Books',quantity:2}],
+  date_needed:'2026-10-30',fulfillment:'pickup'
+});
+assert.ok(!JSON.stringify(readA.orders[0]).includes('a@example.test'),
+  'No email/contact values leave Google account projections');
 assert.equal(JSON.stringify(readA).includes('PRIVATE'),false);
 assert.equal(JSON.stringify(readA).includes('internal_note'),false);
 assert.equal(JSON.stringify(readA).includes('internal_status'),false);
