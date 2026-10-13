@@ -17,6 +17,24 @@
     font-weight: 750;
     text-decoration: none;
   }
+  .jill-site-header__brand-mark {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: var(--jill-color-foreground);
+    line-height: 1;
+  }
+  .jill-site-header__brand-mark strong {
+    font-size: clamp(1.7rem, 2.5vw, 2.2rem);
+    font-weight: 850;
+    letter-spacing: -.085em;
+  }
+  .jill-site-header__brand-mark small {
+    margin-top: .2rem;
+    font-size: .48rem;
+    font-weight: 800;
+    letter-spacing: .22em;
+  }
 
   .jill-site-header__nav {
     display: flex;
