@@ -48,6 +48,8 @@ jobs:
           node scripts/test-account-rewards-readiness.mjs
           node scripts/test-account-coupons.mjs
           node scripts/test-customer-coupons.mjs
+      - name: Verify Google QA form encoding including email plus aliases
+        run: node scripts/test-custom-order-form-decoding.mjs
       - name: Certify WORK Custom Order session and app-proxy routing
         run: |
           node scripts/test-custom-order-account-session.mjs
