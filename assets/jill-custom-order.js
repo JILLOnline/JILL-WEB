@@ -1182,40 +1182,8 @@
     };
   }
 
-  async function submitRequest(root, request) {
-    const endpoint = String(root.dataset.submitEndpoint || '').trim();
-    if (!endpoint) fail('submission is temporarily unavailable');
-    const body = new URLSearchParams();
-    Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
-    // A gateway is optional until its Shopify App Proxy, server signature,
-    // Google receipt secret, and backend deployment have passed WORK QA.
-    // Never send an unverified success signal through a configured gateway.
-    const verifiedPath=String(root.dataset.verifiedSubmitEndpoint||'').trim();
-    if (!verifiedPath) {
-      await fetch(endpoint,{method:'POST',mode:'no-cors',keepalive:true,body});
-      return; // Legacy transport; must be retired after gateway launch.
-    }
-    const gateway=new URL(verifiedPath,globalThis.location?.origin);
-    if (gateway.origin!==globalThis.location?.origin ||
-        gateway.pathname!=='/apps/jill-custom-order' ||
-        gateway.search || gateway.hash) {
-      fail('verified submission endpoint is not a same-origin JILL app proxy');
-    }
-    const result=await fetch(gateway.href,{
-      method:'POST',credentials:'same-origin',
-      headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8'},
-      body,
-    });
-    let receipt;
-    try {receipt=await result.json();} catch {
-      fail('your request has not been confirmed by JILL; retry using the same request');
-    }
-    if (!result.ok || receipt?.ok!==true || receipt?.verified!==true ||
-        receipt?.operation!=='custom_order.submit.result' ||
-        receipt?.submission_id!==request.submission_id ||
-        receipt?.status!=='received') {
-      fail('JILL has not confirmed this request yet; retry without changing the request');
-    }
+  async function submitRequest() {
+    fail('Custom Order submissions are disabled in this LIVE draft preview until the production gateway is independently certified');
   }
 
   function text(bytes, start, end) {

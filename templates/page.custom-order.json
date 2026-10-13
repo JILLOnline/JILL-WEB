@@ -2,8 +2,13 @@
   "sections": {
     "main": {
       "type": "main-custom-order",
-      "settings": {}
+      "settings": {
+        "submission_endpoint": "",
+        "verified_submission_endpoint": ""
+      }
     }
   },
-  "order": ["main"]
+  "order": [
+    "main"
+  ]
 }
