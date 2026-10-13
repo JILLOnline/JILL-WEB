@@ -1,9 +1,15 @@
 {
   "sections": {
     "main": {
-      "type": "main-custom-order",
-      "settings": {}
+      "type": "main-page",
+      "settings": {
+        "kicker": "OUR STORY",
+        "intro": "<p>Handmade with Love. Crafted with Joy.</p>",
+        "fallback_body": "<p>Handmade with Love. Crafted with Joy.</p><p>JILL began with a simple belief: that the best memories are made by hand. What started as a small passion for creating playful, beautiful piñatas has grown into a celebration of love, craft, and imagination.</p><p>Every JILL creation is a reflection of warmth and intention—designed to bring people together in moments of joy. From the careful cuts to the colorful details, each piñata tells a story of tradition, creativity, and care.</p><p>JILL isn’t just a brand—it’s a reminder that magic lives in the little things: a child’s laughter, a burst of candy, the sparkle of a celebration shared with family and friends.</p><p>With roots in artisanal heritage and a heart full of modern joy, JILL brings you handmade treasures that turn every moment into something unforgettable.</p>"
+      }
     }
   },
-  "order": ["main"]
+  "order": [
+    "main"
+  ]
 }
