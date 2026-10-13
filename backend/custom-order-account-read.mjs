@@ -36,6 +36,25 @@ function safeDate(x) {
      !Number.isFinite(Date.parse(x)))throw Error('Bad public projection date.');
   return x;
 }
+function publicOrderSummary(value) {
+  if(value===undefined)return {items:[],date_needed:'',fulfillment:''};
+  if(!value||typeof value!=='object'||Array.isArray(value)||
+     !Array.isArray(value.items)||value.items.length>20||
+     typeof value.date_needed!=='string'||
+     (value.date_needed!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(value.date_needed))||
+     !['','pickup','shipping'].includes(value.fulfillment))
+    throw Error('Invalid public Custom Order summary.');
+  const items=value.items.map(item=>{
+    if(!item||typeof item!=='object'||Array.isArray(item)||
+       typeof item.title!=='string'||item.title.trim()!==item.title||
+       !item.title||item.title.length>120||
+       !Number.isSafeInteger(item.quantity)||item.quantity<1||item.quantity>999)
+      throw Error('Invalid public Custom Order item.');
+    return {title:item.title,quantity:item.quantity};
+  });
+  return {items,date_needed:value.date_needed,fulfillment:value.fulfillment};
+}
+
 export function onlyPublicCustomOrderProjection(orders) {
   if(!Array.isArray(orders)||orders.length>20)throw Error('Invalid public order list.');
   const seen=new Set();
@@ -63,6 +82,7 @@ export function onlyPublicCustomOrderProjection(orders) {
     // internal_note, evidence_ref, actor, email or merchant data.
     return {
       submission_id:item.submission_id,
+      summary:publicOrderSummary(item.summary),
       revision:item.revision,
       status:item.status,
       updated_at:safeDate(item.updated_at),
