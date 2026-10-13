@@ -506,6 +506,9 @@ function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
 // Minimal customer-facing order details. Called ONLY AFTER verifying the
 // original payload hash and immutable, Shopify-signed owner ledger.
 function jillCustomOrderAccountSummary_(rawPayload) {
+  // Historic workflow projections omit the optional summary input.
+  // Private account reads NEVER do: they first verify stored payload hash.
+  if(rawPayload===undefined)return {items:[],date_needed:'',fulfillment:''};
   const request=JSON.parse(String(rawPayload||''));
   if(!request||typeof request!=='object'||Array.isArray(request))
     throw new Error('Invalid private Custom Order payload.');
