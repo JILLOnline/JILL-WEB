@@ -1,0 +1,35 @@
+{% liquid
+  assign link_title_downcase = link.title | downcase
+  assign is_custom_order_link = false
+  if link.url contains '/pages/quote' or link_title_downcase contains 'custom order'
+    assign is_custom_order_link = true
+  endif
+%}
+
+{% if link.links != blank %}
+  <details class="jill-site-header__drawer-group">
+    <summary class="jill-site-header__drawer-link">
+      <span>{{ link.title }}</span>
+      {% render 'ui-icon', name: 'chevron-down' %}
+    </summary>
+    <div class="jill-site-header__drawer-subnav">
+      {% for child_link in link.links %}
+        <a
+          class="jill-site-header__drawer-link"
+          href="{{ child_link.url }}"
+          {% if child_link.current %}aria-current="page"{% endif %}
+        >
+          {{ child_link.title }}
+        </a>
+      {% endfor %}
+    </div>
+  </details>
+{% else %}
+  <a
+    class="jill-site-header__drawer-link{% if is_custom_order_link %} jill-site-header__drawer-link--cta{% endif %}"
+    href="{{ link.url }}"
+    {% if link.current %}aria-current="page"{% endif %}
+  >
+    {{ link.title }}
+  </a>
+{% endif %}

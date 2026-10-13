@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-custom-order",
+      "settings": {
+        "submission_endpoint": "",
+        "verified_submission_endpoint": "/apps/jill-custom-order"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

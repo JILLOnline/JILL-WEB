@@ -1,0 +1,542 @@
+{% liquid
+  assign all_products = collections['jill']
+  assign jill_work_allowed_collections = 'pinatas,catalog,apparel-gifts-dtf-sublimation,kid-activities,party-supplies' | split: ','
+  assign excluded_collection_handles_setting = section.settings.excluded_collection_handles | default: 'all,frontpage,jill,shop-the-party'
+  assign excluded_collection_handles = excluded_collection_handles_setting | downcase | remove: ' ' | split: ','
+  assign quantity_label = 'products.product.quantity' | t
+  assign allocation_count_label = 'products.product.allocation.count' | t
+  assign option_surface_groups = 'product_options' | split: ','
+  assign customer_name_label = 'custom_order.customer.name' | t
+  assign customer_email_label = 'custom_order.customer.email' | t
+  assign customer_phone_label = 'custom_order.customer.phone' | t
+  assign theme_label = 'custom_order.design.theme' | t
+  assign colors_label = 'custom_order.design.colors' | t
+  assign reference_instructions_label = 'custom_order.references.instructions' | t
+  assign date_needed_label = 'custom_order.planning.date_needed' | t
+  assign date_needed_help = 'custom_order.planning.date_needed_help' | t
+  assign city_label = 'custom_order.planning.city' | t
+  assign state_label = 'custom_order.planning.state' | t
+  assign postal_code_label = 'custom_order.planning.postal_code' | t
+  assign notes_label = 'custom_order.final.notes' | t
+  assign optional_label = 'custom_order.final.optional' | t
+%}
+
+<section
+  class="jill-custom-order jill-page-width"
+  data-jill-custom-order
+  data-submit-endpoint="{{ section.settings.submission_endpoint | escape }}"
+  data-verified-submit-endpoint="{{ section.settings.verified_submission_endpoint | escape }}"
+  data-cloud-name="{{ section.settings.cloud_name | escape }}"
+  data-upload-preset="{{ section.settings.upload_preset | escape }}"
+  data-optional-label="{{ optional_label | escape }}"
+  data-customer-logged-in="{% if customer %}true{% else %}false{% endif %}"
+  data-customer-name="{% if customer %}{{ customer.name | escape }}{% endif %}"
+  data-customer-email="{% if customer %}{{ customer.email | escape }}{% endif %}"
+  data-customer-phone="{% if customer %}{{ customer.phone | default: customer.default_address.phone | escape }}{% endif %}"
+  data-complete-label="{{ 'custom_order.state.complete' | t | escape }}"
+  data-incomplete-label="{{ 'custom_order.state.incomplete' | t | escape }}"
+  data-finish-options-label="{{ 'custom_order.actions.finish_options' | t | escape }}"
+  data-options-finished-label="{{ 'custom_order.actions.options_finished' | t | escape }}"
+  data-finish-personalization-label="{{ 'custom_order.actions.finish_personalization' | t | escape }}"
+  data-personalization-finished-label="{{ 'custom_order.actions.personalization_finished' | t | escape }}"
+  data-personalization-required-message="{{ 'custom_order.personalization.required_selected' | t | escape }}"
+  data-reference-required-message="{{ 'custom_order.references.required_by_selection' | t | escape }}"
+  data-needed-date-error="{{ 'custom_order.planning.date_needed_error' | t | escape }}"
+  data-request-label="{{ 'custom_order.actions.submit' | t | escape }}"
+  data-sending-label="{{ 'custom_order.actions.sending' | t | escape }}"
+>
+  <header class="jill-custom-order__header" data-jill-edit-only>
+    <h1 class="jill-custom-order__title">{{ 'custom_order.title' | t }}</h1>
+    <p class="jill-custom-order__intro">{{ 'custom_order.intro' | t }}</p>
+  </header>
+
+  <div class="jill-custom-order__flow" data-jill-custom-order-edit>
+    <section class="jill-custom-order__step jill-card" data-jill-stage="customer" data-stage-state="active">
+      <div class="jill-custom-order__step-head">
+        <span class="jill-custom-order__step-index" aria-hidden="true">1</span>
+        <div>
+          <h2>{{ 'custom_order.customer.title' | t }}</h2>
+          <p>{{ 'custom_order.customer.help' | t }}</p>
+        </div>
+      </div>
+      <div class="jill-custom-order__customer" data-jill-custom-order-customer>
+        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name' %}
+        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email' %}
+        <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
+          <label class="jill-field__label" for="JillCustomOrderPhone">
+            {{ customer_phone_label }}
+            <span class="jill-field__required" data-dynamic-required="true" aria-hidden="true">*</span>
+            <small class="jill-field__optional">{{ optional_label }}</small>
+          </label>
+          <div class="jill-phone-field__control">
+            <div class="jill-phone-field__country-shell">
+              <img class="jill-phone-field__flag" data-jill-phone-flag alt="" width="24" height="16">
+              <span class="jill-phone-field__dial" data-jill-phone-dial aria-hidden="true"></span>
+              <span class="jill-phone-field__chevron" aria-hidden="true"></span>
+              <select class="jill-phone-field__country" data-jill-phone-country aria-label="Phone country code"></select>
+            </div>
+            <input
+              class="jill-field__control jill-phone-field__number"
+              id="JillCustomOrderPhone"
+              name="phone"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel-national"
+              data-jill-phone-number
+            >
+          </div>
+          <p class="jill-field__message" data-jill-phone-help aria-live="polite"></p>
+        </div>
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillCustomOrderContact">
+            {{ 'custom_order.customer.preferred_contact' | t }} <span class="jill-field__required" aria-hidden="true">*</span>
+          </label>
+          <select class="jill-field__control" id="JillCustomOrderContact" name="preferred_contact" required>
+            <option value="" disabled selected>{{ 'custom_order.common.choose_one' | t }}</option>
+            <option value="email">{{ 'custom_order.customer.contact_options.email' | t }}</option>
+            <option value="phone">{{ 'custom_order.customer.contact_options.phone' | t }}</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="jill-custom-order__step jill-card" data-jill-stage="order" hidden aria-hidden="true">
+      <div class="jill-custom-order__step-head">
+        <span class="jill-custom-order__step-index" aria-hidden="true">2</span>
+        <div>
+          <h2>{{ 'custom_order.order.title' | t }}</h2>
+          <p>{{ 'custom_order.order.help' | t }}</p>
+        </div>
+      </div>
+
+      <fieldset class="jill-custom-order__choice-set" data-jill-order-type>
+        <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.order.count_label' | t }}</legend>
+        <div class="jill-custom-order__choice-grid">
+          <label class="jill-custom-order__choice">
+            <input type="radio" name="order_type" value="one" required>
+            <span>{{ 'custom_order.order.one' | t }}</span>
+          </label>
+          <label class="jill-custom-order__choice">
+            <input type="radio" name="order_type" value="multiple" required>
+            <span>{{ 'custom_order.order.multiple' | t }}</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="jill-custom-order__collection-stage" data-jill-collection-stage hidden aria-hidden="true">
+        <p class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.order.collection_label' | t }}</p>
+        <p
+          class="jill-custom-order__help"
+          data-jill-collection-help
+          data-one-help="{{ 'custom_order.order.collection_one_help' | t | escape }}"
+          data-multiple-help="{{ 'custom_order.order.collection_multiple_help' | t | escape }}"
+        >{{ 'custom_order.order.collection_one_help' | t }}</p>
+        <div class="jill-custom-order__collection-grid">
+          {% for catalog_collection in collections %}
+            {% if jill_work_allowed_collections contains catalog_collection.handle %}
+              {% unless excluded_collection_handles contains catalog_collection.handle %}
+                {% if catalog_collection.products_count > 0 %}
+                <label class="jill-custom-order__collection-choice">
+                  <input
+                    type="checkbox"
+                    value="{{ catalog_collection.handle | escape }}"
+                    data-jill-collection-filter
+                    data-jill-collection-choice
+                    data-collection-title="{{ catalog_collection.title | escape }}"
+                  >
+                  <span>{{ catalog_collection.title }}</span>
+                </label>
+                {% endif %}
+              {% endunless %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        <p class="jill-field__message" data-tone="error" data-jill-collection-error hidden>{{ 'custom_order.order.collection_error' | t }}</p>
+      </div>
+    </section>
+
+    {% paginate all_products.products by 250 %}
+      <section class="jill-custom-order__step jill-card" data-jill-stage="products" hidden aria-hidden="true">
+        <div class="jill-custom-order__step-head">
+          <span class="jill-custom-order__step-index" aria-hidden="true">3</span>
+          <div>
+            <h2>{{ 'custom_order.products.title' | t }}</h2>
+            <p>{{ 'custom_order.products.help' | t }}</p>
+          </div>
+        </div>
+
+        <div class="jill-custom-order__product-list" data-jill-custom-order-catalog>
+          {% for catalog_product in all_products.products %}
+            {% assign custom_order_excluded = catalog_product.metafields.custom.jill_custom_order_excluded.value %}
+            {% unless custom_order_excluded == true %}
+              {% assign projection_quantity_id = 'JillOrderQuantity-' | append: section.id | append: '-' | append: catalog_product.id %}
+              {% capture item_display_title %}{% render 'custom-order-item-title', product: catalog_product %}{% endcapture %}
+              {% assign item_display_title = item_display_title | strip %}
+              <article
+                class="jill-custom-order-product"
+                data-jill-product-choice
+                data-product-id="{{ catalog_product.id }}"
+                data-product-handle="{{ catalog_product.handle | escape }}"
+                data-collection-handles="{% for product_collection in catalog_product.collections %}{{ product_collection.handle | escape }}{% unless forloop.last %}|{% endunless %}{% endfor %}"
+                hidden
+              >
+                <label class="jill-custom-order-product__pick">
+                  <input type="checkbox" data-jill-custom-order-select value="{{ catalog_product.id }}">
+                  <span>{{ item_display_title }}</span>
+                </label>
+                <div class="jill-custom-order-product__details" data-jill-product-projection-details hidden aria-hidden="true">
+                  <div data-jill-order-quantity>
+                    {% render 'ui-quantity', id: projection_quantity_id, name: blank, label: quantity_label, value: 1, min: 1, step: 1, required: true %}
+                  </div>
+                </div>
+              </article>
+            {% endunless %}
+          {% endfor %}
+        </div>
+        <p class="jill-field__message" data-tone="error" data-jill-product-error hidden>{{ 'custom_order.products.error' | t }}</p>
+      </section>
+
+      <section class="jill-custom-order__step jill-card" data-jill-stage="configuration" hidden aria-hidden="true">
+        <div class="jill-custom-order__step-head">
+          <span class="jill-custom-order__step-index" aria-hidden="true">4</span>
+          <div>
+            <h2>{{ 'custom_order.design.title' | t }}</h2>
+            <p>{{ 'custom_order.design.help' | t }}</p>
+          </div>
+        </div>
+
+        <section class="jill-custom-order__options" data-jill-product-options-stage>
+          <div class="jill-custom-order__subhead">
+            <h3><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.options.title' | t }}</h3>
+            <p>{{ 'custom_order.options.help' | t }}</p>
+          </div>
+          <div class="jill-custom-order__configuration" data-jill-configuration-list>
+            {% for catalog_product in all_products.products %}
+              {% assign custom_order_excluded = catalog_product.metafields.custom.jill_custom_order_excluded.value %}
+              {% unless custom_order_excluded == true %}
+                {% capture item_display_title %}{% render 'custom-order-item-title', product: catalog_product %}{% endcapture %}
+                {% assign item_display_title = item_display_title | strip %}
+                {% liquid
+                  assign current_variant = catalog_product.selected_or_first_available_variant
+                  if current_variant == blank
+                    assign current_variant = catalog_product.variants.first
+                  endif
+                  assign capability_profile = blank
+                  assign capability_metafield = catalog_product.metafields.custom.jill_product_capabilities
+                  if capability_metafield != blank and capability_metafield.type == 'json'
+                    assign capability_profile = capability_metafield.value
+                  endif
+                  assign item_key = section.id | append: '-' | append: catalog_product.id
+                  assign canonical_quantity_id = 'JillCanonicalQuantity-' | append: item_key
+                %}
+
+                <article
+                  class="jill-custom-order-item"
+                  data-jill-custom-order-item
+                  data-jill-product
+                  data-jill-product-id="{{ catalog_product.id }}"
+                  data-product-handle="{{ catalog_product.handle | escape }}"
+                  data-product-title="{{ item_display_title | escape }}"
+                  data-collection-handles="{% for product_collection in catalog_product.collections %}{{ product_collection.handle | escape }}{% unless forloop.last %}|{% endunless %}{% endfor %}"
+                  hidden
+                  aria-hidden="true"
+                >
+                  <button class="jill-custom-order-item__toggle" type="button" data-jill-option-card-toggle aria-expanded="true">
+                    <span class="jill-custom-order-item__name"><span class="jill-field__required" aria-hidden="true">*</span>{{ item_display_title }}</span>
+                    <span class="jill-pill" data-jill-item-status>{{ 'custom_order.state.incomplete' | t }}</span>
+                  </button>
+
+                  <div class="jill-custom-order-item__body" data-jill-option-card-body>
+                    <form class="jill-product-form" data-jill-custom-order-item-form novalidate>
+                      {% if catalog_product.has_only_default_variant %}
+                        <input type="hidden" name="id" value="{{ current_variant.id }}">
+                      {% endif %}
+
+                      <div data-jill-canonical-product-quantity hidden>
+                        {% render 'ui-quantity', id: canonical_quantity_id, name: 'quantity', label: quantity_label, value: 1, min: 1, step: 1, required: true %}
+                      </div>
+
+                      {% unless catalog_product.has_only_default_variant %}
+                        <input type="hidden" data-jill-variant-allocation-payload>
+                        <div
+                          class="jill-product-customization__group"
+                          data-jill-variant-allocation
+                          data-group-label="{{ 'custom_order.variants.group' | t | escape }}"
+                          data-select-label="{{ 'custom_order.variants.select' | t | escape }}"
+                          data-count-label="{{ allocation_count_label | escape }}"
+                          data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
+                          data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+                          data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+                          data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+                          data-incomplete-label="{{ 'custom_order.variants.incomplete' | t | escape }}"
+                          hidden
+                          aria-hidden="true"
+                        >
+                          <h4 class="jill-product-customization__group-title">{{ 'custom_order.variants.title' | t }}</h4>
+                          <template data-jill-variant-quantity-template>
+                            {% render 'ui-quantity', id: 'JillCustomOrderVariantQuantityTemplate', name: blank, label: allocation_count_label, value: 1, min: 1, step: 1, required: true %}
+                          </template>
+                          <div class="jill-card" data-jill-variant-allocation-groups></div>
+                          <button class="jill-button" data-variant="secondary" type="button" data-jill-variant-allocation-add hidden>
+                            <span aria-hidden="true">+</span><span>{{ 'custom_order.variants.add' | t }}</span>
+                          </button>
+                          <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-variant-allocation-summary hidden></p>
+                          <script type="application/json" data-jill-variant-catalog>
+                            [
+                              {% for variant in catalog_product.variants %}
+                                {"id":"{{ variant.id }}","title":{{ variant.title | json }},"available":{{ variant.available | json }},"priceLabel":{{ variant.price | money | json }}}{% unless forloop.last %},{% endunless %}
+                              {% endfor %}
+                            ]
+                          </script>
+                        </div>
+                      {% endunless %}
+
+                      {% if capability_profile != blank %}
+                        <input type="hidden" name="properties[_jill_profile]" value="{{ capability_profile.id }}@{{ capability_profile.version }}">
+                        {% render 'product-capability-fields', capability_profile: capability_profile, product: catalog_product, section_id: item_key, surface_groups: option_surface_groups, show_intro: false, optional_label: optional_label %}
+                        <script type="application/json" data-jill-product-capability-profile>{% render 'custom-order-capability-profile', capability_profile: capability_profile, product: catalog_product %}</script>
+                        <script type="application/json" data-jill-custom-order-full-profile>{{ capability_profile | json }}</script>
+                      {% endif %}
+
+                      <p
+                        class="jill-product-form__status"
+                        role="status"
+                        aria-live="polite"
+                        data-jill-product-status
+                        data-error-prefix="{{ 'products.product.complete_field' | t | escape }}"
+                        data-quantity-label="{{ quantity_label | escape }}"
+                        data-config-error="{{ 'products.product.configuration_error' | t | escape }}"
+                        data-choose-option-label="{{ 'products.product.choose_option' | t | escape }}"
+                      ></p>
+                    </form>
+                  </div>
+                </article>
+              {% endunless %}
+            {% endfor %}
+          </div>
+          <div class="jill-custom-order__stage-actions">
+            <button class="jill-button" type="button" data-jill-finish-configuration>{{ 'custom_order.actions.finish_options' | t }}</button>
+            <p class="jill-custom-order__help" data-jill-options-help>{{ 'custom_order.options.finish_help' | t }}</p>
+          </div>
+        </section>
+
+        <div class="jill-custom-order__design-core" data-jill-design-core hidden aria-hidden="true">
+          <div class="jill-custom-order__two-column">
+            {% render 'ui-field', id: 'JillCustomOrderTheme', name: 'theme', label: theme_label, type: 'text', required: true %}
+            {% render 'ui-field', id: 'JillCustomOrderColors', name: 'colors', label: colors_label, type: 'text', required: true %}
+          </div>
+        </div>
+
+        <section class="jill-custom-order__personalization" data-jill-order-personalization hidden aria-hidden="true">
+          <div class="jill-custom-order__subhead">
+            <h3><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.personalization.title' | t }}</h3>
+          </div>
+          <div class="jill-field">
+            <label class="jill-field__label" for="JillCustomOrderPersonalizationMode"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.personalization.setup' | t }}</label>
+            <select class="jill-field__control" id="JillCustomOrderPersonalizationMode" data-jill-personalization-mode required>
+              <option value="" disabled selected>{{ 'custom_order.common.choose_one' | t }}</option>
+              <option value="none">{{ 'custom_order.personalization.none' | t }}</option>
+              <option value="same">{{ 'custom_order.personalization.same' | t }}</option>
+              <option value="different">{{ 'custom_order.personalization.different' | t }}</option>
+            </select>
+          </div>
+          <div class="jill-custom-order__personalization-cards" data-jill-personalization-cards></div>
+          <div class="jill-custom-order__stage-actions" data-jill-personalization-actions hidden>
+            <button class="jill-button" data-variant="secondary" type="button" data-jill-personalization-add hidden>{{ 'custom_order.personalization.add' | t }}</button>
+            <button class="jill-button" type="button" data-jill-personalization-finish>{{ 'custom_order.actions.finish_personalization' | t }}</button>
+          </div>
+        </section>
+
+        <section class="jill-custom-order__references" data-jill-reference-stage hidden aria-hidden="true">
+          <fieldset class="jill-custom-order__choice-set">
+            <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.references.title' | t }}</legend>
+            <div class="jill-custom-order__choice-grid">
+              <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="yes" data-jill-reference-choice required><span>{{ 'custom_order.common.yes' | t }}</span></label>
+              <label class="jill-custom-order__choice"><input type="radio" name="has_references" value="no" data-jill-reference-choice required><span>{{ 'custom_order.common.no' | t }}</span></label>
+            </div>
+            <p class="jill-custom-order__help" data-jill-reference-requirement hidden>{{ 'custom_order.references.required_by_selection' | t }}</p>
+          </fieldset>
+          <div class="jill-custom-order__reference-fields" data-jill-reference-fields hidden aria-hidden="true">
+            <div class="jill-media" data-jill-media>
+              <div class="jill-media__head">
+                <strong>{{ 'custom_order.references.upload_title' | t }} <span class="jill-field__required" aria-hidden="true">*</span></strong>
+                <small>{{ 'custom_order.references.upload_help' | t }}</small>
+              </div>
+              <label class="jill-media__drop">
+                <input class="jill-media__input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple data-jill-media-input>
+                <span>{{ 'custom_order.references.add' | t }}</span>
+                <small>{{ 'custom_order.references.required_help' | t }}</small>
+              </label>
+              <div class="jill-media__grid" data-jill-media-grid></div>
+              <p class="jill-media__count" data-jill-media-count>0 / 3</p>
+              <p class="jill-field__message" data-tone="error" data-jill-media-error hidden></p>
+            </div>
+            {% render 'ui-textarea', id: 'JillReferenceInstructions', name: 'reference_instructions', label: reference_instructions_label, optional_label: optional_label, rows: 3 %}
+          </div>
+        </section>
+      </section>
+    {% endpaginate %}
+
+    <section class="jill-custom-order__step jill-card" data-jill-stage="planning" hidden aria-hidden="true">
+      <div class="jill-custom-order__step-head">
+        <span class="jill-custom-order__step-index" aria-hidden="true">5</span>
+        <div><h2>{{ 'custom_order.planning.title' | t }}</h2><p>{{ 'custom_order.planning.help' | t }}</p></div>
+      </div>
+      <div class="jill-custom-order__planning" data-jill-custom-order-planning>
+        {% render 'ui-field', id: 'JillCustomOrderNeededDate', name: 'date_needed', label: date_needed_label, type: 'date', required: true, help: date_needed_help %}
+        <fieldset class="jill-custom-order__choice-set jill-custom-order__planning-choice">
+          <legend class="jill-field__label"><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.planning.fulfillment' | t }}</legend>
+          <div class="jill-custom-order__choice-grid">
+            <label class="jill-custom-order__choice"><input type="radio" name="fulfillment" value="shipping" required><span>{{ 'custom_order.planning.fulfillment_options.shipping' | t }}</span></label>
+            <label class="jill-custom-order__choice"><input type="radio" name="fulfillment" value="pickup" required><span>{{ 'custom_order.planning.fulfillment_options.pickup' | t }}</span></label>
+          </div>
+        </fieldset>
+        <div class="jill-custom-order__shipping" data-jill-shipping-fields hidden aria-hidden="true">
+          {% render 'ui-field', id: 'JillCustomOrderCity', name: 'city', label: city_label, type: 'text', optional_label: optional_label %}
+          {% render 'ui-field', id: 'JillCustomOrderState', name: 'state', label: state_label, type: 'text', optional_label: optional_label %}
+          {% render 'ui-field', id: 'JillCustomOrderPostalCode', name: 'postal_code', label: postal_code_label, type: 'text', required: true, autocomplete: 'postal-code' %}
+        </div>
+      </div>
+    </section>
+
+    <section class="jill-custom-order__step jill-card" data-jill-stage="final" hidden aria-hidden="true">
+      <div class="jill-custom-order__step-head">
+        <span class="jill-custom-order__step-index" aria-hidden="true">6</span>
+        <div><h2>{{ 'custom_order.final.title' | t }}</h2><p>{{ 'custom_order.final.help' | t }}</p></div>
+      </div>
+      <div class="jill-custom-order__two-column">
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillCustomOrderBudget">{{ 'custom_order.final.budget' | t }} <small class="jill-field__optional">{{ optional_label }}</small></label>
+          <select class="jill-field__control" id="JillCustomOrderBudget" name="budget">
+            <option value="">{{ 'custom_order.final.budget_skip' | t }}</option>
+            <option value="under_100">{{ 'custom_order.final.budget_options.under_100' | t }}</option>
+            <option value="100_250">{{ 'custom_order.final.budget_options.100_250' | t }}</option>
+            <option value="250_500">{{ 'custom_order.final.budget_options.250_500' | t }}</option>
+            <option value="500_plus">{{ 'custom_order.final.budget_options.500_plus' | t }}</option>
+          </select>
+        </div>
+        <div class="jill-field">
+          <label class="jill-field__label" for="JillCustomOrderPriority">{{ 'custom_order.final.priority' | t }} <small class="jill-field__optional">{{ optional_label }}</small></label>
+          <select class="jill-field__control" id="JillCustomOrderPriority" name="priority">
+            <option value="">{{ 'custom_order.common.choose_one' | t }}</option>
+            <option value="date">{{ 'custom_order.final.priority_options.date' | t }}</option>
+            <option value="budget">{{ 'custom_order.final.priority_options.budget' | t }}</option>
+            <option value="design">{{ 'custom_order.final.priority_options.design' | t }}</option>
+            <option value="overall">{{ 'custom_order.final.priority_options.overall' | t }}</option>
+          </select>
+        </div>
+      </div>
+      <fieldset class="jill-custom-order__choice-set">
+        <legend class="jill-field__label">{{ 'custom_order.final.recommend' | t }} <small class="jill-field__optional">{{ optional_label }}</small></legend>
+        <div class="jill-custom-order__choice-grid">
+          <label class="jill-custom-order__choice"><input type="radio" name="recommend_matching" value="yes"><span>{{ 'custom_order.common.yes' | t }}</span></label>
+          <label class="jill-custom-order__choice"><input type="radio" name="recommend_matching" value="no"><span>{{ 'custom_order.common.no' | t }}</span></label>
+        </div>
+      </fieldset>
+      {% render 'ui-textarea', id: 'JillCustomOrderNotes', name: 'notes', label: notes_label, optional_label: optional_label, rows: 6 %}
+      <label class="jill-custom-order__consent">
+        <input type="checkbox" data-jill-request-acknowledgment required>
+        <span><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.final.acknowledgment' | t }}</span>
+      </label>
+    </section>
+
+    <div class="jill-custom-order__stage-actions" data-jill-review-gate>
+      <button class="jill-button" type="button" data-jill-review-open>{{ 'custom_order.actions.review' | t }}</button>
+      <p class="jill-custom-order__help" data-jill-review-validation-note hidden></p>
+    </div>
+  </div>
+
+  <section class="jill-custom-order__review" data-jill-custom-order-review hidden aria-hidden="true">
+    <div class="jill-custom-order-review__hero jill-card">
+      <span class="jill-custom-order-review__hero-icon" aria-hidden="true">{% render 'ui-icon', name: 'check' %}</span>
+      <div class="jill-custom-order-review__hero-copy">
+        <h2>{{ 'custom_order.review.title' | t }}</h2>
+        <p>{{ 'custom_order.review.help' | t }}</p>
+      </div>
+    </div>
+
+    <div class="jill-custom-order-review__icon-bank" hidden aria-hidden="true">
+      <template data-jill-review-icon="customer">{% render 'ui-icon', name: 'account' %}</template>
+      <template data-jill-review-icon="items">{% render 'ui-icon', name: 'bag' %}</template>
+      <template data-jill-review-icon="total">{% render 'ui-icon', name: 'package' %}</template>
+      <template data-jill-review-icon="design">{% render 'ui-icon', name: 'palette' %}</template>
+      <template data-jill-review-icon="date">{% render 'ui-icon', name: 'calendar' %}</template>
+      <template data-jill-review-icon="fulfillment">{% render 'ui-icon', name: 'location' %}</template>
+    </div>
+
+    <div class="jill-custom-order__review-content" data-jill-custom-order-review-content></div>
+
+    <label class="jill-custom-order__consent jill-custom-order__marketing jill-custom-order-review__consent-card jill-card">
+      <span class="jill-custom-order-review__consent-icon" aria-hidden="true">{% render 'ui-icon', name: 'mail' %}</span>
+      <input type="checkbox" data-jill-marketing-consent>
+      <span class="jill-custom-order-review__consent-copy">
+        <span class="jill-custom-order-review__consent-line">
+          <strong>{{ 'custom_order.review.marketing' | t }}</strong>
+          <small class="jill-custom-order-review__optional">{{ optional_label }}</small>
+        </span>
+        <small class="jill-custom-order-review__disclosure">{{ 'custom_order.review.marketing_help' | t }}</small>
+      </span>
+    </label>
+
+    <label class="jill-custom-order__consent jill-custom-order-review__consent-card jill-custom-order-review__consent-card--required jill-card">
+      <span class="jill-custom-order-review__consent-icon" aria-hidden="true">{% render 'ui-icon', name: 'shield-check' %}</span>
+      <input type="checkbox" data-jill-review-confirm required>
+      <span class="jill-custom-order-review__consent-copy">
+        <strong><span class="jill-field__required" aria-hidden="true">*</span>{{ 'custom_order.review.confirm' | t }}</strong>
+      </span>
+    </label>
+
+    <div class="jill-custom-order__review-actions">
+      <button class="jill-button" data-variant="secondary" type="button" data-jill-review-back>{{ 'custom_order.actions.back' | t }}</button>
+      <button class="jill-button" type="button" data-jill-request-submit disabled aria-disabled="true">{{ 'custom_order.actions.submit' | t }}</button>
+    </div>
+  </section>
+
+  <section class="jill-custom-order__success jill-card" data-jill-custom-order-success hidden aria-hidden="true" role="status">
+    <div class="jill-custom-order__success-mark" aria-hidden="true">✓</div>
+    <h2 tabindex="-1" data-jill-success-title>{{ 'custom_order.success.title' | t }}</h2>
+    <p>{{ 'custom_order.success.body' | t }}</p>
+    <a class="jill-button" href="{{ routes.root_url }}">{{ 'custom_order.success.action' | t }}</a>
+  </section>
+
+  <p class="jill-product-form__status jill-custom-order__status" role="status" aria-live="polite" data-jill-custom-order-status></p>
+</section>
+
+{% schema %}
+{
+  "name": "Custom order",
+  "settings": [
+    {
+      "type": "text",
+      "id": "excluded_collection_handles",
+      "label": "Collections hidden from picker",
+      "default": "all,frontpage,jill,shop-the-party",
+      "info": "Comma-separated collection handles. These collections stay in Shopify but do not appear in Custom Order."
+    },
+    {
+      "type": "text",
+      "id": "submission_endpoint",
+      "label": "Disabled legacy submission URL (WORK only)"
+    },
+    {
+      "type": "text",
+      "id": "verified_submission_endpoint",
+      "label": "Verified Shopify app proxy path",
+      "info": "Leave blank until the signed Shopify app proxy and receipt verifier are WORK-certified. When ready, use /apps/jill-custom-order.",
+      "default": "/apps/jill-custom-order"
+    },
+    {
+      "type": "text",
+      "id": "cloud_name",
+      "label": "Cloudinary cloud name",
+      "default": "vtnu62sj"
+    },
+    {
+      "type": "text",
+      "id": "upload_preset",
+      "label": "Cloudinary unsigned upload preset",
+      "default": "jill_references"
+    }
+  ]
+}
+{% endschema %}

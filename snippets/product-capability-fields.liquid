@@ -1,0 +1,274 @@
+{% liquid
+  if surface_groups != blank and product != blank
+    for capability_collection in product.collections
+      assign collection_capability_metafield = capability_collection.metafields.custom.jill_custom_order_capabilities
+      if collection_capability_metafield != blank and collection_capability_metafield.type == 'json'
+        assign capability_profile = collection_capability_metafield.value
+        break
+      endif
+    endfor
+  endif
+
+  assign choose_option_label = 'products.product.choose_option' | t
+  assign allocation_count_label = 'products.product.allocation.count' | t
+  assign group_names = surface_groups
+  if group_names == blank
+    assign group_names = 'product_options,personalization,planning,reference' | split: ','
+  endif
+  assign customization_show_intro = true
+  if show_intro == false
+    assign customization_show_intro = false
+  endif
+  assign allocated_option_field_ids = capability_profile.features.productOptionsAllocation.fieldIds
+  assign allocated_personalization_field_ids = capability_profile.features.personalizationAllocation.fieldIds
+  assign excluded_field_ids = surface_override.excludeFieldIds
+  assign always_available_field_ids = surface_override.alwaysAvailableFieldIds
+  assign allocation_initially_available = false
+  assign has_product_options = false
+
+  for candidate in capability_profile.fields
+    assign candidate_excluded = false
+    if excluded_field_ids != blank and excluded_field_ids contains candidate.id
+      assign candidate_excluded = true
+    endif
+    if candidate_excluded == false
+      if candidate.group == 'product_options'
+        assign has_product_options = true
+      endif
+      if allocated_option_field_ids contains candidate.id and candidate.visibleWhen == blank
+        assign allocation_initially_available = true
+      endif
+    endif
+  endfor
+%}
+
+{% if has_product_options and group_names contains 'product_options' %}
+  <input
+    type="hidden"
+    name="properties[_jill_product_options]"
+    data-jill-product-options-payload
+  >
+{% endif %}
+
+{% if allocated_personalization_field_ids != blank and group_names contains 'personalization' %}
+  <input
+    type="hidden"
+    name="properties[_jill_personalization]"
+    data-jill-personalization-payload
+  >
+{% endif %}
+
+<div class="jill-product-customization jill-card" data-jill-product-customization>
+  {% if customization_show_intro %}
+    <div class="jill-product-customization__intro">
+      <h2 class="jill-product-customization__title">{{ 'products.product.customize_title' | t }}</h2>
+      <p class="jill-product-customization__help">{{ 'products.product.customize_help' | t }}</p>
+    </div>
+  {% endif %}
+
+  {% for group_name in group_names %}
+    {% liquid
+      assign group_has_fields = false
+      assign group_has_allocation = false
+
+      for candidate in capability_profile.fields
+        assign candidate_excluded = false
+        if excluded_field_ids != blank and excluded_field_ids contains candidate.id
+          assign candidate_excluded = true
+        endif
+        assign candidate_is_allocated = false
+        if group_name == 'product_options' and allocated_option_field_ids contains candidate.id
+          assign candidate_is_allocated = true
+        endif
+        if group_name == 'personalization' and allocated_personalization_field_ids contains candidate.id
+          assign candidate_is_allocated = true
+        endif
+        if candidate_excluded == false and candidate.group == group_name and candidate_is_allocated == false
+          assign group_has_fields = true
+        endif
+      endfor
+
+      if group_name == 'product_options' and allocated_option_field_ids != blank
+        assign group_has_allocation = true
+      endif
+      if group_name == 'personalization' and allocated_personalization_field_ids != blank
+        assign group_has_allocation = true
+      endif
+    %}
+
+    {% if group_has_fields or group_has_allocation %}
+      <div class="jill-product-customization__group" data-jill-capability-group="{{ group_name }}">
+        <h3 class="jill-product-customization__group-title">
+          {% case group_name %}
+            {% when 'product_options' %}{{ 'products.product.groups.product_options' | t }}
+            {% when 'personalization' %}{{ 'products.product.groups.personalization' | t }}
+            {% when 'planning' %}{{ 'products.product.groups.planning' | t }}
+            {% when 'reference' %}{{ 'products.product.groups.reference' | t }}
+          {% endcase %}
+        </h3>
+
+        {% for field in capability_profile.fields %}
+          {% liquid
+            assign field_excluded = false
+            if excluded_field_ids != blank and excluded_field_ids contains field.id
+              assign field_excluded = true
+            endif
+            assign field_is_allocated = false
+            if group_name == 'product_options' and allocated_option_field_ids contains field.id
+              assign field_is_allocated = true
+            endif
+            if group_name == 'personalization' and allocated_personalization_field_ids contains field.id
+              assign field_is_allocated = true
+            endif
+          %}
+
+          {% if field_excluded == false and field.group == group_name and field_is_allocated == false %}
+            {% liquid
+              assign field_name = 'properties[' | append: field.id | append: ']'
+              if field.group == 'product_options'
+                assign field_name = blank
+              endif
+              assign field_dom_id = 'JillProduct-' | append: section_id | append: '-' | append: field.id
+              assign field_disabled = false
+              assign field_hidden = false
+              assign field_always_available = false
+              if always_available_field_ids != blank and always_available_field_ids contains field.id
+                assign field_always_available = true
+              endif
+              if field.visibleWhen != blank and field_always_available == false
+                assign field_disabled = true
+                assign field_hidden = true
+              endif
+            %}
+
+            <div
+              class="jill-product-customization__field"
+              data-jill-capability-field="{{ field.id }}"
+              {% if field_hidden %}hidden{% endif %}
+            >
+              {% render 'capability-field-control',
+                field: field,
+                field_dom_id: field_dom_id,
+                field_name: field_name,
+                field_disabled: field_disabled,
+                choose_option_label: choose_option_label,
+                optional_label: optional_label
+              %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if group_name == 'product_options' and allocated_option_field_ids != blank %}
+          <div
+            class="jill-product-customization__field"
+            data-jill-product-options-allocation
+            data-group-label="{{ 'products.product.allocation.group' | t | escape }}"
+            data-count-label="{{ allocation_count_label | escape }}"
+            data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
+            data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+            data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+            data-add-label="{{ 'products.product.allocation.add' | t | escape }}"
+            data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+            data-item-label="{{ 'products.product.allocation.item' | t | escape }}"
+            data-items-label="{{ 'products.product.allocation.items' | t | escape }}"
+            {% unless allocation_initially_available %}hidden aria-hidden="true"{% else %}aria-hidden="false"{% endunless %}
+          >
+            <div data-jill-allocated-capability-fields hidden aria-hidden="true">
+              {% for allocated_field_id in allocated_option_field_ids %}
+                <span data-jill-capability-field="{{ allocated_field_id | escape }}"></span>
+              {% endfor %}
+            </div>
+            <h4 class="jill-product-customization__group-title">{{ 'products.product.allocation.title' | t }}</h4>
+            <p class="jill-product-customization__help">{{ 'products.product.allocation.help' | t }}</p>
+            <template data-jill-allocation-quantity-template>
+              {% render 'ui-quantity',
+                id: 'JillAllocationQuantityTemplate',
+                name: blank,
+                label: allocation_count_label,
+                value: 1,
+                min: 1,
+                step: 1,
+                required: true
+              %}
+            </template>
+            <div class="jill-card" data-jill-product-options-groups></div>
+            <button
+              class="jill-button"
+              data-variant="secondary"
+              type="button"
+              data-jill-product-options-add
+              hidden
+            >
+              <span aria-hidden="true">+</span>
+              <span>{{ 'products.product.allocation.add' | t }}</span>
+            </button>
+            <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-product-options-summary hidden></p>
+          </div>
+        {% endif %}
+
+        {% if group_name == 'personalization' and allocated_personalization_field_ids != blank %}
+          <div
+            class="jill-product-customization__field"
+            data-jill-personalization-allocation
+            data-none-label="{{ 'products.product.personalization.none' | t | escape }}"
+            data-same-label="{{ 'products.product.personalization.same' | t | escape }}"
+            data-different-label="{{ 'products.product.personalization.different' | t | escape }}"
+            data-group-label="{{ 'products.product.personalization.group' | t | escape }}"
+            data-count-label="{{ allocation_count_label | escape }}"
+            data-of-label="{{ 'products.product.allocation.of' | t | escape }}"
+            data-assigned-label="{{ 'products.product.allocation.assigned' | t | escape }}"
+            data-unassigned-label="{{ 'products.product.allocation.unassigned' | t | escape }}"
+            data-add-label="{{ 'products.product.personalization.add' | t | escape }}"
+            data-remove-label="{{ 'products.product.allocation.remove' | t | escape }}"
+            data-item-label="{{ 'products.product.allocation.item' | t | escape }}"
+            data-items-label="{{ 'products.product.allocation.items' | t | escape }}"
+            data-jill-personalization-complete="false"
+          >
+            <p class="jill-product-customization__help">{{ 'products.product.personalization.help' | t }}</p>
+            <div data-jill-personalization-modes></div>
+            <template data-jill-personalization-quantity-template>
+              {% render 'ui-quantity',
+                id: 'JillPersonalizationQuantityTemplate',
+                name: blank,
+                label: allocation_count_label,
+                value: 1,
+                min: 1,
+                step: 1,
+                required: true
+              %}
+            </template>
+            <div hidden>
+              {% for field in capability_profile.fields %}
+                {% if allocated_personalization_field_ids contains field.id %}
+                  {% assign template_field_id = 'JillPersonalizationFieldTemplate-' | append: field.id %}
+                  <template data-jill-personalization-field-template="{{ field.id }}">
+                    {% render 'capability-field-control',
+                      field: field,
+                      field_dom_id: template_field_id,
+                      field_name: blank,
+                      field_disabled: false,
+                      choose_option_label: choose_option_label,
+                      optional_label: optional_label
+                    %}
+                  </template>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <div class="jill-card" data-jill-personalization-groups></div>
+            <button
+              class="jill-button"
+              data-variant="secondary"
+              type="button"
+              data-jill-personalization-add
+              hidden
+            >
+              <span aria-hidden="true">+</span>
+              <span>{{ 'products.product.personalization.add' | t }}</span>
+            </button>
+            <p class="jill-product-customization__help jill-pill" role="status" aria-live="polite" data-jill-personalization-summary hidden></p>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>

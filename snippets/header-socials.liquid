@@ -1,0 +1,31 @@
+{% liquid
+  assign has_socials = false
+  if settings.social_instagram_url != blank or settings.social_facebook_url != blank or settings.social_tiktok_url != blank or settings.social_youtube_url != blank
+    assign has_socials = true
+  endif
+%}
+
+{% if has_socials %}
+  <nav class="jill-site-header__socials" aria-label="Social media">
+    {% if settings.social_instagram_url != blank %}
+      <a class="jill-site-header__social-link" href="{{ settings.social_instagram_url }}" target="_blank" rel="noopener noreferrer external" aria-label="Instagram">
+        {% render 'ui-icon', name: 'instagram' %}
+      </a>
+    {% endif %}
+    {% if settings.social_facebook_url != blank %}
+      <a class="jill-site-header__social-link" href="{{ settings.social_facebook_url }}" target="_blank" rel="noopener noreferrer external" aria-label="Facebook">
+        {% render 'ui-icon', name: 'facebook' %}
+      </a>
+    {% endif %}
+    {% if settings.social_tiktok_url != blank %}
+      <a class="jill-site-header__social-link" href="{{ settings.social_tiktok_url }}" target="_blank" rel="noopener noreferrer external" aria-label="TikTok">
+        {% render 'ui-icon', name: 'tiktok' %}
+      </a>
+    {% endif %}
+    {% if settings.social_youtube_url != blank %}
+      <a class="jill-site-header__social-link" href="{{ settings.social_youtube_url }}" target="_blank" rel="noopener noreferrer external" aria-label="YouTube">
+        {% render 'ui-icon', name: 'youtube' %}
+      </a>
+    {% endif %}
+  </nav>
+{% endif %}

@@ -1,0 +1,22 @@
+{% liquid
+  assign button_variant = variant | default: 'primary'
+  assign button_label = label | default: 'Continue'
+%}
+
+{% if url != blank %}
+  <a
+    class="jill-button"
+    data-variant="{{ button_variant }}"
+    href="{{ url }}"
+    {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+  >{{ button_label }}</a>
+{% else %}
+  <button
+    class="jill-button"
+    data-variant="{{ button_variant }}"
+    type="{{ type | default: 'button' }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
+    {% if value != blank %}value="{{ value | escape }}"{% endif %}
+    {% if disabled %}disabled aria-disabled="true"{% endif %}
+  >{{ button_label }}</button>
+{% endif %}

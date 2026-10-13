@@ -1,0 +1,30 @@
+{% liquid
+  assign choice_type = type | default: 'checkbox'
+  assign choice_id = id | default: name
+%}
+
+<label class="jill-choice" for="{{ choice_id }}"{% if error != blank %} data-state="error"{% endif %}>
+  <input
+    class="jill-choice__control"
+    id="{{ choice_id }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
+    type="{{ choice_type }}"
+    value="{{ value | default: '1' | escape }}"
+    {% if checked %}checked{% endif %}
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if error != blank %}aria-invalid="true" aria-describedby="{{ choice_id }}-error"{% elsif help != blank %}aria-describedby="{{ choice_id }}-help"{% endif %}
+  >
+  <span class="jill-choice__label">{{ label }}</span>
+  {% if required %}
+    <span class="jill-field__required" aria-hidden="true">*</span>
+  {% elsif optional_label != blank %}
+    <small class="jill-field__optional">{{ optional_label }}</small>
+  {% endif %}
+</label>
+
+{% if error != blank %}
+  <p class="jill-field__message" id="{{ choice_id }}-error" data-tone="error">{{ error }}</p>
+{% elsif help != blank %}
+  <p class="jill-field__message" id="{{ choice_id }}-help">{{ help }}</p>
+{% endif %}

@@ -1,0 +1,33 @@
+{% liquid
+  assign field_id = id | default: name
+  assign field_label = label | default: name
+%}
+
+<div class="jill-field"{% if error != blank %} data-state="error"{% endif %}>
+  <label class="jill-field__label" for="{{ field_id }}">
+    {{ field_label }}
+    {% if required %}
+      <span class="jill-field__required" aria-hidden="true">*</span>
+    {% elsif optional_label != blank %}
+      <small class="jill-field__optional">{{ optional_label }}</small>
+    {% endif %}
+  </label>
+
+  <input
+    class="jill-field__control jill-field__control--file"
+    id="{{ field_id }}"
+    {% if name != blank %}name="{{ name }}"{% endif %}
+    type="file"
+    {% if accept != blank %}accept="{{ accept }}"{% endif %}
+    {% if multiple %}multiple{% endif %}
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if error != blank %}aria-invalid="true" aria-describedby="{{ field_id }}-error"{% elsif help != blank %}aria-describedby="{{ field_id }}-help"{% endif %}
+  >
+
+  {% if error != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-error" data-tone="error">{{ error }}</p>
+  {% elsif help != blank %}
+    <p class="jill-field__message" id="{{ field_id }}-help">{{ help }}</p>
+  {% endif %}
+</div>

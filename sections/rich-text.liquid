@@ -1,0 +1,28 @@
+<section class="jill-rich-text jill-page-width">
+  {% if section.settings.heading != blank %}
+    <h1 class="jill-rich-text__heading">{{ section.settings.heading }}</h1>
+  {% endif %}
+
+  {% if section.settings.body != blank %}
+    <div class="jill-rich-text__body rte">{{ section.settings.body }}</div>
+  {% endif %}
+
+  {% if section.settings.button_label != blank and section.settings.button_link != blank %}
+    {% render 'ui-button', label: section.settings.button_label, url: section.settings.button_link, variant: 'primary' %}
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Rich text",
+  "settings": [
+    {"type": "text", "id": "heading", "label": "Heading", "default": "Build something distinctly yours"},
+    {"type": "richtext", "id": "body", "label": "Text", "default": "<p>Use Theme Core settings and sections to express your brand without breaking the design system.</p>"},
+    {"type": "text", "id": "button_label", "label": "Button label", "default": "Shop now"},
+    {"type": "url", "id": "button_link", "label": "Button link"}
+  ],
+  "presets": [
+    {"name": "Rich text"}
+  ]
+}
+{% endschema %}

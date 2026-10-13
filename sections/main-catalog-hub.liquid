@@ -1,0 +1,280 @@
+{% if collection.handle == 'all' %}
+  {% liquid
+    assign custom_order_url = section.settings.custom_order_url
+    assign featured_collection = section.settings.featured_collection
+    assign featured_limit = section.settings.featured_limit
+    assign category_count = 0
+    assign catalog_product_count = 0
+    assign creation_count = 0
+    assign testimonial_count = 0
+
+    for block in section.blocks
+      case block.type
+        when 'category'
+          if block.settings.collection != blank
+            assign category_count = category_count | plus: 1
+            assign catalog_product_count = catalog_product_count | plus: block.settings.collection.products_count
+          endif
+        when 'creation'
+          if block.settings.image != blank
+            assign creation_count = creation_count | plus: 1
+          endif
+        when 'testimonial'
+          if block.settings.quote != blank
+            assign testimonial_count = testimonial_count | plus: 1
+          endif
+      endcase
+    endfor
+  %}
+
+  <section class="jill-catalog jill-page-width" data-jill-catalog-disclosures>
+    <div id="JillCatalogProducts-{{ section.id }}" tabindex="-1">
+      {% if category_count > 0 and catalog_product_count > 0 %}
+        <div class="jill-catalog-accordion" data-jill-catalog-accordion>
+          <div class="jill-catalog-disclosure-list" role="group" aria-label="Catalog collections">
+            {% for block in section.blocks %}
+              {% if block.type == 'category' and block.settings.collection != blank %}
+                {% liquid
+                  assign category_collection = block.settings.collection
+                  assign category_label = category_collection.title
+                  case category_collection.title
+                    when 'Piñatas'
+                      assign category_label = 'Piñatas'
+                    when 'Pinatas'
+                      assign category_label = 'Piñatas'
+                    when 'Party Favors'
+                      assign category_label = 'Favors'
+                    when 'Kid Activities'
+                      assign category_label = 'Activities'
+                    when 'Party Supplies'
+                      assign category_label = 'Supplies'
+                    when 'Apparel & Gifts'
+                      assign category_label = 'Gifts'
+                  endcase
+                %}
+                {% if category_collection.products_count > 0 %}
+                  <button
+                    class="jill-catalog-disclosure__pill"
+                    type="button"
+                    id="JillCatalogCollection-{{ category_collection.handle | escape }}"
+                    data-jill-catalog-trigger
+                    aria-expanded="false"
+                    aria-controls="JillCatalogPanel-{{ category_collection.handle | escape }}"
+                    {{ block.shopify_attributes }}
+                  >
+                    <span class="jill-catalog-disclosure__title">{{ category_label }}</span>
+                  </button>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="jill-catalog-disclosure-cue" aria-hidden="true">
+            <span class="jill-catalog-disclosure-cue__line"></span>
+            <span class="jill-catalog-disclosure-cue__label">
+              <span>Select a category</span>
+              <span class="jill-catalog-disclosure-cue__icon">
+                {% render 'ui-icon', name: 'chevron-down' %}
+              </span>
+            </span>
+            <span class="jill-catalog-disclosure-cue__line"></span>
+          </div>
+
+          <div class="jill-catalog-accordion__panels">
+            {% for block in section.blocks %}
+              {% if block.type == 'category' and block.settings.collection != blank %}
+                {% liquid
+                  assign category_collection = block.settings.collection
+                  assign category_description = block.settings.description
+                  if category_description == blank
+                    assign category_description = category_collection.description | strip_html | truncatewords: 34
+                  endif
+                %}
+
+                {% if category_collection.products_count > 0 %}
+                  <div
+                    class="jill-catalog-disclosure__content jill-catalog-accordion__panel"
+                    id="JillCatalogPanel-{{ category_collection.handle | escape }}"
+                    data-jill-catalog-panel
+                    data-jill-catalog-group
+                    aria-labelledby="JillCatalogCollection-{{ category_collection.handle | escape }}"
+                    hidden
+                  >
+                    {% if category_description != blank %}
+                      <p class="jill-catalog-disclosure__description">{{ category_description }}</p>
+                    {% endif %}
+
+                    <div class="jill-product-grid jill-catalog__product-grid">
+                      {% for card_product in category_collection.products %}
+                        {% render 'product-card',
+                          card_product: card_product,
+                          mode: 'catalog',
+                          heading_tag: 'h4',
+                          custom_order_url: custom_order_url
+                        %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <p class="jill-catalog__empty">{{ 'catalog.results.empty' | t }}</p>
+      {% endif %}
+    </div>
+
+    {% if featured_collection != blank and featured_collection.products_count > 0 %}
+      <section
+        class="jill-catalog-disclosure jill-catalog-disclosure--featured"
+        open
+        aria-labelledby="JillCatalogFeaturedHeading-{{ section.id }}"
+      >
+        <div class="jill-catalog__section-heading jill-catalog__section-heading--centered">
+          <h2 id="JillCatalogFeaturedHeading-{{ section.id }}">{{ section.settings.featured_heading }}</h2>
+        </div>
+
+        <div class="jill-catalog-disclosure__content">
+          {% if section.settings.featured_text != blank %}
+            <p class="jill-catalog-disclosure__description jill-catalog-disclosure__description--centered">{{ section.settings.featured_text }}</p>
+          {% endif %}
+
+          <div class="jill-catalog__featured-grid">
+            {% for card_product in featured_collection.products limit: featured_limit %}
+              {% render 'product-card',
+                card_product: card_product,
+                mode: 'catalog',
+                heading_tag: 'h3',
+                custom_order_url: custom_order_url
+              %}
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if creation_count > 0 %}
+      <div class="jill-catalog__section">
+        <div class="jill-catalog__section-heading">
+          <p class="jill-catalog__eyebrow">{{ section.settings.creations_eyebrow }}</p>
+          <h2>{{ section.settings.creations_heading }}</h2>
+          {% if section.settings.creations_text != blank %}
+            <p>{{ section.settings.creations_text }}</p>
+          {% endif %}
+        </div>
+        <div class="jill-catalog__creation-grid">
+          {% for block in section.blocks %}
+            {% if block.type == 'creation' and block.settings.image != blank %}
+              <figure class="jill-catalog-creation" {{ block.shopify_attributes }}>
+                {{ block.settings.image | image_url: width: 1200 | image_tag: class: 'jill-catalog-creation__image', loading: 'lazy', widths: '320, 480, 720, 960, 1200', sizes: '(min-width: 70rem) 25vw, (min-width: 45rem) 33vw, 80vw' }}
+                {% if block.settings.heading != blank or block.settings.caption != blank %}
+                  <figcaption class="jill-catalog-creation__caption">
+                    {% if block.settings.heading != blank %}<strong>{{ block.settings.heading }}</strong>{% endif %}
+                    {% if block.settings.caption != blank %}<span>{{ block.settings.caption }}</span>{% endif %}
+                  </figcaption>
+                {% endif %}
+              </figure>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if testimonial_count > 0 %}
+      <div class="jill-catalog__section">
+        <div class="jill-catalog__section-heading">
+          <p class="jill-catalog__eyebrow">{{ section.settings.testimonials_eyebrow }}</p>
+          <h2>{{ section.settings.testimonials_heading }}</h2>
+        </div>
+        <div class="jill-catalog__testimonial-grid">
+          {% for block in section.blocks %}
+            {% if block.type == 'testimonial' and block.settings.quote != blank %}
+              <blockquote class="jill-card jill-catalog-testimonial" {{ block.shopify_attributes }}>
+                <p>“{{ block.settings.quote }}”</p>
+                {% if block.settings.customer != blank or block.settings.detail != blank %}
+                  <footer>
+                    {% if block.settings.customer != blank %}<strong>{{ block.settings.customer }}</strong>{% endif %}
+                    {% if block.settings.detail != blank %}<span>{{ block.settings.detail }}</span>{% endif %}
+                  </footer>
+                {% endif %}
+              </blockquote>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="jill-catalog__cta jill-card">
+      <div>
+        <p class="jill-catalog__eyebrow">{{ section.settings.final_eyebrow }}</p>
+        <h2>{{ section.settings.final_heading }}</h2>
+        {% if section.settings.final_text != blank %}<p>{{ section.settings.final_text }}</p>{% endif %}
+      </div>
+      {% if custom_order_url != blank %}
+        {% render 'ui-button', type: 'button', label: section.settings.final_button_label, url: custom_order_url %}
+      {% endif %}
+    </div>
+  </section>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Catalog hub",
+  "tag": "section",
+  "class": "jill-catalog-section",
+  "enabled_on": {
+    "templates": ["collection"]
+  },
+  "settings": [
+    {"type": "url", "id": "custom_order_url", "label": "Custom order URL"},
+    {"type": "collection", "id": "featured_collection", "label": "Featured products collection"},
+    {"type": "range", "id": "featured_limit", "label": "Featured products", "min": 2, "max": 8, "step": 1, "default": 4},
+    {"type": "text", "id": "featured_heading", "label": "Featured heading", "default": "Featured Products"},
+    {"type": "text", "id": "featured_text", "label": "Featured text", "default": "A rotating edit of JILL favorites and pieces we want you to see first."},
+
+    {"type": "text", "id": "creations_eyebrow", "label": "Creations eyebrow", "default": "MADE BY JILL"},
+    {"type": "text", "id": "creations_heading", "label": "Creations heading", "default": "Real ideas we’ve brought to life"},
+    {"type": "text", "id": "creations_text", "label": "Creations text"},
+    {"type": "text", "id": "testimonials_eyebrow", "label": "Testimonials eyebrow", "default": "CUSTOMER LOVE"},
+    {"type": "text", "id": "testimonials_heading", "label": "Testimonials heading", "default": "What customers say"},
+
+    {"type": "text", "id": "final_eyebrow", "label": "Final CTA eyebrow", "default": "NOT SEEING IT YET?"},
+    {"type": "text", "id": "final_heading", "label": "Final CTA heading", "default": "Good. That’s what custom is for."},
+    {"type": "text", "id": "final_text", "label": "Final CTA text", "default": "Tell JILL what you’re creating and build the request around your celebration instead of forcing the idea into the wrong listing."},
+    {"type": "text", "id": "final_button_label", "label": "Final CTA button", "default": "Create a custom order"}
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Catalog collection",
+      "settings": [
+        {"type": "collection", "id": "collection", "label": "Collection"},
+        {"type": "textarea", "id": "description", "label": "Collection intro", "info": "Leave blank to use a shortened version of the collection description."}
+      ]
+    },
+    {
+      "type": "creation",
+      "name": "JILL creation",
+      "settings": [
+        {"type": "image_picker", "id": "image", "label": "Image"},
+        {"type": "text", "id": "heading", "label": "Heading"},
+        {"type": "text", "id": "caption", "label": "Caption"}
+      ]
+    },
+    {
+      "type": "testimonial",
+      "name": "Customer testimonial",
+      "settings": [
+        {"type": "textarea", "id": "quote", "label": "Verified customer quote"},
+        {"type": "text", "id": "customer", "label": "Customer name"},
+        {"type": "text", "id": "detail", "label": "Detail", "info": "Optional order/product context."}
+      ]
+    }
+  ],
+  "max_blocks": 30,
+  "presets": [
+    {"name": "Catalog hub"}
+  ]
+}
+{% endschema %}

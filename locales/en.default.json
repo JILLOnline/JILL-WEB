@@ -1,0 +1,270 @@
+{
+  "accessibility": {
+    "skip_to_content": "Skip to content"
+  },
+  "header": {
+    "navigation": "Primary navigation",
+    "home": "Home",
+    "catalog": "Catalog",
+    "contact_us": "Contact us",
+    "about_us": "About us",
+    "search": "Search",
+    "account": "Account",
+    "cart": "Cart"
+  },
+  "footer": {
+    "navigation": "Footer navigation",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "tiktok": "TikTok"
+  },
+  "not_found": {
+    "title": "That page wandered off.",
+    "body": "The page you were looking for isn’t here, but the party can keep going.",
+    "action": "Browse the catalog"
+  },
+  "general": {
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "quantity": {
+      "decrease": "Decrease",
+      "increase": "Increase"
+    }
+  },
+  "products": {
+    "card": {
+      "from": "From"
+    },
+    "product": {
+      "variant": "Options",
+      "quantity": "Quantity",
+      "add_to_cart": "Add to cart",
+      "adding_to_cart": "Adding your configured item to the cart…",
+      "cart_error": "We could not add this configured item to your cart. Please try again.",
+      "sold_out": "Sold out",
+      "choose_option": "Choose an option",
+      "customize_title": "Customize your order",
+      "customize_help": "Complete the required details before adding this item to your cart.",
+      "complete_field": "Please complete:",
+      "configuration_error": "This product is temporarily unavailable while its customization settings are being checked.",
+      "groups": {
+        "product_options": "Options",
+        "personalization": "Personalization",
+        "planning": "Planning",
+        "reference": "References"
+      },
+      "allocation": {
+        "title": "Options by item",
+        "help": "Choose how many customizable items use each option. Add another option only when you want to split the total.",
+        "group": "Option",
+        "count": "How many",
+        "of": "of",
+        "assigned": "assigned",
+        "unassigned": "unassigned",
+        "add": "Add another option",
+        "remove": "Remove",
+        "item": "item",
+        "items": "items"
+      },
+      "personalization": {
+        "none": "No personalization",
+        "same": "Same for all",
+        "different": "Different by item",
+        "group": "Personalization",
+        "add": "Add another personalization",
+        "help": "Choose no personalization, use the same personalization for every item, or split personalization across the items in this order."
+      }
+    }
+  },
+  "custom_order": {
+    "title": "Request a Custom Order",
+    "intro": "Dream it up — we’ll help bring your celebration to life, made just for you.",
+    "common": {
+      "choose_one": "Choose one",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "state": {
+      "complete": "Complete",
+      "incomplete": "Incomplete"
+    },
+    "customer": {
+      "title": "About you",
+      "help": "Who are we helping and how should we reach you?",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "preferred_contact": "Preferred contact",
+      "contact_options": {
+        "email": "Email",
+        "phone": "Text / phone"
+      }
+    },
+    "order": {
+      "title": "What are you ordering?",
+      "help": "Tell us whether this is one item or a group of matching items.",
+      "count_label": "How many different items?",
+      "one": "One item",
+      "multiple": "Multiple items",
+      "collection_label": "Which collection do you need?",
+      "collection_one_help": "Select one collection.",
+      "collection_multiple_help": "Select one or more collections.",
+      "collection_error": "Please select at least one collection."
+    },
+    "products": {
+      "title": "Choose your items",
+      "help": "Pick the actual JILL products you want. Quantity opens under each selection.",
+      "error": "Please select at least one product."
+    },
+    "design": {
+      "title": "Design & personalization",
+      "help": "Now we make sure everything belongs together.",
+      "theme": "Theme / character / style",
+      "colors": "Colors"
+    },
+    "options": {
+      "title": "Product options",
+      "help": "Complete the required choices for each selected item. Variant quantities must match the quantity from Step 3.",
+      "finish_help": "Complete the product options above to continue."
+    },
+    "personalization": {
+      "title": "Personalization",
+      "help": "Add the wording once or split it by selected item.",
+      "setup": "Personalization setup",
+      "none": "No personalization",
+      "same": "Same personalization for all selected items",
+      "different": "Different personalization by item",
+      "add": "Add another personalization",
+      "required_selected": "At least one selected item requires personalization."
+    },
+    "references": {
+      "title": "Do you have reference images?",
+      "upload_title": "Reference images",
+      "upload_help": "Upload up to 3 photos. JPG, PNG, WEBP, HEIC or HEIF · 10 MB max each.",
+      "add": "+ Add reference images",
+      "required_help": "Upload at least 1 photo to continue",
+      "instructions": "What should we keep, change, or use only as inspiration?",
+      "required_by_selection": "At least one selected item requires a reference image."
+    },
+    "planning": {
+      "title": "Event & fulfillment",
+      "help": "Tell us when you need your order and how you’ll receive it.",
+      "date_needed": "Date you need it",
+      "fulfillment": "How will I get it?",
+      "city": "City",
+      "state": "State",
+      "postal_code": "ZIP code",
+      "fulfillment_options": {
+        "pickup": "Jacksonville pickup",
+        "shipping": "Shipping"
+      },
+      "date_needed_help": "Earliest selectable date is 12 business days from today. This helps plan your order but does not guarantee delivery by that date. Pick-up orders are prioritized.",
+      "date_needed_error": "Choose a date at least 12 business days from today."
+    },
+    "final": {
+      "title": "Final details",
+      "help": "Anything that helps us quote and plan it right the first time.",
+      "budget": "Approximate budget",
+      "budget_skip": "Not sure / skip",
+      "budget_options": {
+        "under_100": "Under $100",
+        "100_250": "$100–$250",
+        "250_500": "$250–$500",
+        "500_plus": "$500+"
+      },
+      "priority": "What matters most?",
+      "priority_options": {
+        "date": "Receiving it by my date",
+        "budget": "Staying within budget",
+        "design": "Matching the design closely",
+        "overall": "Best overall result"
+      },
+      "recommend": "Would you like JILL to recommend matching items?",
+      "notes": "Anything else we should know?",
+      "acknowledgment": "I understand this submission is a request, not a confirmed order, price, production slot, or delivery date.",
+      "optional": "optional"
+    },
+    "variants": {
+      "title": "Variations",
+      "group": "Variation",
+      "select": "Choose variation",
+      "add": "Add another combination",
+      "incomplete": "Assign the full product quantity across variations before continuing."
+    },
+    "review": {
+      "title": "Review your custom order request",
+      "help": "Please check the information below before sending it to JILL.",
+      "marketing": "Yes — send me JILL party ideas, new designs, occasional offers, and reminders for future celebrations by email and text.",
+      "marketing_help": "Text messages are only sent if you provide a phone number. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe from texts. You can unsubscribe from emails anytime. Consent is not required to submit your request.",
+      "confirm": "I reviewed the information above and it is accurate."
+    },
+    "actions": {
+      "finish_options": "Finish Product Options",
+      "options_finished": "Product Options finished ✓",
+      "finish_personalization": "Finish personalization",
+      "personalization_finished": "Personalization finished ✓",
+      "review": "Review",
+      "back": "Back to edit",
+      "submit": "Request Custom Order",
+      "sending": "Sending request…"
+    },
+    "success": {
+      "title": "Your request has been submitted",
+      "body": "Thank you for choosing JILL. We’ve received your custom order request. We’ll review the details you provided and contact you using your preferred contact method with pricing, availability, and next steps.",
+      "action": "Continue Shopping"
+    }
+  },
+  "catalog": {
+    "filters": {
+      "label": "Filter catalog by category",
+      "all": "All"
+    },
+    "results": {
+      "product": "product",
+      "products": "products",
+      "empty": "No products are available in this catalog yet."
+    },
+    "card": {
+      "view_product": "View product",
+      "customize": "Customize"
+    }
+  },
+  "collections": {
+    "sort_by": "Sort by",
+    "apply_sort": "Apply",
+    "empty": "There are no products in this collection yet."
+  },
+  "search": {
+    "title": "Search results",
+    "label": "Search JILL",
+    "placeholder": "What are you looking for?",
+    "initial": "Use the search icon in the header to search JILL.",
+    "no_results": "No results matched your search.",
+    "result_count": {
+      "one": "{{ count }} result for “{{ terms }}”",
+      "other": "{{ count }} results for “{{ terms }}”"
+    },
+    "types": {
+      "article": "Article",
+      "page": "Page"
+    }
+  },
+  "cart": {
+    "title": "Your cart",
+    "item_count": {
+      "one": "{{ count }} item",
+      "other": "{{ count }} items"
+    },
+    "empty": "Your cart is empty.",
+    "continue_shopping": "Continue shopping",
+    "quantity": "Quantity",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "checkout_note": "Taxes, shipping, and discounts are calculated at checkout.",
+    "update": "Update cart",
+    "checkout": "Checkout"
+  }
+}

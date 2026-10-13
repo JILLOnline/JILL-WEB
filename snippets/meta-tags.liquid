@@ -1,0 +1,15 @@
+<title>
+  {{ page_title }}
+  {% if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif %}
+  {% if current_page != 1 %} &ndash; Page {{ current_page }}{% endif %}
+  {% unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless %}
+</title>
+
+{% if page_description %}
+  <meta name="description" content="{{ page_description | escape }}">
+{% endif %}
+
+<meta property="og:site_name" content="{{ shop.name | escape }}">
+<meta property="og:url" content="{{ canonical_url }}">
+<meta property="og:title" content="{{ page_title | escape }}">
+<meta property="og:type" content="website">
