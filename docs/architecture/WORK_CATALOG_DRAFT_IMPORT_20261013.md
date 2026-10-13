@@ -8,13 +8,13 @@ Shopify connector selected shop: JILL WORK `jill-work.myshopify.com`. LIVE sourc
   `pinatas` 4, `apparel-gifts-dtf-sublimation` 5, `kid-activities` 2, `party-supplies` 1, `shop-the-party` 4.
 * Smart `jill` collection has 15 products.
 * Smart `catalog` (Party Favors) has **0** products although LIVE contains **3**. Rule is `TAG EQUALS "party favor"`. WORK product tags contain variants such as `party favor bags` and `personalized party favors`, not an exact `party favor` tag. Investigate LIVE smart collection semantics, index timing or source mismatch. Do NOT silently add a non-LIVE tag or change rule as a workaround.
-* WORK returned **15 total products and 7 total collections** in final read-back, whereas earlier in this conversation it had 17 Shopify sample products and 3 sample collections. This unexpected disappearance cannot be reconciled from the performed productSet/collectionAdd operations; **investigate destination data continuity and any reset/mock-store behavior before asserting no pre-existing data was lost**. Never assume sample objects were intentionally removed.
+* WORK returned **15 total products and 7 total collections** in final read-back. **Reconciled with user on 2026-10-13:** merchant explicitly confirmed they manually deleted all 17 preloaded Shopify sample products and 3 sample collections from WORK. This was an intentional merchant cleanup, not a migration-side data loss. Do not reinstate sample data.
 * Every JILL draft carries correct capability identifier and destination-specific personalization profile reference.
 * Initial import mutation returned fewer image media items than some earlier LIVE source media counts. This requires image-by-image inventory and parity check; do not claim gallery parity.
 * The mug has 5 photos, SKU, matching tags, type and price. Full description needs reconciliation. LIVE media audit returned varying 5/6 media counts across queries, requiring a fresh source audit.
 
 ## Remaining gates
-1. Resolve unexpected WORK sample dataset discontinuity and the Party Favors automated collection discrepancy.
+1. Resolve the Party Favors automated collection discrepancy (sample dataset cleanup is user-confirmed and closed).
 2. Read back each of 60 variants (prices, selected options, SKU, policy), all media and descriptions; fix specific mismatches without duplicating products/media.
 3. Complete pages, menus, SEO, locale, image/brand/theme settings parity (excluding account-owned LIVE URLs).
 4. QA page/product publication is store-wide, not isolated by unpublished theme; ask before publication.
