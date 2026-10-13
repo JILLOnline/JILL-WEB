@@ -101,3 +101,32 @@ const classify=async (endpoint,method)=> {
 };
 await classify('/healthz','GET');
 await classify('/jill-custom-order-proxy','POST');
+
+ // Read-only negative account proof: no JWT, no customer ID and no body.
+ // Success means rejecting this probe with 401, never returning order data.
+try {
+  const resp=await fetch(worker+'/jill-custom-order-account',{
+    method:'POST',redirect:'manual',
+    headers:{'content-type':'application/json','accept':'application/json'},
+    body:'',
+    signal:AbortSignal.timeout(14000)
+  });
+  let code='non_json';
+  try {
+    const payload=await resp.json();
+    const raw=payload?.error?.code;
+    code=['unauthenticated_account','account_service_unavailable',
+      'invalid_request','rate_limit_unavailable'].includes(raw)?raw:'unclassified';
+  }catch{}
+  const assessment=resp.status===401&&code==='unauthenticated_account'
+    ?'ACCOUNT_JWT_GATE_ONLINE'
+    :resp.status===503&&code==='account_service_unavailable'
+      ?'ACCOUNT_GATE_CONFIG_MISSING'
+      :resp.status===404?'ACCOUNT_ROUTE_NOT_DEPLOYED'
+        :'ACCOUNT_GATE_UNEXPECTED_RESPONSE';
+  console.log(JSON.stringify({probe:'WORK_ACCOUNT_ANONYMOUS_DENIAL',
+    http_status:resp.status,response_format:code,assessment}));
+}catch(error) {
+  console.log(JSON.stringify({probe:'WORK_ACCOUNT_ANONYMOUS_DENIAL',
+    assessment:'WORKER_HEALTH_PROBE_UNAVAILABLE',error_class:error?.name||'Error'}));
+}
