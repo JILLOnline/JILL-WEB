@@ -1206,13 +1206,41 @@
     });
     let receipt;
     try {receipt=await result.json();} catch {
-      fail('your request has not been confirmed by JILL; retry using the same request');
+      // An HTML password screen, missing Shopify proxy or a redirect is
+      // never proof of receipt. Do not read or echo the raw response body.
+      fail('WORK submission returned a page instead of a verified receipt (HTTP ' +
+        result.status + '). Check the Shopify WORK app-proxy route; retry this same request.');
     }
     if (!result.ok || receipt?.ok!==true || receipt?.verified!==true ||
         receipt?.operation!=='custom_order.submit.result' ||
         receipt?.submission_id!==request.submission_id ||
         receipt?.status!=='received') {
-      fail('JILL has not confirmed this request yet; retry without changing the request');
+      // Only display finite, expected WORK gateway error codes. Never echo
+      // untrusted upstream error strings, request bodies, or customer data.
+      const rawCode = typeof receipt?.error?.code === 'string'
+        ? receipt.error.code
+        : typeof receipt?.error === 'string' ? receipt.error : '';
+      const knownCodes = {
+        unauthenticated_proxy: 'Shopify WORK did not authenticate the app proxy.',
+        wrong_shop: 'The proxy is not connected to JILL WORK.',
+        invalid_origin: 'The gateway did not receive the expected WORK storefront origin.',
+        gateway_unavailable: 'The WORK gateway is not fully configured or online.',
+        rate_limit_unavailable: 'The WORK rate limiter is unavailable.',
+        rate_limited: 'Too many requests reached the WORK gateway. Wait, then retry.',
+        payload_too_large: 'The order request exceeds the gateway size limit.',
+        invalid_submission: 'The WORK gateway rejected the request format.',
+        upstream_rejected: 'The WORK QA order backend rejected the request.',
+        receipt_unconfirmed: 'The WORK QA backend has not confirmed the saved request.',
+        method_not_allowed: 'The WORK proxy did not accept the submit method.',
+        not_found: 'The WORK app-proxy destination route was not found.',
+      };
+      const code = Object.prototype.hasOwnProperty.call(knownCodes, rawCode)
+        ? rawCode : 'unclassified_response';
+      fail(knownCodes[code] ? knownCodes[code] +
+        ' (WORK ' + result.status + ' / ' + code + '). ' +
+        'No receipt is confirmed; retry without changing this request.'
+        : 'JILL has not confirmed this request yet (WORK ' +
+          result.status + ' / ' + code + '). Retry without changing this request.');
     }
   }
 
