@@ -44,6 +44,17 @@ assert.equal(home.sections?.home?.type,'jill-home-showcase');
 assert.equal(home.sections?.home?.settings?.custom_order_link,'/pages/custom-order');
 assert.equal(Object.keys(home.sections?.home?.blocks||{}).length,5);
 assert.deepEqual(home.sections.home.block_order,['card_1','card_2','card_3','card_4','card_5']);
+const requiredCategoryImages=['pinatas','favors','activities','supplies','apparel'];
+for(let i=0;i<5;i++){
+ const card=home.sections.home.blocks['card_'+(i+1)];
+ assert.equal(card?.settings?.media_key,requiredCategoryImages[i],'Wrong category image '+i);
+ assert.ok(!card.settings.link,'Do not link unpublished WORK collections in default homepage');
+}
+const showcase=read('sections/jill-home-showcase.liquid');
+assert.ok(showcase.includes('case block.settings.media_key'),'Category photo must not depend on collection publication');
+assert.ok(showcase.includes('if card_url != blank'),'Unpublished collection cards must not be clickable');
+assert.ok(showcase.includes("default: '/pages/custom-order'"),'WORK homepage fallback must not target LIVE');
+assert.ok(!showcase.includes("default: '/pages/quote?view=custom-order'"));
 assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-showcase.css'"));
 assert.ok(fs.existsSync(path.join(root,'assets/jill-home-showcase.css')));
 for(const file of ['assets/jill-brand-logo.png','assets/jill-brand-favicon.png',
