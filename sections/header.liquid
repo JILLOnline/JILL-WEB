@@ -1,6 +1,7 @@
 {% liquid
   assign custom_order_url = section.settings.custom_order_link | default: '/pages/custom-order'
   assign custom_order_in_menu = false
+  assign about_in_menu = false
   assign search_input_id = 'JillHeaderSearch-' | append: section.id
   assign fallback_contact_page = section.settings.fallback_contact_page
   assign fallback_about_page = section.settings.fallback_about_page
@@ -8,6 +9,9 @@
   if section.settings.menu != blank
     for link in section.settings.menu.links
       assign link_title_downcase = link.title | downcase
+      if link_title_downcase contains 'about'
+        assign about_in_menu = true
+      endif
       if link.url contains '/pages/quote' or link_title_downcase contains 'custom order'
         assign custom_order_in_menu = true
         break
@@ -69,6 +73,9 @@
                   <a class="jill-site-header__drawer-link" href="{{ fallback_about_page.url }}">{{ 'header.about_us' | t }}</a>
                 {% endif %}
               {% endif %}
+              {% unless about_in_menu %}
+                <a class="jill-site-header__drawer-link" href="{{ routes.root_url }}#JillStory">About JILL</a>
+              {% endunless %}
             </nav>
 
             <div class="jill-site-header__drawer-utilities" data-drawer-utilities="core">
