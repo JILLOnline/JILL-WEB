@@ -3,12 +3,6 @@
 <section class="jill-home" aria-labelledby="JillHomeHeading-{{ section.id }}">
   {% liquid
     assign hero_photo = section.settings.hero_image
-    if hero_photo == blank
-      assign hero_collection = collections['pinatas']
-      if hero_collection != blank and hero_collection.products_count > 0
-        assign hero_photo = hero_collection.products.first.featured_image
-      endif
-    endif
     assign order_href = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
   %}
 
@@ -27,12 +21,7 @@
       {% if hero_photo != blank %}
         {{ hero_photo | image_url: width: 1400 | image_tag: loading: 'eager', fetchpriority: 'high', widths: '480, 720, 960, 1200, 1400', sizes: '(min-width: 990px) 48vw, 100vw', class: 'jill-home__hero-image', alt: section.settings.image_alt }}
       {% else %}
-        <div class="jill-home__hero-placeholder" aria-hidden="true">
-          <span class="jill-home__art-spark jill-home__art-spark--one">✦</span>
-          <span class="jill-home__art-wordmark">JILL</span>
-          <span class="jill-home__art-caption">MADE FOR YOUR MOMENTS</span>
-          <span class="jill-home__art-spark jill-home__art-spark--two">✳</span>
-        </div>
+        <img src="{{ 'jill-home-hero.jpg' | asset_url }}" class="jill-home__hero-image" alt="JILL handcrafted piñatas and party creations" width="1536" height="2048" loading="eager" fetchpriority="high">
       {% endif %}
       <span class="jill-home__hero-stamp">MADE JUST FOR YOU</span>
     </div>
@@ -51,12 +40,20 @@
         {% liquid
           assign category = block.settings.collection
           assign card_image = block.settings.image
-          if card_image == blank and category != blank
-            if category.image != blank
-              assign card_image = category.image
-            elsif category.products_count > 0
-              assign card_image = category.products.first.featured_image
-            endif
+          assign category_asset = ''
+          if category != blank
+            case category.handle
+              when 'pinatas'
+                assign category_asset = 'jill-home-pinatas.jpg'
+              when 'catalog'
+                assign category_asset = 'jill-home-party-favors.jpg'
+              when 'kid-activities'
+                assign category_asset = 'jill-home-kids.jpg'
+              when 'party-supplies'
+                assign category_asset = 'jill-home-party-supplies.jpg'
+              when 'apparel-gifts-dtf-sublimation'
+                assign category_asset = 'jill-home-apparel.jpg'
+            endcase
           endif
           assign card_url = block.settings.link
           if card_url == blank and category != blank
@@ -70,6 +67,8 @@
           <div class="jill-home__category-image">
             {% if card_image != blank %}
               {{ card_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '240, 360, 540, 720, 900', sizes: '(min-width: 990px) 24vw, (min-width: 600px) 48vw, 92vw', alt: block.settings.title }}
+            {% elsif category_asset != blank %}
+              <img src="{{ category_asset | asset_url }}" loading="lazy" width="700" height="900" alt="{{ block.settings.title | escape }}">
             {% else %}
               <span class="jill-home__category-monogram" aria-hidden="true">{{ block.settings.monogram | escape }}</span>
             {% endif %}
