@@ -20,6 +20,10 @@
     <article class="jill-content-page__body jill-card rte">
       {{ page.content }}
     </article>
+  {% elsif section.settings.fallback_body != blank %}
+    <article class="jill-content-page__body jill-card rte">
+      {{ section.settings.fallback_body }}
+    </article>
   {% endif %}
 </section>
 
@@ -44,9 +48,18 @@
       "label": "Content width",
       "default": "standard",
       "options": [
-        {"value": "narrow", "label": "Narrow"},
-        {"value": "standard", "label": "Standard"},
-        {"value": "wide", "label": "Wide"}
+        {
+          "value": "narrow",
+          "label": "Narrow"
+        },
+        {
+          "value": "standard",
+          "label": "Standard"
+        },
+        {
+          "value": "wide",
+          "label": "Wide"
+        }
       ]
     },
     {
@@ -55,6 +68,11 @@
       "label": "Show botanical field",
       "default": true,
       "info": "Uses the shared JILL botanical field on large content surfaces."
+    },
+    {
+      "type": "richtext",
+      "id": "fallback_body",
+      "label": "Page content fallback when page body is empty"
     }
   ]
 }
