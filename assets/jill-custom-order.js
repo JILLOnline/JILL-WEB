@@ -1660,15 +1660,19 @@
 
   function syncProductVisibility(root) {
     const selected = new Set(selectedCollectionChoices(root).map((choice) => choice.value));
+    let matchingProducts = 0;
     for (const choice of productChoices(root)) {
       const handles = String(choice.dataset.collectionHandles || '').split('|').filter(Boolean);
       const visible = handles.some((handle) => selected.has(handle));
       choice.hidden = !visible;
+      if (visible) matchingProducts += 1;
       if (!visible) {
         const input = choice.querySelector('[data-jill-custom-order-select]');
         if (input) input.checked = false;
       }
     }
+    setVisible(root.querySelector('[data-jill-product-filter-empty]'),
+      selected.size > 0 && matchingProducts === 0);
     syncSelectedItems(root);
   }
 

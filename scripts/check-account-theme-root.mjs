@@ -23,7 +23,9 @@ const required=[
 for(const file of required)assert.ok(fs.existsSync(path.join(root,file)),'Missing root Shopify theme file: '+file);
 const custom=read('sections/main-custom-order.liquid');
 const js=read('assets/jill-custom-order.js');
-assert.ok(custom.includes("assign all_products = collections['jill']"),'WORK catalog must select JILL only');
+assert.ok(custom.includes("assign all_products = collections['all']"),'WORK catalog must select Online Store products');
+assert.equal(custom.split("catalog_product.vendor == 'JILL' and custom_order_excluded != true").length-1,2,
+  'Both product choice and configuration loops must filter JILL vendor and excluded products');
 assert.ok(custom.includes('jill_work_allowed_collections'),'WORK collection picker requires allowlist');
 assert.ok(!custom.includes('script.google.com/macros/s/'),'Legacy Google endpoint forbidden in WORK theme');
 assert.ok(js.includes("const endpoint = '/apps/jill-custom-order'"),'WORK endpoint must be fixed');

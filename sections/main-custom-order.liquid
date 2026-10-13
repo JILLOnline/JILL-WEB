@@ -4,7 +4,7 @@
   {% render 'jill-custom-order-runtime' %}
 {% endif %}
 {% liquid
-  assign all_products = collections['jill']
+  assign all_products = collections['all']
   assign work_selectable_collections = 0
   assign jill_work_allowed_collections = 'pinatas,catalog,apparel-gifts-dtf-sublimation,kid-activities,party-supplies' | split: ','
   assign excluded_collection_handles_setting = section.settings.excluded_collection_handles | default: 'all,frontpage,jill,shop-the-party'
@@ -59,8 +59,8 @@
 
   {% if all_products == blank or all_products.products_count == 0 %}
     <div class="jill-card jill-custom-order__catalog-note" role="status" data-jill-catalog-unavailable>
-      <strong>JILL WORK catalog preview</strong>
-      <p>Our personalized items are being prepared for testing. You can review the form layout, but product selection and submission won't be available until the WORK products are made visible.</p>
+      <strong>JILL WORK product availability</strong>
+      <p>No active JILL products are available to the WORK Online Store catalog yet. Product selection and submission are unavailable until eligible products are visible.</p>
     </div>
   {% endif %}
 
@@ -189,7 +189,7 @@
         <div class="jill-custom-order__product-list" data-jill-custom-order-catalog>
           {% for catalog_product in all_products.products %}
             {% assign custom_order_excluded = catalog_product.metafields.custom.jill_custom_order_excluded.value %}
-            {% unless custom_order_excluded == true %}
+            {% if catalog_product.vendor == 'JILL' and custom_order_excluded != true %}
               {% assign projection_quantity_id = 'JillOrderQuantity-' | append: section.id | append: '-' | append: catalog_product.id %}
               {% capture item_display_title %}{% render 'custom-order-item-title', product: catalog_product %}{% endcapture %}
               {% assign item_display_title = item_display_title | strip %}
@@ -211,9 +211,10 @@
                   </div>
                 </div>
               </article>
-            {% endunless %}
+            {% endif %}
           {% endfor %}
         </div>
+        <p class="jill-field__message jill-custom-order__product-empty" data-jill-product-filter-empty role="status" hidden>No available JILL items were found in this collection. Check that its products are active, available to the WORK Online Store channel and assigned to this collection.</p>
         <p class="jill-field__message" data-tone="error" data-jill-product-error hidden>{{ 'custom_order.products.error' | t }}</p>
       </section>
 
@@ -234,7 +235,7 @@
           <div class="jill-custom-order__configuration" data-jill-configuration-list>
             {% for catalog_product in all_products.products %}
               {% assign custom_order_excluded = catalog_product.metafields.custom.jill_custom_order_excluded.value %}
-              {% unless custom_order_excluded == true %}
+              {% if catalog_product.vendor == 'JILL' and custom_order_excluded != true %}
                 {% capture item_display_title %}{% render 'custom-order-item-title', product: catalog_product %}{% endcapture %}
                 {% assign item_display_title = item_display_title | strip %}
                 {% liquid
@@ -332,7 +333,7 @@
                     </form>
                   </div>
                 </article>
-              {% endunless %}
+              {% endif %}
             {% endfor %}
           </div>
           <div class="jill-custom-order__stage-actions">

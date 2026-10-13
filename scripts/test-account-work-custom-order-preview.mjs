@@ -34,7 +34,11 @@ const formStyles=read('assets/jill-forms.css');
 assert.match(formStyles,/\.jill-custom-order__customer\s*\{\s*align-items:\s*start;/,'Contact rows must top-align without phone help stretching email');
 assert.ok(formStyles.includes('.jill-custom-order__customer > .jill-field'),'Email and preferred contact must start aligned');
 assert.ok(section.includes('id="JillWorkCustomOrderPreview"'),'QA preview needs a stable anchor');
-assert.ok(section.includes("assign all_products = collections['jill']"),'WORK must be isolated to JILL catalog');
+assert.ok(section.includes("assign all_products = collections['all']"),'WORK must source active Online Store products');
+assert.equal(section.split("catalog_product.vendor == 'JILL' and custom_order_excluded != true").length-1,2,
+  'Both Custom Order product loops must remain JILL-owned');
+assert.ok(section.includes('data-jill-product-filter-empty'),'Step 3 must explain empty selected collections');
+assert.ok(script.includes('matchingProducts === 0'),'Step 3 must distinguish no matching products');
 assert.ok(section.includes('jill_work_allowed_collections'),'Only canonical WORK collections are allowed');
 
 for (const step of ['customer','order','products','configuration','planning','final']){
