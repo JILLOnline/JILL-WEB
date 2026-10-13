@@ -28,7 +28,7 @@
             {% if settings.brand_logo != blank %}
               {{ settings.brand_logo | image_url: width: settings.brand_logo_width | image_tag: alt: 'JILL', width: settings.brand_logo_width, loading: 'eager' }}
             {% else %}
-              <span class="jill-site-header__brand-mark" aria-hidden="true"><strong>JILL</strong><small>ONLINE STORE</small></span>
+              <img src="{{ 'jill-brand-logo.png' | asset_url }}" class="jill-site-header__brand-image" alt="JILL Online Store" width="160" height="160" loading="eager">
             {% endif %}
           </a>
         </div>
