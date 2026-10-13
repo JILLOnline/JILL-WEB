@@ -43,6 +43,12 @@ jobs:
       - name: Verify shared Rewards v13 state and transaction
         run: npm run check:rewards && npm run test:rewards && npm run test:rewards-redemption
 
+      - name: Verify private My JILL Custom Orders and customer A/B isolation
+        run: |
+          npm run test:custom-order-ownership
+          npm run test:custom-order-account-read
+          npm run test:customer-custom-orders
+
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
 
