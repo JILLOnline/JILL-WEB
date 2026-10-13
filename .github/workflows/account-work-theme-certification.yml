@@ -52,6 +52,8 @@ jobs:
         run: |
           node scripts/test-custom-order-account-session.mjs
           node scripts/test-custom-order-work-proxy-config.mjs
+      - name: Certify safe WORK gateway 409 receipt diagnostics
+        run: node scripts/test-account-custom-order-receipt-diagnostics.mjs
       - name: Certify Custom Order WORK gateway and customer ownership
         run: |
           node scripts/test-custom-order-gateway.mjs
