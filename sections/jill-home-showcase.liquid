@@ -3,7 +3,7 @@
 <section class="jill-home" aria-labelledby="JillHomeHeading-{{ section.id }}">
   {% liquid
     assign hero_photo = section.settings.hero_image
-    assign order_href = section.settings.custom_order_link | default: '/pages/quote?view=custom-order'
+    assign order_href = section.settings.custom_order_link | default: '/pages/custom-order'
   %}
 
   <div class="jill-home__hero">
@@ -41,29 +41,28 @@
           assign category = block.settings.collection
           assign card_image = block.settings.image
           assign category_asset = ''
-          if category != blank
-            case category.handle
-              when 'pinatas'
-                assign category_asset = 'jill-home-pinatas.jpg'
-              when 'catalog'
-                assign category_asset = 'jill-home-party-favors.jpg'
-              when 'kid-activities'
-                assign category_asset = 'jill-home-kids.jpg'
-              when 'party-supplies'
-                assign category_asset = 'jill-home-party-supplies.jpg'
-              when 'apparel-gifts-dtf-sublimation'
-                assign category_asset = 'jill-home-apparel.jpg'
-            endcase
-          endif
+          case block.settings.media_key
+            when 'pinatas'
+              assign category_asset = 'jill-home-pinatas.jpg'
+            when 'favors'
+              assign category_asset = 'jill-home-party-favors.jpg'
+            when 'activities'
+              assign category_asset = 'jill-home-kids.jpg'
+            when 'supplies'
+              assign category_asset = 'jill-home-party-supplies.jpg'
+            when 'apparel'
+              assign category_asset = 'jill-home-apparel.jpg'
+          endcase
           assign card_url = block.settings.link
-          if card_url == blank and category != blank
+          if card_url == blank and category != blank and category.products_count > 0
             assign card_url = category.url
           endif
-          if card_url == blank
-            assign card_url = routes.all_products_collection_url
-          endif
         %}
-        <a href="{{ card_url }}" class="jill-home__category jill-home__category--{{ forloop.index }}" {{ block.shopify_attributes }}>
+        {% if card_url != blank %}
+          <a href="{{ card_url }}" class="jill-home__category jill-home__category--{{ forloop.index }}" {{ block.shopify_attributes }}>
+        {% else %}
+          <div class="jill-home__category jill-home__category--{{ forloop.index }} jill-home__category--preview" {{ block.shopify_attributes }}>
+        {% endif %}
           <div class="jill-home__category-image">
             {% if card_image != blank %}
               {{ card_image | image_url: width: 900 | image_tag: loading: 'lazy', widths: '240, 360, 540, 720, 900', sizes: '(min-width: 990px) 24vw, (min-width: 600px) 48vw, 92vw', alt: block.settings.title }}
@@ -75,9 +74,9 @@
           </div>
           <div class="jill-home__category-copy">
             <span class="jill-home__category-sub">{{ block.settings.subtitle | escape }}</span>
-            <span class="jill-home__category-title">{{ block.settings.title | escape }} <span aria-hidden="true">↗</span></span>
+            <span class="jill-home__category-title">{{ block.settings.title | escape }}{% if card_url != blank %} <span aria-hidden="true">↗</span>{% endif %}</span>
           </div>
-        </a>
+        {% if card_url != blank %}</a>{% else %}</div>{% endif %}
       {% endfor %}
     </div>
   </div>
@@ -113,6 +112,11 @@
       "settings": [
         {"type":"collection","id":"collection","label":"Collection"},
         {"type":"image_picker","id":"image","label":"Card image override"},
+        {"type":"select","id":"media_key","label":"JILL category photograph","options":[
+          {"value":"pinatas","label":"Piñatas"},{"value":"favors","label":"Party Favors"},
+          {"value":"activities","label":"Kids Activities"},{"value":"supplies","label":"Party Supplies"},
+          {"value":"apparel","label":"Apparel & Gifts"}
+        ],"default":"pinatas"},
         {"type":"url","id":"link","label":"Link override"},
         {"type":"text","id":"title","label":"Card title","default":"Piñatas"},
         {"type":"text","id":"subtitle","label":"Small description","default":"HANDCRAFTED WITH LOVE"},
@@ -123,11 +127,11 @@
   "max_blocks": 5,
   "presets": [
     {"name":"JILL home showcase","blocks":[
-      {"type":"category","settings":{"title":"Piñatas","monogram":"P"}},
-      {"type":"category","settings":{"title":"Party Favors","monogram":"F"}},
-      {"type":"category","settings":{"title":"Kids Activities","monogram":"K"}},
-      {"type":"category","settings":{"title":"Party Supplies","monogram":"S"}},
-      {"type":"category","settings":{"title":"Apparel & Gifts","monogram":"G"}}
+      {"type":"category","settings":{"title":"Piñatas","monogram":"P","media_key":"pinatas"}},
+      {"type":"category","settings":{"title":"Party Favors","monogram":"F","media_key":"favors"}},
+      {"type":"category","settings":{"title":"Kids Activities","monogram":"K","media_key":"activities"}},
+      {"type":"category","settings":{"title":"Party Supplies","monogram":"S","media_key":"supplies"}},
+      {"type":"category","settings":{"title":"Apparel & Gifts","monogram":"G","media_key":"apparel"}}
     ]}
   ]
 }
