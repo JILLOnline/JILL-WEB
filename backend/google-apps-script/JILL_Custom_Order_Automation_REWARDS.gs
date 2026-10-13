@@ -503,7 +503,32 @@ function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
   return received;
 }
 
-function jillCustomOrderCustomerProjection_(submissionId,events) {
+// Minimal customer-facing order details. Called ONLY AFTER verifying the
+// original payload hash and immutable, Shopify-signed owner ledger.
+function jillCustomOrderAccountSummary_(rawPayload) {
+  const request=JSON.parse(String(rawPayload||''));
+  if(!request||typeof request!=='object'||Array.isArray(request))
+    throw new Error('Invalid private Custom Order payload.');
+  const supplied=Array.isArray(request.items)?request.items:[];
+  if(supplied.length>20)throw new Error('Oversized customer order summary.');
+  const items=supplied.map(function(item) {
+    const title=typeof item.title==='string'?item.title.trim():'';
+    const quantity=Number(item.quantity);
+    if(!title||title.length>120||!Number.isSafeInteger(quantity)||
+       quantity<1||quantity>999)
+      throw new Error('Invalid private Custom Order item.');
+    return {title:title,quantity:quantity};
+  });
+  const planning=request.planning||{};
+  const date=typeof planning.date_needed==='string'?planning.date_needed:'';
+  if(date && !/^\\d{4}-\\d{2}-\\d{2}$/.test(date))
+    throw new Error('Invalid private Custom Order date.');
+  const raw=typeof planning.fulfillment==='string'?
+    planning.fulfillment.toLowerCase():'';
+  const fulfillment=raw==='pickup'||raw==='shipping'?raw:'';
+  return {items:items,date_needed:date,fulfillment:fulfillment};
+}
+function jillCustomOrderCustomerProjection_(submissionId,events,rawPayload) {
   // Internal-only projection; NEVER expose through public doGet/doPost.
   // A future authenticated endpoint must first verify the session-token
   // customer ID and explicit request ownership before calling this.
@@ -512,6 +537,7 @@ function jillCustomOrderCustomerProjection_(submissionId,events) {
   const latest=history[history.length-1];
   return {
     submission_id:submissionId,
+    summary:jillCustomOrderAccountSummary_(rawPayload),
     revision:Number(latest.revision),
     status:latest.customer_status,
     updated_at:latest.occurred_at,
@@ -941,7 +967,7 @@ function jillCustomOrderGatewayCustomerList_(e) {
         throw new Error('Owner refers to conflicting payload.');
       const history=jillCustomOrderEventsFor_(events,row.id);
       if(!history.length)throw new Error('Missing Custom Order status history.');
-      return jillCustomOrderCustomerProjection_(row.id,history);
+      return jillCustomOrderCustomerProjection_(row.id,history,stored);
     });
     return json_({version:1,operation:'custom_order.account.list.result',
       ok:true,orders:result});
