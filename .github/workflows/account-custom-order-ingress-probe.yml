@@ -1,0 +1,24 @@
+name: WORK Custom Order ingress probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ACCOUNT]
+    paths:
+      - scripts/probe-work-custom-order-proxy.mjs
+      - .github/workflows/account-custom-order-ingress-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe-anonymous-invalid-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Diagnose WORK public app proxy using invalid non-order probe
+        run: node scripts/probe-work-custom-order-proxy.mjs
