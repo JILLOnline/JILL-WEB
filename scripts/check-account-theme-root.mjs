@@ -46,6 +46,17 @@ assert.equal(Object.keys(home.sections?.home?.blocks||{}).length,5);
 assert.deepEqual(home.sections.home.block_order,['card_1','card_2','card_3','card_4','card_5']);
 assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-showcase.css'"));
 assert.ok(fs.existsSync(path.join(root,'assets/jill-home-showcase.css')));
+for(const file of ['assets/jill-brand-logo.png','assets/jill-brand-favicon.png',
+ 'assets/jill-home-hero.jpg','assets/jill-home-pinatas.jpg','assets/jill-home-party-favors.jpg',
+ 'assets/jill-home-kids.jpg','assets/jill-home-party-supplies.jpg','assets/jill-home-apparel.jpg']){
+ assert.ok(fs.existsSync(path.join(root,file)),'Brand asset missing: '+file);
+}
+assert.ok(read('sections/header.liquid').includes("'jill-brand-logo.png' | asset_url"),'Original JILL logo not linked');
+assert.ok(read('layout/theme.liquid').includes("'jill-brand-favicon.png' | asset_url"),'JILL favicon not linked');
+assert.ok(read('sections/jill-home-showcase.liquid').includes("'jill-home-hero.jpg' | asset_url"),'LIVE hero not linked');
+assert.equal(home.sections.story?.type,'rich-text');
+assert.equal(JSON.parse(read('templates/page.our-story.json')).sections.main.type,'main-page');
+assert.ok(read('sections/main-page.liquid').includes('section.settings.fallback_body'));
 assert.ok(read('sections/header.liquid').includes("| default: '/pages/custom-order'"),'Header must point to WORK Custom Order');
 assert.ok(read('sections/main-contact.liquid').includes("| default: '/pages/custom-order'"),'Contact must point to WORK Custom Order');
 
@@ -57,6 +68,9 @@ const overlay=new Set([
  'templates/index.json',
  'sections/header.liquid',
  'sections/main-contact.liquid',
+ 'assets/jill-storefront.css',
+ 'layout/theme.liquid',
+ 'sections/main-page.liquid',
 ]);
 const storeEditable=p=>p==='config/settings_data.json'||
   p==='sections/header-group.json'||p==='sections/footer-group.json'||
