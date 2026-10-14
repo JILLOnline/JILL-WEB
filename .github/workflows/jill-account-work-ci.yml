@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - jill/theme-core
+      - jill/rewards-work
   workflow_dispatch:
 
 permissions:

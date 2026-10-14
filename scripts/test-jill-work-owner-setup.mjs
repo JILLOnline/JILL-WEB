@@ -131,6 +131,20 @@ await assert.rejects(()=>authorizeWorkOwnerSetup({
   request:request(),authenticate:null,env:env(),
 }),/verified_shopify_admin_required/);
 
+const setupUI=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.setup-owner.tsx','utf8');
+const homeUI=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.index.tsx','utf8');
+// A full-page link or form navigation in embedded Shopify Admin can lose
+// the SDK/App Bridge context and show an unhelpful successful HTTP page.
+assert.match(homeUI,/import \{Link,/);
+assert.match(homeUI,/<Link to="\/app\/setup-owner">/);
+assert.doesNotMatch(homeUI,/<a href="\/app\/setup-owner">/);
+assert.match(setupUI,/useFetcher<Result>\(\)/);
+assert.match(setupUI,/<fetcher\.Form method="post">/);
+assert.match(setupUI,/submitted\?\.state==="owner_bound"/);
+assert.doesNotMatch(setupUI,/<Form method="post">/);
+
 const source=readFileSync('services/jill-order-desk/owner-bootstrap-route.mjs','utf8');
 assert.match(source,/authenticate\.admin\(request\)/);
 assert.match(source,/origin/);
