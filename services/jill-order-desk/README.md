@@ -3,10 +3,12 @@
 Status: source contract only; no hostname, Shopify App Home, staff role or database is deployed.
 
 This folder deliberately has **no public admin HTTP endpoint**. The current
-WORK app is extension-only, with "Update URLs: Not yet configured" in
-\`shopify app info --config work\` (verified October 14, 2026). It has three
-Customer Account UI extensions and must retain their UIDs, app ID and existing
-Rewards/data boundaries.
+WORK repository currently ships three Customer Account UI extensions and
+no verified hosted App Home implementation (October 14, 2026). Shopify CLI
+reports "Update URLs: Not yet configured"; this refers to development URL
+updates and **does not by itself prove that application_url is absent**.
+Inspect the local gitignored \`shopify.app.work.toml\` before altering URLs.
+Preserve extension UIDs, app ID and existing Rewards/data boundaries.
 
 ## Source pieces (built)
 
