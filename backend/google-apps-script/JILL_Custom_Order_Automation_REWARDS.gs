@@ -107,6 +107,11 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  // Distinct WORK HQ merchant-wide read. Rejected in LIVE and in WORK Rewards;
+  // HMAC uses a separate dedicated read-only secret, not the guest gateway key.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_list) === '1') {
+    return jillWorkHqMerchantList_(e);
+  }
   // Private WORK QA account-list operation. Never a public guest lookup.
   if (clean_(e && e.parameter && e.parameter.jill_order_customer_list) === '1') {
     return jillCustomOrderGatewayCustomerList_(e);
@@ -980,6 +985,141 @@ function jillCustomOrderGatewayCustomerList_(e) {
   } finally {lock.releaseLock();}
 }
 /* END WORK CUSTOM ORDER OWNERSHIP V1 */
+
+/* WORK HQ MERCHANT READ V1 — canonical QA only; NO HTTP WRITES
+   This is a separate HMAC from customer account reads and checkout submissions.
+   Only the isolated QA /exec deployment can process it. It requires a distinct
+   JILL_HQ_MERCHANT_READ_SECRET Script Property (32+ chars).
+   No user identity from the form, no cross-shop source, no PII in responses.
+*/
+function jillWorkHqMerchantReadVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  if(String(p.jill_order_merchant_list||'')!=='1' ||
+     String(p.shop||'')!=='jill-work.myshopify.com')return false;
+  const ts=String(p.jill_hq_read_ts||'');
+  const nonce=String(p.jill_hq_read_nonce||'');
+  const sig=String(p.jill_hq_read_sig||'').toLowerCase();
+  if(!/^[0-9]{13}$/.test(ts) || Math.abs(Date.now()-Number(ts))>120000 ||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce) ||
+     !/^[a-f0-9]{64}$/.test(sig))return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(secret.length<32)return false;
+  const message=['merchant_list_v1','jill-work.myshopify.com',ts,nonce].join('\n');
+  const expected=Utilities.computeHmacSha256Signature(message,secret)
+    .map(function(value){
+      return ('0'+((value+256)%256).toString(16)).slice(-2);
+    }).join('');
+  return constantTimeEqual_(sig,expected);
+}
+
+function jillWorkHqReadOnlySheet_(ss,name,expected) {
+  const sheet=ss.getSheetByName(name);
+  if(!sheet)throw new Error('Missing canonical read sheet.');
+  const headers=sheet.getRange(1,1,1,expected.length).getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(expected))
+    throw new Error('Canonical read sheet headers drifted.');
+  return sheet;
+}
+
+function jillWorkHqCanonicalList_() {
+  // NEVER call setupJill(), getSheet_() or jillCustomOrderEventsSheet_()
+  // here: those helpers may create sheets. This handler is strictly read-only.
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('Merchant list is WORK QA only.');
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+  const events=jillWorkHqReadOnlySheet_(
+    ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+  const count=intake.getLastRow()-1;
+  const eventCount=events.getLastRow()-1;
+  if(count<0 || count>50 || eventCount<0 || eventCount>500)
+    throw new Error('Canonical source exceeds bounded list.');
+  const entries=count?intake.getRange(2,1,count,HEADERS.length).getValues():[];
+  const historyRows=eventCount?events.getRange(
+    2,1,eventCount,JILL_CUSTOM_WORKFLOW.HEADERS.length).getValues():[];
+  const histories={};
+  historyRows.forEach(function(row) {
+    const id=String(row[1]||'');
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id))
+      throw new Error('Malformed event source ID.');
+    if(!histories[id])histories[id]=[];
+    const list=histories[id];
+    const revision=Number(row[2]);
+    if(!Number.isSafeInteger(revision)||revision!==list.length+1 ||
+       JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(row[3]))===-1 ||
+       JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(String(row[4]))===-1)
+      throw new Error('Invalid merchant event history.');
+    const updated=new Date(row[9]);
+    if(!Number.isFinite(updated.getTime()))
+      throw new Error('Invalid event time.');
+    list.push({revision:revision,customer_status:String(row[3]),
+      internal_status:String(row[4]),updated_at:updated.toISOString()});
+  });
+  const ids={};
+  const records=entries.map(function(row) {
+    const id=String(row[HEADERS.indexOf('submission_id')]||'').trim();
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+       Object.prototype.hasOwnProperty.call(ids,id))
+      throw new Error('Invalid or repeated intake ID.');
+    ids[id]=true;
+    const raw=String(row[HEADERS.indexOf('raw_payload')]||'');
+    const payload=JSON.parse(raw);
+    if(!payload || payload.version!==1 ||
+       payload.operation!=='custom_order.submit' ||
+       payload.submission_id!==id ||
+       !Array.isArray(payload.items) ||
+       payload.items.length<1 || payload.items.length>500)
+      throw new Error('Invalid immutable Custom Order payload.');
+    const submitted=new Date(row[HEADERS.indexOf('submitted_at')]);
+    const supplied=new Date(payload.submitted_at);
+    if(!Number.isFinite(submitted.getTime()) ||
+       submitted.getTime()!==supplied.getTime())
+      throw new Error('Intake timestamp mismatch.');
+    const history=histories[id]||[];
+    if(!history.length)throw new Error('Missing canonical event log.');
+    const latest=history[history.length-1];
+    const planning=payload.planning||{};
+    const date=planning.date_needed===undefined?'':planning.date_needed;
+    const fulfillment=planning.fulfillment===undefined?'':planning.fulfillment;
+    if(typeof date!=='string' ||
+       (date!=='' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) ||
+       !['','pickup','shipping'].includes(fulfillment))
+      throw new Error('Invalid canonical planning.');
+    return {
+      submission_id:id,revision:latest.revision,
+      customer_status:latest.customer_status,
+      internal_status:latest.internal_status,
+      submitted_at:submitted.toISOString(),updated_at:latest.updated_at,
+      date_needed:date,fulfillment:fulfillment,item_count:payload.items.length
+    };
+  });
+  return {version:1,operation:'custom_order.merchant.list.result',
+    ok:true,shop:'jill-work.myshopify.com',complete:true,records:records};
+}
+
+function jillWorkHqMerchantList_(e) {
+  const failure=function(code){return json_({
+    version:1,operation:'custom_order.merchant.list.result',
+    ok:false,error:{code:code,retryable:false}
+  });};
+  if(!jillWorkHqMerchantReadVerified_(e))
+    return failure('unauthorized');
+  const lock=LockService.getScriptLock();
+  try{
+    lock.waitLock(10000);
+    return json_(jillWorkHqCanonicalList_());
+  } catch(err) {
+    return failure('private_read_unavailable');
+  } finally {
+    try{lock.releaseLock();}catch(_ignored){}
+  }
+}
+/* END WORK HQ MERCHANT READ V1 */
+
+
 
 // Run this function in the isolated QA Apps Script editor BEFORE any
 // web-app deployment. It is read-only and never emits secret values.
