@@ -8,7 +8,7 @@
   ],
   "workers_dev": true,
   "assets": {
-    "directory": "./build/client"
+    "directory": "./dist/client"
   },
   "d1_databases": [
     {
