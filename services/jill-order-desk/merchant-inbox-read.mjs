@@ -42,7 +42,7 @@ export function projectWorkMerchantInbox(source) {
   if(!source || typeof source!=='object' || Array.isArray(source) ||
     source.version!==1 ||
     source.operation!=='custom_order.merchant.list.result' ||
-    source.ok!==true || source.shop!==SHOP ||
+    source.ok!==true || source.shop!==SHOP || source.complete!==true ||
     !Array.isArray(source.records) || source.records.length>50)
     throw Error('invalid_canonical_merchant_list');
   const seen=new Set();
