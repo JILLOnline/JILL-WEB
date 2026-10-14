@@ -103,3 +103,10 @@ update; a canary health check by itself cannot establish Shopify authentication.
 
 CI test: `npm.cmd run test:jill-app-home-canary`. Neither source nor CI
 provisions Cloudflare secrets, calls Shopify, or deploys to LIVE.
+
+## Canary deployment receipt and read-only certification — 2026-10-14
+
+- Merchant's Wrangler output confirmed `jill-order-desk-canary-work` deployed at `https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev`, version ID `b3a9ef0c-b6a5-4501-963d-36962630a00a`. The deployed binding is only the existing WORK D1; `JILL_WORK_HOST_STAGE=canary` and `JILL_WORK_OWNER_BOOTSTRAP_ENABLED=false`.
+- Merchant's remote migration output separately confirmed `0002_shopify_sessions.sql` applied successfully, with session count 0 and Owner count 0. Neither migration needs repeating.
+- **Runtime still needs confirmation:** `npm.cmd run custom-orders:work:canary:remote:audit` sends exactly five anonymous GET requests. It expects 200 on `/healthz` (all four D1 tables) and 503 on `/`, `/app`, `/auth/login` and `/app/setup-owner` (no secrets/OAuth/Owner actions activated). This script is read-only and never sends a credential. Its deterministic offline contract test is `npm.cmd run test:work-canary-runtime-audit`.
+- **Do not yet configure Shopify API secret or encryption key**, enable Owner setup, or switch the WORK Shopify application URL. The canary is infrastructure-only until runtime denial/health results are reviewed.

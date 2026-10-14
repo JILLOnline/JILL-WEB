@@ -299,3 +299,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - SDK app URL, OAuth Origin and Worker Host validation now derive exclusively from a stage-pinned, allowlisted Cloudflare environment binding, not from untrusted request headers; canary and WORK production hostnames cannot be interchanged.
 - Canaries and release Worker configs default `JILL_WORK_OWNER_BOOTSTRAP_ENABLED=false`. Requests remain HTTP 503 without separately provisioned Shopify secret and encrypted session key; public health checks verify all four real D1 tables.
 - Added CI source tests and two real independent App Home builds (normal + canary), neither deploys a Worker nor changes Shopify URLs. Do not treat an unauthenticated health result as evidence of Shopify OAuth readiness.
+
+## 25. Deployed WORK canary receipt; pending live response certification
+
+- Wrangler deployment confirmed isolated canary Worker URL `https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev`, version `b3a9ef0c-b6a5-4501-963d-36962630a00a`, WORK-only D1 binding, `host_stage=canary` and `owner_bootstrap=false`. Unlike earlier source tests, this is an actual Cloudflare deployment receipt.
+- A separate fail-closed existing merchant Worker remains deployed. No Shopify app URL or extension changes were performed as part of this canary deployment.
+- Added read-only remote runtime audit `custom-orders:work:canary:remote:audit` (five GET calls) with no credential headers and a local unit test. Do not treat successful builds or deployment as proof the live D1 health or staff auth works until this audit is run.
+- Next security gates: remote canary health/denials; SDK Session serializer compatibility and durable encryption; canary-only secrets provisioned privately; real Shopify WORK URL/embedded authentication release and Owner test. Owner bootstrap remains disabled.
