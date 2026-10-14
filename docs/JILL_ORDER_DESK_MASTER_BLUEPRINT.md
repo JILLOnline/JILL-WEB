@@ -265,3 +265,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - The Worker responds with D1-schema-aware `/healthz` and denies all merchant routes until authenticated Shopify App Home is ready. **A successful deployment is not proof the live health check returned HTTP 200.**
 - New uncredentialed runtime command: `npm.cmd run custom-orders:work:merchant:remote:audit`; its offline unit test is `test:work-merchant-runtime-audit`. Both are strict WORK-hostname only; the remote command uses only safe GET methods.
 - Do not modify `shopify.app.work.toml` to embed an app until the real hosted App Home and online Shopify authentication/session storage are ready. Public Shopify client ID does not prove account-owner identity.
+
+## 20. Shopify Admin SDK integration source prepared (2026-10-14)
+
+- Official Shopify guidance confirms that App Home iframe apps can be hosted in an independently operated web framework, and that `shopifyApp({useOnlineTokens:true})` plus `authenticate.admin(request)` obtains staff-scoped online sessions. Cloudflare React Router Workers are supported by Cloudflare but the official Shopify React Router SDK presently documents a Node adapter; runtime packaging and session storage compatibility must be **proven** before deploying the embedded host.
+- Created WORK-only `services/jill-order-desk/shopify-host/sdk-config.mjs`: pinned app/client/shop/origin, SDK dependency injection, online tokens and durable session storage required, with fail-closed validation. `app-home-route.mjs` wires the official SDK-authenticated session into the existing merchant Owner/role D1 reader. No merchant route is publicly served by these files.
+- Added `scripts/test-jill-shopify-host-wiring.mjs` to CI/postinstall, covering unsafe host/app config, missing SDK/storage, 401 wrong shop, 503 unavailable D1, Owner read-only response, and official auth redirects.
+- P1 runtime remains unfinished: Shopify-hosted App Home, real SDK token exchange, session database, secret binding, WORK app embedded config, real Owner bootstrap and staff A/B tests. Any of those are separately gated; do not infer completion from source CI.
