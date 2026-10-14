@@ -1,6 +1,7 @@
 import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {loadWorkMerchantInbox} from "../../../merchant-inbox-read.mjs";
+import {readWorkGoogleQaMerchantList} from "../../../work-google-merchant-read.mjs";
 
 type InboxRecord={
   submission_id:string;
