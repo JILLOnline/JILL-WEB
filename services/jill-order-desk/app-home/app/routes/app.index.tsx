@@ -13,7 +13,12 @@ export default function OrderDesk() {
     <s-section heading="Your merchant workspace">
       <s-paragraph>{data.description}</s-paragraph>
       {data.state==="staff_verified"
-        ? <s-banner tone="info">Identity verified. The merchant inbox will be connected after Owner registration and read-only source certification.</s-banner>
+        ? <>
+            <s-banner tone="info">Identity verified. The WORK merchant inbox is available for source-connection testing; live requests are not connected yet.</s-banner>
+            {data.role==="owner"
+              ? <s-paragraph><Link to="/app/requests">Open Custom Orders inbox (read-only)</Link></s-paragraph>
+              : null}
+          </>
         : <s-banner tone="warning">Merchant access is locked until the WORK Shopify Owner and JILL permissions are verified.</s-banner>}
       {data.state==="merchant_setup_required"
         ? <s-paragraph>
