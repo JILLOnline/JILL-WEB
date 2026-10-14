@@ -26,7 +26,12 @@ const login=read('app/routes/auth.login.tsx');
 const sdk=read('app/shopify.server.ts');
 assert.match(app,/authenticate\.admin\(request\)/);
 assert.match(page,/loadWorkShopifyAdminRoute/);
-assert.match(login,/submittedShop!==WORK_SHOP/);
+assert.match(login,/submittedShops\.some\(shop=>shop!==WORK_SHOP\)/);
+assert.match(login,/queryShops\.some\(shop=>shop!==WORK_SHOP\)/);
+assert.match(login,/LoginErrorType\.MissingShop/);
+assert.match(login,/LoginErrorType\.InvalidShop/);
+assert.match(login,/result instanceof Response/);
+assert.match(login,/role="alert"/);
 assert.match(sdk,/createConfiguredWorkShopifyHost/);
 assert.match(sdk,/AppDistribution\.SingleMerchant/);
 for(const path of [

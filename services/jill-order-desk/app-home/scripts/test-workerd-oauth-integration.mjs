@@ -55,6 +55,22 @@ try {
       path+' returned unexpected HTTP '+status);
     console.log('PASS local Cloudflare runtime '+path+' HTTP '+status);
   }
+  // An untrusted shop parameter must never initiate another store's login.
+  for(const [requestUrl,init] of [
+    [url+'/auth/login?shop=jqtdgr-1y.myshopify.com',{
+      method:'GET',redirect:'manual',
+    }],
+    [url+'/auth/login',{
+      method:'POST',redirect:'manual',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'shop=jqtdgr-1y.myshopify.com',
+    }],
+  ]) {
+    const blocked=await worker.fetch(requestUrl,init);
+    assert.equal(blocked.status,403,'Foreign Shopify shop denied before SDK login');
+    await blocked.arrayBuffer();
+  }
+  console.log('PASS canary login WORK-only shop isolation and SDK validation route.');
   console.log('PASS real compiled Cloudflare Shopify canary: anonymous auth routes do not crash; simulated D1 and secrets only.');
 } catch(error) {
   // Only synthetic fixture values exist in this local worker. Avoid logging
