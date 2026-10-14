@@ -285,3 +285,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Its Worker configuration uses the same planned WORK merchant hostname and D1 binding but is **not deployed**. The existing fail-closed Worker remains active; only a reviewed replacement can change it.
 - A dedicated GitHub source build job performs real npm dependency install and React Router bundling (not an SDK mock). Successful builds are not proof of real OAuth or owner registration. The encrypted session migration `0002` and Shopify secret remain unprovisioned.
 - User-approved runtime sequence: certified build → SDK/Cloudflare compatibility → versioned D1 migration and separate key secret → authenticated canary → WORK-only Shopify application URL/embedding change → real owner binding → A/B operator QA. See the candidate README.
+
+## 23. Second WORK D1 migration and protected Owner onboarding
+
+- Merchant's Wrangler output verified `0002_shopify_sessions.sql` executed successfully on remote `jill-order-desk-work` with 3 SQL commands. Real remote session count 0, Owner count 0. Both schema migrations are now applied; do not reapply.
+- Added `services/jill-order-desk/owner-bootstrap-route.mjs` and embedded `/app/setup-owner` route. The official authenticated online Shopify WORK store owner must explicitly confirm; server-only commissioning flag defaults disabled; same-origin POST and exact confirmation required; immutable owner binding/audit remains the single canonical D1 operation. Unauthorized staff cannot become Owner through typing an ID, email, or shop name.
+- Added regression tests for fake shop, non-Owner, disabled flag, missing confirmation, CSRF-origin check, idempotent retries, owner-collision and preserved Shopify SDK auth redirects. These are source tests, **not** evidence that real Shopify login is configured.
+- DO NOT deploy or enable owner registration until encrypted real Shopify session storage, Workers Node adapter and WORK App Home OAuth flow are runtime certified, the Worker secret is provisioned privately, and WORK-only application URLs are approved. No Shopify LIVE changes authorized.

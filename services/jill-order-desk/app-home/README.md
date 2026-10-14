@@ -71,3 +71,11 @@ sessions in a controlled canary prior to URL updates.
 There are intentionally no invoice, refund, fulfillment, or staff-grant
 mutation routes in this host. The existing Google CustomOrderEvents writer
 and Shopify commerce authority remain unchanged.
+
+## Owner onboarding command — prepared, not activated
+
+- `app/routes/app.setup-owner.tsx` and `../owner-bootstrap-route.mjs` implement an authenticated first-Owner setup route inside the embedded WORK application. Both GET and POST call Shopify's official `authenticate.admin(request)` before any staff or D1 decision. The body cannot set a shop, email or Owner ID.
+- It requires `onlineAccessInfo.associated_user.account_owner === true`, the exact WORK shop, a server-only `JILL_WORK_OWNER_BOOTSTRAP_ENABLED=true` flag, same-origin POST, and one explicit confirmation field. Attempts by nonowners, LIVE sessions, wrong origins, no-flag deployments or already-bound different Owners fail closed.
+- Owner registration is idempotent for the existing Owner, never changes financial or production data, and creates one Owner authority binding plus one audit receipt using the existing transactional D1 adapter.
+- The configuration flag must remain OFF until WORK Shopify login, SDK online session signatures, D1 persistence, OAuth redirect URLs and a rollback are fully certified. This source is not deployed, and its button cannot be used yet.
+- Regression command: `npm.cmd run test:jill-work-owner-setup`. Do NOT manually insert Owner staff IDs or enable this flag through the existing public customer gateway.

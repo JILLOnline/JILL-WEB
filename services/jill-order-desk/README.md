@@ -1,6 +1,6 @@
 # JILL Order Desk — WORK merchant host integration
 
-Status: dedicated WORK database migrated and isolated Worker deployed with D1 binding; real remote health response and Shopify Admin authentication still require certification; no staff/Owner assignments.
+Status: isolated WORK Worker and D1 runtime health certified; remote migrations 0001 and 0002 confirmed; Admin app remains unreleased and zero staff/Owner assignments.
 
 This folder deliberately has **no public admin HTTP endpoint**. The current
 WORK repository currently ships three Customer Account UI extensions and
@@ -158,3 +158,9 @@ The actual endpoint must be taken from Wrangler's deployment output. Do not inve
 - The real React Router + Cloudflare Vite + Shopify SDK app is now under `services/jill-order-desk/app-home/`. It has authenticated `/app`, `/auth/login`, and OAuth-catchall routing, an embedded Shopify App Bridge shell, plus a deny-by-default Owner/staff landing screen.
 - This is a **candidate WORK replacement**, not the deployed Worker. Do not modify `shopify.app.work.toml`, public Cloudflare bindings, app scopes, or LIVE while source builds and a real online staff session remain unverified. It uses its own package dependencies and GitHub CI build job.
 - See `app-home/README.md` for the complete compilation, secure session secret and Worker cutover gates. Never deploy it on top of the healthy fail-closed Worker before a rollout manifest and rollback are recorded.
+
+## WORK Owner commissioning route — no public deployment
+
+- The real Admin scaffold includes a Shopify SDK-authenticated `/app/setup-owner` first-login flow requiring the verified WORK account owner, same-origin explicit confirmation, and a separate server-only flag (OFF until controlled release).
+- Staff IDs are extracted only from Shopify's verified online session; no manual bootstrap, email matching, or account claim.
+- New `scripts/test-jill-work-owner-setup.mjs` regression tests are included in CI. The owner-binding D1 source is unchanged and no remote owner row is written by these GitHub changes.

@@ -15,6 +15,11 @@ export default function OrderDesk() {
       {data.state==="staff_verified"
         ? <s-banner tone="info">Identity verified. The merchant inbox will be connected after Owner registration and read-only source certification.</s-banner>
         : <s-banner tone="warning">Merchant access is locked until the WORK Shopify Owner and JILL permissions are verified.</s-banner>}
+      {data.state==="merchant_setup_required"
+        ? <s-paragraph>
+            <a href="/app/setup-owner">WORK Owner commissioning</a>
+          </s-paragraph>
+        : null}
       <s-text>Customer Custom Orders, Rewards balances, invoicing and fulfillment remain unchanged.</s-text>
     </s-section>
   </s-page>;
