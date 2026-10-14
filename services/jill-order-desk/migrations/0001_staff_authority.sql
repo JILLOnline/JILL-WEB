@@ -1,7 +1,7 @@
 -- WORK-only planning migration. Do NOT run against LIVE.
 -- Staff IDs are Shopify numeric IDs stored as TEXT for stable precision.
 -- Neither Shopify payments nor Google CustomOrderEvents are duplicated here.
-PRAGMA foreign_keys=ON;
+-- D1 enforces foreign keys automatically; no PRAGMA foreign_keys switch.
 
 CREATE TABLE IF NOT EXISTS jill_merchant_authority (
   shop TEXT PRIMARY KEY NOT NULL,

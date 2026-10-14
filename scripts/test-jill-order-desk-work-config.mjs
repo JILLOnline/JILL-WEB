@@ -17,6 +17,8 @@ assert.doesNotMatch(cfg,/jqtdgr-1y|JILL_CUSTOM_ORDER_WORK_SHEET_ID|SHOPIFY_ACCES
 assert.doesNotMatch(publicGateway,/JILL_ORDER_DESK_WORK_DB|jill-order-desk-work/,
   'The public Custom Order gateway must never bind merchant D1');
 assert.match(form,/CREATE TABLE IF NOT EXISTS jill_merchant_authority/);
+assert.doesNotMatch(form,/^PRAGMA\s+foreign_keys\s*=/im,
+  'D1 manages foreign key enforcement inside its transaction');
 assert.match(form,/CREATE TABLE IF NOT EXISTS jill_merchant_grants/);
 assert.match(form,/CREATE TABLE IF NOT EXISTS jill_merchant_audit/);
 for(const [method,path,status] of [
