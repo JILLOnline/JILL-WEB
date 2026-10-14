@@ -9,7 +9,8 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "typecheck": "react-router typegen && tsc --noEmit",
-    "check": "npm run typecheck && npm run build"
+    "check": "npm run typecheck && npm run build",
+    "test:shopify-session-real": "node scripts/test-real-shopify-session.mjs"
   },
   "dependencies": {
     "@shopify/shopify-app-react-router": "^3.0.1",

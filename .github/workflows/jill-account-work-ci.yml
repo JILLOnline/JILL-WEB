@@ -141,6 +141,9 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
+      - name: Validate encrypted D1 with actual Shopify SDK Session
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:shopify-session-real
       - name: Validate Shopify Admin and Cloudflare host types
         working-directory: services/jill-order-desk/app-home
         run: npm run typecheck

@@ -110,3 +110,10 @@ provisions Cloudflare secrets, calls Shopify, or deploys to LIVE.
 - Merchant's remote migration output separately confirmed `0002_shopify_sessions.sql` applied successfully, with session count 0 and Owner count 0. Neither migration needs repeating.
 - **Runtime still needs confirmation:** `npm.cmd run custom-orders:work:canary:remote:audit` sends exactly five anonymous GET requests. It expects 200 on `/healthz` (all four D1 tables) and 503 on `/`, `/app`, `/auth/login` and `/app/setup-owner` (no secrets/OAuth/Owner actions activated). This script is read-only and never sends a credential. Its deterministic offline contract test is `npm.cmd run test:work-canary-runtime-audit`.
 - **Do not yet configure Shopify API secret or encryption key**, enable Owner setup, or switch the WORK Shopify application URL. The canary is infrastructure-only until runtime denial/health results are reviewed.
+
+## Real Shopify SDK Session serialization gate (no customer sessions)
+
+- Run from `services/jill-order-desk/app-home`: `npm.cmd run test:shopify-session-real`.
+- This imports the **installed actual** Shopify `Session` class, generates an entirely synthetic online session, encrypts it with the same production storage adapter into an in-memory fake D1, restores the true Shopify Session instance, then validates the stored staff Owner ID and effective scopes with `requireWorkMerchantIdentity`.
+- Requires no Shopify credentials, authorization, Cloudflare access or personal records; added to the real App Home GitHub build job before typecheck and bundling.
+- If a new Shopify package version changes its Session serialization, **block credential provisioning** until the adapter passes this gate. Passing still does not certify Cloudflare OAuth or authorize Owner registration.
