@@ -22,5 +22,5 @@ assert.throws(()=>prepareCustomOrderWorkProxyConfig(a,'https://different.example
 const other=base+'\n[app_proxy]\nurl = "https://example.org/other"\nprefix = "apps"\nsubpath = "other"\n';
 assert.throws(()=>prepareCustomOrderWorkProxyConfig(other,url),/belongs to another route/);
 assert.throws(()=>prepareCustomOrderWorkProxyConfig(base.replace('f8e1ebdbae84490dc8ea5b133637e6c0',
-  'ebf1a69d82f46619d2f2945faab78afa'),url),/not JILL WORK Rewards/);
+  'ebf1a69d82f46619d2f2945faab78afa'),url),/linked Shopify app Client ID is not the isolated WORK app/);
 console.log('Isolated WORK app proxy config, scope, replays and existing proxy ownership checks passed.');

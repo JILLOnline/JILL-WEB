@@ -1,4 +1,4 @@
-// JILL Order Desk — Shopify App Home read-only authorization boundary.
+// JILL HQ — WORK: Shopify App Home read-only authorization boundary.
 // Route integration MUST call this from a server-side loader after the
 // official Shopify React Router SDK is configured with useOnlineTokens: true.
 // No direct public endpoint, OAuth implementation, HTTP listener, or mutation
@@ -13,9 +13,9 @@ const HEADERS=Object.freeze({
 function outcome(status,state,access=null) {
   const model={
     state,
-    title:'JILL Order Desk',
+    title:'JILL HQ — WORK',
     description:status===200
-      ? 'Your staff access is verified. Order management will be connected after source and runtime certification.'
+      ? 'Your merchant access is verified. JILL HQ modules become available after their individual source and permission checks.'
       : status===503
         ? 'The merchant access registry is not connected yet.'
         : 'You do not have permission to open this merchant workspace.',
