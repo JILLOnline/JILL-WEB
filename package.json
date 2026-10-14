@@ -91,7 +91,8 @@
     "test:work-canary-oauth-manifest": "node scripts/test-work-canary-oauth-manifest.mjs",
     "prepare:work-canary-oauth": "node scripts/prepare-work-canary-oauth-manifest.mjs",
     "test:work-owner-commissioning": "node scripts/test-work-canary-owner-commissioning.mjs",
-    "prepare:work-owner-commissioning": "node scripts/prepare-work-canary-owner-commissioning.mjs"
+    "prepare:work-owner-commissioning": "node scripts/prepare-work-canary-owner-commissioning.mjs",
+    "test:work-merchant-inbox": "node scripts/test-work-merchant-inbox.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
