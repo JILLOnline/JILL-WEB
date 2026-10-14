@@ -8,7 +8,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "react-router typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run build"
   },
   "dependencies": {
