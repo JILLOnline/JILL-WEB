@@ -53,7 +53,7 @@ const auth=s=>({admin:async value=>{
 }});
 const example={
   version:1,operation:'custom_order.merchant.list.result',
-  ok:true,shop,
+  ok:true,shop,complete:true,
   records:[{
     submission_id:'jill:12345678-aaaa-bbbb-cccc-123456789012',
     revision:1,customer_status:'received',internal_status:'new',
@@ -101,6 +101,7 @@ assert.deepEqual(empty.records,[]);
 
 for(const changed of [
   {...example,shop:'jqtdgr-1y.myshopify.com'},
+  {...example,complete:false},
   {...example,records:[example.records[0],example.records[0]]},
   {...example,records:Array(51).fill(example.records[0])},
   {...example,records:[{...example.records[0],revision:0}]},
