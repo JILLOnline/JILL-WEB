@@ -1,6 +1,6 @@
 # JILL Order Desk — Master Architecture and Delivery Contract v1
 
-Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created; migration, Worker deployment and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
+Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created and migration applied; Worker deployment, Shopify hosted App Home and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
 Environment: JILL WORK Shopify development store, branch jill/rewards-work.
 No LIVE operations or Shopify connector use are authorized by this document.
 
@@ -251,3 +251,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - New `services/jill-order-desk/wrangler.toml` binds this exact isolated database. A permanent fail-closed `worker.mjs` denies merchant routes (HTTP 503) until the authenticated Admin host is implemented; its health indicator shows `admin_ready:false`. This source is not deployed.
 - The normal next step is an explicit remote **versioned D1 migration**, with a migration-list confirmation, tables-only verification, and `owner` count zero. See `services/jill-order-desk/README.md`. No manual staff/owner insertion and no public gateway changes.
 - Both WORK source and runtime registration must stay isolated from Shopify LIVE, Rewards, Google Custom Orders ledger and the storefront Cloudflare Worker.
+
+## 18. D1 remote migration confirmed and health gate tightened (2026-10-14)
+
+- Merchant ran `wrangler d1 migrations apply jill-order-desk-work --remote --config ..\\jill-order-desk\\wrangler.toml`; migration `0001_staff_authority.sql` succeeded on isolated database `3f17c186-c794-4e00-8f20-017191373a19`.
+- Remote introspection returned exactly `jill_merchant_audit`, `jill_merchant_authority`, and `jill_merchant_grants`; Owner count 0. **These are actual runtime observations, unlike previous source-only checks.**
+- Before a separate Worker deployment, tightened `services/jill-order-desk/worker.mjs` health to verify all three actual bound D1 tables. It returns 503 for missing/incomplete/unreachable database; all merchant actions still return 503 until official Shopify Admin authentication is linked. No Owner ID, database UUID, staff grants or privileged data are exposed by health.
+- The next executable gate is the separate WORK Worker deployment and real health verification, followed by the Shopify SDK-hosted embedded App Home. None of these authorizes a LIVE app release or any financial operations.

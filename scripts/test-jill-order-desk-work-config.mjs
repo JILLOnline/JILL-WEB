@@ -21,6 +21,19 @@ assert.doesNotMatch(form,/^PRAGMA\s+foreign_keys\s*=/im,
   'D1 manages foreign key enforcement inside its transaction');
 assert.match(form,/CREATE TABLE IF NOT EXISTS jill_merchant_grants/);
 assert.match(form,/CREATE TABLE IF NOT EXISTS jill_merchant_audit/);
+
+const tables=['jill_merchant_audit','jill_merchant_authority','jill_merchant_grants'];
+function mockEnv(rows=tables,raise=false) {
+  return {JILL_ORDER_DESK_WORK_DB:{prepare(sql) {
+    assert.match(sql,/^SELECT name FROM sqlite_master/);
+    assert.doesNotMatch(sql,/owner_staff_id|SELECT \*|INSERT|UPDATE|DELETE/i);
+    return {async all(){
+      if(raise)throw Error('WORK D1 unavailable');
+      return {results:rows.map(name=>({name}))};
+    }};
+  }}};
+}
+const base='https://jill-order-desk-work.example.invalid';
 for(const [method,path,status] of [
   ['GET','/healthz',200],
   ['GET','/',503],
@@ -28,13 +41,29 @@ for(const [method,path,status] of [
   ['POST','/admin/bootstrap',503],
   ['POST','/api/merchant',503],
   ['OPTIONS','/api/merchant',503],
-]){
- const response=await worker.fetch(new Request('https://jill-order-desk-work.workers.dev'+path,{method}));
- assert.equal(response.status,status,path);
- assert.match(response.headers.get('cache-control'),/no-store/);
- const data=await response.json();
- assert.equal(data.admin_ready,status===200?false:undefined);
- assert.equal(data.ok,status===200);
- assert.doesNotMatch(JSON.stringify(data),/3f17c186|owner_staff_id|staff_grants|session|token/i);
+]) {
+  const response=await worker.fetch(new Request(base+path,{method}),mockEnv());
+  assert.equal(response.status,status,path);
+  assert.match(response.headers.get('cache-control'),/no-store/);
+  const data=await response.json();
+  assert.equal(data.admin_ready,status===200?false:undefined);
+  assert.equal(data.ok,status===200);
+  if(path==='/healthz') {
+    assert.equal(data.environment,'JILL_ORDER_DESK_WORK');
+    assert.equal(data.database_ready,true);
+  }
+  assert.doesNotMatch(JSON.stringify(data),
+    /3f17c186|owner_staff_id|staff_grants|session|token|staffId|associated_user/i);
 }
-console.log('JILL WORK merchant D1 binding pinned; public gateway isolated; all merchant API routes fail closed until Shopify Admin host is certified.');
+for(const env of [
+  null,{},mockEnv([]),mockEnv(tables.slice(1)),mockEnv(tables.slice().reverse()),mockEnv(tables,true),
+]) {
+ const response=await worker.fetch(new Request(base+'/healthz'),env);
+ assert.equal(response.status,503,'Not-ready D1 schema must never return healthy');
+ const body=await response.json();
+ assert.deepEqual(body,{
+   ok:false,environment:'JILL_ORDER_DESK_WORK',
+   database_ready:false,admin_ready:false,
+ });
+}
+console.log('WORK merchant D1 health checks schema live, with no leaked staff info; every merchant route remains blocked.');
