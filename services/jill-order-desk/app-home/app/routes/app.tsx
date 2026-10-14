@@ -9,8 +9,7 @@ export async function loader({request,context}:LoaderFunctionArgs) {
 }
 export default function App(){
   const {apiKey}=useLoaderData<typeof loader>();
-  return <AppProvider embedded apiKey={apiKey}>
-    <s-app-nav><s-link href="/app">Order Desk</s-link></s-app-nav>
+  return <AppProvider apiKey={apiKey}>
     <Outlet/>
   </AppProvider>;
 }
