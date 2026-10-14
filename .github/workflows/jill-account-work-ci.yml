@@ -169,6 +169,9 @@ jobs:
         run: |
           node ../../../scripts/prepare-work-canary-oauth-manifest.mjs
           npx wrangler deploy --dry-run --config dist/server/wrangler.oauth-canary.json --outdir .wrangler-oauth-canary-dry-run
+      - name: Exercise Shopify routes in actual local Cloudflare workerd
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-oauth
 
       - name: Certify deployable Cloudflare WORK canary bundle (no deployment)
         working-directory: services/jill-order-desk/app-home
