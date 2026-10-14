@@ -21,7 +21,7 @@ export function signWorkMerchantList({secret,timestamp,nonce,shop=SHOP}={}) {
 }
 
 export async function readWorkGoogleQaMerchantList({
-  secret,backendFetch=fetch,now=Date.now,makeNonce=()=>randomBytes(24).toString('base64url'),
+  secret='',backendFetch=fetch,now=Date.now,makeNonce=()=>randomBytes(24).toString('base64url'),
   endpoint=JILL_HQ_WORK_QA_GOOGLE_URL,
 }={}) {
   if(endpoint!==JILL_HQ_WORK_QA_GOOGLE_URL ||
