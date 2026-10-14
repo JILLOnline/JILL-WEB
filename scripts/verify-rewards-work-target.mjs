@@ -6,6 +6,8 @@ export const WORK_CLIENT_ID = 'f8e1ebdbae84490dc8ea5b133637e6c0';
 export const LIVE_CLIENT_ID = 'ebf1a69d82f46619d2f2945faab78afa';
 export const WORK_STORE = 'jill-work.myshopify.com';
 export const WORK_CONFIG_FILE = 'shopify.app.work.toml';
+export const WORK_APP_NAME = 'JILL HQ — WORK';
+export const WORK_APP_LEGACY_NAME = 'JILL WORK Rewards';
 
 function stringSetting(source, key) {
   const match = source.match(new RegExp(`^\\s*${key}\\s*=\\s*["']([^"'\\r\\n]*)["']\\s*$`, 'm'));
@@ -22,10 +24,10 @@ export function assertRewardsWorkConfig(source) {
   const clientId = stringSetting(source, 'client_id');
   const appName = stringSetting(source, 'name');
   if (clientId !== WORK_CLIENT_ID || clientId === LIVE_CLIENT_ID) {
-    throw new Error('Refusing Rewards WORK preview: linked Shopify app Client ID is not JILL WORK Rewards.');
+    throw new Error('Refusing JILL HQ WORK: linked Shopify app Client ID is not the isolated WORK app.');
   }
-  if (appName !== 'JILL WORK Rewards') {
-    throw new Error('Refusing Rewards WORK preview: linked app name does not match JILL WORK Rewards.');
+  if (appName !== WORK_APP_NAME) {
+    throw new Error('Refusing JILL HQ WORK: the linked WORK app name must be JILL HQ — WORK. Run npm run rewards:work:prepare to prepare the isolated config.');
   }
   if (/jqtdgr-1y\.myshopify\.com|jillonlinestore\.com|AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/i.test(source)) {
     throw new Error('Refusing Rewards WORK preview: LIVE store/backend URL found in WORK config.');
