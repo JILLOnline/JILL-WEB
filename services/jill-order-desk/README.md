@@ -1,6 +1,6 @@
 # JILL Order Desk — WORK merchant host integration
 
-Status: source contract only; no hostname, Shopify App Home, staff role or database is deployed.
+Status: database provisioned in Cloudflare WORK; schema NOT yet migrated, no Shopify App Home, staff roles or Worker deployed.
 
 This folder deliberately has **no public admin HTTP endpoint**. The current
 WORK repository currently ships three Customer Account UI extensions and
@@ -21,6 +21,8 @@ Preserve extension UIDs, app ID and existing Rewards/data boundaries.
 - \`admin-home.mjs\`: server-only read-only landing loader, requiring
   the official \`authenticate.admin(request)\` contract before D1 access.
 - \`migrations/0001_staff_authority.sql\`: isolated WORK database schema; NOT applied.
+- \`wrangler.toml\`: exclusive WORK merchant D1 binding and reserved service name.
+- \`worker.mjs\`: fail-closed entrypoint; only a public health indicator, every merchant route returns HTTP 503 until real Shopify authentication is connected.
 
 ## Required Shopify host (not yet configured)
 
@@ -78,3 +80,26 @@ prerequisites to an actual merchant UI.
 \`npm.cmd run test:jill-order-desk-home\`
 
 No Shopify SDK, D1 or Google secrets are required for this source test.
+
+## Cloudflare database provisioning — October 14, 2026
+
+The merchant created a NEW Cloudflare D1 database using `wrangler d1 create jill-order-desk-work --location enam`; its immutable database ID is `3f17c186-c794-4e00-8f20-017191373a19`. `d1 list` showed 0 user tables immediately after provisioning. The database is not Shopify LIVE and is not bound to `services/custom-order-cloudflare`.
+
+The service's `wrangler.toml` now binds ONLY that D1 database as `JILL_ORDER_DESK_WORK_DB`. The Worker is intentionally not deployed and would return HTTP 503 for every merchant route; its health response explicitly says `admin_ready:false`. There is no authenticated merchant endpoint yet.
+
+From the repository root, prepare using the existing local Wrangler installation:
+
+```powershell
+git pull --ff-only origin jill/rewards-work
+npm.cmd run test:jill-order-desk-work-config
+Push-Location .\services\custom-order-cloudflare
+npx.cmd wrangler d1 migrations list jill-order-desk-work --remote --config ..\jill-order-desk\wrangler.toml
+# After confirming that 0001_staff_authority.sql is the only unapplied migration:
+npx.cmd wrangler d1 migrations apply jill-order-desk-work --remote --config ..\jill-order-desk\wrangler.toml
+npx.cmd wrangler d1 execute jill-order-desk-work --remote --config ..\jill-order-desk\wrangler.toml --command "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'jill_merchant_%' ORDER BY name;"
+npx.cmd wrangler d1 execute jill-order-desk-work --remote --config ..\jill-order-desk\wrangler.toml --command "SELECT COUNT(*) AS owners FROM jill_merchant_authority;"
+Pop-Location
+```
+
+Cloudflare's versioned `d1 migrations apply` records `0001_staff_authority.sql` and takes a backup; don't substitute an untracked one-off `d1 execute --file` call for normal migrations. No owner row should exist after schema creation (expected count: 0). Apply only to `jill-order-desk-work` with `--remote` and the merchant service's explicit config. Do not deploy the Worker, add this binding to the existing public gateway, or manually insert owner/staff records. Owner binding requires a future authentic Shopify WORK account-owner session.
+

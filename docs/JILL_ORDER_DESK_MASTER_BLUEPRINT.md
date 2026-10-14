@@ -1,6 +1,6 @@
 # JILL Order Desk — Master Architecture and Delivery Contract v1
 
-Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 provisioning and live Owner bootstrap NOT DEPLOYED. Date: 2026-10-14.
+Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created; migration, Worker deployment and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
 Environment: JILL WORK Shopify development store, branch jill/rewards-work.
 No LIVE operations or Shopify connector use are authorized by this document.
 
@@ -244,3 +244,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Created `services/jill-order-desk/admin-home.mjs` read-only gate: requires a real authenticated server loader adapter, reads only the prepared isolated D1 authority, responds with no-store view models, returns 401 for offline/invalid staff, 403 for ungranted staff, and 503 when D1/Owner is uninitialized. No admin endpoint, OAuth implementation, executable hosted site, app URL, new scopes or D1 deployment has been created.
 - Created `scripts/test-jill-order-desk-home.mjs` and added the check to source CI and postinstall. It verifies all-deny cases, genuine owner grant, read-only behavior, Shopify SDK redirects and no financial mutation paths.
 - Next: prepare an official supported hosted app codebase for the **same** WORK app using its existing CLI config; provision an exact WORK HTTPS URL and isolated session storage with authorized merchant setup. Only then safely bootstrap Owner with real Shopify session and enable read-only merchant inbox.
+
+## 17. WORK Cloudflare D1 resource provisioned; source binding prepared
+
+- Merchant-provided Wrangler output confirms newly created `jill-order-desk-work` in ENAM, ID `3f17c186-c794-4e00-8f20-017191373a19`, initially zero tables. Cloudflare's `version=production` identifies the database engine, not the JILL LIVE store.
+- New `services/jill-order-desk/wrangler.toml` binds this exact isolated database. A permanent fail-closed `worker.mjs` denies merchant routes (HTTP 503) until the authenticated Admin host is implemented; its health indicator shows `admin_ready:false`. This source is not deployed.
+- The normal next step is an explicit remote **versioned D1 migration**, with a migration-list confirmation, tables-only verification, and `owner` count zero. See `services/jill-order-desk/README.md`. No manual staff/owner insertion and no public gateway changes.
+- Both WORK source and runtime registration must stay isolated from Shopify LIVE, Rewards, Google Custom Orders ledger and the storefront Cloudflare Worker.
