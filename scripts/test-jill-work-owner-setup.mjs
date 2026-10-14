@@ -15,7 +15,7 @@ const db={
         async first() {
           reads++;
           assert.match(sql,/^SELECT /);
-          return ownerId?{owner_staff_id:ownerId}:null;
+          return ownerId?{shop,environment:'WORK',app_client_id:'f8e1ebdbae84490dc8ea5b133637e6c0',owner_staff_id:ownerId,policy_version:1}:null;
         },
         sql,args,
       };
