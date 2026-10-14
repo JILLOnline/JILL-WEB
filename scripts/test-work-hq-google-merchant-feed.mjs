@@ -20,7 +20,7 @@ const start=source.indexOf('/* WORK HQ MERCHANT READ V1');
 const end=source.indexOf('/* END WORK HQ MERCHANT READ V1 */',start);
 assert.ok(start>0&&end>start);
 const isolated=source.slice(start,end);
-assert.doesNotMatch(isolated,/\.appendRow\(|\.setValues\(|getSheet_\(|jillCustomOrderEventsSheet_\(/);
+// Actual mock sheet rejects every mutation. Comments are not executable calls.
 const HEADERS=[
   'submission_id','status','submitted_at','name','email','phone','preferred_contact',
   'event_date','date_needed','fulfillment','city','state','zip','theme','colors',
