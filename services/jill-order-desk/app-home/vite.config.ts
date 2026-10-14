@@ -6,5 +6,5 @@ import tsconfigPaths from "vite-tsconfig-paths";
 // Shopify's React Router SDK currently uses the Node runtime adapter.
 // Worker compatibility is separately validated by CI and the eventual runtime.
 export default defineConfig({
-  plugins:[cloudflare({viteEnvironment:{name:"ssr"}}),reactRouter(),tsconfigPaths()],
+  plugins:[cloudflare({viteEnvironment:{name:"server"}}),reactRouter(),tsconfigPaths()],
 });
