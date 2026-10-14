@@ -117,6 +117,10 @@ jobs:
         working-directory: services/custom-order-cloudflare
         run: npm run build
 
+      - name: Dry-run compile isolated WORK merchant Worker (no deployment)
+        working-directory: services/custom-order-cloudflare
+        run: npx wrangler deploy --dry-run --config ../jill-order-desk/wrangler.toml --outdir .wrangler-dist-merchant
+
       - name: Check signed WORK gateway and shared SQLite quotas
         run: node scripts/test-cloudflare-custom-order-gateway.mjs
 
