@@ -312,3 +312,9 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Merchant uploaded **both** `JILL_WORK_SESSION_KEY_B64` and `SHOPIFY_API_SECRET` via Cloudflare Wrangler to `jill-order-desk-canary-work` only; `wrangler secret list` showed both secret names and no values. Nothing secret was copied into Git, D1 user tables, or this development record.
 - Remote canary audit subsequently passed HTTP 200 on D1 `/healthz` and HTTP 503 on `/`, `/app`, `/auth/login`, and `/app/setup-owner`. OAuth and Owner setup have intentionally not been activated.
 - Next gate is a read-only check of the existing WORK Shopify app config and active version, then safe candidate version with `--no-release`. Protect all three customer-account extensions from accidental reconfiguration and do not change LIVE. The secret's correctness still requires a real Shopify WORK authentication test.
+
+## 27. WORK staged Shopify App Home candidate reviewed and OAuth rollout isolated
+
+- Merchant's Shopify version details screenshot confirms `jill-work-order-desk-canary-1` staged with embedded App Home at the canary URL, `/auth/callback`, ten WORK scopes, unchanged custom-order app proxy, and 3 existing extension handles and UIDs matching repository source. `jill-work-rewards-4` remains active. This cannot establish identical extension bundle behavior; QA after release remains required.
+- Added a local-only OAuth activation manifest builder + unit tests. It validates a compiled canary manifest then modifies only `JILL_WORK_OAUTH_ENABLED` from `false` to `true`; Owner registration stays `false`. CI performs Wrangler packaging dry run; neither CI nor script changes live Cloudflare variables or Shopify release state.
+- Next gate: explicit user-run canary OAuth deploy and non-credentialed auth path verification, then deliberate Shopify WORK-only version release with rollback. The user must never paste Client Secret or encrypted session key.
