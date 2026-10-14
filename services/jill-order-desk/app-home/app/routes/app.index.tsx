@@ -1,4 +1,4 @@
-import {useLoaderData,type LoaderFunctionArgs} from "react-router";
+import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {loadWorkShopifyAdminRoute} from "../../../shopify-host/app-home-route.mjs";
 export async function loader({request,context}:LoaderFunctionArgs) {
@@ -17,7 +17,7 @@ export default function OrderDesk() {
         : <s-banner tone="warning">Merchant access is locked until the WORK Shopify Owner and JILL permissions are verified.</s-banner>}
       {data.state==="merchant_setup_required"
         ? <s-paragraph>
-            <a href="/app/setup-owner">WORK Owner commissioning</a>
+            <Link to="/app/setup-owner">WORK Owner commissioning</Link>
           </s-paragraph>
         : null}
       <s-text>Customer Custom Orders, Rewards balances, invoicing and fulfillment remain unchanged.</s-text>
