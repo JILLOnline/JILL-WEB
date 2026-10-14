@@ -95,7 +95,9 @@
     "test:work-hq-branding": "node scripts/test-work-hq-branding.mjs",
     "rewards:work:prepare": "node scripts/prepare-rewards-work-config.mjs && node scripts/verify-rewards-work-target.mjs",
     "test:work-merchant-inbox": "node scripts/test-work-merchant-inbox.mjs",
-    "test:work-hq-google-merchant-feed": "node scripts/test-work-hq-google-merchant-feed.mjs"
+    "test:work-hq-google-merchant-feed": "node scripts/test-work-hq-google-merchant-feed.mjs",
+    "custom-orders:work:qa:read-audit": "node scripts/audit-work-qa-script-readonly.mjs",
+    "test:work-qa-read-audit": "node scripts/test-work-qa-script-readonly.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
