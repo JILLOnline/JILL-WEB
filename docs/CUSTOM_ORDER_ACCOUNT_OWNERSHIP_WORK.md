@@ -1,9 +1,21 @@
 # My JILL WORK Custom Orders — authenticated ownership bridge
 
-Status: IMPLEMENTED IN WORK SOURCE, NOT DEPLOYED TO GOOGLE QA/CLOUDFLARE/SHOPIFY. LIVE untouched.
+Status: IMPLEMENTED IN WORK SOURCE. Google QA owner registration and the Cloudflare private-read rejection boundary were independently observed on 2026-10-14; the exact deployed build SHAs and an authenticated Shopify account browser read are NOT yet certified. LIVE untouched.
 Scope: `jill/rewards-work`, JILL WORK Rewards app, `jill-work.myshopify.com`,
 existing Cloudflare `jill-work-custom-orders-qa` and isolated Google QA spreadsheet.
 This is the next backend phase after successful real merchant/ingress QA.
+
+## WORK runtime reconciliation — October 14, 2026
+
+These are observations, NOT permission to publish or redeploy:
+
+- The latest verified WORK GitHub account + Theme Core CI at commit `b6df0ef77bf1666fa055d638f166ed19e77d4860` completed successfully; the three ownership/account-read tests passed locally in Windows PowerShell.
+- An independent read of the isolated Google QA spreadsheet `1T3xe_I3kfM6HtluXxq9PLjWp9XUBw1wvEOAAhiTq7OA` showed two saved requests, one owner binding in `CustomOrderOwners`, and three persisted status events. The signed-in WORK request `jill:92b32355-900e-47ba-8946-ccd93190a3b7` has both an immutable owner binding and its revision-1 `received` event. The earlier QA guest request has no owner. **Do not copy identifiers or customer PII into public probes.**
+- Merchant-run Cloudflare WORK probes returned `GET /healthz` -> HTTP 200 with `WORK_CUSTOM_ORDERS_QA`; a nonempty anonymous account POST -> `400 invalid_request`; and an empty anonymous POST -> `401 unauthenticated_account`. CORS headers and no-store were present. These prove basic route reachability and rejection, not acceptance of a genuine signed-in JWT or exact deployed source SHA.
+- The source-only, pinned-host remote regression command is `npm.cmd run custom-orders:work:account:remote:audit`. It performs only the four public checks (health, CORS preflight, anonymous 401 and bad-body 400). It supplies no credentials, session tokens or customer IDs. Its deterministic unit regression runs in standard postinstall/CI as `test:work-account-runtime-audit`, with no network dependency.
+- **Still not certified:** deployed Google `customer_list` handler version, Cloudflare exact Worker build, Shopify Partner network-access permission, My JILL full-page extension release, an actual bearer-JWT list response, customer A/B isolation in the WORK browser, and checkout-side Rewards regression. Avoid claiming end-to-end account history until the user-visible WORK session proves it.
+- The WORK Shopify connector is reserved for a separate products/catalog chat. All further verification here must use GitHub, the isolated Google QA Sheet, WORK-only local CLI/browser evidence or the public nonmutating Cloudflare probes. **Never switch the Shopify connector from this chat.**
+- This note supersedes older `source only / not deployed` claims **for ownership registration and anonymous Worker behavior only**. It does not certify the new read handler deployment or authorize any release.
 
 ## Evidence already established (2026-10-12)
 
@@ -157,10 +169,9 @@ Official Shopify guidance:
 - https://shopify.dev/docs/apps/build/online-store/app-proxies/authenticate-app-proxies
 
 
-## WORK-only controlled deployment sequence (not yet executed)
+## WORK-only controlled verification / conditional deployment sequence
 
-1. Confirm a passing source CI run for the exact `jill/rewards-work` SHA.
-   The Apps Script changes DO NOT update an already deployed Google /exec.
+1. Confirm a passing source CI run for the exact `jill/rewards-work` SHA. **First audit the currently deployed Google QA/Cloudflare versions; do not assume an update is necessary because an older checklist says not deployed.** Owner registration and an anonymous account-read rejection were already observed. The Apps Script source commit alone does not update Google `/exec`. Steps 2–4 are conditional and must be skipped when the running artifacts already match the certified source.
 2. In the **local Windows PowerShell**, run:
 
        cd C:\Users\itzen\JILL-WEB
