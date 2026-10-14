@@ -1,6 +1,6 @@
 # JILL Order Desk — Master Architecture and Delivery Contract v1
 
-Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created/migrated and isolated WORK Worker deployed; Shopify hosted App Home and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
+Status: WORK Owner commissioned on 2026-10-14 (one D1 Owner authority and one allowed audit; OAuth enabled, bootstrap disabled). Merchant read-only inbox P2 is source-only, NOT deployed and NOT connected to Google QA.
 Environment: JILL WORK Shopify development store, branch jill/rewards-work.
 No LIVE operations or Shopify connector use are authorized by this document.
 
@@ -342,3 +342,12 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Stale `shopify app dev` preview was cleaned on the **WORK** shop, restoring active `jill-work-order-desk-canary-1`; Shopify Admin then displayed the actual embedded JILL Order Desk with merchant access locked. Live WORK D1 read-only queries returned **2 saved and 2 unexpired Shopify sessions; 0 merchant Owners; 0 owner.bootstrap audit records**. This is proof of session persistence and absent Owner binding, not proof of current user being Shopify account owner.
 - Added a guarded temporary Owner commissioning manifest generator and unit tests, plus Cloudflare dry-run packaging in CI. It changes only the Owner server-side switch from false to true in the already-reviewed WORK OAuth canary manifest; it never deploys, touches LIVE or reads secrets. WORK owner identity must be SDK-verified and explicit confirmation supplied in the Shopify Admin page.
 - Post-registration the intended rollback is to the **OAuth-enabled, Owner-disabled** candidate, not to the OAuth-disabled base manifest while the Shopify App Home remains active. Check one authority row + one audit row with read-only SQL, then disable commissioning.
+
+## P2 read-only merchant inbox boundary (source-only candidate, 2026-10-14)
+
+- Shopify WORK Owner successfully verified in embedded Admin; Owner bootstrap was relocked to OFF after confirmation. Current WORK merchant policy uses trusted Shopify online user identity plus WORK D1 authorization.
+- The Google QA project currently provides a private **customer-owned** list and a Google operator-only single-submission merchant read. Neither is an authorized Shopify merchant-wide list. Never reuse the customer endpoint or bypass the Google operator gate.
+- P2 source candidate adds `/app/requests` plus one `merchant-inbox-read.mjs` adapter. Auth occurs before D1, Owner read permission before source access; nonowners/expired/offline/LIVE sessions fail closed. No backend source is wired in this phase, so the page must display `source_not_connected` and **never** invent an empty order list.
+- The future bridge needs a *separate* signed WORK-only Google merchant-list operation, server-to-server request authentication, bounded list, strict projection, and source-runtime QA. Canonical Submissions and append-only CustomOrderEvents remain authoritative. No D1 shadow order statuses or Google event writes.
+- The first projection deliberately excludes buyer contact information, internal notes, raw artwork URLs, tokens, and raw payload. Merchant authorization expansion, assignments, search, pagination, detailed views and all mutation actions require later separately certified phases.
+- No new Cloudflare/Shopify secrets, Worker deployments, OAuth configuration, customer-account extension, or LIVE changes are part of this P2 source candidate.
