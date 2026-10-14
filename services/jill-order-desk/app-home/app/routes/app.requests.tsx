@@ -27,8 +27,15 @@ export async function loader({request,context}:LoaderFunctionArgs) {
     request,
     authenticate:workShopify(env).authenticate,
     db:env.JILL_ORDER_DESK_WORK_DB,
-    // No merchant source reader until a distinct WORK Google QA signed,
-    // read-only contract has been certified. Never reuse customer listing.
+    // Private opt-in key is provisioned only after WORK QA Google runtime
+    // certification. No secret -> explicit source_not_connected state.
+    // Never forward Shopify session tokens or customer identity to Google.
+    readCanonicalSource: env.JILL_WORK_HOST_STAGE==="canary" &&
+      env.JILL_HQ_MERCHANT_READ_SECRET
+      ? () => readWorkGoogleQaMerchantList({
+          secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
+        })
+      : undefined,
   });
   return Response.json(result.model,{
     status:result.status,headers:result.headers,
