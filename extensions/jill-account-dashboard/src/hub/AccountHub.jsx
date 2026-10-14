@@ -8,8 +8,8 @@ import Celebrations from '../pages/Celebrations.jsx';
 import SavedPreferences from '../pages/SavedPreferences.jsx';
 import Settings from '../pages/Settings.jsx';
 
-// One page entrypoint; each feature has one internal screen owner.
-// WORK preview never calls an Admin endpoint or performs a reward mutation.
+// The hub is the one Shopify full-page entrypoint. Screen owners and native
+// Shopify account navigation remain unchanged; styling uses platform components.
 export default function AccountHub({accountState = null}) {
   const [route, setRoute] = useState(() => {
     if (typeof navigation === 'undefined') return 'overview';
@@ -25,15 +25,13 @@ export default function AccountHub({accountState = null}) {
 
   const onNavigate = (nextRoute) => {
     const id = canonicalRoute(nextRoute);
-    setRoute(id); // Works in preview even when Shopify doesn't expose history.
+    setRoute(id);
     if (typeof navigation !== 'undefined' && navigation.navigate) {
       try {
         const result = navigation.navigate(extensionRoute(id));
-        if (result && typeof result.catch === 'function') {
-          result.catch(() => {}); // Keep local tab functional if route host rejects history.
-        }
+        if (result && typeof result.catch === 'function') result.catch(() => {});
       } catch {
-        // Navigation remains local to this already authenticated page.
+        // Never break in-page tabs if Shopify history is unavailable.
       }
     }
   };
@@ -49,21 +47,29 @@ export default function AccountHub({accountState = null}) {
   }[canonicalRoute(route)];
 
   return (
-    <s-page heading="My JILL" subheading="Your JILL account, all in one place">
+    <s-page heading="My JILL" subheading="Your little corner of JILL — made for every celebration">
       <s-section heading="Explore My JILL">
-        <s-stack direction="inline" gap="base">
-          {HUB_ROUTES.map((item) => (
-            <s-button key={item.id}
-              variant={route === item.id ? 'primary' : 'secondary'}
-              onClick={() => onNavigate(item.id)}>
-              {item.label}
-            </s-button>
-          ))}
+        <s-stack direction="block" gap="small-300">
+          <s-text color="subdued">Your Rewards, Custom Orders, offers and party plans — all together.</s-text>
+          <s-box padding="base" background="subdued" borderRadius="large">
+            <s-stack direction="inline" gap="small-200">
+              {HUB_ROUTES.map((item) => (
+                <s-button key={item.id}
+                  variant={route === item.id ? 'primary' : 'secondary'}
+                  onClick={() => onNavigate(item.id)}>
+                  {item.label}
+                </s-button>
+              ))}
+            </s-stack>
+          </s-box>
         </s-stack>
       </s-section>
       {accountState?.status === 'loading' && (
         <s-section>
-          <s-text>Loading your authenticated Shopify account…</s-text>
+          <s-stack direction="inline" gap="small-200" alignItems="center">
+            <s-spinner size="small"/>
+            <s-text color="subdued">Checking your verified Shopify account…</s-text>
+          </s-stack>
         </s-section>
       )}
       {accountState?.status === 'error' && (
@@ -75,14 +81,17 @@ export default function AccountHub({accountState = null}) {
         </s-section>
       )}
       {screen}
-      <s-section heading="Your Shopify account">
-        <s-stack direction="block" gap="base">
-          <s-text>Orders, addresses and sign-in remain securely managed by Shopify.</s-text>
-          <s-stack direction="inline" gap="base">
-            <s-link href="shopify:customer-account/orders">Orders</s-link>
-            <s-link href="shopify:customer-account/profile">Profile & addresses</s-link>
+      <s-section>
+        <s-box padding="base" background="subdued" borderRadius="large">
+          <s-stack direction="block" gap="small-300">
+            <s-heading>More of your JILL account</s-heading>
+            <s-text color="subdued">Shopify securely manages your regular orders, addresses and sign-in.</s-text>
+            <s-stack direction="inline" gap="base">
+              <s-link href="shopify:customer-account/orders">Orders</s-link>
+              <s-link href="shopify:customer-account/profile">Profile & addresses</s-link>
+            </s-stack>
           </s-stack>
-        </s-stack>
+        </s-box>
       </s-section>
     </s-page>
   );

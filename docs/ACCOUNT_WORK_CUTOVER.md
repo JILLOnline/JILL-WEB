@@ -208,3 +208,13 @@ restorable. The Git commit before the unified entrypoint migration retains
 the older Dashboard display, and backend v13 remains unchanged during these
 UI-source changes. Do not reset customer points, delete wallet records,
 rotate coupon codes or modify production storefront theme during UI rollback.
+
+
+## My JILL visual refinement — WORK-only (October 14, 2026)
+
+- A merchant-provided signed-in WORK browser preview displayed the genuine owner-bound Custom Order with its `received` public status and revision 1. This certifies **one positive customer-facing read**. A second WORK test customer, guest non-claim check, Shopify released-version check, and post-status-update timeline read remain separate gates.
+- The visual polish uses existing Shopify 2026-07 Preact web components: single My JILL navigation registry, clearer Overview, status-specific badges, request reference, summary details when available, readable dates, and a timeline reflecting **persisted events only**.
+- The canonical Custom Order reader still obtains a fresh Shopify session token for each read; the account page owns one query lifecycle and retry/refresh action. Rewards/Coupons transactions and all backend services are untouched.
+- Celebrations and Saved for You remain explicitly **not connected**. No storage, reminders, or account claims are implied.
+- Regression: `npm.cmd run test:my-jill-presentation` runs in standard postinstall/CI. The WORK canary generator copies the one collocated formatter with the canonical CustomOrders screen.
+- Source CI alone is not release proof: browser-check 390px / 768px / desktop, keyboard/focus, long notes and references, language expansion, and customer A/B privacy. WORK app release is separately gated; LIVE untouched.

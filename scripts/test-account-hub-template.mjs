@@ -57,10 +57,16 @@ const customOrders=read(root+'pages/CustomOrders.jsx');
 assert.match(customOrders,/loadWorkCustomerCustomOrders/);
 assert.match(customOrders,/signed-in account/);
 assert.match(customOrders,/Try again/);
+assert.match(customOrders,/customOrderStatus/);
+assert.match(customOrders,/Tracking history/);
+assert.match(customOrders,/Refresh updates/);
+assert.match(customOrders,/<s-badge tone={current.tone}>/);
+assert.match(read(root+'pages/custom-order-presentation.mjs'),/CUSTOM_ORDER_STATUS/);
 assert.doesNotMatch(customOrders,/owner_gid|logged_in_customer_id|Admin API|metafieldsSet/);
 assert.match(read('extensions/jill-account-dashboard/shopify.extension.toml'),/network_access = true/);
 assert.match(read('shared/customer-custom-orders.mjs'),/sessionToken\.get\(\)/);
 const preparer=read('scripts/prepare-account-hub-canary.mjs');
+assert.match(preparer,/custom-order-presentation\.mjs/);
 assert.match(preparer,/mode === 'read' \|\| mode === 'template'/);
 assert.match(preparer,/\'rewards\.mjs\',\'customer-account-api\.mjs\',\'customer-coupons\.mjs\'/);
 for (const file of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
