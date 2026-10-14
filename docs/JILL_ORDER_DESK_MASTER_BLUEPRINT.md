@@ -306,3 +306,9 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - A separate fail-closed existing merchant Worker remains deployed. No Shopify app URL or extension changes were performed as part of this canary deployment.
 - Added read-only remote runtime audit `custom-orders:work:canary:remote:audit` (five GET calls) with no credential headers and a local unit test. Do not treat successful builds or deployment as proof the live D1 health or staff auth works until this audit is run.
 - Next security gates: remote canary health/denials; SDK Session serializer compatibility and durable encryption; canary-only secrets provisioned privately; real Shopify WORK URL/embedded authentication release and Owner test. Owner bootstrap remains disabled.
+
+## 26. Private canary secrets and live denial audit verified (2026-10-14)
+
+- Merchant uploaded **both** `JILL_WORK_SESSION_KEY_B64` and `SHOPIFY_API_SECRET` via Cloudflare Wrangler to `jill-order-desk-canary-work` only; `wrangler secret list` showed both secret names and no values. Nothing secret was copied into Git, D1 user tables, or this development record.
+- Remote canary audit subsequently passed HTTP 200 on D1 `/healthz` and HTTP 503 on `/`, `/app`, `/auth/login`, and `/app/setup-owner`. OAuth and Owner setup have intentionally not been activated.
+- Next gate is a read-only check of the existing WORK Shopify app config and active version, then safe candidate version with `--no-release`. Protect all three customer-account extensions from accidental reconfiguration and do not change LIVE. The secret's correctness still requires a real Shopify WORK authentication test.
