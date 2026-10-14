@@ -144,6 +144,9 @@ jobs:
       - name: Validate encrypted D1 with actual Shopify SDK Session
         working-directory: services/jill-order-desk/app-home
         run: npm run test:shopify-session-real
+      - name: Initialize real Shopify SDK for WORK canary with synthetic credentials
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:shopify-real-init
       - name: Validate Shopify Admin and Cloudflare host types
         working-directory: services/jill-order-desk/app-home
         run: npm run typecheck
