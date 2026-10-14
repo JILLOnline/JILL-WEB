@@ -11,6 +11,8 @@ const config=JSON.parse(readFileSync(file,'utf8'));
 assert.equal(config.name,'jill-order-desk-canary-work',
   'Do not deploy a build targeting the existing WORK merchant Worker');
 assert.equal(config.vars?.JILL_WORK_HOST_STAGE,'canary');
+assert.equal(config.vars?.JILL_WORK_OAUTH_ENABLED,'false',
+  'OAuth must be explicitly locked while provisioning canary secrets');
 assert.equal(config.vars?.JILL_WORK_OWNER_BOOTSTRAP_ENABLED,'false',
   'Owner registration must remain disabled during canary infrastructure verification');
 assert.ok(Array.isArray(config.compatibility_flags));

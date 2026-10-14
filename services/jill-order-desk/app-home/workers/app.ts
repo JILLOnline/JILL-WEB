@@ -55,7 +55,10 @@ export default {
       return unavailable("merchant_storage_unavailable");
     // Before the two WORK-only secrets are provisioned, no Shopify auth
     // routes, HTML, owner setup or SDK processing may run.
-    if(!env.SHOPIFY_API_SECRET || !env.JILL_WORK_SESSION_KEY_B64)
+    // A separate, opt-in canary switch is required even AFTER both secrets
+    // exist. Cloudflare secret rotation must never auto-open Shopify login.
+    if(env.JILL_WORK_OAUTH_ENABLED!=="true" ||
+       !env.SHOPIFY_API_SECRET || !env.JILL_WORK_SESSION_KEY_B64)
       return unavailable("shopify_auth_not_configured");
     return handler(request,{cloudflare:{env,ctx}});
   },

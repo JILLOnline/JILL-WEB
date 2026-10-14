@@ -16,6 +16,8 @@ assert.equal(base.vars.JILL_WORK_HOST_STAGE,'work');
 assert.equal(canary.vars.JILL_WORK_HOST_STAGE,'canary');
 assert.equal(base.vars.JILL_WORK_OWNER_BOOTSTRAP_ENABLED,'false');
 assert.equal(canary.vars.JILL_WORK_OWNER_BOOTSTRAP_ENABLED,'false');
+assert.equal(canary.vars.JILL_WORK_OAUTH_ENABLED,'false');
+assert.equal(base.vars.JILL_WORK_OAUTH_ENABLED,'false');
 assert.equal(canary.d1_databases[0].database_id,base.d1_databases[0].database_id);
 assert.equal(canary.d1_databases[0].database_name,'jill-order-desk-work');
 assert.deepEqual(canary.d1_databases.map(x=>x.binding),['JILL_ORDER_DESK_WORK_DB']);
@@ -48,6 +50,7 @@ for(const [stage,appUrl] of [
 const script=readFileSync('services/jill-order-desk/app-home/workers/app.ts','utf8');
 assert.match(script,/workAppHomeOrigin\(env\.JILL_WORK_HOST_STAGE\)/);
 assert.match(script,/shopify_auth_not_configured/);
+assert.match(script,/env\.JILL_WORK_OAUTH_ENABLED!=="true"/);
 assert.match(script,/jill_shopify_sessions/);
 assert.match(script,/wrong_host/);
 assert.match(script,/admin_ready:false/);

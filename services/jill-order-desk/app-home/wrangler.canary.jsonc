@@ -20,6 +20,7 @@
   ],
   "vars": {
     "JILL_WORK_HOST_STAGE": "canary",
-    "JILL_WORK_OWNER_BOOTSTRAP_ENABLED": "false"
+    "JILL_WORK_OWNER_BOOTSTRAP_ENABLED": "false",
+    "JILL_WORK_OAUTH_ENABLED": "false"
   }
 }
