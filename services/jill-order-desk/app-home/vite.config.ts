@@ -9,6 +9,6 @@ export default defineConfig({
   plugins:[cloudflare({
     configPath:process.env.JILL_BUILD_TARGET==="canary"
       ? "./wrangler.canary.jsonc" : "./wrangler.jsonc",
-    viteEnvironment:{name:"server"},
+    viteEnvironment:{name:"ssr"},
   }),reactRouter(),tsconfigPaths()],
 });
