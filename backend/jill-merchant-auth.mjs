@@ -6,7 +6,7 @@ export const JILL_WORK_MERCHANT_SHOP='jill-work.myshopify.com';
 export const JILL_WORK_MERCHANT_CLIENT_ID='f8e1ebdbae84490dc8ea5b133637e6c0';
 
 const ID=/^[1-9][0-9]{0,19}$/;
-const SCOPE=/^[a-z][a-z0-9_]{1,99}$/;
+const SCOPE=/^(?:read|write|customer_read|customer_write|unauthenticated_read|unauthenticated_write)_[a-z0-9_]{2,96}$/;
 
 function fail() { throw new Error('unverified_shopify_staff'); }
 
