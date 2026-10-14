@@ -64,11 +64,28 @@ function tool(program,args,{cwd=ROOT,env=process.env,capture=false}={}) {
   }
   return capture?String(res.stdout||''):'';
 }
+export function assertAnonymousInboxDenied(status) {
+  // An unauthenticated request must never return merchant inbox data.
+  // Shopify's Admin SDK or Cloudflare may return 404 before the embedded
+  // session route is resolved, or 410 when OAuth has no session.
+  // Neither result proves the authenticated page works: test inside Shopify.
+  assert([404,410].includes(status),
+    '/app/requests anonymous access must be denied; got HTTP '+status);
+  return true;
+}
 async function http(pathname,expected) {
   const res=await fetch(HOST+pathname,{
     method:'GET',redirect:'manual',signal:AbortSignal.timeout(20000),
   });
   assert(res.status===expected,pathname+' returned HTTP '+res.status);
+}
+async function anonymousInbox() {
+  const res=await fetch(HOST+'/app/requests',{
+    method:'GET',redirect:'manual',signal:AbortSignal.timeout(20000),
+  });
+  assertAnonymousInboxDenied(res.status);
+  console.log('PASS unauthenticated inbox denied (HTTP '+res.status+
+    '). Verify the authenticated route inside Shopify Admin.');
 }
 const run=process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url;
 if(run) {
@@ -119,7 +136,7 @@ if(run) {
     tool('npx',['--no-install','wrangler','deploy','--config',manifest],{cwd:APP});
     await http('/healthz',200);
     await http('/auth/login',200);
-    await http('/app/requests',410);
+    await anonymousInbox();
     await http('/app/setup-owner',410);
     console.log('PASS JILL HQ inbox shell deployed to WORK canary.');
     console.log('Merchant Google read source: NOT CONNECTED (by design).');

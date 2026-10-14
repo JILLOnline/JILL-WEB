@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
-  assertWorkHqInboxManifest,currentWorkerVersion,assertSecretNames,
+  assertWorkHqInboxManifest,currentWorkerVersion,assertSecretNames,assertAnonymousInboxDenied,
 } from './deploy-work-hq-inbox-shell.mjs';
 
 const safe={
@@ -51,6 +51,10 @@ assert.match(source,/test:work-hq-google-merchant-feed/);
 assert.match(source,/test:workerd-oauth/);
 assert.match(source,/writeOAuthManifest/);
 assert.match(source,/DEPLOY WORK INBOX SHELL/);
-assert.match(source,/await http\('\/app\/requests',410\)/);
+assert.match(source,/await anonymousInbox\(\)/);
+for(const denied of [404,410])assert.equal(assertAnonymousInboxDenied(denied),true);
+for(const status of [200,201,302,401,403,500,503])
+  assert.throws(()=>assertAnonymousInboxDenied(status),
+    /anonymous access must be denied/);
 assert.doesNotMatch(source,/secret put|secret delete|owner-commissioning\.json|shopify app deploy|update-deployment|scriptProperties\.setProperty/i);
 console.log('PASS WORK HQ inbox rollout: WORK identity, OAuth, Owner OFF, D1, required secrets, source secret absent, deployment-race denial and no other service writes.');
