@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {
-  auditWorkQaReadOnly,verifyLocalWorkQaIdentity,runReadOnlyClasp,
+  auditWorkQaReadOnly,verifyLocalWorkQaIdentity,runReadOnlyClasp,publishedVersionFromClasp,
 } from './audit-work-qa-script-readonly.mjs';
 import {reconstructCustomOrderQaSource} from './verify-custom-order-qa-remote.mjs';
 
@@ -25,9 +25,9 @@ const canonical=fs.readFileSync(
   'backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs','utf8');
 const compiled=reconstructCustomOrderQaSource(canonical,sha,sheetId);
 const invoked=[];
-const run=(cwd,cmd)=>{
-  invoked.push(cmd);
-  if(cmd==='list-deployments')return deployment+' @1 - WORK QA';
+const run=(cwd,cmd,options={})=>{
+  invoked.push([cmd,options.versionNumber??null]);
+  if(cmd==='list-deployments')return deployment+' @7 - WORK QA';
   assert.equal(cmd,'pull');
   fs.writeFileSync(path.join(cwd,'JILL_Custom_Order_Automation_REWARDS.js'),compiled);
   return 'Pulled WORK QA project source';
@@ -44,21 +44,24 @@ try {
   });
   assert.equal(res.deploymentFound,true);
   assert.equal(res.headMatchesCertifiedGit,true);
-  assert.equal(res.publishedRevisionVerified,false);
+  assert.equal(res.publishedRevisionVerified,true);
+  assert.equal(res.publishedVersion,7);
+  assert.equal(res.publishedCommit,sha);
+  assert.equal(res.publishedDigest,res.sourceDigest);
   assert.equal(res.historicalCommit,sha);
-  assert.deepEqual(invoked,['list-deployments','pull']);
+  assert.deepEqual(invoked,[['list-deployments',null],['pull',null],['pull',7]]);
   assert.deepEqual(fs.readdirSync(dir).sort(),before,
     'Remote audit must never change existing source workspace');
 
   await assert.rejects(()=>auditWorkQaReadOnly({
     root,readHistorical:()=>canonical,
     invokeClasp:()=>'- wrong deployment',
-  }),/deployment ID absent/);
+  }),/Expected exactly one WORK QA deployment/);
 
   await assert.rejects(()=>auditWorkQaReadOnly({
     root,readHistorical:()=>canonical,
     invokeClasp:(cwd,cmd)=>{
-      if(cmd==='list-deployments')return deployment;
+      if(cmd==='list-deployments')return deployment+' @7 - WORK QA';
       fs.writeFileSync(path.join(cwd,'JILL_Custom_Order_Automation_REWARDS.js'),
         compiled.replace('JILL WORK Custom Orders QA online.',
                          'Unexpected unauthorized source change.'));
@@ -66,13 +69,18 @@ try {
     },
   }),/differs from the certified Git build/);
 
+  for(const invalid of [deployment,deployment+' @HEAD',deployment+' @0',deployment+' @7\n'+deployment+' @8']) {
+    assert.throws(()=>publishedVersionFromClasp(invalid),/version|exactly one/);
+  }
   fs.writeFileSync(recordPath,JSON.stringify({...record,shop:'jqtdgr-1y.myshopify.com'}));
   await assert.rejects(()=>auditWorkQaReadOnly({
     root,invokeClasp:()=>{throw Error('Remote call must not occur');},
   }),/project identity mismatch/);
-  assert.throws(()=>runReadOnlyClasp(root,'push'),/Only read-only/);
-  assert.throws(()=>runReadOnlyClasp(root,'update-deployment'),/Only read-only/);
-  console.log('PASS WORK QA audit command: no remote writes, exact project, deployment existence, certified source, tamper denial, and published-revision caveat.');
+  assert.throws(()=>runReadOnlyClasp(root,'push'),/Only.*read-only/);
+  assert.throws(()=>runReadOnlyClasp(root,'update-deployment'),/Only.*read-only/);
+  assert.throws(()=>runReadOnlyClasp(root,'pull',{versionNumber:0}),/Only.*read-only/);
+  assert.throws(()=>runReadOnlyClasp(root,'pull',{versionNumber:'7'}),/Only.*read-only/);
+  console.log('PASS WORK QA audit: independently certified project HEAD and immutable published /exec version, no remote writes, exact project, source tamper and LIVE denial.');
 } finally {
   fs.rmSync(root,{recursive:true,force:true});
 }

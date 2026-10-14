@@ -24,16 +24,36 @@ export function verifyLocalWorkQaIdentity(root) {
   return {scriptId:WORK_SCRIPT,sheetId:WORK_SHEET};
 }
 
-export function runReadOnlyClasp(directory,command) {
-  if(!['list-deployments','pull'].includes(command))
-    throw Error('Only read-only Google clasp commands permitted.');
+export function runReadOnlyClasp(directory,command,{versionNumber}={}) {
+  if(!['list-deployments','pull'].includes(command) ||
+      (versionNumber!==undefined &&
+        (command!=='pull' || !Number.isSafeInteger(versionNumber) ||
+          versionNumber<1)))
+    throw Error('Only bounded read-only Google clasp commands permitted.');
+  const args=['--yes','@google/clasp@3.4.1',command];
+  if(versionNumber!==undefined)args.push('--versionNumber',String(versionNumber));
   const win=process.platform==='win32';
-  const result=spawnSync(win?'npx.cmd':'npx',[
-    '--yes','@google/clasp@3.4.1',command,
-  ],{cwd:directory,encoding:'utf8',shell:win,maxBuffer:8*1024*1024});
+  const result=spawnSync(win?'npx.cmd':'npx',args,
+    {cwd:directory,encoding:'utf8',shell:win,maxBuffer:8*1024*1024});
   if(result.error || result.status!==0)
     throw Error('Google clasp '+command+' failed. Check clasp login; no changes were made.');
   return String(result.stdout||'');
+}
+
+// clasp prints each published deployment as "<deploymentId> @<number> - description".
+// This exact number is the immutable source snapshot served by /exec.
+// Reject missing, ambiguous or HEAD-only deployments instead of guessing.
+export function publishedVersionFromClasp(text) {
+  if(typeof text!=='string')throw Error('Missing WORK QA deployment list.');
+  const lines=text.split(/\r?\n/).filter(line=>line.includes(WORK_DEPLOYMENT));
+  if(lines.length!==1)throw Error('Expected exactly one WORK QA deployment.');
+  const line=lines[0];
+  const pos=line.indexOf(WORK_DEPLOYMENT)+WORK_DEPLOYMENT.length;
+  const match=line.slice(pos).match(/^\s+@([1-9][0-9]*)\b/);
+  if(!match)throw Error('Cannot resolve published /exec version number.');
+  const versionNumber=Number(match[1]);
+  if(!Number.isSafeInteger(versionNumber))throw Error('Invalid deployment version.');
+  return versionNumber;
 }
 
 export async function auditWorkQaReadOnly({
@@ -48,24 +68,34 @@ export async function auditWorkQaReadOnly({
   verifyLocalWorkQaIdentity(root);
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'jill-work-qa-read-'));
   try {
-    // Never pull into the existing local source bundle.
-    fs.writeFileSync(path.join(temp,'.clasp.json'),
-      JSON.stringify({scriptId:WORK_SCRIPT})+'\n');
-    const deployments=invokeClasp(temp,'list-deployments');
-    if(typeof deployments!=='string'||!deployments.includes(WORK_DEPLOYMENT))
-      throw Error('Expected WORK QA deployment ID absent; STOP.');
-    invokeClasp(temp,'pull');
-    const result=auditPulledCustomOrderQa({
-      directory:temp,sheetId:WORK_SHEET,gitReadAtSha:readHistorical,
+    const tempHead=path.join(temp,'head');
+    const tempPublished=path.join(temp,'published');
+    fs.mkdirSync(tempHead);fs.mkdirSync(tempPublished);
+    for(const folder of [tempHead,tempPublished]) {
+      fs.writeFileSync(path.join(folder,'.clasp.json'),
+        JSON.stringify({scriptId:WORK_SCRIPT})+'\n');
+    }
+    const deployments=invokeClasp(tempHead,'list-deployments');
+    const publishedVersion=publishedVersionFromClasp(deployments);
+    invokeClasp(tempHead,'pull');
+    const head=auditPulledCustomOrderQa({
+      directory:tempHead,sheetId:WORK_SHEET,gitReadAtSha:readHistorical,
+    });
+    // Published version is immutable and may differ from project HEAD.
+    invokeClasp(tempPublished,'pull',{versionNumber:publishedVersion});
+    const published=auditPulledCustomOrderQa({
+      directory:tempPublished,sheetId:WORK_SHEET,gitReadAtSha:readHistorical,
     });
     return Object.freeze({
       project:'WORK Custom Orders QA',
       deploymentFound:true,
       headMatchesCertifiedGit:true,
-      historicalCommit:result.commit,
-      sourceDigest:result.digest,
-      publishedRevisionVerified:false,
-      // clasp pull audits project HEAD, NOT the version pinned to /exec.
+      historicalCommit:head.commit,
+      sourceDigest:head.digest,
+      publishedRevisionVerified:true,
+      publishedVersion,
+      publishedCommit:published.commit,
+      publishedDigest:published.digest,
     });
   } finally {
     fs.rmSync(temp,{recursive:true,force:true});
@@ -86,7 +116,10 @@ if(invoked) {
     console.log('PASS remote project HEAD matches certified historical Git source.');
     console.log('Historical Git commit: '+result.historicalCommit);
     console.log('Remote project HEAD SHA-256: '+result.sourceDigest);
-    console.log('NEXT GATE: published /exec revision not yet source-attested.');
+    console.log('PASS published /exec version '+result.publishedVersion+
+      ' matches certified historical Git source.');
+    console.log('Published version Git commit: '+result.publishedCommit);
+    console.log('Published version SHA-256: '+result.publishedDigest);
     console.log('Google deployments, sheet data, secrets and LIVE: UNCHANGED.');
   } catch(error) {
     console.error('WORK QA read-only audit STOPPED: '+error.message);
