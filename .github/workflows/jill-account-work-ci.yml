@@ -51,7 +51,7 @@ jobs:
           npm run test:customer-custom-orders
 
       - name: Verify WORK merchant online staff authorization and owner registry
-        run: npm run test:work-qa-read-audit && npm run test:work-hq-branding && npm run test:work-hq-google-merchant-feed && npm run test:work-merchant-inbox && npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary && npm run test:work-canary-runtime-audit && npm run test:work-canary-oauth-manifest && npm run test:work-owner-commissioning
+        run: npm run test:work-qa-read-audit && npm run test:work-hq-branding && npm run test:work-hq-inbox-rollout && npm run test:work-hq-google-merchant-feed && npm run test:work-merchant-inbox && npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary && npm run test:work-canary-runtime-audit && npm run test:work-canary-oauth-manifest && npm run test:work-owner-commissioning
 
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
