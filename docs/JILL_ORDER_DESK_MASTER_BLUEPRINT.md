@@ -272,3 +272,9 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Created WORK-only `services/jill-order-desk/shopify-host/sdk-config.mjs`: pinned app/client/shop/origin, SDK dependency injection, online tokens and durable session storage required, with fail-closed validation. `app-home-route.mjs` wires the official SDK-authenticated session into the existing merchant Owner/role D1 reader. No merchant route is publicly served by these files.
 - Added `scripts/test-jill-shopify-host-wiring.mjs` to CI/postinstall, covering unsafe host/app config, missing SDK/storage, 401 wrong shop, 503 unavailable D1, Owner read-only response, and official auth redirects.
 - P1 runtime remains unfinished: Shopify-hosted App Home, real SDK token exchange, session database, secret binding, WORK app embedded config, real Owner bootstrap and staff A/B tests. Any of those are separately gated; do not infer completion from source CI.
+
+## 21. Durable encrypted Shopify sessions — prepared (WORK source only)
+
+- `0002_shopify_sessions.sql` adds `jill_shopify_sessions` to the existing dedicated WORK D1. This is a **pending migration**, not runtime data. Shopify online+offline token payloads are AES-256-GCM encrypted with unique nonces, an app-specific secret key, and authenticated session ID/shop binding; no raw access token or API secret is written to the role tables.
+- The adapter implements the Shopify SessionStorage contract with the SDK Session serializer and preserves owner flag and staff-scoped online access information. Deterministic no-network tests cover read/store/delete/shop queries, expiry and tamper rejection.
+- Before activation: validate real Shopify SDK Session class compatibility, Cloudflare Workers packaging under Node compatibility, secret provisioning, Shopify auth callback/session flows, Owner role binding and shop-scoped leak denial. User authorization required for D1 migration and Shopify app URLs.
