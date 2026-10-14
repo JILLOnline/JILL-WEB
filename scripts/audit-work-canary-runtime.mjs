@@ -7,9 +7,9 @@ export const WORK_CANARY_HOST =
   'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
 const checks=Object.freeze([
   {path:'/healthz',status:200,label:'Canary D1 schema health'},
-  {path:'/',status:503,label:'Canary home locked before secrets'},
-  {path:'/app',status:503,label:'Canary Shopify Admin locked before secrets'},
-  {path:'/auth/login',status:503,label:'Canary Shopify login locked before secrets'},
+  {path:'/',status:503,label:'Canary home locked (OAuth disabled)'},
+  {path:'/app',status:503,label:'Canary Shopify Admin locked (OAuth disabled)'},
+  {path:'/auth/login',status:503,label:'Canary Shopify login locked (OAuth disabled)'},
   {path:'/app/setup-owner',status:503,label:'Canary Owner commissioning locked'},
 ]);
 function assert(condition,message){if(!condition)throw new Error(message);}
