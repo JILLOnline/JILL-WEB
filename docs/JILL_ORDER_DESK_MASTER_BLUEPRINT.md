@@ -1,6 +1,6 @@
 # JILL Order Desk — Master Architecture and Delivery Contract v1
 
-Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created and migration applied; Worker deployment, Shopify hosted App Home and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
+Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 database created/migrated and isolated WORK Worker deployed; Shopify hosted App Home and live Owner bootstrap NOT COMPLETED. Date: 2026-10-14.
 Environment: JILL WORK Shopify development store, branch jill/rewards-work.
 No LIVE operations or Shopify connector use are authorized by this document.
 
@@ -258,3 +258,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Remote introspection returned exactly `jill_merchant_audit`, `jill_merchant_authority`, and `jill_merchant_grants`; Owner count 0. **These are actual runtime observations, unlike previous source-only checks.**
 - Before a separate Worker deployment, tightened `services/jill-order-desk/worker.mjs` health to verify all three actual bound D1 tables. It returns 503 for missing/incomplete/unreachable database; all merchant actions still return 503 until official Shopify Admin authentication is linked. No Owner ID, database UUID, staff grants or privileged data are exposed by health.
 - The next executable gate is the separate WORK Worker deployment and real health verification, followed by the Shopify SDK-hosted embedded App Home. None of these authorizes a LIVE app release or any financial operations.
+
+## 19. Dedicated WORK Worker deployed and public runtime audit prepared
+
+- Merchant's Wrangler deployment receipt confirms URL `https://jill-order-desk-work.jill-work-custom-orders.workers.dev`, version `9d83e689-9d7f-4496-b460-179d6cece4c2`, and binding to WORK D1 database `jill-order-desk-work` only.
+- The Worker responds with D1-schema-aware `/healthz` and denies all merchant routes until authenticated Shopify App Home is ready. **A successful deployment is not proof the live health check returned HTTP 200.**
+- New uncredentialed runtime command: `npm.cmd run custom-orders:work:merchant:remote:audit`; its offline unit test is `test:work-merchant-runtime-audit`. Both are strict WORK-hostname only; the remote command uses only safe GET methods.
+- Do not modify `shopify.app.work.toml` to embed an app until the real hosted App Home and online Shopify authentication/session storage are ready. Public Shopify client ID does not prove account-owner identity.

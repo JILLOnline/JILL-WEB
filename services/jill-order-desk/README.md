@@ -1,6 +1,6 @@
 # JILL Order Desk — WORK merchant host integration
 
-Status: dedicated Cloudflare WORK database provisioned and schema migration 0001 verified remotely; no Shopify App Home, staff/owner assignments or Worker deployed.
+Status: dedicated WORK database migrated and isolated Worker deployed with D1 binding; real remote health response and Shopify Admin authentication still require certification; no staff/Owner assignments.
 
 This folder deliberately has **no public admin HTTP endpoint**. The current
 WORK repository currently ships three Customer Account UI extensions and
@@ -85,7 +85,7 @@ No Shopify SDK, D1 or Google secrets are required for this source test.
 
 The merchant created a NEW Cloudflare D1 database using `wrangler d1 create jill-order-desk-work --location enam`; its immutable database ID is `3f17c186-c794-4e00-8f20-017191373a19`. `d1 list` showed 0 user tables immediately after provisioning. The database is not Shopify LIVE and is not bound to `services/custom-order-cloudflare`.
 
-The service's `wrangler.toml` now binds ONLY that D1 database as `JILL_ORDER_DESK_WORK_DB`. The Worker is intentionally not deployed. Its health route returns HTTP 200 **only if the bound D1 database contains all three required merchant tables**; otherwise HTTP 503. Every merchant route returns HTTP 503, and `admin_ready:false` is always reported. There is no authenticated merchant endpoint yet.
+The service's `wrangler.toml` now binds ONLY that D1 database as `JILL_ORDER_DESK_WORK_DB`. The isolated Worker was deployed and verified by the merchant's Wrangler receipt. Its health route returns HTTP 200 **only if the bound D1 database contains all three required merchant tables**; otherwise HTTP 503. Every merchant route returns HTTP 503, and `admin_ready:false` is always reported. There is no authenticated merchant endpoint yet.
 
 From the repository root, prepare using the existing local Wrangler installation:
 
@@ -115,7 +115,7 @@ Merchant-supplied Wrangler output confirms the migration was **applied remotely*
 - `SELECT COUNT(*) AS owners FROM jill_merchant_authority`: **0**, correct initial state
 - No Shopify Admin session authenticated, no Owner inserted, no grants activated, no merchant Worker deployed, no Shopify app URL changed and no customer-facing gateway changed.
 
-**Do not reapply the migration**, manually bootstrap Owner, or expose merchant endpoints. The next infrastructure step is a safe, *separate* WORK Worker deploy that can verify D1 health while returning 503 on all merchant routes. A real merchant UI still requires a Shopify-authenticated App Home host and owner registration.
+**Do not reapply the migration**, manually bootstrap Owner, or expose merchant endpoints. The next infrastructure step is a safe, *separate* WORK Worker deploy that can verify D1 health while returning 503 on all merchant routes. A real merchant UI still requires a Shopify-authenticated App Home host and owner registration. The WORK Worker has since been deployed; its actual health must be checked before labeling the remote D1 runtime ready.
 
 For a read-only follow-up after deploying this separate Worker:
 
@@ -125,3 +125,13 @@ curl.exe -sS -i --max-time 20 "https://jill-order-desk-work.<YOUR-CLOUDFLARE-WOR
 
 The actual endpoint must be taken from Wrangler's deployment output. Do not invent or guess the Workers subdomain or publish anything on LIVE.
 
+
+
+## Isolated merchant Worker deployment — 2026-10-14
+
+- Merchant's successful Wrangler deployment for `jill-order-desk-work` used only the dedicated WORK D1 binding `JILL_ORDER_DESK_WORK_DB`, not the public Custom Order gateway.
+- Wrangler returned the exact URL `https://jill-order-desk-work.jill-work-custom-orders.workers.dev` and Worker version ID `9d83e689-9d7f-4496-b460-179d6cece4c2`.
+- No Shopify app URL, Shopify installation, staff/Owner record, Rewards service, invoice or Customer Order event changed.
+- To certify remote infrastructure, run from repository root: `npm.cmd run custom-orders:work:merchant:remote:audit`. This command sends only four **GET** requests to that exact WORK hostname, with **no Authorization or cookies**, and checks D1-backed `/healthz` HTTP 200 plus fail-closed merchant routes HTTP 503. Nothing can be created or modified by it.
+- Deterministic contract unit test: `npm.cmd run test:work-merchant-runtime-audit`, included in standard CI/postinstall without making network requests.
+- Do not call the Admin host operational until the real Shopify SDK-authenticated online staff session is integrated, real owner is bootstrapped, and customer/staff A-B denials are confirmed.
