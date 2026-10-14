@@ -76,7 +76,7 @@ try {
   await assert.rejects(()=>auditWorkQaReadOnly({
     root,invokeClasp:()=>{throw Error('Remote call must not occur');},
   }),/project identity mismatch/);
-  assert.throws(()=>runReadOnlyClasp(root,'push'),/Only read-only/);
+  assert.throws(()=>runReadOnlyClasp(root,'push'),/Only.*read-only/);
   assert.throws(()=>runReadOnlyClasp(root,'update-deployment'),/Only.*read-only/);
   assert.throws(()=>runReadOnlyClasp(root,'pull',{versionNumber:0}),/Only.*read-only/);
   assert.throws(()=>runReadOnlyClasp(root,'pull',{versionNumber:'7'}),/Only.*read-only/);
