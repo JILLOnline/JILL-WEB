@@ -79,3 +79,27 @@ and Shopify commerce authority remain unchanged.
 - Owner registration is idempotent for the existing Owner, never changes financial or production data, and creates one Owner authority binding plus one audit receipt using the existing transactional D1 adapter.
 - The configuration flag must remain OFF until WORK Shopify login, SDK online session signatures, D1 persistence, OAuth redirect URLs and a rollback are fully certified. This source is not deployed, and its button cannot be used yet.
 - Regression command: `npm.cmd run test:jill-work-owner-setup`. Do NOT manually insert Owner staff IDs or enable this flag through the existing public customer gateway.
+
+## WORK canary build — preserves deployed deny-only Worker
+
+A **separate planned** Worker name `jill-order-desk-canary-work` is declared
+in `wrangler.canary.jsonc`. It shares only the existing WORK D1 database;
+its server-only `JILL_WORK_HOST_STAGE=canary` flag pins Shopify's app URL
+to the exact planned canary origin and owner bootstrapping is OFF. The
+original `jill-order-desk-work` deployment and D1 schema stay untouched.
+
+Build the canary using `JILL_BUILD_TARGET=canary` and `npm run build`
+(CI does this alongside the normal build). This selects only the canary
+Wrangler input. This is a **build gate, not deployment**. The canary hostname
+must be independently confirmed from Wrangler when/if it is later deployed.
+
+The Worker entrypoint's public `/healthz` proves all four D1 tables and
+always reports `admin_ready:false`. Requests to other endpoints return
+HTTP 503 until the separate Shopify API secret and 32-byte session key are
+bound in the **canary Worker only**. It rejects incorrect Host origins.
+No Owner ID can be supplied through request bodies or query strings.
+A real Shopify login will require a controlled WORK app URL/embedding
+update; a canary health check by itself cannot establish Shopify authentication.
+
+CI test: `npm.cmd run test:jill-app-home-canary`. Neither source nor CI
+provisions Cloudflare secrets, calls Shopify, or deploys to LIVE.

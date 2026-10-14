@@ -3,4 +3,5 @@ interface Env {
   SHOPIFY_API_SECRET: string;
   JILL_WORK_SESSION_KEY_B64: string;
   JILL_WORK_OWNER_BOOTSTRAP_ENABLED?: string;
+  JILL_WORK_HOST_STAGE: 'work'|'canary';
 }

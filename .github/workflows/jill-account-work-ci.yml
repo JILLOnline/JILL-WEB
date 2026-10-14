@@ -50,7 +50,7 @@ jobs:
           npm run test:customer-custom-orders
 
       - name: Verify WORK merchant online staff authorization and owner registry
-        run: npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup
+        run: npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary
 
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
@@ -146,6 +146,11 @@ jobs:
         run: npm run typecheck
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
+        run: npm run build
+      - name: Build isolated WORK canary App Home (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        env:
+          JILL_BUILD_TARGET: canary
         run: npm run build
       - name: Verify no tracked files were mutated
         run: |

@@ -5,7 +5,7 @@
 // are present. Never bind by typed email, staff ID, or shop parameter.
 import {requireWorkMerchantIdentity} from '../../backend/jill-merchant-auth.mjs';
 import {bootstrapWorkMerchantOwner} from './merchant-access.mjs';
-import {JILL_WORK_APP_HOME_ORIGIN} from './shopify-host/sdk-config.mjs';
+import {workAppHomeOrigin} from './shopify-host/sdk-config.mjs';
 
 const deny=(code,status)=>Object.freeze({ok:false,code,status});
 const safeResponse=(status,body)=>Response.json(body,{
@@ -69,7 +69,7 @@ export async function commitWorkOwnerSetup({request,authenticate,env}={}) {
   });
   if(request.method!=='POST')
     return safeResponse(405,{ok:false,code:'method_not_allowed'});
-  if(request.headers.get('origin')!==JILL_WORK_APP_HOME_ORIGIN)
+  if(request.headers.get('origin')!==workAppHomeOrigin(env.JILL_WORK_HOST_STAGE))
     return safeResponse(403,{ok:false,code:'invalid_origin'});
   const mime=(request.headers.get('content-type')||'').split(';')[0].trim();
   if(mime!=='application/x-www-form-urlencoded')

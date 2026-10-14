@@ -46,6 +46,7 @@ function auth(session=valid(100)) {
 function env(enabled=true) {
   return {
     JILL_ORDER_DESK_WORK_DB:db,
+    JILL_WORK_HOST_STAGE:'work',
     JILL_WORK_OWNER_BOOTSTRAP_ENABLED:enabled?'true':'false',
   };
 }

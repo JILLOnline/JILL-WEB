@@ -26,3 +26,10 @@ services/custom-order-cloudflare/.dev.vars*
 services/custom-order-cloudflare/.wrangler/
 services/custom-order-cloudflare/.wrangler-dist/
 services/custom-order-cloudflare/node_modules/
+
+# Shopify embedded merchant App Home local secrets and generated bundles.
+services/jill-order-desk/app-home/.dev.vars*
+services/jill-order-desk/app-home/.wrangler/
+services/jill-order-desk/app-home/dist/
+services/jill-order-desk/app-home/.react-router/
+services/jill-order-desk/app-home/node_modules/

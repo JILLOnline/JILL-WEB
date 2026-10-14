@@ -17,5 +17,9 @@
       "database_id": "3f17c186-c794-4e00-8f20-017191373a19",
       "migrations_dir": "../migrations"
     }
-  ]
+  ],
+  "vars": {
+    "JILL_WORK_HOST_STAGE": "work",
+    "JILL_WORK_OWNER_BOOTSTRAP_ENABLED": "false"
+  }
 }

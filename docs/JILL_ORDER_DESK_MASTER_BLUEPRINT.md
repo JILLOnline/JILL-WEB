@@ -292,3 +292,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - Added `services/jill-order-desk/owner-bootstrap-route.mjs` and embedded `/app/setup-owner` route. The official authenticated online Shopify WORK store owner must explicitly confirm; server-only commissioning flag defaults disabled; same-origin POST and exact confirmation required; immutable owner binding/audit remains the single canonical D1 operation. Unauthorized staff cannot become Owner through typing an ID, email, or shop name.
 - Added regression tests for fake shop, non-Owner, disabled flag, missing confirmation, CSRF-origin check, idempotent retries, owner-collision and preserved Shopify SDK auth redirects. These are source tests, **not** evidence that real Shopify login is configured.
 - DO NOT deploy or enable owner registration until encrypted real Shopify session storage, Workers Node adapter and WORK App Home OAuth flow are runtime certified, the Worker secret is provisioned privately, and WORK-only application URLs are approved. No Shopify LIVE changes authorized.
+
+## 24. Isolated WORK App Home canary build and host hardening
+
+- Separate planned Cloudflare Worker `jill-order-desk-canary-work` defined in `services/jill-order-desk/app-home/wrangler.canary.jsonc`, sharing **only** the existing WORK D1. The already deployed fail-closed merchant Worker remains untouched.
+- SDK app URL, OAuth Origin and Worker Host validation now derive exclusively from a stage-pinned, allowlisted Cloudflare environment binding, not from untrusted request headers; canary and WORK production hostnames cannot be interchanged.
+- Canaries and release Worker configs default `JILL_WORK_OWNER_BOOTSTRAP_ENABLED=false`. Requests remain HTTP 503 without separately provisioned Shopify secret and encrypted session key; public health checks verify all four real D1 tables.
+- Added CI source tests and two real independent App Home builds (normal + canary), neither deploys a Worker nor changes Shopify URLs. Do not treat an unauthenticated health result as evidence of Shopify OAuth readiness.

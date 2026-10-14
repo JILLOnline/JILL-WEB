@@ -11,12 +11,22 @@ import {
 export const JILL_WORK_APP_HOME_ORIGIN =
   'https://jill-order-desk-work.jill-work-custom-orders.workers.dev';
 
+// Planned hostname, not a deployed endpoint until Wrangler confirms it.
+export const JILL_WORK_CANARY_APP_HOME_ORIGIN =
+  'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
+
+export function workAppHomeOrigin(stage) {
+  if(stage==='work')return JILL_WORK_APP_HOME_ORIGIN;
+  if(stage==='canary')return JILL_WORK_CANARY_APP_HOME_ORIGIN;
+  throw new Error('invalid_work_host_stage');
+}
+
 export function createWorkShopifyHost({
   shopifyApp,apiVersion,distribution,sessionStorage,
-  apiSecretKey,appUrl,shop=JILL_WORK_MERCHANT_SHOP,
+  apiSecretKey,appUrl,shop=JILL_WORK_MERCHANT_SHOP,stage='work',
 }={}) {
   if(shop!==JILL_WORK_MERCHANT_SHOP ||
-     appUrl!==JILL_WORK_APP_HOME_ORIGIN ||
+     appUrl!==workAppHomeOrigin(stage) ||
      typeof shopifyApp!=='function' ||
      typeof apiVersion!=='string' || !apiVersion ||
      typeof distribution!=='string' || !distribution ||

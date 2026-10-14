@@ -6,7 +6,7 @@
 // The staff grant D1 tables control user permissions independently.
 import {createWorkD1SessionStorage} from './d1-session-storage.mjs';
 import {
-  createWorkShopifyHost,JILL_WORK_APP_HOME_ORIGIN,
+  createWorkShopifyHost,workAppHomeOrigin,
 } from './sdk-config.mjs';
 
 export function createConfiguredWorkShopifyHost({
@@ -18,6 +18,9 @@ export function createConfiguredWorkShopifyHost({
      typeof env.JILL_WORK_SESSION_KEY_B64!=='string') {
     throw new Error('work_shopify_host_secrets_or_d1_missing');
   }
+  // Only Cloudflare stage bindings determine the authorized WORK hostname.
+  const stage=env.JILL_WORK_HOST_STAGE;
+  const appUrl=workAppHomeOrigin(stage);
   const sessionStorage=createWorkD1SessionStorage({
     db:env.JILL_ORDER_DESK_WORK_DB,
     keyBase64:env.JILL_WORK_SESSION_KEY_B64,
@@ -26,6 +29,6 @@ export function createConfiguredWorkShopifyHost({
   return createWorkShopifyHost({
     shopifyApp,apiVersion,distribution,
     sessionStorage,apiSecretKey:env.SHOPIFY_API_SECRET,
-    appUrl:JILL_WORK_APP_HOME_ORIGIN,
+    appUrl,stage,
   });
 }

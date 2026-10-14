@@ -14,6 +14,7 @@ const db={
 };
 const env={
   JILL_ORDER_DESK_WORK_DB:db,
+  JILL_WORK_HOST_STAGE:'work',
   SHOPIFY_API_SECRET:'SYNTHETIC_TEST_SHOPIFY_SECRET_DO_NOT_USE',
   JILL_WORK_SESSION_KEY_B64:Buffer.alloc(32,44).toString('base64'),
 };
@@ -32,6 +33,18 @@ assert.equal(captured.sessionStorage.findSessionsByShop instanceof Function,true
 assert.equal(captured.apiKey,'f8e1ebdbae84490dc8ea5b133637e6c0');
 assert.equal(captured.appUrl,'https://jill-order-desk-work.jill-work-custom-orders.workers.dev');
 assert.ok(!JSON.stringify(instance).includes('SYNTHETIC_TEST_SHOPIFY_SECRET'));
+createConfiguredWorkShopifyHost({
+  shopifyApp:sdk,Session,env:{...env,JILL_WORK_HOST_STAGE:'canary'},
+  apiVersion:'2026-10',distribution:'single_merchant',
+});
+assert.equal(captured.appUrl,
+  'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev');
+for(const stage of ['LIVE','production','']) {
+  assert.throws(()=>createConfiguredWorkShopifyHost({
+    shopifyApp:sdk,Session,env:{...env,JILL_WORK_HOST_STAGE:stage},
+    apiVersion:'2026-10',distribution:'single_merchant',
+  }),/invalid_work_host_stage/);
+}
 for(const missing of [
  {},{...env,JILL_ORDER_DESK_WORK_DB:null},
  {...env,JILL_WORK_SESSION_KEY_B64:''},
