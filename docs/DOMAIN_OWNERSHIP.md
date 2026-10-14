@@ -47,6 +47,7 @@ This registry answers one question: **where does this behavior belong?**
 | Backend execution architecture | `docs/FUNCTIONAL_ARCHITECTURE.md` | feature contracts/platform boundaries | feature-specific business rules |
 | JILL merchant staff identity | `backend/jill-merchant-auth.mjs` | Trusted Shopify `authenticate.admin` online session only, WORK app and shop | customer account JWT, storefront app proxy, browser-supplied identity, OAuth code duplication |
 | JILL merchant operation/role policy | `backend/jill-merchant-policy.mjs` | Verified online staff identity, Shopify online scopes, one JILL grant registry | storefront UI, Google operator email, unverified session claims |
+| JILL Shopify Admin App Home read gate | `services/jill-order-desk/admin-home.mjs` | Authenticated Shopify SDK online session, sole D1 merchant grant adapter | own OAuth/JWT verification, any public API, customer-account auth, production mutations |
 | JILL merchant D1 registry adapter | `services/jill-order-desk/merchant-access.mjs` + `migrations/0001_staff_authority.sql` | WORK-only bound owner ID, staff grants and append-only audit | Shopify payment/Order truth, Google production events, customer authentication |
 | Backend HTTP routing | one web-app router/entry owner when extracted | command/query/event handlers | business logic for individual domains |
 | Backend boundary validation | one backend validation utility owner when extracted | request schemas/domain rules | browser-only presentation validation |

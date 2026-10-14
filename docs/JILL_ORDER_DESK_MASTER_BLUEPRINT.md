@@ -236,3 +236,11 @@ Intentionally BLOCKED:
 - No LIVE Shopify connector, WORK app release, new API scopes, Cloudflare deploy, Sheets write, coupon/reward changes or Shopify customer/order changes were made.
 
 Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity and staff session online token exchange. Provision isolated D1, run additive migration, explicitly bootstrap verified WORK account owner once, then prove owner/authorized-role/unauthorized-staff denial under real Shopify Admin. Grant writes only after signed admin route and full audit test.
+
+## 16. WORK Shopify app-host discovery and source-only loader
+
+- Merchant supplied `shopify app info --config work`: app `JILL WORK Rewards`, public client ID `f8e1ebdbae84490dc8ea5b133637e6c0`, dev store `jill-work.myshopify.com`, 3 existing account UI extensions, and `Update URLs: Not yet configured` as of 2026-10-14. The app is **not** yet a hosted embedded App Home.
+- Official Shopify guidance recommends hosted React Router App Home for multi-page server-side merchant workflows. This will reuse the current WORK app ID rather than creating another Shopify app. The host must configure `useOnlineTokens:true` and call Shopify's trusted `authenticate.admin(request)` before any access evaluation.
+- Created `services/jill-order-desk/admin-home.mjs` read-only gate: requires a real authenticated server loader adapter, reads only the prepared isolated D1 authority, responds with no-store view models, returns 401 for offline/invalid staff, 403 for ungranted staff, and 503 when D1/Owner is uninitialized. No admin endpoint, OAuth implementation, executable hosted site, app URL, new scopes or D1 deployment has been created.
+- Created `scripts/test-jill-order-desk-home.mjs` and added the check to source CI and postinstall. It verifies all-deny cases, genuine owner grant, read-only behavior, Shopify SDK redirects and no financial mutation paths.
+- Next: prepare an official supported hosted app codebase for the **same** WORK app using its existing CLI config; provision an exact WORK HTTPS URL and isolated session storage with authorized merchant setup. Only then safely bootstrap Owner with real Shopify session and enable read-only merchant inbox.
