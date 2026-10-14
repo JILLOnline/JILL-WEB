@@ -152,6 +152,12 @@ jobs:
         env:
           JILL_BUILD_TARGET: canary
         run: npm run build
+      - name: Verify exact WORK canary deployment manifest and dry-run package
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ../../../scripts/check-jill-app-home-canary-manifest.mjs
+          npx wrangler deploy --dry-run --config dist/server/wrangler.json --outdir .wrangler-canary-dry-run
+
       - name: Certify deployable Cloudflare WORK canary bundle (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: |
