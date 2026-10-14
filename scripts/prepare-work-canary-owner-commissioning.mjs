@@ -40,7 +40,7 @@ export function prepareOwnerCommissioningManifest({locked,oauth}) {
 export function writeOwnerCommissioningManifest({
   lockedPath=sourceLocked,oauthPath=sourceOAuth,outputPath=target,
 }={}) {
-  const unique=new Set([lockedPath,oauthPath,outputPath].map(resolve));
+  const unique=new Set([lockedPath,oauthPath,outputPath].map(p=>resolve(p)));
   guard(unique.size===3,'output must not overwrite source manifests');
   guard(existsSync(lockedPath)&&existsSync(oauthPath),
     'canary build and OAuth candidate are required');
