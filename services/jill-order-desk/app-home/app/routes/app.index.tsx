@@ -30,6 +30,11 @@ export default function JillHQ() {
               will share the original JILL submission and event history.
               The read-only WORK merchant inbox is under source certification.
             </s-paragraph>
+            {data.role==="owner"
+              ? <s-paragraph>
+                  <Link to="/app/requests">Open Custom Orders inbox (read-only)</Link>
+                </s-paragraph>
+              : null}
           </s-section>
           <s-section heading="Customers &amp; Loyalty">
             <s-paragraph>

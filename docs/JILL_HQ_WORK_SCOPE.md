@@ -38,3 +38,12 @@ LIVE is intentionally excluded.
 3. Deploy corrected frontend to WORK canary only with OAuth enabled and bootstrap disabled; verify authenticated Shopify Admin behavior.
 4. Release a distinct WORK Shopify app version with its current known-good app URLs, scopes and extensions held constant apart from the app name; verify Shopify Admin sidebar label.
 5. Smoke-test Rewards, Coupons, Customer Account and Custom Orders after a Shopify app-version release; rollback by releasing prior known-good WORK app version if any regression occurs.
+
+## P2 Custom Orders inbox (Owner-only source candidate)
+
+- Embedded WORK route: `/app/requests`, linked from the authorized HQ page. All direct navigations rerun Shopify SDK online authentication and WORK D1 authorization; a browser link or a customer-supplied ID is never permission.
+- Initial full-list access: verified Owner ONLY. Granted staff without assignment-aware, field-level policy are denied.
+- Source: **NOT YET CONNECTED**. The Google QA `Submissions` and append-only `CustomOrderEvents` remain authoritative. A signed merchant-wide read must be designed and certified separately; never reuse customer-owned `custom_order.account.list` or impersonate a Google operator.
+- No invented zero count: missing source results in `source_not_connected`. A verified complete, bounded upstream list may return zero records. Missing/corrupt data fails closed.
+- Projection: opaque ID, revision, customer/internal status, submitted/updated dates, need-by date, fulfillment, item count. No email/phone/address, artwork URLs, internal notes, API tokens or raw payload.
+- No D1 migration, Google read token, runtime deployment, staff grants, refund, invoice or order mutation in this phase. Tests are required before shipping; browser review remains a separate gate.
