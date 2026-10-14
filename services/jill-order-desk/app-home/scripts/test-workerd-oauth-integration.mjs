@@ -55,6 +55,33 @@ try {
       path+' returned unexpected HTTP '+status);
     console.log('PASS local Cloudflare runtime '+path+' HTTP '+status);
   }
+  // Match PowerShell curl.exe behavior. Shopify SDK treats some UAs as
+  // bots; login must stay available as a plain GET without a session.
+  for(const ua of ['curl/8.13.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/155.0 Safari/537.36']) {
+    const response=await worker.fetch(url+'/auth/login',{
+      method:'GET',redirect:'manual',headers:{'User-Agent':ua},
+    });
+    const status=response.status;
+    await response.arrayBuffer();
+    console.log('CANARY LOCAL login '+(ua.startsWith('curl')?'curl':'browser')+
+      ' HTTP '+status);
+    assert.equal(status,200,
+      'Login route must be reachable to user agent '+(ua.startsWith('curl')?'curl':'browser'));
+  }
+  // Shop-scoped route must preserve Shopify's SDK-owned redirect (never
+  // force a logged-in session or send tokens to another domain).
+  const scoped=await worker.fetch(url+'/auth/login?shop=jill-work.myshopify.com',{
+    method:'GET',redirect:'manual',headers:{'User-Agent':'curl/8.13.0'},
+  });
+  const scopedStatus=scoped.status;
+  const destination=scoped.headers.get('location')||'';
+  await scoped.arrayBuffer();
+  console.log('CANARY LOCAL WORK shop redirect HTTP '+scopedStatus);
+  assert.equal(scopedStatus,302);
+  assert.ok(destination.startsWith('https://admin.shopify.com/store/jill-work/'),
+    'SDK redirect must point only to WORK Admin');
+
   // An untrusted shop parameter must never initiate another store's login.
   for(const [requestUrl,init] of [
     [url+'/auth/login?shop=jqtdgr-1y.myshopify.com',{
