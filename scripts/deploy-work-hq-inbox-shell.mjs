@@ -7,10 +7,10 @@ import path from 'node:path';
 import {spawnSync,execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {createInterface} from 'node:readline/promises';
-import {pathToFileURL} from 'node:url';
+import {pathToFileURL,fileURLToPath} from 'node:url';
 import {writeOAuthManifest} from './prepare-work-canary-oauth-manifest.mjs';
 
-const ROOT=path.resolve(new URL('../',import.meta.url).pathname);
+const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=path.join(ROOT,'services/jill-order-desk/app-home');
 const WORKER='jill-order-desk-canary-work';
 const DB='3f17c186-c794-4e00-8f20-017191373a19';
