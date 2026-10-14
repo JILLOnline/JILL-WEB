@@ -90,8 +90,36 @@ const verified=requireWorkMerchantIdentity(loaded);
 assert.equal(verified.staffId,'987654321');
 assert.equal(verified.shopifyAccountOwner,true);
 assert.deepEqual(verified.scopes,['read_orders','write_orders']);
+// Real Shopify SDK serialization must preserve effective staff permissions,
+// not replace them with session.scope (the app-level grant).
+assert.equal(loaded.onlineAccessInfo.associated_user_scope,
+  'read_orders,write_orders');
+const missingScope=new Session({
+  ...s.toObject(),
+  id:'online_jill-work_missing_staff_scope',
+  onlineAccessInfo:{
+    ...s.onlineAccessInfo,
+    associated_user_scope:undefined,
+  },
+});
+await assert.rejects(()=>store.storeSession(missingScope),
+  /missing_verified_staff_scope/);
 assert.equal((await store.findSessionsByShop(shop)).length,1);
 assert.equal(await store.deleteSession(s.id),true);
 assert.equal(await store.loadSession(s.id),undefined);
+const offline=new Session({
+  id:'offline_jill-work',
+  shop,
+  state:'offline-synthetic',
+  isOnline:false,
+  accessToken:fakeToken,
+  scope:'read_orders',
+});
+assert.equal(await store.storeSession(offline),true);
+const recoveredOffline=await store.loadSession(offline.id);
+assert.ok(recoveredOffline instanceof Session);
+assert.equal(recoveredOffline.isOnline,false);
+assert.equal(recoveredOffline.onlineAccessInfo,undefined);
+assert.equal(await store.deleteSession(offline.id),true);
 assert.ok(sqlCalls.every(sql=>!sql.includes(fakeToken)));
 console.log('PASS actual Shopify Session SDK AES-GCM D1 serialization and verified WORK staff identity round trip; zero real tokens or API calls.');

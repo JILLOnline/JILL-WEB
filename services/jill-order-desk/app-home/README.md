@@ -117,3 +117,9 @@ provisions Cloudflare secrets, calls Shopify, or deploys to LIVE.
 - This imports the **installed actual** Shopify `Session` class, generates an entirely synthetic online session, encrypts it with the same production storage adapter into an in-memory fake D1, restores the true Shopify Session instance, then validates the stored staff Owner ID and effective scopes with `requireWorkMerchantIdentity`.
 - Requires no Shopify credentials, authorization, Cloudflare access or personal records; added to the real App Home GitHub build job before typecheck and bundling.
 - If a new Shopify package version changes its Session serialization, **block credential provisioning** until the adapter passes this gate. Passing still does not certify Cloudflare OAuth or authorize Owner registration.
+
+## Shopify real-SDK session restoration finding and remediation
+
+- The first real package test caught a **fail-closed** incompatibility: `Session.fromPropertyArray(..., true)` preserved Shopify staff identity but omitted `onlineAccessInfo.associated_user_scope`. Our merchant policy correctly denied that restored session rather than incorrectly trusting the app's `session.scope`.
+- The D1 adapter now uses a versioned authenticated encryption envelope (`version: 1`) containing the official Shopify property array **plus the original Shopify-provided effective user scope**. Restore explicitly applies that scope only after AES-GCM verification, WORK shop/session ID validation, and rehydration into a genuine Shopify `Session` instance. Missing scope on an online session fails closed.
+- The real SDK test requires online staff Owner ID/effective scopes to survive restore, a missing staff scope to fail, offline sessions to round-trip, and the D1 rows to contain no plaintext staff information or token. **No real credentials have been stored**; this is pre-activation remediation.

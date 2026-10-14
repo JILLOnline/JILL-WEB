@@ -55,7 +55,17 @@ export function createWorkD1SessionStorage({db,keyBase64,Session,cryptoImpl=cryp
     validSession(session);
     const properties=session.toPropertyArray(true);
     assert(Array.isArray(properties),'invalid_shopify_session_properties');
-    const encoded=encoder.encode(JSON.stringify(properties));
+    // Shopify's current toPropertyArray(true) omits the verified effective
+    // online associated_user_scope when fromPropertyArray reconstructs it.
+    // Save that issuer-provided field INSIDE the authenticated ciphertext.
+    // Never synthesize it from session.scope (app-level requested scopes).
+    const staffScope=session.isOnline
+      ? session.onlineAccessInfo?.associated_user_scope : null;
+    assert(!session.isOnline || typeof staffScope==='string',
+      'missing_verified_staff_scope');
+    const encoded=encoder.encode(JSON.stringify({
+      version:1,properties,staffScope,
+    }));
     assert(encoded.length>0 && encoded.length<=MAX_PAYLOAD,
       'shopify_session_too_large');
     const nonce=cryptoImpl.getRandomValues(new Uint8Array(12));
@@ -85,10 +95,23 @@ export function createWorkD1SessionStorage({db,keyBase64,Session,cryptoImpl=cryp
       additionalData:encoder.encode(JILL_WORK_MERCHANT_SHOP+'\n'+row.id),
       tagLength:128,
     },key,ciphertext);
-    const session=Session.fromPropertyArray(JSON.parse(
-      decoder.decode(new Uint8Array(data))),true);
+    const envelope=JSON.parse(decoder.decode(new Uint8Array(data)));
+    assert(envelope?.version===1 && Array.isArray(envelope.properties),
+      'unsupported_shopify_session_envelope');
+    const session=Session.fromPropertyArray(envelope.properties,true);
     assert(exactShop(session) && session.id===row.id &&
       typeof session.isOnline==='boolean','stored_session_identity_mismatch');
+    if(session.isOnline) {
+      assert(typeof envelope.staffScope==='string' &&
+        session.onlineAccessInfo &&
+        typeof session.onlineAccessInfo==='object' &&
+        session.onlineAccessInfo.associated_user,
+        'missing_verified_staff_scope');
+      // Restored only from encrypted, authenticated OAuth session storage.
+      session.onlineAccessInfo.associated_user_scope=envelope.staffScope;
+    } else {
+      assert(envelope.staffScope===null,'offline_session_scope_mismatch');
+    }
     return session;
   }
 
