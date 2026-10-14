@@ -49,6 +49,9 @@ jobs:
           npm run test:custom-order-account-read
           npm run test:customer-custom-orders
 
+      - name: Verify WORK merchant online staff authorization and owner registry
+        run: npm run test:jill-merchant-auth
+
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
 

@@ -45,6 +45,9 @@ This registry answers one question: **where does this behavior belong?**
 | Custom-order API transport contract | `contracts/custom-order-api.schema.json` | Custom Order feature contract and normalized browser state | backend implementation details or rewards data |
 | Custom-order API contract guard | `scripts/check-custom-order-contract.mjs` | Custom Order API schema | theme or rewards validation |
 | Backend execution architecture | `docs/FUNCTIONAL_ARCHITECTURE.md` | feature contracts/platform boundaries | feature-specific business rules |
+| JILL merchant staff identity | `backend/jill-merchant-auth.mjs` | Trusted Shopify `authenticate.admin` online session only, WORK app and shop | customer account JWT, storefront app proxy, browser-supplied identity, OAuth code duplication |
+| JILL merchant operation/role policy | `backend/jill-merchant-policy.mjs` | Verified online staff identity, Shopify online scopes, one JILL grant registry | storefront UI, Google operator email, unverified session claims |
+| JILL merchant D1 registry adapter | `services/jill-order-desk/merchant-access.mjs` + `migrations/0001_staff_authority.sql` | WORK-only bound owner ID, staff grants and append-only audit | Shopify payment/Order truth, Google production events, customer authentication |
 | Backend HTTP routing | one web-app router/entry owner when extracted | command/query/event handlers | business logic for individual domains |
 | Backend boundary validation | one backend validation utility owner when extracted | request schemas/domain rules | browser-only presentation validation |
 | Privileged Shopify API transport | one backend Shopify client owner when extracted | credentials, Shopify Admin API | rewards/custom-order business rules |

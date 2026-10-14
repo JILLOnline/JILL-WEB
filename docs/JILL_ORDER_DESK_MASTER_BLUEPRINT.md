@@ -1,6 +1,6 @@
 # JILL Order Desk — Master Architecture and Delivery Contract v1
 
-Status: DESIGN APPROVED FOR WORK PLANNING ONLY; NOT IMPLEMENTED, NOT DEPLOYED. Date: 2026-10-14.
+Status: P0/P1 SERVER-SIDE AUTHORIZATION FOUNDATION IMPLEMENTED IN WORK SOURCE ONLY; embedded Shopify admin host, grant mutations, D1 provisioning and live Owner bootstrap NOT DEPLOYED. Date: 2026-10-14.
 Environment: JILL WORK Shopify development store, branch jill/rewards-work.
 No LIVE operations or Shopify connector use are authorized by this document.
 
@@ -217,3 +217,22 @@ Explicit user approval required for any production Shopify scope change, custome
 - https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order
 - https://shopify.dev/docs/apps/build/webhooks/verify-deliveries
 - https://shopify.dev/docs/apps/build/webhooks
+
+
+## 15. Implementation log — 2026-10-14 P0/P1 source
+
+Implemented:
+- backend/jill-merchant-auth.mjs: a strict WORK-only adapter for a Shopify SDK-verified, online staff session; validates the pinned shop, pinned public WORK app ID, verified associated_user numeric ID, account-owner flag, online effective scopes, and optional session expiry. This code cannot validate arbitrary browser tokens by itself: the Shopify-managed authenticate.admin server route remains mandatory before calling it.
+- backend/jill-merchant-policy.mjs: one operation/role registry and fail-closed permission evaluator; protected owner binding; revocation checks and assigned-only access for Viewer/Production.
+- services/jill-order-desk/merchant-access.mjs: D1 parameterized, server-only owner/grant reads and explicit opt-in owner-bootstrap logic; no public HTTP routes or deployed configuration. Work shop only; first immutable owner wins. No Shopify API mutation.
+- services/jill-order-desk/migrations/0001_staff_authority.sql: WORK-only owner/staff/audit tables, NOT executed against any database. Shopify still owns money and Google still owns production history.
+- scripts/test-jill-merchant-auth.mjs: wrong shop, expired/offline/unverified session, missing scope, owner revocation, staff grants, double-owner collision and idempotent owner bootstrap tests. CI/postinstall validates the source without contacting Shopify.
+- docs/DOMAIN_OWNERSHIP.md now records three distinct owners.
+
+Intentionally BLOCKED:
+- No embedded Shopify App Home route exists yet. The SDK and online token exchange must be linked to the EXISTING WORK app via its verified App Home configuration before a merchant identity can be trusted.
+- No D1 WORK database provisioned/migration applied; bootstrap requires merchant-owned action after confirmation. No staff grant write endpoint exposed. All production, quote, invoice, refund, fulfillment, team grant/revoke and ownership-transfer actions default DISABLED in the policy.
+- No private Google operator privileges inferred from Shopify staff authentication; P3 signed service-command bridge must be separately authorized and tested.
+- No LIVE Shopify connector, WORK app release, new API scopes, Cloudflare deploy, Sheets write, coupon/reward changes or Shopify customer/order changes were made.
+
+Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity and staff session online token exchange. Provision isolated D1, run additive migration, explicitly bootstrap verified WORK account owner once, then prove owner/authorized-role/unauthorized-staff denial under real Shopify Admin. Grant writes only after signed admin route and full audit test.
