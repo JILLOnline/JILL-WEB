@@ -16,7 +16,7 @@ function stringSetting(source, key) {
 
 // The file is pulled from Shopify, not synthesized or shared with LIVE.
 // Refuse a misleading preview before Shopify CLI receives any arguments.
-export function assertRewardsWorkConfig(source) {
+export function assertRewardsWorkConfig(source,{requireHqName=false}={}) {
   if (typeof source !== 'string' || !source.trim()) {
     throw new Error('Missing WORK app configuration. Run npm run rewards:work:link first.');
   }
@@ -26,7 +26,8 @@ export function assertRewardsWorkConfig(source) {
   if (clientId !== WORK_CLIENT_ID || clientId === LIVE_CLIENT_ID) {
     throw new Error('Refusing JILL HQ WORK: linked Shopify app Client ID is not the isolated WORK app.');
   }
-  if (appName !== WORK_APP_NAME) {
+  if (appName !== WORK_APP_NAME &&
+      (appName !== WORK_APP_LEGACY_NAME || requireHqName)) {
     throw new Error('Refusing JILL HQ WORK: the linked WORK app name must be JILL HQ — WORK. Run npm run rewards:work:prepare to prepare the isolated config.');
   }
   if (/jqtdgr-1y\.myshopify\.com|jillonlinestore\.com|AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/i.test(source)) {
@@ -58,6 +59,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!fs.existsSync(filename)) {
     throw new Error(`Missing ${WORK_CONFIG_FILE}. Run npm run rewards:work:link first.`);
   }
-  const verified = assertRewardsWorkConfig(fs.readFileSync(filename, 'utf8'));
+  const verified = assertRewardsWorkConfig(fs.readFileSync(filename, 'utf8'),{requireHqName:true});
   console.log(`Verified isolated ${verified.name} app on ${verified.store}. Starting Shopify WORK preview is allowed.`);
 }
