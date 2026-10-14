@@ -152,6 +152,17 @@ jobs:
         env:
           JILL_BUILD_TARGET: canary
         run: npm run build
+      - name: Certify deployable Cloudflare WORK canary bundle (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          echo "Cloudflare candidate output:"
+          find dist -maxdepth 6 -type f \( -name wrangler.json -o -name '_worker.js' -o -name 'index.js' \) | sort
+          manifest="$(find dist -maxdepth 6 -type f -name wrangler.json | head -n 1)"
+          if [ -z "$manifest" ]; then
+            echo "No generated deployable Wrangler manifest found. Do not provision secrets or deploy this host."
+            exit 1
+          fi
+          echo "Deploy manifest: $manifest"
       - name: Verify no tracked files were mutated
         run: |
           if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
