@@ -33,7 +33,7 @@ if(!current.includes('write_orders')) {
   content=content.replace(section[0],modified);
 }
 // Validate the complete resulting config BEFORE writing any local file.
-assertRewardsWorkConfig(content);
+assertRewardsWorkConfig(content,{requireHqName:true});
 if(content!==original) {
   fs.writeFileSync(WORK_CONFIG_FILE,content);
   console.log('Prepared WORK app name '+WORK_APP_NAME+' (local config only).');
