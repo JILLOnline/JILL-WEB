@@ -1,0 +1,5 @@
+interface Env {
+  JILL_ORDER_DESK_WORK_DB: D1Database;
+  SHOPIFY_API_SECRET: string;
+  JILL_WORK_SESSION_KEY_B64: string;
+}

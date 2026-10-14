@@ -50,7 +50,7 @@ jobs:
           npm run test:customer-custom-orders
 
       - name: Verify WORK merchant online staff authorization and owner registry
-        run: npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition
+        run: npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold
 
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
@@ -126,3 +126,27 @@ jobs:
 
       - name: Verify no tracked files changed
         run: test -z "$(git status --porcelain --untracked-files=no)"
+
+  merchant_app_home:
+    name: Build WORK embedded Shopify Admin App Home (no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout WORK source
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install isolated App Home dependencies
+        working-directory: services/jill-order-desk/app-home
+        run: npm install --no-audit --no-fund
+      - name: Build real React Router Cloudflare App Home (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run build
+      - name: Verify no tracked files were mutated
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            git status --short
+            exit 1
+          fi

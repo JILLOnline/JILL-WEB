@@ -152,3 +152,9 @@ The actual endpoint must be taken from Wrangler's deployment output. Do not inve
 - Online tokens must expire; encrypted offline SDK sessions may be retained only within approved Shopify/session security requirements. Rotate the encryption key via a reviewed re-encryption strategy, not by overwriting the secret without session migration.
 - Independent source test `npm.cmd run test:jill-shopify-d1-sessions` checks ciphertext round trips, nonce tampering, different-row substitution, expiry, deletions and LIVE-shop rejection. No real Shopify credentials are used.
 - **Do not run the migration yet:** certify the real SDK adapter and its Workers runtime bundling first, then apply remote `0002` to `jill-order-desk-work` only. Provision the secret through Wrangler after validating host runtime; never write it into Git, `.env` screenshots, CLI output or Google.
+
+## Candidate embedded Admin App Home — source compilation gate
+
+- The real React Router + Cloudflare Vite + Shopify SDK app is now under `services/jill-order-desk/app-home/`. It has authenticated `/app`, `/auth/login`, and OAuth-catchall routing, an embedded Shopify App Bridge shell, plus a deny-by-default Owner/staff landing screen.
+- This is a **candidate WORK replacement**, not the deployed Worker. Do not modify `shopify.app.work.toml`, public Cloudflare bindings, app scopes, or LIVE while source builds and a real online staff session remain unverified. It uses its own package dependencies and GitHub CI build job.
+- See `app-home/README.md` for the complete compilation, secure session secret and Worker cutover gates. Never deploy it on top of the healthy fail-closed Worker before a rollout manifest and rollback are recorded.

@@ -278,3 +278,10 @@ Next P1 runtime gate: confirm existing WORK Shopify app App Home host capacity a
 - `0002_shopify_sessions.sql` adds `jill_shopify_sessions` to the existing dedicated WORK D1. This is a **pending migration**, not runtime data. Shopify online+offline token payloads are AES-256-GCM encrypted with unique nonces, an app-specific secret key, and authenticated session ID/shop binding; no raw access token or API secret is written to the role tables.
 - The adapter implements the Shopify SessionStorage contract with the SDK Session serializer and preserves owner flag and staff-scoped online access information. Deterministic no-network tests cover read/store/delete/shop queries, expiry and tamper rejection.
 - Before activation: validate real Shopify SDK Session class compatibility, Cloudflare Workers packaging under Node compatibility, secret provisioning, Shopify auth callback/session flows, Owner role binding and shop-scoped leak denial. User authorization required for D1 migration and Shopify app URLs.
+
+## 22. Candidate embedded Shopify React Router App Home (unreleased)
+
+- Created a standalone full-stack React Router v7 + Cloudflare Vite candidate App Home under `services/jill-order-desk/app-home/`, using the existing WORK shop/client, Node compatibility for the Shopify SDK, authenticated `/app` and `/auth/*` routes, Shopify App Bridge, and the existing D1-backed owner/roles gate.
+- Its Worker configuration uses the same planned WORK merchant hostname and D1 binding but is **not deployed**. The existing fail-closed Worker remains active; only a reviewed replacement can change it.
+- A dedicated GitHub source build job performs real npm dependency install and React Router bundling (not an SDK mock). Successful builds are not proof of real OAuth or owner registration. The encrypted session migration `0002` and Shopify secret remain unprovisioned.
+- User-approved runtime sequence: certified build → SDK/Cloudflare compatibility → versioned D1 migration and separate key secret → authenticated canary → WORK-only Shopify application URL/embedding change → real owner binding → A/B operator QA. See the candidate README.

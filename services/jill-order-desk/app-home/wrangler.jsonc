@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jill-order-desk-work",
+  "main": "workers/app.ts",
+  "compatibility_date": "2026-10-14",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "assets": {
+    "directory": "./build/client"
+  },
+  "d1_databases": [
+    {
+      "binding": "JILL_ORDER_DESK_WORK_DB",
+      "database_name": "jill-order-desk-work",
+      "database_id": "3f17c186-c794-4e00-8f20-017191373a19",
+      "migrations_dir": "../migrations"
+    }
+  ]
+}
