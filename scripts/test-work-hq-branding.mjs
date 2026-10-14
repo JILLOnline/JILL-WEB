@@ -51,8 +51,9 @@ try {
     assert.throws(run,'Unknown or LIVE Shopify config must be refused');
     assert.equal(readFileSync(path,'utf8'),rejected,'Rejected app config must not be changed');
   }
-  assert.equal(assertRewardsWorkConfig(before).name,WORK_APP_LEGACY_NAME);
-  assert.throws(()=>assertRewardsWorkConfig(before,{requireHqName:true}),/JILL HQ/);
+  const validLegacy=after.replace(WORK_APP_NAME,WORK_APP_LEGACY_NAME);
+  assert.equal(assertRewardsWorkConfig(validLegacy).name,WORK_APP_LEGACY_NAME);
+  assert.throws(()=>assertRewardsWorkConfig(validLegacy,{requireHqName:true}),/JILL HQ/);
 } finally {
   rmSync(dir,{recursive:true,force:true});
 }
