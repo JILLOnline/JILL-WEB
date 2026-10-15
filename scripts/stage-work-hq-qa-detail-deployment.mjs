@@ -53,7 +53,8 @@ export function certifyDetailQaGate({head,remote,branch,dirty,identity,
   const p=deployments;
   if(!(p instanceof Map)||!p.has(PINNED)||!p.has(PREVIOUS_HQ))
     stop('protected_qa_deployment_missing');
-  if(p.get(PINNED).version!==audit.publishedVersion)
+  if(p.get(PINNED).version!==audit.publishedVersion ||
+     p.get(PREVIOUS_HQ).version!==8)
     stop('protected_pinned_version_drift');
   if(typeof canonicalSource!=='string' ||
     !canonicalSource.includes('function jillWorkHqMerchantDetailVerified_(') ||
