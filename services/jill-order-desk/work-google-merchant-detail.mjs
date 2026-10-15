@@ -9,7 +9,7 @@ import {projectVerifiedWorkMerchantRequestDetail}
 // Separate, immutable Google WORK QA detail @9. The merchant list/status
 // endpoints stay pinned to their original verified @7 deployment.
 export const JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL =
-  'https://script.google.com/macros/s/AKfycby2CWe5_GeTfVwM1ITER0psT5e00UCysEsHXpiqWXTBHTCxKr5E584IA1ErxPPwIzH/exec';
+  'https://script.google.com/macros/s/AKfycby2CWe5_GeTfVwMlITER0psT5e00UCysEsHXpiqWXTBHTCxKr5E584IA1ErxPPwIzH/exec';
 
 const SHOP='jill-work.myshopify.com';
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
