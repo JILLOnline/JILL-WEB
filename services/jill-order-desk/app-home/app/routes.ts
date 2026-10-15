@@ -6,6 +6,7 @@ export default [
   route("app","routes/app.tsx",[
     index("routes/app.index.tsx"),
     route("requests","routes/app.requests.tsx"),
+    route("requests/:submissionId","routes/app.requests.$submissionId.tsx"),
     route("setup-owner","routes/app.setup-owner.tsx"),
   ]),
 ] satisfies RouteConfig;
