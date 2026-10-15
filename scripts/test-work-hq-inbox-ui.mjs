@@ -61,14 +61,20 @@ const helper=readFileSync(
   'services/jill-order-desk/inbox-display.mjs','utf8');
 const landing=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.index.tsx','utf8');
+const serverLoader=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
 for(const expected of [
   'loadWorkMerchantInbox','workShopify(env).authenticate',
-  'readWorkGoogleQaMerchantList','readOnly:boolean',
+  'readWorkGoogleQaMerchantList',
+])assert.ok(serverLoader.includes(expected),expected);
+for(const expected of [
+  'readOnly:boolean',
   'inboxStats','selectInboxRecords','useMemo','type="search"',
   'aria-live="polite"','View request details','<details',
   'Customer contact details,','Read-only WORK preview',
 ])assert.ok(route.includes(expected),expected);
 assert.match(route,/data\.state==="source_unavailable"/);
+assert.doesNotMatch(route,/loadWorkMerchantInbox|workShopify\(|readWorkGoogleQaMerchantList|export async function loader/);
 assert.match(route,/data\.state==="access_denied"/);
 assert.match(route,/data\.state==="source_not_connected"/);
 assert.match(route,/item\.submission_id/);
