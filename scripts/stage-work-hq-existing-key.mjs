@@ -14,6 +14,7 @@ import {validateCopiedExistingKey,testExistingMerchantSecret}
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=path.join(ROOT,'services/jill-order-desk/app-home');
 const CONFIG=path.join(APP,'dist/server/wrangler.oauth-canary.json');
+const WRANGLER_BIN=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const WORKER='jill-order-desk-canary-work';
 const ACTIVE='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
 const SECRET_NAME='JILL_HQ_MERCHANT_READ_SECRET';
@@ -46,16 +47,45 @@ export function assertActiveWorkerBinding(versionDetails) {
 function git(...args) {
   return execFileSync('git',['-C',ROOT,...args],{encoding:'utf8'}).trim();
 }
-// All command tokens here are repository-owned literals, never clipboard text.
-// Wrangler stdin is piped, not a command argument, env file or log line.
+// Run Wrangler's JS binary with Node directly, without cmd.exe, npx.cmd,
+// or shell interpolation. A multiword --message MUST remain a single argv
+// entry; the private key travels only by stdin, never argv/env/shell.
+export function wranglerProcessSpec(args,{input}={}) {
+  if(!Array.isArray(args) || args.some(arg=>typeof arg!=='string'))
+    throw Error('wrangler_invalid_argv');
+  return Object.freeze({
+    executable:process.execPath,
+    argv:Object.freeze([WRANGLER_BIN,...args]),
+    options:Object.freeze({
+      cwd:APP,
+      input,
+      encoding:'utf8',
+      shell:false,
+      windowsHide:true,
+      maxBuffer:8*1024*1024,
+      stdio:['pipe','pipe','pipe'],
+    }),
+  });
+}
+export function safeWranglerError(stderr) {
+  const str=String(stderr||'');
+  // Only print these constant labels, never Cloudflare stderr or the key.
+  if(/unknown arguments?|too many non-option arguments|unknown command|invalid option/i.test(str))
+    return 'wrangler_invalid_arguments';
+  if(/403|unauthorized|not authorized|insufficient permissions|permission denied|access denied/i.test(str))
+    return 'wrangler_access_denied';
+  if(/cannot find module|module not found|could not read file|ENOENT/i.test(str))
+    return 'wrangler_missing_dependency_or_config';
+  if(/timeout|timed out|fetch failed|ECONN|ENOTFOUND|network error/i.test(str))
+    return 'wrangler_network_failure';
+  return 'wrangler_failed';
+}
 function cmd(args,{input}={}) {
-  const windows=process.platform==='win32';
-  const proc=spawnSync(windows?'npx.cmd':'npx',
-    ['--no-install','wrangler',...args],{
-      cwd:APP,input,encoding:'utf8',shell:windows,windowsHide:true,
-      maxBuffer:8*1024*1024,stdio:['pipe','pipe','pipe'],
-    });
-  ensure(!proc.error && proc.status===0,'cloudflare_command_failed');
+  ensure(fs.existsSync(WRANGLER_BIN),'wrangler_local_binary_missing');
+  const spec=wranglerProcessSpec(args,{input});
+  const proc=spawnSync(spec.executable,spec.argv,spec.options);
+  ensure(!proc.error && proc.status===0,
+    proc.error?'wrangler_process_failed':safeWranglerError(proc.stderr));
   return String(proc.stdout||'');
 }
 function deployedVersion() {
@@ -146,11 +176,18 @@ if(invoked) {
     console.log('Active WORK Worker version remains: '+active);
     console.log('Next: inspect candidate bindings before a separate release.');
     console.log('Google QA, My JILL, Rewards and LIVE were not changed.');
-  } catch {
-    // Never print raw exception messages or Wrangler responses that could
-    // accidentally disclose a credential or customer detail.
+  } catch(error) {
+    // This string is always a locally-authored allowlisted constant.
+    // Never print raw exceptions, Wrangler output, or customer details.
+    const known=new Set([
+      'wrangler_invalid_arguments','wrangler_access_denied',
+      'wrangler_missing_dependency_or_config','wrangler_network_failure',
+      'wrangler_failed','wrangler_local_binary_missing',
+      'wrangler_process_failed',
+    ]);
+    const classification=known.has(error?.message)?error.message:'preflight_failed';
     console.error('WORK HQ existing-key staging STOPPED at '+stage+
-      '. Do not retry or deploy without reviewing this checkpoint.');
+      ' ('+classification+'). Do not retry or deploy without reviewing this checkpoint.');
     process.exitCode=1;
   } finally {
     if(io)io.close();
