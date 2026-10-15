@@ -43,6 +43,34 @@ The visible screenshot was of PROPERTY **NAMES**, not values; the names do
 not prove a given project has the correct secret configured, nor identify its
 environment. Google Apps Script \`PropertiesService\` is scoped to each script.
 
+## Separate Google Apps Script project believed to be LIVE
+
+The user has now identified a distinct Apps Script project titled
+**JILL Custom Order Rewards**. Its screenshots show:
+
+- Sensitive: `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_CLIENT_SECRET`
+- Store configuration: `SHOPIFY_CLIENT_ID`, `SHOPIFY_REDIRECT_URI`,
+  `SHOPIFY_SHOP`, `SHOPIFY_STORE`, `JILL_SHEET_ID`
+- Generated state, NOT a credential: `JILL_REWARDS_INFRA_CHECK_AT`
+
+This project is **likely LIVE but not independently certified** by project ID,
+Shopify store and Google deployment ID. For that reason, the local initializer
+adds a clearly named `[LIVE.GOOGLE_CUSTOM_ORDER_REWARDS_CANDIDATE]` section
+with empty values and a warning, not a production-authorized configuration.
+The runtime timestamp is included only as a comment and must not be restored.
+
+**All existing WORK entries are preserved exactly.** The earlier unassigned
+fields are also left untouched, even if a name reappears under a tentative
+LIVE section. A coincident name does not imply that values are interchangeable.
+Other screenshot names such as `JILL_CUSTOM_ORDER_GATEWAY_SECRET`,
+`JILL_CUSTOM_ORDER_ADMINS`, and `JILL_PUBLIC_PROMOTIONS_INFRA_CHECK_AT`
+remain unassigned until separately grounded in the originating project.
+
+Re-running `npm run jill:private:initialize` on the local Windows machine
+appends this new section exactly once to an existing v2 file; it backs up the
+existing file before writing. It never reads Google Script Properties,
+copies LIVE values, or modifies any Google, Shopify or Cloudflare systems.
+
 ## Names from an earlier speculative local template — NOT verified mappings
 
 \`SHOPIFY_WORK_API_SECRET\`, \`SHOPIFY_KEEP_API_SECRET\`,
