@@ -94,7 +94,7 @@ function session(id='123',owner=true){return {
 };}
 const auth=s=>({admin:async()=>({session:s})});
 const invoke=(overrides={})=>handleWorkMerchantCommand({
-  request,authenticate:auth(session()),db,enabled:true,secret:SECRET,
+  request:request.clone(),authenticate:auth(session()),db,enabled:true,secret:SECRET,
   now:()=>Number(stamp),backendFetch:async()=>Response.json(response),...overrides,
 });
 let out=await invoke({enabled:false});assert.equal(out.status,503);
