@@ -29,6 +29,38 @@ const STAGE_VAR=Object.freeze({
 });
 
 function gate(ok,code){if(!ok)throw Error(code);}
+// Stable JSON representation prevents a false Worker drift warning caused
+// solely by Cloudflare reordering object keys. Arrays and all values remain
+// strict: a real difference still blocks the release.
+export function sameStructuredData(a,b){
+  function canonical(value){
+    if(Array.isArray(value))return value.map(canonical);
+    if(value && typeof value==='object')
+      return Object.fromEntries(Object.keys(value).sort()
+        .map(k=>[k,canonical(value[k])]));
+    return value;
+  }
+  return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
+}
+export function safeRuntimeDiffLabels(activeRuntime,candidateRuntime){
+  const known=[
+    'compatibility_date','compatibility_flags','usage_model',
+    'limits','containers',
+  ];
+  const safe=[];
+  for(const key of known) {
+    if(!sameStructuredData(activeRuntime?.[key],candidateRuntime?.[key]))
+      safe.push(key);
+  }
+  const extraA=activeRuntime&&typeof activeRuntime==='object'?
+    Object.fromEntries(Object.entries(activeRuntime)
+      .filter(([k])=>!known.includes(k))):{};
+  const extraC=candidateRuntime&&typeof candidateRuntime==='object'?
+    Object.fromEntries(Object.entries(candidateRuntime)
+      .filter(([k])=>!known.includes(k))):{};
+  if(!sameStructuredData(extraA,extraC))safe.push('other_runtime_settings');
+  return safe;
+}
 export function selectVerifiedCandidate(list,activeVersion,activeId=ACTIVE){
   gate(Array.isArray(list)&&list.length>=2&&list.length<=10,'invalid_version_list');
   gate(activeVersion?.id===activeId && activeId===ACTIVE,'active_version_changed');
@@ -73,8 +105,8 @@ export function inspectVersions({active,candidate}){
   gate(JSON.stringify(active.resources.script.handlers)===
     JSON.stringify(candidate.resources.script.handlers),
     'worker_handler_changed');
-  gate(JSON.stringify(active.resources.script_runtime)===
-    JSON.stringify(candidate.resources.script_runtime),
+  gate(sameStructuredData(active.resources.script_runtime,
+      candidate.resources.script_runtime),
     'worker_runtime_changed');
   const a=orderedBindings(active.resources.bindings);
   const c=orderedBindings(candidate.resources.bindings);
@@ -96,7 +128,7 @@ export function inspectVersions({active,candidate}){
   for(const b of a) {
     // Entire binding payload must remain identical, not merely the name.
     // For secret_text, Cloudflare returns metadata, not plaintext values.
-    gate(JSON.stringify(b)===JSON.stringify(cbc.get(b.name)),
+    gate(sameStructuredData(b,cbc.get(b.name)),
       'binding_changed_'+b.name);
   }
   return Object.freeze({
@@ -172,7 +204,15 @@ if(invoked){
     const active=version(ACTIVE);
     const id=selectVerifiedCandidate(candidateList(),active);
     step='candidate';
-    const match=inspectVersions({active,candidate:version(id)});
+    const candidate=version(id);
+    // Log only the names of well-defined runtime fields, NEVER their values.
+    // A true change remains an absolute release blocker.
+    const runtimeDifferences=safeRuntimeDiffLabels(
+      active.resources?.script_runtime,candidate.resources?.script_runtime);
+    if(runtimeDifferences.length)
+      console.error('WORK runtime differences (field names only): '+
+        runtimeDifferences.join(', '));
+    const match=inspectVersions({active,candidate});
     console.log('PASS WORK active version: '+match.activeId);
     console.log('PASS exact inactive key candidate: '+match.candidateId);
     console.log('PASS identical Worker code, runtime, D1, Shopify secrets, OAuth ON and Owner setup OFF.');
