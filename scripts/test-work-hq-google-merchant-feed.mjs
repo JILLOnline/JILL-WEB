@@ -131,6 +131,34 @@ stores.set('Submissions',intake);
 stores.set('CustomOrderEvents',makeSheet(EVENT_HEADERS,[]));
 assert.equal(ctx.jillWorkHqMerchantList_(request).error.code,'private_read_unavailable');
 stores.set('CustomOrderEvents',events);
+// The editor-visible diagnostic must NEVER expose raw rows, customer data,
+// Shopify tokens or exceptions. Its only output is a count or safe error code.
+const diagnosticStart=source.indexOf('/* WORK HQ QA DIAGNOSTIC V1');
+const diagnosticEnd=source.indexOf('/* END WORK HQ QA DIAGNOSTIC V1 */',
+  diagnosticStart);
+assert.ok(diagnosticStart>0 && diagnosticEnd>diagnosticStart);
+const diagnostics=[];
+ctx.Logger={log:(line)=>diagnostics.push(String(line))};
+vm.runInContext(source.slice(diagnosticStart,diagnosticEnd),ctx);
+assert.equal(ctx.jillWorkHqQaReadDiagnostic(),true);
+assert.ok(diagnostics.includes('WORK_HQ_QA_DIAGNOSTIC: read_key_configured=true'));
+assert.ok(diagnostics.includes('WORK_HQ_QA_DIAGNOSTIC: PASS request_count=1'));
+stores.set('CustomOrderEvents',makeSheet(EVENT_HEADERS,[]));
+assert.throws(()=>ctx.jillWorkHqQaReadDiagnostic(),
+  /WORK_HQ_QA_DIAGNOSTIC: missing_event_history/);
+assert.ok(diagnostics.includes(
+  'WORK_HQ_QA_DIAGNOSTIC: FAIL code=missing_event_history'));
+stores.set('CustomOrderEvents',events);
+ctx.JILL_REWARDS_RUNTIME='LIVE';
+assert.throws(()=>ctx.jillWorkHqQaReadDiagnostic(),/wrong_runtime/);
+ctx.JILL_REWARDS_RUNTIME='WORK';ctx.JILL_CUSTOM_ORDER_SANDBOX=false;
+assert.throws(()=>ctx.jillWorkHqQaReadDiagnostic(),/wrong_runtime/);
+ctx.JILL_CUSTOM_ORDER_SANDBOX=true;
+const diagnosticLog=diagnostics.join('\n');
+for(const forbidden of [
+  'secret.customer@example.invalid','555-555-5555','PRIVATE_INTERNAL_NOTE',
+  'PRIVATE_OPERATOR','Secret private design','SECRET CUSTOMER NAME',secret,
+]) assert.ok(!diagnosticLog.includes(forbidden),'Diagnostic leaked sensitive data');
 const calls=[];
 const payload=await readWorkGoogleQaMerchantList({
   secret,now:()=>Number(ts),makeNonce:()=>nonce,

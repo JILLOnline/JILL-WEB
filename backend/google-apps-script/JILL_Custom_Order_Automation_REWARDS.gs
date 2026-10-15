@@ -1119,6 +1119,64 @@ function jillWorkHqMerchantList_(e) {
 }
 /* END WORK HQ MERCHANT READ V1 */
 
+/* WORK HQ QA DIAGNOSTIC V1
+   Visible in the Apps Script editor function dropdown (no trailing "_").
+   WORK QA-only; uses the existing strict canonical read and prints ONLY a
+   bounded record count, configuration-presence boolean and safe error code.
+   It does not call setupJill, append/modify sheet rows or log raw payloads.
+   It is an editor-only diagnostic, not a public doGet/doPost operation.
+*/
+function jillWorkHqQaReadDiagnostic() {
+  if (JILL_REWARDS_RUNTIME !== 'WORK' || JILL_CUSTOM_ORDER_SANDBOX !== true)
+    throw new Error('WORK_HQ_QA_DIAGNOSTIC: wrong_runtime');
+  const hasKey = String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET') || '').length >= 32;
+  Logger.log('WORK_HQ_QA_DIAGNOSTIC: read_key_configured=' + hasKey);
+  try {
+    const result = jillWorkHqCanonicalList_();
+    if (!result || result.ok !== true || result.complete !== true ||
+        !Array.isArray(result.records) || result.records.length > 50)
+      throw new Error('Invalid canonical merchant projection.');
+    Logger.log('WORK_HQ_QA_DIAGNOSTIC: PASS request_count=' +
+      result.records.length);
+    return true;
+  } catch (error) {
+    const message = String(error && error.message || '');
+    let code = 'unknown_read_failure';
+    if (message === 'Missing canonical read sheet.')
+      code = 'missing_canonical_sheet';
+    else if (message === 'Canonical read sheet headers drifted.')
+      code = 'header_mismatch';
+    else if (message === 'Canonical source exceeds bounded list.')
+      code = 'source_over_limit';
+    else if (message === 'Malformed event source ID.')
+      code = 'invalid_event_id';
+    else if (message === 'Invalid merchant event history.')
+      code = 'invalid_event_sequence';
+    else if (message === 'Invalid event time.')
+      code = 'invalid_event_timestamp';
+    else if (message === 'Invalid or repeated intake ID.')
+      code = 'invalid_submission_id';
+    else if (message === 'Invalid immutable Custom Order payload.')
+      code = 'invalid_submission_payload';
+    else if (message === 'Intake timestamp mismatch.')
+      code = 'submission_timestamp_mismatch';
+    else if (message === 'Missing canonical event log.')
+      code = 'missing_event_history';
+    else if (message === 'Invalid canonical planning.')
+      code = 'invalid_order_planning';
+    else if (message === 'Invalid canonical merchant projection.')
+      code = 'invalid_projection';
+    else if (error && error.name === 'SyntaxError')
+      code = 'invalid_payload_json';
+    // Never include exception text or stack here; they can contain PII.
+    Logger.log('WORK_HQ_QA_DIAGNOSTIC: FAIL code=' + code);
+    throw new Error('WORK_HQ_QA_DIAGNOSTIC: ' + code);
+  }
+}
+/* END WORK HQ QA DIAGNOSTIC V1 */
+
+
 
 
 // Run this function in the isolated QA Apps Script editor BEFORE any
