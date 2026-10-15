@@ -122,7 +122,7 @@ function RequestCard({item}:{item:InboxRecord}) {
       </p>
     </details>
     <div className="jill-inbox__open">
-      <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+      <Link prefetch="intent" to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
         Open request workspace →
       </Link>
     </div>
