@@ -15,7 +15,7 @@ assert.match(loader,/JILL_WORK_HQ_DETAIL_ENABLED!=="true"/);
 assert.match(loader,/return result\(200,"not_connected"\)/);
 assert.match(loader,/JILL_WORK_HOST_STAGE!=="canary"/);
 // Authorization must be completed before the signed exact-ID Google read.
-const auth=loader.indexOf('authenticateWorkAdminOnce(');
+const auth=loader.indexOf('authenticateWorkAdminOnce<{session:unknown}>(');
 const owner=loader.indexOf('readWorkMerchantPermission(');
 const google=loader.indexOf('readWorkGoogleQaMerchantDetail(');
 assert.ok(auth>0&&owner>auth&&google>owner,
