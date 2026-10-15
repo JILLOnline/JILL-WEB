@@ -177,7 +177,8 @@ if(invoked) {
     phase='tests';
     for(const name of [
       'test:work-merchant-inbox','test:work-hq-inbox-ui',
-      'test:work-hq-request-detail','test:work-hq-source-cache',
+      'test:work-hq-request-detail','test:work-hq-request-auth-stages',
+      'test:work-hq-source-cache',
       'test:work-hq-google-source-cache','test:work-hq-merchant-command',
       'test:work-hq-mail-outbox','test:work-hq-qa-write-key-probe',
     ])npmRun(name);
