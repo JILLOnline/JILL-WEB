@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   validateCopiedExistingKey,classifyGoogleMerchantEnvelope,
-  testExistingMerchantSecret,
+  testExistingMerchantSecret,safeProbeStageCode,
 } from './probe-work-hq-existing-merchant-key.mjs';
 
 const key='A'.repeat(64);
@@ -70,9 +70,21 @@ await assert.rejects(()=>testExistingMerchantSecret({
   secret:key,invalidKey:()=>key,reader:async()=>valid,
 }),/independent negative-control/);
 
+for (const [stage,code] of Object.entries({
+  git:'work_source_not_synced',
+  qa:'local_qa_project_mismatch',
+  clipboard_read:'clipboard_read_failed',
+  clipboard_format:'clipboard_key_missing_or_invalid',
+  signed_http:'signed_http_transport_failed',
+}))assert.equal(safeProbeStageCode(stage),code);
+assert.equal(safeProbeStageCode('SECRET_MY_KEY'),'preflight_failed');
+
 const source=readFileSync('scripts/probe-work-hq-existing-merchant-key.mjs','utf8');
 assert.match(source,/Get-Clipboard -Raw/);
 assert.match(source,/clearClipboardIfUnchanged/);
+assert.match(source,/PASS clipboard format for existing 64-character WORK key/);
+assert.match(source,/safeProbeStageCode\(stage\)/);
+assert.doesNotMatch(source,/console\.log\(clipboard\)|console\.log\(secret\)|console\.error\(error\)/);
 assert.match(source,/readWorkGoogleQaMerchantList/);
 assert.match(source,/jill\/rewards-work/);
 assert.doesNotMatch(source,/versions','secret','put'|secret put|versions deploy|wrangler.*deploy|update-deployment|setProperty\(|getProperty\(|console\.log\(secret\)|console\.error\(error\)/i);
