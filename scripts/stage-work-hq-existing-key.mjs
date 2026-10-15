@@ -129,6 +129,8 @@ if(invoked) {
     const approved=await io.question(
       '\nType STAGE EXISTING WORK KEY to create an INACTIVE Cloudflare version: ');
     ensure(approved==='STAGE EXISTING WORK KEY','staging_not_authorized');
+    ensure(deployedVersion()===active,'active_worker_changed_before_staging');
+    assertSecretNames(currentSecrets());
     stage='cloudflare_stage';
     const receipt=cmd(['versions','secret','put',SECRET_NAME,
       '--name',WORKER,'--config',CONFIG,
