@@ -104,6 +104,11 @@ function RequestCard({item}:{item:InboxRecord}) {
         private notes and order changes are not exposed in this view.
       </p>
     </details>
+    <div className="jill-inbox__open">
+      <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+        Open request workspace →
+      </Link>
+    </div>
   </article>;
 }
 
