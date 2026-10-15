@@ -9,7 +9,7 @@ const start=source.indexOf('/* WORK HQ MERCHANT COMMAND V1');
 const end=source.indexOf('/* END WORK HQ MERCHANT COMMAND V1 */',start);
 assert.ok(start>0&&end>start);
 const script=source.slice(start,end);
-const op='jill:hq:09e67134-cd3e-47d4-b371-555a121b5f99';
+const op='jill:hq:message:09e67134-cd3e-47d4-b371-555a121b5f99';
 const id='jill:92b32355-900e-47ba-8946-ccd93190a3b7';
 const email='test.customer@example.invalid';
 const note='Your custom request is being reviewed.';
