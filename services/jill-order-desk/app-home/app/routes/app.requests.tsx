@@ -150,7 +150,7 @@ export default function WorkMerchantInbox() {
       <main className="jill-inbox" aria-label="JILL HQ Custom Orders">
         <div className="jill-inbox__nav">
           <Link to="/app" className="jill-inbox__back">← Back to JILL HQ</Link>
-          <span className="jill-inbox__readonly">WORK · READ ONLY</span>
+          <span className="jill-inbox__readonly">WORK · {data.controlsEnabled===true?"MANAGEMENT":"READ ONLY"}</span>
         </div>
         <header className="jill-inbox__intro">
           <p className="jill-inbox__eyebrow">REQUESTS &amp; OPERATIONS</p>
@@ -173,7 +173,7 @@ export default function WorkMerchantInbox() {
               : <>
                   <div className="jill-inbox__source">
                     <span className="jill-inbox__source-dot" aria-hidden="true"/>
-                    Verified WORK source <span aria-hidden="true">·</span> Read-only snapshot
+                    Verified WORK source <span aria-hidden="true">·</span> {data.controlsEnabled===true?"Owner-managed requests":"Read-only snapshot"}
                   </div>
                   <div className="jill-inbox__stats" aria-label="Inbox overview">
                     <div className="jill-inbox__metric">
@@ -231,8 +231,8 @@ export default function WorkMerchantInbox() {
                       </div>}
                 </>}
         <footer className="jill-inbox__footer">
-          <strong>{data.controlsEnabled===true?"Verified WORK merchant operations.":"Read-only WORK preview."}</strong> Quotes, invoices, payments,
-          production edits and fulfillment changes are not enabled.
+          <strong>{data.controlsEnabled===true?"Verified WORK merchant operations enabled.":"Read-only WORK preview."}</strong> Quotes, invoices, payments,
+          Shopify fulfillment and direct production-file editing are not enabled.
           Existing My JILL customer tracking is unaffected.
         </footer>
       </main>
