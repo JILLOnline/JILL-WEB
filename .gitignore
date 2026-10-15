@@ -33,3 +33,8 @@ services/jill-order-desk/app-home/.wrangler/
 services/jill-order-desk/app-home/dist/
 services/jill-order-desk/app-home/.react-router/
 services/jill-order-desk/app-home/node_modules/
+
+# NEVER version private local credential catalogs or accidental copies.
+JILL-PRIVATE/
+JILL-SECRETS*.txt
+**/JILL-SECRETS*.backup-*.txt
