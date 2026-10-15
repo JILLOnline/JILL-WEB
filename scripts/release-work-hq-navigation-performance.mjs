@@ -20,6 +20,9 @@ const CONFIG='./wrangler.canary.jsonc';
 const WORKER='jill-order-desk-canary-work';
 const BASE='https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
 export const ACTIVE='e818c639-f962-4a09-9399-54ab521531c3';
+// Last prior management version that rendered successfully before the
+// broken navigation-v1 release. Use as recovery instead of known-bad v1.
+export const ROLLBACK='a57b9b91-84e8-44db-bd2b-144646d5b342';
 export const CANDIDATE='f777d728-ef6f-456a-b0be-2e2495bcd804';
 export const APPROVAL='RELEASE JILL HQ WORK SINGLE READER V2';
 function gate(ok,code){if(!ok)throw Error(code);}
@@ -47,7 +50,7 @@ function list(){
   return JSON.parse(cli(['versions','list','--name',WORKER,
     '--config',CONFIG,'--json']));
 }
-export function assertNavigationRelease({active,candidate,versions,current}={}){
+export function assertNavigationRelease({active,candidate,rollback,versions,current}={}){
   gate(current===ACTIVE,'active_worker_changed');
   gate(candidate?.id===CANDIDATE &&
     candidate?.annotations?.['workers/message']===
@@ -55,12 +58,15 @@ export function assertNavigationRelease({active,candidate,versions,current}={}){
   gate(selectPerformanceCandidate(versions,active)===CANDIDATE,
     'navigation_candidate_not_latest');
   const checked=assertPerformanceWorkerVersion({active,candidate});
+  gate(rollback?.id===ROLLBACK,'rollback_version_mismatch');
+  // Exactly the same WORK-only secrets, Owner/OAuth flags and routing.
+  assertPerformanceWorkerVersion({active,candidate:rollback});
   gate(checked.active===ACTIVE && checked.candidate===CANDIDATE,
     'unexpected_release_version');
   return Object.freeze(checked);
 }
 export function releaseArgs(id,message='JILL HQ WORK single-reader stability v2'){
-  gate(id===ACTIVE || id===CANDIDATE,'unapproved_worker_version');
+  gate(id===ROLLBACK || id===CANDIDATE,'unapproved_worker_version');
   return ['versions','deploy',id+'@100%','--name',WORKER,
     '--config',CONFIG,'--yes','--message',message];
 }
@@ -113,9 +119,9 @@ function inspect(){
   verifySource();
   const current=deployed();
   gate(current===ACTIVE,'active_worker_changed');
-  const active=view(ACTIVE),candidate=view(CANDIDATE);
+  const active=view(ACTIVE),candidate=view(CANDIDATE),rollback=view(ROLLBACK);
   return assertNavigationRelease({
-    active,candidate,versions:list(),current,
+    active,candidate,rollback,versions:list(),current,
   });
 }
 async function probeGoogleQaKey(){
@@ -133,17 +139,17 @@ async function rollbackIfOwnedCandidate(){
   // candidate is now active. Never overwrite a different user's rollout.
   try {
     const seen=deployed();
-    if(seen===ACTIVE){
-      console.error('PASS original WORK navigation v1 remains active.');
+    if(seen===ROLLBACK){
+      console.error('PASS previous WORK management v2 remains active.');
       return;
     }
     if(seen!==CANDIDATE){
       console.error('WORK version changed unexpectedly; manual review required.');
       return;
     }
-    cli(releaseArgs(ACTIVE,'JILL HQ WORK stability rollback to navigation v1'));
-    if(deployed()===ACTIVE)
-      console.error('PASS automatic WORK rollback to navigation v1.');
+    cli(releaseArgs(ROLLBACK,'JILL HQ WORK rollback to prior management v2'));
+    if(deployed()===ROLLBACK)
+      console.error('PASS automatic WORK rollback to prior management v2.');
     else console.error('WORK rollback not confirmed; inspect Cloudflare now.');
   }catch{
     console.error('WORK rollback not confirmed; inspect Cloudflare now.');
@@ -182,7 +188,7 @@ if(invoked){
       await verifyPublicWorkBoundary();
       console.log('PASS JILL HQ WORK single-reader repair ACTIVE: '+CANDIDATE);
       console.log('PASS health, WORK OAuth, Owner OFF, inbox denial and exact command HTTP 403.');
-      console.log('PASS navigation v1 retained for rollback: '+ACTIVE);
+      console.log('PASS prior WORK management v2 certified for rollback: '+ROLLBACK);
       console.log('No LIVE, KEEP, Rewards, Google script or customer email changes.');
       console.log('NEXT: Shopify Owner browser render + navigation stress QA and timing (public health alone is NOT sufficient).');
     }
@@ -202,6 +208,7 @@ if(invoked){
       'wrong_work_database','existing_worker_binding_changed',
       'new_code_not_present','worker_entrypoint_changed',
       'worker_runtime_drift','worker_asset_routing_drift',
+      'rollback_version_mismatch',
     ]);
     console.error('JILL HQ WORK navigation '+phase+' STOPPED: '+
       (allowed.has(error?.message)?error.message:'unverified_release_state'));
