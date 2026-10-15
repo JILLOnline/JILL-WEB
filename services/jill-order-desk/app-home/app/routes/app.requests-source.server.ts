@@ -13,13 +13,28 @@ import {readWorkD1IndexedMerchantList} from "../../../work-merchant-d1-index.mjs
 export async function loadVerifiedMerchantInbox({request,context}:LoaderFunctionArgs) {
   const env=context.cloudflare.env;
   const started=performance.now();
+  // A random trace ID groups ONLY numeric phase durations. Never log
+  // session tokens, shop/customer identity, URLs or request bodies.
+  const trace=crypto.randomUUID();
+  const report=(phase:string,event:"begin"|"end",ms?:number)=>{
+    console.info("JILL_WORK_INBOX_PHASE",JSON.stringify({
+      trace,phase,event,...(ms===undefined?{}:{duration_ms:Math.round(ms)}),
+    }));
+  };
   let sourceMs=0;
   let cacheMode="not-requested";
   const timings:Record<string,number>={};
-  const result=await loadWorkMerchantInbox({
+  report("inbox","begin");
+  let result:Awaited<ReturnType<typeof loadWorkMerchantInbox>>;
+  try {
+  result=await loadWorkMerchantInbox({
+    onPhaseStart:(name:string)=>report(name,"begin"),
     onTiming:(name:string,ms:number)=>{
       if(["shopify_auth","work_owner","google_feed"].includes(name) &&
-         Number.isFinite(ms))timings[name]=Math.max(0,ms);
+         Number.isFinite(ms)){
+        timings[name]=Math.max(0,ms);
+        report(name,"end",ms);
+      }
     },
     request,
     authenticate:{admin:()=>authenticateWorkAdminOnce({
@@ -59,7 +74,9 @@ export async function loadVerifiedMerchantInbox({request,context}:LoaderFunction
         }
       : undefined,
   });
+  } finally {report("inbox","end",performance.now()-started);}
   const headers=new Headers(result.headers);
+  headers.set("x-jill-inbox-trace",trace);
   const total=performance.now()-started;
   const source=Math.min(total,sourceMs);
   // Header values are only aggregate milliseconds, never account details.
