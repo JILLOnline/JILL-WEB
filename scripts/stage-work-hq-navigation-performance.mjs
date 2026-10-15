@@ -1,4 +1,4 @@
-// WORK-only: stage ONE canonical request reader after stress-nav repair over
+// WORK-only: stage Auth-safe navigation + ONE canonical reader over
 // ACTIVE navigation v1 Worker. Creates ONE INACTIVE version; NO traffic switch.
 // Preserve every original binding (including all four secrets), WORK D1,
 // OAuth ON, Owner setup OFF, write command ON and Worker routing/runtime.
@@ -37,7 +37,7 @@ const FLAGS={
   JILL_WORK_MERCHANT_WRITES_ENABLED:'true',
 };
 export const NAVIGATION_RELEASE_MARKER=
-  'JILL HQ WORK single-reader stress fix v2; inactive';
+  'JILL HQ WORK auth-safe single-reader v3; inactive';
 
 function gate(ok,code){if(!ok)throw Error(code);}
 function bindings(version) {
