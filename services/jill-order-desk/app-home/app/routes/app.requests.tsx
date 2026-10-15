@@ -235,7 +235,7 @@ export default function WorkMerchantInbox() {
                       </div>}
                 </>}
         <footer className="jill-inbox__footer">
-          <strong>WORK merchant request preview.</strong> Quotes, invoices, payments,
+          <strong>{data.controlsEnabled===true?"Verified WORK merchant operations.":"Read-only WORK preview."}</strong> Quotes, invoices, payments,
           production edits and fulfillment changes are not enabled.
           Existing My JILL customer tracking is unaffected.
         </footer>
