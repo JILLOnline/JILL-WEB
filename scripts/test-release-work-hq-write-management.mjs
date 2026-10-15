@@ -33,7 +33,7 @@ staged.resources.bindings.push({
   name:'JILL_HQ_MERCHANT_WRITE_SECRET',type:'secret_text',
 });
 const candidate=structuredClone(staged);
-candidate.id=CANDIDATE;candidate.metadata.created_on='2026-10-15T17:25:00Z';
+candidate.id=CANDIDATE;candidate.metadata.created_on='2026-10-15T17:44:00Z';
 candidate.resources.script.etag='new-code';
 candidate.resources.script_runtime.assets={
   ...asset,html_handling:'auto-trailing-slash',not_found_handling:'none',
@@ -42,7 +42,13 @@ candidate.resources.bindings.push({
   name:'JILL_WORK_MERCHANT_WRITES_ENABLED',type:'plain_text',text:'true',
 });
 candidate.annotations={'workers/message':RELEASE_MARKER};
-const versions=[active,staged,candidate];
+const superseded={
+  id:'e7bad727-b876-4895-866d-bc4dc583e280',
+  metadata:{created_on:'2026-10-15T17:25:00Z'},
+  annotations:{'workers/message':
+    'JILL HQ WORK verified inline commands and source-cache v1; inactive'},
+};
+const versions=[active,staged,superseded,candidate];
 const valid={active,staged,candidate,versions,current:ACTIVE};
 assert.deepEqual(assertReleaseCandidate(valid),{
   active:ACTIVE,candidate:CANDIDATE,
@@ -84,20 +90,22 @@ assert.deepEqual(releaseArgs(ACTIVE,
   'JILL HQ WORK rollback to verified prior version').slice(0,3),
   ['versions','deploy',ACTIVE+'@100%']);
 assert.throws(()=>releaseArgs('unknown'),/unknown_work/);
+// The corrected Worker is required to return exact 403 (invalid Origin)
+ // before Shopify handles the anonymous POST. Redirects and 404/410 MUST
+ // fail, even if some previous SDK deployments used those statuses.
 assert.equal(anonymousCommandSafe(403,null),true);
-assert.equal(anonymousCommandSafe(404,null),true);
-assert.equal(anonymousCommandSafe(410,null),true);
-assert.equal(anonymousCommandSafe(302,'/auth/login'),true);
-assert.equal(anonymousCommandSafe(302,
-  'https://admin.shopify.com/store/jill-work'),true);
-for(const [code,url] of [
-  [200,null],[500,null],[302,null],
-  [302,'https://evil.example/steal'],[302,'http://jill-work.myshopify.com/'],
+for(const [code,location] of [
+  [200,null],[401,null],[404,null],[410,null],[500,null],
+  [302,'/auth/login'],
+  [302,'https://admin.shopify.com/store/jill-work'],
+  [403,'https://admin.shopify.com/store/jill-work'],
+  [302,'https://evil.example/steal'],
 ]){
-  const result=()=>anonymousCommandSafe(code,url);
-  if(code===302&&url)assert.notEqual(result(),true);
-  else assert.throws(result);
+  assert.throws(()=>anonymousCommandSafe(code,location),
+    /anonymous_command_not_denied/);
 }
+assert.equal(CANDIDATE,'a57b9b91-84e8-44db-bd2b-144646d5b342');
+assert.notEqual(CANDIDATE,superseded.id);
 assert.equal(APPROVAL,'RELEASE JILL HQ WORK MANAGEMENT');
 const source=readFileSync('scripts/release-work-hq-write-management.mjs','utf8');
 for(const re of [
@@ -109,6 +117,8 @@ for(const re of [
   /versions','deploy'/,
   /check\('\/app\/requests\/command'/,
   /anonymousCommandSafe/,
+  /anonymous_command_bad_ack/,
+  /reply\?\.error==='invalid_origin'/,
   /PASS automatic WORK rollback/,
 ])assert.match(source,re);
 assert.doesNotMatch(source,/secret put|versions','upload|Get-Clipboard|LIVE\\.SHOPIFY/);
