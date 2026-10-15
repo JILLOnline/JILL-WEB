@@ -2,12 +2,17 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHmac} from 'node:crypto';
 import vm from 'node:vm';
-import {signWorkMerchantDetail,readWorkGoogleQaMerchantDetail}
+import {signWorkMerchantDetail,readWorkGoogleQaMerchantDetail,
+  JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL}
   from '../services/jill-order-desk/work-google-merchant-detail.mjs';
 import {JILL_HQ_WORK_QA_GOOGLE_URL}
   from '../services/jill-order-desk/work-google-merchant-read.mjs';
 
 const SHOP='jill-work.myshopify.com';
+assert.notEqual(JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL,JILL_HQ_WORK_QA_GOOGLE_URL,
+  'v9 detail must never reuse v7 merchant list endpoint');
+assert.match(JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL,
+  /^https:\/\/script\.google\.com\/macros\/s\/AKfycb[A-Za-z0-9_-]{20,}\/exec$/);
 const SECRET='QA_ONLY_WORK_MERCHANT_DETAIL_HMAC_SECRET_123456';
 const ID='jill:92b32355-900e-47ba-8946-ccd93190a3b7';
 const TS=String(Date.now()),NONCE='M'.repeat(32);
@@ -168,7 +173,7 @@ const details=await readWorkGoogleQaMerchantDetail({
   secret:SECRET,submissionId:ID,now:()=>Number(TS),makeNonce:()=>NONCE,
   backendFetch:async(url,{method,body,redirect,signal})=>{
     backendCalls++;
-    assert.equal(url,JILL_HQ_WORK_QA_GOOGLE_URL);
+    assert.equal(url,JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL);
     assert.equal(method,'POST');assert.equal(redirect,'follow');
     assert.ok(signal);
     assert.equal(body.get('jill_hq_read_sig'),signature);
@@ -196,10 +201,12 @@ for(const ack of invalidSources)
     secret:SECRET,submissionId:ID,
     backendFetch:async()=>Response.json(ack),
   }));
-await assert.rejects(()=>readWorkGoogleQaMerchantDetail({
-  secret:SECRET,submissionId:ID,
-  endpoint:'https://jillonlinestore.com',
-  backendFetch:async()=>Response.json(accepted),
-}),/invalid_work/);
+for(const forbiddenEndpoint of [JILL_HQ_WORK_QA_GOOGLE_URL,
+  'https://jillonlinestore.com'])
+  await assert.rejects(()=>readWorkGoogleQaMerchantDetail({
+    secret:SECRET,submissionId:ID,
+    endpoint:forbiddenEndpoint,
+    backendFetch:async()=>Response.json(accepted),
+  }),/invalid_work/);
 assert.doesNotMatch(isolated,/setupJill\(|appendRow\(|setValues\(|MailApp|UrlFetchApp/);
 console.log('PASS WORK full-detail source: separate HMAC domain, exact ID, no LIVE, no mutations, revision validation, bounded private raw, opaque file IDs and whitelisted output.');
