@@ -115,6 +115,52 @@ export function safeUnknownRuntimeDifferences(activeRuntime,candidateRuntime){
     label(k)+' (active='+kind(a,k)+', candidate='+kind(c,k)+')')
     .concat(names.length>16?['additional_fields_omitted']:[]);
 }
+// Read-only static asset metadata inspection. Reveal ONLY short structural
+// field paths and value types, never their values, hashes, filenames, JWTs,
+// path-derived property names, complete Cloudflare JSON or customer data.
+export function safeAssetDifferences(activeAssets,candidateAssets,{maxItems=20,maxDepth=5}={}){
+  const out=[];
+  function valueType(v){
+    if(v===undefined)return 'absent';
+    if(v===null)return 'null';
+    if(Array.isArray(v))return 'array';
+    return typeof v;
+  }
+  function segment(raw){
+    if(typeof raw==='number')return '[entry]';
+    if(/^[a-z][a-z0-9_]{0,35}$/i.test(raw) &&
+       !/(secret|token|password|credential|authorization|private|customer|email|jwt|hmac|key)/i.test(raw))
+      return '.'+raw;
+    return '.[redacted]';
+  }
+  function dive(a,b,path,depth){
+    if(out.length>=maxItems || sameStructuredData(a,b))return;
+    const ta=valueType(a),tb=valueType(b);
+    if(depth>=maxDepth || ta!==tb || a===null || b===null ||
+       (ta!=='object' && ta!=='array')){
+      out.push(path+' (active='+ta+', candidate='+tb+', values=different)');
+      return;
+    }
+    if(ta==='array'){
+      if(a.length!==b.length)
+        out.push(path+'.length (active=array, candidate=array, values=different)');
+      const count=Math.min(a.length,b.length,12);
+      for(let i=0;i<count && out.length<maxItems;i++)
+        dive(a[i],b[i],path+segment(i),depth+1);
+      if(Math.max(a.length,b.length)>12 && out.length<maxItems)
+        out.push(path+'.[more entries omitted]');
+      return;
+    }
+    const keys=[...new Set([...Object.keys(a),...Object.keys(b)])].sort();
+    for(let i=0;i<Math.min(keys.length,40) && out.length<maxItems;i++){
+      const k=keys[i];
+      dive(a[k],b[k],path+segment(k),depth+1);
+    }
+    if(keys.length>40 && out.length<maxItems)out.push(path+'.[more fields omitted]');
+  }
+  dive(activeAssets,candidateAssets,'assets',0);
+  return out.slice(0,maxItems);
+}
 export function selectVerifiedCandidate(list,activeVersion,activeId=ACTIVE){
   gate(Array.isArray(list)&&list.length>=2&&list.length<=10,'invalid_version_list');
   gate(activeVersion?.id===activeId && activeId===ACTIVE,'active_version_changed');
@@ -273,6 +319,15 @@ if(invoked){
         for(const detail of safeUnknownRuntimeDifferences(
           active.resources?.script_runtime,candidate.resources?.script_runtime))
           console.error('WORK unknown runtime key (name/type only): '+detail);
+      }
+      if(!sameStructuredData(
+        active.resources?.script_runtime?.assets,
+        candidate.resources?.script_runtime?.assets)) {
+        console.error('WORK asset metadata differs; release stays blocked.');
+        for(const detail of safeAssetDifferences(
+          active.resources?.script_runtime?.assets,
+          candidate.resources?.script_runtime?.assets))
+          console.error('WORK asset field (path/type only): '+detail);
       }
     }
     const match=inspectVersions({active,candidate});
