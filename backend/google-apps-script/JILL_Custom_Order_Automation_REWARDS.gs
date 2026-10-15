@@ -1350,6 +1350,25 @@ function jillWorkHqMerchantCommand_(e) {
     return failed('command_unconfirmed');
   }
 }
+// Editor-only WORK QA commissioning diagnostic. It NEVER installs a key,
+// changes event history, sends email, or prints secret values.
+function jillWorkHqQaWritePreflight() {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('WORK_HQ_WRITE_PREFLIGHT: wrong_runtime');
+  const props=PropertiesService.getScriptProperties();
+  const write=String(props.getProperty('JILL_HQ_MERCHANT_WRITE_SECRET')||'');
+  const read=String(props.getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  const configured=write.length>=48 && write!==read;
+  // Even an improperly configured key cannot cause mutation by diagnostic.
+  const list=jillWorkHqCanonicalList_();
+  const result={
+    scope:'WORK_CUSTOM_ORDERS_QA',write_key_configured:configured,
+    canonical_requests:list.records.length,mail_delivery_enabled:false,
+  };
+  Logger.log('WORK_HQ_WRITE_PREFLIGHT: '+JSON.stringify(result));
+  if(!configured)throw new Error('WORK_HQ_WRITE_PREFLIGHT: write_key_missing');
+  return result;
+}
 /* END WORK HQ MERCHANT COMMAND V1 */
 
 
