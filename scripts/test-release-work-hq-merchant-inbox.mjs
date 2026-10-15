@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   selectVerifiedCandidate,inspectVersions,rolloutArguments,
+  sameStructuredData,safeRuntimeDiffLabels,
 } from './release-work-hq-merchant-inbox.mjs';
 
 const A='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -39,6 +40,41 @@ assert.equal(okay.bindingCount,7);
 assert.deepEqual(okay.secretNames,[
   'JILL_HQ_MERCHANT_READ_SECRET','JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET',
 ]);
+
+// Cloudflare REST metadata may reorder JSON object properties while retaining
+// precisely the same values. A plain JSON.stringify comparison would falsely
+// identify such responses as runtime drift.
+assert.equal(sameStructuredData(
+  {limits:{cpu_ms:200,subrequests:100},usage_model:'standard'},
+  {usage_model:'standard',limits:{subrequests:100,cpu_ms:200}}),true);
+assert.equal(sameStructuredData(
+  {limits:{cpu_ms:200}},{limits:{cpu_ms:201}}),false);
+assert.equal(sameStructuredData(['nodejs_compat','other'],['other','nodejs_compat']),false);
+const activeOrder=structuredClone(active);
+const candidateOrder=structuredClone(candidate);
+activeOrder.resources.script_runtime.limits={cpu_ms:200,subrequests:100};
+candidateOrder.resources.script_runtime.limits={subrequests:100,cpu_ms:200};
+candidateOrder.resources.script_runtime={
+  usage_model:'standard',
+  limits:candidateOrder.resources.script_runtime.limits,
+  compatibility_flags:['nodejs_compat'],
+  compatibility_date:'2026-10-14',
+};
+candidateOrder.resources.bindings=candidateOrder.resources.bindings.map(b=>{
+  if(b.name==='JILL_ORDER_DESK_WORK_DB')
+    return {id:b.id,type:b.type,name:b.name};
+  return b;
+});
+assert.equal(inspectVersions({active:activeOrder,candidate:candidateOrder}).candidateId,C);
+assert.deepEqual(safeRuntimeDiffLabels(activeOrder.resources.script_runtime,
+  candidateOrder.resources.script_runtime),[]);
+assert.deepEqual(safeRuntimeDiffLabels(active.resources.script_runtime,{
+  ...active.resources.script_runtime,compatibility_flags:[],
+  limits:{cpu_ms:99},
+}),['compatibility_flags','limits']);
+assert.deepEqual(safeRuntimeDiffLabels(active.resources.script_runtime,{
+  ...active.resources.script_runtime,unexpected_private_value:'SHOULD_NOT_BE_LOGGED',
+}),['other_runtime_settings']);
 
 const alter=(changed)=>({...structuredClone(candidate),...changed});
 function invalid(x,pattern){assert.throws(()=>inspectVersions({active,candidate:x}),pattern);}
@@ -80,6 +116,9 @@ assert.deepEqual(args,[
 assert.throws(()=>rolloutArguments('garbage'),/invalid_candidate_id/);
 const source=fs.readFileSync('scripts/release-work-hq-merchant-inbox.mjs','utf8');
 assert.match(source,/shell:false/);
+assert.match(source,/safeRuntimeDiffLabels/);
+assert.match(source,/WORK runtime differences \(field names only\):/);
+assert.doesNotMatch(source,/JSON\.stringify\(active\.resources\.script_runtime\)===/);
 assert.match(source,/RELEASE JILL HQ WORK INBOX/);
 assert.match(source,/activeStatus\(\)===ACTIVE,'active_version_changed_at_approval'/);
 assert.match(source,/inspectVersions\(\{active:version\(ACTIVE\),candidate:version\(id\)\}\)/);
