@@ -47,7 +47,8 @@ if(invoked) {
     fs.mkdirSync(folder,{recursive:true,mode:0o700});
     if(fs.existsSync(full)&&fs.lstatSync(full).isSymbolicLink())
       throw Error('Refusing symlinked file.');
-    const existing=fs.existsSync(full)?fs.readFileSync(full,'utf8'):'';
+    const exists=fs.existsSync(full);
+    const existing=exists?fs.readFileSync(full,'utf8'):'';
     const result=reconcileCatalog(existing);
     if(result.changed) {
       if(existing) {
@@ -56,7 +57,7 @@ if(invoked) {
         console.log('Existing local file backed up inside JILL-PRIVATE.');
       }
       fs.writeFileSync(full,result.content,{
-        encoding:'utf8',flag:existing?'w':'wx',mode:0o600,
+        encoding:'utf8',flag:exists?'w':'wx',mode:0o600,
       });
     }
     console.log('JILL local catalog: '+full);
