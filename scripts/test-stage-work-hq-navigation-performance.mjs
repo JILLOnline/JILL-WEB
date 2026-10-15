@@ -78,7 +78,7 @@ assert.equal(selectPerformanceCandidate([active,candidate],active),newId);
 // not a new candidate for the v2 stability release.
 assert.equal(active.id,'e818c639-f962-4a09-9399-54ab521531c3');
 assert.equal(NAVIGATION_RELEASE_MARKER,
-  'JILL HQ WORK single-reader stress fix v2; inactive');
+  'JILL HQ WORK auth-safe single-reader v3; inactive');
 assert.throws(()=>selectPerformanceCandidate([active],active),
   /navigation_candidate_not_unique/);
 assert.throws(()=>selectPerformanceCandidate([active,candidate,candidate],active),
