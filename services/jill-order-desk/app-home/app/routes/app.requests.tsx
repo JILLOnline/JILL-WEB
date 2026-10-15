@@ -47,7 +47,7 @@ export async function loader({request,context}:LoaderFunctionArgs) {
             return await readWorkMerchantSourceCached({
               secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
               reader:readWorkGoogleQaMerchantList,
-              onCache:mode=>{cacheMode=mode;},
+              onCache:(mode:string)=>{cacheMode=mode;},
             });
           } finally {sourceMs=performance.now()-began;}
         }
