@@ -19,9 +19,9 @@ const WORKER='jill-order-desk-canary-work';
 const BIN=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const CONFIG='./wrangler.canary.jsonc';
 const BASE='https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
-const ACTIVE='b6a908d4-002a-4c39-9f37-7825763e75c7';
+const ACTIVE='e67a2209-f6d9-4671-b6fc-33994015af30';
 const D1='3f17c186-c794-4e00-8f20-017191373a19';
-const MESSAGE='JILL HQ WORK request workspace v1; read-only release';
+const MESSAGE='JILL HQ WORK source-cache v1; 20-second verified metadata';
 const SECRETS=['JILL_HQ_MERCHANT_READ_SECRET','JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET'];
 
 function gate(ok,code){if(!ok)throw Error(code);}
@@ -171,6 +171,7 @@ if(invoked){
     npmRun('test:work-merchant-inbox');
     npmRun('test:work-hq-inbox-ui');
     npmRun('test:work-hq-request-detail');
+    npmRun('test:work-hq-source-cache');
     phase='build';
     const dist=path.join(APP,'dist');
     if(fs.existsSync(dist)){

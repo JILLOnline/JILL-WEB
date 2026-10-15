@@ -113,7 +113,8 @@
     "test:work-hq-inbox-ui": "node scripts/test-work-hq-inbox-ui.mjs",
     "work:hq:ui:deploy": "node scripts/deploy-work-hq-inbox-ui.mjs",
     "test:work-hq-ui-rollout": "node scripts/test-deploy-work-hq-inbox-ui.mjs",
-    "test:work-hq-request-detail": "node scripts/test-work-hq-request-detail.mjs"
+    "test:work-hq-request-detail": "node scripts/test-work-hq-request-detail.mjs",
+    "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",

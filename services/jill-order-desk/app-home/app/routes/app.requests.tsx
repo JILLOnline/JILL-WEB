@@ -3,6 +3,7 @@ import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {loadWorkMerchantInbox} from "../../../merchant-inbox-read.mjs";
 import {readWorkGoogleQaMerchantList} from "../../../work-google-merchant-read.mjs";
+import {readWorkMerchantSourceCached} from "../../../work-merchant-source-cache.mjs";
 import {
   customerStatusLabel,internalStatusLabel,requestShortId,dateLabel,
   selectInboxRecords,inboxStats,INBOX_FILTERS,
@@ -29,6 +30,9 @@ type InboxModel={
 
 export async function loader({request,context}:LoaderFunctionArgs) {
   const env=context.cloudflare.env;
+  const started=performance.now();
+  let sourceMs=0;
+  let cacheMode="not-requested";
   const result=await loadWorkMerchantInbox({
     request,
     authenticate:workShopify(env).authenticate,
@@ -37,13 +41,26 @@ export async function loader({request,context}:LoaderFunctionArgs) {
     // No Shopify session or customer identity is forwarded to the source.
     readCanonicalSource:env.JILL_WORK_HOST_STAGE==="canary" &&
       env.JILL_HQ_MERCHANT_READ_SECRET
-      ? () => readWorkGoogleQaMerchantList({
-          secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
-        })
+      ? async () => {
+          const began=performance.now();
+          try {
+            return await readWorkMerchantSourceCached({
+              secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
+              reader:readWorkGoogleQaMerchantList,
+              onCache:(mode:string)=>{cacheMode=mode;},
+            });
+          } finally {sourceMs=performance.now()-began;}
+        }
       : undefined,
   });
+  const headers=new Headers(result.headers);
+  const total=performance.now()-started;
+  const source=Math.min(total,sourceMs);
+  headers.set("server-timing",
+    `merchant-auth;dur=${Math.max(0,total-source).toFixed(1)}, merchant-feed;dur=${source.toFixed(1)}, merchant-total;dur=${total.toFixed(1)}`);
+  headers.set("x-jill-feed-cache",cacheMode);
   return Response.json(result.model,{
-    status:result.status,headers:result.headers,
+    status:result.status,headers,
   });
 }
 
@@ -105,7 +122,7 @@ function RequestCard({item}:{item:InboxRecord}) {
       </p>
     </details>
     <div className="jill-inbox__open">
-      <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+      <Link prefetch="intent" to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
         Open request workspace →
       </Link>
     </div>
