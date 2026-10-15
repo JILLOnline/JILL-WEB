@@ -1002,15 +1002,15 @@ function jillCustomOrderGatewayCustomerList_(e) {
 }
 /* END WORK CUSTOM ORDER OWNERSHIP V1 */
 
-const JILL_WORK_HQ_CACHE_KEY='jill:work:hq:merchant:summary:v2';
-const JILL_WORK_HQ_CACHE_SECONDS=15;
-
 /* WORK HQ MERCHANT READ V1 — canonical QA only; NO HTTP WRITES
    This is a separate HMAC from customer account reads and checkout submissions.
    Only the isolated QA /exec deployment can process it. It requires a distinct
    JILL_HQ_MERCHANT_READ_SECRET Script Property (32+ chars).
    No user identity from the form, no cross-shop source, no PII in responses.
 */
+const JILL_WORK_HQ_CACHE_KEY='jill:work:hq:merchant:summary:v2';
+const JILL_WORK_HQ_CACHE_SECONDS=15;
+
 function jillWorkHqMerchantReadVerified_(e) {
   if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
     return false;
