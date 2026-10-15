@@ -8,7 +8,7 @@ import {WORK_STATUS_TRANSITIONS,WORK_INTERNAL_STAGES} from './merchant-command-c
 export {WORK_STATUS_TRANSITIONS,WORK_INTERNAL_STAGES} from './merchant-command-contract.mjs';
 const SHOP='jill-work.myshopify.com';
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
-const OP=/^jill:hq:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const OP=/^jill:hq:(?:status|message):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const NONCE=/^[A-Za-z0-9_-]{32}$/;
 const RESPONSE_HEADERS={'cache-control':'private, no-store, max-age=0',
   'x-content-type-options':'nosniff'};
@@ -31,6 +31,7 @@ export function validateWorkMerchantCommand(input) {
   const revision=Number(data.expected_revision);
   if(!['status','message'].includes(data.kind)||
      !ID.test(data.submission_id)||!OP.test(data.operation_id)||
+     !data.operation_id.startsWith('jill:hq:'+data.kind+':')||
      !/^[1-9][0-9]{0,2}$/.test(data.expected_revision)||
      revision>99 ||
      !Object.hasOwn(WORK_STATUS_TRANSITIONS,data.current_status)||
