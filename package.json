@@ -101,6 +101,8 @@
     "test:work-hq-qa-versions": "node scripts/test-work-hq-qa-versions.mjs",
     "test:work-hq-qa-write-key-probe": "node scripts/test-work-hq-qa-write-key-probe.mjs",
     "work:hq:qa:write-key:probe": "node scripts/probe-work-hq-qa-write-key.mjs",
+    "work:hq:write-release:stage": "node scripts/stage-work-hq-write-release.mjs",
+    "test:work-hq-write-release-stage": "node scripts/test-stage-work-hq-write-release.mjs",
     "test:work-qa-read-audit": "node scripts/test-work-qa-script-readonly.mjs",
     "work:hq:inbox:deploy-shell": "node scripts/deploy-work-hq-inbox-shell.mjs",
     "test:work-hq-inbox-rollout": "node scripts/test-work-hq-inbox-rollout.mjs",
