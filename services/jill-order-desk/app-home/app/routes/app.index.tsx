@@ -28,11 +28,11 @@ export default function JillHQ() {
             <s-paragraph>
               Custom Orders, quotes, production stages and delivery workflows
               will use the original JILL submission and event history.
-              The verified WORK Custom Orders inbox is available in read-only mode.
+              The verified WORK Custom Orders inbox supports Owner-only request management.
             </s-paragraph>
             {data.role==="owner"
               ? <s-paragraph>
-                  <Link to="/app/requests">Open Custom Orders inbox (read-only)</Link>
+                  <Link to="/app/requests" prefetch="intent">Open Custom Orders inbox →</Link>
                 </s-paragraph>
               : null}
           </s-section>

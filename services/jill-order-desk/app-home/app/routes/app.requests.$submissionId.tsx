@@ -1,5 +1,4 @@
-import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
-import {loader as inboxLoader} from "./app.requests";
+import {Link,useParams,useRouteLoaderData} from "react-router";
 import {
   requestShortId,customerStatusLabel,internalStatusLabel,dateLabel,
 } from "../../../inbox-display.mjs";
@@ -25,53 +24,20 @@ type InboxModel={
   controlsEnabled?:boolean;
   records:RequestRecord[];
 };
-type DetailModel={
-  state:InboxModel["state"]|"not_found";
-  readOnly:true;
-  record:RequestRecord|null;
-  controlsEnabled:boolean;
-};
-
-/**
- * Do not create a second merchant auth or Google read path.
- * Reuse the existing, certified Shopify online Owner + WORK D1 permission
- * gate, bounded HMAC Google QA read, and whitelisted metadata projection.
- * Only the exact matching record is returned from this route; never expose
- * the full inbox or customer PII in the detail response.
- */
-export async function loader(args:LoaderFunctionArgs){
-  const inbox=await inboxLoader(args);
-  const data=await inbox.json() as InboxModel;
-  const headers=new Headers(inbox.headers);
-  headers.set("cache-control","private, no-store, max-age=0");
-  headers.set("x-content-type-options","nosniff");
-
-  if(inbox.status!==200 || data.state!=="ready" || data.readOnly!==true){
-    return Response.json({
-      state:data.state,record:null,readOnly:true,controlsEnabled:false,
-    } satisfies DetailModel,{status:inbox.status,headers});
-  }
-  // Exact match only, after authenticated source projection. No query IDs,
-  // encoded wildcard matches, guessed missing fields or direct Google calls.
-  const selected=data.records.find(
-    item=>item.submission_id===args.params.submissionId);
-  if(!selected){
-    return Response.json({
-      state:"not_found",record:null,readOnly:true,controlsEnabled:false,
-    } satisfies DetailModel,{status:404,headers});
-  }
-  return Response.json({
-    state:"ready",record:selected,readOnly:true,
-    controlsEnabled:data.controlsEnabled===true,
-  } satisfies DetailModel,{status:200,headers});
-}
-
+// The authenticated parent loader is the single canonical source for both
+// sibling pages. Direct URLs still run it and return 404 for unknown IDs;
+// client-side navigation only selects from the previously authorized result.
 function FulfillmentName({value}:{value:string}){
   return <>{value==="pickup"?"Local pickup":
     value==="shipping"?"Shipping":"Not provided"}</>;
 }
 export default function WorkRequestDetail(){
-  const {state,record,controlsEnabled}=useLoaderData<typeof loader>() as DetailModel;
+  const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
+  const {submissionId}=useParams();
+  const record=data.state==="ready"?
+    data.records.find(item=>item.submission_id===submissionId)??null:null;
+  const state=data.state==="ready"&&!record?"not_found":data.state;
+  const controlsEnabled=data.controlsEnabled===true && state==="ready";
   return <s-page heading="JILL HQ — WORK / Request details">
     <s-section>
       <main className="jill-inbox jill-request" aria-label="Custom Order request workspace">

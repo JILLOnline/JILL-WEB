@@ -161,5 +161,6 @@ assert.match(route,/loadWorkMerchantInbox/);
 assert.doesNotMatch(route,/custom-order-account-read|jill-custom-order-account|merchant\.list\?/,);
 const appRoutes=readFileSync(
   'services/jill-order-desk/app-home/app/routes.ts','utf8');
-assert.match(appRoutes,/route\("requests","routes\/app\.requests\.tsx"\)/);
+assert.match(appRoutes,/route\("requests","routes\/app\.requests\.layout\.tsx",\[/);
+assert.match(appRoutes,/index\("routes\/app\.requests\.tsx"\)/);
 console.log('PASS WORK Owner-only inbox boundary: authenticated, read-only, isolated source, no invented counts, whitelisted records, and fail-closed unauthorized staff.');

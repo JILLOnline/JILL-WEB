@@ -1,6 +1,6 @@
 import {workMerchantWritesReady} from "../../../work-merchant-write-readiness.mjs";
 import {useMemo,useState} from "react";
-import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
+import {Link,useRouteLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {loadWorkMerchantInbox} from "../../../merchant-inbox-read.mjs";
 import {readWorkGoogleQaMerchantList} from "../../../work-google-merchant-read.mjs";
@@ -129,7 +129,7 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
     </details>
     <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
     <div className="jill-inbox__open">
-      <Link prefetch="intent" to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+      <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
         Open request workspace →
       </Link>
     </div>
@@ -137,7 +137,7 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
 }
 
 export default function WorkMerchantInbox() {
-  const data=useLoaderData() as InboxModel;
+  const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const [query,setQuery]=useState("");
   const [status,setStatus]=useState("all");
   const [sort,setSort]=useState("recent");

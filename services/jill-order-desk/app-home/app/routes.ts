@@ -5,9 +5,11 @@ export default [
   route("auth/*","routes/auth.catchall.tsx"),
   route("app","routes/app.tsx",[
     index("routes/app.index.tsx"),
-    route("requests","routes/app.requests.tsx"),
+    route("requests","routes/app.requests.layout.tsx",[
+      index("routes/app.requests.tsx"),
+      route(":submissionId","routes/app.requests.$submissionId.tsx"),
+    ]),
     route("requests/command","routes/app.requests.command.tsx"),
-    route("requests/:submissionId","routes/app.requests.$submissionId.tsx"),
     route("setup-owner","routes/app.setup-owner.tsx"),
   ]),
 ] satisfies RouteConfig;
