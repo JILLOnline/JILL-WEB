@@ -65,13 +65,13 @@ const argv=[
   '--config','C:\\work\\dist\\server\\wrangler.oauth-canary.json',
   '--message',message,
 ];
-const spec=wranglerProcessSpec(argv,{input:key+'\\n'});
+const spec=wranglerProcessSpec(argv,{input:key+'\n'});
 assert.equal(spec.executable,process.execPath);
 assert.match(spec.argv[0],/wrangler[\\\\/]bin[\\\\/]wrangler\\.js$/);
 assert.deepEqual(spec.argv.slice(1),argv);
 assert.equal(spec.argv.at(-1),message);
 assert.equal(spec.options.shell,false);
-assert.equal(spec.options.input,key+'\\n');
+assert.equal(spec.options.input,key+'\n');
 assert.equal(spec.argv.includes(key),false);
 assert.equal(spec.argv.join(' ').includes(key),false);
 assert.throws(()=>wranglerProcessSpec(['versions',null]));
