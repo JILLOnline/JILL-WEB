@@ -3,9 +3,9 @@ import {readFileSync} from 'node:fs';
 import {assertVersionBindings,selectUiVersion,assertReleaseReady}
   from './deploy-work-hq-inbox-ui.mjs';
 
-const ACTIVE='b6a908d4-002a-4c39-9f37-7825763e75c7';
+const ACTIVE='e67a2209-f6d9-4671-b6fc-33994015af30';
 const NEXT='f8e64049-8e2d-42a4-b1db-7dc616edc520';
-const MSG='JILL HQ WORK request workspace v1; read-only release';
+const MSG='JILL HQ WORK source-cache v1; 20-second verified metadata';
 const db='3f17c186-c794-4e00-8f20-017191373a19';
 const bindings=[
   {name:'JILL_WORK_HOST_STAGE',type:'plain_text',text:'canary'},
@@ -88,7 +88,7 @@ for(const phrase of [
   "RELEASE JILL HQ WORK UI",
   "work:hq:ui","test:work-merchant-inbox","test:work-hq-inbox-ui",
   "writeOAuthManifest","assertWorkHqInboxManifest",
-  "test:workerd-oauth","test:work-hq-request-detail",
+  "test:workerd-oauth","test:work-hq-request-detail","test:work-hq-source-cache",
   "assertHttp('/app/requests','denied')",
   "assertHttp('/app/requests/jill%3A92b32355-900e-47ba-8946-ccd93190a3b7','denied')",
   "assertHttp('/app/setup-owner',410)",
