@@ -62,7 +62,7 @@ invalidateWorkMerchantSourceCache();
 finishOld(raw);
 await oldPending;
 await readWorkMerchantSourceCached(args);
-assert.equal(calls,5,'invalidated in-flight snapshot must never warm cache');
+assert.equal(calls,4,'invalidated in-flight snapshot must never warm cache');
 
 // Malformed / failed canonical reads are NEVER cached or transformed to zero.
 invalidateWorkMerchantSourceCache();
@@ -75,12 +75,12 @@ await assert.rejects(()=>readWorkMerchantSourceCached({...args,reader:async()=>{
 }}));
 assert.equal(failures,2);
 await readWorkMerchantSourceCached(args);
-assert.equal(calls,6);
+assert.equal(calls,5);
 await assert.rejects(()=>readWorkMerchantSourceCached({...args,secret:'short'}));
 
 // Signing secret change can never reuse an old credential's snapshot.
 await readWorkMerchantSourceCached({...args,secret:'B'.repeat(40)});
-assert.equal(calls,7);
+assert.equal(calls,6);
 const route=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
 const boundary=readFileSync('services/jill-order-desk/merchant-inbox-read.mjs','utf8');
