@@ -2,9 +2,13 @@ import {AppProvider} from "@shopify/shopify-app-react-router/react";
 import {boundary} from "@shopify/shopify-app-react-router/server";
 import {Outlet,useLoaderData,useRouteError,type LoaderFunctionArgs,type HeadersFunction,type ShouldRevalidateFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
+import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {JILL_WORK_MERCHANT_CLIENT_ID} from "../../../../../backend/jill-merchant-auth.mjs";
 export async function loader({request,context}:LoaderFunctionArgs) {
-  await workShopify(context.cloudflare.env).authenticate.admin(request);
+  await authenticateWorkAdminOnce({
+    scope:context.cloudflare,
+    authenticate:()=>workShopify(context.cloudflare.env).authenticate.admin(request),
+  });
   return {apiKey:JILL_WORK_MERCHANT_CLIENT_ID};
 }
 // Once the WORK request layout authenticated Owner and D1, sibling
