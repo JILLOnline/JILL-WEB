@@ -43,9 +43,14 @@ export function sameStructuredData(a,b){
   return JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 }
 export function safeRuntimeDiffLabels(activeRuntime,candidateRuntime){
+  // Exact Cloudflare Workers version `script_runtime` API members:
+  // compatibility_date, compatibility_flags, exports, limits,
+  // migration_tag and usage_model. In particular, exports and migration_tag
+  // carry Durable Object/entrypoint lifecycle information and MUST never
+  // be waved through as "unimportant" metadata.
   const known=[
-    'compatibility_date','compatibility_flags','usage_model',
-    'limits','containers',
+    'compatibility_date','compatibility_flags','exports',
+    'limits','migration_tag','usage_model',
   ];
   const safe=[];
   for(const key of known) {
@@ -60,6 +65,24 @@ export function safeRuntimeDiffLabels(activeRuntime,candidateRuntime){
       .filter(([k])=>!known.includes(k))):{};
   if(!sameStructuredData(extraA,extraC))safe.push('other_runtime_settings');
   return safe;
+}
+// Only reports field presence and shape. Never print runtime values,
+// DO class/export names, HMAC material, Cloudflare JSON or request data.
+export function safeRuntimeDiffShapes(activeRuntime,candidateRuntime){
+  const differing=safeRuntimeDiffLabels(activeRuntime,candidateRuntime);
+  function shape(value){
+    if(value===undefined)return 'absent';
+    if(value===null)return 'null';
+    if(Array.isArray(value))return 'array';
+    if(typeof value==='object')return 'object';
+    return typeof value;
+  }
+  return differing.map(field=>{
+    if(field==='other_runtime_settings')
+      return 'other_runtime_settings (unknown API members; blocked)';
+    const active=activeRuntime?.[field],candidate=candidateRuntime?.[field];
+    return field+' (active='+shape(active)+', candidate='+shape(candidate)+')';
+  });
 }
 export function selectVerifiedCandidate(list,activeVersion,activeId=ACTIVE){
   gate(Array.isArray(list)&&list.length>=2&&list.length<=10,'invalid_version_list');
@@ -209,9 +232,13 @@ if(invoked){
     // A true change remains an absolute release blocker.
     const runtimeDifferences=safeRuntimeDiffLabels(
       active.resources?.script_runtime,candidate.resources?.script_runtime);
-    if(runtimeDifferences.length)
-      console.error('WORK runtime differences (field names only): '+
+    if(runtimeDifferences.length) {
+      console.error('WORK runtime differences (API fields only): '+
         runtimeDifferences.join(', '));
+      for(const detail of safeRuntimeDiffShapes(
+        active.resources?.script_runtime,candidate.resources?.script_runtime))
+        console.error('WORK runtime field: '+detail);
+    }
     const match=inspectVersions({active,candidate});
     console.log('PASS WORK active version: '+match.activeId);
     console.log('PASS exact inactive key candidate: '+match.candidateId);

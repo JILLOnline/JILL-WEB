@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   selectVerifiedCandidate,inspectVersions,rolloutArguments,
-  sameStructuredData,safeRuntimeDiffLabels,
+  sameStructuredData,safeRuntimeDiffLabels,safeRuntimeDiffShapes,
 } from './release-work-hq-merchant-inbox.mjs';
 
 const A='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -76,6 +76,33 @@ assert.deepEqual(safeRuntimeDiffLabels(active.resources.script_runtime,{
   ...active.resources.script_runtime,unexpected_private_value:'SHOULD_NOT_BE_LOGGED',
 }),['other_runtime_settings']);
 
+assert.deepEqual(safeRuntimeDiffLabels(active.resources.script_runtime,{
+  ...active.resources.script_runtime,
+  exports:{WorkerEntrypoint:{type:'worker',state:'created'}},
+  migration_tag:'UNTRUSTED_OR_PRIVATE_VALUE',
+}),['exports','migration_tag']);
+const reports=safeRuntimeDiffShapes(active.resources.script_runtime,{
+  ...active.resources.script_runtime,
+  exports:{SENSITIVE_CLASS_NAME:{type:'durable-object',storage:'sqlite'}},
+  migration_tag:'PRIVATE_MIGRATION_TAG',
+});
+assert.deepEqual(reports,[
+  'exports (active=absent, candidate=object)',
+  'migration_tag (active=absent, candidate=string)',
+]);
+assert.ok(!JSON.stringify(reports).includes('SENSITIVE_CLASS_NAME'));
+assert.ok(!JSON.stringify(reports).includes('PRIVATE_MIGRATION_TAG'));
+assert.deepEqual(safeRuntimeDiffShapes(active.resources.script_runtime,{
+  ...active.resources.script_runtime,
+  unknown_token:'DO_NOT_EXPOSE',
+}),['other_runtime_settings (unknown API members; blocked)']);
+assert.deepEqual(safeRuntimeDiffShapes(
+  {...active.resources.script_runtime,exports:{WorkerEntrypoint:{type:'worker'}}},
+  {...active.resources.script_runtime,exports:{WorkerEntrypoint:{type:'worker'}},
+    migration_tag:'v1'},
+),['migration_tag (active=absent, candidate=string)']);
+
+
 const alter=(changed)=>({...structuredClone(candidate),...changed});
 function invalid(x,pattern){assert.throws(()=>inspectVersions({active,candidate:x}),pattern);}
 invalid(alter({resources:{...candidate.resources,
@@ -117,7 +144,10 @@ assert.throws(()=>rolloutArguments('garbage'),/invalid_candidate_id/);
 const source=fs.readFileSync('scripts/release-work-hq-merchant-inbox.mjs','utf8');
 assert.match(source,/shell:false/);
 assert.match(source,/safeRuntimeDiffLabels/);
-assert.match(source,/WORK runtime differences \(field names only\):/);
+assert.match(source,/safeRuntimeDiffShapes/);
+assert.match(source,/'exports'/);
+assert.match(source,/'migration_tag'/);
+assert.match(source,/WORK runtime differences \(API fields only\):/);
 assert.doesNotMatch(source,/JSON\.stringify\(active\.resources\.script_runtime\)===/);
 assert.match(source,/RELEASE JILL HQ WORK INBOX/);
 assert.match(source,/activeStatus\(\)===ACTIVE,'active_version_changed_at_approval'/);
