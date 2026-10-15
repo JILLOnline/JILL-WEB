@@ -70,3 +70,31 @@ commands. Stage and inspect a new WORK-only candidate after determining
 the exact currently active WORK Worker/version, preserving all FOUR
 secrets, Owner bootstrap OFF, OAuth ON, write opt-in, and rollback.
 No LIVE, KEEP, Rewards or Google Apps Script update.
+
+## 2026-10-15 repeated-navigation regression (follow-up)
+
+Owner reports that the newly released performance version improved speed a
+little, but repeated inbox → detail → inbox clicks eventually caused an
+unspecified failure. No browser error/HTTP trace has been supplied yet, so
+its exact failure mode is **not confirmed**.
+
+Source audit found one definite duplicate-read defect in PR #81: the new
+parent request layout imported and invoked the original inbox `loader`, but
+the index route **also continued exporting that loader**. React Router thus
+ran a second Shopify Owner/D1/Google data loader for the child index route
+on initial inbox visits and every return from a workspace. Under rapid
+navigation, this could trigger redundant remote work and failures.
+
+Fix: move the single canonical reader to `app.requests-source.server.ts`,
+import it only from the parent layout, and remove every route-loader export
+and server-side reader import from the index presentation module.
+The workspace and inbox remain consumers of one nine-field verified parent
+loader; all direct-load auth, short revalidation TTL, status-save refresh,
+404 and origin/Owner restrictions remain unchanged. The regression suite now
+checks one registered data loader and exercises 210 alternating navigation
+cycles across the 15-second reuse boundary and POST invalidation.
+
+This is a **source-only repair**, not a confirmed fix to the user's exact
+on-screen failure until deployed and verified against their browser trace.
+The current active WORK version must be confirmed before any new inactive
+release is staged. Do not reuse the previous release/rollback scripts.
