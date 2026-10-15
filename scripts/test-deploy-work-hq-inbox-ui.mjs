@@ -3,9 +3,9 @@ import {readFileSync} from 'node:fs';
 import {assertVersionBindings,selectUiVersion,assertReleaseReady}
   from './deploy-work-hq-inbox-ui.mjs';
 
-const ACTIVE='76eda941-abcf-4838-a147-b5450a7c1148';
+const ACTIVE='b6a908d4-002a-4c39-9f37-7825763e75c7';
 const NEXT='f8e64049-8e2d-42a4-b1db-7dc616edc520';
-const MSG='JILL HQ WORK Custom Orders inbox UI v1; read-only release';
+const MSG='JILL HQ WORK request workspace v1; read-only release';
 const db='3f17c186-c794-4e00-8f20-017191373a19';
 const bindings=[
   {name:'JILL_WORK_HOST_STAGE',type:'plain_text',text:'canary'},
@@ -88,8 +88,9 @@ for(const phrase of [
   "RELEASE JILL HQ WORK UI",
   "work:hq:ui","test:work-merchant-inbox","test:work-hq-inbox-ui",
   "writeOAuthManifest","assertWorkHqInboxManifest",
-  "test:workerd-oauth",
+  "test:workerd-oauth","test:work-hq-request-detail",
   "assertHttp('/app/requests','denied')",
+  "assertHttp('/app/requests/jill%3A92b32355-900e-47ba-8946-ccd93190a3b7','denied')",
   "assertHttp('/app/setup-owner',410)",
 ])if(phrase!=="work:hq:ui")assert.ok(source.includes(phrase),phrase);
 assert.match(source,/shell:false/);
