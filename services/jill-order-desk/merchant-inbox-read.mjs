@@ -80,14 +80,23 @@ export function projectWorkMerchantInbox(source) {
 
 export async function loadWorkMerchantInbox({
   request,authenticate,db,readCanonicalSource,
+  onTiming=()=>{},clock=()=>performance.now(),
 }={}) {
   if(!request || typeof authenticate?.admin!=='function')
     throw new TypeError('Shopify SDK Admin authentication required');
-  // Shopify owns the redirect/challenge. Do not replace it with session JSON.
-  const {session}=await authenticate.admin(request);
-  const access=await readWorkMerchantPermission({
-    db,session,action:'requests.read',
-  });
+  // Record duration per verified boundary, never session IDs/PII/secret
+  // content. Instrumentation does NOT skip or relax either auth gate.
+  let started=clock(),session;
+  try {
+    ({session}=await authenticate.admin(request));
+  } finally {onTiming('shopify_auth',Math.max(0,clock()-started));}
+  started=clock();
+  let access;
+  try {
+    access=await readWorkMerchantPermission({
+      db,session,action:'requests.read',
+    });
+  } finally {onTiming('work_owner',Math.max(0,clock()-started));}
   if(!access.allowed) {
     const status=access.code==='authority_unavailable'?503:
       access.code==='unauthenticated'?401:403;
@@ -101,11 +110,12 @@ export async function loadWorkMerchantInbox({
   // source, not fictional zero requests or cached customer account data.
   if(typeof readCanonicalSource!=='function')
     return result(200,safeModel('source_not_connected'));
+  started=clock();
   try {
     const source=await readCanonicalSource({shop:SHOP});
     return result(200,projectWorkMerchantInbox(source));
   } catch {
     // No stale data, source internals, customer PII or secret details.
     return result(503,safeModel('source_unavailable'));
-  }
+  } finally {onTiming('google_feed',Math.max(0,clock()-started));}
 }
