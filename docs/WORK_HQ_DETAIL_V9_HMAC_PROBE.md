@@ -82,3 +82,45 @@ Owner + D1 authorization before any proposed feature enablement. For the
 first actual request test, use one disposable WORK-only submission, and
 confirm per-item personalization and opaque references; no LIVE, KEEP,
 Rewards, customer records, mail, statuses, or Shopify payment changes.
+
+## Isolated WORK Cloudflare candidate stage — detail remains OFF
+
+After **live** `work:hq:qa:detail:pin:audit` PASS, prepare exactly one
+**inactive** version of the existing canary Worker. The CURRENT verified
+100%-deployed canary baseline must match
+`52adfbde-afb6-453e-b779-7be6f4e02519`, with four existing secret
+bindings, WORK D1, OAuth ON, Owner commissioning OFF, request status writes
+ON and exact-detail flag **ABSENT**.
+
+From a clean, synchronized local `jill/rewards-work`, run:
+
+```powershell
+npm.cmd run test:work-hq-detail-v9-stage
+npm.cmd run work:hq:detail:v9:inspect
+```
+
+The inspect command is **read-only**: it queries Google's deployment
+listing and Cloudflare version/bindings, but reads no request payload or
+secret values. If it stops, do not force staging or edit the active Worker.
+The source branch includes a separate operator-invoked staging mode:
+
+```powershell
+npm.cmd run work:hq:detail:v9:stage
+```
+
+This second command rechecks all gates, runs static security regression
+tests, archives the existing ignored local build, builds the WORK canary,
+prepares an OAuth-ON / Owner-OFF / existing-writes-ON manifest and uploads
+one **inactive** Cloudflare version. It does **not** add
+`JILL_WORK_HQ_DETAIL_ENABLED=true`, run `versions deploy`, change a
+Shopify app version or overwrite any Cloudflare secret. Following upload,
+it checks the candidate's complete binding/resource parity against the
+active version and verifies **the original active version still owns 100%
+traffic**. If the upload succeeds but post-upload validation stops, an
+inactive candidate may exist: DO NOT blindly rerun the stage command.
+
+Do not confuse **code staged** with **full details operational**. The
+actual detail loader remains disconnected until a second, strictly
+controlled WORK-only opt-in change is inspected, rolled out and tested with
+a disposable WORK request by a genuinely authenticated Shopify Owner.
+Original Google @7 merchant feed/status management must remain independent.
