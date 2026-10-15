@@ -112,6 +112,11 @@ function doPost(e) {
   if (clean_(e && e.parameter && e.parameter.jill_order_merchant_list) === '1') {
     return jillWorkHqMerchantList_(e);
   }
+  // Exact-ID merchant full detail — read-only WORK QA source, signed HMAC.
+  // This never accepts a customer JWT, public URL, email or browser token.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_detail) === '1') {
+    return jillWorkHqMerchantDetail_(e);
+  }
   // Dedicated merchant command gate. QA only; NEVER an anonymous customer API.
   if (clean_(e && e.parameter && e.parameter.jill_order_merchant_command) === '1') {
     return jillWorkHqMerchantCommand_(e);
@@ -1170,6 +1175,115 @@ function jillWorkHqMerchantList_(e) {
   }
 }
 /* END WORK HQ MERCHANT READ V1 */
+
+/* WORK HQ EXACT REQUEST DETAIL V1 — QA-ONLY, READ-ONLY
+   Full original submission is returned to the authenticated WORK Worker,
+   never directly to customer accounts. This endpoint is absent from the
+   pinned deployed QA v7 until separately reviewed/released. It must NOT
+   create sheets, append events, resolve private files or modify raw intake.
+*/
+function jillWorkHqMerchantDetailVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  const multiple=e&&e.parameters||{};
+  const expected=['jill_order_merchant_detail','shop','submission_id',
+    'jill_hq_read_ts','jill_hq_read_nonce','jill_hq_read_sig'];
+  if(Object.keys(p).length!==expected.length ||
+     !expected.every(function(k){
+       return Object.prototype.hasOwnProperty.call(p,k) &&
+         (!multiple[k] || multiple[k].length===1);
+     }) || String(p.jill_order_merchant_detail)!=='1' ||
+     String(p.shop)!=='jill-work.myshopify.com')
+    return false;
+  const id=String(p.submission_id||'');
+  const ts=String(p.jill_hq_read_ts||'');
+  const nonce=String(p.jill_hq_read_nonce||'');
+  const sig=String(p.jill_hq_read_sig||'').toLowerCase();
+  if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+     !/^[0-9]{13}$/.test(ts) ||
+     Math.abs(Date.now()-Number(ts))>120000 ||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce) ||
+     !/^[a-f0-9]{64}$/.test(sig))
+    return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(secret.length<32)return false;
+  const message=['merchant_detail_v1','jill-work.myshopify.com',
+    id,ts,nonce].join('\n');
+  const expectedSig=Utilities.computeHmacSha256Signature(message,secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);})
+    .join('');
+  return constantTimeEqual_(sig,expectedSig);
+}
+function jillWorkHqCanonicalDetail_(id) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('wrong_runtime');
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+  const events=jillWorkHqReadOnlySheet_(ss,
+    JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+  const count=intake.getLastRow()-1;
+  const eventCount=events.getLastRow()-1;
+  if(count<0||count>50||eventCount<0||eventCount>500)
+    throw new Error('source_limit');
+  const idColumn=HEADERS.indexOf('submission_id');
+  const rawColumn=HEADERS.indexOf('raw_payload');
+  const submittedColumn=HEADERS.indexOf('submitted_at');
+  const ids=count?intake.getRange(2,1,count,HEADERS.length).getValues():[];
+  const matches=ids.filter(function(row){
+    return String(row[idColumn]||'')===id;
+  });
+  if(matches.length!==1)return null;
+  const raw=String(matches[0][rawColumn]||'');
+  // Prevent oversized raw payload from crossing the Worker boundary.
+  if(!raw||raw.length>262144)throw new Error('raw_limit');
+  const payload=JSON.parse(raw);
+  if(!payload||payload.version!==1||
+     payload.operation!=='custom_order.submit'||payload.submission_id!==id ||
+     !Array.isArray(payload.items)||payload.items.length<1||
+     payload.items.length>500)
+    throw new Error('bad_raw');
+  const submitted=new Date(matches[0][submittedColumn]);
+  const payloadTime=new Date(payload.submitted_at);
+  if(!Number.isFinite(submitted.getTime())||
+     submitted.getTime()!==payloadTime.getTime())
+    throw new Error('time_conflict');
+  const history=eventCount?events.getRange(2,1,eventCount,
+    JILL_CUSTOM_WORKFLOW.HEADERS.length).getValues():[];
+  let revision=0;
+  history.forEach(function(row){
+    if(String(row[1]||'')!==id)return;
+    const n=Number(row[2]);
+    if(!Number.isSafeInteger(n)||n!==revision+1||n>100||
+       JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(row[3]))===-1||
+       JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(String(row[4]))===-1)
+      throw new Error('bad_event_revision');
+    revision=n;
+  });
+  if(revision<1)throw new Error('missing_event');
+  return {version:1,operation:'custom_order.merchant.detail.source.result',
+    ok:true,shop:'jill-work.myshopify.com',submission_id:id,
+    revision:revision,raw_payload:raw};
+}
+function jillWorkHqMerchantDetail_(e) {
+  const failed=function(code){
+    return json_({version:1,
+      operation:'custom_order.merchant.detail.source.result',
+      ok:false,error:{code:code,retryable:false}});
+  };
+  if(!jillWorkHqMerchantDetailVerified_(e))return failed('unauthorized');
+  try {
+    const detail=jillWorkHqCanonicalDetail_(
+      String(e.parameter.submission_id));
+    return detail?json_(detail):failed('not_found');
+  } catch (_ignored) {
+    // No raw data, source IDs beyond the signed request, email or stack.
+    return failed('private_read_unavailable');
+  }
+}
+/* END WORK HQ EXACT REQUEST DETAIL V1 */
+
 
 
 /* WORK HQ MERCHANT COMMAND V1 — QA ONLY; SEPARATE WRITE SECRET.
