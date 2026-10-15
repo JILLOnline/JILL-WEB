@@ -9,6 +9,8 @@ import {
   selectInboxRecords,inboxStats,INBOX_FILTERS,
 } from "../../../inbox-display.mjs";
 import "../styles/inbox.css";
+import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
+import "../styles/request-actions.css";
 
 type InboxRecord={
   submission_id:string;
@@ -26,6 +28,7 @@ type InboxModel={
   requestsConnected:boolean;
   records:InboxRecord[];
   readOnly:boolean;
+  controlsEnabled?:boolean;
 };
 
 export async function loader({request,context}:LoaderFunctionArgs) {
@@ -59,7 +62,14 @@ export async function loader({request,context}:LoaderFunctionArgs) {
   headers.set("server-timing",
     `merchant-auth;dur=${Math.max(0,total-source).toFixed(1)}, merchant-feed;dur=${source.toFixed(1)}, merchant-total;dur=${total.toFixed(1)}`);
   headers.set("x-jill-feed-cache",cacheMode);
-  return Response.json(result.model,{
+  const controlsEnabled=result.model.state==="ready" &&
+    env.JILL_WORK_HOST_STAGE==="canary" &&
+    env.JILL_WORK_MERCHANT_WRITES_ENABLED==="true" &&
+    typeof env.JILL_HQ_MERCHANT_WRITE_SECRET==="string" &&
+    env.JILL_HQ_MERCHANT_WRITE_SECRET.length>=32 &&
+    env.JILL_HQ_MERCHANT_WRITE_SECRET!==env.JILL_HQ_MERCHANT_READ_SECRET &&
+    env.JILL_HQ_MERCHANT_WRITE_SECRET!==env.SHOPIFY_API_SECRET;
+  return Response.json({...result.model,controlsEnabled},{
     status:result.status,headers,
   });
 }
@@ -69,7 +79,7 @@ const STATUS_TONE:Record<string,string>={
   in_production:"working",ready_pickup:"ready",on_hold:"waiting",
   cancelled:"muted",completed:"ready",
 };
-function RequestCard({item}:{item:InboxRecord}) {
+function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:boolean}) {
   const statusTone=STATUS_TONE[item.customer_status]??"muted";
   return <article className="jill-inbox__card">
     <div className="jill-inbox__card-head">
@@ -121,6 +131,7 @@ function RequestCard({item}:{item:InboxRecord}) {
         private notes and order changes are not exposed in this view.
       </p>
     </details>
+    <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
     <div className="jill-inbox__open">
       <Link prefetch="intent" to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
         Open request workspace →
@@ -214,7 +225,8 @@ export default function WorkMerchantInbox() {
                   {visible.length
                     ? <div className="jill-inbox__cards">
                         {visible.map((item:InboxRecord)=>
-                          <RequestCard key={item.submission_id} item={item}/>)}
+                          <RequestCard key={item.submission_id} item={item}
+                            controlsEnabled={data.controlsEnabled===true}/>)}
                       </div>
                     : <div className="jill-inbox__empty" role="status">
                         {stats.total===0
@@ -223,7 +235,7 @@ export default function WorkMerchantInbox() {
                       </div>}
                 </>}
         <footer className="jill-inbox__footer">
-          <strong>Read-only WORK preview.</strong> Quotes, invoices, payments,
+          <strong>WORK merchant request preview.</strong> Quotes, invoices, payments,
           production edits and fulfillment changes are not enabled.
           Existing My JILL customer tracking is unaffected.
         </footer>
