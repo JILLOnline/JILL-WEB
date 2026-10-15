@@ -87,7 +87,7 @@ assert.equal(WORK_REQUESTS_NAVIGATION_REUSE_MS,15000);
 const currentUrl=new URL('https://work.example/app/requests');
 const nextUrl=new URL('https://work.example/app/requests/'+encodeURIComponent(id));
 const now=100000;
-const snapshot={state:'ready',readOnly:true,verifiedAt:now-500};
+const snapshot={state:'ready',readOnly:true,scope:'inbox',verifiedAt:now-500};
 const options={currentUrl,nextUrl,snapshot,now};
 assert.equal(isWorkRequestsPath(currentUrl.pathname),true);
 assert.equal(isWorkRequestsPath(nextUrl.pathname),true);
@@ -98,6 +98,7 @@ assert.equal(mayReuseWorkRequestsSnapshot({...options,
 for(const wrong of [
   {...options,snapshot:{...snapshot,state:'access_denied'}},
   {...options,snapshot:{...snapshot,readOnly:false}},
+  {...options,snapshot:{...snapshot,scope:'detail'}},
   {...options,snapshot:{...snapshot,verifiedAt:now-15000}},
   {...options,snapshot:{...snapshot,verifiedAt:now+1}},
   {...options,snapshot:undefined},
