@@ -32,7 +32,7 @@ export default function JillHQ() {
             </s-paragraph>
             {data.role==="owner"
               ? <s-paragraph>
-                  <Link to="/app/requests" prefetch="intent">Open Custom Orders inbox →</Link>
+                  <Link to="/app/requests">Open Custom Orders inbox →</Link>
                 </s-paragraph>
               : null}
           </s-section>
