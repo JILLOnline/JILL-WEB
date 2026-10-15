@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {
-  CATALOG,CATALOG_MARKER,reconcileCatalog,localFilePath,
+  CATALOG,CATALOG_MARKER,LIVE_CANDIDATE,LIVE_CANDIDATE_MARKER,reconcileCatalog,localFilePath,
 } from './initialize-jill-private-catalog.mjs';
 
 // Template keys are the actual externally configured names; screenshot
@@ -39,8 +39,31 @@ assert.ok(updated.content.includes('LIVE_KEY=PRIVATE_LIVE_VALUE'));
 assert.equal(updated.content.split(CATALOG_MARKER).length,2);
 assert.deepEqual(reconcileCatalog(updated.content),
   {changed:false,content:updated.content,reason:'already_installed'});
-assert.equal(reconcileCatalog('').content,CATALOG);
-assert.equal(reconcileCatalog('  ').content,CATALOG);
+assert.equal(reconcileCatalog('').content,CATALOG+LIVE_CANDIDATE);
+assert.equal(reconcileCatalog('  ').content,'  \n\n'+CATALOG+LIVE_CANDIDATE);
+assert.ok(updated.content.includes('[LIVE.GOOGLE_CUSTOM_ORDER_REWARDS_CANDIDATE]'));
+assert.equal(updated.content.split(LIVE_CANDIDATE_MARKER).length,2);
+assert.ok(LIVE_CANDIDATE.includes('Believed LIVE; NOT VERIFIED'));
+for(const exact of [
+  'SHOPIFY_ACCESS_TOKEN=',
+  'SHOPIFY_CLIENT_SECRET=',
+  'SHOPIFY_CLIENT_ID=',
+  'SHOPIFY_REDIRECT_URI=',
+  'SHOPIFY_SHOP=',
+  'SHOPIFY_STORE=',
+  'JILL_SHEET_ID=',
+])assert.ok(LIVE_CANDIDATE.includes('\n'+exact+'\n'));
+assert.ok(!LIVE_CANDIDATE.includes('\nJILL_REWARDS_INFRA_CHECK_AT='));
+assert.ok(LIVE_CANDIDATE.includes('# JILL_REWARDS_INFRA_CHECK_AT'));
+assert.ok(!LIVE_CANDIDATE.includes('\nJILL_CUSTOM_ORDER_GATEWAY_SECRET='));
+const previousV2=CATALOG.replace('JILL_HQ_MERCHANT_READ_SECRET=',
+  'JILL_HQ_MERCHANT_READ_SECRET=PRIVATE_WORK_VALUE');
+const updatedV2=reconcileCatalog(previousV2);
+assert.ok(updatedV2.content.startsWith(previousV2));
+assert.ok(updatedV2.content.includes('PRIVATE_WORK_VALUE'));
+assert.equal(updatedV2.content.split(CATALOG_MARKER).length,2);
+assert.equal(updatedV2.content.split(LIVE_CANDIDATE_MARKER).length,2);
+assert.equal(reconcileCatalog(updatedV2.content).changed,false);
 assert.throws(()=>reconcileCatalog(null));
 
 // Guard against accidentally writing under repo or common sync folders.
@@ -54,4 +77,4 @@ const source=fs.readFileSync('scripts/initialize-jill-private-catalog.mjs','utf8
 assert.doesNotMatch(source,/fetch\(|https\.request\(|console\.log\(existing\)|console\.log\(result\.content\)/);
 assert.match(source,/COPYFILE_EXCL/);
 assert.match(source,/fs\.lstatSync\(full\)\.isSymbolicLink\(\)/);
-console.log('PASS JILL private local catalog: exact names, unknown LIVE/WORK quarantine, append-only and backup, no key upload, no automatic secret reading.');
+console.log('PASS JILL private catalog: separate unverified LIVE Apps Script candidate, preserved WORK keys, idempotent append-only, no key upload or runtime reads.');
