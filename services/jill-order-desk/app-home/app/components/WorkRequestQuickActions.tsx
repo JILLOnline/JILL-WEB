@@ -44,8 +44,8 @@ export function WorkRequestQuickActions({
     if(!enabled||pending)return;
     if(kind==="message" && !message.trim())return;
     if(kind==="status" && record.revision>=100)return;
-    if(!operation.current)
-      operation.current="jill:hq:"+crypto.randomUUID();
+    if(!operation.current || !operation.current.startsWith("jill:hq:"+kind+":"))
+      operation.current="jill:hq:"+kind+":"+crypto.randomUUID();
     const payload=new URLSearchParams({
       kind,submission_id:record.submission_id,
       operation_id:operation.current,
