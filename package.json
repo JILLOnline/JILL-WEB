@@ -134,6 +134,8 @@
     "work:hq:qa:detail:inspect": "node scripts/stage-work-hq-qa-detail-deployment.mjs --inspect",
     "work:hq:qa:detail:stage": "node scripts/stage-work-hq-qa-detail-deployment.mjs --stage",
     "work:hq:qa:detail:reconcile": "node scripts/reconcile-work-hq-qa-detail-deployment.mjs",
+    "work:hq:qa:detail:probe": "node scripts/probe-work-hq-qa-detail-v9.mjs",
+    "test:work-hq-qa-detail-probe": "node scripts/test-work-hq-qa-detail-v9-probe.mjs",
     "test:work-hq-qa-detail-reconcile": "node scripts/test-work-hq-qa-detail-reconcile.mjs",
     "test:work-hq-qa-detail-stage": "node scripts/test-stage-work-hq-qa-detail-deployment.mjs",
     "test:work-hq-detail-view": "node scripts/test-work-hq-detail-view.mjs",
