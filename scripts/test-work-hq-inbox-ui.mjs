@@ -61,6 +61,12 @@ const helper=readFileSync(
   'services/jill-order-desk/inbox-display.mjs','utf8');
 const landing=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.index.tsx','utf8');
+// Shopify App Bridge must authenticate route DATA requests. React Router's
+// automatic prefetch link requests may lack a fresh embedded session token;
+// they have historically generated spurious /auth/login 200 navigation.
+assert.match(landing,/<Link to="\/app\/requests">/);
+assert.doesNotMatch(landing,/prefetch\s*=/);
+assert.doesNotMatch(route,/prefetch\s*=/);
 const serverLoader=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
 for(const expected of [
