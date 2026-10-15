@@ -124,3 +124,47 @@ actual detail loader remains disconnected until a second, strictly
 controlled WORK-only opt-in change is inspected, rolled out and tested with
 a disposable WORK request by a genuinely authenticated Shopify Owner.
 Original Google @7 merchant feed/status management must remain independent.
+
+## Confirmed inactive Cloudflare stage, and controlled OFF release
+
+Owner's 2026-10-15 local log shows the new WORK Cloudflare version
+`204d66c3-3296-430d-8288-39c354876600` uploaded **INACTIVE**.
+The previous version `52adfbde-afb6-453e-b779-7be6f4e02519`
+remains 100% active. All four secret bindings, WORK D1, OAuth ON,
+Owner commissioning OFF, merchant status writes ON and full-detail OFF
+were certified by the upload script. **Never rerun**
+`work:hq:detail:v9:stage`.
+
+The next isolated release is **code-only with full-detail still OFF**.
+From the synchronized `jill/rewards-work`, use:
+
+```powershell
+npm.cmd run test:work-hq-detail-v9-off-release
+npm.cmd run work:hq:detail:v9:off:inspect
+```
+
+The `off:inspect` command is **read-only**. It checks the exact
+Cloudflare candidate ID/marker, protected active version, binding
+identity and absence of unrecognized newer versions, and re-reconciles
+Google QA v9. It must pass before:
+
+```powershell
+npm.cmd run work:hq:detail:v9:off:release
+```
+
+The release command repeats these checks, verifies anonymous WORK
+health/login and denial of Owner-only inbox/detail/command endpoints,
+then requests the exact local operator confirmation. It switches
+**only the pre-staged version** on the isolated WORK canary and tests
+the boundary again. If its own candidate becomes unhealthy, it attempts
+rollback to the known previous WORK version, but never overwrites an
+unexpected independent Cloudflare version. The operator must inspect
+Cloudflare if any post-release check stops; do not retry blindly.
+
+Even after this OFF code release, **customer intake detail is not yet
+enabled**. Verify the signed-in Shopify WORK Owner inbox and status
+management first. Turning detail ON requires a distinct, auditable
+WORK-only configuration/Worker candidate and negative authorization
+tests before a real disposable request. LIVE, KEEP, Rewards, My JILL,
+Shopify app versions, Google QA deployments and customer records
+remain outside this change.
