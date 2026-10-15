@@ -14,6 +14,7 @@ type VerifiedSnapshot={
   records?:Array<{submission_id:string}>;
   verifiedAt?:number;
   readOnly?:boolean;
+  scope?:"inbox"|"detail";
 };
 
 export function shouldRevalidate({
@@ -42,18 +43,24 @@ export async function loader(args:LoaderFunctionArgs){
   headers.set("cache-control","private, no-store, max-age=0");
   headers.set("x-content-type-options","nosniff");
 
-  // A directly opened unknown request MUST stay an HTTP 404 instead of a
-  // UI-only missing state. Never expose the other inbox records on denial.
-  if(args.params.submissionId && response.status===200 &&
-     data.state==="ready" &&
-     !data.records?.some(item=>
-       item.submission_id===args.params.submissionId)){
-    throw new Response("Not found",{
-      status:404,headers:{"cache-control":"private, no-store, max-age=0",
-        "x-content-type-options":"nosniff"},
-    });
+  // A direct detail URL still returns ONLY its matching authorized
+  // request, never an entire inbox payload. An inbox navigation carries a
+  // full Owner-verified projection and may reuse it for sibling pages.
+  let records=data.records;
+  let scope:"inbox"|"detail"="inbox";
+  if(args.params.submissionId) {
+    scope="detail";
+    if(response.status===200 && data.state==="ready"){
+      const selected=data.records?.find(item=>
+        item.submission_id===args.params.submissionId);
+      if(!selected)throw new Response("Not found",{
+        status:404,headers:{"cache-control":"private, no-store, max-age=0",
+          "x-content-type-options":"nosniff"},
+      });
+      records=[selected];
+    }else records=[];
   }
-  return Response.json({...data,verifiedAt:Date.now()},{
+  return Response.json({...data,records,scope,verifiedAt:Date.now()},{
     status:response.status,headers,
   });
 }
