@@ -85,13 +85,25 @@ function git(...args) {
 }
 const run=process.argv[1] &&
   pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url;
+export function safeProbeStageCode(stage) {
+  const codes=Object.freeze({
+    git:'work_source_not_synced',
+    qa:'local_qa_project_mismatch',
+    clipboard_read:'clipboard_read_failed',
+    clipboard_format:'clipboard_key_missing_or_invalid',
+    signed_http:'signed_http_transport_failed',
+  });
+  return codes[stage]||'preflight_failed';
+}
 if(run) {
-  let secret;
+  let secret, stage='git';
   try {
     if(git('branch','--show-current')!=='jill/rewards-work' ||
        git('rev-parse','HEAD')!==git('rev-parse','refs/remotes/origin/jill/rewards-work') ||
        git('status','--porcelain','--untracked-files=no'))
       throw Error('WORK Git source must be clean and synced before private probe.');
+    console.log('PASS clean and synced WORK Git source.');
+    stage='qa';
     const fs=await import('node:fs');
     const qa=path.join(ROOT,'.work-custom-orders');
     const project=JSON.parse(fs.readFileSync(path.join(qa,'.qa-project.json'),'utf8'));
@@ -99,7 +111,13 @@ if(run) {
     if(project.scriptId!==EXPECTED_SCRIPT||clasp.scriptId!==EXPECTED_SCRIPT ||
        project.sheetId!==EXPECTED_SHEET||project.shop!=='jill-work.myshopify.com')
       throw Error('Isolated Google WORK QA project identity mismatch.');
-    secret=validateCopiedExistingKey(clipboardText());
+    console.log('PASS isolated Google WORK QA project identity.');
+    stage='clipboard_read';
+    const clipboard=clipboardText();
+    stage='clipboard_format';
+    secret=validateCopiedExistingKey(clipboard);
+    console.log('PASS clipboard format for existing 64-character WORK key.');
+    stage='signed_http';
     const result=await testExistingMerchantSecret({secret});
     if(!result.ok) {
       console.error('WORK QA HTTP PROBE STOPPED: '+result.code);
@@ -112,8 +130,9 @@ if(run) {
       console.log('No Google/Cloudflare deployment, secret rotation, staging, or LIVE changes.');
     }
   } catch {
-    // Never print raw exceptions (source errors may contain private data).
-    console.error('WORK QA HTTP PROBE STOPPED: local identity, clipboard, or transport check failed.');
+    // Never print raw exceptions, clipboard values, or server responses:
+    // Google transport exceptions may contain private request details.
+    console.error('WORK QA HTTP PROBE STOPPED: '+safeProbeStageCode(stage));
     process.exitCode=1;
   } finally {
     if(secret)clearClipboardIfUnchanged(secret);
