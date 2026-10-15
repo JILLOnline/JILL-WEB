@@ -1,3 +1,32 @@
+## Current WORK stability v2 stage (2026-10-15)
+
+**Do not use the old management v2 baseline or reactivate navigation v1.**
+The user activated navigation v1 and reproduced a failure after repeated
+inbox ↔ workspace clicks. Source audit showed the inbox child still exported
+its own React Router `loader`, so both index and parent re-read Shopify/D1/Google.
+PR #84 fixes that by giving the verified parent one canonical server-only
+source loader and removing the duplicate child data loader. Exact root cause
+of the user's particular error still needs a screenshot/network response.
+
+For the **current** `work:hq:navigation:stage` script:
+- Expected active navigation v1 (rollback):
+  `e818c639-f962-4a09-9399-54ab521531c3`.
+- Unique staging marker:
+  `JILL HQ WORK single-reader stress fix v2; inactive`.
+- Tests must prove exactly one registered inbox loader plus 210
+  alternating navigation cycles including the 15-second freshness cutoff.
+- Preserve all four Cloudflare WORK secrets, WORK D1, OAuth ON, Owner
+  commissioning OFF, signed merchant writes ON, Worker routing and runtime.
+- Build and upload one **inactive** candidate only. No traffic switch.
+- The release command remains pinned to the **old** navigation v1 and
+  **must not** be used until a separate exact-candidate/rollback update
+  has passed CI. Never retry an already staged candidate.
+
+The remainder of this document records the earlier v1 stage and should
+be read as historical context only.
+
+---
+
 # JILL HQ WORK — Faster Custom Orders navigation staging
 
 ## Grounded active baseline
