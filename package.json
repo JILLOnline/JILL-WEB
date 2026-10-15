@@ -101,7 +101,8 @@
     "work:hq:inbox:deploy-shell": "node scripts/deploy-work-hq-inbox-shell.mjs",
     "test:work-hq-inbox-rollout": "node scripts/test-work-hq-inbox-rollout.mjs",
     "work:hq:merchant:stage-secret": "node scripts/stage-work-hq-merchant-secret.mjs",
-    "test:work-hq-merchant-secret-stage": "node scripts/test-stage-work-hq-merchant-secret.mjs"
+    "test:work-hq-merchant-secret-stage": "node scripts/test-stage-work-hq-merchant-secret.mjs",
+    "work:hq:qa:diagnostic:sync": "node scripts/sync-work-hq-qa-diagnostic.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
