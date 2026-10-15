@@ -77,7 +77,7 @@ export default function WorkRequestDetail(){
       <main className="jill-inbox jill-request" aria-label="Custom Order request workspace">
         <nav className="jill-inbox__nav" aria-label="Request navigation">
           <Link className="jill-inbox__back" to="/app/requests">← Custom Orders inbox</Link>
-          <span className="jill-inbox__readonly">WORK · READ ONLY</span>
+          <span className="jill-inbox__readonly">WORK · {controlsEnabled?"MANAGEMENT":"READ ONLY"}</span>
         </nav>
         {state!=="ready" || !record
           ? <div className="jill-request__empty" role="status">
@@ -156,8 +156,9 @@ export default function WorkRequestDetail(){
               </div>
             </>}
         <footer className="jill-inbox__footer">
-          <strong>Verified WORK merchant view.</strong> No customer-account data,
-          Google records or Shopify orders were changed.
+          <strong>Verified WORK merchant view.</strong> The management tools save only after
+          canonical Google QA confirmation. Shopify orders, payments and
+          fulfillment remain separate.
         </footer>
       </main>
     </s-section>
