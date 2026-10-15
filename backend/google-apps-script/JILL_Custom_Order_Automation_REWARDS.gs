@@ -112,6 +112,10 @@ function doPost(e) {
   if (clean_(e && e.parameter && e.parameter.jill_order_merchant_list) === '1') {
     return jillWorkHqMerchantList_(e);
   }
+  // Dedicated merchant command gate. QA only; NEVER an anonymous customer API.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_command) === '1') {
+    return jillWorkHqMerchantCommand_(e);
+  }
   // Private WORK QA account-list operation. Never a public guest lookup.
   if (clean_(e && e.parameter && e.parameter.jill_order_customer_list) === '1') {
     return jillCustomOrderGatewayCustomerList_(e);
@@ -592,7 +596,15 @@ function jillCustomOrderMerchantRead(submissionId) {
 }
 
 function jillCustomOrderMerchantUpdate(command) {
-  const actor=jillCustomOrderActor_();
+  return jillCustomOrderMerchantUpdateAsActor_(command,jillCustomOrderActor_());
+}
+// One canonical event writer for editor-authorized desk commands and separately
+// HMAC-authorized Shopify WORK Owner requests. Validation, lock, revision CAS,
+// transition rules and idempotency are deliberately not duplicated.
+function jillCustomOrderMerchantUpdateAsActor_(command,actor) {
+  jillCustomOrderAssertLive_();
+  if(typeof actor!=='string'||actor.length<3||actor.length>150)
+    throw new Error('Invalid merchant actor.');
   const data=command || {};
   const id=String(data.submission_id || '').trim();
   const op=String(data.operation_id || '').trim();
@@ -1118,6 +1130,186 @@ function jillWorkHqMerchantList_(e) {
   }
 }
 /* END WORK HQ MERCHANT READ V1 */
+
+
+/* WORK HQ MERCHANT COMMAND V1 — QA ONLY; SEPARATE WRITE SECRET.
+   Production LIVE and Rewards WORK MUST reject every request here.
+   Accepted writes append exactly one canonical CustomOrderEvents event via
+   the SAME existing CAS/domain helper as the authorized spreadsheet desk.
+   Customer-visible public notes already flow to My JILL through the
+   verified, owner-scoped account timeline.
+   Email is only QUEUED here, never sent; QA manifest has no mail scopes.
+*/
+const JILL_WORK_HQ_OUTBOX=Object.freeze({
+  SHEET:'CustomOrderMailOutbox',
+  HEADERS:['operation_id','submission_id','revision','recipient_email',
+    'subject','body','state','created_at','updated_at']
+});
+function jillWorkHqMerchantCommandVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  if(String(p.jill_order_merchant_command||'')!=='1' ||
+     String(p.shop||'')!=='jill-work.myshopify.com')return false;
+  const ts=String(p.jill_hq_write_ts||'');
+  const nonce=String(p.jill_hq_write_nonce||'');
+  const sig=String(p.jill_hq_write_sig||'').toLowerCase();
+  const staff=String(p.jill_hq_write_staff||'');
+  if(!/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>120000||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce)||
+     !/^[a-f0-9]{64}$/.test(sig)||!/^[1-9][0-9]*$/.test(staff))
+    return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_WRITE_SECRET')||'');
+  if(secret.length<32)return false;
+  const fields=[
+    'merchant_command_v1','jill-work.myshopify.com',ts,nonce,
+    String(p.kind||''),String(p.operation_id||''),
+    String(p.submission_id||''),String(p.expected_revision||''),
+    String(p.current_status||''),String(p.customer_status||''),
+    String(p.internal_status||''),String(p.public_note||''),
+    String(p.internal_note||''),String(p.handoff_reference||''),staff
+  ];
+  const expected=Utilities.computeHmacSha256Signature(fields.join('\n'),secret)
+    .map(function(value){
+      return ('0'+((value+256)%256).toString(16)).slice(-2);
+    }).join('');
+  if(!constantTimeEqual_(sig,expected))return false;
+  // Apps Script parameter returns one value when duplicates are submitted.
+  // Refuse ambiguous duplicate signed fields before any mutation.
+  const required=['jill_order_merchant_command','shop','jill_hq_write_ts',
+    'jill_hq_write_nonce','jill_hq_write_sig','jill_hq_write_staff',
+    'kind','operation_id','submission_id','expected_revision',
+    'current_status','customer_status','internal_status','public_note',
+    'internal_note','handoff_reference'];
+  return !required.some(function(key){
+    return !e.parameters||!Array.isArray(e.parameters[key])||
+      e.parameters[key].length!==1;
+  });
+}
+function jillWorkHqMailOutbox_(ss) {
+  let sheet=ss.getSheetByName(JILL_WORK_HQ_OUTBOX.SHEET);
+  if(!sheet) {
+    sheet=ss.insertSheet(JILL_WORK_HQ_OUTBOX.SHEET);
+    sheet.getRange(1,1,1,JILL_WORK_HQ_OUTBOX.HEADERS.length)
+      .setValues([JILL_WORK_HQ_OUTBOX.HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers=sheet.getRange(1,1,1,JILL_WORK_HQ_OUTBOX.HEADERS.length)
+    .getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(JILL_WORK_HQ_OUTBOX.HEADERS))
+    throw new Error('Email outbox header mismatch.');
+  return sheet;
+}
+function jillWorkHqQueueEmail_(command,revision) {
+  // Outbox is a private WORK QA ledger, not a deliverability guarantee.
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+    const events=jillWorkHqReadOnlySheet_(
+      ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+    const count=intake.getLastRow()-1;
+    if(count<1||count>50)throw new Error('No bounded intake.');
+    const rows=intake.getRange(2,1,count,HEADERS.length).getValues();
+    const matches=rows.filter(function(row){
+      return String(row[HEADERS.indexOf('submission_id')])===command.submission_id;
+    });
+    if(matches.length!==1)throw new Error('Email recipient not uniquely verified.');
+    const email=String(matches[0][HEADERS.indexOf('email')]||'')
+      .trim().toLowerCase();
+    const raw=JSON.parse(String(matches[0][HEADERS.indexOf('raw_payload')]||''));
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||
+       String(raw&&raw.customer&&raw.customer.email||'').toLowerCase()!==email)
+      throw new Error('Original recipient integrity check failed.');
+    // Bind pending email to a REAL committed event, never a proposed edit.
+    const history=jillCustomOrderEventsFor_(events,command.submission_id);
+    const found=history.find(function(event){
+      return event.event_id===command.operation_id &&
+        event.revision===revision &&
+        event.public_note===command.public_note;
+    });
+    if(!found)throw new Error('Email not backed by canonical event.');
+    const outbox=jillWorkHqMailOutbox_(ss);
+    const countOut=outbox.getLastRow()-1;
+    if(countOut>1000)throw new Error('Email outbox full.');
+    const rowsOut=countOut?outbox.getRange(
+      2,1,countOut,JILL_WORK_HQ_OUTBOX.HEADERS.length).getValues():[];
+    const previous=rowsOut.filter(function(row){
+      return String(row[0])===command.operation_id;
+    });
+    if(previous.length>1)throw new Error('Duplicate email outbox operations.');
+    if(previous.length===1) {
+      if(String(previous[0][1])!==command.submission_id ||
+         Number(previous[0][2])!==revision ||
+         String(previous[0][3])!==email||
+         String(previous[0][5])!==command.public_note)
+        throw new Error('Email outbox idempotency conflict.');
+      return 'queued';
+    }
+    const at=new Date().toISOString();
+    outbox.appendRow([command.operation_id,command.submission_id,revision,
+      email,'JILL — Custom Order update',command.public_note,'QUEUED',at,at]);
+    SpreadsheetApp.flush();
+    return 'queued';
+  } finally {lock.releaseLock();}
+}
+function jillWorkHqMerchantCommand_(e) {
+  const failed=function(code){return json_({
+    version:1,operation:'custom_order.merchant.command.result',
+    ok:false,error:{code:code,retryable:code==='stale_revision'}
+  });};
+  if(!jillWorkHqMerchantCommandVerified_(e))return failed('unauthorized');
+  const p=e.parameter;
+  const command={
+    operation_id:String(p.operation_id||''),
+    submission_id:String(p.submission_id||''),
+    expected_revision:Number(p.expected_revision),
+    customer_status:String(p.customer_status||''),
+    internal_status:String(p.internal_status||''),
+    public_note:String(p.public_note||''),
+    internal_note:String(p.internal_note||''),
+    handoff_reference:String(p.handoff_reference||'')
+  };
+  const kind=String(p.kind||'');
+  if(!['status','message'].includes(kind) ||
+     !/^jill:hq:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+       .test(command.operation_id) ||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(command.submission_id) ||
+     !Number.isSafeInteger(command.expected_revision)||
+     command.expected_revision<1||command.expected_revision>99 ||
+     JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(p.current_status||''))<0 ||
+     JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(command.customer_status)<0 ||
+     JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(command.internal_status)<0 ||
+     command.public_note.length>500||command.internal_note.length>2000 ||
+     command.handoff_reference.length>256)
+    return failed('invalid_command');
+  if(kind==='message'&&
+     (command.customer_status!==String(p.current_status)||
+      !command.public_note.trim()||command.internal_note||
+      command.handoff_reference))return failed('invalid_command');
+  // The signed previous status is only a UI hint, not an authority: the
+  // canonical workflow CAS and transition evaluator make the final decision.
+  try {
+    const actor='shopify:WORK:staff:'+String(p.jill_hq_write_staff);
+    const outcome=jillCustomOrderMerchantUpdateAsActor_(command,actor);
+    const emailStatus=kind==='message'?
+      jillWorkHqQueueEmail_(command,outcome.revision):'not_requested';
+    return json_({version:1,operation:'custom_order.merchant.command.result',
+      ok:true,submission_id:command.submission_id,
+      operation_id:command.operation_id,revision:outcome.revision,
+      customer_status:command.customer_status,
+      duplicate:Boolean(outcome.duplicate),email_status:emailStatus});
+  } catch(err) {
+    const msg=String(err&&err.message||'');
+    if(msg.indexOf('updated elsewhere')>=0)return failed('stale_revision');
+    if(msg.indexOf('status transition')>=0)return failed('invalid_transition');
+    return failed('command_unconfirmed');
+  }
+}
+/* END WORK HQ MERCHANT COMMAND V1 */
+
 
 /* WORK HQ QA DIAGNOSTIC V1
    Visible in the Apps Script editor function dropdown (no trailing "_").
