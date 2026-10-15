@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import {
   selectVerifiedCandidate,inspectVersions,rolloutArguments,
   sameStructuredData,safeRuntimeDiffLabels,safeRuntimeDiffShapes,
-  safeUnknownRuntimeDifferences,
+  safeUnknownRuntimeDifferences,safeAssetDifferences,
 } from './release-work-hq-merchant-inbox.mjs';
 
 const A='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -141,6 +141,47 @@ assert.equal(safeUnknownRuntimeDifferences(
   Object.fromEntries(Array.from({length:18},(_,i)=>['extra_'+i,1]))
 ).at(-1),'additional_fields_omitted');
 
+// Assets are part of the Worker version. Inspect differences without
+// revealing content, asset paths, credentials, or any actual metadata value.
+const activeAssets={
+  config:{html_handling:'auto-trailing-slash',not_found_handling:'single-page-application'},
+  manifest:{'/assets/customer-447.js':'OLD_PRIVATE_FINGERPRINT'},
+  jwt:'SENSITIVE_ACTIVE_TOKEN',
+  namespace_id:'private-old-id',
+  flags:['one','two'],
+};
+const candidateAssets={
+  config:{not_found_handling:'single-page-application',html_handling:'none'},
+  manifest:{'/assets/customer-447.js':'NEW_PRIVATE_FINGERPRINT'},
+  jwt:'SENSITIVE_CANDIDATE_TOKEN',
+  namespace_id:'private-new-id',
+  flags:['one','three'],
+};
+const assetDiff=safeAssetDifferences(activeAssets,candidateAssets);
+assert.ok(assetDiff.some(v=>v.startsWith('assets.config.html_handling ')));
+assert.ok(assetDiff.some(v=>v.includes('.[redacted]')));
+assert.ok(assetDiff.some(v=>v.startsWith('assets.flags.[entry] ')));
+assert.ok(assetDiff.some(v=>v.startsWith('assets.namespace_id ')));
+assert.ok(!JSON.stringify(assetDiff).includes('customer-447'));
+assert.ok(!JSON.stringify(assetDiff).includes('SENSITIVE_'));
+assert.ok(!JSON.stringify(assetDiff).includes('private-'));
+assert.deepEqual(safeAssetDifferences(
+  {config:{not_found_handling:'404',html_handling:'none'}},
+  {config:{html_handling:'none',not_found_handling:'404'}}),[]);
+assert.deepEqual(safeAssetDifferences(undefined,{binding:'STATIC_CONTENT'}),
+  ['assets (active=absent, candidate=object, values=different)']);
+assert.ok(safeAssetDifferences(
+  {jwt:'HIDDEN_A'},
+  {jwt:'HIDDEN_B'}).every(v=>!v.includes('jwt')));
+assert.ok(safeAssetDifferences(
+  {a:Object.fromEntries(Array.from({length:80},(_,i)=>['path/'+i,'a']))},
+  {a:Object.fromEntries(Array.from({length:80},(_,i)=>['path/'+i,'b']))},
+).length<=20);
+const candidateAssetsDrift=structuredClone(candidate);
+candidateAssetsDrift.resources.script_runtime.assets=candidateAssets;
+assert.throws(()=>inspectVersions({active,candidate:candidateAssetsDrift}),
+  /worker_runtime_changed/);
+
 const alter=(changed)=>({...structuredClone(candidate),...changed});
 function invalid(x,pattern){assert.throws(()=>inspectVersions({active,candidate:x}),pattern);}
 invalid(alter({resources:{...candidate.resources,
@@ -184,6 +225,10 @@ assert.match(source,/shell:false/);
 assert.match(source,/safeRuntimeDiffLabels/);
 assert.match(source,/safeRuntimeDiffShapes/);
 assert.match(source,/safeUnknownRuntimeDifferences/);
+assert.match(source,/safeAssetDifferences/);
+assert.ok(source.includes('WORK asset metadata differs; release stays blocked.'));
+assert.ok(source.includes('WORK asset field (path/type only):'));
+
 assert.ok(source.includes('WORK unknown runtime key (name/type only):'));
 assert.match(source,/'exports'/);
 assert.match(source,/'migration_tag'/);
