@@ -127,7 +127,7 @@ export function safeAssetDifferences(activeAssets,candidateAssets,{maxItems=20,m
     return typeof v;
   }
   function segment(raw){
-    if(typeof raw==='number')return '[entry]';
+    if(typeof raw==='number')return '.[entry]';
     if(/^[a-z][a-z0-9_]{0,35}$/i.test(raw) &&
        !/(secret|token|password|credential|authorization|private|customer|email|jwt|hmac|key)/i.test(raw))
       return '.'+raw;
