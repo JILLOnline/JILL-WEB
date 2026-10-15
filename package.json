@@ -97,6 +97,8 @@
     "test:work-merchant-inbox": "node scripts/test-work-merchant-inbox.mjs",
     "test:work-hq-google-merchant-feed": "node scripts/test-work-hq-google-merchant-feed.mjs",
     "custom-orders:work:qa:read-audit": "node scripts/audit-work-qa-script-readonly.mjs",
+    "work:hq:qa:versions:audit": "node scripts/audit-work-hq-qa-versions.mjs",
+    "test:work-hq-qa-versions": "node scripts/test-work-hq-qa-versions.mjs",
     "test:work-qa-read-audit": "node scripts/test-work-qa-script-readonly.mjs",
     "work:hq:inbox:deploy-shell": "node scripts/deploy-work-hq-inbox-shell.mjs",
     "test:work-hq-inbox-rollout": "node scripts/test-work-hq-inbox-rollout.mjs",
