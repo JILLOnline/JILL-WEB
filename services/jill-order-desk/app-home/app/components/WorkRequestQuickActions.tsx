@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {useFetcher} from "react-router";
 import {
   WORK_INTERNAL_STAGES,WORK_STATUS_TRANSITIONS,
-} from "../../../merchant-command.mjs";
+} from "../../../merchant-command-contract.mjs";
 import {
   customerStatusLabel,internalStatusLabel,
 } from "../../../inbox-display.mjs";
