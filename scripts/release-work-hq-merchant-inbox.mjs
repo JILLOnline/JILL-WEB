@@ -115,6 +115,51 @@ export function safeUnknownRuntimeDifferences(activeRuntime,candidateRuntime){
     label(k)+' (active='+kind(a,k)+', candidate='+kind(c,k)+')')
     .concat(names.length>16?['additional_fields_omitted']:[]);
 }
+// Cloudflare Wrangler documents omitted static-asset options as:
+// html_handling: auto-trailing-slash; not_found_handling: none.
+// Cloudflare's secret-version materialization may add these as explicit
+// defaults to an existing asset configuration. Permit ONLY these exact
+// implicit->explicit equivalents and require ALL OTHER metadata unchanged.
+// No fallback for unknown asset options, dynamic routing or runtime state.
+export function sameRuntimeWithDocumentedAssetDefaults(activeRuntime,candidateRuntime){
+  if(!activeRuntime || !candidateRuntime ||
+    typeof activeRuntime!=='object' || typeof candidateRuntime!=='object' ||
+    Array.isArray(activeRuntime) || Array.isArray(candidateRuntime))return false;
+  const aa=activeRuntime.assets,ca=candidateRuntime.assets;
+  if(!aa || !ca || typeof aa!=='object' || typeof ca!=='object' ||
+    Array.isArray(aa) || Array.isArray(ca))return false;
+  const candidateAssets={...ca};
+  const own=Object.prototype.hasOwnProperty;
+  for(const [field,defaultValue] of [
+    ['html_handling','auto-trailing-slash'],
+    ['not_found_handling','none'],
+  ]){
+    if(!own.call(aa,field) && own.call(ca,field)){
+      if(ca[field]!==defaultValue)return false;
+      delete candidateAssets[field];
+    }
+  }
+  return sameStructuredData(activeRuntime,{
+    ...candidateRuntime,assets:candidateAssets,
+  });
+}
+export function safeAssetDefaultAssessment(activeRuntime,candidateRuntime){
+  const defaults={
+    html_handling:'auto-trailing-slash',
+    not_found_handling:'none',
+  };
+  const a=activeRuntime?.assets??{};
+  const c=candidateRuntime?.assets??{};
+  const own=Object.prototype.hasOwnProperty;
+  return Object.keys(defaults).map(field=>{
+    const wasMissing=!own.call(a,field);
+    const nowExplicit=own.call(c,field);
+    const allowed=wasMissing && nowExplicit && c[field]===defaults[field];
+    return {field,active:wasMissing?'omitted':'specified',
+      candidate:nowExplicit?'specified':'omitted',
+      matchesDocumentedDefault:allowed};
+  });
+}
 // Read-only static asset metadata inspection. Reveal ONLY short structural
 // field paths and value types, never their values, hashes, filenames, JWTs,
 // path-derived property names, complete Cloudflare JSON or customer data.
@@ -206,7 +251,9 @@ export function inspectVersions({active,candidate}){
     JSON.stringify(candidate.resources.script.handlers),
     'worker_handler_changed');
   gate(sameStructuredData(active.resources.script_runtime,
-      candidate.resources.script_runtime),
+      candidate.resources.script_runtime) ||
+    sameRuntimeWithDocumentedAssetDefaults(
+      active.resources.script_runtime,candidate.resources.script_runtime),
     'worker_runtime_changed');
   const a=orderedBindings(active.resources.bindings);
   const c=orderedBindings(candidate.resources.bindings);
@@ -323,7 +370,22 @@ if(invoked){
       if(!sameStructuredData(
         active.resources?.script_runtime?.assets,
         candidate.resources?.script_runtime?.assets)) {
-        console.error('WORK asset metadata differs; release stays blocked.');
+        for(const assessment of safeAssetDefaultAssessment(
+          active.resources?.script_runtime,
+          candidate.resources?.script_runtime)) {
+          if(assessment.active==='omitted' &&
+            assessment.candidate==='specified')
+            console.log('WORK static asset '+assessment.field+
+              ' matches Cloudflare documented default: '+
+              assessment.matchesDocumentedDefault);
+        }
+        const defaultParity=sameRuntimeWithDocumentedAssetDefaults(
+          active.resources?.script_runtime,
+          candidate.resources?.script_runtime);
+        if(defaultParity)
+          console.log('PASS only exact implicit-to-explicit Cloudflare static asset defaults.');
+        else
+          console.error('WORK asset metadata differs; release stays blocked.');
         for(const detail of safeAssetDifferences(
           active.resources?.script_runtime?.assets,
           candidate.resources?.script_runtime?.assets))
@@ -333,7 +395,7 @@ if(invoked){
     const match=inspectVersions({active,candidate});
     console.log('PASS WORK active version: '+match.activeId);
     console.log('PASS exact inactive key candidate: '+match.candidateId);
-    console.log('PASS identical Worker code, runtime, D1, Shopify secrets, OAuth ON and Owner setup OFF.');
+    console.log('PASS equivalent Worker code, runtime and static-asset defaults, same D1/Shopify secrets, OAuth ON, Owner setup OFF.');
     console.log('PASS only added binding: '+READ_SECRET+' (secret_text).');
     if(mode==='inspect') {
       console.log('READ-ONLY inspection complete. No traffic switched.');

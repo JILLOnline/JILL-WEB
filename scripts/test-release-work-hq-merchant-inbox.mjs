@@ -4,6 +4,7 @@ import {
   selectVerifiedCandidate,inspectVersions,rolloutArguments,
   sameStructuredData,safeRuntimeDiffLabels,safeRuntimeDiffShapes,
   safeUnknownRuntimeDifferences,safeAssetDifferences,
+  sameRuntimeWithDocumentedAssetDefaults,safeAssetDefaultAssessment,
 } from './release-work-hq-merchant-inbox.mjs';
 
 const A='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -182,6 +183,80 @@ candidateAssetsDrift.resources.script_runtime.assets=candidateAssets;
 assert.throws(()=>inspectVersions({active,candidate:candidateAssetsDrift}),
   /worker_runtime_changed/);
 
+// Cloudflare's documented defaults are the ONLY allowed static-asset
+// normalization between omitted active fields and explicit candidate fields.
+const implicit=structuredClone(active);
+implicit.resources.script_runtime.assets={
+  binding:'ASSETS',
+  run_worker_first:true,
+  not_an_default:{safe:'unchanged'},
+};
+const defaults=structuredClone(candidate);
+defaults.resources.script_runtime.assets={
+  binding:'ASSETS',
+  run_worker_first:true,
+  not_an_default:{safe:'unchanged'},
+  html_handling:'auto-trailing-slash',
+  not_found_handling:'none',
+};
+assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+  implicit.resources.script_runtime,defaults.resources.script_runtime),true);
+assert.equal(inspectVersions({active:implicit,candidate:defaults}).candidateId,C);
+assert.deepEqual(safeAssetDefaultAssessment(
+  implicit.resources.script_runtime,defaults.resources.script_runtime),[
+  {field:'html_handling',active:'omitted',candidate:'specified',
+   matchesDocumentedDefault:true},
+  {field:'not_found_handling',active:'omitted',candidate:'specified',
+   matchesDocumentedDefault:true},
+]);
+for(const forbidden of [
+  {html_handling:'none'},
+  {html_handling:'force-trailing-slash'},
+  {html_handling:'drop-trailing-slash'},
+  {not_found_handling:'404-page'},
+  {not_found_handling:'single-page-application'},
+  {not_found_handling:null},
+  {run_worker_first:false},
+  {extra_deployment_param:'changed'},
+  {not_an_default:{safe:'changed'}},
+]){
+  const wrong=structuredClone(defaults);
+  wrong.resources.script_runtime.assets={
+    ...wrong.resources.script_runtime.assets,...forbidden,
+  };
+  assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+    implicit.resources.script_runtime,wrong.resources.script_runtime),false,
+    JSON.stringify(Object.keys(forbidden)));
+  assert.throws(()=>inspectVersions({active:implicit,candidate:wrong}),
+    /worker_runtime_changed/);
+}
+// Never waive asset differences in the opposite direction, and never waive
+// code changes, DB/OAuth changes, or a changed run_worker_first value.
+const activeExplicit=structuredClone(implicit);
+activeExplicit.resources.script_runtime.assets.html_handling='none';
+assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+  activeExplicit.resources.script_runtime,defaults.resources.script_runtime),false);
+const activeWithoutAssets=structuredClone(implicit);
+delete activeWithoutAssets.resources.script_runtime.assets;
+assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+  activeWithoutAssets.resources.script_runtime,defaults.resources.script_runtime),false);
+const candidateWithoutAssets=structuredClone(defaults);
+delete candidateWithoutAssets.resources.script_runtime.assets;
+assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+  implicit.resources.script_runtime,candidateWithoutAssets.resources.script_runtime),false);
+const wrongRuntime=structuredClone(defaults);
+wrongRuntime.resources.script_runtime.compatibility_date='2027-01-01';
+assert.equal(sameRuntimeWithDocumentedAssetDefaults(
+  implicit.resources.script_runtime,wrongRuntime.resources.script_runtime),false);
+const wrongScript=structuredClone(defaults);
+wrongScript.resources.script.etag='new-payload';
+assert.throws(()=>inspectVersions({active:implicit,candidate:wrongScript}),
+  /worker_code_fingerprint_changed/);
+const wrongBinding=structuredClone(defaults);
+wrongBinding.resources.bindings.find(b=>b.name==='JILL_WORK_OAUTH_ENABLED').text='false';
+assert.throws(()=>inspectVersions({active:implicit,candidate:wrongBinding}),
+  /worker_stage_binding_invalid/);
+
 const alter=(changed)=>({...structuredClone(candidate),...changed});
 function invalid(x,pattern){assert.throws(()=>inspectVersions({active,candidate:x}),pattern);}
 invalid(alter({resources:{...candidate.resources,
@@ -226,6 +301,8 @@ assert.match(source,/safeRuntimeDiffLabels/);
 assert.match(source,/safeRuntimeDiffShapes/);
 assert.match(source,/safeUnknownRuntimeDifferences/);
 assert.match(source,/safeAssetDifferences/);
+assert.match(source,/sameRuntimeWithDocumentedAssetDefaults/);
+assert.match(source,/safeAssetDefaultAssessment/);
 assert.ok(source.includes('WORK asset metadata differs; release stays blocked.'));
 assert.ok(source.includes('WORK asset field (path/type only):'));
 
