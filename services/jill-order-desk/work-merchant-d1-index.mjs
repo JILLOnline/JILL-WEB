@@ -48,6 +48,13 @@ export async function invalidateWorkD1InboxIndex(db){
   if(!done?.success || done.meta?.changes!==1)fail();
   return true;
 }
+/** @param {{
+  db?:any,
+  readCanonicalSource?:(params:{shop:string})=>Promise<any>,
+  now?:()=>number,
+  forceFresh?:boolean,
+  onCache?:(mode:string)=>void,
+}} [options] */
 export async function readWorkD1IndexedMerchantList({
   db,readCanonicalSource,now=Date.now,forceFresh=false,onCache=()=>{},
 }={}){
