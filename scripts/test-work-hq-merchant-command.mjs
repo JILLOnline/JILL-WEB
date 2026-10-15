@@ -15,7 +15,7 @@ const SECRET='QA_ONLY_SIGNED_WRITE_KEY_abcdefghijklmnopqrstuvwxyz';
 const command={
   kind:'message',
   submission_id:'jill:92b32355-900e-47ba-8946-ccd93190a3b7',
-  operation_id:'jill:hq:09e67134-cd3e-47d4-b371-555a121b5f99',
+  operation_id:'jill:hq:message:09e67134-cd3e-47d4-b371-555a121b5f99',
   expected_revision:'1',
   current_status:'received',customer_status:'received',
   internal_status:'new',public_note:'Your custom item is being reviewed.',
@@ -37,7 +37,7 @@ for(const input of [
   {...command,public_note:'a'.repeat(501)},
 ])assert.throws(()=>validateWorkMerchantCommand(input));
 const status={
-  ...command,kind:'status',customer_status:'reviewing',internal_status:'needs_quote',
+  ...command,kind:'status',operation_id:'jill:hq:status:09e67134-cd3e-47d4-b371-555a121b5f99',customer_status:'reviewing',internal_status:'needs_quote',
   public_note:'We are reviewing.',internal_note:'Inventory check',
 };
 assert.equal(validateWorkMerchantCommand(status).customer_status,'reviewing');
