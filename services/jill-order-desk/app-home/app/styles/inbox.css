@@ -171,6 +171,14 @@
 .jill-inbox__details-note{
   font-size:11px;line-height:1.55;margin:0;padding:0 20px 17px;color:#777b80
 }
+.jill-inbox__open{border-top:1px solid #ecebe8;padding:11px 20px 15px}
+.jill-inbox__open a{
+  display:inline-flex;align-items:center;min-height:34px;
+  text-decoration:none;color:#325a83;font-size:12px;font-weight:740;
+  background:#edf4fb;border-radius:8px;padding:7px 11px
+}
+.jill-inbox__open a:hover{background:#e3eef8;text-decoration:underline}
+.jill-inbox__open a:focus-visible{outline:3px solid var(--jill-focus);outline-offset:4px}
 .jill-inbox__empty{
   text-align:center;padding:35px 20px;background:#faf9f7;
   border:1px dashed #d9d6d0;border-radius:14px;font-size:13px;color:#666
@@ -193,6 +201,7 @@
   .jill-inbox__details summary{padding:12px 14px}
   .jill-inbox__details dl{padding:15px 14px}
   .jill-inbox__details-note{padding:0 14px 15px}
+  .jill-inbox__open{padding:11px 14px 15px}
 }
 @media(max-width:380px){
   .jill-inbox__stats{grid-template-columns:1fr}
