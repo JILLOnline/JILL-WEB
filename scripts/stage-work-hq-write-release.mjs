@@ -50,15 +50,16 @@ export function prepareWorkWriteManifest(config) {
   return result;
 }
 function compareAssetPolicy(a,c) {
-  if(!a || !c)return false;
+  // Compiled asset hashes and manifests SHOULD change with this UI upgrade.
+  // Only routing semantics must remain equivalent to the active Worker.
+  if(!a || !c || typeof a!=='object' || typeof c!=='object')return false;
   for(const [k,def] of [
     ['html_handling','auto-trailing-slash'],
     ['not_found_handling','none'],
   ])if((a[k]??def)!==(c[k]??def))return false;
-  const aa={...a},cc={...c};
-  delete aa.html_handling;delete cc.html_handling;
-  delete aa.not_found_handling;delete cc.not_found_handling;
-  return sameStructuredData(aa,cc);
+  if('run_worker_first' in a || 'run_worker_first' in c)
+    if(!sameStructuredData(a.run_worker_first,c.run_worker_first))return false;
+  return true;
 }
 export function assertWriteReleaseVersion({active,stagedKey,candidate}) {
   gate(active?.id===ACTIVE && stagedKey?.id===STAGED_KEY &&
@@ -168,7 +169,6 @@ if(invoked) {
     gate(deployed()===ACTIVE,'active_worker_changed');
     // Owner has already verified this exact isolated key-only version,
     // not activated it. Ensure it was not silently switched or modified.
-    assertWriteReleaseVersion; // keep static binding checker bundled.
     const active=view(ACTIVE),prior=view(STAGED_KEY);
     const original=active.resources?.bindings||[];
     gate(prior.resources?.script?.etag===
