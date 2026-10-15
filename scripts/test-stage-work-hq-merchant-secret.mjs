@@ -42,7 +42,7 @@ for(const bad of [
   {secretNames:[...names,{name:'JILL_HQ_MERCHANT_READ_SECRET',type:'secret_text'}]},
   {workerVersion:'dcd17f20-7b76-4332-8ea2-37fe74931f63'},
 ])assert.throws(()=>verifyWorkCanaryBeforeStaging({...safe,...bad}),
-  /refused|rollout refused/);
+  /refused|rollout refused|activation STOPPED/);
 const record={submission_id:'jill:92b32355-900e-47ba-8946-ccd93190a3b7'};
 assert.equal(verifyCanonicalQaList({
   state:'ready',requestsConnected:true,records:[record],
