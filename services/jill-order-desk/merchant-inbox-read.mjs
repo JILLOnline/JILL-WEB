@@ -78,6 +78,14 @@ export function projectWorkMerchantInbox(source) {
   return safeModel('ready',records,true);
 }
 
+/** @param {{
+  request?:Request,
+  authenticate?:{admin:(request:Request)=>Promise<{session:any}>},
+  db?:any,
+  readCanonicalSource?:(params:{shop:string})=>Promise<any>,
+  onTiming?:(name:string,durationMs:number)=>void,
+  clock?:()=>number,
+}} [options] */
 export async function loadWorkMerchantInbox({
   request,authenticate,db,readCanonicalSource,
   onTiming=()=>{},clock=()=>performance.now(),
