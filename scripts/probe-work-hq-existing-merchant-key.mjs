@@ -16,10 +16,12 @@ const EXPECTED_SHEET='1T3xe_I3kfM6HtluXxq9PLjWp9XUBw1wvEOAAhiTq7OA';
 const EXPECTED_REQUEST='jill:92b32355-900e-47ba-8946-ccd93190a3b7';
 
 export function validateCopiedExistingKey(value) {
-  // 48 random bytes produced a 64-character base64url key in the earlier
-  // staging tool. Whitespace only from clipboard transport is removed.
+  // The Google QA HMAC verifier and the Node signer both require at least
+  // 32 characters. A previous staging script generated 64-character keys,
+  // but that is not a protocol requirement. Accept existing printable ASCII
+  // secrets of 32-256 characters; never force key rotation for a probe.
   const key=typeof value==='string'?value.trim():'';
-  if(!/^[A-Za-z0-9_-]{64}$/.test(key))
+  if(!/^[\x21-\x7E]{32,256}$/.test(key))
     throw Error('No valid existing WORK merchant key copied. STOP. Do not generate another key.');
   return key;
 }
@@ -116,7 +118,7 @@ if(run) {
     const clipboard=clipboardText();
     stage='clipboard_format';
     secret=validateCopiedExistingKey(clipboard);
-    console.log('PASS clipboard format for existing 64-character WORK key.');
+    console.log('PASS clipboard format for existing WORK key (32+ characters).');
     stage='signed_http';
     const result=await testExistingMerchantSecret({secret});
     if(!result.ok) {
