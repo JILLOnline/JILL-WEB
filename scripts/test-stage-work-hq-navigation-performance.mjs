@@ -115,6 +115,7 @@ for(const re of [
   /versions','upload',\.\.\.upload/,
   /fs\.rmSync\(temporary/,
   /test:work-hq-request-detail/,
+  /test:work-hq-request-auth-stages/,
   /test:work-hq-merchant-command/,
   /test:workerd-oauth/,
   /work_source_not_synced/,
