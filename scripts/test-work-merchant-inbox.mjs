@@ -94,6 +94,36 @@ const publicJSON=JSON.stringify(permitted);
 for(const word of ['private@example.invalid','5555555555','secret-staff','sensitive'])
   assert.ok(!publicJSON.includes(word),'PII leaked from upstream projection: '+word);
 
+// Pure numeric measurements for auth, D1 authorization and Google fetch;
+// no customer, session, secret or request identifiers may be exported.
+let ticks=0;
+const phases=[];
+const instrumented=await loadWorkMerchantInbox({
+  request,db:mockDb(),
+  authenticate:{admin:async()=>{
+    ticks+=11;
+    return {session:session()};
+  }},
+  readCanonicalSource:async()=>{
+    ticks+=23;
+    return example;
+  },
+  clock:()=>ticks,
+  onTiming:(name,duration)=>phases.push([name,duration]),
+});
+assert.equal(instrumented.status,200);
+assert.deepEqual(phases,[
+  ['shopify_auth',11],['work_owner',0],['google_feed',23],
+]);
+const timingSource=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
+for(const header of [
+  'merchant-shopify;dur=','merchant-authority;dur=',
+  'merchant-google;dur=','merchant-total;dur=',
+  'x-jill-feed-cache',
+])assert.ok(timingSource.includes(header),'Missing timing '+header);
+assert.doesNotMatch(timingSource,/session\.id|session\.accessToken|customer\.email/);
+
 const empty=projectWorkMerchantInbox({...example,records:[]});
 assert.equal(empty.state,'ready');
 assert.equal(empty.requestsConnected,true);
