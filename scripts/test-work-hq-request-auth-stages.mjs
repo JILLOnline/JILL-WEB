@@ -21,9 +21,6 @@ const value=await once({scope:secondRequest,
   authenticate:async()=>{calls++;return {session:{shop:'other'}};}});
 assert.equal(calls,2,'Every new HTTP request must authenticate again');
 assert.equal(value.session.shop,'other');
-await assert.rejects(once({scope:secondRequest,
-  authenticate:async()=>{throw Error('should not rerun');}}),()=>false)
-  .catch(()=>{throw Error('per-request memo incorrectly rejected')});
 // Same scope can see the successful earlier result, without refreshing.
 assert.equal((await once({scope:secondRequest,
   authenticate:async()=>{throw Error('unexpected second auth');}})).session.shop,
