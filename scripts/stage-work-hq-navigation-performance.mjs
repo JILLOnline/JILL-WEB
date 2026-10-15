@@ -1,5 +1,5 @@
-// WORK-only: stage faster JILL HQ request navigation over the verified
-// ACTIVE management v2 Worker. Creates ONE INACTIVE version; NO traffic switch.
+// WORK-only: stage ONE canonical request reader after stress-nav repair over
+// ACTIVE navigation v1 Worker. Creates ONE INACTIVE version; NO traffic switch.
 // Preserve every original binding (including all four secrets), WORK D1,
 // OAuth ON, Owner setup OFF, write command ON and Worker routing/runtime.
 import fs from 'node:fs';
@@ -20,7 +20,7 @@ const APP=path.join(ROOT,'services/jill-order-desk/app-home');
 const BIN=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const WORKER='jill-order-desk-canary-work';
 const CONFIG='./wrangler.canary.jsonc';
-const ACTIVE='a57b9b91-84e8-44db-bd2b-144646d5b342';
+const ACTIVE='e818c639-f962-4a09-9399-54ab521531c3';
 const WORK_DB='3f17c186-c794-4e00-8f20-017191373a19';
 const WRITE_SECRET='JILL_HQ_MERCHANT_WRITE_SECRET';
 const EXPECTED=new Set([
@@ -37,7 +37,7 @@ const FLAGS={
   JILL_WORK_MERCHANT_WRITES_ENABLED:'true',
 };
 export const NAVIGATION_RELEASE_MARKER=
-  'JILL HQ WORK verified shared-request-navigation speed v1; inactive';
+  'JILL HQ WORK single-reader stress fix v2; inactive';
 
 function gate(ok,code){if(!ok)throw Error(code);}
 function bindings(version) {
@@ -222,7 +222,7 @@ if(invoked) {
     console.log('PASS JILL HQ WORK navigation candidate staged INACTIVE: '+checked.candidate);
     console.log('PASS all FOUR WORK secrets, WORK D1, OAuth ON, Owner OFF, writes ON.');
     console.log('PASS same Worker entrypoint, runtime and asset routing.');
-    console.log('PASS currently deployed management v2 unchanged: '+checked.active);
+    console.log('PASS currently deployed navigation v1 unchanged: '+checked.active);
     console.log('No LIVE, KEEP, Rewards, Google or customer records changed.');
     console.log('Do NOT activate until separately inspected and approved.');
   }catch(error){

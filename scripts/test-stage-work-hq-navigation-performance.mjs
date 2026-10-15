@@ -5,7 +5,7 @@ import {
   assertPerformanceWorkerVersion,selectPerformanceCandidate,
 } from './stage-work-hq-navigation-performance.mjs';
 
-const activeId='a57b9b91-84e8-44db-bd2b-144646d5b342';
+const activeId='e818c639-f962-4a09-9399-54ab521531c3';
 const newId='15f2a08c-96e0-4cc5-9602-326b2425295e';
 const db='3f17c186-c794-4e00-8f20-017191373a19';
 const flags={
@@ -56,14 +56,14 @@ const runtime={
 };
 const active={
   id:activeId,
-  metadata:{created_on:'2026-10-15T17:43:59.179Z'},
+  metadata:{created_on:'2026-10-15T19:57:25.000Z'},
   resources:{bindings,script:{etag:'old-code',handlers:['fetch']},
     script_runtime:runtime},
 };
 const candidate=structuredClone(active);
 candidate.id=newId;
 candidate.resources.script.etag='new-code';
-candidate.metadata.created_on='2026-10-15T19:00:00Z';
+candidate.metadata.created_on='2026-10-15T20:30:00Z';
 candidate.resources.script_runtime.assets={
   ...runtime.assets,
   html_handling:'auto-trailing-slash',
@@ -74,12 +74,17 @@ assert.deepEqual(assertPerformanceWorkerVersion({active,candidate}),{
   active:activeId,candidate:newId,
 });
 assert.equal(selectPerformanceCandidate([active,candidate],active),newId);
+// The previously active navigation v1 is now the only allowed release baseline,
+// not a new candidate for the v2 stability release.
+assert.equal(active.id,'e818c639-f962-4a09-9399-54ab521531c3');
+assert.equal(NAVIGATION_RELEASE_MARKER,
+  'JILL HQ WORK single-reader stress fix v2; inactive');
 assert.throws(()=>selectPerformanceCandidate([active],active),
   /navigation_candidate_not_unique/);
 assert.throws(()=>selectPerformanceCandidate([active,candidate,candidate],active),
   /navigation_candidate_not_unique/);
 assert.throws(()=>selectPerformanceCandidate([active,candidate,{
-  id:'later',metadata:{created_on:'2026-10-15T20:00:00Z'},
+  id:'later',metadata:{created_on:'2026-10-15T21:00:00Z'},
 }],active),/unexpected_newer_worker_version/);
 for(const change of [
   c=>c.resources.bindings.pop(),
@@ -119,4 +124,4 @@ for(const re of [
 ])assert.match(source,re);
 assert.doesNotMatch(source,
   /versions','deploy|secret','put|shopify','app','deploy/);
-console.log('PASS WORK navigation staging: exact active management v2, unchanged four secrets/WORK D1/OAuth/Owner/write flags, new code only, no traffic switch, local key disposal and drift denial.');
+console.log('PASS WORK navigation staging: exact active navigation v1, unchanged four secrets/WORK D1/OAuth/Owner/write flags, new code only, no traffic switch, local key disposal and drift denial.');
