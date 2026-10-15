@@ -25,7 +25,7 @@ const ACTIVE='e67a2209-f6d9-4671-b6fc-33994015af30';
 const STAGED_KEY='6b70350e-0a5f-4630-8888-fe8a356a0a54';
 const D1='3f17c186-c794-4e00-8f20-017191373a19';
 const SECRET='JILL_HQ_MERCHANT_WRITE_SECRET';
-export const RELEASE_MARKER='JILL HQ WORK verified inline commands and source-cache v1; inactive';
+export const RELEASE_MARKER='JILL HQ WORK origin-guarded command release v2; inactive';
 const KEEP_SECRETS=['JILL_HQ_MERCHANT_READ_SECRET',
   'JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET'];
 const flags={
