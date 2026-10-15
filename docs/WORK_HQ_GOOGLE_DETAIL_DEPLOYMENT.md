@@ -108,3 +108,36 @@ alone does not expose new detail data to Shopify Admin.
 No LIVE, KEEP, Rewards, original QA published versions, Shopify scopes,
 customer records, inbox statuses, shipping costs or email sending are
 changed by this code merge.
+
+## Ambiguous create-deployment result — DO NOT retry blindly
+
+If `work:hq:qa:detail:stage` reports
+`qa_detail_creation_unconfirmed_inspect_before_retry`, the Google
+remote creation outcome is **unknown**. It does not establish failure
+or success, and should never trigger a second create automatically.
+
+On a clean local `jill/rewards-work` branch, run:
+
+```powershell
+npm.cmd run work:hq:qa:detail:reconcile
+```
+
+This is a **read-only list-deployments** operation scoped to the
+certified isolated WORK Custom Orders QA script. It verifies original
+deployment v7 and separate HQ deployment v8 **have not changed**,
+then looks for a single extra deployment whose description is exactly
+`JILL_HQ_WORK_EXACT_DETAIL_V1`.
+
+- `FOUND ONE NEW QA detail deployment`: creation happened; retain the
+  exact new ID/version, verify HMAC and request isolation next.
+  **Never rerun the create command**.
+- `NO detail deployment with expected marker found`: no matching
+  deployment currently appears. Do not infer whether Google created an
+  orphan immutable version; inspect the CLI error and versions before
+  deciding on any future new deployment.
+- `STOPPED`: there is a version drift, duplicate marker, wrong
+  project, or unreadable Google state. Stop and reconcile manually.
+
+Neither the original inbox nor status writes are modified by
+reconciliation. Do not paste private Script Properties, query tokens
+or customer raw payloads into troubleshooting messages.
