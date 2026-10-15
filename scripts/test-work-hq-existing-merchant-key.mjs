@@ -5,11 +5,17 @@ import {
   testExistingMerchantSecret,safeProbeStageCode,
 } from './probe-work-hq-existing-merchant-key.mjs';
 
-const key='A'.repeat(64);
+const key='A'.repeat(32);
 const wrong='B'.repeat(64);
 assert.equal(validateCopiedExistingKey('  '+key+'\r\n'),key);
-for(const bad of ['',null,undefined,'short','A'.repeat(63),'A'.repeat(65),
-  '<private key>','A'.repeat(63)+'!',0])
+for(const good of [
+  'C'.repeat(32),'C'.repeat(64),'D'.repeat(96),
+  'P@ssw0rd!+/-_:;'.padEnd(32,'x'),
+  'Z'.repeat(256),
+])assert.equal(validateCopiedExistingKey(good),good);
+for(const bad of ['',null,undefined,'short','A'.repeat(31),
+  'A'.repeat(257),'A'.repeat(31)+'\n'+'B',
+  'A'.repeat(31)+' ',0])
   assert.throws(()=>validateCopiedExistingKey(bad),/No valid existing/);
 
 const id='jill:92b32355-900e-47ba-8946-ccd93190a3b7';
@@ -82,7 +88,7 @@ assert.equal(safeProbeStageCode('SECRET_MY_KEY'),'preflight_failed');
 const source=readFileSync('scripts/probe-work-hq-existing-merchant-key.mjs','utf8');
 assert.match(source,/Get-Clipboard -Raw/);
 assert.match(source,/clearClipboardIfUnchanged/);
-assert.match(source,/PASS clipboard format for existing 64-character WORK key/);
+assert.match(source,/PASS clipboard format for existing WORK key \(32\+ characters\)/);
 assert.match(source,/safeProbeStageCode\(stage\)/);
 assert.doesNotMatch(source,/console\.log\(clipboard\)|console\.log\(secret\)|console\.error\(error\)/);
 assert.match(source,/readWorkGoogleQaMerchantList/);
