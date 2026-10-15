@@ -5,11 +5,10 @@
 import {Outlet,type LoaderFunctionArgs,type ShouldRevalidateFunctionArgs}
   from "react-router";
 import {loader as loadVerifiedInbox} from "./app.requests";
+import {mayReuseWorkRequestsSnapshot} from
+  "../../../requests-navigation-policy.mjs";
 
 export const REQUESTS_LAYOUT_ROUTE_ID="routes/app.requests.layout";
-export const REQUESTS_NAVIGATION_REUSE_MS=15000;
-const REQUESTS_PATH="/app/requests";
-
 type VerifiedSnapshot={
   state?:string;
   records?:Array<{submission_id:string}>;
@@ -17,30 +16,20 @@ type VerifiedSnapshot={
   readOnly?:boolean;
 };
 
-function requestsPage(pathname:string){
-  return pathname===REQUESTS_PATH||
-    pathname.startsWith(REQUESTS_PATH+"/");
-}
-
 export function shouldRevalidate({
   currentUrl,nextUrl,formMethod,formAction,currentLoaderData,
   defaultShouldRevalidate,
 }:ShouldRevalidateFunctionArgs){
-  // All mutations and explicit same-URL refreshes MUST contact the source.
-  // In particular, an unconfirmed write can still have committed remotely.
+  // An action (including a failed or unconfirmed write) or manual refresh
+  // MUST retrieve the canonical source. A sibling Link navigation may only
+  // reuse the verified in-memory projection for a short bounded interval.
   if(formMethod||formAction || currentUrl.pathname===nextUrl.pathname)
     return true;
-  const previous=currentLoaderData as VerifiedSnapshot|undefined;
-  if(requestsPage(currentUrl.pathname) &&
-     requestsPage(nextUrl.pathname) &&
-     !currentUrl.search && !nextUrl.search &&
-     previous?.state==="ready" && previous.readOnly===true &&
-     typeof previous.verifiedAt==="number" &&
-     Number.isFinite(previous.verifiedAt) &&
-     Date.now()>=previous.verifiedAt &&
-     Date.now()-previous.verifiedAt<REQUESTS_NAVIGATION_REUSE_MS)
-    return false;
-  return defaultShouldRevalidate;
+  const reuse=mayReuseWorkRequestsSnapshot({
+    currentUrl,nextUrl,formMethod,formAction,
+    snapshot:currentLoaderData as VerifiedSnapshot|undefined,
+  });
+  return reuse?false:defaultShouldRevalidate;
 }
 
 export async function loader(args:LoaderFunctionArgs){
