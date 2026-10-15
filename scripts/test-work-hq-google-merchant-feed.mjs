@@ -77,6 +77,7 @@ const ctx={
     STATUSES:['received','reviewing','awaiting_approval','in_production','ready_pickup','on_hold','cancelled','completed'],
     INTERNAL:['new','needs_quote','waiting_customer','materials_ordered','proof_revision','printing','assembly','quality_check','ready','none'],
   },
+  CacheService:{getScriptCache:()=>({get:()=>null,put:()=>{},remove:()=>{}})},
   SpreadsheetApp:{openById(id){
     assert.equal(id,'TEST_ONLY_WORK_QA');
     return {getSheetByName:name=>stores.get(name)||null};
