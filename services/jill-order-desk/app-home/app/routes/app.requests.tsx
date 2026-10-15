@@ -32,7 +32,10 @@ type InboxModel={
   controlsEnabled?:boolean;
 };
 
-export async function loader({request,context}:LoaderFunctionArgs) {
+// Data is owned exclusively by the verified parent request route.
+// This must NOT be named `loader`: React Router would invoke it AGAIN for
+// the child index route, duplicating Shopify/D1/Google calls on return.
+export async function loadVerifiedMerchantInbox({request,context}:LoaderFunctionArgs) {
   const env=context.cloudflare.env;
   const started=performance.now();
   let sourceMs=0;
