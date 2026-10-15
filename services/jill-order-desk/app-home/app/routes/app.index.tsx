@@ -27,8 +27,8 @@ export default function JillHQ() {
           <s-section heading="Requests &amp; Operations">
             <s-paragraph>
               Custom Orders, quotes, production stages and delivery workflows
-              will share the original JILL submission and event history.
-              The read-only WORK merchant inbox is under source certification.
+              will use the original JILL submission and event history.
+              The verified WORK Custom Orders inbox is available in read-only mode.
             </s-paragraph>
             {data.role==="owner"
               ? <s-paragraph>
