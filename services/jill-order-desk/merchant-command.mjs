@@ -149,7 +149,7 @@ export async function submitWorkMerchantCommand({command,staffId,secret,
     duplicate:data.duplicate,email_status:data.email_status};
 }
 
-/** @param {{request?: Request,authenticate?: any,db?: any,enabled?: boolean,secret?: string,backendFetch?: typeof fetch,now?: ()=>number}} [options] */
+/** @param {{request?: Request,authenticate?: any,db?: any,enabled?: boolean,secret?: string,backendFetch?: typeof fetch,now?: ()=>number,fastIndexEnabled?:boolean}} [options] */
 export async function handleWorkMerchantCommand({request,authenticate,db,
   enabled=false,secret,backendFetch=fetch,now=Date.now,
   fastIndexEnabled=false,
