@@ -184,7 +184,7 @@ assert.match(source,/shell:false/);
 assert.match(source,/safeRuntimeDiffLabels/);
 assert.match(source,/safeRuntimeDiffShapes/);
 assert.match(source,/safeUnknownRuntimeDifferences/);
-assert.match(source,/unknown runtime key \\(name\\/type only\\)/);
+assert.ok(source.includes('WORK unknown runtime key (name/type only):'));
 assert.match(source,/'exports'/);
 assert.match(source,/'migration_tag'/);
 assert.match(source,/WORK runtime differences \(API fields only\):/);
