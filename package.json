@@ -127,6 +127,7 @@
     "test:work-hq-request-detail": "node scripts/test-work-hq-request-detail.mjs",
     "test:work-hq-full-request-projection": "node scripts/test-work-hq-full-request-projection.mjs",
     "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs",
+    "test:work-hq-d1-index": "node scripts/test-work-hq-d1-inbox-index.mjs",
     "test:work-hq-google-source-cache": "node scripts/test-work-hq-google-source-cache.mjs",
     "test:work-hq-write-key": "node scripts/test-prepare-work-hq-write-key.mjs",
     "work:hq:write-key:prepare": "node scripts/prepare-work-hq-write-key.mjs",

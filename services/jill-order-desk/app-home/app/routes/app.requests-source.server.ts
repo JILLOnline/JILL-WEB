@@ -7,6 +7,7 @@ import {workShopify} from "../shopify.server";
 import {loadWorkMerchantInbox} from "../../../merchant-inbox-read.mjs";
 import {readWorkGoogleQaMerchantList} from "../../../work-google-merchant-read.mjs";
 import {readWorkMerchantSourceCached} from "../../../work-merchant-source-cache.mjs";
+import {readWorkD1IndexedMerchantList} from "../../../work-merchant-d1-index.mjs";
 
 export async function loadVerifiedMerchantInbox({request,context}:LoaderFunctionArgs) {
   const env=context.cloudflare.env;
@@ -29,10 +30,26 @@ export async function loadVerifiedMerchantInbox({request,context}:LoaderFunction
       ? async () => {
           const began=performance.now();
           try {
-            return await readWorkMerchantSourceCached({
+            const readGoogle=()=>readWorkMerchantSourceCached({
               secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
               reader:readWorkGoogleQaMerchantList,
               onCache:(mode:string)=>{cacheMode=mode;},
+            });
+            // This flag is intentionally NOT in the active Worker manifest.
+            // Only after WORK D1 migration 0003 + explicit release may the
+            // distributed index be activated. Auth happened upstream.
+            const fast=(env as typeof env & {
+              JILL_WORK_HQ_FAST_INBOX_ENABLED?:string
+            }).JILL_WORK_HQ_FAST_INBOX_ENABLED==="true";
+            if(!fast)return await readGoogle();
+            const refreshed=new URL(request.url).searchParams.get("refresh")==="1";
+            return await readWorkD1IndexedMerchantList({
+              db:env.JILL_ORDER_DESK_WORK_DB,
+              readCanonicalSource:readGoogle,
+              forceFresh:refreshed,
+              onCache:(mode:string)=>{
+                if(mode==="d1-hit")cacheMode=mode;
+              },
             });
           } finally {sourceMs=performance.now()-began;}
         }
