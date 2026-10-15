@@ -42,3 +42,27 @@
 @media(max-width:420px){
  .jill-request__data>div{grid-template-columns:1fr;gap:3px}
 }
+
+/* Exact original WORK intake — one canonical request workspace style owner. */
+.jill-request__full{margin-top:16px}
+.jill-request__full-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:20px}
+.jill-request__full h4{font-size:14px;font-weight:730;margin:0 0 12px}
+.jill-request__full h5{font-size:12px;font-weight:730;margin:0 0 10px}
+.jill-request__original-items{display:grid;gap:14px;margin-bottom:18px}
+.jill-request__original-item{border:1px solid var(--jill-border);background:var(--jill-soft);border-radius:12px;padding:16px;min-width:0}
+.jill-request__item-header{display:flex;justify-content:space-between;gap:16px;align-items:start}
+.jill-request__item-header h4{font-size:16px;margin:6px 0}
+.jill-request__item-quantity{background:var(--jill-surface);border:1px solid var(--jill-border);padding:6px 10px;border-radius:8px;white-space:nowrap}
+.jill-request__original-subsection{margin-top:18px}
+.jill-request__original-subsection>p{font-size:12px;line-height:1.5;color:var(--jill-muted);overflow-wrap:anywhere}
+.jill-request__personalization-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.jill-request__personalization{background:var(--jill-surface);border:1px solid var(--jill-border);padding:12px;border-radius:10px;min-width:0}
+.jill-request__personalization>strong{display:block;font-size:13px}
+.jill-request__personalization>small{display:block;color:var(--jill-muted);overflow-wrap:anywhere;margin-top:5px}
+.jill-request__file-manifest{border-top:1px solid var(--jill-border);padding-top:14px;margin:14px 0}
+.jill-request__file-manifest>strong{display:block;font-size:12px;margin-bottom:8px}
+.jill-request__file-manifest ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.jill-request__file-manifest li{font-size:12px;display:flex;gap:8px;align-items:start;overflow-wrap:anywhere}
+.jill-request__file-manifest code{white-space:normal;word-break:break-all}
+.jill-request__file-icon{font-weight:700;color:var(--jill-muted)}
+@media(max-width:750px){.jill-request__full-overview{grid-template-columns:1fr;gap:16px}}
