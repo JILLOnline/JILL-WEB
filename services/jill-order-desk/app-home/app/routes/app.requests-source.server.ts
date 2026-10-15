@@ -13,7 +13,12 @@ export async function loadVerifiedMerchantInbox({request,context}:LoaderFunction
   const started=performance.now();
   let sourceMs=0;
   let cacheMode="not-requested";
+  const timings:Record<string,number>={};
   const result=await loadWorkMerchantInbox({
+    onTiming:(name:string,ms:number)=>{
+      if(["shopify_auth","work_owner","google_feed"].includes(name) &&
+         Number.isFinite(ms))timings[name]=Math.max(0,ms);
+    },
     request,
     authenticate:workShopify(env).authenticate,
     db:env.JILL_ORDER_DESK_WORK_DB,
@@ -36,8 +41,12 @@ export async function loadVerifiedMerchantInbox({request,context}:LoaderFunction
   const headers=new Headers(result.headers);
   const total=performance.now()-started;
   const source=Math.min(total,sourceMs);
+  // Header values are only aggregate milliseconds, never account details.
+  // If total is over a minute, DevTools tells us whether Shopify SDK,
+  // WORK D1 permissions, or Google QA actually consumed that time.
+  const timing=(name:string)=>(timings[name]??0).toFixed(1);
   headers.set("server-timing",
-    `merchant-auth;dur=${Math.max(0,total-source).toFixed(1)}, merchant-feed;dur=${source.toFixed(1)}, merchant-total;dur=${total.toFixed(1)}`);
+    `merchant-auth;dur=${Math.max(0,total-source).toFixed(1)}, merchant-feed;dur=${source.toFixed(1)}, merchant-shopify;dur=${timing("shopify_auth")}, merchant-authority;dur=${timing("work_owner")}, merchant-google;dur=${timing("google_feed")}, merchant-total;dur=${total.toFixed(1)}`);
   headers.set("x-jill-feed-cache",cacheMode);
   const controlsEnabled=result.model.state==="ready" &&
     workMerchantWritesReady(env);
