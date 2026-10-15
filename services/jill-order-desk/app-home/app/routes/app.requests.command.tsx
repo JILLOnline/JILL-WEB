@@ -14,5 +14,8 @@ export async function action({request,context}:ActionFunctionArgs){
     request,authenticate:workShopify(env).authenticate,
     db:env.JILL_ORDER_DESK_WORK_DB,
     enabled,secret:env.JILL_HQ_MERCHANT_WRITE_SECRET,
+    fastIndexEnabled:(env as typeof env & {
+      JILL_WORK_HQ_FAST_INBOX_ENABLED?:string
+    }).JILL_WORK_HQ_FAST_INBOX_ENABLED==="true",
   });
 }
