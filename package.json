@@ -104,7 +104,9 @@
     "test:work-hq-merchant-secret-stage": "node scripts/test-stage-work-hq-merchant-secret.mjs",
     "work:hq:qa:diagnostic:sync": "node scripts/sync-work-hq-qa-diagnostic.mjs",
     "work:hq:merchant:probe-existing-key": "node scripts/probe-work-hq-existing-merchant-key.mjs",
-    "test:work-hq-existing-merchant-key": "node scripts/test-work-hq-existing-merchant-key.mjs"
+    "test:work-hq-existing-merchant-key": "node scripts/test-work-hq-existing-merchant-key.mjs",
+    "work:hq:merchant:stage-existing-key": "node scripts/stage-work-hq-existing-key.mjs",
+    "test:work-hq-stage-existing-key": "node scripts/test-stage-work-hq-existing-key.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
