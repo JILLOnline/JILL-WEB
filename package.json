@@ -128,6 +128,7 @@
     "work:hq:ui:deploy": "node scripts/deploy-work-hq-inbox-ui.mjs",
     "test:work-hq-ui-rollout": "node scripts/test-deploy-work-hq-inbox-ui.mjs",
     "test:work-hq-request-detail": "node scripts/test-work-hq-request-detail.mjs",
+    "test:work-hq-request-auth-stages": "node scripts/test-work-hq-request-auth-stages.mjs",
     "test:work-hq-full-request-projection": "node scripts/test-work-hq-full-request-projection.mjs",
     "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs",
     "test:work-hq-d1-index": "node scripts/test-work-hq-d1-inbox-index.mjs",
