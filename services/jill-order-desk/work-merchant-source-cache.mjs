@@ -22,7 +22,7 @@ export function invalidateWorkMerchantSourceCache() {
 }
 
 export async function readWorkMerchantSourceCached({
-  secret,reader=readWorkGoogleQaMerchantList,
+  secret='',reader=readWorkGoogleQaMerchantList,
   now=Date.now,onCache=(_mode)=>{},
 }={}) {
   if(typeof secret!=='string'||secret.length<32||
