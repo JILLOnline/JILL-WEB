@@ -5,7 +5,7 @@
 import {useEffect} from "react";
 import {Outlet,useLoaderData,type LoaderFunctionArgs,
   type ShouldRevalidateFunctionArgs} from "react-router";
-import {loader as loadVerifiedInbox} from "./app.requests";
+import {loadVerifiedMerchantInbox} from "./app.requests";
 import {mayReuseWorkRequestsSnapshot} from
   "../../../requests-navigation-policy.mjs";
 
@@ -40,7 +40,7 @@ export async function loader(args:LoaderFunctionArgs){
   // No shortcut: the existing inbox loader authenticates Shopify online
   // Owner, authorizes against WORK D1 and reads only the signed 9-field QA
   // projection. The same server path serves new/direct browser sessions.
-  const response=await loadVerifiedInbox(args);
+  const response=await loadVerifiedMerchantInbox(args);
   const data=await response.json() as VerifiedSnapshot;
   const headers=new Headers(response.headers);
   headers.set("cache-control","private, no-store, max-age=0");
