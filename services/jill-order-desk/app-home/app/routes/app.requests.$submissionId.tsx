@@ -5,6 +5,8 @@ import {
 } from "../../../inbox-display.mjs";
 import "../styles/inbox.css";
 import "../styles/request-detail.css";
+import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
+import "../styles/request-actions.css";
 
 type RequestRecord={
   submission_id:string;
@@ -20,12 +22,14 @@ type RequestRecord={
 type InboxModel={
   state:"ready"|"source_not_connected"|"source_unavailable"|"access_denied";
   readOnly:boolean;
+  controlsEnabled?:boolean;
   records:RequestRecord[];
 };
 type DetailModel={
   state:InboxModel["state"]|"not_found";
   readOnly:true;
   record:RequestRecord|null;
+  controlsEnabled:boolean;
 };
 
 /**
@@ -44,7 +48,7 @@ export async function loader(args:LoaderFunctionArgs){
 
   if(inbox.status!==200 || data.state!=="ready" || data.readOnly!==true){
     return Response.json({
-      state:data.state,record:null,readOnly:true,
+      state:data.state,record:null,readOnly:true,controlsEnabled:false,
     } satisfies DetailModel,{status:inbox.status,headers});
   }
   // Exact match only, after authenticated source projection. No query IDs,
@@ -53,11 +57,12 @@ export async function loader(args:LoaderFunctionArgs){
     item=>item.submission_id===args.params.submissionId);
   if(!selected){
     return Response.json({
-      state:"not_found",record:null,readOnly:true,
+      state:"not_found",record:null,readOnly:true,controlsEnabled:false,
     } satisfies DetailModel,{status:404,headers});
   }
   return Response.json({
     state:"ready",record:selected,readOnly:true,
+    controlsEnabled:data.controlsEnabled===true,
   } satisfies DetailModel,{status:200,headers});
 }
 
@@ -66,7 +71,7 @@ function FulfillmentName({value}:{value:string}){
     value==="shipping"?"Shipping":"Not provided"}</>;
 }
 export default function WorkRequestDetail(){
-  const {state,record}=useLoaderData<typeof loader>() as DetailModel;
+  const {state,record,controlsEnabled}=useLoaderData<typeof loader>() as DetailModel;
   return <s-page heading="JILL HQ — WORK / Request details">
     <s-section>
       <main className="jill-inbox jill-request" aria-label="Custom Order request workspace">
@@ -135,7 +140,8 @@ export default function WorkRequestDetail(){
                     </div>
                   </section>
                   <section className="jill-request__panel" aria-labelledby="request-next">
-                    <h3 id="request-next">Management tools</h3>
+                    <h3 id="request-next">Request management</h3>
+                    <WorkRequestQuickActions record={record} enabled={controlsEnabled}/>
                     <p className="jill-request__muted">
                       Full item customization, customer contact, attachments,
                       quotes and historical events need their own certified
@@ -143,7 +149,7 @@ export default function WorkRequestDetail(){
                     </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
-                      Quote, production and fulfillment edits are not enabled.
+                      Quotes, Shopify fulfillment and payments remain separate.
                     </div>
                   </section>
                 </div>
