@@ -106,7 +106,10 @@
     "work:hq:merchant:stage-existing-key": "node scripts/stage-work-hq-existing-key.mjs",
     "test:work-hq-stage-existing-key": "node scripts/test-stage-work-hq-existing-key.mjs",
     "jill:private:initialize": "node scripts/initialize-jill-private-catalog.mjs",
-    "test:jill-private-catalog": "node scripts/test-jill-private-catalog.mjs"
+    "test:jill-private-catalog": "node scripts/test-jill-private-catalog.mjs",
+    "work:hq:merchant:inspect-staged": "node scripts/release-work-hq-merchant-inbox.mjs --inspect",
+    "work:hq:merchant:release-staged": "node scripts/release-work-hq-merchant-inbox.mjs --release",
+    "test:work-hq-merchant-release": "node scripts/test-release-work-hq-merchant-inbox.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
