@@ -97,6 +97,23 @@ try {
     assert.equal(blocked.status,403,'Foreign Shopify shop denied before SDK login');
     await blocked.arrayBuffer();
   }
+  // Merchant command: anonymous cross-site requests must be denied by
+  // the Worker BEFORE Shopify redirect machinery runs, even with healthy D1.
+  // Valid same-origin Owner calls still reach the signed Shopify/D1 handler.
+  for(const headers of [
+    {'Content-Type':'application/x-www-form-urlencoded'},
+    {'Content-Type':'application/x-www-form-urlencoded',Origin:'null'},
+    {'Content-Type':'application/x-www-form-urlencoded',Origin:'https://evil.example'},
+    {'Content-Type':'application/x-www-form-urlencoded',Origin:'https://jillonlinestore.com'},
+  ]) {
+    const response=await worker.fetch(url+'/app/requests/command',{
+      method:'POST',redirect:'manual',headers,body:'probe=1',
+    });
+    assert.equal(response.status,403,
+      'Command POST must reject missing or foreign Origin before Shopify');
+    assert.equal((await response.json()).error,'invalid_origin');
+  }
+  console.log('PASS compiled WORK command: anonymous POST origin denial HTTP 403 before Shopify, D1 or Google.');
   console.log('PASS canary login WORK-only shop isolation and SDK validation route.');
   console.log('PASS real compiled Cloudflare Shopify canary: anonymous auth routes do not crash; simulated D1 and secrets only.');
 } catch(error) {
