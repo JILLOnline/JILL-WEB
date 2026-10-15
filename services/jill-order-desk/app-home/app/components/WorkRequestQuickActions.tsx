@@ -10,7 +10,7 @@ import {
 type RequestRecord={
   submission_id:string;revision:number;customer_status:string;internal_status:string;
 };
-type Result={ok:boolean;code:string;revision?:number;email_status?:string};
+type Result={ok:boolean;code:string;revision?:number;email_status?:string;operation_id?:string};
 const STATUS_OPTIONS=WORK_STATUS_TRANSITIONS as Record<string,string[]>;
 const INTERNAL=WORK_INTERNAL_STAGES as string[];
 
