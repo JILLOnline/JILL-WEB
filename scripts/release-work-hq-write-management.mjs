@@ -21,7 +21,7 @@ const WORKER='jill-order-desk-canary-work';
 const BASE='https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
 const ACTIVE='e67a2209-f6d9-4671-b6fc-33994015af30';
 const STAGED_KEY='6b70350e-0a5f-4630-8888-fe8a356a0a54';
-export const CANDIDATE='e7bad727-b876-4895-866d-bc4dc583e280';
+export const CANDIDATE='a57b9b91-84e8-44db-bd2b-144646d5b342';
 export const APPROVAL='RELEASE JILL HQ WORK MANAGEMENT';
 
 function gate(ok,code){if(!ok)throw Error(code);}
@@ -63,20 +63,13 @@ export function releaseArgs(id,message='JILL HQ WORK verified request management
   return ['versions','deploy',id+'@100%','--name',WORKER,'--config',
     CONFIG,'--yes','--message',message];
 }
-export function anonymousCommandSafe(status,location,host=BASE) {
-  // Any auth redirect must stay inside the exact WORK app or Shopify admin
-  // login; NEVER accept 200 or unauthenticated command mutation responses.
-  if([401,403,404,410].includes(status))return true;
-  if([302,303].includes(status)&&typeof location==='string') {
-    try{
-      const url=new URL(location,host);
-      return url.protocol==='https:' &&
-        (url.origin===host ||
-          url.origin==='https://admin.shopify.com' ||
-          url.origin==='https://jill-work.myshopify.com');
-    }catch{return false;}
-  }
-  throw Error('anonymous_command_not_denied');
+export function anonymousCommandSafe(status,location) {
+  // This exact WORK v2 release guarantees that an Origin-less merchant
+  // command POST is refused at the outer Worker ingress BEFORE Shopify.
+  // Redirects, 404s and generic authentication responses are insufficient:
+  // they would hide a failure of the explicit fail-closed Origin guard.
+  if(status!==403 || location!==null)throw Error('anonymous_command_not_denied');
+  return true;
 }
 async function check(pathname,{status,method='GET',body}={}){
   const result=await fetch(BASE+pathname,{
@@ -88,9 +81,16 @@ async function check(pathname,{status,method='GET',body}={}){
     signal:AbortSignal.timeout(20000),
   });
   if(status==='denied')assertAnonymousInboxDenied(result.status);
-  else if(status==='command_denied')
+  else if(status==='command_denied') {
     gate(anonymousCommandSafe(result.status,
       result.headers.get('location')),'anonymous_command_not_denied');
+    let reply;
+    try {reply=await result.json();} catch {
+      throw Error('anonymous_command_bad_ack');
+    }
+    gate(reply?.ok===false && reply?.error==='invalid_origin',
+      'anonymous_command_bad_ack');
+  }
   else gate(result.status===status,'unexpected_public_http_status');
 }
 function sourceReady(){
@@ -170,7 +170,7 @@ if(invoked){
       'work_source_not_synced','local_wrangler_missing',
       'wrangler_command_failed','unexpected_public_http_status',
       'release_not_approved','qa_write_key_handshake_failed',
-      'deployed_version_mismatch',
+      'deployed_version_mismatch','anonymous_command_bad_ack',
     ]);
     console.error('JILL HQ WORK release '+phase+' STOPPED: '+
       (safe.has(err?.message)?err.message:'unverified_release_state'));

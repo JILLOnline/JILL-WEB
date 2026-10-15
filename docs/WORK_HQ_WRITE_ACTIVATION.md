@@ -8,10 +8,21 @@
 - Inactive key-only version (never deploy this):
   `6b70350e-0a5f-4630-8888-fe8a356a0a54`.
 - Inactive **new application code + matching write key**:
-  `e7bad727-b876-4895-866d-bc4dc583e280`.
+  `a57b9b91-84e8-44db-bd2b-144646d5b342`.
 - Staging regression suites, compilation, build, local OAuth integration,
   WORK D1/Owner/off and all original bindings: PASS.
 - Email delivery still NOT connected: WORK queue remains QUEUED, not SENT.
+
+The earlier version `e7bad727-b876-4895-866d-bc4dc583e280`
+briefly activated but the anonymous command post-release check failed;
+the guarded rollout reported successful rollback. **Never redeploy v1.**
+New v2 was staged inactive after a real compiled Worker test confirmed
+that requests with missing/foreign Origin receive 403 before Shopify.
+
+V2 activation requires the anonymous POST to return **exact HTTP 403**
+with a JSON `{ok:false,error:"invalid_origin"}` acknowledgment.
+A Shopify redirect or generic 404/410 is not sufficient. The release
+attempts automatic rollback after any failed post-release test.
 
 The source PR adds **no deployment**. Local activation is the only
 operation that can switch traffic, and requires direct confirmation.
