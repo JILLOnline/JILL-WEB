@@ -1,3 +1,10 @@
+> **Current v2 safeguard:** The old
+> `work:hq:navigation:activate` and `work:hq:navigation:inspect`
+> aliases were intentionally removed while staging v2. They will only
+> be reintroduced once the exact new inactive candidate is known and
+> a separate guarded activation PR passes CI.
+>
+
 ## Current WORK stability v2 stage (2026-10-15)
 
 **Do not use the old management v2 baseline or reactivate navigation v1.**
