@@ -45,8 +45,11 @@ From clean synced `jill/rewards-work`:
    Only then promote the exact `f777...` candidate to 100% WORK.
 4. Post-release check repeats health, OAuth, Owner bootstrap denial,
    anonymous inbox denial and signed-write Origin gate.
-   Failed post-release checks attempt rollback to
-   `e818c639-f962-4a09-9399-54ab521531c3`.
+   Failed post-release checks attempt rollback to the earlier WORK
+   management release `a57b9b91-84e8-44db-bd2b-144646d5b342`,
+   which previously rendered when navigation v1 was not installed.
+   The currently active navigation v1 has reported 200-OK rendering
+   failures and is **not** treated as the last working rollback.
    Unknown status -> STOP; do not blindly rerun.
 
 ## Real browser acceptance is mandatory
