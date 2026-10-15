@@ -1274,7 +1274,7 @@ function jillWorkHqMerchantCommand_(e) {
   };
   const kind=String(p.kind||'');
   if(!['status','message'].includes(kind) ||
-     !/^jill:hq:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+     !/^jill:hq:(?:status|message):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
        .test(command.operation_id) ||
      !/^[A-Za-z0-9._:-]{8,128}$/.test(command.submission_id) ||
      !Number.isSafeInteger(command.expected_revision)||
@@ -1284,6 +1284,8 @@ function jillWorkHqMerchantCommand_(e) {
      JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(command.internal_status)<0 ||
      command.public_note.length>500||command.internal_note.length>2000 ||
      command.handoff_reference.length>256)
+    return failed('invalid_command');
+  if(command.operation_id.indexOf('jill:hq:'+kind+':')!==0)
     return failed('invalid_command');
   if(kind==='message'&&
      (command.customer_status!==String(p.current_status)||
