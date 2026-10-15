@@ -185,8 +185,12 @@ await assert.rejects(()=>readWorkGoogleQaMerchantList({
   secret,backendFetch:async()=>new Response('X'.repeat(65537)),
 }),/oversized/);
 const route=readFileSync('services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
-assert.match(route,/JILL_HQ_MERCHANT_READ_SECRET/);
-assert.match(route,/JILL_WORK_HOST_STAGE==="canary"/);
-assert.match(route,/readWorkGoogleQaMerchantList/);
-assert.doesNotMatch(route,/jill_order_owner_gid|CUSTOMER_LIST|SHOPIFY_API_SECRET/);
+const reader=readFileSync('services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
+const parent=readFileSync('services/jill-order-desk/app-home/app/routes/app.requests.layout.tsx','utf8');
+assert.match(reader,/JILL_HQ_MERCHANT_READ_SECRET/);
+assert.match(reader,/JILL_WORK_HOST_STAGE==="canary"/);
+assert.match(reader,/readWorkGoogleQaMerchantList/);
+assert.match(parent,/loadVerifiedMerchantInbox/);
+assert.doesNotMatch(route,/JILL_HQ_MERCHANT_READ_SECRET|readWorkGoogleQaMerchantList|loadWorkMerchantInbox/);
+assert.doesNotMatch(reader,/jill_order_owner_gid|CUSTOMER_LIST|SHOPIFY_API_SECRET/);
 console.log('PASS WORK HQ Google QA merchant feed: scoped HMAC parity, Owner gate, QA-only, read-only, no PII, bounds, and secret opt-in.');

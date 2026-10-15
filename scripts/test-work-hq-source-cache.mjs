@@ -83,12 +83,15 @@ await readWorkMerchantSourceCached({...args,secret:'B'.repeat(40)});
 assert.equal(calls,6);
 const route=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
+const serverReader=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
 const boundary=readFileSync('services/jill-order-desk/merchant-inbox-read.mjs','utf8');
-assert.match(route,/readWorkMerchantSourceCached/);
-assert.match(route,/server-timing/);
-assert.match(route,/x-jill-feed-cache/);
+assert.match(serverReader,/readWorkMerchantSourceCached/);
+assert.match(serverReader,/server-timing/);
+assert.match(serverReader,/x-jill-feed-cache/);
 assert.match(boundary,/readWorkMerchantPermission/);
 assert.match(boundary,/access\.role!=='owner'/);
-assert.match(route,/loadWorkMerchantInbox/);
+assert.match(serverReader,/loadWorkMerchantInbox/);
+assert.doesNotMatch(route,/readWorkMerchantSourceCached|loadWorkMerchantInbox|server-timing/);
 assert.doesNotMatch(route,/localStorage|sessionStorage/);
 console.log('PASS 20-second WORK source-only cache: Owner gate preserved, source projections only, concurrent read coalescing, expiry, invalidation, credential isolation and fail-closed errors.');

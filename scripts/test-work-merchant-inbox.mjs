@@ -156,8 +156,11 @@ await assert.rejects(()=>loadWorkMerchantInbox({
 // Never wire a customer JWT account-reader as the merchant source.
 const route=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
-assert.match(route,/workShopify\(env\)\.authenticate/);
-assert.match(route,/loadWorkMerchantInbox/);
+const source=readFileSync(
+  'services/jill-order-desk/app-home/app/routes/app.requests-source.server.ts','utf8');
+assert.match(source,/workShopify\(env\)\.authenticate/);
+assert.match(source,/loadWorkMerchantInbox/);
+assert.doesNotMatch(route,/workShopify\(|loadWorkMerchantInbox|export async function loader/);
 assert.doesNotMatch(route,/custom-order-account-read|jill-custom-order-account|merchant\.list\?/,);
 const appRoutes=readFileSync(
   'services/jill-order-desk/app-home/app/routes.ts','utf8');

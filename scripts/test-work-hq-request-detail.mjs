@@ -24,8 +24,18 @@ assert.match(routes,/route\("requests\/command","routes\/app\.requests\.command\
 assert.match(inbox,/useRouteLoaderData\("routes\/app\.requests\.layout"\)/);
 assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
 assert.match(inbox,/Open request workspace/);
-assert.match(layout,/loader as loadVerifiedInbox/);
-assert.match(layout,/await loadVerifiedInbox\(args\)/);
+const source=readFileSync(base+'routes/app.requests-source.server.ts','utf8');
+assert.match(layout,/import \{loadVerifiedMerchantInbox\} from\s*".\/app.requests-source.server"/);
+assert.match(layout,/await loadVerifiedMerchantInbox\(args\)/);
+// The child index must have NO loader and NO server imports; the verified
+// parent is the only registered request loader across every navigation.
+assert.match(source,/export async function loadVerifiedMerchantInbox\(/);
+assert.match(source,/workShopify\(env\)\.authenticate/);
+assert.match(source,/loadWorkMerchantInbox/);
+assert.match(source,/readWorkMerchantSourceCached/);
+assert.doesNotMatch(inbox,/(?:export\s+(?:async\s+)?function|export\s+(?:const|let))\s+loader\b/);
+assert.doesNotMatch(inbox,/workShopify|readWorkGoogleQaMerchantList|loadWorkMerchantInbox|work-merchant-source-cache/);
+assert.match(layout,/export async function loader\(args:LoaderFunctionArgs\)/);
 assert.match(layout,/shouldRevalidate/);
 assert.match(layout,/useEffect/);
 assert.match(layout,/visibleClientSnapshot/);
@@ -112,4 +122,23 @@ for(const wrong of [
   {...options,nextUrl:new URL(nextUrl+'?sort=recent')},
 ])assert.equal(mayReuseWorkRequestsSnapshot(wrong),false,
   'Unverified navigation source reused: '+JSON.stringify(wrong).slice(0,180));
+// Stress realistic back/forth patterns across the 15-second TTL:
+// fast inbox -> detail -> inbox uses the SAME parent record; expiration,
+// manual refresh and mutations must cause a new, authorized canonical read.
+for (let cycle=0;cycle<210;cycle++) {
+  const forward=cycle%2===0;
+  const from=forward?currentUrl:nextUrl;
+  const to=forward?nextUrl:currentUrl;
+  const time=100000+cycle*100;
+  const safe={
+    currentUrl:from,nextUrl:to,
+    snapshot:{...snapshot,verifiedAt:100000},
+    now:time,
+  };
+  assert.equal(mayReuseWorkRequestsSnapshot(safe),time-100000<15000,
+    'stress navigation TTL mismatch at click '+cycle);
+  assert.equal(mayReuseWorkRequestsSnapshot({
+    ...safe,formMethod:'POST',formAction:'/app/requests/command',
+  }),false,'mutation must revalidate on every click '+cycle);
+}
 console.log('PASS WORK request navigation: one Owner-authorized parent feed, fast bounded sibling reuse, canonical refresh on write, secure direct access and 404, exact nine-field projection.');
