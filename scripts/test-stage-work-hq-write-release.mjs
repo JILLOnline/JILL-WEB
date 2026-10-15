@@ -72,6 +72,14 @@ candidate.resources.script_runtime.assets={
 assert.deepEqual(assertWriteReleaseVersion({
   active,stagedKey:staged,candidate,
 }),{activeId,stagedId,candidateId});
+const superseded={id:'e7bad727-b876-4895-866d-bc4dc583e280',
+  metadata:{created_on:'2026-10-15T19:00:00Z'},
+  annotations:{'workers/message':
+    'JILL HQ WORK verified inline commands and source-cache v1; inactive'},
+};
+assert.equal(selectWriteCandidate([active,staged,superseded,candidate],active),candidateId);
+assert.throws(()=>selectWriteCandidate([active,staged,superseded],active),
+  /write_candidate_not_unique/);
 assert.equal(selectWriteCandidate([active,staged,candidate],active),candidateId);
 const mutate=[
   v=>{v.resources.bindings.find(x=>x.name==='JILL_WORK_OAUTH_ENABLED').text='false';},
