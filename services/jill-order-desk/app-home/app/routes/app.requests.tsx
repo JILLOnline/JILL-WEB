@@ -1,3 +1,4 @@
+import {workMerchantWritesReady} from "../../../work-merchant-write-readiness.mjs";
 import {useMemo,useState} from "react";
 import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
@@ -63,12 +64,7 @@ export async function loader({request,context}:LoaderFunctionArgs) {
     `merchant-auth;dur=${Math.max(0,total-source).toFixed(1)}, merchant-feed;dur=${source.toFixed(1)}, merchant-total;dur=${total.toFixed(1)}`);
   headers.set("x-jill-feed-cache",cacheMode);
   const controlsEnabled=result.model.state==="ready" &&
-    env.JILL_WORK_HOST_STAGE==="canary" &&
-    env.JILL_WORK_MERCHANT_WRITES_ENABLED==="true" &&
-    typeof env.JILL_HQ_MERCHANT_WRITE_SECRET==="string" &&
-    env.JILL_HQ_MERCHANT_WRITE_SECRET.length>=32 &&
-    env.JILL_HQ_MERCHANT_WRITE_SECRET!==env.JILL_HQ_MERCHANT_READ_SECRET &&
-    env.JILL_HQ_MERCHANT_WRITE_SECRET!==env.SHOPIFY_API_SECRET;
+    workMerchantWritesReady(env);
   return Response.json({...result.model,controlsEnabled},{
     status:result.status,headers,
   });
