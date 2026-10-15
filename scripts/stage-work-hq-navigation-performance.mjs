@@ -1,5 +1,5 @@
-// WORK-only: stage Auth-safe navigation + ONE canonical reader over
-// ACTIVE navigation v1 Worker. Creates ONE INACTIVE version; NO traffic switch.
+// WORK-only: stage one SDK auth per incoming fetch + inbox phase tracing
+// over the ACTIVE auth-safe navigation v3 Worker. Creates ONE INACTIVE version; NO traffic switch.
 // Preserve every original binding (including all four secrets), WORK D1,
 // OAuth ON, Owner setup OFF, write command ON and Worker routing/runtime.
 import fs from 'node:fs';
@@ -20,7 +20,7 @@ const APP=path.join(ROOT,'services/jill-order-desk/app-home');
 const BIN=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const WORKER='jill-order-desk-canary-work';
 const CONFIG='./wrangler.canary.jsonc';
-const ACTIVE='e818c639-f962-4a09-9399-54ab521531c3';
+const ACTIVE='545795da-c7f4-40cf-baab-19ab8f04df69';
 const WORK_DB='3f17c186-c794-4e00-8f20-017191373a19';
 const WRITE_SECRET='JILL_HQ_MERCHANT_WRITE_SECRET';
 const EXPECTED=new Set([
@@ -37,7 +37,7 @@ const FLAGS={
   JILL_WORK_MERCHANT_WRITES_ENABLED:'true',
 };
 export const NAVIGATION_RELEASE_MARKER=
-  'JILL HQ WORK auth-safe single-reader v3; inactive';
+  'JILL HQ WORK shared request auth + phase tracing v4; inactive';
 
 function gate(ok,code){if(!ok)throw Error(code);}
 function bindings(version) {
@@ -177,7 +177,8 @@ if(invoked) {
     phase='tests';
     for(const name of [
       'test:work-merchant-inbox','test:work-hq-inbox-ui',
-      'test:work-hq-request-detail','test:work-hq-source-cache',
+      'test:work-hq-request-detail','test:work-hq-request-auth-stages',
+      'test:work-hq-source-cache',
       'test:work-hq-google-source-cache','test:work-hq-merchant-command',
       'test:work-hq-mail-outbox','test:work-hq-qa-write-key-probe',
     ])npmRun(name);
@@ -222,7 +223,7 @@ if(invoked) {
     console.log('PASS JILL HQ WORK navigation candidate staged INACTIVE: '+checked.candidate);
     console.log('PASS all FOUR WORK secrets, WORK D1, OAuth ON, Owner OFF, writes ON.');
     console.log('PASS same Worker entrypoint, runtime and asset routing.');
-    console.log('PASS currently deployed navigation v1 unchanged: '+checked.active);
+    console.log('PASS currently deployed auth-safe navigation v3 unchanged: '+checked.active);
     console.log('No LIVE, KEEP, Rewards, Google or customer records changed.');
     console.log('Do NOT activate until separately inspected and approved.');
   }catch(error){
