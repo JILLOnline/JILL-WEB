@@ -71,7 +71,7 @@ const known={
 const pass=await probeIsolatedWorkQaDetail({...known,backendFetch:mock});
 assert.equal(pass.verified,true);
 assert.deepEqual(calls,['unauthorized','not_found']);
-assert.equal(pass.existingRecordsRead,0);
+assert.equal(pass.existingRecordsReturned,0);
 assert.equal(pass.mutations,0);
 for(const [negative,positive] of [
   ['not_found','not_found'],
