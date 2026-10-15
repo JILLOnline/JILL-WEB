@@ -485,6 +485,10 @@ function jillCustomOrderAppendEvent_(sheet, event) {
   });
   sheet.appendRow(row);
   SpreadsheetApp.flush();
+  // Canonical event commits invalidate the ephemeral WORK-only Google cache.
+  // This is not a second status authority and is never enabled in LIVE.
+  if(JILL_REWARDS_RUNTIME==='WORK' && JILL_CUSTOM_ORDER_SANDBOX===true)
+    CacheService.getScriptCache().remove(JILL_WORK_HQ_CACHE_KEY);
 }
 
 function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
@@ -998,6 +1002,9 @@ function jillCustomOrderGatewayCustomerList_(e) {
 }
 /* END WORK CUSTOM ORDER OWNERSHIP V1 */
 
+const JILL_WORK_HQ_CACHE_KEY='jill:work:hq:merchant:summary:v2';
+const JILL_WORK_HQ_CACHE_SECONDS=15;
+
 /* WORK HQ MERCHANT READ V1 — canonical QA only; NO HTTP WRITES
    This is a separate HMAC from customer account reads and checkout submissions.
    Only the isolated QA /exec deployment can process it. It requires a distinct
@@ -1122,7 +1129,40 @@ function jillWorkHqMerchantList_(e) {
   const lock=LockService.getScriptLock();
   try{
     lock.waitLock(10000);
-    return json_(jillWorkHqCanonicalList_());
+    const cache=CacheService.getScriptCache();
+    const prior=cache.get(JILL_WORK_HQ_CACHE_KEY);
+    if(prior) {
+      try {
+        const saved=JSON.parse(prior);
+        if(saved&&saved.version===1&&
+           saved.operation==='custom_order.merchant.list.result' &&
+           saved.ok===true && saved.complete===true &&
+           saved.shop==='jill-work.myshopify.com' &&
+           Array.isArray(saved.records) && saved.records.length<=50 &&
+           saved.records.every(function(row){
+             return row&&Object.keys(row).sort().join(',')===
+               'customer_status,date_needed,fulfillment,internal_status,item_count,revision,submission_id,submitted_at,updated_at' &&
+               /^[A-Za-z0-9._:-]{8,128}$/.test(row.submission_id) &&
+               Number.isSafeInteger(row.revision)&&row.revision>=1&&row.revision<=100 &&
+               JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(row.customer_status)>=0 &&
+               JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(row.internal_status)>=0 &&
+               Number.isSafeInteger(row.item_count)&&row.item_count>=1&&row.item_count<=500 &&
+               ['','pickup','shipping'].indexOf(row.fulfillment)>=0 &&
+               typeof row.date_needed==='string' &&
+               (row.date_needed===''||/^\\d{4}-\\d{2}-\\d{2}$/.test(row.date_needed)) &&
+               typeof row.submitted_at==='string'&&
+               Number.isFinite(Date.parse(row.submitted_at)) &&
+               typeof row.updated_at==='string'&&
+               Number.isFinite(Date.parse(row.updated_at));
+           }))return json_(saved);
+      } catch(_ignored) {}
+      // Discard corrupt or unexpected cache without exposing its contents.
+      cache.remove(JILL_WORK_HQ_CACHE_KEY);
+    }
+    const fresh=jillWorkHqCanonicalList_();
+    cache.put(JILL_WORK_HQ_CACHE_KEY,JSON.stringify(fresh),
+      JILL_WORK_HQ_CACHE_SECONDS);
+    return json_(fresh);
   } catch(err) {
     return failure('private_read_unavailable');
   } finally {
