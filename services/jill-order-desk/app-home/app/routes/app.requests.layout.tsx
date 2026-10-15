@@ -5,7 +5,7 @@
 import {useEffect} from "react";
 import {Outlet,useLoaderData,type LoaderFunctionArgs,
   type ShouldRevalidateFunctionArgs} from "react-router";
-import {loadVerifiedMerchantInbox} from "./app.requests";
+import {loadVerifiedMerchantInbox} from "./app.requests-source.server";
 import {mayReuseWorkRequestsSnapshot} from
   "../../../requests-navigation-policy.mjs";
 
