@@ -16,6 +16,7 @@ export function mayReuseWorkRequestsSnapshot({
      !isWorkRequestsPath(nextUrl.pathname) ||
      currentUrl.search||nextUrl.search ||
      snapshot?.state!=='ready'||snapshot?.readOnly!==true ||
+     snapshot?.scope!=='inbox' ||
      !Number.isSafeInteger(snapshot.verifiedAt) ||
      !Number.isSafeInteger(now)||now<snapshot.verifiedAt ||
      now-snapshot.verifiedAt>=WORK_REQUESTS_NAVIGATION_REUSE_MS)
