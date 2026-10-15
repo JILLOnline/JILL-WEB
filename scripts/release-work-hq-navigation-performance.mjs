@@ -143,6 +143,10 @@ async function rollbackIfOwnedCandidate(){
       console.error('PASS previous WORK management v2 remains active.');
       return;
     }
+    if(seen===ACTIVE){
+      console.error('PASS unchanged WORK navigation v1 still active; no rollback needed.');
+      return;
+    }
     if(seen!==CANDIDATE){
       console.error('WORK version changed unexpectedly; manual review required.');
       return;
