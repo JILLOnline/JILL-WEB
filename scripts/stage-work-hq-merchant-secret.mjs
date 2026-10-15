@@ -112,7 +112,7 @@ function clearClipboard() {
 }
 const run=process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url;
 if(run) {
-  let secret=null, ui=null;
+  let secret=null, ui=null, copied=false;
   try {
     const version=workerVersion();
     requireSafe(fs.existsSync(OAuth),
@@ -138,6 +138,7 @@ if(run) {
     console.log('PASS new merchant key is absent from active Cloudflare Worker.');
     secret=randomBytes(48).toString('base64url');
     copySecretToClipboard(secret);
+    copied=true;
     console.log('\nGenerated one-time merchant-read secret; copied to Windows clipboard.');
     console.log('Secret was NOT printed and no file was created.');
     console.log('Open isolated Google WORK QA Apps Script project:');
@@ -145,6 +146,7 @@ if(run) {
     console.log('Project Settings > Script properties > Add script property.');
     console.log('Name: '+NAME);
     console.log('Value: paste from clipboard (Ctrl+V) and click Save.');
+    console.log('If the property already exists, STOP rather than overwriting it.');
     console.log('Do not paste the secret into chat, PowerShell, or source files.');
     ui=createInterface({input:process.stdin,output:process.stdout});
     const answer=await ui.question('\nAfter SAVING the Google Script property, type GOOGLE SAVED: ');
@@ -185,11 +187,12 @@ if(run) {
     console.log('JILL HQ active page, Shopify customer account and LIVE: unchanged.');
   } catch(error) {
     console.error(String(error?.message||error));
+    console.error('If you saved a new Google QA Script Property but the signed probe failed, remove that new property before retrying.');
     console.error('Cloudflare must NOT be released unless the staged version is verified.');
     process.exitCode=1;
   } finally {
     if(ui)ui.close();
-    clearClipboard();
+    if(copied)clearClipboard();
     secret=null;
   }
 }
