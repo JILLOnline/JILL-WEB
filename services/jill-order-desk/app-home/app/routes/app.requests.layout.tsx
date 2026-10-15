@@ -2,8 +2,9 @@
 // BOTH inbox and request workspace. Browser navigation reuses ONLY this
 // in-memory React Router loader result, never a new backend authority.
 // Direct URLs run this loader and recheck Shopify Owner + WORK D1.
-import {Outlet,type LoaderFunctionArgs,type ShouldRevalidateFunctionArgs}
-  from "react-router";
+import {useEffect} from "react";
+import {Outlet,useLoaderData,type LoaderFunctionArgs,
+  type ShouldRevalidateFunctionArgs} from "react-router";
 import {loader as loadVerifiedInbox} from "./app.requests";
 import {mayReuseWorkRequestsSnapshot} from
   "../../../requests-navigation-policy.mjs";
@@ -17,18 +18,20 @@ type VerifiedSnapshot={
   scope?:"inbox"|"detail";
 };
 
+// React Router doesn't provide current loader data to shouldRevalidate.
+// Track ONLY the readiness, scope and freshness of the currently mounted
+// authorized route in its own browser module. No records, customer IDs,
+// session tokens, secrets, or localStorage are kept here. Effects don't run
+// during SSR; direct requests always use the authenticated server loader.
+let visibleClientSnapshot:VerifiedSnapshot|null=null;
 export function shouldRevalidate({
-  currentUrl,nextUrl,formMethod,formAction,currentLoaderData,
-  defaultShouldRevalidate,
+  currentUrl,nextUrl,formMethod,formAction,defaultShouldRevalidate,
 }:ShouldRevalidateFunctionArgs){
-  // An action (including a failed or unconfirmed write) or manual refresh
-  // MUST retrieve the canonical source. A sibling Link navigation may only
-  // reuse the verified in-memory projection for a short bounded interval.
   if(formMethod||formAction || currentUrl.pathname===nextUrl.pathname)
     return true;
   const reuse=mayReuseWorkRequestsSnapshot({
     currentUrl,nextUrl,formMethod,formAction,
-    snapshot:currentLoaderData as VerifiedSnapshot|undefined,
+    snapshot:visibleClientSnapshot,
   });
   return reuse?false:defaultShouldRevalidate;
 }
@@ -64,4 +67,17 @@ export async function loader(args:LoaderFunctionArgs){
     status:response.status,headers,
   });
 }
-export default function VerifiedRequestsLayout(){return <Outlet/>;}
+export default function VerifiedRequestsLayout(){
+  const data=useLoaderData<typeof loader>() as VerifiedSnapshot;
+  useEffect(()=>{
+    const visible:VerifiedSnapshot={
+      state:data.state,readOnly:data.readOnly,
+      scope:data.scope,verifiedAt:data.verifiedAt,
+    };
+    visibleClientSnapshot=visible;
+    return ()=>{
+      if(visibleClientSnapshot===visible)visibleClientSnapshot=null;
+    };
+  },[data.state,data.readOnly,data.scope,data.verifiedAt]);
+  return <Outlet/>;
+}
