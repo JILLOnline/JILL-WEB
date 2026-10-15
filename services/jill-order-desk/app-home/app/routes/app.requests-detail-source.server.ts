@@ -31,7 +31,7 @@ export async function loadAuthorizedWorkRequestDetail({
     return result(503,"source_unavailable");
   // A direct URL and child-route navigation reuses ONLY the SDK's
   // authentication promise for THIS incoming request. No cross-request cache.
-  const {session}=await authenticateWorkAdminOnce({
+  const {session}=await authenticateWorkAdminOnce<{session:unknown}>({
     scope:context.cloudflare,
     authenticate:()=>workShopify(env).authenticate.admin(request),
   });
