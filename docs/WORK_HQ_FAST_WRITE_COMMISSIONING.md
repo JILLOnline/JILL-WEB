@@ -39,7 +39,14 @@ the two WORK sections of the existing
 preserving unrelated entries and LIVE sections. It creates a local
 backup before changing the file. It never prints the key or uploads it.
 
-This helper does NOT install either remote secret, and it never reads
+After independent QA Script Property setup, the owner can explicitly run
+`npm.cmd run work:hq:write-key:stage` locally. This uses Cloudflare's
+**inactive** `wrangler versions secret put`, reads the WORK entry from the
+private vault via stdin, verifies all original bindings, and refuses
+LIVE, extra binding changes or active Worker traffic switches. It stages
+only; it does NOT enable the write feature or deploy the new app code.
+
+This helper does NOT install the Google Script Property, and it never reads
 the vault except when the owner runs the named local command.
 Never paste the key into chat, commit it to Git, or expose it in logs.
 
