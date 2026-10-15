@@ -171,6 +171,23 @@ assert.equal(sandbox.jillWorkHqMerchantCommand_(event).error.code,'unauthorized'
 sandbox.JILL_REWARDS_RUNTIME='WORK';sandbox.JILL_CUSTOM_ORDER_SANDBOX=false;
 assert.equal(sandbox.jillWorkHqMerchantCommand_(event).error.code,'unauthorized');
 assert.equal(events.length,0,'No unauthorized Google events');
+sandbox.JILL_CUSTOM_ORDER_SANDBOX=true;
+let queued=0;
+sandbox.jillWorkHqQueueEmail_=(cmd,revision)=>{
+  assert.equal(cmd.operation_id,command.operation_id);
+  assert.equal(revision,2);queued++;return 'queued';
+};
+const accepted=sandbox.jillWorkHqMerchantCommand_(event);
+assert.equal(accepted.ok,true);
+assert.equal(accepted.revision,2);
+assert.equal(accepted.email_status,'queued');
+assert.equal(queued,1);
+assert.equal(events.length,1);
+sandbox.jillCustomOrderMerchantUpdateAsActor_=()=>{
+  throw Error('Custom Order was updated elsewhere; reload current revision.');
+};
+assert.equal(sandbox.jillWorkHqMerchantCommand_(event).error.code,'stale_revision');
+assert.equal(queued,1);
 // QA email dispatch must stay OUTSIDE web-app mutation and QA mail scopes.
 assert.doesNotMatch(gs.slice(begin,end),/MailApp\.|GmailApp\.|sendEmail\(/);
 const route=readFileSync('services/jill-order-desk/app-home/app/routes/app.requests.command.tsx','utf8');
