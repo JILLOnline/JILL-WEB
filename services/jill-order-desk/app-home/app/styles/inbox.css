@@ -1,5 +1,5 @@
 /* JILL HQ WORK Custom Orders — single scoped owner for this screen.
-   No global Shopify Admin styles, inline overrides, or !important. */
+   No global Shopify Admin styles, overrides or forced declarations. */
 .jill-inbox{
   --jill-ink:#242528;
   --jill-muted:#626770;
