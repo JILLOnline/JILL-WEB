@@ -109,7 +109,8 @@
     "test:jill-private-catalog": "node scripts/test-jill-private-catalog.mjs",
     "work:hq:merchant:inspect-staged": "node scripts/release-work-hq-merchant-inbox.mjs --inspect",
     "work:hq:merchant:release-staged": "node scripts/release-work-hq-merchant-inbox.mjs --release",
-    "test:work-hq-merchant-release": "node scripts/test-release-work-hq-merchant-inbox.mjs"
+    "test:work-hq-merchant-release": "node scripts/test-release-work-hq-merchant-inbox.mjs",
+    "test:work-hq-inbox-ui": "node scripts/test-work-hq-inbox-ui.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
