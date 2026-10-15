@@ -27,6 +27,11 @@
 .jill-actions__feedback{font-size:12px;background:#fff3e5;color:#775421;
   border-radius:8px;padding:9px 11px;margin-top:12px}
 .jill-actions__feedback--ok{background:#e9f5ed;color:#2b6f45}
+.jill-actions__refresh{font-size:12px;line-height:1.5;background:#eef3fa;color:#394a5e;
+  padding:10px 12px;border-radius:8px;margin-top:10px}
+.jill-actions__refresh button{display:inline-flex;border:1px solid #c6d4e5;
+  border-radius:7px;color:#325a83;background:white;padding:6px 10px;margin-left:9px}
+.jill-actions__refresh button:disabled{opacity:.65;cursor:not-allowed}
 .jill-request .jill-actions{background:transparent;padding:0;border:0}
 @media(max-width:700px){.jill-actions{padding:13px 14px}
   .jill-actions__body{grid-template-columns:1fr}}
