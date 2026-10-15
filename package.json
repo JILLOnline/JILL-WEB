@@ -99,7 +99,9 @@
     "custom-orders:work:qa:read-audit": "node scripts/audit-work-qa-script-readonly.mjs",
     "test:work-qa-read-audit": "node scripts/test-work-qa-script-readonly.mjs",
     "work:hq:inbox:deploy-shell": "node scripts/deploy-work-hq-inbox-shell.mjs",
-    "test:work-hq-inbox-rollout": "node scripts/test-work-hq-inbox-rollout.mjs"
+    "test:work-hq-inbox-rollout": "node scripts/test-work-hq-inbox-rollout.mjs",
+    "work:hq:merchant:stage-secret": "node scripts/stage-work-hq-merchant-secret.mjs",
+    "test:work-hq-merchant-secret-stage": "node scripts/test-stage-work-hq-merchant-secret.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
