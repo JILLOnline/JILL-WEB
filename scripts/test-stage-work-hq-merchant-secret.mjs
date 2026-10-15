@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
-  verifyCanonicalQaList,verifyWorkCanaryBeforeStaging,
+  verifyCanonicalQaList,verifyWorkCanaryBeforeStaging,assertSignedGoogleQaEnvelope,
 } from './stage-work-hq-merchant-secret.mjs';
 
 const active='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -54,6 +54,28 @@ for(const bad of [
     records:[{submission_id:'jill:00000000-1111-2222-3333-444444444444'}]},
   {state:'ready',requestsConnected:true,records:Array(51).fill(record)},
 ])assert.throws(()=>verifyCanonicalQaList(bad),/STOPPED/);
+
+// Distinguish server-side source failure vs incorrect signature without
+// disclosing records, secret text or raw backend error content.
+const envelope={
+  version:1,operation:'custom_order.merchant.list.result',
+  shop:'jill-work.myshopify.com',ok:true,complete:true,records:[],
+};
+assert.equal(assertSignedGoogleQaEnvelope(envelope),true);
+for(const code of ['unauthorized','private_read_unavailable']) {
+  assert.throws(()=>assertSignedGoogleQaEnvelope({
+    ok:false,error:{code,raw:'PRIVATE_CUSTOMER_EMAIL@EXAMPLE.COM'},
+  }),err=>err.message.includes('returned '+code) &&
+    !err.message.includes('PRIVATE_CUSTOMER_EMAIL'));
+}
+assert.throws(()=>assertSignedGoogleQaEnvelope({
+  ok:false,error:{code:'sensitive secret detail',raw:'PRIVATE'},
+}),err=>err.message.includes('returned unknown') &&
+  !err.message.includes('PRIVATE') &&
+  !err.message.includes('sensitive secret detail'));
+assert.throws(()=>assertSignedGoogleQaEnvelope({
+  ...envelope,complete:false,
+}),/response contract mismatch/);
 
 const src=readFileSync('scripts/stage-work-hq-merchant-secret.mjs','utf8');
 assert.match(src,/randomBytes\(48\)\.toString\('base64url'\)/);

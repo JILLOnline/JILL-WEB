@@ -27,6 +27,24 @@ const OAuth=path.join(APP,'dist/server/wrangler.oauth-canary.json');
 function requireSafe(ok,reason) {
   if(!ok)throw Error('WORK HQ merchant activation STOPPED: '+reason);
 }
+// Sanitize live Google QA response BEFORE strict inbox projection.
+// Exposes only known public operation errors, never the response body,
+// secret, customer contact data, or spreadsheet values.
+export function assertSignedGoogleQaEnvelope(value) {
+  if(value?.ok===true) {
+    requireSafe(value.version===1 &&
+      value.operation==='custom_order.merchant.list.result' &&
+      value.shop==='jill-work.myshopify.com' &&
+      value.complete===true && Array.isArray(value.records),
+      'signed Google QA response contract mismatch');
+    return true;
+  }
+  const allowed=new Set(['unauthorized','private_read_unavailable']);
+  const code=allowed.has(value?.error?.code)?value.error.code:'unknown';
+  throw Error('WORK HQ merchant activation STOPPED: Google QA signed read returned '+
+    code+'. No Cloudflare version staged.');
+}
+
 export function verifyCanonicalQaList(model) {
   requireSafe(model?.state==='ready' && model.requestsConnected===true,
     'canonical merchant source not ready');
@@ -156,10 +174,11 @@ if(run) {
     });
     requireSafe(bad?.ok===false && bad?.error?.code==='unauthorized',
       'Google QA did not deny the invalid signature');
+    console.log('PASS invalid HMAC rejected by Google QA.');
     const result=await readWorkGoogleQaMerchantList({secret});
+    assertSignedGoogleQaEnvelope(result);
     const projected=projectWorkMerchantInbox(result);
     const count=verifyCanonicalQaList(projected);
-    console.log('PASS invalid HMAC rejected by Google QA.');
     console.log('PASS signed canonical Google QA merchant feed: '+count+
       ' bounded request(s); known My JILL request present.');
     console.log('PASS projection excludes customer contact details and raw payload.');
@@ -187,7 +206,7 @@ if(run) {
     console.log('JILL HQ active page, Shopify customer account and LIVE: unchanged.');
   } catch(error) {
     console.error(String(error?.message||error));
-    console.error('If you saved a new Google QA Script Property but the signed probe failed, remove that new property before retrying.');
+    console.error('If you saved a new Google QA Script Property, leave Cloudflare unchanged. Before retrying, check the error classification and coordinate replacement/removal of the property.');
     console.error('Cloudflare must NOT be released unless the staged version is verified.');
     process.exitCode=1;
   } finally {
