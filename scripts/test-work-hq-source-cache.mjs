@@ -52,6 +52,18 @@ complete(raw);
 assert.deepEqual(await Promise.all([p1,p2]),[first,first]);
 assert.equal(modes.at(-1),'joined');
 
+// Invalidation during an in-flight old read must not resurrect stale source.
+invalidateWorkMerchantSourceCache();
+let finishOld;
+const oldReader=()=>new Promise(resolve=>{finishOld=resolve;});
+const oldPending=readWorkMerchantSourceCached({...args,reader:oldReader});
+await Promise.resolve();
+invalidateWorkMerchantSourceCache();
+finishOld(raw);
+await oldPending;
+await readWorkMerchantSourceCached(args);
+assert.equal(calls,5,'invalidated in-flight snapshot must never warm cache');
+
 // Malformed / failed canonical reads are NEVER cached or transformed to zero.
 invalidateWorkMerchantSourceCache();
 let failures=0;
@@ -63,12 +75,12 @@ await assert.rejects(()=>readWorkMerchantSourceCached({...args,reader:async()=>{
 }}));
 assert.equal(failures,2);
 await readWorkMerchantSourceCached(args);
-assert.equal(calls,4);
+assert.equal(calls,6);
 await assert.rejects(()=>readWorkMerchantSourceCached({...args,secret:'short'}));
 
 // Signing secret change can never reuse an old credential's snapshot.
 await readWorkMerchantSourceCached({...args,secret:'B'.repeat(40)});
-assert.equal(calls,5);
+assert.equal(calls,7);
 const route=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
 const boundary=readFileSync('services/jill-order-desk/merchant-inbox-read.mjs','utf8');

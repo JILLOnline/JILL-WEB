@@ -11,11 +11,14 @@ export const WORK_MERCHANT_CACHE_MS=20000;
 const SHOP='jill-work.myshopify.com';
 let cached=null;
 let pending=null;
+let generation=0;
 
 export function invalidateWorkMerchantSourceCache() {
+  generation++;
   cached=null;
-  // Old pending readers may settle later but cannot be treated as current.
-  // A future write path must also await its upstream commit before invalidation.
+  pending=null;
+  // Even a pending old read cannot repopulate an invalidated snapshot.
+  // A future write path must invalidate only AFTER canonical commit.
 }
 
 export async function readWorkMerchantSourceCached({
@@ -36,6 +39,7 @@ export async function readWorkMerchantSourceCached({
     return pending.promise;
   }
   onCache('miss');
+  const currentGeneration=generation;
   const task=(async()=>{
     const upstream=await reader({secret});
     // Reject untrusted source BEFORE saving anything; project strips all PII.
@@ -46,7 +50,7 @@ export async function readWorkMerchantSourceCached({
     });
     const expiresAt=now()+WORK_MERCHANT_CACHE_MS;
     // Do not let an invalidated/superseded fetch warm the cache.
-    if(pending?.promise===task)
+    if(pending?.promise===task && currentGeneration===generation)
       cached={key,expiresAt,source};
     return source;
   })();
