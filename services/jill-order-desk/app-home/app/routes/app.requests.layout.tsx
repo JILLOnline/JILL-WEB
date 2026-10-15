@@ -21,7 +21,7 @@ type VerifiedSnapshot={
 // React Router doesn't provide current loader data to shouldRevalidate.
 // Track ONLY the readiness, scope and freshness of the currently mounted
 // authorized route in its own browser module. No records, customer IDs,
-// session tokens, secrets, or localStorage are kept here. Effects don't run
+// session tokens, secrets, or persistent browser storage are kept here. Effects don't run
 // during SSR; direct requests always use the authenticated server loader.
 let visibleClientSnapshot:VerifiedSnapshot|null=null;
 export function shouldRevalidate({
