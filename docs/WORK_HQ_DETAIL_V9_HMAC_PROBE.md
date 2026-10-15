@@ -53,3 +53,32 @@ traffic switch.
 
 If the signed probe reports STOPPED, do **not** rotate keys or redeploy
 Google. Investigate error code and protected deployment versions first.
+
+## After the HMAC proof: source pin review (no deployment)
+
+The owner completed both the remote deployment reconciliation and signed v9
+read-only probe. The next code-only review pins a **separate** v9 detail URL in
+`services/jill-order-desk/work-google-merchant-detail.mjs`; the legacy
+`work-google-merchant-read.mjs` v7 list/status URL must remain untouched.
+This pin does **not** enable any Worker feature flag or publish customer data.
+
+After review/merge to `jill/rewards-work`, run from clean synchronized source:
+
+```powershell
+npm.cmd run test:work-hq-google-exact-detail
+npm.cmd run test:work-hq-qa-detail-pin
+npm.cmd run test:work-hq-detail-view
+npm.cmd run work:hq:qa:detail:pin:audit
+```
+
+The final command lists Google's WORK QA deployments **read only**, verifies
+v7/v8 intact and v9 exactly matches the code's detail pin. It does not use
+the private HMAC key, change an endpoint, or touch records.
+
+Only after these checks may an **inactive** WORK canary build be staged with
+`JILL_WORK_HQ_DETAIL_ENABLED` still OFF. Separately validate that the
+deployed WORK Worker has its server-only read secret and genuine Shopify
+Owner + D1 authorization before any proposed feature enablement. For the
+first actual request test, use one disposable WORK-only submission, and
+confirm per-item personalization and opaque references; no LIVE, KEEP,
+Rewards, customer records, mail, statuses, or Shopify payment changes.
