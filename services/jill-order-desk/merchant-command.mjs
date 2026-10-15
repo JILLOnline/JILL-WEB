@@ -3,6 +3,7 @@ import {createHmac,randomBytes} from 'node:crypto';
 import {readWorkMerchantPermission} from './merchant-access.mjs';
 import {JILL_HQ_WORK_QA_GOOGLE_URL} from './work-google-merchant-read.mjs';
 import {invalidateWorkMerchantSourceCache} from './work-merchant-source-cache.mjs';
+import {invalidateWorkD1InboxIndex} from './work-merchant-d1-index.mjs';
 
 import {WORK_STATUS_TRANSITIONS,WORK_INTERNAL_STAGES} from './merchant-command-contract.mjs';
 export {WORK_STATUS_TRANSITIONS,WORK_INTERNAL_STAGES} from './merchant-command-contract.mjs';
@@ -151,6 +152,7 @@ export async function submitWorkMerchantCommand({command,staffId,secret,
 /** @param {{request?: Request,authenticate?: any,db?: any,enabled?: boolean,secret?: string,backendFetch?: typeof fetch,now?: ()=>number}} [options] */
 export async function handleWorkMerchantCommand({request,authenticate,db,
   enabled=false,secret,backendFetch=fetch,now=Date.now,
+  fastIndexEnabled=false,
 }={}) {
   if(request?.method!=='POST')return writeResult(405,'method_not_allowed');
   if(typeof authenticate?.admin!=='function')return writeResult(503,'unavailable');
@@ -175,6 +177,15 @@ export async function handleWorkMerchantCommand({request,authenticate,db,
     });
     if(!result.ok)return writeResult(result.code==='stale_revision'?409:422,result.code);
     invalidateWorkMerchantSourceCache();
+    if(fastIndexEnabled===true) {
+      try {await invalidateWorkD1InboxIndex(db);}
+      catch {
+        // Google may already have committed. Do NOT return a false
+        // success while an older shared snapshot could still be served.
+        // The same operation_id remains safe for idempotent reconciliation.
+        return writeResult(503,'commit_unconfirmed');
+      }
+    }
     return writeResult(200,'saved',{submission_id:command.submission_id,
       operation_id:command.operation_id,revision:result.revision,
       duplicate:result.duplicate,email_status:result.email_status});
