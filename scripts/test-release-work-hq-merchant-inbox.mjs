@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {
   selectVerifiedCandidate,inspectVersions,rolloutArguments,
   sameStructuredData,safeRuntimeDiffLabels,safeRuntimeDiffShapes,
+  safeUnknownRuntimeDifferences,
 } from './release-work-hq-merchant-inbox.mjs';
 
 const A='49b10c46-8e00-4ef3-8075-74eea29e9c9e';
@@ -103,6 +104,43 @@ assert.deepEqual(safeRuntimeDiffShapes(
 ),['migration_tag (active=absent, candidate=string)']);
 
 
+// Only UNKNOWN Cloudflare API keys (not their values) may appear in output.
+const unknownA={
+  ...active.resources.script_runtime,
+  placement:{mode:'smart',secret_token:'never log nested values'},
+  compatibility_date:'2026-10-14',
+  cloudflare_internal_setting:true,
+  auth_token:'A SENSITIVE VALUE',
+};
+const unknownC={
+  ...active.resources.script_runtime,
+  placement:{mode:'off',secret_token:'never log nested values'},
+  cloudflare_internal_setting:null,
+  auth_token:'DIFFERENT SENSITIVE VALUE',
+  observability:{head_sampling_rate:0.2},
+  'BADDY<SECRET>':'DO NOT PRINT',
+};
+const safe=safeUnknownRuntimeDifferences(unknownA,unknownC);
+assert.deepEqual(safe,[
+  'redacted_field_name (active=absent, candidate=string)',
+  'redacted_field_name (active=string, candidate=string)',
+  'cloudflare_internal_setting (active=boolean, candidate=null)',
+  'observability (active=absent, candidate=object)',
+  'placement (active=object, candidate=object)',
+]);
+assert.ok(!JSON.stringify(safe).includes('SENSITIVE VALUE'));
+assert.ok(!JSON.stringify(safe).includes('never log'));
+assert.ok(!JSON.stringify(safe).includes('BADDY'));
+assert.ok(!JSON.stringify(safe).includes('auth_token'));
+assert.deepEqual(safeUnknownRuntimeDifferences({known_extra:{a:1}},
+  {known_extra:{a:1}}),[]);
+assert.deepEqual(safeUnknownRuntimeDifferences({},{runtime_options:false}),
+  ['runtime_options (active=absent, candidate=boolean)']);
+assert.equal(safeUnknownRuntimeDifferences(
+  Object.fromEntries(Array.from({length:18},(_,i)=>['extra_'+i,0])),
+  Object.fromEntries(Array.from({length:18},(_,i)=>['extra_'+i,1]))
+).at(-1),'additional_fields_omitted');
+
 const alter=(changed)=>({...structuredClone(candidate),...changed});
 function invalid(x,pattern){assert.throws(()=>inspectVersions({active,candidate:x}),pattern);}
 invalid(alter({resources:{...candidate.resources,
@@ -145,6 +183,8 @@ const source=fs.readFileSync('scripts/release-work-hq-merchant-inbox.mjs','utf8'
 assert.match(source,/shell:false/);
 assert.match(source,/safeRuntimeDiffLabels/);
 assert.match(source,/safeRuntimeDiffShapes/);
+assert.match(source,/safeUnknownRuntimeDifferences/);
+assert.ok(source.includes('WORK unknown runtime key (name/type only):'));
 assert.match(source,/'exports'/);
 assert.match(source,/'migration_tag'/);
 assert.match(source,/WORK runtime differences \(API fields only\):/);

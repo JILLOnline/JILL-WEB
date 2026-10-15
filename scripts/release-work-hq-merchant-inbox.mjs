@@ -84,6 +84,37 @@ export function safeRuntimeDiffShapes(activeRuntime,candidateRuntime){
     return field+' (active='+shape(active)+', candidate='+shape(candidate)+')';
   });
 }
+// Identify only UNKNOWN top-level Cloudflare runtime setting NAMES and SHAPES.
+// This is a read-only diagnosis; do not print metadata values, secret material
+// or request data. Unknown runtime changes still fail closed.
+export function safeUnknownRuntimeDifferences(activeRuntime,candidateRuntime){
+  const documented=new Set([
+    'compatibility_date','compatibility_flags','exports',
+    'limits','migration_tag','usage_model',
+  ]);
+  const a=(activeRuntime && typeof activeRuntime==='object')?activeRuntime:{};
+  const c=(candidateRuntime && typeof candidateRuntime==='object')?candidateRuntime:{};
+  const names=[...new Set([...Object.keys(a),...Object.keys(c)])]
+    .filter(k=>!documented.has(k))
+    .filter(k=>!sameStructuredData(a[k],c[k]))
+    .sort();
+  function kind(obj,key){
+    if(!Object.prototype.hasOwnProperty.call(obj,key))return 'absent';
+    if(obj[key]===null)return 'null';
+    if(Array.isArray(obj[key]))return 'array';
+    return typeof obj[key];
+  }
+  // Untrusted keys are never logged unless they look like ordinary platform
+  // metadata labels. Redact credential-like and private names by default.
+  function label(k){
+    return /^[a-z][a-z0-9_]{0,63}$/.test(k) &&
+      !/(secret|credential|token|password|private|customer|email|authorization|api_key|hmac)/i.test(k)
+      ?k:'redacted_field_name';
+  }
+  return names.slice(0,16).map(k=>
+    label(k)+' (active='+kind(a,k)+', candidate='+kind(c,k)+')')
+    .concat(names.length>16?['additional_fields_omitted']:[]);
+}
 export function selectVerifiedCandidate(list,activeVersion,activeId=ACTIVE){
   gate(Array.isArray(list)&&list.length>=2&&list.length<=10,'invalid_version_list');
   gate(activeVersion?.id===activeId && activeId===ACTIVE,'active_version_changed');
@@ -238,6 +269,11 @@ if(invoked){
       for(const detail of safeRuntimeDiffShapes(
         active.resources?.script_runtime,candidate.resources?.script_runtime))
         console.error('WORK runtime field: '+detail);
+      if(runtimeDifferences.includes('other_runtime_settings')) {
+        for(const detail of safeUnknownRuntimeDifferences(
+          active.resources?.script_runtime,candidate.resources?.script_runtime))
+          console.error('WORK unknown runtime key (name/type only): '+detail);
+      }
     }
     const match=inspectVersions({active,candidate});
     console.log('PASS WORK active version: '+match.activeId);
