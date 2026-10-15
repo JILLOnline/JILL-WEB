@@ -170,7 +170,7 @@ export default function WorkMerchantInbox() {
                     <label>
                       Status
                       <select value={status} onChange={event=>setStatus(event.target.value)}>
-                        {INBOX_FILTERS.map(([value,label]:[string,string])=>
+                        {INBOX_FILTERS.map(([value,label])=>
                           <option key={value} value={value}>{label}</option>)}
                       </select>
                     </label>
