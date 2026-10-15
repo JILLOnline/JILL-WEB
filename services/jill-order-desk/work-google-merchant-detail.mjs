@@ -3,8 +3,10 @@
 // The deployed QA v7 currently lacks this operation: keep feature DISABLED
 // until Google QA project has a separately certified detail-enabled /exec.
 import {createHmac,randomBytes} from 'node:crypto';
-import {JILL_HQ_WORK_QA_GOOGLE_URL}
-  from './work-google-merchant-read.mjs';
+// Separate, immutable Google WORK QA detail @9. The merchant list/status
+// endpoints stay pinned to their original verified @7 deployment.
+export const JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL =
+  'https://script.google.com/macros/s/AKfycby2CWe5_GeTfVwM1ITER0psT5e00UCysEsHXpiqWXTBHTCxKr5E584IA1ErxPPwIzH/exec';
 import {projectVerifiedWorkMerchantRequestDetail}
   from './merchant-request-detail.mjs';
 
@@ -38,10 +40,10 @@ export function signWorkMerchantDetail({
 export async function readWorkGoogleQaMerchantDetail({
   secret,submissionId,backendFetch=fetch,now=Date.now,
   makeNonce=()=>randomBytes(24).toString('base64url'),
-  endpoint=JILL_HQ_WORK_QA_GOOGLE_URL,
+  endpoint=JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL,
 }={}){
   if(!ID.test(submissionId||'')||
-    endpoint!==JILL_HQ_WORK_QA_GOOGLE_URL ||
+    endpoint!==JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL ||
     typeof backendFetch!=='function'||typeof now!=='function'||
     typeof makeNonce!=='function')fail();
   const timestamp=String(now()),nonce=makeNonce();
