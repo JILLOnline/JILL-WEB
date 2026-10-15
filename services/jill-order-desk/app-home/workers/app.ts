@@ -44,6 +44,14 @@ export default {
     catch {return unavailable("work_host_unavailable");}
     const url=new URL(request.url);
     if(url.origin!==expected)return unavailable("wrong_host",421);
+    // Anonymous/foreign-origin command posts must fail before Shopify's
+    // embedded auth redirect machinery, D1 or any request body processing.
+    // A matching Origin is ONLY a browser CSRF precondition, never merchant
+    // authorization: the downstream action still verifies Shopify Owner,
+    // the WORK D1 grant, write flag, and the Google QA HMAC signature.
+    if(request.method==="POST" && url.pathname==="/app/requests/command" &&
+       request.headers.get("origin")!==expected)
+      return unavailable("invalid_origin",403);
     if(request.method==="GET" && url.pathname==="/healthz") {
       const ready=await schemaReady(env.JILL_ORDER_DESK_WORK_DB);
       return Response.json({
