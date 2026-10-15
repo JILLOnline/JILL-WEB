@@ -33,7 +33,7 @@ assert.match(styles,/@media\(max-width:750px\)/);
 assert.match(styles,/:focus-visible/);
 assert.match(styles,/\.jill-request__grid/);
 assert.doesNotMatch(styles,/!important|@import|url\(/i);
-assert.doesNotMatch(route,/custom-order-account-read|JILL_SHEET_ID|SHOPIFY_ACCESS_TOKEN|JILL_CUSTOM_ORDER_GATEWAY_SECRET|shopify_customer_id|useFetcher|useSubmit|fetch\\(|<form|<button|action\\s*\\(/i);
+assert.doesNotMatch(route,/custom-order-account-read|JILL_SHEET_ID|SHOPIFY_ACCESS_TOKEN|JILL_CUSTOM_ORDER_GATEWAY_SECRET|shopify_customer_id|useFetcher|useSubmit|fetch\(|<form|<button|action\s*\(/i);
 assert.doesNotMatch(route,/reader\.read|readWorkGoogleQaMerchantList|workShopify\(/);
 // The canonical projected record (not raw Google payload) determines the
 // exact owner-only detail fields; all extra personal fields are dropped.
