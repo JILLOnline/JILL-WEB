@@ -84,21 +84,24 @@ export function projectWorkMerchantInbox(source) {
   db?:any,
   readCanonicalSource?:(params:{shop:string})=>Promise<any>,
   onTiming?:(name:string,durationMs:number)=>void,
+  onPhaseStart?:(name:string)=>void,
   clock?:()=>number,
 }} [options] */
 export async function loadWorkMerchantInbox({
   request,authenticate,db,readCanonicalSource,
-  onTiming=()=>{},clock=()=>performance.now(),
+  onTiming=()=>{},onPhaseStart=()=>{},clock=()=>performance.now(),
 }={}) {
   if(!request || typeof authenticate?.admin!=='function')
     throw new TypeError('Shopify SDK Admin authentication required');
   // Record duration per verified boundary, never session IDs/PII/secret
   // content. Instrumentation does NOT skip or relax either auth gate.
   let started=clock(),session;
+  onPhaseStart('shopify_auth');
   try {
     ({session}=await authenticate.admin(request));
   } finally {onTiming('shopify_auth',Math.max(0,clock()-started));}
   started=clock();
+  onPhaseStart('work_owner');
   let access;
   try {
     access=await readWorkMerchantPermission({
@@ -119,6 +122,7 @@ export async function loadWorkMerchantInbox({
   if(typeof readCanonicalSource!=='function')
     return result(200,safeModel('source_not_connected'));
   started=clock();
+  onPhaseStart('google_feed');
   try {
     const source=await readCanonicalSource({shop:SHOP});
     return result(200,projectWorkMerchantInbox(source));
