@@ -39,6 +39,9 @@ for(const [label,change] of [
   ['pinned v7 mutated',{deployments:new Map([
     [PINNED,{version:9,description:'BAD'}],[PREVIOUS_HQ,base.get(PREVIOUS_HQ)]])}],
   ['v8 missing',{deployments:new Map([[PINNED,base.get(PINNED)]])}],
+  ['v8 version unexpectedly changed',{deployments:new Map([
+    [PINNED,base.get(PINNED)],
+    [PREVIOUS_HQ,{version:9,description:'UNREVIEWED_UPDATE'}]])}],
   ['source missing',{canonicalSource:source.replace(
     'function jillWorkHqMerchantDetailVerified_(', 'function BROKEN(')}],
   ['existing detail version',{deployments:new Map([
