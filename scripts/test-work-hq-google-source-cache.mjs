@@ -26,6 +26,9 @@ const cache={
 const ctx={
   JILL_REWARDS_RUNTIME:'WORK',JILL_CUSTOM_ORDER_SANDBOX:true,
   JILL_CUSTOM_WORKFLOW:{
+    HEADERS:['event_id','submission_id','revision','customer_status',
+      'internal_status','public_note','internal_note','evidence_ref',
+      'actor','occurred_at','source'],
     STATUSES:['received','reviewing','awaiting_approval','in_production',
       'ready_pickup','on_hold','cancelled','completed'],
     INTERNAL:['new','needs_quote','waiting_customer','materials_ordered',
