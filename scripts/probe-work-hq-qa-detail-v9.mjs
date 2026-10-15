@@ -1,6 +1,7 @@
 // Exact Google WORK QA detail v9 — READ-ONLY HMAC negative/positive proof.
-// It sends a deliberately NONEXISTENT request ID. No existing customer
-// payload, event, mail, secrets or production shop is ever read or modified.
+// It sends a deliberately NONEXISTENT request ID. No real customer
+// payload is RETURNED by the endpoint; Google may scan QA intake rows.
+// No event, mail, private key or production shop is modified.
 // The endpoint is obtained from the certified isolated clasp deployment
 // listing. Never take URL, raw HMAC key or submission ID from CLI arguments.
 import fs from 'node:fs';
