@@ -15,6 +15,9 @@ export const JILL_MERCHANT_ROLES=Object.freeze([
 export const JILL_MERCHANT_ACTIONS=Object.freeze({
   'requests.read':          {roles:JILL_MERCHANT_ROLES,scopes:[],enabled:true,assigned:true},
   'team.read':              {roles:['owner'],scopes:[],enabled:true},
+  // Command route still requires an explicit WORK-only deployment flag and
+  // separate merchant WRITE HMAC secret; no public/customer write authority.
+  'requests.write':          {roles:['owner'],scopes:[],enabled:true},
   'production.update':      {roles:['owner','administrator','order_manager'],scopes:[],enabled:false},
   'production.internal_note':{roles:['owner','administrator','order_manager','production'],scopes:[],enabled:false,assigned:true},
   'quote.prepare':          {roles:['owner','administrator','order_manager'],scopes:[],enabled:false},
