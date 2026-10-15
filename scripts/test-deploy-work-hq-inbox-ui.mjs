@@ -79,7 +79,8 @@ for(const mutate of [
   v=>{v.resources.bindings.push({name:'EXTRA_ACCESS',type:'secret_text'});},
 ]){
   const wrong=structuredClone(candidate);mutate(wrong);
-  assert.throws(()=>assertVersionBindings(active,wrong));
+  assert.throws(()=>assertVersionBindings(active,wrong),
+    'Release guard allowed unsafe change: '+mutate.toString());
 }
 const source=readFileSync('scripts/deploy-work-hq-inbox-ui.mjs','utf8');
 for(const phrase of [
