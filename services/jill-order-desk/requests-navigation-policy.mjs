@@ -7,6 +7,19 @@ export function isWorkRequestsPath(pathname){
     (pathname===PATH||pathname.startsWith(PATH+'/')) &&
     pathname!=='/app/requests/command';
 }
+/** @param {{
+  currentUrl?: URL|null,
+  nextUrl?: URL|null,
+  formMethod?: string|null,
+  formAction?: string|null,
+  snapshot?: {
+    state?:string,
+    readOnly?:boolean,
+    scope?:"inbox"|"detail",
+    verifiedAt?:number,
+  }|null,
+  now?:number
+}} [args] */
 export function mayReuseWorkRequestsSnapshot({
   currentUrl,nextUrl,formMethod,formAction,snapshot,now=Date.now(),
 }={}){
