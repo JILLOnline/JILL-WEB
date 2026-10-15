@@ -147,7 +147,7 @@ assert.match(source,/safeRuntimeDiffLabels/);
 assert.match(source,/safeRuntimeDiffShapes/);
 assert.match(source,/'exports'/);
 assert.match(source,/'migration_tag'/);
-assert.match(source,/WORK runtime differences \(field names only\):/);
+assert.match(source,/WORK runtime differences \(API fields only\):/);
 assert.doesNotMatch(source,/JSON\.stringify\(active\.resources\.script_runtime\)===/);
 assert.match(source,/RELEASE JILL HQ WORK INBOX/);
 assert.match(source,/activeStatus\(\)===ACTIVE,'active_version_changed_at_approval'/);
