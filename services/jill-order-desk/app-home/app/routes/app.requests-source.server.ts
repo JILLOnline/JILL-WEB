@@ -4,6 +4,7 @@
 import {workMerchantWritesReady} from "../../../work-merchant-write-readiness.mjs";
 import {type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
+import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {loadWorkMerchantInbox} from "../../../merchant-inbox-read.mjs";
 import {readWorkGoogleQaMerchantList} from "../../../work-google-merchant-read.mjs";
 import {readWorkMerchantSourceCached} from "../../../work-merchant-source-cache.mjs";
@@ -21,7 +22,10 @@ export async function loadVerifiedMerchantInbox({request,context}:LoaderFunction
          Number.isFinite(ms))timings[name]=Math.max(0,ms);
     },
     request,
-    authenticate:workShopify(env).authenticate,
+    authenticate:{admin:()=>authenticateWorkAdminOnce({
+      scope:context.cloudflare,
+      authenticate:()=>workShopify(env).authenticate.admin(request),
+    })},
     db:env.JILL_ORDER_DESK_WORK_DB,
     // Keep the authenticated owner-only, WHITELISTED Google read boundary.
     // No Shopify session or customer identity is forwarded to the source.
