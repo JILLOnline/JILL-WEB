@@ -19,9 +19,9 @@ const WORKER='jill-order-desk-canary-work';
 const BIN=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const CONFIG='./wrangler.canary.jsonc';
 const BASE='https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
-const ACTIVE='76eda941-abcf-4838-a147-b5450a7c1148';
+const ACTIVE='b6a908d4-002a-4c39-9f37-7825763e75c7';
 const D1='3f17c186-c794-4e00-8f20-017191373a19';
-const MESSAGE='JILL HQ WORK Custom Orders inbox UI v1; read-only release';
+const MESSAGE='JILL HQ WORK request workspace v1; read-only release';
 const SECRETS=['JILL_HQ_MERCHANT_READ_SECRET','JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET'];
 
 function gate(ok,code){if(!ok)throw Error(code);}
@@ -170,6 +170,7 @@ if(invoked){
     phase='tests';
     npmRun('test:work-merchant-inbox');
     npmRun('test:work-hq-inbox-ui');
+    npmRun('test:work-hq-request-detail');
     phase='build';
     const dist=path.join(APP,'dist');
     if(fs.existsSync(dist)){
@@ -220,10 +221,11 @@ if(invoked){
     await assertHttp('/healthz',200);
     await assertHttp('/auth/login',200);
     await assertHttp('/app/requests','denied');
+    await assertHttp('/app/requests/jill%3A92b32355-900e-47ba-8946-ccd93190a3b7','denied');
     await assertHttp('/app/setup-owner',410);
     console.log('PASS JILL HQ WORK new Custom Orders UI deployed: '+id);
     console.log('PASS health, OAuth login, anonymous inbox denial and Owner OFF.');
-    console.log('Review signed-in Shopify WORK Admin > JILL HQ > Custom Orders.');
+    console.log('Review signed-in Shopify WORK Admin > JILL HQ > Custom Orders > Open request workspace.');
     console.log('LIVE/KEEP/My JILL/Rewards/Google QA unchanged by this command.');
   }catch(error){
     const safe=typeof error?.message==='string' &&
