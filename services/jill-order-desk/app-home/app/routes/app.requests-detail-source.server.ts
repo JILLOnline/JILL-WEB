@@ -38,7 +38,7 @@ export async function loadAuthorizedWorkRequestDetail({
   const grant=await readWorkMerchantPermission({
     db:env.JILL_ORDER_DESK_WORK_DB,session,action:"requests.read",
   });
-  if(!grant.allowed || grant.role!=="owner")
+  if(grant.allowed!==true || !("role" in grant) || grant.role!=="owner")
     return result(grant.code==="authority_unavailable"?503:403,
       "access_denied");
   try{
