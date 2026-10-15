@@ -1149,7 +1149,7 @@ function jillWorkHqMerchantList_(e) {
                Number.isSafeInteger(row.item_count)&&row.item_count>=1&&row.item_count<=500 &&
                ['','pickup','shipping'].indexOf(row.fulfillment)>=0 &&
                typeof row.date_needed==='string' &&
-               (row.date_needed===''||/^\\d{4}-\\d{2}-\\d{2}$/.test(row.date_needed)) &&
+               (row.date_needed===''||/^\d{4}-\d{2}-\d{2}$/.test(row.date_needed)) &&
                typeof row.submitted_at==='string'&&
                Number.isFinite(Date.parse(row.submitted_at)) &&
                typeof row.updated_at==='string'&&
