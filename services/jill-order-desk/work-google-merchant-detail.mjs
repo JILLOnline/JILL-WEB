@@ -27,6 +27,14 @@ export function signWorkMerchantDetail({
       .join('\n'),'utf8').digest('hex');
 }
 
+/** @param {{
+  secret?:string,
+  submissionId?:string,
+  backendFetch?:typeof fetch,
+  now?:()=>number,
+  makeNonce?:()=>string,
+  endpoint?:string
+}} [options] */
 export async function readWorkGoogleQaMerchantDetail({
   secret,submissionId,backendFetch=fetch,now=Date.now,
   makeNonce=()=>randomBytes(24).toString('base64url'),

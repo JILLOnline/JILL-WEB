@@ -11,6 +11,9 @@ function databaseReady(db) {
   return db && typeof db.prepare==='function';
 }
 
+/** @param {{
+  db?:any,session?:any,action?:string,assignedStaffIds?:any
+}} [options] */
 export async function readWorkMerchantPermission({
   db,session,action,assignedStaffIds=null,
 }={}) {

@@ -1,10 +1,16 @@
-import {Link,useParams,useRouteLoaderData} from "react-router";
+import {Link,useLoaderData,useParams,useRouteLoaderData,type LoaderFunctionArgs} from "react-router";
 import {
   requestShortId,customerStatusLabel,internalStatusLabel,dateLabel,
 } from "../../../inbox-display.mjs";
 import "../styles/inbox.css";
 import "../styles/request-detail.css";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
+import {WorkOriginalRequestDetails} from "../components/WorkOriginalRequestDetails";
+import {loadAuthorizedWorkRequestDetail} from "./app.requests-detail-source.server";
+
+export async function loader(args:LoaderFunctionArgs){
+  return loadAuthorizedWorkRequestDetail(args);
+}
 import "../styles/request-actions.css";
 
 type RequestRecord={
@@ -32,6 +38,7 @@ function FulfillmentName({value}:{value:string}){
     value==="shipping"?"Shipping":"Not provided"}</>;
 }
 export default function WorkRequestDetail(){
+  const original=useLoaderData<typeof loader>();
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const {submissionId}=useParams();
   const record=data.state==="ready"?
@@ -109,9 +116,8 @@ export default function WorkRequestDetail(){
                     <h3 id="request-next">Request management</h3>
                     <WorkRequestQuickActions record={record} enabled={controlsEnabled}/>
                     <p className="jill-request__muted">
-                      Full item customization, customer contact, attachments,
-                      quotes and historical events need their own certified
-                      merchant detail source. They are not available in this summary.
+                      Status updates use canonical Google QA confirmation.
+                      Detailed customer intake is loaded separately below.
                     </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
@@ -120,6 +126,7 @@ export default function WorkRequestDetail(){
                   </section>
                 </div>
               </div>
+              <WorkOriginalRequestDetails model={original} submissionId={record.submission_id}/>
             </>}
         <footer className="jill-inbox__footer">
           <strong>Verified WORK merchant view.</strong> The management tools save only after
