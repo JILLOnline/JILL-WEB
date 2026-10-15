@@ -1,3 +1,14 @@
+> **Historical v1 release record (2026-10-15).** The v1 navigation
+> Worker is ACTIVE, version `e818c639-f962-4a09-9399-54ab521531c3`.
+> Following a reported repeated-navigation failure, the v1 activation
+> script and npm commands were retired. **Do not execute old release
+> snippets below.** The canonical v2 staging command is
+> `npm.cmd run work:hq:navigation:stage`, which uploads an inactive
+> candidate only. Its new ID must be reviewed before new activation
+> tooling can be reinstated. Never use the previous version as a release
+> candidate or change LIVE/KEEP/Rewards.
+>
+
 # JILL HQ WORK — activate faster request navigation
 
 ## Verified baseline and staged build
