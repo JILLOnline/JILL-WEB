@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
-  ACTIVE,CANDIDATE,APPROVAL,assertNavigationRelease,
+  ACTIVE,CANDIDATE,ROLLBACK,APPROVAL,assertNavigationRelease,
   releaseArgs,requireCommandDenial,
 } from './release-work-hq-navigation-performance.mjs';
 import {NAVIGATION_RELEASE_MARKER}
@@ -46,9 +46,13 @@ candidate.resources.script_runtime.assets={
   html_handling:'auto-trailing-slash',
   not_found_handling:'none',
 };
+const rollback=structuredClone(active);
+rollback.id=ROLLBACK;
+rollback.metadata.created_on='2026-10-15T17:43:59.179Z';
+rollback.resources.script.etag='previous-management-v2';
 const versions=[active,{id:'superseded',
   metadata:{created_on:'2026-10-15T20:05:00Z'}},candidate];
-const inputs={active,candidate,versions,current:ACTIVE};
+const inputs={active,candidate,rollback,versions,current:ACTIVE};
 assert.deepEqual(assertNavigationRelease(inputs),
   {active:ACTIVE,candidate:CANDIDATE});
 assert.throws(()=>assertNavigationRelease({...inputs,current:CANDIDATE}),
@@ -88,10 +92,13 @@ assert.deepEqual(releaseArgs(CANDIDATE),[
   'jill-order-desk-canary-work','--config','./wrangler.canary.jsonc',
   '--yes','--message','JILL HQ WORK single-reader stability v2',
 ]);
-assert.deepEqual(releaseArgs(ACTIVE,'rollback').slice(0,3),[
-  'versions','deploy',ACTIVE+'@100%',
+assert.deepEqual(releaseArgs(ROLLBACK,'rollback').slice(0,3),[
+  'versions','deploy',ROLLBACK+'@100%',
 ]);
 assert.throws(()=>releaseArgs('unknown'),/unapproved_worker_version/);
+assert.throws(()=>releaseArgs(ACTIVE),/unapproved_worker_version/);
+assert.throws(()=>assertNavigationRelease({...inputs,rollback:{...rollback,id:'wrong'}}),
+  /rollback_version_mismatch/);
 assert.equal(requireCommandDenial({
   status:403,location:null,body:{ok:false,error:'invalid_origin'},
 }),true);
@@ -109,6 +116,7 @@ for(const args of [
   assert.throws(()=>requireCommandDenial(args),/anonymous_command_not_denied/);
 assert.equal(ACTIVE,'e818c639-f962-4a09-9399-54ab521531c3');
 assert.equal(CANDIDATE,'f777d728-ef6f-456a-b0be-2e2495bcd804');
+assert.equal(ROLLBACK,'a57b9b91-84e8-44db-bd2b-144646d5b342');
 assert.equal(NAVIGATION_RELEASE_MARKER,'JILL HQ WORK single-reader stress fix v2; inactive');
 assert.equal(APPROVAL,'RELEASE JILL HQ WORK SINGLE READER V2');
 const src=readFileSync('scripts/release-work-hq-navigation-performance.mjs','utf8');
@@ -118,7 +126,7 @@ for(const expression of [
   /selectPerformanceCandidate/,/NAVIGATION_RELEASE_MARKER/,
   /reply\.json\(\)/,/\/app\/requests\/command/,
   /\/app\/setup-owner/,/\/healthz/,/\/auth\/login/,
-  /PASS automatic WORK rollback to navigation v1/,
+  /PASS automatic WORK rollback to prior management v2/,
   /if\(phase==='release'\|\|phase==='post_release'\)/,
   /versions','deploy'/,
 ]) assert.match(src,expression);
