@@ -24,14 +24,17 @@ assert.match(routes,/route\("requests\/command","routes\/app\.requests\.command\
 assert.match(inbox,/useRouteLoaderData\("routes\/app\.requests\.layout"\)/);
 assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
 assert.match(inbox,/Open request workspace/);
-assert.match(layout,/import \{loadVerifiedMerchantInbox\} from/);
+const source=readFileSync(base+'routes/app.requests-source.server.ts','utf8');
+assert.match(layout,/import \{loadVerifiedMerchantInbox\} from\s*".\/app.requests-source.server"/);
 assert.match(layout,/await loadVerifiedMerchantInbox\(args\)/);
-// The root cause of repeated navigation lag: the index child previously
-// exported its own named loader, so parent + child each read Google/D1.
-// Only the parent layout may expose a React Router loader.
-assert.match(inbox,/export async function loadVerifiedMerchantInbox\(/);
-assert.doesNotMatch(inbox,/export\s+(?:async\s+)?function\s+loader\s*\(/);
-assert.doesNotMatch(inbox,/export\s+(?:const|let)\s+loader\s*=/);
+// The child index must have NO loader and NO server imports; the verified
+// parent is the only registered request loader across every navigation.
+assert.match(source,/export async function loadVerifiedMerchantInbox\(/);
+assert.match(source,/workShopify\(env\)\.authenticate/);
+assert.match(source,/loadWorkMerchantInbox/);
+assert.match(source,/readWorkMerchantSourceCached/);
+assert.doesNotMatch(inbox,/(?:export\s+(?:async\s+)?function|export\s+(?:const|let))\s+loader\b/);
+assert.doesNotMatch(inbox,/workShopify|readWorkGoogleQaMerchantList|loadWorkMerchantInbox|work-merchant-source-cache/);
 assert.match(layout,/export async function loader\(args:LoaderFunctionArgs\)/);
 assert.match(layout,/shouldRevalidate/);
 assert.match(layout,/useEffect/);
@@ -122,7 +125,7 @@ for(const wrong of [
 // Stress realistic back/forth patterns across the 15-second TTL:
 // fast inbox -> detail -> inbox uses the SAME parent record; expiration,
 // manual refresh and mutations must cause a new, authorized canonical read.
-for (let cycle=0;cycle<150;cycle++) {
+for (let cycle=0;cycle<210;cycle++) {
   const forward=cycle%2===0;
   const from=forward?currentUrl:nextUrl;
   const to=forward?nextUrl:currentUrl;
