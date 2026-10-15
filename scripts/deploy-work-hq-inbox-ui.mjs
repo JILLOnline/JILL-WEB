@@ -26,7 +26,10 @@ const SECRETS=['JILL_HQ_MERCHANT_READ_SECRET','JILL_WORK_SESSION_KEY_B64','SHOPI
 
 function gate(ok,code){if(!ok)throw Error(code);}
 export function assertVersionBindings(active,candidate){
-  gate(active?.id===ACTIVE && candidate?.id && candidate.id!==ACTIVE,
+  gate(active?.id===ACTIVE &&
+    typeof candidate?.id==='string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(candidate.id) &&
+    candidate.id!==ACTIVE,
     'wrong_work_version');
   const a=active.resources?.bindings,c=candidate.resources?.bindings;
   gate(Array.isArray(a)&&Array.isArray(c),'missing_worker_bindings');
