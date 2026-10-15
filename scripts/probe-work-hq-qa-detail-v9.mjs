@@ -137,7 +137,7 @@ export async function probeIsolatedWorkQaDetail({
   if(await send(secret)!=='not_found')
     stop('detail_hmac_or_route_not_verified');
   return Object.freeze({
-    verified:true,version,negativeDenied:true,existingRecordsRead:0,
+    verified:true,version,negativeDenied:true,existingRecordsReturned:0,
     customerDetailsExposed:0,mutations:0,
   });
 }
