@@ -1,5 +1,6 @@
 // Synthetic, offline regression test. Does not access Google or secrets.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {verifyWorkQaDetailSourcePin}
   from './audit-work-hq-qa-detail-pin.mjs';
 import {JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL}
@@ -11,6 +12,13 @@ const id=JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL.match(
   /^https:\/\/script\.google\.com\/macros\/s\/(AKfycb[A-Za-z0-9_-]{20,})\/exec$/,
 )?.[1];
 assert.ok(id,'detail endpoint must be a pinned Google script deployment');
+// Independent operator-confirmed Google list-deployments @9 fingerprint.
+// This offline guard detects truncation and case/0/O/l/1 transcription errors.
+// The remote audit remains the final authority before any WORK deployment.
+assert.equal(id.length,72,'certified Google QA detail deployment ID length');
+assert.equal(createHash('sha256').update(id,'utf8').digest('hex'),
+  '1dcc930446bfde35d8a2094c445cac473995bfa6b0a60020b4666716247fb69c',
+  'certified Google QA v9 immutable deployment ID fingerprint');
 assert.notEqual(JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL,JILL_HQ_WORK_QA_GOOGLE_URL);
 const verified=verifyWorkQaDetailSourcePin({deploymentId:id,version:9});
 assert.equal(verified.verified,true);
