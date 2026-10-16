@@ -90,6 +90,14 @@ async function parseBoundedSelector(request){
  * Authenticate must be the real Shopify SDK authenticate.admin(request),
  * never a request-provided role, JWT, session, customer email or ID.
  * readExactDetail must be pinned to the signed WORK Google QA exact-ID reader.
+ * @param {{
+ *  request?:Request,
+ *  stage?:string,
+ *  enabled?:boolean,
+ *  authenticate?:(request:Request)=>Promise<any>,
+ *  db?:any,
+ *  readExactDetail?:(args:{submissionId:string})=>Promise<any>
+ * }} [options]
  */
 export async function handleWorkPrivateMediaOwnerInspect({
   request,stage,enabled=false,authenticate,db,readExactDetail,
