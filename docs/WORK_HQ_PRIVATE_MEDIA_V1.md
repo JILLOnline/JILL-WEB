@@ -1365,3 +1365,72 @@ from synthetic test output.
 Phase 19 must be rerun on Windows with process exit 0; no R2
 production binding, migrations 0004–0006, real object writes, Cloudflare
 Images plan, LIVE/KEEP or customer preview changes have been authorized.
+
+### Phase 19 final Windows certification — PASS, 2026-10-16
+
+Owner pulled WORK `df93d9d` and ran
+`npm.cmd run test:work-hq-media-local-end-to-end` on Windows.
+The full real local Cloudflare workerd test finished with exit 0:
+`PASS LOCAL WORKERD Phase 19`.
+The locally emulated R2 storageClass field was sometimes blank; this
+is a test-only omission explicitly logged as INFO. The following
+checks all ran and passed: real WebAssembly PNG->WebP output, 23
+synthetic D1 schema statements, an atomic quota+intent reservation,
+conditional local R2 PUT, HEAD metadata, GET readback with exact
+SHA-256, no overwrite, duplicate D1 slot rejection, HTTP 404.
+No remote Cloudflare, customer or billing operation took place.
+This successful run supersedes the earlier Phase 19 failure entries.
+
+**Phase 19 is certified ONLY for synthetic local runtime behavior.
+No real WORK upload, migration, account authorization, production
+billing protection or customer delivery has been approved.**
+
+## Phase 20 — Interrupted private uploads: local D1/R2 recovery
+
+A critical gap after Phase 19: a successful synthetic upload still
+left its durable intent in `reserved`. That is safe and inert in
+the test, but real production uploads require audit and recovery
+when a process crashes between D1 commit, R2 PUT and R2 HEAD/GET.
+
+New pure source-only helper:
+`services/jill-order-desk/work-private-r2-local-recovery.mjs`.
+It accepts only a previously committed canonical intent, a full
+local R2 HEAD and optional body bytes, and generates a **candidate**
+D1 transition plan:
+- No HEAD/object after D1 commit -> `ambiguous`, quota retained.
+  Absence is not proof a lost write cannot later appear.
+- PUT succeeds but response/ack is lost -> independent HEAD and
+  exact full byte SHA-256 plus immutable metadata can produce
+  `quarantined_unlinked` candidate (not preview authority).
+- Wrong object metadata, wrong bytes, missing HEAD/GET -> `ambiguous`;
+  keep the existing object, no retries, delete or refund.
+- SQL transition is optimistic and scoped to the exact already
+  reserved immutable owner/slot/key/hash/version, with
+  `state='reserved'` and exact prior `updated_at_ms` so old
+  observations cannot activate already-terminal records.
+
+The helper has no network access or executor. It is explicitly
+called **LOCAL** because the presence of HEAD and bytes provided by
+a caller does not authenticate real Cloudflare provider evidence,
+Owner/session, bucket privacy, account budget or storage class.
+`provider_authenticated:false`, `upload_authorized:false`,
+`preview_enabled:false`, `auto_retry:false`,
+`auto_delete:false`, `quota_refund:false` and no remote migration.
+
+New real LOCAL workerd regression:
+`services/jill-order-desk/app-home/scripts/test-workerd-media-local-recovery.mjs`
+uses only preexisting `workerd-phase19` fake D1/R2 bindings with
+`remote:false`; creates 3 synthetic canonical slots and commits
+the real D1 two-statement quota/intent batch for each. It exercises
+the cases above, actual R2 conditional PUT/HEAD/GET, guarded SQLite
+lifecycle transitions and stale transition prevention, verifies
+3 retained quota reservations and 404 public access. It does not
+re-upload or delete objects to "fix" a failure.
+
+The result is **NOT YET WINDOWS CERTIFIED**; run
+`npm.cmd run test:work-hq-media-local-recovery` and require exit 0.
+GitHub CI includes this regression.
+
+**HOLD** remains: inert 0004–0006 migration proposals, no R2
+production bindings or writes, no Cloudflare Images paid feature,
+no customer uploads or previews, no LIVE/KEEP or Google QA changes.
