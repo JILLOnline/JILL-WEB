@@ -308,3 +308,66 @@ The command does not call a deploy, D1 migration, R2 object API,
 or billing-plan activation. Only aggregate usage and bucket privacy
 are checked. Uploads, previews, migrations and production
 binding remain OFF.
+
+## Phase 23 owner Windows verification — PASS (READ ONLY)
+
+Owner's October 2026 Windows run returned success for BOTH:
+- `npm.cmd run test:work-hq-media-release-preflight`: 18
+  valid/invalid read-only receipt cases passed, no mutations.
+- `npm.cmd run work:hq:media:release:inspect`: live read-only
+  Cloudflare WORK preflight verified exact private Standard
+  `jill-work-private-artwork` bucket empty, r2.dev URL disabled,
+  no custom domains and NO configured WORK/canary deploy R2
+  binding. October 2026 account analytics reported **0 Standard
+  bytes**, **0 objects**, and **7 R2 operations** in the observed
+  month. The concluding PowerShell conditional PASS was valid.
+
+These values are observations, NOT complete current Cloudflare
+invoices or projected bills. Metrics may be delayed or sampled.
+No hard $0 monthly/account-wide cap follows from these results.
+The earlier "awaiting Windows" note above is historic.
+**Phase 23 read-only verification is certified, NOT customer uploads.**
+
+## Phase 24 — Retention and incident decision model (source only)
+
+New source-only `work-private-media-retention-review.mjs`:
+takes only four projection fields—`state`, `byte_length`,
+`created_at_ms` and `updated_at_ms`—and produces aggregate
+counts, retained D1 intent bytes and record/change ages grouped
+by `reserved`, `ambiguous`, `quarantined_unlinked`, and
+`revoked`. It rejects any extra fields including customer
+identities, R2 object keys, reference MACs or raw URLs; it
+never queries Cloudflare, deletes, previews, retries, refunds,
+returns a real provider attestation, or claims an expiry date.
+If reserved quota remains while the selected intent projection
+has no rows, the result still requires Owner review.
+
+`scripts/test-work-hq-media-retention-review.mjs` is an
+OFFLINE synthetic adversarial test, registered in CI. Its result
+must be verified on Windows. This is NOT a management UI or
+a scan of real WORK D1; 0004–0006 remain unapplied.
+
+### Pending decisions before ANY real retention implementation
+
+- Owner-selected timeframe for ordinary completed/private files,
+  unfinished reservations, ambiguous writes and revoked records.
+  **No automatic expiration period is established.**
+- Privacy/legal hold exceptions and incident escalation procedures.
+- Separately authenticated manual operator authorization for
+  irreversible R2 delete, require exact object/intent audit and
+  independent provider HEAD verification before and after.
+- Log evidence without leaking object keys, hashes, images,
+  customer names/email/phone or secrets.
+- Treat D1 `revoked` only as an accounting/state indicator;
+  it does not certify object deletion, refund, fee reversal,
+  customer access removal from other systems or legal erasure.
+- Distinguish retention of object contents from audit record
+  retention; current SQL 0004–0006 prohibits deleting records.
+  Separate reviewed policy/migration may be required to honor
+  actual deletion requests; never override D1 triggers casually.
+- Require explicit user approval at the actual release step.
+  Merely observing an age or exceeded review threshold never
+  creates delete authority.
+
+Phase 24 is **source-built, runtime verification pending.**
+Keep all phases source-only; no real R2 access or database change.
