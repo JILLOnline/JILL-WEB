@@ -41,7 +41,8 @@ try{
   assert.equal(policy.max_object_bytes,8*1024*1024);
 
   const reserve=(size,month='2026-10')=>{
-    const contract=plan({shop:policy.shop,byteLength:size,monthKey:month});
+    const contract=plan({shop:policy.shop,byteLength:size,
+      nowMs:Date.parse(month+'-16T12:00:00.000Z')});
     assert.equal(contract.state,'sql_plan_only_not_executed');
     assert.equal(contract.upload_enabled,false);
     assert.equal(contract.account_usage_verified,false);
@@ -88,13 +89,13 @@ try{
     'SELECT COUNT(*) n FROM jill_work_r2_quota_guard').get().n,1);
 
   for(const bad of [
-    {shop:'jillonlinestore.myshopify.com',byteLength:20,monthKey:'2026-10'},
-    {shop:policy.shop,byteLength:0,monthKey:'2026-10'},
-    {shop:policy.shop,byteLength:8*1024*1024+1,monthKey:'2026-10'},
-    {shop:policy.shop,byteLength:3.14,monthKey:'2026-10'},
-    {shop:policy.shop,byteLength:100,monthKey:'2026-13'},
-    {shop:policy.shop,byteLength:100,monthKey:'2026-00'},
-    {shop:policy.shop,byteLength:100,monthKey:'October'},
+    {shop:'jillonlinestore.myshopify.com',byteLength:20,nowMs:1792152000000},
+    {shop:policy.shop,byteLength:0,nowMs:1792152000000},
+    {shop:policy.shop,byteLength:8*1024*1024+1,nowMs:1792152000000},
+    {shop:policy.shop,byteLength:3.14,nowMs:1792152000000},
+    {shop:policy.shop,byteLength:100,nowMs:NaN},
+    {shop:policy.shop,byteLength:100,nowMs:-10},
+    {shop:policy.shop,byteLength:100,nowMs:0},
   ]) assert.throws(()=>plan(bad),/work_r2_quota_reservation_not_authorized/);
   for(const bad of [
     {...table(),shop:'jill-live.myshopify.com'},
