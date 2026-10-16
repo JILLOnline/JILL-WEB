@@ -87,8 +87,7 @@ export function assertWork0003Postflight({schema,ledger,seed}={}){
     const p=Array.isArray(payload)&&payload.length===1?payload[0]:
       !Array.isArray(payload)?payload:null;
     if(p?.success!==true||!Array.isArray(p.results)||
-      (p.meta&&(
-        p.meta.changed_db!==false||p.meta.rows_written!==0)))
+      p.meta?.changed_db!==false||p.meta?.rows_written!==0)
       fail('work_0003_postflight_read_invalid');
     return p.results;
   }
@@ -177,7 +176,7 @@ function recoveryCapability(){
   if(typeof bookmark!=='string')fail('work_0003_bookmark_not_found');
   return bookmark;
 }
-function encryptForCurrentWindowsUser(text){
+export function encryptForCurrentWindowsUser(text){
   if(process.platform!=='win32')fail('work_0003_windows_dpapi_required');
   const script=[
     '$ErrorActionPreference="Stop"',
@@ -192,7 +191,7 @@ function encryptForCurrentWindowsUser(text){
     fail('work_0003_dpapi_encryption_unverified');
   return encrypted;
 }
-function decryptForVerification(cipher){
+export function decryptForVerification(cipher){
   const script=[
     '$ErrorActionPreference="Stop"',
     '$secure=ConvertTo-SecureString -String ([Console]::In.ReadToEnd())',
@@ -274,7 +273,7 @@ async function runMain(){
     }
     // Explicit local Owner execution and interactive consent required.
     if(process.platform!=='win32'||!process.stdin.isTTY||
-      !process.stdout.isTTY||process.env.CI==='true')
+      !process.stdout.isTTY||Boolean(process.env.CI))
       fail('work_0003_interactive_windows_required');
     const ui=createInterface({input:process.stdin,output:process.stdout});
     let approved;
