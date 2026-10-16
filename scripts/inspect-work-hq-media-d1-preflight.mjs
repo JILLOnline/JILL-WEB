@@ -25,10 +25,14 @@ export const WORK_MEDIA_BASE_TABLES=Object.freeze([
   'jill_shopify_sessions',
   'jill_work_verified_inbox_index',
 ]);
+// Inspect ALL JILL-prefixed table names, not just expected names, so an
+// unknown future/foreign table cannot silently disappear from this audit.
 export const WORK_MEDIA_SCHEMA_SQL=
-  "SELECT name,type FROM sqlite_master WHERE type='table' AND name IN ("+
-  [...WORK_MEDIA_BASE_TABLES,WORK_MEDIA_TABLE].map(x=>"'"+x+"'").join(',')+
-  ") ORDER BY name";
+  "SELECT name,type FROM sqlite_master WHERE type='table' "+
+  "AND name GLOB 'jill_*' ORDER BY name";
+export const WORK_MEDIA_CORE_TABLES=Object.freeze(
+  WORK_MEDIA_BASE_TABLES.filter(x=>
+    x!=='jill_work_verified_inbox_index'));
 function gate(value,message){if(!value)throw Error(message);}
 export function assertWorkMediaD1Config(config){
   const databases=config?.d1_databases;
@@ -87,15 +91,28 @@ export function assertWorkMediaD1Schema(payload){
     (!Array.isArray(payload)?payload:null);
   gate(p?.success===true && Array.isArray(p.results),
     'work_media_schema_query_unverifiable');
-  const normalized=p.results.map(x=>x?.name);
-  const expected=[...WORK_MEDIA_BASE_TABLES].sort();
-  gate(p.results.every(x=>x?.type==='table' &&
-    typeof x.name==='string') &&
-    normalized.length===expected.length &&
-    JSON.stringify([...normalized].sort())===JSON.stringify(expected),
-    'work_media_schema_unexpected_or_registry_already_exists');
-  return Object.freeze({tables_verified:expected.length,
-    registry_absent:true});
+  const rows=p.results;
+  gate(rows.every(x=>x?.type==='table' &&
+    typeof x.name==='string'&&x.name.startsWith('jill_')) &&
+    new Set(rows.map(x=>x.name)).size===rows.length,
+    'work_media_schema_invalid_or_duplicated');
+  const names=new Set(rows.map(x=>x.name));
+  gate(!names.has(WORK_MEDIA_TABLE),
+    'work_media_registry_already_exists');
+  gate(WORK_MEDIA_CORE_TABLES.every(name=>names.has(name)),
+    'work_media_core_table_missing');
+  gate([...names].every(name=>WORK_MEDIA_BASE_TABLES.includes(name)),
+    'work_media_unknown_jill_table');
+  const missingIndex=!names.has('jill_work_verified_inbox_index');
+  gate(rows.length===WORK_MEDIA_CORE_TABLES.length+
+    (missingIndex?0:1),'work_media_schema_inconsistent');
+  return Object.freeze({
+    tables_verified:rows.length,
+    registry_absent:true,
+    schema_state:missingIndex?
+      'four_table_pre_0003':'five_table_index_present',
+    pending_0003_inbox_index:missingIndex,
+  });
 }
 export function workMediaD1ReadCommand(step){
   switch(step){
@@ -169,8 +186,15 @@ if(invoked){
     gate(currentWorkerVersion(readCloudflare('worker_status'))===
       DETAIL_ON_CANDIDATE,'work_media_worker_version_changed');
     console.log('PASS exact WORK canary v34 and exact D1 binding/Cloudflare account database identity.');
-    console.log('PASS existing '+schema.tables_verified+' WORK D1 schema tables; registry table ABSENT.');
-    console.log('PASS 0004 proposal remains outside active D1 migrations; no dedicated registry MAC key provisioned by this audit.');
+    console.log('PASS remote WORK D1 schema recognized: '+schema.tables_verified+
+      ' existing JILL tables; media registry ABSENT.');
+    if(schema.pending_0003_inbox_index){
+      console.log('HOLD: jill_work_verified_inbox_index is MISSING from remote D1.');
+      console.log('HOLD: migration 0003 application history NOT confirmed; inspect the migration ledger before any schema change.');
+    }else{
+      console.log('PASS WORK inbox-index table exists; migration application ledger NOT yet verified.');
+    }
+    console.log('PASS 0004 proposal remains outside active D1 migrations; no registry key or media storage writes.');
     console.log('READ ONLY. No customer rows, keys, D1 changes, Cloudflare traffic switches, Google or Shopify writes.');
     console.log('HOLD: no D1 migration/secret provisioning until separate Owner-approved plan and rollback test.');
   }catch(e){
@@ -185,7 +209,9 @@ if(invoked){
       'cloudflare_d1_inventory_unverifiable',
       'cloudflare_d1_account_identity_mismatch',
       'work_media_schema_query_unverifiable',
-      'work_media_schema_unexpected_or_registry_already_exists',
+      'work_media_schema_invalid_or_duplicated',
+      'work_media_registry_already_exists','work_media_core_table_missing',
+      'work_media_unknown_jill_table','work_media_schema_inconsistent',
     ]);
     console.error('WORK MEDIA D1 PREFLIGHT STOPPED: '+
       (known.has(e?.message)?e.message:'work_media_preflight_unverified'));
