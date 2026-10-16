@@ -267,3 +267,69 @@ bounded durable queue/outbox with backpressure, dead-letter
 resolution and real load/cost measurement. Until then DO NOT
 wire phase26 planner to `handler.mjs`, change DO quotas, or
 activate 0007 on remote D1. The current proxy remains untouched.
+
+## Phase 26 Windows verification — PASS, 2026-10-16
+
+Owner pulled WORK to `fcedb05`; both JS syntax checks and the
+actual **LOCAL workerd D1** test exited 0. Console:
+`PASS WORK Phase 26 LOCAL intake ledger`, followed by guarded PASS.
+The local D1 confirmed immutable first reservation, duplicate/change
+in payload or trusted owner binding rejection, only one dispatch,
+ambiguity without automatic retry, synthetic confirmed CAS and
+no raw PII or false customer acknowledgement.
+
+**Phase 26 passes LOCAL scope, NOT real Google submission endurance.**
+
+## Phase 27 — Signed intake + existing Google QA gateway (source-only)
+
+To get JILL HQ through stronger integration tests, new LOCAL test
+coordinator `services/jill-order-desk/app-home/scripts/phase27-local-signed-intake.mjs`
+combines:
+- REAL existing Shopify app-proxy HMAC verification (synthetic signed
+  test requests) before accepting request-body fields or D1 writes;
+- local fake-workerd D1 0007 one-shot ledger and HMAC-deduped owner;
+- existing unchanged `createCustomOrderWorkProxyRoute` and
+  `handleCustomOrderProxy`, including its TWO Google QA confirmations;
+- deliberately **mocked Google network** with genuine signed gateway
+  request formats, not actual Apps Script;
+- only a verified gateway success plus final D1 state may return an
+  HTTP 200. Upstream uncertainty, replay, changed-owner or payload
+  is fail-closed and never blindly dispatched twice.
+
+`scripts/test-workerd-signed-intake-local.mjs` exercises that
+composition in local workerd D1 using purely synthetic forms.
+The code lives exclusively in test scripts, is NEVER imported by
+the deployed proxy, and fake D1 config is pinned to `remote:false`.
+
+`scripts/verify-work-hq-local-bundle.mjs` also runs an integrated
+WORK HQ regression suite: proxy, merchant commands, mail QA,
+surge, retention, local OAuth, Owner, intake, media, TypeScript.
+It guards exact branch/sync, tracked source integrity,
+production Wrangler bindings and active migration membership
+before any test. This is local verification, **not** a live
+Shopify/Google/Cloudflare rollout check.
+
+**Phase 27 and full HQ bundle await Windows certification.** No
+remote schema application, Worker deployment, file upload,
+Shopify app update, store customization or paid activation.
+
+### Honest capacity and recovery gap
+
+Phase 26/27 stores ONLY an identity HMAC, owner HMAC and state,
+**not an encrypted replayable custom-order payload or transactional
+outbox**. It cannot resume a Google write after a crash, nor
+complete a million-request intake backlog independently. A future
+real production service needs a bounded, encrypted durable source,
+separately authenticated receipt-reconciliation mechanism,
+queue/outbox, limits, retention, privacy controls and observed
+load testing. Shopify-native commerce remains unaffected.
+
+### Provider scaling preference
+
+The owner prefers retaining Cloudflare/Shopify and accepts
+evaluating **paid capacity** when real usage justifies it.
+Cloudflare Workers Paid and usage-metered R2 Standard, and D1
+paid capacity, are available, but no plan, account upgrade,
+consent to variable charges, spending cap or remote deployment
+is yet specifically approved. Pricing and throttles must be
+re-validated at the approval gate.
