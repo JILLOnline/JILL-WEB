@@ -396,7 +396,7 @@ exports `inspectWorkPrivateArtworkBytes({bytes,declaredMime})`.
 Offline adversarial regression:
 `npm.cmd run test:work-hq-private-media-ingest-contract`.
 CI executes it without any real Cloudflare, Shopify, Google, R2,
-Cloudinary, secret, D1 write, file read or customer submission.
+Cloudinary, secret, D1 write, artwork read or customer submission.
 
 **Still HOLD:** choose/verify WORK private storage provider and
 separate WORK credentials, implement the authenticated ingest route
