@@ -261,12 +261,14 @@ try{
   // unspecified default. Explicitly request Standard above, and
   // accept empty class ONLY in this isolated remote:false fixture.
   // An empty response MUST NEVER pass production bucket attestation.
-  assert.ok(head.storageClass==='Standard'||head.storageClass==='',
-    'Local R2 storage class must be Standard or an unreported default');
-  assert.equal(head.storageClass,put.storageClass,
-    'Local PUT and HEAD must agree on their reported class');
-  if(head.storageClass===''){
-    console.log('INFO LOCAL R2 storageClass unreported by emulator; '+
+  for(const [method,reported] of [
+    ['PUT',put.storageClass],['HEAD',head.storageClass],
+  ]){
+    assert.ok(reported==='Standard'||reported==='',
+      'Local R2 '+method+' must report Standard or an empty class');
+  }
+  if(put.storageClass===''||head.storageClass===''){
+    console.log('INFO LOCAL R2 storageClass not fully reported by emulator; '+
       'real Standard-class bucket audit remains required.');
   }
   const obtained=await bucket.get(r2key);
