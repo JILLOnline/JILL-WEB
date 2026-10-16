@@ -60,8 +60,9 @@ assert.match(routes,/requests\/media\/inspect/);
 assert.match(ingress,/url\.pathname==="/app\/requests\/media\/inspect"/);
 const boundary=readFileSync(resolve(SRC,
   'work-private-media-owner-boundary.mjs'),'utf8');
+// Header reads via request.headers.get() are expected; R2 operations are NOT.
 assert.doesNotMatch(boundary,
-  /\.put\(|\.get\(|\.delete\(|\.batch\(|createSignedUrl|\.upload\(|\bfetch\(/);
+  /\b(?:r2Bucket|bucket|provider)\.(?:put|head|get|delete)\(|\.batch\(|createSignedUrl|\.upload\(|\bfetch\(/);
 assert.ok(boundary.includes('private_media_storage_not_connected'));
 
 const payload={
