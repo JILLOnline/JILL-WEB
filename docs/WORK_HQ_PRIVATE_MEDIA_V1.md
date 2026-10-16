@@ -980,3 +980,71 @@ runs the same regression.
 
 **HOLD:** migrations 0004–0006 not applied; real uploads, previews,
 Cloudflare Images paid subscription and LIVE/KEEP changes OFF.
+
+## Phase 17 — real read-only account-wide Cloudflare R2 usage telemetry
+
+Owner's Windows `test:work-hq-r2-prewrite-evidence` output:
+**PASS**, 29 adversarial synthetic denials. This is NOT proof of
+Cloudflare account usage, provider authenticity, billing or an upload.
+
+On 2026-10-16, Cloudflare's first-party API docs were checked:
+- `GET /client/v4/accounts/{account_id}/r2/metrics` is an
+  account-level R2 inventory of Standard and Infrequent Access bytes,
+  metadata and object counts:
+  https://developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/metrics/
+- GraphQL `r2OperationsAdaptiveGroups` supports an account-level
+  query by accountTag without a bucketName filter, using a month-to-date
+  time window (maximum 31 days):
+  https://developers.cloudflare.com/r2/platform/metrics-analytics/
+- Cloudflare documents `wrangler auth token --json` to retrieve the
+  locally authorized OAuth/API bearer credential:
+  https://developers.cloudflare.com/workers/wrangler/commands/general/
+- Storage, Class A and Class B are independently metered with
+  monthly Standard free allowances, but those are **not hard bill
+  limits**: https://developers.cloudflare.com/r2/pricing/
+
+`scripts/inspect-work-hq-r2-account-usage.mjs` is a local operator
+diagnostic, NOT a deployed billing/usage endpoint or Worker code. It
+requires clean tracked files, exact synced WORK Git HEAD, pinned
+Cloudflare account, WORK D1 config with no R2 binding, and active
+migrations exactly 0001–0003. It captures the local Wrangler auth token
+from a subprocess **only into process memory**; never prints token,
+auth stderr, request header, provider error body or raw response.
+It makes exactly two API calls to `https://api.cloudflare.com`:
+the account-level R2 storage `GET` and a fixed read-only GraphQL
+query `POST` for month-to-date R2 operation counts. No bucket filter,
+no mutation query, account-provisioning call, object list/GET/PUT,
+D1 query, migration or Worker deploy. JSON results are parsed
+locally and summarized to numeric, privacy-safe observations.
+
+Any absent GraphQL account entry, provider error, invalid/partial
+object metric or >=10,000 operation groups is a STOP. A permissions
+error is NOT zero usage. If the token does not have analytical read
+permission, use Cloudflare dashboard Billable Usage and R2
+analytics to inspect separately; do not upgrade or request broader
+privileges blindly. `test:work-hq-r2-account-usage` exercises the
+parser with synthetic provider results in an offline regression.
+
+**Critical distinction:** adaptive GraphQL analytics may be delayed
+or sampled, and the storage API is a snapshot, not month-end GB-month
+billing. These metrics can establish observations but do not prove
+`accountUsage.billable_overage_possible=false`, precise remaining
+allowances, whether another service will use resources, or a
+mathematical $0 hard cap. Do NOT feed this inspector receipt into
+the Phase 16 synthetic gate as if it were authoritative billing
+evidence. The diagnostic always marks:
+`complete_billing_evidence:false`,
+`safe_spend_guaranteed:false`,
+`can_authorize_r2_upload:false`.
+
+Operator Windows procedure (run from clean synced branch):
+```powershell
+npm.cmd run test:work-hq-r2-account-usage
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Offline analytics parser failed' }
+npm.cmd run work:hq:r2:account:inspect
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Real read-only usage query failed' }
+```
+
+**HOLD:** Migrations 0004–0006 remain inert; REAL R2 upload/preview
+routes, Worker bindings, paid subscriptions, LIVE/KEEP and Google QA
+unchanged. No customer media is accessed.
