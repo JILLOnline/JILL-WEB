@@ -178,26 +178,31 @@ function recoveryCapability(){
 }
 export function encryptForCurrentWindowsUser(text){
   if(process.platform!=='win32')fail('work_0003_windows_dpapi_required');
+  // Use native Windows .NET DPAPI. PowerShell's Microsoft.PowerShell.Security
+  // module is not guaranteed to auto-load on the Windows CI runner.
+  // Password/keys remain owned by the current user's Windows profile.
   const script=[
     '$ErrorActionPreference="Stop"',
-    '$plain=[Console]::In.ReadToEnd()',
-    '$secure=ConvertTo-SecureString -String $plain -AsPlainText -Force',
-    '[Console]::Out.Write((ConvertFrom-SecureString $secure))',
+    '$raw=[Console]::In.ReadToEnd()',
+    '$bytes=[Text.Encoding]::UTF8.GetBytes($raw)',
+    '$blob=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)',
+    '[Console]::Out.Write([Convert]::ToBase64String($blob))',
   ].join(';');
   const encrypted=call('powershell.exe',
     ['-NoProfile','-NonInteractive','-Command',script],
     {input:text,timeout:20000}).trim();
-  if(!/^[0-9a-fA-F]{80,2048}$/.test(encrypted))
+  if(!/^[A-Za-z0-9+/]{64,2048}={0,2}$/.test(encrypted))
     fail('work_0003_dpapi_encryption_unverified');
   return encrypted;
 }
 export function decryptForVerification(cipher){
+  if(process.platform!=='win32')fail('work_0003_windows_dpapi_required');
   const script=[
     '$ErrorActionPreference="Stop"',
-    '$secure=ConvertTo-SecureString -String ([Console]::In.ReadToEnd())',
-    '$p=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)',
-    'try{[Console]::Out.Write([Runtime.InteropServices.Marshal]::PtrToStringBSTR($p))}',
-    'finally{[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($p)}',
+    '$encoded=[Console]::In.ReadToEnd()',
+    '$blob=[Convert]::FromBase64String($encoded)',
+    '$plain=[Security.Cryptography.ProtectedData]::Unprotect($blob,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)',
+    '[Console]::Out.Write([Text.Encoding]::UTF8.GetString($plain))',
   ].join(';');
   return call('powershell.exe',
     ['-NoProfile','-NonInteractive','-Command',script],
