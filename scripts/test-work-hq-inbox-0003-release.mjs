@@ -2,6 +2,7 @@
 // NO Cloudflare/Shopify/Google/D1 calls, no migration apply or restore.
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
 import {
   WORK_0003_APPROVAL,
   WORK_0003_POST_SEED_SQL,WORK_0003_POST_SCHEMA_SQL,
@@ -129,7 +130,27 @@ assert.doesNotMatch(release,/'time-travel','restore'|'secret','put'|'d1','delete
 assert.doesNotMatch(release,/execSync\(.*?shell:true/);
 if(process.platform==='win32'){
   const sample='SYNTHETIC_WORK_0003_CHECKPOINT_ONLY_'+Date.now();
-  const encrypted=encryptForCurrentWindowsUser(sample);
+  let encrypted;
+  try{encrypted=encryptForCurrentWindowsUser(sample);}
+  catch(e){
+    // Diagnostic is isolated to a hardcoded synthetic string.
+    // Never print the actual recovery bookmark or protected user data.
+    const probe=spawnSync('powershell.exe',
+      ['-NoProfile','-NonInteractive','-Command',
+        '$ErrorActionPreference="Stop";'+
+        '$plain=[Console]::In.ReadToEnd();'+
+        '$secure=ConvertTo-SecureString -String $plain -AsPlainText -Force;'+
+        '[Console]::Out.Write((ConvertFrom-SecureString $secure))'],
+      {input:'SYNTHETIC_CI_DIAGNOSTIC_ONLY',encoding:'utf8',
+        shell:false,windowsHide:true,timeout:20000});
+    console.error('SYNTHETIC ONLY DPAPI DIAGNOSTIC:',
+      JSON.stringify({
+        status:probe.status,errorCode:probe.error?.code||null,
+        stderr:String(probe.stderr||'').slice(0,1600),
+        stdoutBytes:String(probe.stdout||'').length,
+      }));
+    throw e;
+  }
   assert.ok(!encrypted.includes(sample));
   assert.equal(decryptForVerification(encrypted),sample,
     'Win32 DPAPI must roundtrip for the current user');
