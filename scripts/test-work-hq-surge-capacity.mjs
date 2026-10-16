@@ -73,7 +73,7 @@ const surge=check({
 });
 assert.equal(surge.free_reference_exceeded,true);
 assert.equal(surge.pilot_media_capacity_exceeded,true);
-assert.equal(surge.blocking_thresholds.length,6);
+assert.equal(surge.blocking_thresholds.length,7);
 assert.equal(surge.limit_exceedances.worker_free_daily_exceeded,true);
 assert.equal(surge.limit_exceedances.d1_free_writes_exceeded,true);
 assert.equal(surge.limit_exceedances.d1_free_reads_exceeded,true);
