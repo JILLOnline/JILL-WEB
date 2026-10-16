@@ -173,6 +173,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-owner-boundary
 
+      - name: Verify Owner -> real WASM sanitizer -> local D1 and R2 transaction
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-transaction
+
       - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-r2-d1-batch
