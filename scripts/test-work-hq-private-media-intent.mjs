@@ -168,5 +168,5 @@ await assert.rejects(()=>inspectWorkOwnerMediaIntent({
   ...params,readVerifiedRequestDetail:async()=>{throw Error('private backend error: SECRET');},
 }),e=>e.message==='work_private_media_access_denied');
 
-assert.equal(sourceReads,1); // last failed source call happened after auth.
+assert.equal(sourceReads,2); // both authenticated negative detail reads were attempted.
 console.log('PASS WORK source-only media intent: Shopify online + D1 Owner before exact Google read, exact item/request index, P1/P2 unit allocations, 0 unverified previews, no URLs, no LIVE/Cloudinary mutations.');
