@@ -6,7 +6,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "test": "node test-sanitizer.mjs"
+    "test": "node test-sanitizer.mjs",
+    "test:quarantine": "node test-quarantine-integration.mjs"
   },
   "dependencies": {
     "sharp": "0.34.1"
