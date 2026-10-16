@@ -68,6 +68,26 @@ function snapshotOk(snapshot,nowMs,size){
     Number.isSafeInteger(snapshot.class_b_month)&&
     snapshot.class_b_month>=0&&snapshot.class_b_month<20000;
 }
+function assertMetadataFreeWebp(encoded){
+  // Independent transaction-level defense: never trust a codec's
+  // x-jill-sanitized header alone. Reject forbidden RIFF chunks after
+  // reading the decoded WebP structure (including VP8X extras).
+  if(encoded.length<20||encoded.toString('ascii',0,4)!=='RIFF'||
+     encoded.toString('ascii',8,12)!=='WEBP'||
+     encoded.readUInt32LE(4)+8!==encoded.length)denial();
+  let offset=12,frames=0;
+  while(offset+8<=encoded.length){
+    const name=encoded.toString('ascii',offset,offset+4);
+    const length=encoded.readUInt32LE(offset+4);
+    const start=offset+8;
+    if(start+length>encoded.length)denial();
+    if(['EXIF','XMP ','ICCP','ANIM','ANMF'].includes(name))denial();
+    if(name==='VP8 '||name==='VP8L')frames++;
+    offset=start+length+(length&1);
+  }
+  if(offset!==encoded.length||frames!==1)denial();
+}
+
 async function codecSanitize(fetchCodec,mime,input){
   const validMime=new Set(['image/png','image/jpeg','image/webp']);
   if(!validMime.has(mime)||!bytes(input)||
@@ -98,6 +118,7 @@ async function codecSanitize(fetchCodec,mime,input){
   const encoded=new Uint8Array(count);let i=0;
   for(const part of parts){encoded.set(part,i);i+=part.length;}
   const hdr=inspectEdgeImageHeader(encoded,'image/webp');
+  assertMetadataFreeWebp(Buffer.from(encoded));
   if(String(hdr.width)!==response.headers.get('x-jill-width')||
      String(hdr.height)!==response.headers.get('x-jill-height'))
     denial();
