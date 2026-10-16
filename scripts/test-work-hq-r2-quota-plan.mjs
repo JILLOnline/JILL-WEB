@@ -31,7 +31,7 @@ try{
   const table=()=>db.prepare(
     'SELECT * FROM jill_work_r2_quota_guard WHERE shop=?'
   ).get(policy.shop);
-  assert.deepEqual(table(),{
+  assert.deepEqual({...table()},{
     shop:policy.shop,month_key:'0000-00',
     lifetime_reserved_bytes:0,month_uploads:0,
     month_class_a:0,month_class_b:0,lifetime_reservations:0,
@@ -63,7 +63,7 @@ try{
   assert.equal(table().lifetime_reservations,40);
   const frozen=structuredClone(table());
   assert.equal(reserve(1024),undefined,'41st in same month denied');
-  assert.deepEqual(table(),frozen,'failed reservation is no-op');
+  assert.deepEqual({...table()},frozen,'failed reservation is no-op');
   assert.ok(reserve(1024,'2026-11'),'month rollover permitted');
   assert.equal(table().month_uploads,1);
   assert.equal(table().month_key,'2026-11');
@@ -83,7 +83,7 @@ try{
     policy.max_lifetime_reserved_bytes);
   const cap=structuredClone(table());
   assert.equal(reserve(20,'2027-01'),undefined);
-  assert.deepEqual(table(),cap);
+  assert.deepEqual({...table()},cap);
   assert.equal(db.prepare(
     'SELECT COUNT(*) n FROM jill_work_r2_quota_guard').get().n,1);
 
