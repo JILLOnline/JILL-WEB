@@ -394,3 +394,49 @@ billing change occurred.
 Require a Windows exit-code-0 rerun of
 `npm.cmd run test:work-hq-media-retention-review` after pulling
 `jill/rewards-work`. Do not print PASS outside a guarded success branch.
+
+### Phase 24 owner Windows verification — PASS (OFFLINE)
+
+On 2026-10-16, the Owner fast-forwarded WORK to `b0fd6ae`,
+ran `node --check services/jill-order-desk/work-private-media-retention-review.mjs`
+(exit 0), then `npm.cmd run test:work-hq-media-retention-review`
+(exit 0). The test printed `PASS WORK Phase 24 OFFLINE retention
+review: 50 synthetic cases`, covering all four states, strict
+allowlisted/no-PII aggregate output, orphan quota escalation and
+no invented retention deadlines, automatic deletion, retry, refund,
+preview or remote I/O. The guarded PowerShell PASS also followed.
+The earlier failed `null` test and PENDING notes are superseded
+by this successful rerun.
+
+**Certified scope:** source-only offline aggregation against synthetic
+intent rows, not a real WORK D1 scan, approved retention periods,
+deletion service, actual legal-hold review, or customer artwork release.
+
+### Post-Phase 24 implementation reality
+
+Local core is ready for a controlled *design* review, not release.
+The next actual deliverable is a deployable-capable CANARY-only,
+disabled-by-default WORK transaction implementation that obtains
+a real SDK Shopify Owner session, independent signed exact WORK
+source detail and provider-authenticated R2 privacy evidence without
+trusting user-provided flags or synthetic receipts. It needs final
+8 MiB body-bounds, WASM CPU/memory limits on the target plan, secure
+first-write accounting, active migrated WORK D1 schema, and an
+audited recovery/retention operator design. None currently exists
+as one production-authenticated, permissioned, callable route.
+
+**Owner decisions pending before even a private real-object pilot:**
+- Define review/retention time windows for quarantined and ambiguous
+  artwork and an exception/legal-hold procedure. A review threshold
+  must not silently become a deletion or refund instruction.
+- Confirm whether *any* residual Cloudflare account-wide billable
+  overage risk is acceptable. Existing free-tier usage snapshots
+  are NOT a hard $0 account cap, even when all values read zero.
+- Explicitly approve WORK-only remote 0004–0006 migration after
+  separate schema and rollback inspection; then an isolated disabled
+  CANARY binding/deploy; then a tiny synthetic R2 pilot. These are
+  separate gates, not consequences of Phase 18–24 PASS.
+
+Until explicit decisions and real production integration testing:
+**NO-GO customer uploads, previews, automatic deletion, remote
+migrations, or paid upgrades.** LIVE and KEEP remain untouched.
