@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "jill-work-phase15-local-only",
+  "main": "./worker.mjs",
+  "compatibility_date": "2026-10-14",
+  "workers_dev": false,
+  "d1_databases": [
+    {
+      "binding": "JILL_PHASE15_LOCAL_D1",
+      "database_name": "jill-work-phase15-local-synthetic",
+      "database_id": "00000000-0000-4000-8000-000000000015",
+      "remote": false
+    }
+  ]
+}
