@@ -30,12 +30,12 @@ export async function action({request,context}:ActionFunctionArgs){
       env.JILL_WORK_HQ_DETAIL_ENABLED==="true" &&
       typeof env.JILL_HQ_MERCHANT_READ_SECRET==="string" &&
       env.JILL_HQ_MERCHANT_READ_SECRET.length>=32,
-    authenticate:incoming=>authenticateWorkAdminOnce({
+    authenticate:(incoming:Request)=>authenticateWorkAdminOnce({
       scope:context.cloudflare,
       authenticate:()=>workShopify(env).authenticate.admin(incoming),
     }),
     db:env.JILL_ORDER_DESK_WORK_DB,
-    readExactDetail:({submissionId})=>readWorkGoogleQaMerchantDetail({
+    readExactDetail:({submissionId}:{submissionId:string})=>readWorkGoogleQaMerchantDetail({
       secret:env.JILL_HQ_MERCHANT_READ_SECRET!,
       submissionId,
     }),
