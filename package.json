@@ -162,6 +162,8 @@
     "test:work-hq-media-registry-sql-plan": "node scripts/test-work-hq-media-registry-sql-plan.mjs",
     "test:work-hq-media-d1-preflight": "node scripts/test-work-hq-media-d1-preflight.mjs",
     "test:work-hq-inbox-0003-readiness": "node scripts/test-work-hq-inbox-0003-readiness.mjs",
+    "test:work-hq-0003-recovery-readiness": "node scripts/test-work-hq-0003-recovery-readiness.mjs",
+    "work:hq:inbox:0003:recovery:inspect": "node scripts/inspect-work-hq-0003-recovery-readiness.mjs --inspect",
     "work:hq:media:d1:inspect": "node scripts/inspect-work-hq-media-d1-preflight.mjs --inspect",
     "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs",
     "test:work-hq-d1-index": "node scripts/test-work-hq-d1-inbox-index.mjs",
