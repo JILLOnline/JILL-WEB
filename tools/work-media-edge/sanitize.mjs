@@ -183,7 +183,8 @@ export async function sanitizeEdgeArtwork({bytes,declaredMime,codecs}={}){
     pixels=await codecs.decode(declaredMime,input);
   }catch{fail();}
   if(!pixels||pixels.width!==header.width||pixels.height!==header.height||
-     !(pixels.data instanceof Uint8Array)||
+     !ArrayBuffer.isView(pixels.data)||
+     pixels.data.BYTES_PER_ELEMENT!==1||
      pixels.data.byteLength!==pixels.width*pixels.height*4)fail();
   pixels=oriented(pixels,header.orientation);
   let encoded;
