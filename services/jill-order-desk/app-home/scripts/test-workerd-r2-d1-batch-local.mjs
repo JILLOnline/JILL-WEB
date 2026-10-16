@@ -169,7 +169,7 @@ try{
   assert.equal(typeof db?.exec,'function');
 
   await seedLocalOnlySchema(db);
-  console.log('PASS local WORKERD synthetic D1: 23 prepared schema statements loaded (no remote migrations).');
+  console.log('INFO local WORKERD: 23 synthetic schema statements loaded; verifying D1 batch rollback next.');
   await db.prepare(
     'INSERT INTO jill_merchant_authority '+
     '(shop,environment,app_client_id,owner_staff_id,owner_bound_at) '+
