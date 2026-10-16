@@ -136,8 +136,9 @@ if(process.platform==='win32'){
     const probe=spawnSync('powershell.exe',
       ['-NoProfile','-NonInteractive','-Command',
         '$ErrorActionPreference="Stop";'+
+        'Add-Type -AssemblyName System.Security;'+
         '$bytes=[Text.Encoding]::UTF8.GetBytes([Console]::In.ReadToEnd());'+
-        '$blob=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser);'+
+        '$blob=[System.Security.Cryptography.ProtectedData]::Protect($bytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser);'+
         '[Console]::Out.Write([Convert]::ToBase64String($blob))'],
       {input:'SYNTHETIC_DPAPI_NET_DIAGNOSTIC_ONLY',
         encoding:'utf8',shell:false,windowsHide:true,timeout:20000});
