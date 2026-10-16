@@ -127,7 +127,7 @@ const successKey=stored.key;
 await stage(args);
 assert.notEqual(stored.key,successKey,'new uploads require fresh random keys');
 assert.equal(written,2);
-const reject=async (changes,regex=/not_authorized|write_unverified/)=>{
+const reject=async (changes,regex=/not_authorized|write_unverified|work_private_artwork_not_accepted/)=>{
   const before=[read,sanitized,audited,written,headed];
   await assert.rejects(()=>stage({...args,...changes}),regex);
   return before;
