@@ -1,6 +1,6 @@
 // Synthetic post-release safety regression; never contacts live services.
 import assert from 'node:assert/strict';
-import {verifyWorkDetailLive}
+import {verifyWorkDetailLive,workLiveAuditReadArgs}
   from './audit-work-hq-detail-v9-live.mjs';
 import {DETAIL_ON_CANDIDATE}
   from './release-work-hq-detail-v9-on.mjs';
@@ -77,4 +77,19 @@ for(const mutation of [
 ]){
   assert.throws(()=>verifyWorkDetailLive(mutation));
 }
+// Prevent CLI option-order regressions on Windows Wrangler 4.151.
+// These must be identical to manually successful Cloudflare read commands.
+const scope=['--name','jill-order-desk-canary-work',
+  '--config','./wrangler.canary.jsonc'];
+assert.deepEqual(workLiveAuditReadArgs('deployment_status'),
+  ['deployments','status',...scope]);
+assert.deepEqual(workLiveAuditReadArgs('baseline_v33'),
+  ['versions','view',DETAIL_OFF_CANDIDATE,...scope,'--json']);
+assert.deepEqual(workLiveAuditReadArgs('candidate_v34'),
+  ['versions','view',DETAIL_ON_CANDIDATE,...scope,'--json']);
+assert.deepEqual(workLiveAuditReadArgs('version_listing'),
+  ['versions','list',...scope,'--json']);
+assert.throws(()=>workLiveAuditReadArgs('deploy'),/invalid_cloudflare_read_step/);
+assert.throws(()=>workLiveAuditReadArgs('arbitrary-id'),/invalid_cloudflare_read_step/);
+
 console.log('PASS post-release WORK v34 LIVE audit contract: v34 active, v33 rollback, exact v9 detail flag, untouched four secrets/WORK D1/OAuth/writes, no unknown newer versions or code drift.');
