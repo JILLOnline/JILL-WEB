@@ -371,3 +371,26 @@ a scan of real WORK D1; 0004–0006 remain unapplied.
 
 Phase 24 is **source-built, runtime verification pending.**
 Keep all phases source-only; no real R2 access or database change.
+
+### Phase 24 first Windows failure and targeted repair — awaiting rerun
+
+The owner's 2026-10-16 Windows Phase 24 offline test stopped at an
+adversarial `null` input. The review's destructured function argument
+threw an uncontrolled JavaScript `TypeError` before entering the
+fail-closed checks. The test correctly rejected this as a failure;
+**Phase 24 was NOT certified**.
+
+Source repair: `summarizeWorkPrivateMediaRetention(input={})` now validates
+an exact four-field top-level envelope (`rows`, `nowMs`,
+`quotaReservedBytes`, `quotaLifetimeReservations`) before destructuring.
+Invalid outer types, null, extra PII/object-key fields, and absent
+fields now throw the stable policy error
+`work_media_retention_observation_unverified`. This is a strictness
+improvement, not a bypass. The offline adversarial test adds invalid
+outer-envelope cases. Neither file performs remote I/O or storage
+mutations. No LIVE, KEEP, deploy, D1 migration, R2 operation, or
+billing change occurred.
+
+Require a Windows exit-code-0 rerun of
+`npm.cmd run test:work-hq-media-retention-review` after pulling
+`jill/rewards-work`. Do not print PASS outside a guarded success branch.
