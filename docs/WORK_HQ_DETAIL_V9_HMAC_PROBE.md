@@ -323,3 +323,30 @@ preview/download remains **unconnected**, and quote/payment/fulfillment
 workflows remain separate. A follow-up secure-media architecture must
 first establish the actual storage authority and Owner-scoped retrieval
 mechanism; do not construct direct public download links from opaque IDs.
+
+## Live audit CLI recovery — read-only, no new Cloudflare version
+
+One WORK operator run showed the synthetic `test:work-hq-detail-v9-live-audit`
+PASS, but the first real `work:hq:detail:v9:live:audit` stopped with
+`cloudflare_read_failed`. This means a Wrangler metadata read returned
+a nonzero exit, NOT that full detail became disabled, v34 rolled back,
+or data was modified. At that time the failed wrapper omitted the exact
+step and hid Wrangler diagnostics.
+
+The recovered audit now uses the **same option order** as the successful
+v34 release and owner's separate Wrangler inspection commands and
+prints a fixed `READ ONLY FAILURE PHASE` for the failing read:
+
+- `cloudflare_deployment_status`
+- `cloudflare_baseline_v33_view`
+- `cloudflare_candidate_v34_view`
+- `cloudflare_version_listing`
+- `cloudflare_certification`
+- `anonymous_work_boundary`
+
+Only the status, two known-version views and version listing are
+requested; no uploads, deploys, secret retrieval, customer reads or D1
+mutations. If the audit still stops, capture that phase and run **only**
+the matching known read-only Wrangler command directly to expose its
+native error. Never repeat ON/OFF release or stage because of an audit
+failure.
