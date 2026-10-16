@@ -1222,3 +1222,38 @@ must rerun the actual workerd suite.
 **Release HOLD remains:** migrations 0004–0006 inert; no customer
 uploads, private previews, R2 object writes, new Worker bindings or
 deployments, Cloudflare Images upgrade, LIVE/KEEP/Rewards mutations.
+
+### Phase 18 second Windows run — genuine codecs/HD passed, EXIF fixture failed
+
+Owner's real LOCAL workerd run on Windows after `c5a0c36`:
+- PNG -> WebP: PASS, 25 ms elapsed;
+- JPEG -> WebP: PASS, 11 ms elapsed;
+- actual patterned EXIF-bearing WebP -> WebP: PASS, 10 ms elapsed;
+- synthetic 1280x720 JPEG -> WebP: PASS, 547,960 to 360,028 bytes,
+  336 ms elapsed (NOT billable CPU measurement).
+- Test then **STOPPED** before invoking the Worker for the
+  Orientation 6 fixture: `Expected string for IFD0.Orientation but
+  received 6 of type number`. Process exited nonzero. A subsequent
+  standalone PowerShell `Write-Host PASS` was **not** test success.
+
+Independent local Sharp reproduction confirmed the subtler issue:
+`withExif({IFD0:{Orientation:'6'}})` accepts a string but results in
+Orientation **1** in Sharp output; the correct API for synthesizing
+Orientation **6** here is `withMetadata({orientation:6})`.
+It produces EXIF-bearing JPEG metadata with `orientation=6`.
+This is a test-fixture correction; no original Worker codec code or
+storage/account settings were changed.
+
+The repaired local Worker test now generates a four-quadrant,
+asymmetric 64x48 synthetic JPEG with actual EXIF Orientation 6,
+ensures Sharp independently reports orientation 6, calls the real
+local workerd codec, and checks the 48x64 sanitized WebP has no
+EXIF/ICC/orientation. It then checks actual output corner pixels:
+top-left blue, top-right red, bottom-left yellow, bottom-right
+green (90° clockwise). Verified with locally generated Sharp
+reference JPEG: the four expected colors survived rotation.
+The actual workerd test remains **PENDING Windows rerun**.
+
+Release HOLD unchanged: no 0004–0006 remote D1 migrations,
+Cloudflare Images subscription, customer artwork upload/preview,
+R2 writes, deployed codec, LIVE/KEEP mutation or paid activation.
