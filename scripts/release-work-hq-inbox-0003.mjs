@@ -161,9 +161,13 @@ function call(program,args,{
 // Generic runner is exported for OFFLINE synthetic process regression;
 // production always invokes it with the pinned Wrangler path/args.
 export async function runWork0003InheritedTerminal(program,args,{
-  cwd=ROOT,stdio='inherit',timeout=180000,
+  cwd=ROOT,stdio='inherit',timeout=180000,syntheticInput=null,
 }={}){
-  if(!['inherit','pipe'].includes(stdio))
+  // Only the offline pipe-mode child fixture may receive synthetic input.
+  // Never feed Wrangler an automatic response; its real TTY asks the owner.
+  if(!['inherit','pipe'].includes(stdio)||
+    (syntheticInput!==null&&
+      (stdio!=='pipe'||typeof syntheticInput!=='string')))
     fail('work_0003_unsafe_terminal_mode');
   return await new Promise((resolve,reject)=>{
     const child=spawn(program,args,{
@@ -173,6 +177,8 @@ export async function runWork0003InheritedTerminal(program,args,{
     if(stdio==='pipe'){
       child.stdout?.on('data',part=>{stdout+=String(part);});
       child.stderr?.on('data',part=>{stderr+=String(part);});
+      if(syntheticInput!==null)child.stdin?.end(syntheticInput);
+      else child.stdin?.end();
     }
     child.once('error',()=>reject(Error('work_0003_command_failed')));
     child.once('close',(code,signal)=>{
