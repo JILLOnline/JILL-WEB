@@ -112,3 +112,45 @@ result. There is deliberately NO release/apply command in this PR.
 After it passes, review the pre-change recovery anchor and request
 explicit approval for a later 0003-only D1 action. **0004/media previews
 are still blocked.**
+
+## Phase 2 — Recovery capability inspection only (no bookmark export)
+
+Cloudflare documents two separate read-only Wrangler operations:
+`d1 info <database> --json` reports database backend information,
+and `d1 time-travel info <database> --json` retrieves a current
+bookmark if supported. The `d1 time-travel restore` operation is
+**destructive** and is never exposed by this script.
+
+`npm.cmd run test:work-hq-0003-recovery-readiness` is an offline
+synthetic regression. After syncing the certified WORK branch,
+`npm.cmd run work:hq:inbox:0003:recovery:inspect` will:
+
+- Re-run the proven read-only preflight and require active v34,
+  exact WORK UUID, *four* existing JILL tables and a two-record
+  migration ledger with 0003 not recorded. Newer or ambiguous state
+  is an automatic stop.
+- Verify `jill-order-desk-work` uses D1 backend
+  `version: production`, which supports Time Travel.
+- Check that a current Time Travel bookmark can be retrieved.
+  **The bookmark itself is never printed, persisted or exported.**
+- Re-run the WORK read-only preflight to detect a concurrent change
+  before printing a success receipt.
+
+This is NOT a backup. A Time Travel bookmark is a short-lived reference
+to past database state. Cloudflare's Time Travel documentation specifies
+a retention window based on plan. To actually prepare for a separately
+approved migration, the owner must record a **fresh pre-change bookmark
+locally under owner control**, privately and immediately before changing
+the database. Never put it in a Git commit, CI log, chat or public file.
+Even a valid bookmark does not make a restore safe: restoring can erase
+unrelated writes since that point and should require an independent
+owner-reviewed recovery plan.
+
+Current official sources:
+- https://developers.cloudflare.com/d1/wrangler-commands/
+- https://developers.cloudflare.com/d1/reference/time-travel/
+
+**Still prohibited:** D1 migrations apply, Time Travel restore,
+database export containing customer/session records, Cloudflare Worker
+release, activating the fast-inbox feature, adding the media registry
+or provisioning a new secret. This phase checks capability only.
