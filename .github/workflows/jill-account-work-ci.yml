@@ -161,6 +161,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-edge
 
+      - name: Verify local WASM -> D1 quota and intent -> synthetic R2 readback
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-end-to-end
+
       - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-r2-d1-batch
