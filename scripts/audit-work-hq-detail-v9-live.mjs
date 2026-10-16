@@ -53,9 +53,24 @@ function cli(args){
   gate(!p.error&&p.status===0,'cloudflare_read_failed');
   return String(p.stdout||'');
 }
-const command=(...args)=>[
-  ...args,'--name',WORKER,'--config',CONFIG,
-];
+// Match the exact known-working Wrangler CLI ordering used during the
+// certified v34 release and operator's read-only recovery. Never accept an
+// arbitrary Worker name, config path, version or command from a caller.
+export function workLiveAuditReadArgs(step){
+  const scoped=['--name',WORKER,'--config',CONFIG];
+  switch(step){
+    case 'deployment_status':
+      return ['deployments','status',...scoped];
+    case 'baseline_v33':
+      return ['versions','view',DETAIL_OFF_CANDIDATE,...scoped,'--json'];
+    case 'candidate_v34':
+      return ['versions','view',DETAIL_ON_CANDIDATE,...scoped,'--json'];
+    case 'version_listing':
+      return ['versions','list',...scoped,'--json'];
+    default:
+      throw Error('invalid_cloudflare_read_step');
+  }
+}
 async function anonymous(){
   async function req(route,init={}){
     const response=await fetch(ORIGIN+route,{
@@ -86,6 +101,7 @@ async function anonymous(){
 const invoked=process.argv[1] &&
   pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url;
 if(invoked){
+  let phase='start';
   try{
     gate(process.argv.length===2,'invalid_live_audit_args');
     gate(git('branch','--show-current')==='jill/rewards-work' &&
@@ -93,26 +109,31 @@ if(invoked){
         git('rev-parse','refs/remotes/origin/jill/rewards-work') &&
       !git('status','--porcelain','--untracked-files=no'),
       'work_source_not_synced');
+    phase='google_deployment_listing';
     const remote=await reconcileWorkQaDetailRemote({root:ROOT});
     gate(remote.state==='present_unprobed'&&remote.version===9,
       'google_detail_v9_missing');
     verifyWorkQaDetailSourcePin({
       deploymentId:remote.deploymentId,version:remote.version,
     });
+    phase='cloudflare_deployment_status';
     const deployed=currentWorkerVersion(
-      cli(command('deployments','status')));
+      cli(workLiveAuditReadArgs('deployment_status')));
+    phase='cloudflare_baseline_v33_view';
+    const baseline=JSON.parse(cli(workLiveAuditReadArgs('baseline_v33')));
+    phase='cloudflare_candidate_v34_view';
+    const candidate=JSON.parse(cli(workLiveAuditReadArgs('candidate_v34')));
+    phase='cloudflare_version_listing';
+    const versions=JSON.parse(cli(workLiveAuditReadArgs('version_listing')));
+    phase='cloudflare_certification';
     const receipt=verifyWorkDetailLive({
-      activeVersion:deployed,
-      baseline:JSON.parse(cli(command(
-        'versions','view',DETAIL_OFF_CANDIDATE,'--json'))),
-      candidate:JSON.parse(cli(command(
-        'versions','view',DETAIL_ON_CANDIDATE,'--json'))),
-      versions:JSON.parse(cli(command('versions','list','--json'))),
+      activeVersion:deployed,baseline,candidate,versions,
     });
     console.log('PASS WORK active Cloudflare exact v34 '+receipt.version);
     console.log('PASS rollback v33 preserved '+receipt.fallback);
     console.log('PASS all four secrets, WORK D1, OAuth ON, Owner setup OFF, writes ON; only detail flag added.');
     console.log('PASS Google QA @9 source pin, original @7 inbox/status isolation.');
+    phase='anonymous_work_boundary';
     await anonymous();
     console.log('PASS live anonymous /healthz, /auth/login and Owner-only route denial.');
     console.log('READ ONLY. No customer data read, Google/Shopify/D1 writes, traffic changes, secrets or LIVE/KEEP changes.');
@@ -140,6 +161,9 @@ if(invoked){
     ]);
     console.error('WORK DETAIL v9 LIVE AUDIT STOPPED: '+
       (errors.has(e?.message)?e.message:'unverified_work_live_state'));
+    // Never print raw Wrangler stderr/stdout: these may contain private
+    // provider metadata. A fixed phase tells the operator which read failed.
+    console.error('READ ONLY FAILURE PHASE: '+phase);
     process.exitCode=1;
   }
 }
