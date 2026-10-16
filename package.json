@@ -158,6 +158,7 @@
     "test:work-hq-detail-view": "node scripts/test-work-hq-detail-view.mjs",
     "test:work-hq-reference-provenance": "node scripts/test-work-hq-reference-provenance.mjs",
     "test:work-hq-private-media-intent": "node scripts/test-work-hq-private-media-intent.mjs",
+    "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
     "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs",
     "test:work-hq-d1-index": "node scripts/test-work-hq-d1-inbox-index.mjs",
     "test:work-hq-google-source-cache": "node scripts/test-work-hq-google-source-cache.mjs",
