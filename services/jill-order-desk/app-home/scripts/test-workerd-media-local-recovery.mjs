@@ -181,11 +181,13 @@ try{
     assert.equal(observation.quota_refund,false);
     assert.equal(observation.provider_authenticated,false);
     assert.equal(observation.executes_remotely,false);
-    const result=await db.prepare(observation.statement.sql)
+    const outcome=await db.prepare(observation.statement.sql)
       .bind(...observation.statement.params).all();
-    assert.equal(result.length,1,'Exactly one local state transition');
-    assert.equal(result[0].state,observation.recommendation);
-    return result[0];
+    assert.equal(outcome?.success,true,'Local D1 UPDATE must succeed');
+    assert.equal(outcome.results?.length,1,
+      'Exactly one local state transition');
+    assert.equal(outcome.results[0].state,observation.recommendation);
+    return outcome.results[0];
   };
   const state=async row=>(await db.prepare(
     'SELECT state FROM jill_work_r2_object_intents WHERE reservation_id=?'
@@ -205,11 +207,11 @@ try{
   const afterMissing=await count();
   assert.equal(afterMissing.quota.month_uploads,1);
   assert.equal(afterMissing.quota.lifetime_reserved_bytes,webp.length);
-  await assert.rejects(()=>db.prepare(absent.statement.sql)
-    .bind(...absent.statement.params).all().then(rows=>{
-      if(rows.length!==0)throw Error('repeat unexpected');
-      throw Error('no_transition');
-    }),/no_transition/);
+  const repeated=await db.prepare(absent.statement.sql)
+    .bind(...absent.statement.params).all();
+  assert.equal(repeated.success,true);
+  assert.equal(repeated.results.length,0,
+    'Stale recovery observation must not transition a terminal row');
 
   // 2. Commit D1 and PUT but lose client ACK. Do not PUT again.
   // Independent local HEAD+full-body readback matches the original.
