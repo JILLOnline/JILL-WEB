@@ -1,5 +1,7 @@
 // Presentation ONLY: already verified Owner-scoped exact request data.
-// Never resolves opaque original file IDs as URLs or infers prices.
+// Legacy submissions may include Cloudinary public delivery URLs where
+// reference IDs are expected. Never trust, open or embed them as media.
+import {describeWorkReference} from "../../../work-reference-provenance.mjs";
 type Attribute={id:string;label:string;value:string|number|boolean|
   Array<string|number|boolean>};
 type OriginalItem={
@@ -41,13 +43,18 @@ function Attributes({values}:{values:Attribute[]}){
 function OpaqueReferences({ids,label}:{ids:string[];label:string}){
   if(!ids?.length)return null;
   return <div className="jill-request__file-manifest">
-    <strong>{label}</strong>
-    <ul>{ids.map((id,i)=><li key={id+"-"+i}>
-      <span className="jill-request__file-icon" aria-hidden="true">◇</span>
-      <code>{id}</code>
-    </li>)}</ul>
-    <p className="jill-request__muted">Reference IDs only — secure file preview/download
-      will appear after the private media service is connected.</p>
+    <strong>{label} ({ids.length})</strong>
+    <ul>{ids.map((id,i)=>{
+      const ref=describeWorkReference(id);
+      return <li key={i}>
+        <span className="jill-request__file-icon" aria-hidden="true">◇</span>
+        <span>{ref.label} {i+1}: <code>{ref.identifier}</code></span>
+      </li>;
+    })}</ul>
+    <p className="jill-request__muted">Legacy requests can contain
+      Cloudinary delivery URLs, not just Reference IDs. They do not
+      establish private file ownership or permission. Secure file preview/download
+      remains disabled until a verified Owner-scoped media connection exists.</p>
   </div>;
 }
 export function WorkOriginalRequestDetails({model,submissionId}:{
