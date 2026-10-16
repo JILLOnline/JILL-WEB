@@ -169,6 +169,7 @@
     "test:work-hq-r2-quota-plan": "node scripts/test-work-hq-r2-quota-plan.mjs",
     "test:work-hq-r2-object-intent": "node scripts/test-work-hq-r2-object-intent.mjs",
     "test:work-hq-r2-d1-batch-plan": "node scripts/test-work-hq-r2-d1-batch-plan.mjs",
+    "test:work-hq-r2-d1-workerd-local": "npm run test:workerd-r2-d1-batch --prefix services/jill-order-desk/app-home",
     "work:hq:r2:private:inspect": "node scripts/inspect-work-hq-r2-private-preflight.mjs --inspect",
     "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
     "test:work-hq-media-registry-sql-plan": "node scripts/test-work-hq-media-registry-sql-plan.mjs",
