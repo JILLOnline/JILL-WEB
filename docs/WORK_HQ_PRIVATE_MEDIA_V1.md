@@ -177,3 +177,45 @@ It performs no network or D1 operations.
 
 **No new D1 migration file is present.** WORK v34 continues active
 with the previous UI and media previews disabled.
+
+## Phase 3 — WORK D1 registry SQL plan (NOT applied)
+
+The tested MAC contract now has an explicit SQL **proposal** at
+`services/jill-order-desk/migration-plans/0004_work_private_media_registry.sql`.
+
+**Its location is intentional:** the real Cloudflare migration directory
+`services/jill-order-desk/migrations/` still ends at 0003. The
+0004 proposal is *not* discovered by routine Wrangler D1 migrations,
+and no migration should be applied until an explicit owner-approved
+WORK-only preflight verifies the database identity and retention policy.
+The existing WORK Worker v34 remains unchanged.
+
+The proposed schema provides:
+- A single pending row per WORK shop + canonical request + scope +
+  item + reference index. Request-level rows use empty `item_key`,
+  while item-level rows require a non-empty item key.
+- Only 64-character lowercase HMAC-SHA256 **reference fingerprints**,
+  status and timestamps; no provider ID, source URL, file bytes, customer
+  name/email, tokens or registry MAC key values.
+- A foreign key to WORK staff authority; a hard-coded WORK-only shop
+  check, index 0–19, uniqueness by reference location and HMAC.
+- Immutable identity/MAC (UPDATE rejected), DELETE rejected, and
+  irreversible `pending_verification` → `revoked` or `quarantined`
+  transitions; rows cannot start with a `verified` status.
+- No preview authorization, even for a properly matched pending row.
+
+`npm.cmd run test:work-hq-media-registry-sql-plan` uses **in-memory**
+Node SQLite, first loads the existing 0001–0003 migrations, then
+validates 0004 twice (idempotence). Tests reject invalid shop, references,
+scope, item, index, MAC syntax, statuses, duplicate bindings, direct
+identifier/MAC rewrites, DELETE, and revoked→pending transitions. The
+existing session and inbox tables stay untouched. There is **no network
+connection**, real D1 database, Cloudflare deployment, key provisioning,
+or artwork request involved.
+
+Before moving the proposal to the real migration folder: separately
+review release timing, backup/export strategy, WORK D1 database ID,
+dedicated MAC key provisioning, actual Owner-authenticated insert/read
+adapter, migration/test compatibility with production D1 (not just SQLite),
+and explicit dry-run and rollback procedures. **Do not execute
+`wrangler d1 migrations apply` based on this document.**
