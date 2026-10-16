@@ -181,8 +181,12 @@ if(invoked){
       console.log('READ ONLY. Candidate remains inactive and current WORK traffic unchanged.');
     }else{
       phase='preflight';
-      await checkAnonymousSafety();
-      console.log('PASS anonymous inbox/detail denied, Owner setup disabled, command Origin guard 403.');
+      if(mode==='release'){
+        await checkAnonymousSafety();
+        console.log('PASS anonymous inbox/detail denied, Owner setup disabled, command Origin guard 403.');
+      }else{
+        console.log('ROLLBACK: skipping health precheck because the ON candidate may be unhealthy; exact version/source gates still required.');
+      }
       await approval(mode==='release'?
         DETAIL_ON_RELEASE_APPROVAL:DETAIL_ON_ROLLBACK_APPROVAL);
       await inspect(mode); // catch Cloudflare/Git/Google drift immediately before switch
