@@ -158,9 +158,21 @@ const invoked=process.argv[1]&&
   pathToFileURL(resolve(process.argv[1])).href===import.meta.url;
 if(invoked){
   try{
-    if(process.argv.length!==3||process.argv[2]!=='--prepare-local')
+    if(process.argv.length!==3 ||
+       !['--prepare-local','--inspect-existing-base'].includes(process.argv[2]))
       stop('invalid_cli');
     verifySource();
+    if(process.argv[2]==='--inspect-existing-base'){
+      if(!existsSync(BASE))stop('compiled_base_missing');
+      const inspected=prepareWorkHqV34LocalUi(
+        JSON.parse(readFileSync(BASE,'utf8')));
+      if(!inspected.local_manifest_only ||
+         inspected.deployment_authorized!==false)
+        stop('inspection_not_safe');
+      console.log('PASS LOCAL compiled WORK v34 canary manifest: exact D1 and five flags, no active R2/Images/Queues/other bindings.');
+      console.log('READ ONLY: No build, upload, candidate write, deployment or provider calls.');
+      process.exitCode=0;
+    }else{
     for(const script of [
       'test:work-hq-reference-provenance',
       'test:work-hq-detail-view',
@@ -188,6 +200,7 @@ if(invoked){
     console.log('WORK v34 five security flags retained, media R2/Images OFF.');
     console.log('HOLD: No Cloudflare upload or traffic change. Real v34/candidate binary/bindings parity NOT certified.');
     console.log('Candidate path: services/jill-order-desk/app-home/dist/server/wrangler.hq-v34-ui-LOCAL-NOUPLOAD.json');
+    }
   }catch(e){
     const code=String(e?.message||'work_hq_v34_local_ui_unknown');
     console.error('STOP LOCAL WORK HQ UI PREPARATION: '+
