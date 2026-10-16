@@ -106,8 +106,8 @@ try{
   // schema and entries rather than a stubbed 'allowed: true' role flag.
   const raw=readFileSync(resolve(SRC,
     'migrations/0001_staff_authority.sql'),'utf8');
-  const uncommented=raw.split(/\\r?\\n/)
-    .filter(line=>!line.trim().startsWith('--')).join('\\n');
+  const uncommented=raw.split(/\r?\n/)
+    .filter(line=>!line.trim().startsWith('--')).join('\n');
   for(const sql of uncommented.split(';').map(s=>s.trim())
     .filter(Boolean).map(s=>s+';')){
     // Leading SQL comments are removed before splitting because
