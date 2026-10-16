@@ -719,3 +719,60 @@ if ($LASTEXITCODE -ne 0) { throw 'STOP: R2 SQL quota plan regression failed' }
 **Release HOLD:** no live R2 writes, Worker binding, Cloudflare Images
 upgrade, LIVE/KEEP/Rewards/Google QA mutation, or D1 migration
 0004/0005 permitted from this phase. Private preview stays OFF.
+
+## Phase 13 — R2 object-intent linkage and fail-closed reconciliation (INERT)
+
+Owner's Windows PowerShell receipts: `test:work-hq-r2-quota-plan` and
+`test:work-hq-r2-private-preflight` both **PASS**. Those are offline
+tests; Phase 11 is the last independently verified *real* Cloudflare
+metadata inspection and reported 0 R2 objects / 0 B.
+
+New **source-only** proposal at
+`services/jill-order-desk/migration-plans/0006_work_r2_object_intents.sql`,
+not in `migrations/`. It would require BOTH reviewed 0004 (immutable
+canonical-reference MAC) and 0005 (quota guard) first. A row records a
+random server-private quarantine object key, reference slot/MAC, R2
+SHA-256, byte count, reservation UUID and lifecycle. It does not
+store raw Cloudinary URLs, artwork, names, email, file blobs or secrets.
+Each slot and key can only be claimed once. The registry FK + trigger
+rejects reference copied from another item/slot, deleted source, or
+a source no longer in `pending_verification`.
+
+The lifecycle is `reserved -> ambiguous` or
+`reserved -> quarantined_unlinked` or `reserved -> revoked`.
+`ambiguous` and `quarantined_unlinked` may only transition to
+`revoked`; terminal states cannot be automatically revived. No
+DELETE or identifier/hash/key rewrite. None of these states grants
+customer or staff previews.
+
+The new `work-private-r2-object-intent.mjs` derives an immutable
+server-only proposed intent from the exact verified request projection,
+then classifies a synthetic provider HEAD plus account privacy receipt
+as `quarantined_unlinked_candidate` or `manual_review_required`.
+A matching receipt is advisory only: a caller-supplied `source` label
+can be forged. Production must independently authenticate the Owner
+and obtain provider evidence server-side. No GET/PUT/DELETE, retries,
+refunds, URL generation, or delivery exists here.
+
+`test:work-hq-r2-object-intent` uses offline Node SQLite, loading
+active 0001–0003 and inert 0004–0006 into memory. It checks an isolated
+`BEGIN IMMEDIATE` quota-update + intent-insert transaction, duplicate
+rollback, wrong MAC/slot, independent object keys, immutability,
+ambiguous/revoked lifecycle, stale/wrong/private HEAD cases and preview
+denial. Windows verification and GitHub CI must pass before calling
+the source phase certified.
+
+**Important release blockers:** the existing
+`stageWorkOwnerR2Quarantine` remains **unwired** to the proposed
+intent ledger. It currently generates a random key before a synthetic
+PUT without persisting the key beforehand. Therefore it must NOT be
+connected to real R2 until a new explicitly audited pre-PUT
+quota-and-intent persistence workflow exists. Real Cloudflare D1
+transaction/batch atomicity is NOT established by Node SQLite; neither
+a forged R2 HEAD receipt nor a D1 state is sufficient to prove
+provider privacy or file ownership. Account-wide storage/operation
+usage and deletion/retention recovery still need authoritative review.
+
+No 0004/0005/0006 migrations, real media writes, Worker bindings,
+customer routes, Cloudflare Images subscriptions, or LIVE/KEEP/
+Rewards/Google QA changes are authorized.
