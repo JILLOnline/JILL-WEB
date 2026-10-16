@@ -475,3 +475,58 @@ PASS requires a verified signed-in Owner, correct WORK shop,
 a signed source showing the expected existing disposable
 requests, and a request-workspace render. It is NOT proven by
 anonymous route checks alone. LIVE and KEEP remain out of scope.
+
+## Phase 29 — Owner WORK QA exact request visible (2026-10-16)
+
+The owner supplied a screenshot of **JILL HQ / Original request ·
+Items & personalization** in a disposable WORK QA customer request.
+It visibly renders **Verified revision 2**, a named product
+(Coloring Books) with quantity 1, customer/event fields, and
+request-level planning/personalization, including a pickup
+fulfillment and date. This provides strong human evidence that
+the deployed merchant request workspace and exact-detail source
+are functioning with the WORK QA fixture. It does not by itself
+prove browser session claims beyond the route's separately
+reviewed authentication code, correct inbox counts, or mutation
+write success.
+
+**UI deployment drift identified:** Screenshot shows a full legacy
+Cloudinary delivery URL rendered literally under request-level
+references and the older notice 'Reference IDs only'. Current
+reviewed Git source (source commit `9c5b96e`) instead calls
+`describeWorkReference`; the strict provenance classifier
+(commit `99158a5`, then `eab95a3`) displays only legacy image
+filename and refuses to build public link/preview/download. This
+points to deployed WORK presentation source predating the
+improvement. No screenshot-derived URL/customer email is copied
+into this audit. There is no evidence that the correct source
+version is deployed. Full URL in an Owner-only view is not proof
+of a public HTTP authorization bypass; do not call it one.
+
+**Do not run** old `work:hq:ui:deploy` blindly: its existing
+guard pins an earlier active canary version and will not safely
+stage current code over the audited v34 exact-detail deployment.
+First run existing read-only
+`npm.cmd run work:hq:detail:v9:live:audit` to establish exact
+active WORK version and current Google QA @9 evidence; STOP on
+mismatch. A future UI candidate must preserve all existing
+v34 bindings, Shopify OAuth/Owner grants, Google @7/@9 source,
+write flags, private-media OFF, and rollback version. Require
+separate exact-version approval before any Cloudflare version
+upload/switch. Nothing has been deployed in this phase.
+
+**Next real merchant mutation acceptance:** On this disposable
+WORK QA request ONLY, and after checking its displayed current
+status/revision, use **Update status** to advance an allowed
+transition (e.g. `received -> reviewing`), keep customer message
+and customer-visible note blank, then click **Save verified
+update** once. Expect verified source ACK/revision increment;
+if uncertain or stale, stop—do not blindly repeat. Reload
+Custom Orders and verify the same request shows the confirmed
+new revision/status, including direct detail navigation. Email
+delivery is NOT tested by a status-only update with no message.
+This is an intentional write to the disposable QA request
+ledger, not a billing/Shopify paid-order operation.
+
+Private media preview, customer-account linkage, Quotes/Invoices,
+fulfillment and 1m-customer load capacity are separate gates.
