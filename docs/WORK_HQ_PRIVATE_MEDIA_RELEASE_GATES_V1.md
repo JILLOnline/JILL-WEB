@@ -440,3 +440,42 @@ as one production-authenticated, permissioned, callable route.
 Until explicit decisions and real production integration testing:
 **NO-GO customer uploads, previews, automatic deletion, remote
 migrations, or paid upgrades.** LIVE and KEEP remain untouched.
+
+## Surge-planning checkpoint — 2026-10-16 (source only)
+
+Owner asks to prefer an architecture that stays safe even if JILL
+receives one million storefront customers tomorrow. This does NOT
+establish one million new transactional WORK requests or approve a
+paid Cloudflare plan. Source-only design:
+`docs/JILL_MILLION_CUSTOMER_SURGE_ARCHITECTURE_V1.md`.
+
+New pure `work-surge-capacity-forecast.mjs` models distinct daily
+Shopify storefront traffic, WORK requests, D1 row reads/writes,
+Queues operations and monthly sanitized artwork bytes/uploads.
+It compares OFFLINE hypothetical counts to October 2026 published
+Free-plan reference limits and the unchanged 40/month, 256MiB
+lifetime, 8MiB/object WORK pilot quota. It outputs NO authorization
+for uploads, customer previews, Shopify confirmation, billing,
+migration, deployment or an upgrade; it never reads actual account
+usage, personal data or customer assets.
+
+This is a CAPACITY MODEL, not a load test: it cannot establish
+p99 latency, webhooks, Shopify rate-limit headroom, durability,
+account actual billing or a one-million-customer guarantee.
+Tests `scripts/test-work-hq-surge-capacity.mjs` run offline
+synthetic projections including a one-million-visit Shopify-only
+case vs one million real WORK requests; no provider account
+calls or infrastructure changes. CI enforces these safeguards.
+
+**Critical:** Shopify checkout remains its own source of truth;
+new custom orders require a durable idempotent receipt before any
+"saved" acknowledgement. A queue does not count as a paid order.
+Actual 1m private requests cannot be supported within Workers Free
+100k requests/day and D1 Free 100k rows written/day; optional
+media cannot scale on the current 40-upload pilot ceiling.
+Do not lift ceilings or add real queues/paid upgrades without a
+reviewed funded, load-tested design.
+
+The user's general delegation authorizes this SOURCE-ONLY
+architecture design, not charges or remote migrations. LIVE,
+KEEP, customer artwork and deployed WORK configurations unchanged.
