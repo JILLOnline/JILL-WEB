@@ -4,7 +4,9 @@ import {
   assertWorkMediaD1Config,assertWorkMediaD1AccountList,
   assertWorkMediaD1Worker,assertWorkMediaD1Schema,
   workMediaD1ReadCommand,WORK_MEDIA_D1_ID,
-  WORK_MEDIA_SCHEMA_SQL,WORK_MEDIA_BASE_TABLES,
+  WORK_MEDIA_SCHEMA_SQL,WORK_MEDIA_BASE_TABLES,WORK_MEDIA_CORE_TABLES,
+  assertWorkMediaD1LedgerPresence,assertWorkMediaD1LedgerHistory,
+  WORK_MEDIA_LEDGER_PRESENCE_SQL,WORK_MEDIA_LEDGER_HISTORY_SQL,
 } from './inspect-work-hq-media-d1-preflight.mjs';
 import {DETAIL_ON_CANDIDATE}
   from './release-work-hq-detail-v9-on.mjs';
@@ -70,13 +72,23 @@ for(const mut of [
 ]){
   assert.throws(()=>assertWorkMediaD1Worker(mut));
 }
+// Exact four-table state observed in the real WORK D1 on 2026-10-16.
+assert.equal(WORK_MEDIA_CORE_TABLES.length,4);
+const core=WORK_MEDIA_CORE_TABLES.map(name=>({name,type:'table'}));
+const four=[{success:true,results:core}];
+assert.deepEqual(assertWorkMediaD1Schema(four),{
+  tables_verified:4,registry_absent:true,
+  schema_state:'four_table_pre_0003',pending_0003_inbox_index:true,
+});
 const rows=WORK_MEDIA_BASE_TABLES.map(name=>({name,type:'table'}));
 const fixture=[{success:true,results:rows}];
 assert.deepEqual(assertWorkMediaD1Schema(fixture),{
   tables_verified:5,registry_absent:true,
+  schema_state:'five_table_index_present',pending_0003_inbox_index:false,
 });
 assert.deepEqual(assertWorkMediaD1Schema(fixture[0]),{
   tables_verified:5,registry_absent:true,
+  schema_state:'five_table_index_present',pending_0003_inbox_index:false,
 });
 for(const bad of [
   [{success:false,results:rows}],
@@ -87,10 +99,77 @@ for(const bad of [
   [{success:true,results:[...rows.slice(0,4),{
     name:rows[4].name,type:'view'}]}],
   [{success:true,results:[]}],[],
+  [{success:true,results:core.slice(1)}],
+  [{success:true,results:[...core,core[0]]}],
+  [{success:true,results:[
+    ...core,{name:'jill_work_private_media_registry',type:'table'}]}],
   [{success:true,results:[...rows,{name:'jill_LIVE_orders',type:'table'}]}],
 ]){
   assert.throws(()=>assertWorkMediaD1Schema(bad));
 }
+// Read-only Cloudflare D1 ledger detection does not create or initialize
+// the migration table. Missing ledger is a recognized HOLD, not a PASS.
+assert.equal(assertWorkMediaD1LedgerPresence([
+  {success:true,results:[]},
+]),false);
+assert.equal(assertWorkMediaD1LedgerPresence([
+  {success:true,results:[{name:'d1_migrations'}]},
+]),true);
+for(const bad of [
+  [],null,[{success:false,results:[]}],
+  [{success:true,results:[{name:'d1_migrations'},
+    {name:'d1_migrations'}]}],
+  [{success:true,results:[{name:'jill_merchant_authority'}]}],
+  [{success:true,results:[{name:'d1_migrations',id:1}]}],
+]){
+  assert.throws(()=>assertWorkMediaD1LedgerPresence(bad));
+}
+assert.deepEqual(assertWorkMediaD1LedgerHistory([
+  {success:true,results:[
+    {name:'0001_staff_authority.sql'},
+    {name:'0002_shopify_sessions.sql'},
+  ]},
+],{inboxTablePresent:false}),{
+  migration_count:2,inbox_0003_recorded:false,
+});
+assert.deepEqual(assertWorkMediaD1LedgerHistory([
+  {success:true,results:[
+    {name:'0001_staff_authority.sql'},
+    {name:'0002_shopify_sessions.sql'},
+    {name:'0003_work_verified_inbox_index.sql'},
+  ]},
+],{inboxTablePresent:true}),{
+  migration_count:3,inbox_0003_recorded:true,
+});
+for(const bad of [
+  [{success:false,results:[]}],[],
+  [{success:true,results:[{name:'0004_work_private_media_registry.sql'}]}],
+  [{success:true,results:[{name:'0001_staff_authority.sql'},
+    {name:'0001_staff_authority.sql'}]}],
+  [{success:true,results:[{name:'0001_staff_authority.sql',
+    customer_email:'private@example.invalid'}]}],
+]){
+  assert.throws(()=>assertWorkMediaD1LedgerHistory(bad));
+}
+assert.throws(()=>assertWorkMediaD1LedgerHistory([
+  {success:true,results:[{name:'0003_work_verified_inbox_index.sql'}]},
+],{inboxTablePresent:false}),/work_media_0003_recorded_but_table_missing/);
+assert.equal(WORK_MEDIA_LEDGER_PRESENCE_SQL,
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='d1_migrations'");
+assert.equal(WORK_MEDIA_LEDGER_HISTORY_SQL,
+  'SELECT name FROM d1_migrations ORDER BY name');
+for(const [step,sql] of [
+  ['ledger_presence',WORK_MEDIA_LEDGER_PRESENCE_SQL],
+  ['ledger_history',WORK_MEDIA_LEDGER_HISTORY_SQL],
+]){
+  const args=workMediaD1ReadCommand(step);
+  assert.deepEqual(args.slice(0,3),
+    ['d1','execute','jill-order-desk-work']);
+  assert.ok(args.includes('--remote')&&args.includes('--json'));
+  assert.equal(args[args.indexOf('--command')+1],sql);
+  assert.doesNotMatch(sql,/;|PRAGMA|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE/i);
+}
+
 const parts=workMediaD1ReadCommand('schema_only');
 assert.deepEqual(parts.slice(0,3),[
   'd1','execute','jill-order-desk-work']);
@@ -126,4 +205,4 @@ const runtime=readFileSync(
 assert.doesNotMatch(runtime,
   /\bversions','(deploy|upload)'\b|wrangler d1 migrations apply|secret put/);
 assert.match(runtime,/READ ONLY FAILURE PHASE/);
-console.log('PASS WORK D1 READ-ONLY preflight contract: exact Cloudflare v34/D1 UUID, five legacy tables, planned 0004 absent, immutable metadata-only commands; rejects wrong shop, unknown schema, unsafe commands, no customer queries.');
+console.log('PASS WORK D1 READ-ONLY reconciliation: four-table pre-0003 and five-table states, optional migration-ledger metadata/history, invalid and forged records rejected; no migrations, secrets, customer queries or writes.');
