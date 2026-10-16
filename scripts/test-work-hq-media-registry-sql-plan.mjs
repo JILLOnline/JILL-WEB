@@ -129,10 +129,6 @@ try{
     'SELECT * FROM jill_work_private_media_registry').all());
   assert.doesNotMatch(rawRows,
     /res\.cloudinary|https?:|work@example|Synthetic Coloring|SYNTHETIC_ONLY_WORK_MAC_KEY/);
-  const badRow=(fields)=>{
-    const values=params(itemBinding);
-    return insert.run(...fields(values));
-  };
   const corruptions=[
     v=>{v[0]='jillonlinestore.myshopify.com';return v;},
     v=>{v[1]='other';return v;},
@@ -144,7 +140,6 @@ try{
     v=>{v[4]=0.5;return v;},
     v=>{v[5]='a'.repeat(63);return v;},
     v=>{v[5]='Z'.repeat(64);return v;},
-    v=>{v[5]='0'.repeat(64);return v;}, // no duplicate? actually valid & unique -> omit
     v=>{v[6]='verified';return v;},
     v=>{v[6]='revoked';return v;}, // inserts must start pending
     v=>{v[7]=0;return v;},
