@@ -97,6 +97,13 @@ export async function handlePhase27LocalSignedIntake(request,options){
   }catch{return error(401,'unauthenticated_proxy');}
   if(auth?.shop!==SHOP)return error(403,'wrong_shop');
 
+  // Capacity admission happens before any D1 write. A throttled
+  // request must not consume a permanent one-shot submission ID.
+  let admitted;
+  try{admitted=await options.rateLimit({shop:auth.shop,request});}
+  catch{return error(503,'rate_limit_unavailable');}
+  if(admitted!==true)return error(429,'rate_limited');
+
   let source,parsed;
   try{
     source=await readBounded(request);
@@ -157,7 +164,8 @@ export async function handlePhase27LocalSignedIntake(request,options){
       googleGatewaySecret:options.googleGatewaySecret,
       googleQaEndpoint:options.googleQaEndpoint,
       backendFetch:options.backendFetch,
-      rateLimit:options.rateLimit,
+      // Already checked exactly once prior to D1 reservation.
+      rateLimit:async ({shop})=>shop===SHOP&&admitted===true,
       now:options.now,
     });
     const forwarded=new Request(request.url,{
