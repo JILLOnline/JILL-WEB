@@ -166,19 +166,19 @@ const simulatedChild=[
 ].join('');
 const accepted=await runWork0003InheritedTerminal(
   process.execPath,['-e',simulatedChild],
-  {stdio:'pipe',syntheticInput:'y\\n',timeout:15000});
+  {stdio:'pipe',syntheticInput:'y'+String.fromCharCode(10),timeout:15000});
 assert.equal(accepted.exitCode,0);
 assert.match(accepted.stdout,/SYNTHETIC \(Y\/n\)/);
 await assert.rejects(()=>runWork0003InheritedTerminal(
   process.execPath,['-e',simulatedChild],
-  {stdio:'pipe',syntheticInput:'n\\n',timeout:15000}),
+  {stdio:'pipe',syntheticInput:'n'+String.fromCharCode(10),timeout:15000}),
 /work_0003_command_failed/);
 await assert.rejects(()=>runWork0003InheritedTerminal(
   process.execPath,['-e','process.exit(12)'],
   {stdio:'pipe',timeout:15000}),/work_0003_command_failed/);
 await assert.rejects(()=>runWork0003InheritedTerminal(
   process.execPath,['-e','process.exit(0)'],
-  {stdio:'inherit',syntheticInput:'y\\n'}),/work_0003_unsafe_terminal_mode/);
+  {stdio:'inherit',syntheticInput:'y'+String.fromCharCode(10)}),/work_0003_unsafe_terminal_mode/);
 const terminalSource=readFileSync(
   'scripts/release-work-hq-inbox-0003.mjs','utf8');
 assert.match(terminalSource,/await runWork0003InheritedTerminal\(process\.execPath/);
