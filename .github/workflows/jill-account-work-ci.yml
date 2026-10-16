@@ -39,6 +39,7 @@ jobs:
         run: |
           npm install --prefix tools/work-media-local --no-audit --no-fund
           npm run test --prefix tools/work-media-local
+          npm run test:quarantine --prefix tools/work-media-local
 
       - name: Verify My JILL extension and canary boundaries
         run: npm run check:account-hub && npm run test:account-hub-canary && npm run test:account-hub-summary && npm run test:account-hub-template
