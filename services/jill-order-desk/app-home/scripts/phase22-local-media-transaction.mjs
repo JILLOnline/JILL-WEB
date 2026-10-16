@@ -5,18 +5,18 @@
 // No payment/billing authorization, previews, delete, retry, or download.
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {readWorkMerchantPermission}
-  from '../../../merchant-access.mjs';
+  from '../../merchant-access.mjs';
 import {chooseWorkOwnerReference}
-  from '../../../work-private-media-intent.mjs';
+  from '../../work-private-media-intent.mjs';
 import {draftWorkMediaRegistryBinding}
-  from '../../../work-private-media-registry.mjs';
+  from '../../work-private-media-registry.mjs';
 import {planWorkR2AtomicIntentBatch,
   inspectWorkR2AtomicBatchReceipt}
-  from '../../../work-private-r2-d1-batch-plan.mjs';
+  from '../../work-private-r2-d1-batch-plan.mjs';
 import {planWorkR2LocalRecoveryObservation}
-  from '../../../work-private-r2-local-recovery.mjs';
+  from '../../work-private-r2-local-recovery.mjs';
 import {inspectEdgeImageHeader,EDGE_LIMITS}
-  from '../../../../../tools/work-media-edge/sanitize.mjs';
+  from '../../../../tools/work-media-edge/sanitize.mjs';
 
 const SHOP='jill-work.myshopify.com';
 const MARKER='phase22-local-synthetic-runner';
