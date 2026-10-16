@@ -595,3 +595,38 @@ all existing four secret and D1 binding parity, route and
 compatibility parity, correct Google QA @7/@9 isolation,
 anonymous auth denial, and a safe v34 rollback plan. Never
 use older UI deployment scripts pinned to obsolete versions.
+
+### Phase 30 first owner Windows run — FAILED and narrow local repair pending certification
+
+The owner pulled to `5526bbf`. The synthetic Phase 30
+29-case manifest-policy test, four independent UI/detail/merchant
+source tests, React Router TypeScript, and a fresh WORK canary
+build all passed. Then the candidate builder stopped at
+`work_hq_v34_local_ui_base_invalid`. The subsequently typed
+`Write-Host PASS` was **unconditional and invalid evidence**;
+this phase has NOT been certified and no new local
+`wrangler.hq-v34-ui-LOCAL-NOUPLOAD.json` candidate was written.
+
+Root issue under investigation: generated Cloudflare/Vite Wrangler
+manifests can serialize optional *inert* sections (e.g. empty
+binding arrays or objects) that the initial Phase 30 validator
+rejected merely for being present. The revised validator allows
+ONLY precisely empty known optional sections, preserves them in
+the candidate, and rejects all nonempty R2, Images, Queues,
+services, Durable Objects, unsafe sections or routes. For a
+future failure it now reports just the offending field identifier
+rather than copying manifest values, binding details or secrets.
+
+Phase 30 CI now separately reads the actual freshly compiled
+WORK canary `dist/server/wrangler.json` with
+`scripts/test-work-hq-v34-compiled-manifest.mjs`, rather than
+only validating synthetic fixtures. The operator-only
+`--inspect-existing-base` mode retains the stricter clean
+`jill/rewards-work` branch/sync guard; the CI test supports
+detached GitHub Actions checkout without provider network calls.
+
+**Release remains HOLD:** no Wrangler upload, deploy, changes
+to WORK v34/v33 traffic, Google QA, LIVE, KEEP, D1/R2, app
+permissions, or paid resources. Only mark Phase 30 PASS after
+the actual compiled manifest check and owner's guarded Windows
+`work:hq:v34:ui:prepare-local` return exit code 0.
