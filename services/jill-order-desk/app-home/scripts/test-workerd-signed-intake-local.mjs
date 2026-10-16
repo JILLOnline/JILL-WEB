@@ -125,9 +125,12 @@ async function googleFetch(url,{body}={}){
     'jill:foreign-request');
   return yes('custom_order.submit.result',id,{duplicate:false});
 }
+let limiterMode='ok',limiterCalls=0;
 const fakeRateLimit=async ({shop})=>{
+  limiterCalls++;
   assert.equal(shop,SHOP);
-  return true;
+  if(limiterMode==='down')throw Error('synthetic_limiter_unavailable');
+  return limiterMode==='ok';
 };
 const harness=createTestHarness({root:APP,workers:[{configPath:CFG}]});
 let open=false;
@@ -159,9 +162,24 @@ try{
   }
   assert.equal(await state(id1),null);
   assert.equal(calls,0);
+  // Rate limits MUST reject before D1 reservation, preserving the
+  // submission ID for a genuine authorized retry.
+  limiterMode='reject';
+  const throttle=await exec(signedRequest({id:id1}));
+  assert.equal(throttle.status,429);
+  assert.equal(await state(id1),null);
+  limiterMode='down';
+  const offline=await exec(signedRequest({id:id1}));
+  assert.equal(offline.status,503);
+  assert.equal(await state(id1),null);
+  assert.equal(calls,0);
   // Authorized synthetic Google double confirmation then D1 final CAS.
+  limiterMode='ok';
   mode='normal';
+  const beforeFirst=limiterCalls;
   const accepted=await exec(signedRequest({id:id1}));
+  assert.equal(limiterCalls,beforeFirst+1,
+    'Admission must not count twice in existing gateway');
   assert.equal(accepted.status,200);
   const receipt=await accepted.json();
   assert.equal(receipt.verified,true);
