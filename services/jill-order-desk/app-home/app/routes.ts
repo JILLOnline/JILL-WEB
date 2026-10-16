@@ -10,6 +10,7 @@ export default [
       route(":submissionId","routes/app.requests.$submissionId.tsx"),
     ]),
     route("requests/command","routes/app.requests.command.tsx"),
+    route("requests/media/inspect","routes/app.requests.media.inspect.tsx"),
     route("setup-owner","routes/app.setup-owner.tsx"),
   ]),
 ] satisfies RouteConfig;
