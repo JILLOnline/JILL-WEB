@@ -529,3 +529,56 @@ Real usage must remain OFF until Owner approval of fully certified
 account-plan reads, atomic quota ledger, R2 account-wide capacity and
 operation budget, authenticated uploads, sanitizer output proof, storage
 privacy, object linkage and cleanup.
+
+## Phase 9 — FREE local Node artwork decoder (WORK source/testing only)
+
+2026-10-16 user screenshot: Cloudflare Transformations usage showed 0/5,000
+and no zones; Images & Stream > Plans showed **unchecked paid hosted
+Images storage at $5/month per 100,000 stored assets** and Stream priced
+separately. Neither optional subscription was selected. The Images
+Workers binding's eligibility remains unverified. No Cloudflare Images
+storage, zone, or paid feature is needed for this phase.
+
+Created `tools/work-media-local/` as an entirely separate Node-only
+harness using pinned open-source Sharp 0.34.1. `sanitize.mjs` accepts
+in-memory PNG/JPEG/WebP bytes, validates the existing JILL byte contract,
+fully decodes and re-encodes pixels, normalizes to sRGB and at most
+3,000px on either output side, strips EXIF/XMP/ICC metadata, and
+checks the output type/bytes/metadata again. It fails closed on
+animated/multi-frame content, unsupported input, mismatched MIME, invalid
+decode, images above 24 million input pixels, over 10,000px per side,
+and outputs exceeding the caller's bound (max 8 MiB). It does not
+create URLs, store files, call Cloudflare, or read customer artwork.
+
+A real native Sharp decoder was exercised on local synthetic PNG/JPEG/
+WebP fixtures. Tests checked stripped synthetic EXIF, rejected spoofed
+headers and genuinely animated WebP, resized a valid wide image,
+and rejected corrupted or oversized input. Its CI script will
+independently install this separate Node package, never importing
+Sharp into app-home or workerd. Windows owner must separately run
+the install/test and report local results before certification.
+
+To run offline on the owner's Windows repo:
+
+```powershell
+npm.cmd run work:hq:media:local:install
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Local Sharp install failed' }
+npm.cmd run test:work-hq-media-local-sanitizer
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Real local decoder test failed' }
+```
+
+**Important scope limit:** Sharp's native Node module CANNOT run inside
+the Cloudflare Worker. This is not a production upload sanitizer and
+does not prove malicious image content has been fully neutralized.
+It is a local decoder implementation and offline validation baseline,
+not a subscription-enabled Images binding, media preview, R2 upload,
+operator-attested service, or replacement for signed Shopify Owner+D1
+authorization. Automatic customer uploads would require an independently
+audited Worker-compatible sanitizer or a separately approved private
+Node service, plus storage, quotas, authorization, signed evidence
+retention and delivery checks. No such backend was deployed.
+
+The existing WORK R2 bucket stays empty/private; the proposed 0004
+registry stays inert and cannot be applied from this phase.
+No changes to LIVE, KEEP, Rewards, Google QA, customer data or
+Cloudflare account billing were authorized or performed.
