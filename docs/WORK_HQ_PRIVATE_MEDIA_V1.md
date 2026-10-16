@@ -823,3 +823,60 @@ persistent retention/recovery, and explicit approval for migrations.
 **Release HOLD:** no deployed R2/Images bindings; no customer files,
 remote R2/D1 writes, migrations 0004–0006, Cloudflare paid plan,
 LIVE/KEEP, Rewards or Google QA modifications.
+
+## Phase 15 — isolated real LOCAL workerd D1 batch semantics
+
+Owner's Windows console confirmed Phase 14 OFFLINE SQL-facade tests PASS:
+`test:work-hq-r2-d1-batch-plan` and
+`test:work-hq-r2-object-intent`. They did not reach real D1 or R2.
+
+Cloudflare publishes the official `createTestHarness()` API with
+`getWorker().getEnv()`, which returns LOCAL Worker storage bindings:
+https://developers.cloudflare.com/workers/testing/test-harness/prepare-test-state/
+and:
+https://developers.cloudflare.com/workers/testing/test-harness/configure/
+
+Phase 15 creates an **independent synthetic Worker** only in
+`services/jill-order-desk/app-home/workerd-phase15/`. Its name is
+`jill-work-phase15-local-only`. Its synthetic D1 binding
+`JILL_PHASE15_LOCAL_D1` uses database name
+`jill-work-phase15-local-synthetic`, fabricated UUID
+`00000000-0000-4000-8000-000000000015` and `remote:false`.
+There is no R2 binding, admin credential, public route, custom domain,
+secret, Shopify SDK integration or Cloudflare account configuration.
+The Worker returns 404 for every request, and is not part of the
+deployable App Home Worker. Neither canonical WORK nor canary
+Wrangler config changes. Only this isolated local binding can be
+accessed from the test. Cloudflare's local harness does NOT run remote
+D1 transactions.
+
+`scripts/test-workerd-r2-d1-batch-local.mjs` uses the installed
+App Home Wrangler test harness, reads real active migration *source*
+0001–0003 and inert *proposal source* 0004–0006, and applies copies
+ONLY inside the synthetic local D1 binding. It seeds synthetic
+Owner/reference identities and runs the *actual D1Database.batch()*
+method with the Phase 14 two prepared statements. It verifies normal
+reservation, duplicate-reference rollback, forged MAC rollback,
+monthly 40/41 exhaustion, absent orphan intent after zero-row UPDATE,
+and 404 for the synthetic Worker route. It never writes to actual
+WORK D1. A successful local test is not remote migration approval.
+
+From repo root after clean fast-forward:
+```powershell
+npm.cmd run test:work-hq-r2-d1-workerd-local
+if ($LASTEXITCODE -ne 0) {
+  throw 'STOP: Real local workerd D1 test failed'
+}
+```
+
+If the test harness is missing, install only the already declared
+App Home development dependencies in its isolated package. No
+`wrangler d1 execute --remote`, `migrations apply`,
+`wrangler deploy`, new Cloudflare account resource or R2 PUT is
+allowed. Node local test success does NOT certify live Owner sessions,
+server-side account-wide cost budget, actual R2 privacy on upload,
+recovery, private preview/delivery, or storage linkage.
+
+**HOLD remains:** migrations 0004/0005/0006 inert, no real upload,
+no customer preview, no Images paid subscription, and no
+LIVE/KEEP/Rewards/Google QA changes.
