@@ -10,6 +10,7 @@ import {
   work0003ReleaseCommand,
   assertWork0003FileState,assertWork0003Postflight,
   encryptForCurrentWindowsUser,decryptForVerification,
+  runWork0003InheritedTerminal,
 } from './release-work-hq-inbox-0003.mjs';
 
 const dir='services/jill-order-desk/migrations/';
@@ -152,4 +153,37 @@ if(process.platform==='win32'){
   assert.equal(decryptForVerification(encrypted),sample,
     'Win32 DPAPI must roundtrip for the current user');
 }
-console.log('PASS WORK 0003 OWNER-GATED release OFFLINE: exact migration-only args, TTY approval, Windows DPAPI checkpoint contract, strict after-state, 0004/LIVE blocked; NO remote writes.');
+
+// No remote calls: verify the asynchronous child process can receive a
+// user-like Y/n response and return terminal output on Win32 as on Linux.
+// The real WORK migration path always uses stdio=inherit and never
+// sends syntheticInput or auto-confirmation.
+const simulatedChild=[
+  'process.stdout.write("SYNTHETIC (Y/n)");',
+  'process.stdin.once("data",x=>{',
+  '  process.exit(String(x).trim()==="y"?0:31);',
+  '});',
+].join('');
+const accepted=await runWork0003InheritedTerminal(
+  process.execPath,['-e',simulatedChild],
+  {stdio:'pipe',syntheticInput:'y\\n',timeout:15000});
+assert.equal(accepted.exitCode,0);
+assert.match(accepted.stdout,/SYNTHETIC \(Y\/n\)/);
+await assert.rejects(()=>runWork0003InheritedTerminal(
+  process.execPath,['-e',simulatedChild],
+  {stdio:'pipe',syntheticInput:'n\\n',timeout:15000}),
+/work_0003_command_failed/);
+await assert.rejects(()=>runWork0003InheritedTerminal(
+  process.execPath,['-e','process.exit(12)'],
+  {stdio:'pipe',timeout:15000}),/work_0003_command_failed/);
+await assert.rejects(()=>runWork0003InheritedTerminal(
+  process.execPath,['-e','process.exit(0)'],
+  {stdio:'inherit',syntheticInput:'y\\n'}),/work_0003_unsafe_terminal_mode/);
+const terminalSource=readFileSync(
+  'scripts/release-work-hq-inbox-0003.mjs','utf8');
+assert.match(terminalSource,/await runWork0003InheritedTerminal\(process\.execPath/);
+assert.match(terminalSource,/stdio:'inherit',timeout:180000/);
+assert.doesNotMatch(terminalSource,/apply_0003'\)\],\{[\s\S]*?stdio:'pipe'/);
+assert.match(terminalSource,/mode==='--verify'/);
+
+console.log('PASS WORK 0003 OWNER-GATED release OFFLINE: async terminal Y/n fixture, explicit Owner approval and Windows DPAPI recovery, strict 0003 postflight, 0004/LIVE blocked; NO remote writes.');
