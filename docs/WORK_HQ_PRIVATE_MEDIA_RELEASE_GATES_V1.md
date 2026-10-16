@@ -152,3 +152,69 @@ active flag or live deployment, and all testing must use synthetic
 Cloudflare local workerd D1/R2. The older adapter is not permitted.
 Do not begin remote work until the user separately approves exact
 migration/binding/pilot operations and acknowledges billing risk.
+
+## Phase 22 — Full synthetic local transaction source built (NOT CERTIFIED)
+
+New executable script-only LOCAL transaction code:
+`services/jill-order-desk/app-home/scripts/phase22-local-media-transaction.mjs`.
+**It is NOT a production upload adapter or a WORK Worker route.**
+This implementation never accepts a browser HTTP Request; it is
+explicitly scoped to the isolated `workerd-phase19` fake D1
+`00000000-0000-4000-8000-000000000019` and fake R2
+`jill-phase19-local-synthetic-artwork` with `remote:false`.
+The normal WORK/canary Wrangler configs are UNCHANGED.
+
+The local test controller composes:
+- REAL `readWorkMerchantPermission` over actual local D1 authority,
+  with synthetic SDK online session shape. No actual Shopify
+  authentication or Google signature execution in this test.
+- `chooseWorkOwnerReference` for an exact synthetic projected signed-
+  shape canonical detail; rejects foreign IDs, public URLs, guests,
+  staff and incorrect shop before decoding bytes.
+- Explicitly **synthetic** fresh account/privacy snapshot; this is
+  NOT provider-authenticated billing evidence and is NOT the real
+  Phase 16 prewrite evidence gate.
+- **REAL workerd WASM** PNG/JPEG/WebP -> WebP sanitized pixel output
+  through the already locally verified isolated codec Worker.
+  Re-inspects the output MIME, dimensions and encoded WebP bytes.
+  D1, provider object metadata and SHA-256 use SANITIZED WebP bytes,
+  never original upload hashes/types.
+- Idempotent canonical D1 registry insertion with MAC conflict
+  rejection; atomic D1 `batch()` quota+intent, unique immutable slot,
+  monotonic limits. No R2 object before committed reservation.
+- Conditional single R2 PUT only against fake local R2, with
+  Standard requested, `application/octet-stream` no-store attachment
+  headers and MAC/hash metadata. No retry on timeout or lost ACK.
+- Independent fake R2 HEAD+GET full hash/metadata readback and guarded
+  D1 terminal transition to `quarantined_unlinked` or `ambiguous`.
+  Both preserve quota and deny customer preview, URL, download,
+  automatic delete/refund/retry.
+
+Local adversarial suite:
+`services/jill-order-desk/app-home/scripts/test-workerd-media-local-transaction.mjs`.
+It requires genuine WASM codec via synthetic local worker, real local
+D1 authority, local D1 proposals and synthetic local R2; tests disabled,
+wrong stage/shop, forged session/staff/reference, unsafe provider
+snapshot, malformed image and mislabeled type, duplicate slot,
+lost ACK, mismatched metadata, PUT failure, original-vs-output WebP
+SHA and negative public route access. CI includes it.
+
+**IMPORTANT: The local `providerSnapshot` string is deliberately
+forgeable for synthetic tests; this code can NEVER be invoked with a
+real WORK R2 binding. The real Phase 16 account/usage gate stays
+`upload_authorized:false`. Neither the old unpersisted quarantine
+adapter nor this synthetic test code may be connected to a deployed
+upload route.**
+
+**Phase 22 awaits first Windows test**:
+```powershell
+npm.cmd run test:work-hq-media-local-transaction
+if ($LASTEXITCODE -ne 0) {
+  throw 'STOP: Phase 22 synthetic transaction test failed'
+}
+```
+
+Gate B — production-capable, separately authorized service with
+provider-authenticated evidence and retention/cost approval —
+**NOT complete**. Gate E–H remain NOT APPROVED. LIVE/KEEP and real
+Cloudflare data untouched.
