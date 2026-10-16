@@ -219,3 +219,50 @@ dedicated MAC key provisioning, actual Owner-authenticated insert/read
 adapter, migration/test compatibility with production D1 (not just SQLite),
 and explicit dry-run and rollback procedures. **Do not execute
 `wrangler d1 migrations apply` based on this document.**
+
+## Phase 4 — read-only real WORK D1 preflight (NO migration)
+
+The proposal and keyed binding code have now passed local Windows tests,
+including isolated in-memory SQLite. The next approved checkpoint is
+**metadata only** on the real WORK Cloudflare account.
+
+Use `work:hq:media:d1:inspect` from clean, synchronized
+`jill/rewards-work`. It is a read-only inspector, not a migration command.
+The code refuses unrecognized CLI arguments or SQL, checks the exact
+canary Worker v34 and its D1 binding UUID, compares the WORK D1 name/UUID
+against Cloudflare's account inventory, and executes **only** a constant
+`SELECT name,type FROM sqlite_master ...` query to confirm the five
+existing JILL WORK tables and that the private-media registry does **not**
+already exist. It requires the source 0004 proposal to remain outside
+the real `migrations/` directory. The command repeats the v34 active
+version check before returning success.
+
+The query never selects customer rows, access tokens, contact details,
+messages, file references, or artwork. The script never calls D1 migrations,
+`INSERT`, `UPDATE`, `DELETE`, asset storage, secret provisioning,
+Cloudflare traffic deployment, Google Apps Script, or Shopify writes.
+
+Offline syntax and negative tests:
+
+```powershell
+npm.cmd run test:work-hq-media-d1-preflight
+```
+
+Only after the offline test passes and operator explicitly chooses a
+**read-only remote inspection**, run:
+
+```powershell
+npm.cmd run work:hq:media:d1:inspect
+```
+
+The inspector fails closed if Wrangler's JSON shape is not recognized.
+It prints `READ ONLY FAILURE PHASE` so the exact metadata command can
+be checked manually. A failure is **not** permission to migrate or
+rotate keys.
+
+**Migration remains forbidden at this checkpoint.** Work still required:
+a dedicated WORK registry MAC secret in the user's local owner-controlled
+secret vault; a reviewed D1 backup/rollback plan; the exact sanctioned
+WORK migration command and database ID; then a separate staff-authorized
+server adapter and real provider-private asset attestation. Neither a
+matched registry row nor a public Cloudinary URL establishes media privacy.
