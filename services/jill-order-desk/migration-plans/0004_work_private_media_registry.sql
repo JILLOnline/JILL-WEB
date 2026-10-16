@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS jill_work_private_media_registry (
 -- Prevent silently swapping the canonical source reference or owner scope.
 -- Rebinding a changed original source will require a separately reviewed
 -- migration/reconciliation process, NEVER an UPDATE to the MAC.
-CREATE TRIGGER jill_work_private_media_registry_immutable
+CREATE TRIGGER IF NOT EXISTS jill_work_private_media_registry_immutable
 BEFORE UPDATE OF shop,submission_id,scope,item_key,
   reference_index,reference_mac
 ON jill_work_private_media_registry
@@ -44,8 +44,25 @@ BEGIN
 END;
 
 -- Quarantine/revoke instead of deleting the audit identity.
-CREATE TRIGGER jill_work_private_media_registry_no_delete
+CREATE TRIGGER IF NOT EXISTS jill_work_private_media_registry_no_delete
 BEFORE DELETE ON jill_work_private_media_registry
 BEGIN
   SELECT RAISE(ABORT,'work_media_registry_delete_forbidden');
+END;
+
+-- New registry rows must start without any private storage claim.
+CREATE TRIGGER IF NOT EXISTS jill_work_private_media_registry_pending_insert
+BEFORE INSERT ON jill_work_private_media_registry
+WHEN NEW.status<>'pending_verification'
+BEGIN
+  SELECT RAISE(ABORT,'work_media_registry_insert_must_be_pending');
+END;
+
+-- Quarantine/revocation is a one-way transition until separately audited.
+CREATE TRIGGER IF NOT EXISTS jill_work_private_media_registry_no_unrevoke
+BEFORE UPDATE OF status ON jill_work_private_media_registry
+WHEN OLD.status<>'pending_verification'
+  AND NEW.status<>OLD.status
+BEGIN
+  SELECT RAISE(ABORT,'work_media_registry_reactivation_forbidden');
 END;
