@@ -55,6 +55,34 @@ signed Shopify webhooks with de-duplication, deterministic retry
 after checking committed state, and dead-letter isolation.
 No queue can substitute for the original durable receipt.
 
+## Physical operations: do not oversell handmade capacity
+
+Even perfect software cannot manufacture one million personalized
+piñatas tomorrow. Separate SKUs and customer promises into:
+- **Ready-to-ship stock:** let Shopify's actual inventory availability
+  control checkout. No artificial custom-order backend bottleneck.
+- **Made-to-order piñatas, apparel, favors and gift bundles:** publish
+  truthful current lead times and inventory/production capacity,
+  reserving dated production slots in a durable ledger BEFORE making
+  a firm delivery promise. Avoid simultaneous oversubscription with
+  atomic reservation and an auditable cancellation/release.
+- **Capacity exhausted:** display later dates, waitlist/notification
+  or unavailable status. Never silently take an unfulfillable order
+  with an impossible delivery date.
+- **Shipping and pickup:** capacity/date logic must include working
+  days, carrier uncertainty, material supply, staff hours and holiday
+  peaks. Track backlog age and promise-date risk; communicate changes
+  promptly.
+- **Rush orders:** separate explicitly priced and individually
+  accepted rush capacity; no automatic rush assumption.
+- **Discounts and campaigns:** rate-limit promotions based on
+  fulfillment slots, not just CDN/checkout throughput. Keep
+  coupon/redemption security independent of the private-artwork gate.
+
+Production-slot enforcement needs a separate Shopify-compatible
+reservation/order-state integration and operating-capacity inputs
+from the Owner. It is NOT implemented by the synthetic scale forecast.
+
 ## 2026 published free-tier reality
 
 Public reference limits (subject to changes, not per-account invoices):
