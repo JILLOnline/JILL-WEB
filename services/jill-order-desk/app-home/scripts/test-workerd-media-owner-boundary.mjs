@@ -57,7 +57,8 @@ assert.match(route,/readWorkGoogleQaMerchantDetail/);
 assert.match(route,/JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED==="true"/);
 assert.match(route,/JILL_WORK_HQ_DETAIL_ENABLED==="true"/);
 assert.match(routes,/requests\/media\/inspect/);
-assert.match(ingress,/url\.pathname==="/app\/requests\/media\/inspect"/);
+assert.ok(ingress.includes('url.pathname==="/app/requests/media/inspect"'),
+  'WORK ingress must apply an early Origin check to the media route');
 const boundary=readFileSync(resolve(SRC,
   'work-private-media-owner-boundary.mjs'),'utf8');
 // Header reads via request.headers.get() are expected; R2 operations are NOT.
