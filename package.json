@@ -167,6 +167,7 @@
     "test:work-hq-media-local-quarantine": "npm run test:quarantine --prefix tools/work-media-local",
     "test:work-hq-r2-private-preflight": "node scripts/test-work-hq-r2-private-preflight.mjs",
     "test:work-hq-r2-quota-plan": "node scripts/test-work-hq-r2-quota-plan.mjs",
+    "test:work-hq-r2-object-intent": "node scripts/test-work-hq-r2-object-intent.mjs",
     "work:hq:r2:private:inspect": "node scripts/inspect-work-hq-r2-private-preflight.mjs --inspect",
     "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
     "test:work-hq-media-registry-sql-plan": "node scripts/test-work-hq-media-registry-sql-plan.mjs",
