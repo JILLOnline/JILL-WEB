@@ -184,6 +184,8 @@
     "test:work-hq-intake-ledger-local": "npm run test:workerd-intake-ledger-local --prefix services/jill-order-desk/app-home",
     "test:work-hq-signed-intake-local": "npm run test:workerd-signed-intake-local --prefix services/jill-order-desk/app-home",
     "work:hq:local:verify-all": "node scripts/verify-work-hq-local-bundle.mjs --verify-local",
+    "test:work-hq-live-anonymous-v1": "node scripts/test-work-hq-live-anonymous-v1.mjs",
+    "work:hq:live:anonymous:inspect": "node scripts/inspect-work-hq-live-anonymous-v1.mjs --inspect",
     "work:hq:scale:simulate-million": "node scripts/simulate-work-hq-million-surge.mjs --simulate-million",
     "work:hq:media:release:inspect": "node scripts/inspect-work-hq-media-release-preflight.mjs --inspect",
     "test:work-hq-r2-d1-workerd-local": "npm run test:workerd-r2-d1-batch --prefix services/jill-order-desk/app-home",
