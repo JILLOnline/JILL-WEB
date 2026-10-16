@@ -268,3 +268,43 @@ retention/incident response, and explicit owner approval are
 unresolved production requirements. Do not treat local PASS, either
 read-only inspector, or a generic prior GO as permission for a remote
 migration, binding, real R2 object write or customer release.
+
+## Phase 23 — Combined REAL Cloudflare read-only evidence preflight
+
+New `scripts/inspect-work-hq-media-release-preflight.mjs`
+runs the **two pre-existing, owner-tested Cloudflare read-only
+inspectors** in one guarded terminal command:
+1. exact WORK account/D1/private empty Standard R2 bucket, no
+   public r2.dev URL or custom domain, no normal/canary R2 binding;
+2. entire Cloudflare account current Standard/other-class storage
+   and month-to-date operations, not solely the target WORK bucket.
+
+The command refuses branch drift/dirty tracked files, unauthorized
+arguments, child execution errors, missing/altered provider-readable
+receipts, malformed numbers or dates, and `STOP` indications. It
+does not print raw Cloudflare bodies, tokens or user files. It
+returns a **read-only receipt**, NOT a signed Cloudflare certificate
+or an upload/spending authorization. The target bucket must
+still be empty; all-account totals may include other buckets.
+All-account analytics are potentially delayed/sampled and do not
+establish invoice completeness or a $0 spending guarantee.
+
+`scripts/test-work-hq-media-release-preflight.mjs` is an
+**offline parser regression** using synthetic versions of the
+earlier real read-only inspector logs. It performs no network
+operations; CI runs this parser check on the WORK branch.
+The combined real inspection needs an owner Windows run
+with the existing local Wrangler authentication.
+
+```powershell
+npm.cmd run test:work-hq-media-release-preflight
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Offline release preflight parser failed' }
+npm.cmd run work:hq:media:release:inspect
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Cloudflare read-only evidence incomplete' }
+```
+
+**Phase 23 real read-only inspector: awaiting Windows result.**
+The command does not call a deploy, D1 migration, R2 object API,
+or billing-plan activation. Only aggregate usage and bucket privacy
+are checked. Uploads, previews, migrations and production
+binding remain OFF.
