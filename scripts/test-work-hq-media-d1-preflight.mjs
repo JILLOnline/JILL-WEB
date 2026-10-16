@@ -4,7 +4,7 @@ import {
   assertWorkMediaD1Config,assertWorkMediaD1AccountList,
   assertWorkMediaD1Worker,assertWorkMediaD1Schema,
   workMediaD1ReadCommand,WORK_MEDIA_D1_ID,
-  WORK_MEDIA_SCHEMA_SQL,WORK_MEDIA_BASE_TABLES,
+  WORK_MEDIA_SCHEMA_SQL,WORK_MEDIA_BASE_TABLES,WORK_MEDIA_CORE_TABLES,
 } from './inspect-work-hq-media-d1-preflight.mjs';
 import {DETAIL_ON_CANDIDATE}
   from './release-work-hq-detail-v9-on.mjs';
@@ -70,13 +70,23 @@ for(const mut of [
 ]){
   assert.throws(()=>assertWorkMediaD1Worker(mut));
 }
+// Exact four-table state observed in the real WORK D1 on 2026-10-16.
+assert.equal(WORK_MEDIA_CORE_TABLES.length,4);
+const core=WORK_MEDIA_CORE_TABLES.map(name=>({name,type:'table'}));
+const four=[{success:true,results:core}];
+assert.deepEqual(assertWorkMediaD1Schema(four),{
+  tables_verified:4,registry_absent:true,
+  schema_state:'four_table_pre_0003',pending_0003_inbox_index:true,
+});
 const rows=WORK_MEDIA_BASE_TABLES.map(name=>({name,type:'table'}));
 const fixture=[{success:true,results:rows}];
 assert.deepEqual(assertWorkMediaD1Schema(fixture),{
   tables_verified:5,registry_absent:true,
+  schema_state:'five_table_index_present',pending_0003_inbox_index:false,
 });
 assert.deepEqual(assertWorkMediaD1Schema(fixture[0]),{
   tables_verified:5,registry_absent:true,
+  schema_state:'five_table_index_present',pending_0003_inbox_index:false,
 });
 for(const bad of [
   [{success:false,results:rows}],
@@ -87,6 +97,10 @@ for(const bad of [
   [{success:true,results:[...rows.slice(0,4),{
     name:rows[4].name,type:'view'}]}],
   [{success:true,results:[]}],[],
+  [{success:true,results:core.slice(1)}],
+  [{success:true,results:[...core,core[0]]}],
+  [{success:true,results:[
+    ...core,{name:'jill_work_private_media_registry',type:'table'}]}],
   [{success:true,results:[...rows,{name:'jill_LIVE_orders',type:'table'}]}],
 ]){
   assert.throws(()=>assertWorkMediaD1Schema(bad));
@@ -126,4 +140,4 @@ const runtime=readFileSync(
 assert.doesNotMatch(runtime,
   /\bversions','(deploy|upload)'\b|wrangler d1 migrations apply|secret put/);
 assert.match(runtime,/READ ONLY FAILURE PHASE/);
-console.log('PASS WORK D1 READ-ONLY preflight contract: exact Cloudflare v34/D1 UUID, five legacy tables, planned 0004 absent, immutable metadata-only commands; rejects wrong shop, unknown schema, unsafe commands, no customer queries.');
+console.log('PASS WORK D1 READ-ONLY reconciliation: real four-table pre-0003 and optional fifth index classified, registry absent; unknown/malformed tables refused, no migrations, secrets, customer queries or writes.');
