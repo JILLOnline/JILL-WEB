@@ -37,11 +37,34 @@ const sharp=requireSharp('sharp');
 const marker='SYNTHETIC_PRIVATE_EXIF_REMOVE_SENTINEL';
 const sample=sharp({create:{width:64,height:48,
   channels:4,background:{r:55,g:111,b:177,alpha:1}}});
+// A flat-color lossy WebP can encode to exactly the same deterministic
+// bytes after a full decode/re-encode. Use a nonuniform LOSSLESS source
+// with genuine EXIF to prove that the Worker produces a NEW lossy WebP.
+const width=64,height=48;
+const webpPattern=Buffer.alloc(width*height*4);
+for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const i=(y*width+x)*4;
+  webpPattern[i]=55+x*2;
+  webpPattern[i+1]=65+y*3;
+  webpPattern[i+2]=80+((x+y)*2)%128;
+  webpPattern[i+3]=255;
+}
+const exifWebp=await sharp(webpPattern,{
+  raw:{width,height,channels:4},
+}).webp({lossless:true}).withExif({
+  IFD0:{Artist:marker},
+}).toBuffer();
+const sourceWebpMeta=await sharp(exifWebp).metadata();
+assert.equal(sourceWebpMeta.format,'webp');
+assert.ok(sourceWebpMeta.exif,
+  'Lossless WebP fixture must carry removable EXIF');
+assert.ok(exifWebp.includes(Buffer.from(marker)),
+  'WebP source must actually include the private EXIF sentinel');
 const fixtures=[
   ['image/png',await sample.clone().png().toBuffer()],
   ['image/jpeg',await sample.clone().jpeg({quality:90})
     .withExif({IFD0:{Artist:marker}}).toBuffer()],
-  ['image/webp',await sample.clone().webp().toBuffer()],
+  ['image/webp',exifWebp],
 ];
 assert.ok((await sharp(fixtures[1][1]).metadata()).exif,
   'Synthetic JPEG must contain actual removable EXIF');
@@ -81,7 +104,8 @@ try{
     assert.equal(response.headers.get('x-jill-persisted'),'false');
     assert.equal(response.headers.get('cache-control'),'private, no-store');
     assert.ok(result.byteLength>=20&&result.byteLength<=8*1024*1024);
-    assert.notDeepEqual(result,bytes,'Codec must really re-encode');
+    assert.notDeepEqual(result,bytes,
+      'Distinct source encoding must result in newly encoded WebP');
     assert.equal(result.includes(Buffer.from(marker)),false);
     const meta=await sharp(result).metadata();
     assert.equal(meta.format,'webp');
@@ -93,11 +117,16 @@ try{
     assert.ok(meta.pages===undefined||meta.pages===1);
     const rgba=await sharp(result).ensureAlpha().raw().toBuffer();
     let diffs=0;
-    for(let i=0;i<rgba.length;i+=4)
-      diffs+=Math.abs(rgba[i]-55)+Math.abs(rgba[i+1]-111)+
-        Math.abs(rgba[i+2]-177);
+    for(let i=0;i<rgba.length;i+=4){
+      const target=mime==='image/webp'?
+        [webpPattern[i],webpPattern[i+1],webpPattern[i+2]]:
+        [55,111,177];
+      diffs+=Math.abs(rgba[i]-target[0])+
+        Math.abs(rgba[i+1]-target[1])+
+        Math.abs(rgba[i+2]-target[2]);
+    }
     assert.ok(diffs/(rgba.length/4*3)<32,
-      'Real decoded/re-encoded colors should survive quality setting');
+      'Output pixels must match genuine source pixels after conversion');
     completed++;
     console.log('PASS LOCAL WORKERD real '+mime+
       ' -> WebP '+result.length+' bytes, metadata stripped, '+
