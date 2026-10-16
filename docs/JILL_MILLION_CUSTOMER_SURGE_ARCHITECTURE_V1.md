@@ -201,3 +201,69 @@ throughput. **Do not run a million real requests** or enable paid
 services to "test" this plan. Independent controlled synthetic load
 testing needs separate authorization, infrastructure sizing and
 budget controls.
+
+## Phase 25 — Owner Windows surge forecast PASS, 2026-10-16
+
+Owner fast-forwarded `jill/rewards-work` to `273b785`, ran
+`npm.cmd run test:work-hq-surge-capacity` successfully
+(25 hypothetical aggregate-only scenarios) and
+`npm.cmd run work:hq:scale:simulate-million` successfully
+(7 model capacity blockers). The guarded PowerShell PASS followed
+both exit-code-zero commands.
+
+The hypothetical case used 1 million Shopify visitors AND
+1 million direct WORK requests/day, 3 million D1 row writes/day,
+3 million queue operations/day and 100 decimal GB/month of media.
+These exceed current *reference* Workers/D1/Queues and pilot
+media limits. No traffic was generated and no real capacity,
+pricing, latency or durability was measured. Phase 25 is a
+**planning-model certification only**.
+
+## Phase 26 — WORK custom-order receipt ledger, source-only (PENDING)
+
+Read-only audit of actual WORK custom-order code:
+- `backend/custom-order-gateway.mjs` currently checks the Google
+  QA submission response AND makes a second signed Google QA
+  receipt query before sending a `received` acknowledgement.
+  Preserve this confirmed receipt behavior and the app-proxy HMAC.
+- `services/custom-order-cloudflare/limiter.mjs` applies a
+  Durable Object global default of **30 submissions/minute**
+  and 6/minute per client. This protects WORK but cannot serve
+  a hypothetical million submitters without deliberate scaling.
+- Google QA synchronous upstream calls (each with bounded timeout)
+  are a throughput/dependency bottleneck. No separate durable
+  WORK intake/outbox presently absorbs arbitrary upstream delays.
+  Never replace a Google receipt with a speculative D1 success.
+
+New completely **inert** proposal
+`services/jill-order-desk/intake-ledger-proposals/0007_work_intake_ledger.sql`
+is OUTSIDE active migrations/ and outside existing media proposals.
+It defines a privacy-minimal D1 submission-key ledger with
+payload + independently verified owner binding HMACs, one
+first-dispatch attempt, immutable identifiers, no row deletion,
+and reserved -> forwarding -> ambiguous/confirmed lifecycle.
+
+Pure non-executing planner
+`services/jill-order-desk/work-intake-ledger-plan.mjs` validates
+existing WORK form shape, prevents conflicting duplicate IDs and
+changed owner identity, and models optimistic state transitions.
+It never authenticates Shopify, contacts Google, queues a job,
+writes D1 or gives a customer success. The local synthetic
+confirmation marker is intentionally NOT a trusted Google receipt;
+even a locally 'confirmed' row cannot produce a customer ACK.
+
+Test `services/jill-order-desk/app-home/scripts/test-workerd-intake-ledger-local.mjs`
+runs genuine LOCAL Cloudflare D1 against fake `remote:false`
+bindings with synthetic orders only. It checks immutable uniqueness,
+one-shot dispatch, ambiguity on uncertain upstream outcomes,
+rejection of cross-owner/payload replays, no raw email/owner stored
+in D1, no public route, no auto-redelivery or fake HTTP receipt.
+It does not call an actual Shopify or Google service. CI runs
+the test, but the owner's Windows result is **not yet known**.
+
+Later phase (separate explicit approval): design a real verified
+WORK app-proxy admission adapter and signed Google reconciliation,
+bounded durable queue/outbox with backpressure, dead-letter
+resolution and real load/cost measurement. Until then DO NOT
+wire phase26 planner to `handler.mjs`, change DO quotas, or
+activate 0007 on remote D1. The current proxy remains untouched.
