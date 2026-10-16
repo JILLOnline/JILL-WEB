@@ -1562,7 +1562,7 @@ sessions), and verifies guests, disabled flags, offline/expired
 sessions, wrong shops, delegated staff, mismatched canonical source,
 invalid/cross-customer selectors, forged identity fields, malformed
 or oversized forms, and no exposure or storage operation. Tests also
-statistically verify source route wiring and that both deployable
+statically verify source route wiring and that both deployable
 Worker configurations still lack R2 bindings and the new flag.
 
 Run on Windows, after pulling WORK branch:
@@ -1584,3 +1584,11 @@ require explicit separate owner approval.
 **NO-GO for real customer upload or preview.** LIVE/KEEP, merchant
 Rewards, Google QA, remote D1/R2, billing/subscription, and existing
 WORK host deploy remain unchanged.
+
+**Owner-only scope clarification:** The Phase 21 route belongs to JILL HQ
+merchant Owner sessions. An Owner may legitimately inspect requests
+from different customers after canonical signed source authorization.
+It is NOT a My JILL customer-account or guest upload endpoint.
+Rejecting browser-supplied customer identity prevents bypassing the
+canonical request/attachment binding. Future customer-to-customer
+privacy requires a SEPARATE customer authentication policy.
