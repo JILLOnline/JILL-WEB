@@ -156,6 +156,7 @@
     "test:work-hq-qa-detail-reconcile": "node scripts/test-work-hq-qa-detail-reconcile.mjs",
     "test:work-hq-qa-detail-stage": "node scripts/test-stage-work-hq-qa-detail-deployment.mjs",
     "test:work-hq-detail-view": "node scripts/test-work-hq-detail-view.mjs",
+    "test:work-hq-reference-provenance": "node scripts/test-work-hq-reference-provenance.mjs",
     "test:work-hq-source-cache": "node scripts/test-work-hq-source-cache.mjs",
     "test:work-hq-d1-index": "node scripts/test-work-hq-d1-inbox-index.mjs",
     "test:work-hq-google-source-cache": "node scripts/test-work-hq-google-source-cache.mjs",
