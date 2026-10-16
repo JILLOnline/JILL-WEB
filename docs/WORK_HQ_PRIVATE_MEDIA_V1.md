@@ -1327,3 +1327,41 @@ run it on Windows after pulling and require exit code 0.
 
 **HOLD:** Cloudflare Images paid, LIVE/KEEP, real R2 storage,
 deployed D1 migrations and customer media upload/preview all OFF.
+
+### Phase 19 first Windows run — local R2 storage-class reporting difference
+
+Owner's 2026-10-16 Windows result from commit `7ed0a21`:
+`npm.cmd run test:work-hq-media-local-end-to-end` stopped with
+`Expected values to be strictly equal: '' !== 'Standard'`, at the
+local R2 HEAD `storageClass` assertion. The follow-up bare PowerShell
+`Write-Host PASS` was a false positive; **Phase 19 has not passed**.
+
+The test passed earlier steps on its execution path (synthetic
+PNG-to-WebP codec, local D1 schema, registry/intent, local R2 PUT
+and HEAD metadata before storageClass), but the full byte-for-byte
+GET readback and duplicate/overwrite protections were **not reached**
+and must not be claimed as verified.
+
+Cloudflare's R2 Workers API documents `storageClass:
+'Standard'|'InfrequentAccess'` on R2 objects and a
+`storageClass:'Standard'` option for R2 PUT. The isolated
+`remote:false` Miniflare emulator instead returned an empty string
+for the object's omitted default class; the original synthetic PUT
+had not specified a storage class.
+https://developers.cloudflare.com/r2/api/workers/workers-api-reference/
+
+Phase 19's synthetic PUT now explicitly specifies
+`storageClass:'Standard'`. The *LOCAL TEST ONLY* accepts HEAD
+`storageClass` being `'Standard'` or `''`, requires the PUT
+and HEAD class to agree, and logs an informative message if the local
+emulator leaves the field empty. No other provider metadata, hash,
+conditional write, duplicate reservation, or 404 checks have been
+relaxed. **An empty string cannot prove the actual WORK bucket is
+Standard and must NEVER be accepted by the production pre-upload
+provider-privacy/billing check.** The production bucket was separately
+read-only verified as Standard in Phase 11, and cannot be inferred
+from synthetic test output.
+
+Phase 19 must be rerun on Windows with process exit 0; no R2
+production binding, migrations 0004–0006, real object writes, Cloudflare
+Images plan, LIVE/KEEP or customer preview changes have been authorized.
