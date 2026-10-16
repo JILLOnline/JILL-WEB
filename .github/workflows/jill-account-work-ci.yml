@@ -152,6 +152,10 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
+      - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-r2-d1-batch
+
       - name: Validate encrypted D1 with actual Shopify SDK Session
         working-directory: services/jill-order-desk/app-home
         run: npm run test:shopify-session-real
