@@ -168,3 +168,52 @@ WORK-only configuration/Worker candidate and negative authorization
 tests before a real disposable request. LIVE, KEEP, Rewards, My JILL,
 Shopify app versions, Google QA deployments and customer records
 remain outside this change.
+
+## WORK exact detail ON: preparation only, pending signed-in Owner QA
+
+The merchant's 2026-10-15 local release receipt confirms the
+**previously inactive** full-detail-v9 code was deployed to WORK Cloudflare
+as version `204d66c3-3296-430d-8288-39c354876600` and all remote
+checks PASS. Original `52adfbde-afb6-453e-b779-7be6f4e02519` is
+retained as a rollback target. The feature remains OFF.
+
+**Before any new upload**, the actual Shopify WORK Owner must open
+JILL HQ > Custom Orders, verify the existing inbox loads, filters work,
+`Open request workspace` opens a known request, and existing status
+controls are still present. Do NOT submit a status change solely for QA.
+The original customer details panel should still show
+`not_connected` until feature activation. A screenshot or explicit
+operator report is required to accept this manual gate.
+
+After that Owner UI check, run from clean synchronized WORK source:
+
+```powershell
+npm.cmd run test:work-hq-detail-v9-on-stage
+npm.cmd run work:hq:detail:v9:on:inspect
+```
+
+`on:inspect` is read-only and refuses mismatched Google v9, wrong
+Cloudflare active version, changed WORK D1/secrets, changed OAuth/Owner/
+existing write flags, or already-staged ON versions.
+
+Only after the Owner check and inspect PASS, operator may separately run:
+
+```powershell
+npm.cmd run work:hq:detail:v9:on:stage
+```
+
+The staging action is **not** a release. It runs source security tests,
+builds the same WORK Worker code, runs local workerd anonymous-denial
+tests using fake secrets and fake D1 while the detail flag is ON,
+asks for an explicit on-device confirmation, then uploads **one
+INACTIVE version**. The candidate may add only
+`JILL_WORK_HQ_DETAIL_ENABLED=true`; the other nine bindings, four
+secret IDs, application Worker code/handler fingerprint, D1, OAuth,
+Owner setup, status writes, compatibility/runtime and asset routing
+must match the active OFF version. Nothing touches Google QA @7/@8/@9,
+Shopify app versions, customer data, LIVE, KEEP or Rewards.
+
+Do not assume inactive staging enables customer details. A later
+separate reviewed WORK-only release must verify Owner authentication,
+D1 permission, anonymous direct-URL denial, real disposable WORK
+request projection and preservation of inbox/status operations.
