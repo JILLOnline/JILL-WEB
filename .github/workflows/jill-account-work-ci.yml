@@ -184,6 +184,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-owner-boundary
 
+      - name: Verify signed Shopify WORK intake + local D1 ledger + actual double-confirm Google QA contract
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-signed-intake-local
+
       - name: Verify source-only custom-order one-shot intake ledger in genuine LOCAL D1
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-intake-ledger-local
