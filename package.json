@@ -144,6 +144,8 @@
     "work:hq:detail:v9:on:stage": "node scripts/stage-work-hq-detail-v9-on.mjs --stage",
     "work:hq:detail:v9:on:release:inspect": "node scripts/release-work-hq-detail-v9-on.mjs --inspect",
     "work:hq:detail:v9:on:release": "node scripts/release-work-hq-detail-v9-on.mjs --release",
+    "work:hq:detail:v9:live:audit": "node scripts/audit-work-hq-detail-v9-live.mjs",
+    "test:work-hq-detail-v9-live-audit": "node scripts/test-audit-work-hq-detail-v9-live.mjs",
     "work:hq:detail:v9:on:rollback": "node scripts/release-work-hq-detail-v9-on.mjs --rollback",
     "test:work-hq-detail-v9-on-release": "node scripts/test-release-work-hq-detail-v9-on.mjs",
     "test:work-hq-detail-v9-on-stage": "node scripts/test-stage-work-hq-detail-v9-on.mjs",
