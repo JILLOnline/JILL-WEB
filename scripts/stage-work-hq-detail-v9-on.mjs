@@ -199,7 +199,7 @@ if(invoked){
     console.log('PASS existing WORK version '+active.id);
     console.log('PASS original 4 secrets/WORK D1/OAuth ON/Owner OFF/writes ON/detail OFF.');
     if(process.argv[2]==='--inspect'){
-      console.log('READ ONLY. No upload, deployment, Google request or customer data.');
+      console.log('READ ONLY: checks Google deployment LISTING and Cloudflare metadata; no Google customer read, upload or deployment.');
     }else{
       phase='tests';
       for(const script of [
