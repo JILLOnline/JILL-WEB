@@ -880,3 +880,35 @@ recovery, private preview/delivery, or storage linkage.
 **HOLD remains:** migrations 0004/0005/0006 inert, no real upload,
 no customer preview, no Images paid subscription, and no
 LIVE/KEEP/Rewards/Google QA changes.
+
+### Phase 15 repair — source-comment compatibility (still NOT certified)
+
+The owner's first Windows real local workerd run after commit
+`dc54ce3` **FAILED** in the fixture seeding stage:
+`D1_EXEC_ERROR: SQL code did not contain a statement`, referencing
+the first `-- WORK-only planning migration` line of active 0001.
+The user subsequently executed a standalone green PowerShell
+`Write-Host PASS` despite the thrown failure; that printout is
+**not evidence of successful workerd testing**.
+
+This is a harness/setup issue: passing commented, multi-statement
+migration source wholesale to `D1Database.exec()`. Cloudflare has
+documented/reported D1 failures on comment-only statements. The repaired
+local harness now strips full-line SQL comments, splits the six fixed
+audited SQL sources into exactly 23 prepared statements while preserving
+`CREATE TRIGGER ... BEGIN ... END;` blocks, and executes each with
+the synthetic local D1 `prepare(...).run()`. Only the later
+**two-statement transactional quota+intent test** still calls the
+real local `db.batch()`. It does not modify SQL proposals, canonical
+Worker, deployed app or remote account.
+
+A review against the actual committed six fixture files confirmed
+statement counts 5+2+2+5+4+5=23, no incomplete statements and no
+unexpected inline SQL comments. Actual workerd results must still be
+run by the Windows owner. The diagnostic now says `INFO` when fixtures
+load and reserves the only final `PASS` for completion of the entire
+transaction regression. Treat any nonzero process exit as FAIL,
+regardless of a separately printed PowerShell status.
+
+**HOLD:** no D1 migrations 0004/0005/0006, R2 writes or Worker deploy;
+LIVE/KEEP/Rewards/Google QA unchanged, paid features off.
