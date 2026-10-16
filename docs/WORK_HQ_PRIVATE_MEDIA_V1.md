@@ -230,10 +230,11 @@ Use `work:hq:media:d1:inspect` from clean, synchronized
 `jill/rewards-work`. It is a read-only inspector, not a migration command.
 The code refuses unrecognized CLI arguments or SQL, checks the exact
 canary Worker v34 and its D1 binding UUID, compares the WORK D1 name/UUID
-against Cloudflare's account inventory, and executes **only** a constant
-`SELECT name,type FROM sqlite_master ...` query to confirm the five
-existing JILL WORK tables and that the private-media registry does **not**
-already exist. It requires the source 0004 proposal to remain outside
+against Cloudflare's account inventory, and executes **only** constant metadata SELECT queries against
+`sqlite_master` and (when present) the `d1_migrations` filename ledger.
+It confirms whether the four foundational JILL WORK tables are present,
+whether the optional 0003 inbox index is missing/present, and that the
+private-media registry does **not** already exist. It requires the source 0004 proposal to remain outside
 the real `migrations/` directory. The command repeats the v34 active
 version check before returning success.
 
@@ -266,3 +267,36 @@ secret vault; a reviewed D1 backup/rollback plan; the exact sanctioned
 WORK migration command and database ID; then a separate staff-authorized
 server adapter and real provider-private asset attestation. Neither a
 matched registry row nor a public Cloudinary URL establishes media privacy.
+
+## Observed real WORK D1 baseline — 0003 table absent (read-only receipt)
+
+Owner's read-only Wrangler schema query returned exactly four
+JILL-prefixed tables: `jill_merchant_audit`,
+`jill_merchant_authority`, `jill_merchant_grants`, and
+`jill_shopify_sessions`. No media registry is present. In particular
+`jill_work_verified_inbox_index` is **absent**, despite migration
+`0003_work_verified_inbox_index.sql` existing in Git. Cloudflare
+reported `rows_written: 0` and `changed_db: false`.
+
+The original preflight required five tables and failed with the
+ambiguous message `work_media_schema_unexpected_or_registry_already_exists`.
+We have now reconciled that validator to identify the observed
+**four-table pre-0003** state separately from the future **five-table**
+state. Both are supported *read-only observations*, and neither grants
+permission to apply a migration. Any unrecognized JILL table, missing
+core table, or already-present registry **still fails closed**.
+
+The repaired inspector additionally checks the presence of Cloudflare's
+`d1_migrations` metadata table. If present, it selects **migration
+filenames only**, never session/customer rows. It explicitly distinguishes
+a 0003 ledger entry from the absence of the 0003 table: a ledger claiming
+0003 applied while the table is missing is a **STOP** condition. A missing
+ledger or an unrecorded 0003 is a **HOLD** pending separate assessment.
+
+**Important:** The presence/absence of a table by itself does not prove
+whether a migration was run, skipped, manually created or later dropped.
+Do not run `wrangler d1 migrations list` or
+`wrangler d1 migrations apply` in this incident without reviewing the
+database's existing migration ledger and the exact WORK-only rollout.
+There are still **no actual D1 writes, keys, file previews or deployments**
+as part of this diagnostic change.
