@@ -1048,3 +1048,72 @@ if ($LASTEXITCODE -ne 0) { throw 'STOP: Real read-only usage query failed' }
 **HOLD:** Migrations 0004–0006 remain inert; REAL R2 upload/preview
 routes, Worker bindings, paid subscriptions, LIVE/KEEP and Google QA
 unchanged. No customer media is accessed.
+
+### Phase 17 — REAL account-wide R2 analytics receipt and release decision
+
+**Owner-confirmed Windows PowerShell execution, 2026-10-16 (UTC month 2026-10)**
+
+- `npm.cmd run test:work-hq-r2-account-usage`: PASS, synthetic
+  Cloudflare response/parser regression.
+- `npm.cmd run work:hq:r2:account:inspect`: PASS, **real read-only
+  Cloudflare account-level metrics** via local Wrangler auth.
+- Observed Standard storage: **0 bytes, 0 objects**.
+- Observed other storage-class usage: **0 bytes**.
+- Observed October R2 operations: **7 total**;
+  `HeadBucket=2`, `ListBuckets=4`, `PutBucket=1`.
+- The script printed no tokens, created no storage objects, and made
+  no Cloudflare mutation call. These observations are not an invoice
+  or a billing guarantee; adaptive GraphQL analytics can be delayed.
+
+**Financial architecture decision: R2 Standard is a reasonable
+LOW-USAGE candidate for WORK private artwork.** Cloudflare's
+2026-10-01 R2 pricing documentation confirms that the
+Standard-class free monthly allowances include 10 GB-month storage,
+1,000,000 Class A requests and 10,000,000 Class B requests, with no
+egress fee. The currently proposed WORK-only 256 MiB cumulative
+reservation and 40 uploads/month are comfortably below those
+allowances **on their own**; other account usage or future behavior
+could still incur charges. These observations do not warrant a
+paid subscription or weakening the hold:
+https://developers.cloudflare.com/r2/pricing/
+
+**Primary release blocker is now PRODUCTION IMAGE DECODE/SANITIZATION,
+not baseline R2 quota volume.** The tested Node `sharp` sanitation
+is real but cannot execute directly inside the Cloudflare Workers
+runtime. Cloudflare's 2026-06-10 tutorial currently lists
+an **Images Paid subscription prerequisite** for its raw-byte
+Workers Images binding, even though external-image
+*URL-based transformations* have a Free allowance:
+https://developers.cloudflare.com/images/tutorials/optimize-user-uploaded-image/
+https://developers.cloudflare.com/images/pricing/
+
+Under JILL's explicit no-paid-activation constraint, do NOT enable
+Cloudflare Images Paid, add `images` or `r2_buckets` to any
+canonical deployed WORK/KEEP/LIVE Worker, buy Images hosted storage,
+or attempt to pass public legacy Cloudinary URLs as verified private
+artwork.
+
+**Next engineering objective (not yet implemented):** a
+Worker-compatible, no-subscription real image decode/re-encode
+boundary, tested against genuine PNG/JPEG/WebP with corrupt files,
+multi-frame, metadata, malformed headers, decompression-bomb
+limits, runtime memory and CPU pressure, using only a synthetic
+local Worker first. If a reliable Worker-native sanitizer cannot
+be demonstrated within verified free runtime limits, explicitly
+consider an owner-operated separate private Node service rather
+than presenting the local `sharp` harness as an automatic online
+upload pipeline. Such an operator service would require its own
+authentication, operating availability and costs. Browser-only
+re-encoding is not a security boundary.
+
+Only after sanitizer feasibility and owner signoff: attest true
+online Shopify Owner + WORK D1 authorization; apply an approved
+migration sequence; commit quota + durable intent atomically;
+verify real provider privacy and storage operations; implement
+conservative recovery/retention; and launch a tiny WORK-only
+synthetic upload pilot under explicit separate approval.
+
+**CURRENT RELEASE STATE: HOLD.** D1 0004/0005/0006 proposals inert,
+WORK R2 bucket empty/private at last verified inspection; no
+customer media uploads/downloads/previews, no remote storage
+mutation, no paid subscription; LIVE and KEEP untouched.
