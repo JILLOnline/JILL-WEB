@@ -20,12 +20,14 @@ const deny=()=>{throw Error('work_r2_quota_reservation_not_authorized');};
  * One failed/ambiguous upload continues to count. Month rollover cannot
  * reset the lifetime byte ceiling. No customer URL, object key or PII.
  */
-export function planWorkR2QuotaReservation({shop,byteLength,monthKey}={}){
+export function planWorkR2QuotaReservation({shop,byteLength,nowMs}={}){
   const p=WORK_R2_QUOTA_POLICY;
-  if(shop!==p.shop || !Number.isSafeInteger(byteLength)||
+  if(shop!==p.shop || !Number.isSafeInteger(nowMs)||nowMs<=0||
+     !Number.isSafeInteger(byteLength)||
      byteLength<20||byteLength>p.max_object_bytes||
-     typeof monthKey!=='string'||
-     !/^20[0-9]{2}-(0[1-9]|1[0-2])$/.test(monthKey))deny();
+     new Date(nowMs).getUTCFullYear()<2026||
+     new Date(nowMs).getUTCFullYear()>2100)deny();
+  const monthKey=new Date(nowMs).toISOString().slice(0,7);
   const sql=[
     'UPDATE jill_work_r2_quota_guard',
     'SET lifetime_reserved_bytes=lifetime_reserved_bytes+?,',
