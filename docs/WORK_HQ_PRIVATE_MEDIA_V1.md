@@ -1257,3 +1257,73 @@ The actual workerd test remains **PENDING Windows rerun**.
 Release HOLD unchanged: no 0004–0006 remote D1 migrations,
 Cloudflare Images subscription, customer artwork upload/preview,
 R2 writes, deployed codec, LIVE/KEEP mutation or paid activation.
+
+### Phase 18 full Windows certification — PASS
+
+Owner's Windows 2026-10-16 local workerd run at commit
+`74276d3` returned process exit **0** and printed:
+- Real PNG -> WebP: 25 ms, metadata removed;
+- Real JPEG -> WebP: 11 ms, metadata removed;
+- Real WebP -> WebP: 10 ms, metadata removed;
+- 1280x720 JPEG: 547,960 -> 360,028 bytes in 328 ms;
+- EXIF orientation 6 corrected and asymmetric 4-corner pixel check;
+- Animation, mislabeled, malformed, and oversized test inputs rejected.
+- Final `PASS local WORKERD EDGE` and guarded PowerShell PASS.
+
+**Certification scope:** genuine WASM codecs and synthetic fixtures in
+real LOCAL Cloudflare workerd only. Timing is WALL elapsed, NOT
+account-billed CPU, memory or production pricing. No storage or
+customer/private preview authorization followed. Prior Phase 18
+pending/failure notes above are superseded by this successful rerun.
+
+## Phase 19 — Real LOCAL sanitizer + D1 + R2 pipeline (SOURCE ONLY)
+
+The next blocker was combining a sanitized WebP from Phase 18 with
+the actual D1 quota-and-intent atomic commit tested in Phase 15, then
+verifying REAL local R2 storage and provider object metadata in one
+isolated integration regression. Phase 19 demonstrates these combined
+runtime surfaces; it does NOT add a production upload route.
+
+New independent synthetic storage Worker:
+`services/jill-order-desk/app-home/workerd-phase19/`
+- Name `jill-work-phase19-local-media-only`;
+- Fabricated database UUID `00000000-0000-4000-8000-000000000019`;
+- `JILL_PHASE19_SYNTHETIC_D1` with `remote:false`;
+- Fake R2 bucket `jill-phase19-local-synthetic-artwork`;
+- `JILL_PHASE19_SYNTHETIC_R2` with `remote:false`;
+- `workers_dev:false`, no routes, secrets, custom domains, account IDs,
+  Shopify/Google API handlers, or customer-media exposure.
+- HTTP worker responds with 404 on every request.
+
+`test:work-hq-media-local-end-to-end` creates **two** real Cloudflare
+LOCAL workerd test harnesses. The already certified local WebAssembly
+Worker decodes an actual synthetic PNG and returns sanitized WebP.
+The storage harness applies copies of the 23 fixed, audited SQL
+statements to a fake local D1. It adds synthetic source registry
+binding, atomically commits quota+intent using the real
+`D1Database.batch()`, then performs **TEST-ONLY local** conditional
+`R2Bucket.put()`, `head()` metadata verification, and `get()` byte
+hash readback. Tests also require no object before the DB commit,
+no upload permission from the Phase 16 evidence gate, reject duplicate
+DB reference with no second R2 object, prevent overwrite via
+`onlyIf: {etagDoesNotMatch:'*'}`, and 404 on the synthetic
+storage worker route. Only synthetic pixels and metadata are used.
+
+**CAUTION:** This integration test intentionally invokes R2 PUT only
+against the isolated `remote:false` fake R2 test bucket, while
+Phase 16 continues to return `upload_authorized:false`. This is
+a test demonstration of the LOCAL provider API, not a production
+authorization or deployment adapter. Do not copy test-only R2 writes
+into a LIVE/KEEP/WORK Worker or run a real R2 pilot without a separate
+approved Owner-auth/account-budget/retention and migration release.
+
+The production quota+intent plan still lives solely in inert SQL
+proposals 0004–0006, is not applied to WORK D1, and is not connected
+to the existing unpersisted quarantine adapter. The production
+sanitizer has not been wired to Shopify, Owner D1, Google QA, customer
+upload, private serving, or account-wide billing evidence.
+`test:work-hq-media-local-end-to-end` is NOT yet certified;
+run it on Windows after pulling and require exit code 0.
+
+**HOLD:** Cloudflare Images paid, LIVE/KEEP, real R2 storage,
+deployed D1 migrations and customer media upload/preview all OFF.
