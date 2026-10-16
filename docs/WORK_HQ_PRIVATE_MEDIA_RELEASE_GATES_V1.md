@@ -479,3 +479,17 @@ reviewed funded, load-tested design.
 The user's general delegation authorizes this SOURCE-ONLY
 architecture design, not charges or remote migrations. LIVE,
 KEEP, customer artwork and deployed WORK configurations unchanged.
+
+### Phase 26 and HQ integrated test direction
+
+Owner's Phase 26 local Windows result PASSED after pulling
+`fcedb05`: actual synthetic D1 one-shot ledger and HMAC duplicate
+guard, no actual Google/Shopify media. Phase 27 adds a test-only
+Shopify-signed custom-order-to-existing-Google-double-confirmation
+bridge and fail-closed full HQ local bundle (pending Windows).
+No media activation or customer upload is implied.
+
+Owner accepts the *possibility* of later paid Cloudflare capacity;
+this is NOT permission to subscribe, generate unbounded bills or
+apply private-media migrations. Preserve no-binding and privacy
+gates until a costed, separately approved WORK-specific release.
