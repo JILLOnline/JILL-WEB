@@ -54,6 +54,20 @@ export default {
         url.pathname==="/app/requests/media/inspect") &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
+    // Media inspect is OFF before D1 access or Shopify OAuth by default.
+    // Enabling this INSPECT flag never enables real uploads or delivery.
+    if(url.pathname==="/app/requests/media/inspect"){
+      const mediaEnv=env as Env & {
+        JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED?:string;
+        JILL_WORK_HQ_DETAIL_ENABLED?:string;
+      };
+      if(env.JILL_WORK_HOST_STAGE!=="canary" ||
+         mediaEnv.JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED!=="true" ||
+         mediaEnv.JILL_WORK_HQ_DETAIL_ENABLED!=="true" ||
+         typeof env.JILL_HQ_MERCHANT_READ_SECRET!=="string" ||
+         env.JILL_HQ_MERCHANT_READ_SECRET.length<32)
+        return unavailable("private_media_not_enabled");
+    }
     if(request.method==="GET" && url.pathname==="/healthz") {
       const ready=await schemaReady(env.JILL_ORDER_DESK_WORK_DB);
       return Response.json({
