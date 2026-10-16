@@ -165,6 +165,7 @@
     "work:hq:media:local:install": "npm install --prefix tools/work-media-local --no-audit --no-fund",
     "work:hq:media:edge:install": "npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund",
     "test:work-hq-media-edge-workerd": "npm run test:workerd-media-edge --prefix services/jill-order-desk/app-home",
+    "test:work-hq-media-local-end-to-end": "npm run test:workerd-media-local-end-to-end --prefix services/jill-order-desk/app-home",
     "test:work-hq-media-local-sanitizer": "npm run test --prefix tools/work-media-local",
     "test:work-hq-media-local-quarantine": "npm run test:quarantine --prefix tools/work-media-local",
     "test:work-hq-r2-private-preflight": "node scripts/test-work-hq-r2-private-preflight.mjs",
