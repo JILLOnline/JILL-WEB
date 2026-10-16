@@ -665,3 +665,57 @@ retention. R2 storage and operations remain separately metered.
 No R2 Worker binding, upload/preview route, D1 0004 migration,
 Images subscription change, LIVE/KEEP/Rewards or Google QA mutation
 was authorized or made.
+
+## Phase 12 — WORK R2 durable quota reservation SQL proposal (INERT)
+
+Owner's Windows logs confirmed both Phase 11 tests PASSED:
+offline read-only R2 auditor and real Cloudflare metadata. The real
+private Standard bucket is 0 objects / 0 B, r2.dev OFF and no custom
+domains; normal WORK/canary deployment configs have no R2 bindings.
+
+Source-only files:
+- `services/jill-order-desk/migration-plans/0005_work_r2_quota_guard.sql`
+- `services/jill-order-desk/work-private-r2-quota-plan.mjs`
+- `scripts/test-work-hq-r2-quota-plan.mjs`
+
+0005 is NOT in the active `migrations/` directory. Like the inert 0004
+media registry proposal, it MUST NOT be applied without a distinct
+Owner-approved review and recovery checkpoint. The offline test uses
+only in-memory Node SQLite and loads active 0001–0003 locally. It
+simulates one conditional SQL UPDATE ... RETURNING per reservation,
+avoiding a non-atomic SELECT then UPDATE quota race.
+
+Proposed WORK-only conservative guard:
+- Max single sanitized image: **8 MiB**.
+- Cumulative ever-reserved WORK storage: **256 MiB**, deliberately
+  irreversible without a separately audited recovery/retention process.
+- Maximum **40** requested WORK quarantine uploads per UTC month.
+- Each upload reserves **one Class A PUT and one Class B HEAD**.
+  No separate GET, LIST, preview, retry or delete access is authorized.
+- Monthly operation counters can start fresh in a later month, but
+  cumulative reserved bytes and reservation sequence never reset.
+- Failed/ambiguous R2 writes conservatively keep their reservations.
+- Exact WORK Shopify shop, no customer PII, raw URLs, provider object
+  keys or secrets in the counter table.
+
+**Crucial limitation:** this is a planned ceiling on one authorized
+WORK application workflow, NOT certified account-wide R2 accounting,
+a hard cloud spending cap, a live D1 table, a release-ready
+reservation adapter, or protection against other Cloudflare callers.
+A secure deployment needs an authoritative complete account-wide
+storage/operation snapshot (including other services), freshness
+requirements, server-held Owner access, provider-private R2 audit,
+D1-based reconciliation and extra metered operations controls.
+Cloudflare bills Standard storage and Class A/B operations separately,
+even though its free monthly allowance is generous:
+https://developers.cloudflare.com/r2/pricing/
+
+Local offline regression:
+```powershell
+npm.cmd run test:work-hq-r2-quota-plan
+if ($LASTEXITCODE -ne 0) { throw 'STOP: R2 SQL quota plan regression failed' }
+```
+
+**Release HOLD:** no live R2 writes, Worker binding, Cloudflare Images
+upgrade, LIVE/KEEP/Rewards/Google QA mutation, or D1 migration
+0004/0005 permitted from this phase. Private preview stays OFF.
