@@ -162,6 +162,8 @@
     "test:work-hq-private-r2-quarantine": "node scripts/test-work-hq-r2-quarantine.mjs",
     "test:work-hq-private-images-sanitizer": "node scripts/test-work-hq-private-images-sanitizer.mjs",
     "test:work-hq-media-budget-gate": "node scripts/test-work-hq-media-budget-gate.mjs",
+    "work:hq:media:local:install": "npm install --prefix tools/work-media-local --no-audit --no-fund",
+    "test:work-hq-media-local-sanitizer": "npm run test --prefix tools/work-media-local",
     "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
     "test:work-hq-media-registry-sql-plan": "node scripts/test-work-hq-media-registry-sql-plan.mjs",
     "test:work-hq-media-0004-readiness": "node scripts/test-work-hq-media-0004-readiness.mjs",
