@@ -158,6 +158,7 @@
     "test:work-hq-detail-view": "node scripts/test-work-hq-detail-view.mjs",
     "test:work-hq-reference-provenance": "node scripts/test-work-hq-reference-provenance.mjs",
     "test:work-hq-private-media-intent": "node scripts/test-work-hq-private-media-intent.mjs",
+    "test:work-hq-private-media-ingest-contract": "node scripts/test-work-hq-private-media-ingest-contract.mjs",
     "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
     "test:work-hq-media-registry-sql-plan": "node scripts/test-work-hq-media-registry-sql-plan.mjs",
     "test:work-hq-media-0004-readiness": "node scripts/test-work-hq-media-0004-readiness.mjs",
