@@ -159,14 +159,36 @@ try{
     Math.round(performance.now()-bigStart)+
     'ms elapsed (NOT Cloudflare CPU billing).');
 
-  // EXIF Orientation 6 (common phone photo): rotate pixel geometry and
-  // remove the original orientation metadata in the output.
-  const withRotation=await sharp({create:{width:64,height:48,
-    channels:3,background:'#3f779d'}})
-    .jpeg().withExif({IFD0:{Orientation:6}}).toBuffer();
+  // EXIF Orientation 6 (common phone photo): rotate the actual pixels,
+  // not just the reported dimensions, and discard all input metadata.
+  // Sharp's withExif({Orientation:6}) expects a string and silently
+  // serializes '6' as orientation 1. withMetadata({orientation:6}) is
+  // the correct way to create this test fixture with EXIF Orientation 6.
+  const rotatedFixtureWidth=64,rotatedFixtureHeight=48;
+  const rotationPixels=Buffer.alloc(rotatedFixtureWidth*rotatedFixtureHeight*3);
+  const quadrantColors=[
+    [230,40,40], // source top-left red
+    [35,210,65], // source top-right green
+    [20,75,225], // source bottom-left blue
+    [235,200,35], // source bottom-right yellow
+  ];
+  for(let y=0;y<rotatedFixtureHeight;y++){
+    for(let x=0;x<rotatedFixtureWidth;x++){
+      const quadrant=(y>=rotatedFixtureHeight/2?2:0)+
+        (x>=rotatedFixtureWidth/2?1:0);
+      const p=(y*rotatedFixtureWidth+x)*3;
+      for(let channel=0;channel<3;channel++)
+        rotationPixels[p+channel]=quadrantColors[quadrant][channel];
+    }
+  }
+  const withRotation=await sharp(rotationPixels,{
+    raw:{width:rotatedFixtureWidth,height:rotatedFixtureHeight,channels:3},
+  }).jpeg({quality:95,chromaSubsampling:'4:4:4'})
+    .withMetadata({orientation:6}).toBuffer();
   const rotationInput=await sharp(withRotation).metadata();
   assert.equal(rotationInput.orientation,6,
     'Fixture must actually include EXIF orientation 6');
+  assert.ok(rotationInput.exif,'Orientation fixture must carry EXIF');
   const rotateResponse=await call('image/jpeg',withRotation);
   const rotatedBytes=Buffer.from(await rotateResponse.arrayBuffer());
   assert.equal(rotateResponse.status,200,
@@ -175,8 +197,26 @@ try{
   assert.equal(rotateMeta.width,48);assert.equal(rotateMeta.height,64);
   assert.equal(rotateMeta.orientation,undefined);
   assert.equal(rotateMeta.exif,undefined);
+  assert.equal(rotateMeta.icc,undefined);
+  const orientedPixels=await sharp(rotatedBytes)
+    .removeAlpha().raw().toBuffer();
+  // After rotating source JPEG 90 degrees clockwise, the source
+  // corners end up at: TL blue, TR red, BL yellow, BR green.
+  const corners=[
+    {x:8,y:8,color:quadrantColors[2]},
+    {x:39,y:8,color:quadrantColors[0]},
+    {x:8,y:55,color:quadrantColors[3]},
+    {x:39,y:55,color:quadrantColors[1]},
+  ];
+  for(const corner of corners){
+    const p=(corner.y*48+corner.x)*3;
+    for(let channel=0;channel<3;channel++)
+      assert.ok(Math.abs(orientedPixels[p+channel]-
+        corner.color[channel])<=38,
+      'Orientation 6 must rotate each asymmetric source quadrant correctly');
+  }
   completed++;
-  console.log('PASS LOCAL WORKERD real EXIF Orientation 6 correction.');
+  console.log('PASS LOCAL WORKERD real EXIF Orientation 6 correction and 4-corner pixel verification.');
 
   // Use an actually animated, two-frame synthetic WebP fixture. Even
   // decoders capable of playing it must never accept it as one still image.
