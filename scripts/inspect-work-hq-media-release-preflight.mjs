@@ -78,7 +78,7 @@ export function summarizeWorkMediaReadOnlyPreflight({
     account_requests_month_observed:requests,
     operation_types_observed:kinds,
     observed_month_utc:month,
-    private_media_flag_enabled:false,
+    media_activation_flag_state_verified:false,
     remote_r2_binding_enabled:false,
     completeness_and_billing_guaranteed:false,
     account_usage_may_be_delayed:true,
@@ -132,6 +132,8 @@ if(called){
     const receipt=summarizeWorkMediaReadOnlyPreflight({
       privacyOutput,accountOutput,
     });
+    if(receipt.observed_month_utc!==new Date().toISOString().slice(0,7))
+      STOP('work_hq_media_read_only_stale_month');
     console.log('PASS JILL WORK private R2 bucket: Standard, empty, no public URLs or domains.');
     console.log('PASS JILL WORK deploy manifests: R2 binding absent (READ ONLY).');
     console.log('Observed UTC month: '+receipt.observed_month_utc);
