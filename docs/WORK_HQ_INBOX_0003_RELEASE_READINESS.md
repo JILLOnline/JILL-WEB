@@ -129,9 +129,12 @@ synthetic regression. After syncing the certified WORK branch,
   exact WORK UUID, *four* existing JILL tables and a two-record
   migration ledger with 0003 not recorded. Newer or ambiguous state
   is an automatic stop.
-- Verify `jill-order-desk-work` uses D1 backend
-  `version: production`, which supports Time Travel.
-- Check that a current Time Travel bookmark can be retrieved.
+- Verify exact WORK database name/UUID in Wrangler's `d1 info`
+  response. If `version` is supplied, it MUST equal `production`.
+  If omitted, record `backend: not_reported` without inferring
+  production; explicitly reported `alpha`/unknown versions still STOP.
+- Prove Time Travel capability separately by successfully obtaining
+  a current bookmark using the read-only `d1 time-travel info` endpoint.
   **The bookmark itself is never printed, persisted or exported.**
 - Re-run the WORK read-only preflight to detect a concurrent change
   before printing a success receipt.
@@ -154,3 +157,26 @@ Current official sources:
 database export containing customer/session records, Cloudflare Worker
 release, activating the fast-inbox feature, adding the media registry
 or provisioning a new secret. This phase checks capability only.
+
+
+## 2026-10-16 — Real Wrangler JSON shape reconciliation
+
+The Owner's actual `wrangler d1 info jill-order-desk-work --json`
+returned a direct JSON object with valid matching `name` and `uuid`,
+plus metadata such as `num_tables`, `running_in_region`,
+`read_replication`, and `database_size`. It did **not** include a
+`version` field. The original recovery inspector required exactly
+`version: production` and stopped at
+`time_travel_backend_info` **before** making any Time Travel request.
+
+The updated contract treats a missing `version` as **unknown** (not
+as `production`, not as `alpha`). The exact WORK name/UUID must
+still match; if a version is explicitly supplied it must be
+`production`. The independent read-only `d1 time-travel info` call
+must then succeed with a validated current bookmark before reporting
+recovery capability. The bookmark is discarded and never printed.
+
+This is a compatibility fix for real observed metadata, **not** a
+weakened authorization gate. No D1 migration or recovery restore
+is permitted by this change. A successful bookmark probe only
+establishes present capability, not a durable protected backup.
