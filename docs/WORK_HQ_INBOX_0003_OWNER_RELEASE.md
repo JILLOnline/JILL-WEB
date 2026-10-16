@@ -84,6 +84,58 @@ A passing postflight means the schema has been applied, **not**
 that the optional distributed inbox cache has been enabled or tested
 under live traffic. That switch requires its own separate release.
 
+## Wrangler Windows TTY correction and independent verification
+
+**Observed Owner incident:** after exact WORK v34/UUID preflight,
+Windows DPAPI checkpoint creation, and Wrangler listing **one** pending
+migration, the old synchronous Node subprocess stopped at Wrangler's
+`(Y/n)` prompt. The Owner independently confirmed the real WORK D1
+still has **four JILL tables** and exactly two migration records,
+with 0003 not recorded. The encrypted checkpoint was retained; no
+schema repair or restore is required on this evidence.
+
+The corrected implementation launches the real Wrangler CLI via
+**asynchronous `spawn` with `stdio: inherit`**, preserving its own
+interactive `(Y/n)` question. No `--yes` / forced confirmation is sent.
+The owner must still explicitly approve both the JILL phrase and
+Wrangler's confirmation.
+
+Before reattempting a remote write, test the exact two-step Windows
+terminal behavior without any Cloudflare request:
+
+```powershell
+npm.cmd run work:hq:inbox:0003:terminal:probe
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Windows console probe failed' }
+```
+
+This asks for `TEST JILL WORK TERMINAL`, then a **synthetic**
+`SYNTHETIC Wrangler confirm (Y/n)` prompt. Type `y` to finish.
+The probe never contacts D1, produces no bookmark and performs no
+database write. If it cannot complete, **do not apply the migration**.
+Test results from CI use synthetic pipes; this explicit owner-side
+TTY probe tests the real Windows console that CI cannot fully emulate.
+
+Then rerun the existing read-only release inspection to confirm the
+four-table and two-ledger pre-migration state. Only if both commands pass
+may the owner reattempt the previously approved `release:apply`.
+It will generate a **new fresh encrypted recovery bookmark** and will
+recheck exact WORK authority immediately before the remote write.
+Preserve the older checkpoint as historical recovery evidence.
+
+After a successful migration, run an independent read-only verification:
+
+```powershell
+npm.cmd run work:hq:inbox:0003:release:verify
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Inspect actual WORK D1 state' }
+```
+
+The `release:verify` mode is intentionally distinct from
+`release:inspect`: it expects the new five-table/three-ledger state,
+one empty index seed, and unchanged v34, and performs **no writes**.
+If apply fails or the result is ambiguous, run `release:verify` and
+the independent `work:hq:media:d1:inspect` read-only inspector
+before discussing any retry. Never auto-reapply or Time Travel restore.
+
 ## Errors, recovery and retention
 
 If Wrangler starts the write but returns an error, or postflight cannot

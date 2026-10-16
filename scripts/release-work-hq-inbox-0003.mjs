@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {spawnSync,execFileSync} from 'node:child_process';
+import {spawn,spawnSync,execFileSync} from 'node:child_process';
 import {createInterface} from 'node:readline/promises';
 import {randomUUID,createHash} from 'node:crypto';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -146,6 +146,7 @@ function inspectLocal(){
 function call(program,args,{
   cwd=ROOT,stdio='pipe',input,timeout=60000,
 }={}){
+  // Metadata-only noninteractive subprocess; never use for a TTY prompt.
   const p=spawnSync(program,args,{
     cwd,encoding:'utf8',shell:false,windowsHide:true,
     maxBuffer:8*1024*1024,stdio,input,timeout,
@@ -153,6 +154,38 @@ function call(program,args,{
   if(p.error||p.status!==0)
     fail('work_0003_command_failed');
   return String(p.stdout||'');
+}
+// A synchronous Windows subprocess can show Wrangler's (Y/n) prompt,
+// yet fail to accept input. Use an ASYNCHRONOUS inherited console so
+// Wrangler, not the parent Node readline, owns the second confirmation.
+// Generic runner is exported for OFFLINE synthetic process regression;
+// production always invokes it with the pinned Wrangler path/args.
+export async function runWork0003InheritedTerminal(program,args,{
+  cwd=ROOT,stdio='inherit',timeout=180000,syntheticInput=null,
+}={}){
+  // Only the offline pipe-mode child fixture may receive synthetic input.
+  // Never feed Wrangler an automatic response; its real TTY asks the owner.
+  if(!['inherit','pipe'].includes(stdio)||
+    (syntheticInput!==null&&
+      (stdio!=='pipe'||typeof syntheticInput!=='string')))
+    fail('work_0003_unsafe_terminal_mode');
+  return await new Promise((resolve,reject)=>{
+    const child=spawn(program,args,{
+      cwd,shell:false,windowsHide:false,stdio,timeout,
+    });
+    let stdout='',stderr='';
+    if(stdio==='pipe'){
+      child.stdout?.on('data',part=>{stdout+=String(part);});
+      child.stderr?.on('data',part=>{stderr+=String(part);});
+      if(syntheticInput!==null)child.stdin?.end(syntheticInput);
+      else child.stdin?.end();
+    }
+    child.once('error',()=>reject(Error('work_0003_command_failed')));
+    child.once('close',(code,signal)=>{
+      if(code===0&&signal===null)resolve(Object.freeze({exitCode:0,stdout,stderr}));
+      else reject(Error('work_0003_command_failed'));
+    });
+  });
 }
 function readBaseline(){
   const s=call(process.execPath,[BASELINE,'--inspect']);
@@ -262,10 +295,53 @@ async function runMain(){
   try{
     const mode=process.argv[2];
     if(process.argv.length!==3||
-      !['--inspect','--apply'].includes(mode))
+      !['--inspect','--apply','--verify','--terminal-probe'].includes(mode))
       fail('work_0003_mode_invalid');
+    if(mode==='--terminal-probe'){
+      // No D1, Cloudflare, account, bookmark or filesystem access here.
+      // Rehearses parent readline + inherited Node child question on
+      // the owner's real Windows console, exactly like Wrangler.
+      phase='synthetic_terminal_probe';
+      if(process.platform!=='win32'||!process.stdin.isTTY||
+        !process.stdout.isTTY||Boolean(process.env.CI))
+        fail('work_0003_interactive_windows_required');
+      const ui=createInterface({input:process.stdin,output:process.stdout});
+      let typed;
+      try{typed=await ui.question(
+        'Type TEST JILL WORK TERMINAL to check the local console (NO D1 writes): ');}
+      finally{ui.close();}
+      if(typed!=='TEST JILL WORK TERMINAL')
+        fail('work_0003_owner_not_approved');
+      const probeCode=[
+        'process.stdout.write("SYNTHETIC Wrangler confirm (Y/n): ");',
+        'process.stdin.setEncoding("utf8");',
+        'process.stdin.once("data",x=>{',
+        '  if(String(x).trim().toLowerCase()==="y"){',
+        '    console.log("SYNTHETIC CONFIRMATION PASS");',
+        '    process.exit(0);',
+        '  }',
+        '  process.exit(31);',
+        '});',
+      ].join('');
+      await runWork0003InheritedTerminal(process.execPath,
+        ['-e',probeCode],{cwd:ROOT,stdio:'inherit',timeout:30000});
+      console.log('PASS LOCAL WORK TERMINAL PROBE. No Cloudflare request, D1 write or bookmark access.');
+      return;
+    }
     phase='verify_git_and_exact_migration_source';
     const head=gitGuard(),local=inspectLocal();
+    if(mode==='--verify'){
+      // A failed/ambiguous apply must be independently certifiable
+      // WITHOUT requiring the pre-0003 four-table baseline.
+      phase='verify_live_0003_postflight_read_only';
+      const receipt=verifyPostflight();
+      console.log('PASS WORK D1 0003 independently verified: '+
+        receipt.tables_verified+' JILL tables, '+
+        receipt.migrations_verified+' ledger entries, '+
+        receipt.initial_index_rows+' empty index seed.');
+      console.log('READ ONLY. WORK v34 preserved; fast inbox OFF; no migration, retry or restore.');
+      return;
+    }
     phase='verify_real_work_d1_prechange';
     readBaseline();
     if(mode==='--inspect'){
@@ -307,7 +383,7 @@ async function runMain(){
     console.log('STOP after any ambiguous migration outcome; NEVER auto-restore or reapply.');
     phase='apply_exact_pending_work_0003';
     writeStarted=true;
-    call(process.execPath,[WRANGLER,
+    await runWork0003InheritedTerminal(process.execPath,[WRANGLER,
       ...work0003ReleaseCommand('apply_0003')],{
         cwd:APP,stdio:'inherit',timeout:180000,
       });
@@ -322,6 +398,7 @@ async function runMain(){
   }catch(e){
     const allowed=new Set([
       'work_0003_mode_invalid','work_0003_git_unverified',
+      'work_0003_unsafe_terminal_mode',
       'work_0003_wrangler_missing','work_0003_migration_source_drift',
       'work_0003_command_failed','work_0003_remote_json_invalid',
       'work_0003_bookmark_not_found','work_0003_windows_dpapi_required',
