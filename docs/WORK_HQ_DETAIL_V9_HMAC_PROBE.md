@@ -281,3 +281,45 @@ operator confirmation. A successful rollback returns full-detail to OFF;
 Google QA deployments, Shopify, My JILL, Rewards, D1 and LIVE/KEEP
 are not modified. Do not blindly rerun failed release/rollback commands;
 first inspect Cloudflare deployments status.
+
+## WORK v34 post-release acceptance audit (no deployment)
+
+The owner-confirmed Cloudflare release activated exactly
+`4973b74d-d479-41da-897c-e36129303279` (v34) at **100% WORK traffic**
+with the Google QA v9 full-detail flag ON. Immediately after switching,
+the release command reported passing health/login, anonymous detail
+denial, Owner setup disabled and status-command Origin denial. Original
+OFF v33 `204d66c3-3296-430d-8288-39c354876600` remains available.
+
+The pre-release `on:release:inspect` intentionally refuses to run once
+v34 is active; do not repeat the release or staging commands. For
+ongoing read-only operational checks, run from a clean synchronized
+`jill/rewards-work` working tree:
+
+```powershell
+npm.cmd run test:work-hq-detail-v9-live-audit
+npm.cmd run work:hq:detail:v9:live:audit
+```
+
+The live audit checks v34 is the exact current active Cloudflare Worker,
+v33's rollback identity is present, v34 alone adds the certified ON flag,
+four existing secret **references** (not values), OAuth/Owner/D1/status
+bindings, runtime and source fingerprint are unchanged, and Google v9
+is still the certified signed detail deployment independent of the v7
+inbox/status source. It then performs **anonymous** health/login/denial
+checks only, using a deliberately nonexistent ID. No privileged session,
+real request details or customer PII are retrieved.
+
+The live audit **cannot** prove the signed-in Owner actually sees the
+original submitted order. For that remaining acceptance criterion, the
+merchant must open the WORK JILL HQ request workspace, verify actual
+customer/event/items/options, variation allocations, personalization
+groups and opaque file reference IDs, and confirm the inbox/management
+screen stays healthy. Any abnormal original details or unexpected access
+must be investigated immediately before adding downstream features.
+
+Do not misinterpret reference IDs as usable media files: secure reference
+preview/download remains **unconnected**, and quote/payment/fulfillment
+workflows remain separate. A follow-up secure-media architecture must
+first establish the actual storage authority and Owner-scoped retrieval
+mechanism; do not construct direct public download links from opaque IDs.
