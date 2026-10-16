@@ -530,3 +530,68 @@ ledger, not a billing/Shopify paid-order operation.
 
 Private media preview, customer-account linkage, Quotes/Invoices,
 fulfillment and 1m-customer load capacity are separate gates.
+
+## Phase 29 read-only production binding audit — PASS (Owner Windows)
+
+After synchronizing WORK to commit `94ff3ce`, the Owner executed
+`npm.cmd run work:hq:detail:v9:live:audit` with exit code zero.
+Cloudflare reported **exact active v34**
+`4973b74d-d479-41da-897c-e36129303279` and retained
+**rollback v33**
+`204d66c3-3296-430d-8288-39c354876600`.
+Four existing secret bindings, WORK D1 identity, OAuth ON,
+Owner setup OFF, merchant status writes ON, exact detail ON,
+Google QA @9 read source and unchanged @7 inbox/status source were
+all checked. Live anonymous health/login and restricted-route
+denials passed. This is read-only evidence; no customer writes
+or Worker changes occurred.
+
+**Pending:** Owner has NOT yet shown an accepted status update
+and observed revision increment. Real WORK customer message/email
+delivery is also unverified. Preserve the already working v34
+before changing anything.
+
+## Phase 30 — LOCAL ONLY WORK v34-compatible UI build preparation
+
+New `scripts/prepare-work-hq-v34-ui-local.mjs` produces only a
+local `dist/server/wrangler.hq-v34-ui-LOCAL-NOUPLOAD.json`
+artifact, never uploaded or activated. It checks synced clean WORK
+source, existing newer provenance classifier/UI, source manifests
+with no R2/Images/merchant-write/detail activation flags, then
+runs source UI/detail/merchant regressions, TypeScript, and
+fresh local canary compilation.
+
+The candidate applies the already-tested OAuth + exact-detail
+transforms to the fresh locked base; requires exactly
+`JILL_WORK_HOST_STAGE=canary`,
+`JILL_WORK_OWNER_BOOTSTRAP_ENABLED=false`,
+`JILL_WORK_OAUTH_ENABLED=true`,
+`JILL_WORK_MERCHANT_WRITES_ENABLED=true` and
+`JILL_WORK_HQ_DETAIL_ENABLED=true`, one exact WORK D1, and
+NO R2/Images/Queues/Intake activation or plaintext secrets.
+It may change local compiled server and UI code relative to
+active v34: **candidate binary/code equivalence with v34 is
+NOT VERIFIED** by this transform, nor have the four *deployed*
+secret bindings been read in this local preparation. It is not
+a production-ready UI-only patch or a staging approval.
+
+Adversarial `scripts/test-work-hq-v34-ui-local.mjs` runs
+offline in CI and rejects altered flags, extra secret/plaintext
+vars, foreign D1, added R2, changed worker and malformed
+source. The owner can verify it and generate the local build:
+
+```powershell
+npm.cmd run test:work-hq-v34-ui-local
+if ($LASTEXITCODE -ne 0) { throw 'STOP: UI security invariant failed' }
+npm.cmd run work:hq:v34:ui:prepare-local
+if ($LASTEXITCODE -ne 0) { throw 'STOP: UI local build failed' }
+```
+
+**HOLD:** v34 stays active. No `wrangler versions upload/deploy`,
+no remote Google Apps Script/D1/R2 operations, no paid feature.
+Before a separately authorized inactive staging of a new v35,
+review production code/asset differences against audited v34,
+all existing four secret and D1 binding parity, route and
+compatibility parity, correct Google QA @7/@9 isolation,
+anonymous auth denial, and a safe v34 rollback plan. Never
+use older UI deployment scripts pinned to obsolete versions.
