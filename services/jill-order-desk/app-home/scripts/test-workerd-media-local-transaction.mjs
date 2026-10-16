@@ -295,6 +295,27 @@ try{
   assert.equal(malformed.code,'sanitization_failed');
   const mislabeled=await execute({...selected(5),declaredMime:'image/jpeg'});
   assert.equal(mislabeled.code,'sanitization_failed');
+  // A forged "sanitized" HTTP response carrying real WebP EXIF is
+  // rejected independently by the transaction layer, even if it lies
+  // in all sanitizer result headers. No quota or R2 side effects.
+  const exifWebp=await sharp(sourcePng)
+    .webp({lossless:true})
+    .withExif({IFD0:{Artist:'SYNTHETIC_PHASE22_PRIVATE_EXIF'}})
+    .toBuffer();
+  assert.ok((await sharp(exifWebp).metadata()).exif);
+  const forgedCodec=async()=>new Response(exifWebp,{
+    status:200,headers:{
+      'content-type':'image/webp',
+      'x-jill-sanitized':'true',
+      'x-jill-persisted':'false',
+      'x-jill-source-type':'image/png',
+      'x-jill-width':'96',
+      'x-jill-height':'64',
+    },
+  });
+  const forged=await execute({...selected(4),fetchCodec:forgedCodec});
+  assert.equal(forged.code,'sanitization_failed');
+
   const stale=await execute({...selected(6),providerSnapshot:{
     ...providerSnapshot,checked_at_ms:nowMs-300001}});
   assert.equal(stale.code,'provider_attestation_unavailable');
