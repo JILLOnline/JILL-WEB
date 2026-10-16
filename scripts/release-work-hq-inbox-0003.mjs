@@ -295,8 +295,39 @@ async function runMain(){
   try{
     const mode=process.argv[2];
     if(process.argv.length!==3||
-      !['--inspect','--apply','--verify'].includes(mode))
+      !['--inspect','--apply','--verify','--terminal-probe'].includes(mode))
       fail('work_0003_mode_invalid');
+    if(mode==='--terminal-probe'){
+      // No D1, Cloudflare, account, bookmark or filesystem access here.
+      // Rehearses parent readline + inherited Node child question on
+      // the owner's real Windows console, exactly like Wrangler.
+      phase='synthetic_terminal_probe';
+      if(process.platform!=='win32'||!process.stdin.isTTY||
+        !process.stdout.isTTY||Boolean(process.env.CI))
+        fail('work_0003_interactive_windows_required');
+      const ui=createInterface({input:process.stdin,output:process.stdout});
+      let typed;
+      try{typed=await ui.question(
+        'Type TEST JILL WORK TERMINAL to check the local console (NO D1 writes): ');}
+      finally{ui.close();}
+      if(typed!=='TEST JILL WORK TERMINAL')
+        fail('work_0003_owner_not_approved');
+      const probeCode=[
+        'process.stdout.write("SYNTHETIC Wrangler confirm (Y/n): ");',
+        'process.stdin.setEncoding("utf8");',
+        'process.stdin.once("data",x=>{',
+        '  if(String(x).trim().toLowerCase()==="y"){',
+        '    console.log("SYNTHETIC CONFIRMATION PASS");',
+        '    process.exit(0);',
+        '  }',
+        '  process.exit(31);',
+        '});',
+      ].join('');
+      await runWork0003InheritedTerminal(process.execPath,
+        ['-e',probeCode],{cwd:ROOT,stdio:'inherit',timeout:30000});
+      console.log('PASS LOCAL WORK TERMINAL PROBE. No Cloudflare request, D1 write or bookmark access.');
+      return;
+    }
     phase='verify_git_and_exact_migration_source';
     const head=gitGuard(),local=inspectLocal();
     if(mode==='--verify'){
