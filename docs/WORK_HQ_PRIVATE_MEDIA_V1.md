@@ -1510,3 +1510,77 @@ use an old general "GO FOR IT" for those specific remote actions.
 **Status: NO-GO for live uploads/previews.** No production migration,
 real bucket write or binding, Cloudflare Images paid activation,
 LIVE/KEEP deployment or customer artwork access is authorized.
+
+## Phase 21 — source-only authenticated WORK media Owner inspection
+
+This phase implements the specifically approved WORK-only **authentication
+integration** but does NOT accept artwork, deploy Workers, alter real D1,
+enable customer previews, or authorize uploads.
+
+New `services/jill-order-desk/work-private-media-owner-boundary.mjs`
+exports `handleWorkPrivateMediaOwnerInspect`, which handles a small
+form-urlencoded **reference selector**, not file bytes. Exact route:
+`POST /app/requests/media/inspect` (registered as a sibling of
+WORK merchant requests; GET returns HTTP 405). The route is
+source-only and **OFF by default**.
+
+The React Router entry point:
+`app-home/app/routes/app.requests.media.inspect.tsx`
+requires **all** of:
+1. Stage-pinned exact CANARY origin and browser Origin CSRF check
+   (also enforced early in `app-home/workers/app.ts`).
+2. `JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED==="true"` AND
+   the existing `JILL_WORK_HQ_DETAIL_ENABLED==="true"` AND a
+   configured WORK-only merchant read secret. The new flag is
+   deliberately absent from normal WORK/canary Wrangler configs.
+3. Trusted `workShopify(env).authenticate.admin(request)`, reused
+   per single HTTP request with `authenticateWorkAdminOnce`.
+4. Real `readWorkMerchantPermission` using WORK D1 action
+   `requests.read`, exact bound Shopify WORK online account Owner
+   (non-owner administrators denied) and the registered staff ID.
+5. Strict 1 KiB body and allowlisted `submission_id`, `scope`,
+   `item_id`, `index` fields; duplicate fields, customer identity,
+   email, phone, staff role, shop, URL, file or session keys rejected.
+6. Signed `readWorkGoogleQaMerchantDetail` exact request ID;
+   `chooseWorkOwnerReference` ensures the canonical item and slot
+   belong to that exact signed request. Public Cloudinary/external
+   references cannot be claimed as newly private objects.
+
+Even when every above check passes, the ONLY success-path response
+is **HTTP 503 `private_media_storage_not_connected`**, no file
+key/URL/PII, no R2 binding, D1 write, upload or preview.
+Never add an R2 PUT or a response body with private media to this
+inspection route. Phase 16 prewrite and Phase 20 reconciliation
+cannot be bypassed or used for authorization.
+
+Offline integration regression
+`services/jill-order-desk/app-home/scripts/test-workerd-media-owner-boundary.mjs`
+loads the real WORK 0001 D1 authority tables into a synthetic local
+workerd database, exercises the REAL permission evaluator with
+synthetic online Shopify session SHAPES (not actual Shopify network
+sessions), and verifies guests, disabled flags, offline/expired
+sessions, wrong shops, delegated staff, mismatched canonical source,
+invalid/cross-customer selectors, forged identity fields, malformed
+or oversized forms, and no exposure or storage operation. Tests also
+statistically verify source route wiring and that both deployable
+Worker configurations still lack R2 bindings and the new flag.
+
+Run on Windows, after pulling WORK branch:
+```powershell
+npm.cmd run test:work-hq-media-owner-boundary
+if ($LASTEXITCODE -ne 0) {
+  throw 'STOP: Phase 21 source-only Owner gate test failed'
+}
+```
+
+**NOT YET WINDOWS CERTIFIED.** Static GitHub source and CI wiring
+checks alone are not test execution. Real Shopify SDK session integration
+in a production-authenticated route, D1 migrations 0004–0006,
+true Cloudflare usage/privacy proof, private WebP ingest and
+retention/expiry/manual recovery all remain separate unapproved gates.
+To activate even the non-upload inspection flag on remote WORK would
+require explicit separate owner approval.
+
+**NO-GO for real customer upload or preview.** LIVE/KEEP, merchant
+Rewards, Google QA, remote D1/R2, billing/subscription, and existing
+WORK host deploy remain unchanged.
