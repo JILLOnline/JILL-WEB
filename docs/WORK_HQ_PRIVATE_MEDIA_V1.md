@@ -102,3 +102,78 @@ wire it only behind the real existing WORK Shopify/D1 server auth path.
 **Do not run a Worker deployment on the strength of these synthetic
 tests.** This is a source-level trust contract for the next isolated
 WORK media integration, not a completed media service.
+
+## Registry phase 2 — immutable source reference binding (source-only)
+
+A new pure helper, `work-private-media-registry.mjs`, prepares a
+**pending, disabled-only** registry record. It derives a keyed HMAC from
+the exact canonical original reference **and** shop, submission ID,
+request/item scope, item ID, and index. That prevents a matching digest
+from authorizing a reference copied to another request, item, or slot.
+It uses domain-separated SHA-256 HMAC; no raw URL, provider public ID,
+email, address or file content is stored in the drafted record.
+
+The HMAC intentionally omits revision: canonical source status updates
+may increase the revision without changing the original submitted media
+reference. Replacing or changing the original reference itself invalidates
+the binding. The operator must provision a **dedicated WORK-only registry
+MAC key** separately before any real persistence. Do not reuse a LIVE
+key, the existing Google HMAC secret or a browser-exposed API key.
+No new key has been created or installed by this source change.
+
+`draftWorkMediaRegistryBinding` takes a previously Owner-verified
+detail projection, a canonical submission ID, a request/item selector
+and the private MAC key. It returns only a frozen record in
+`pending_verification`. `inspectWorkMediaRegistryBinding` accepts
+only the exact bounded pending row and compares MACs in constant time.
+Even a correctly matching record returns `preview_disabled`,
+`provider_storage_not_verified`. A row that claims `verified`,
+includes a provider or an arbitrary URL is rejected. These helpers
+**are not authentication or storage attestation**, and MUST only run
+after the real Shopify online Admin + WORK D1 Owner gate.
+
+Proposed WORK D1 schema — **DESIGN ONLY, NOT A DEPLOYABLE MIGRATION**:
+
+```sql
+-- DO NOT APPLY. Separate review, WORK D1 ID inspection,
+-- dedicated secret provisioning and migration approval are required.
+CREATE TABLE jill_work_private_media_registry (
+  shop TEXT NOT NULL CHECK(shop='jill-work.myshopify.com'),
+  submission_id TEXT NOT NULL,
+  scope TEXT NOT NULL CHECK(scope IN ('request','item')),
+  item_key TEXT NOT NULL DEFAULT '',
+  reference_index INTEGER NOT NULL
+    CHECK(reference_index BETWEEN 0 AND 19),
+  reference_mac TEXT NOT NULL
+    CHECK(length(reference_mac)=64),
+  status TEXT NOT NULL DEFAULT 'pending_verification'
+    CHECK(status IN ('pending_verification','revoked','quarantined')),
+  provider TEXT,
+  provider_asset_immutable_id TEXT,
+  provider_private_attestation_id TEXT,
+  content_sha256 TEXT,
+  mime_type TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY(shop,submission_id,scope,item_key,reference_index),
+  CHECK((scope='request' AND item_key='') OR
+        (scope='item' AND length(item_key)>0))
+);
+```
+
+The actual storage schema, provider-verified attestation, access
+revocations, provider identity, content hash and safe private delivery
+must be audited **before** a migration becomes executable. A pure HMAC
+does not make an existing unsigned Cloudinary upload private, does not
+prove file ownership at the provider, and must never become a standalone
+permission to fetch. Future media grants require per-request Owner auth
+plus *current* authoritative storage verification.
+
+Offline test: `npm.cmd run test:work-hq-media-registry`.
+It checks revision stability, different MACs for copied references in
+other items/slots, changed secret/source rejection, malformed fields,
+false `verified` statuses, URL injections, and P1/P2 preservation.
+It performs no network or D1 operations.
+
+**No new D1 migration file is present.** WORK v34 continues active
+with the previous UI and media previews disabled.
