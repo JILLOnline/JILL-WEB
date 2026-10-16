@@ -80,6 +80,17 @@ const deny=x=>{
 };
 for(const value of [undefined,null,{},'hello',[],42])
   deny(value);
+// Every malformed outer envelope must fail with our policy error,
+// including null: no raw JS destructuring TypeError or fallback report.
+for(const value of [
+  {...base,customer_email:'private@example.invalid'},
+  {...base,object_key:'work/quarantine/v1/hidden'},
+  {...base,shop:'jill-work.myshopify.com'},
+  {rows,nowMs:now,quotaReservedBytes:460},
+  {rows,nowMs:now,quotaLifetimeReservations:4},
+  {rows,quotaReservedBytes:460,quotaLifetimeReservations:4},
+  {nowMs:now,quotaReservedBytes:460,quotaLifetimeReservations:4},
+])deny(value);
 for(const value of [null,{},'x',5])
   deny({...base,rows:value});
 for(const state of ['uploaded','private','public','deleted','pending','']){
