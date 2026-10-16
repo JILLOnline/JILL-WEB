@@ -217,3 +217,67 @@ Do not assume inactive staging enables customer details. A later
 separate reviewed WORK-only release must verify Owner authentication,
 D1 permission, anonymous direct-URL denial, real disposable WORK
 request projection and preservation of inbox/status operations.
+
+## Recovered inactive ON v34 and exact release (no new upload)
+
+Merchant's read-only Cloudflare recovery verified:
+
+- Active OFF v33 (100%): \`204d66c3-3296-430d-8288-39c354876600\`.
+- ONE inactive ON v34: \`4973b74d-d479-41da-897c-e36129303279\`.
+- Exact v34 marker: \`JILL HQ WORK Google v9 exact request detail ON; INACTIVE owner-QA candidate\`.
+- \`verifyWorkDetailOnCandidate\` passed: only the explicit
+  \`JILL_WORK_HQ_DETAIL_ENABLED=true\` binding was added; all existing
+  four secrets, WORK D1, OAuth, Owner commissioning, writes, code,
+  compatibility and asset routing match v33.
+
+Do not run \`work:hq:detail:v9:on:stage\` again. Do not upload a new
+Cloudflare version or rotate credentials.
+
+The separate WORK-only, exact-v34 release script supports:
+
+\`\`\`powershell
+npm.cmd run test:work-hq-detail-v9-on-release
+npm.cmd run work:hq:detail:v9:on:release:inspect
+\`\`\`
+
+The inspection is **read-only**, requiring clean synchronized WORK source,
+live Google v9 ID matching, v33 100%-active, unique v34 with the exact
+marker and no unknown newer versions. It validates all original secret
+**bindings** (never reading secret values), D1, authentication and the
+original v7 inbox/status source.
+
+After the operator confirms the signed-in Shopify WORK dashboard is
+healthy, the release is a separate explicit action:
+
+\`\`\`powershell
+npm.cmd run work:hq:detail:v9:on:release
+\`\`\`
+
+It checks anonymous WORK health/login, exact request, Owner setup and
+status-command boundary **before** switching. It requests the exact
+operator confirmation before performing \`versions deploy\` at 100% to
+**only** v34. After release it checks the exact active version and repeats
+the anonymous boundary checks. On its own release/post-release failure,
+the script attempts rollback **only if v34 is current**; any unfamiliar
+active version is left untouched and requires manual review.
+
+**Important**: passing anonymous checks does not prove the actual
+Owner-bound Google v9 customer detail read succeeds. Immediately after
+an ON release, signed-in WORK Owner must open a preexisting authorized
+WORK request and confirm customer/event/items, options and P1/P2
+personalizations load as expected, no raw JSON/key/Google URL is displayed,
+and the inbox/status workspace remains healthy. Hide customer PII in any
+shared screenshots. The permitted media view is **reference IDs only**.
+
+If real Owner QA fails, no further status mutations. The
+operator-controlled rollback command is:
+
+\`\`\`powershell
+npm.cmd run work:hq:detail:v9:on:rollback
+\`\`\`
+
+It only targets exact v33 and requires v34 currently active plus local
+operator confirmation. A successful rollback returns full-detail to OFF;
+Google QA deployments, Shopify, My JILL, Rewards, D1 and LIVE/KEEP
+are not modified. Do not blindly rerun failed release/rollback commands;
+first inspect Cloudflare deployments status.
