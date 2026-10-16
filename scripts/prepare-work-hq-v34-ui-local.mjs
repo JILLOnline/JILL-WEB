@@ -33,20 +33,48 @@ function stop(code){throw Error('work_hq_v34_local_ui_'+code);}
 function json(x){return JSON.stringify(x);}
 function identical(a,b){return json(a)===json(b);}
 function object(x){return !!x&&typeof x==='object'&&!Array.isArray(x);}
-
+const EMPTY_BINDING_ARRAYS=Object.freeze([
+  'r2_buckets','kv_namespaces','queues','services','routes',
+]);
+// Wrangler/Vite generated manifests may serialize inert defaults as
+// empty [] or {}. Never interpret an empty container as an active binding.
+// Only exact known inert shapes are acceptable; unexpected sections and
+// ANY real capability still fail closed.
+function inertSection(key,value){
+  if(value===undefined)return true;
+  if(EMPTY_BINDING_ARRAYS.includes(key))
+    return Array.isArray(value)&&value.length===0;
+  if(key==='images')
+    return object(value)&&Object.keys(value).length===0;
+  if(key==='durable_objects'||key==='unsafe')
+    return object(value)&&(
+      Object.keys(value).length===0 ||
+      (Object.keys(value).length===1 &&
+       Object.hasOwn(value,'bindings')&&
+       Array.isArray(value.bindings)&&value.bindings.length===0)
+    );
+  return false;
+}
+function requireNoNewBindings(o,tag){
+  for(const key of [
+    ...EMPTY_BINDING_ARRAYS,'images','durable_objects','unsafe',
+  ])if(!inertSection(key,o[key]))
+    stop(tag+'_active_'+key);
+}
+function requireWorkD1(o,tag){
+  if(!object(o)||o.name!=='jill-order-desk-canary-work')
+    stop(tag+'_worker');
+  if(!Array.isArray(o.d1_databases)||
+     o.d1_databases.length!==1||
+     o.d1_databases[0]?.binding!=='JILL_ORDER_DESK_WORK_DB'||
+     o.d1_databases[0]?.database_name!=='jill-order-desk-work'||
+     o.d1_databases[0]?.database_id!==D1)
+    stop(tag+'_d1');
+}
 /** STRICT LOCAL v34 shape preparation; no network or secrets read. */
 export function prepareWorkHqV34LocalUi(source){
-  if(!object(source)||source.name!=='jill-order-desk-canary-work'||
-     source.r2_buckets!==undefined||source.images!==undefined||
-     source.kv_namespaces!==undefined||source.queues!==undefined||
-     source.durable_objects!==undefined||source.services!==undefined||
-     source.routes!==undefined||
-     source.unsafe!==undefined||
-     !Array.isArray(source.d1_databases)||
-     source.d1_databases.length!==1||
-     source.d1_databases[0].binding!=='JILL_ORDER_DESK_WORK_DB'||
-     source.d1_databases[0].database_id!==D1)
-    stop('base_invalid');
+  requireWorkD1(source,'base');
+  requireNoNewBindings(source,'base');
   // Use the already-certified manifest transforms. The base is OAuth
   // locked by design; build a LOCAL candidate with the same exact five
   // plaintext flags as the remotely audited active v34.
@@ -54,13 +82,9 @@ export function prepareWorkHqV34LocalUi(source){
   try{
     next=prepareWorkDetailOnManifest(prepareOAuthManifest(source));
   }catch{stop('transform_invalid');}
-  if(!object(next)||next.name!==source.name||
-     !object(next.vars)||!identical(next.vars,VARS)||
-     next.r2_buckets!==undefined||next.images!==undefined||
-     next.kv_namespaces!==undefined||next.queues!==undefined||
-     next.durable_objects!==undefined||next.services!==undefined||
-     next.routes!==undefined||next.unsafe!==undefined||
-     !Array.isArray(next.d1_databases)||
+  requireWorkD1(next,'candidate');
+  requireNoNewBindings(next,'candidate');
+  if(!object(next.vars)||!identical(next.vars,VARS)||
      !identical(next.d1_databases,source.d1_databases))
     stop('candidate_invalid');
   if(!object(source.vars)||!object(next.vars)||
