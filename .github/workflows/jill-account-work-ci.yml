@@ -165,6 +165,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-local-end-to-end
 
+      - name: Verify genuine local D1 and R2 uncertain-write recovery with no retry
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-recovery
+
       - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-r2-d1-batch
