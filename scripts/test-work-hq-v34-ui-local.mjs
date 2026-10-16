@@ -61,6 +61,26 @@ assert.equal(source.vars.JILL_WORK_OAUTH_ENABLED,'false');
 assert.equal(source.vars.JILL_WORK_HQ_DETAIL_ENABLED,undefined);
 assert.equal(source.vars.JILL_WORK_MERCHANT_WRITES_ENABLED,undefined);
 count++;
+// The Cloudflare Vite build may serialize inert defaults even when
+// there is NO binding. Keep and preserve those exact known empty forms.
+for(const harmless of [
+  {r2_buckets:[]},{kv_namespaces:[]},{queues:[]},
+  {services:[]},{routes:[]},{images:{}},
+  {durable_objects:{}},{durable_objects:{bindings:[]}},
+  {unsafe:{}},{unsafe:{bindings:[]}},
+  {r2_buckets:[],images:{},queues:[],services:[],
+    durable_objects:{bindings:[]},unsafe:{bindings:[]}},
+]){
+  const input={...source,...harmless};
+  const result=build(input);
+  assert.equal(result.deployment_authorized,false);
+  assert.equal(result.cloudflare_version_uploaded,false);
+  assert.equal(result.storage_activation_authorized,false);
+  for(const [key,value] of Object.entries(harmless))
+    assert.deepEqual(result.candidate[key],value,
+      'Preserve inert generated Wrangler shape for '+key);
+  count++;
+}
 for(const modified of [
   null,undefined,[],{},'string',
   {...source,name:'jill-order-desk-live'},
@@ -80,12 +100,14 @@ for(const modified of [
   {...source,d1_databases:[source.d1_databases[0],
     source.d1_databases[0]]},
   {...source,r2_buckets:[{binding:'WORK_ART',bucket_name:'fake'}]},
-  {...source,r2_buckets:[]},
   {...source,images:{binding:'IMAGES'}},
-  {...source,queues:[]},
-  {...source,services:[]},
-  {...source,kv_namespaces:[]},
-  {...source,unsafe:{}},
+  {...source,queues:[{binding:'MALICIOUS'}]},
+  {...source,services:[{binding:'OTHER_WORKER',service:'live'}]},
+  {...source,kv_namespaces:[{binding:'CACHE',id:'secret'}]},
+  {...source,durable_objects:{bindings:[{name:'OTHER'}]}},
+  {...source,durable_objects:{migrations:[{tag:'do'}]}},
+  {...source,unsafe:{bindings:[{name:'EXPAND'}]}},
+  {...source,unsafe:{metadata:{new_capability:true}}},
   {...source,routes:['*/*']},
   {...source,main:''},
   {...source,compatibility_flags:[]},
