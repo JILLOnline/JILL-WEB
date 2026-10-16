@@ -300,3 +300,56 @@ Do not run `wrangler d1 migrations list` or
 database's existing migration ledger and the exact WORK-only rollout.
 There are still **no actual D1 writes, keys, file previews or deployments**
 as part of this diagnostic change.
+
+## Post-0003 WORK D1 baseline / media 0004 read-only gate
+
+On 2026-10-16 the Owner **successfully applied** migration
+`0003_work_verified_inbox_index.sql` to the exact WORK D1 database.
+Wrangler reported one migration applied; the release script and a
+separate read-only postflight verified **five** expected JILL tables,
+**three** migration-ledger entries, and **one initial empty** inbox-index
+row. WORK Worker v34 remained active, fast inbox remained **OFF**, and
+there were no changes to LIVE, KEEP, Rewards or Google QA.
+
+The following new command **only inspects metadata**:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run test:work-hq-media-0004-readiness
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Offline test failed' }
+npm.cmd run work:hq:media:0004:inspect
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Read-only 0004 audit failed' }
+```
+
+The gate pins Worker v34, the exact WORK D1 UUID, five JILL tables,
+three recorded migrations, one empty 0003 seed, absence of the
+`jill_work_private_media_registry` table, and the **inert**
+`migration-plans/0004_work_private_media_registry.sql` file outside
+the active Wrangler migration directory.
+
+The result deliberately reports **HOLD**, not a release authorization.
+The proposal contains no private storage backing, signed media delivery,
+proof that existing Cloudinary links have been made private, or provisioned
+HMAC registry key. A pending row cannot produce a usable image URL.
+
+Remaining gates before ANY actual 0004 D1 migration or image-preview route:
+- Dedicated WORK-only 32–512 byte HMAC key provisioned securely under
+  Owner control; never checked into Git or exposed to customer accounts.
+- Real private-storage choice and provider-side privacy proof, including
+  rules for the existing *public* Cloudinary `image/upload` references.
+- Exact authenticated Shopify online Owner + WORK D1 grants wired to the
+  canonical signed Google QA @9 full-detail reader, before any media
+  registry lookup or asset access.
+- Independently reviewed authorized asset-copy/migration process, with
+  immutable source binding, short-lived signed delivery, revocation,
+  audit logs and explicit retention/deletion policy.
+- A separately approved WORK-only 0004 migration and its own fresh
+  recovery checkpoint, preflight, tests and verified postflight.
+  Do not reuse the 0003 approval or claim the 0003 bookmark establishes
+  recoverability for a later migration.
+
+**No remote 0004 schema writes, secret provisioning, Cloudinary/R2
+upload/download, private-link generation or Worker deployment is part
+of this source phase.**
