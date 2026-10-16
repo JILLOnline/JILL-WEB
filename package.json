@@ -167,6 +167,7 @@
     "test:work-hq-media-edge-workerd": "npm run test:workerd-media-edge --prefix services/jill-order-desk/app-home",
     "test:work-hq-media-local-end-to-end": "npm run test:workerd-media-local-end-to-end --prefix services/jill-order-desk/app-home",
     "test:work-hq-media-local-recovery": "npm run test:workerd-media-local-recovery --prefix services/jill-order-desk/app-home",
+    "test:work-hq-media-owner-boundary": "npm run test:workerd-media-owner-boundary --prefix services/jill-order-desk/app-home",
     "test:work-hq-media-local-sanitizer": "npm run test --prefix tools/work-media-local",
     "test:work-hq-media-local-quarantine": "npm run test:quarantine --prefix tools/work-media-local",
     "test:work-hq-r2-private-preflight": "node scripts/test-work-hq-r2-private-preflight.mjs",
