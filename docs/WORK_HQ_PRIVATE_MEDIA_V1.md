@@ -404,3 +404,92 @@ and full image decode/sanitization, certify owned private objects with
 revocation/retention, then seek a **new separate approval** for 0004.
 Do not run `wrangler d1 migrations apply` or deploy WORK v35
 based only on this source contract.
+
+
+## Phase 6 — Proposed private Cloudflare R2 staging adapter (NOT deployed)
+
+Owner approved **R2 as the target architecture for new WORK artwork**.
+Existing legacy Cloudinary `image/upload` URLs stay immutable,
+unverified and blocked from private preview. No bucket or Worker binding
+has been created, and no existing Cloudinary asset has been modified.
+
+`services/jill-order-desk/work-private-r2-storage.mjs` is a WORK-only
+server module with a proposed future binding
+`JILL_WORK_PRIVATE_ARTWORK_R2` and proposed dedicated bucket name
+`jill-work-private-artwork`. **Do not add the binding to the
+currently deployed `wrangler.canary.jsonc` manifest yet**. This
+source module is not registered as a route and cannot be invoked by
+customers.
+
+Cloudflare R2 Workers API uses a bound bucket's `put`, `head` and
+`get` methods. The module's future
+`stageWorkOwnerArtworkToPrivateR2` integration contract:
+
+1. Check exact WORK shop, canonical request ID and reference selector
+   by passing the request-scoped Shopify online Owner context through
+   the established WORK D1 Owner gate **before the exact-ID signed
+   Google detail read**. Only *opaque* references from the canonical
+   request are eligible. Existing Cloudinary URL references are
+   explicitly rejected.
+2. Validate input as bounded image bytes using the previous
+   `inspectWorkPrivateArtworkBytes` source primitive. No URL fetch,
+   browser-supplied pathname or external reference resolution.
+3. Call a future **server-owned, freshly verified Cloudflare bucket
+   configuration check**. It must prove the correct account, bucket,
+   binding, and both `r2.dev` and custom-domain public access
+   **disabled**. Current code checks the shape and freshness of an
+   injected result; that result **does not itself cryptographically
+   prove** provider configuration. Public-access settings are not
+   inferable from R2 bucket binding objects.
+4. Require a future **trusted server-side image decoder/re-encoder**
+   and revalidate its output bytes, type and size. A caller-controlled
+   `sanitizer_verified` boolean is not proof of sanitizer execution.
+   No real sanitizer has been wired or certified. This staged contract
+   refuses unmodified original input masquerading as a rewritten file.
+5. Generate an unpredictable v4 UUID object key under
+   `work-artwork/v1/`. Never embed customer details, filenames,
+   shop names, public URLs, form data or Shopify IDs in the key.
+   Use R2 conditional `If-None-Match: *` to avoid overwriting an
+   existing object. Store only MIME, private/no-store HTTP headers and
+   unregistered lifecycle + content SHA-256 metadata. No customer PII.
+6. Check R2 `put`, `head` and private `get`/body read-back against
+   expected key, size, MIME, metadata and SHA-256 digest. Any mismatch
+   is an error; **never label the object preview-ready**. On a partial
+   failure a staged object may remain orphaned: reconcile through a
+   separately audited lifecycle job, not auto-delete.
+7. Return an **INTERNAL-ONLY** object-key/digest receipt explicitly
+   marked `registry_state:not_written`, `delivery_state:disabled`.
+   No public link, signed URL, browser-safe grant or registry insert.
+   The object key **must never be returned to customer/browser output,
+   logged, or used as a standalone authorization token**.
+
+Mocked integration test:
+
+```powershell
+npm.cmd run test:work-hq-r2-private-artwork
+```
+
+It simulates the R2 API in memory, including write collision, forged
+Owner permission, wrong work account, public bucket, stale attestation,
+bad sanitizer output, HEAD metadata drift and GET body corruption.
+It performs **zero real R2 operations**, zero D1/Google/Shopify calls,
+zero Cloudinary fetches, zero secret operations and zero deployments.
+
+**Required before live integration**: approve/create a dedicated
+WORK-only private R2 bucket with `r2.dev` and custom-domain public
+access disabled; provision a binding through a separately reviewed
+inactive WORK Worker release; implement a real image decoder/re-encoder
+with resource and malware controls, authenticated request-specific
+ingest route, provider settings attestation, D1 registry linking,
+orphan-object reconciliation, retention/legal deletion and revocation;
+test isolated disposable WORK files with two personalization groups,
+then explicitly approve any 0004 migration and Worker traffic change.
+
+This phase **does not authorize 0004, bucket creation, key provisioning,
+a Worker v35 deployment, or private previews**. Cloudflare R2 is
+private by default, but public bucket URLs can be enabled separately;
+both need an independent Owner audit before relying on privacy.
+
+Official Cloudflare references:
+- https://developers.cloudflare.com/r2/api/workers/workers-api-reference/
+- https://developers.cloudflare.com/r2/buckets/public-buckets/
