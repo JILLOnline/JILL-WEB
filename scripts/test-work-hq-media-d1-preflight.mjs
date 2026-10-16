@@ -5,6 +5,8 @@ import {
   assertWorkMediaD1Worker,assertWorkMediaD1Schema,
   workMediaD1ReadCommand,WORK_MEDIA_D1_ID,
   WORK_MEDIA_SCHEMA_SQL,WORK_MEDIA_BASE_TABLES,WORK_MEDIA_CORE_TABLES,
+  assertWorkMediaD1LedgerPresence,assertWorkMediaD1LedgerHistory,
+  WORK_MEDIA_LEDGER_PRESENCE_SQL,WORK_MEDIA_LEDGER_HISTORY_SQL,
 } from './inspect-work-hq-media-d1-preflight.mjs';
 import {DETAIL_ON_CANDIDATE}
   from './release-work-hq-detail-v9-on.mjs';
@@ -105,6 +107,69 @@ for(const bad of [
 ]){
   assert.throws(()=>assertWorkMediaD1Schema(bad));
 }
+// Read-only Cloudflare D1 ledger detection does not create or initialize
+// the migration table. Missing ledger is a recognized HOLD, not a PASS.
+assert.equal(assertWorkMediaD1LedgerPresence([
+  {success:true,results:[]},
+]),false);
+assert.equal(assertWorkMediaD1LedgerPresence([
+  {success:true,results:[{name:'d1_migrations'}]},
+]),true);
+for(const bad of [
+  [],null,[{success:false,results:[]}],
+  [{success:true,results:[{name:'d1_migrations'},
+    {name:'d1_migrations'}]}],
+  [{success:true,results:[{name:'jill_merchant_authority'}]}],
+  [{success:true,results:[{name:'d1_migrations',id:1}]}],
+]){
+  assert.throws(()=>assertWorkMediaD1LedgerPresence(bad));
+}
+assert.deepEqual(assertWorkMediaD1LedgerHistory([
+  {success:true,results:[
+    {name:'0001_staff_authority.sql'},
+    {name:'0002_shopify_sessions.sql'},
+  ]},
+],{inboxTablePresent:false}),{
+  migration_count:2,inbox_0003_recorded:false,
+});
+assert.deepEqual(assertWorkMediaD1LedgerHistory([
+  {success:true,results:[
+    {name:'0001_staff_authority.sql'},
+    {name:'0002_shopify_sessions.sql'},
+    {name:'0003_work_verified_inbox_index.sql'},
+  ]},
+],{inboxTablePresent:true}),{
+  migration_count:3,inbox_0003_recorded:true,
+});
+for(const bad of [
+  [{success:false,results:[]}],[],
+  [{success:true,results:[{name:'0004_work_private_media_registry.sql'}]}],
+  [{success:true,results:[{name:'0001_staff_authority.sql'},
+    {name:'0001_staff_authority.sql'}]}],
+  [{success:true,results:[{name:'0001_staff_authority.sql',
+    customer_email:'private@example.invalid'}]}],
+]){
+  assert.throws(()=>assertWorkMediaD1LedgerHistory(bad));
+}
+assert.throws(()=>assertWorkMediaD1LedgerHistory([
+  {success:true,results:[{name:'0003_work_verified_inbox_index.sql'}]},
+],{inboxTablePresent:false}),/work_media_0003_recorded_but_table_missing/);
+assert.equal(WORK_MEDIA_LEDGER_PRESENCE_SQL,
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='d1_migrations'");
+assert.equal(WORK_MEDIA_LEDGER_HISTORY_SQL,
+  'SELECT name FROM d1_migrations ORDER BY name');
+for(const [step,sql] of [
+  ['ledger_presence',WORK_MEDIA_LEDGER_PRESENCE_SQL],
+  ['ledger_history',WORK_MEDIA_LEDGER_HISTORY_SQL],
+]){
+  const args=workMediaD1ReadCommand(step);
+  assert.deepEqual(args.slice(0,3),
+    ['d1','execute','jill-order-desk-work']);
+  assert.ok(args.includes('--remote')&&args.includes('--json'));
+  assert.equal(args[args.indexOf('--command')+1],sql);
+  assert.doesNotMatch(sql,/;|PRAGMA|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE/i);
+}
+
 const parts=workMediaD1ReadCommand('schema_only');
 assert.deepEqual(parts.slice(0,3),[
   'd1','execute','jill-order-desk-work']);
@@ -140,4 +205,4 @@ const runtime=readFileSync(
 assert.doesNotMatch(runtime,
   /\bversions','(deploy|upload)'\b|wrangler d1 migrations apply|secret put/);
 assert.match(runtime,/READ ONLY FAILURE PHASE/);
-console.log('PASS WORK D1 READ-ONLY reconciliation: real four-table pre-0003 and optional fifth index classified, registry absent; unknown/malformed tables refused, no migrations, secrets, customer queries or writes.');
+console.log('PASS WORK D1 READ-ONLY reconciliation: four-table pre-0003 and five-table states, optional migration-ledger metadata/history, invalid and forged records rejected; no migrations, secrets, customer queries or writes.');
