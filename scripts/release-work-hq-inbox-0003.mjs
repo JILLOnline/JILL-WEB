@@ -183,9 +183,10 @@ export function encryptForCurrentWindowsUser(text){
   // Password/keys remain owned by the current user's Windows profile.
   const script=[
     '$ErrorActionPreference="Stop"',
+    'Add-Type -AssemblyName System.Security',
     '$raw=[Console]::In.ReadToEnd()',
     '$bytes=[Text.Encoding]::UTF8.GetBytes($raw)',
-    '$blob=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)',
+    '$blob=[System.Security.Cryptography.ProtectedData]::Protect($bytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)',
     '[Console]::Out.Write([Convert]::ToBase64String($blob))',
   ].join(';');
   const encrypted=call('powershell.exe',
@@ -199,9 +200,10 @@ export function decryptForVerification(cipher){
   if(process.platform!=='win32')fail('work_0003_windows_dpapi_required');
   const script=[
     '$ErrorActionPreference="Stop"',
+    'Add-Type -AssemblyName System.Security',
     '$encoded=[Console]::In.ReadToEnd()',
     '$blob=[Convert]::FromBase64String($encoded)',
-    '$plain=[Security.Cryptography.ProtectedData]::Unprotect($blob,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)',
+    '$plain=[System.Security.Cryptography.ProtectedData]::Unprotect($blob,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)',
     '[Console]::Out.Write([Text.Encoding]::UTF8.GetString($plain))',
   ].join(';');
   return call('powershell.exe',
