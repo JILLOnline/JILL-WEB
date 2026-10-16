@@ -404,3 +404,25 @@ and full image decode/sanitization, certify owned private objects with
 revocation/retention, then seek a **new separate approval** for 0004.
 Do not run `wrangler d1 migrations apply` or deploy WORK v35
 based only on this source contract.
+
+## Phase 6 — WORK-only Cloudflare R2 quarantine adapter (source-only)
+
+**Provider choice: Cloudflare R2 for NEW WORK artwork only.** Owner approval here covers source design and tests, not provisioning or deployment. NO R2 bucket, secret, R2 token, binding, route, D1 migration or deployed Worker was created. Existing public Cloudinary image/upload URLs remain original evidence; no automatic asset copy or private preview.
+
+New module: services/jill-order-desk/work-private-r2-quarantine.mjs. Planned bucket: jill-work-private-artwork. Planned binding: JILL_WORK_PRIVATE_ARTWORK_R2. Those constants do NOT modify app-home/wrangler.canary.jsonc. No HTTP endpoint calls the module.
+
+The staging adapter requires authenticated online Shopify Admin + WORK D1 Owner permission before reading the exact signed Google QA detail for the matching submission ID, item and reference index. It derives the keyed original-reference MAC from that verified request. Legacy Cloudinary URLs are explicitly rejected from the **new-upload** path. Only canonical opaque references may be staged.
+
+File bytes must pass the existing PNG/JPEG/WebP bounded-header contract, then a trusted server-only image decoder/re-encoder/sanitizer callback, then another bounded check. Such a sanitizer does NOT YET EXIST in the live application; a browser assertion of sanitizer success has no authority.
+
+Before any R2 access, a privileged server-side Cloudflare-account privacy audit callback must confirm the exact bucket and binding, the bucket exists, the r2.dev public development URL is disabled, and no custom domain exposes the bucket. The audit must be recent (maximum five minutes). This real audit callback and R2 binding do NOT YET EXIST. A self-reported client flag is never valid evidence of private provider configuration.
+
+Only after these gates would the future adapter use a random work/quarantine/v1/UUID object key with no customer data, immutable-reference ID or URL. It uses R2 conditional PUT (etagDoesNotMatch '*'), SHA-256 write-integrity, application/octet-stream and private/no-store attachment metadata, then verifies the provider PUT and HEAD key, length and metadata. On ambiguous write, it fails closed without auto-retry, delete, GET or display.
+
+A successful future source-layer call would return only quarantined_unlinked, private_delivery disabled, registry_persisted false. It never returns a provider key, signed URL, raw file or media grant. IMPORTANT: the inert 0004 registry only models the pending original-reference MAC; it has no real verified object linkage. No actual uploads or delivery should be enabled until a separately audited D1 object-linkage/reconciliation model exists.
+
+Offline regression command: npm.cmd run test:work-hq-private-r2-quarantine. It uses a synthetic bucket and fake Owner, Google and Cloudflare audit callbacks. Tests cover permission order, legacy URLs, raw byte forgery, MIME/type and sanitization gates, public/stale/wrong R2 audits, fresh random keys, strict PUT/HEAD verification and ambiguous results. No real R2, customer records, secrets, Google/Shopify or Cloudflare operations occur.
+
+**Release HOLD:** independently create and audit the isolated private WORK R2 bucket (disable BOTH r2.dev and all custom domains); configure binding and least-privilege credentials; implement trusted image decoder/re-encoder, account privacy-audit service, authorization route, D1 provider-object linkage, retained-original reconciliation and orphan cleanup policy; certify a disposable WORK image; get separate Owner approval for any 0004 migration, Worker deployment or real upload. Existing WORK v34 and LIVE/KEEP/Rewards remain untouched.
+
+Official references: https://developers.cloudflare.com/r2/api/workers/workers-api-reference/ and https://developers.cloudflare.com/r2/buckets/public-buckets/
