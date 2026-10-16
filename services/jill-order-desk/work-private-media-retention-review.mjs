@@ -25,9 +25,16 @@ export const WORK_RETENTION_READ_ONLY_SQL=
  * No specific retention period is assumed: only Owner may decide
  * retention/legal holds, manual deletion approval and audit controls.
  */
-export function summarizeWorkPrivateMediaRetention({
-  rows,nowMs,quotaReservedBytes,quotaLifetimeReservations,
-}={}){
+export function summarizeWorkPrivateMediaRetention(input={}){
+  // Validate the outer envelope BEFORE destructuring. Null, arrays,
+  // primitives and extra caller-supplied properties must all receive
+  // the same fail-closed policy error (never a raw TypeError).
+  const REQUIRED=[
+    'rows','nowMs','quotaReservedBytes','quotaLifetimeReservations',
+  ];
+  if(!object(input)||Object.keys(input).length!==REQUIRED.length||
+     REQUIRED.some(key=>!Object.hasOwn(input,key)))STOP();
+  const {rows,nowMs,quotaReservedBytes,quotaLifetimeReservations}=input;
   if(!Array.isArray(rows)||rows.length>LIMIT||
      !int(nowMs)||nowMs<DAY||
      !int(quotaReservedBytes)||quotaReservedBytes>MAX||
