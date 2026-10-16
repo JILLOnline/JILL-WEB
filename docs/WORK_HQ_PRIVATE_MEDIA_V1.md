@@ -426,3 +426,53 @@ Offline regression command: npm.cmd run test:work-hq-private-r2-quarantine. It u
 **Release HOLD:** independently create and audit the isolated private WORK R2 bucket (disable BOTH r2.dev and all custom domains); configure binding and least-privilege credentials; implement trusted image decoder/re-encoder, account privacy-audit service, authorization route, D1 provider-object linkage, retained-original reconciliation and orphan cleanup policy; certify a disposable WORK image; get separate Owner approval for any 0004 migration, Worker deployment or real upload. Existing WORK v34 and LIVE/KEEP/Rewards remain untouched.
 
 Official references: https://developers.cloudflare.com/r2/api/workers/workers-api-reference/ and https://developers.cloudflare.com/r2/buckets/public-buckets/
+
+
+## Phase 7 — verified empty private R2 bucket and source-only Images Free sanitizer
+
+Owner's 2026-10-16 Cloudflare CLI receipts establish the real R2 bucket
+`jill-work-private-artwork` now exists in the correct Cloudflare account
+with **Standard** storage, **0 objects / 0 B**, `r2.dev` public access
+disabled, and **no custom domains**. Bucket creation itself did not make
+a media route, Worker binding, upload capability, grant, or D1 registry.
+Wrangler initially auto-edited app-home/wrangler.jsonc to add an
+incorrect lowercase binding with `remote:true`; the owner restored that
+tracked file cleanly.
+
+A separately created
+`services/jill-order-desk/app-home/wrangler.r2-local.jsonc` specifies
+the intended `JILL_WORK_PRIVATE_ARTWORK_R2` binding with `remote:false`
+and is ignored through local `.git/info/exclude`. The canonical WORK
+and canary deployment configs still have **no R2 bindings**. Existing
+untracked local files are preserved; no automatic cleanup.
+
+The owner confirmed both previous offline test suites passed:
+`test:work-hq-private-r2-quarantine` and
+`test:work-hq-private-media-ingest-contract`. No remote operations
+occurred during those tests.
+
+New **source-only** module:
+`services/jill-order-desk/work-private-images-sanitizer.mjs`, with
+offline mock regression `test:work-hq-private-images-sanitizer`.
+It targets Cloudflare Images' raw-byte Workers binding, not Images
+paid hosted storage. It rejects foreign shops, missing trusted
+Free-plan/quota gate, unsupported or mismatched input bytes, failed
+transformations, mismatched output MIME, and oversized outputs.
+It requests a bounded decode/re-encode with `metadata:'none'` and
+`anim:false`, then re-checks output bytes. Its mock tests do **not**
+prove real Cloudflare decode, output metadata removal or production
+quarantine writes. The gate callback is a contract placeholder,
+**not** an implemented authoritative account-wide budget ledger.
+
+**Still HOLD:** No Image binding in deployed Worker, no real sanitizer
+attestation, no authorized media upload/preview route, no safe provider
+object registry, no 0004 D1 migration, no R2 media PUT/GET, no
+LIVE/KEEP/Rewards/Google QA changes. Before a first real transformation:
+independently confirm account is on Images Free (5,000 unique
+transformations/month; excess blocked on Free), implement atomic
+server-side per-account usage protection and Owner auth linkage,
+and certify decoded/re-encoded fixtures in an isolated WORK harness.
+Before any real R2 upload, additionally certify privacy audits, quotas,
+orphan/reconciliation/retention policy and D1 linkage. No paid-plan
+upgrade is authorized. Official pricing:
+https://developers.cloudflare.com/images/pricing/
