@@ -1117,3 +1117,67 @@ synthetic upload pilot under explicit separate approval.
 WORK R2 bucket empty/private at last verified inspection; no
 customer media uploads/downloads/previews, no remote storage
 mutation, no paid subscription; LIVE and KEEP untouched.
+
+## Phase 18 — Free WASM image decoder in LOCAL Cloudflare Worker
+
+Owner's latest instruction: **GO FOR IT** on a free, real Worker-compatible
+image decode/re-encode boundary rather than another mock-only stage.
+No customer uploads or remote writes were authorized.
+
+jSquash has an upstream Cloudflare Worker (ES-module) example requiring
+manual WASM imports and module initialization:
+https://github.com/jamsinclair/jSquash/tree/main/examples/cloudflare-worker-esm-format
+WASM modules are supported by the Workers runtime:
+https://developers.cloudflare.com/workers/runtime-apis/webassembly/javascript/
+
+**Source now on isolated WORK branch (not yet Windows-certified):**
+- `tools/work-media-edge/package.json`: pinned open-source WebAssembly
+  codecs `@jsquash/png@3.1.1`, `@jsquash/jpeg@1.6.0`,
+  `@jsquash/webp@1.5.0`. No paid Cloudflare Images binding, no Sharp
+  native code inside the Worker.
+- `tools/work-media-edge/sanitize.mjs`: pure Worker-safe JS
+  conservative pre-decoder header gate and real decoder/output
+  checker, max 8 MiB input/output, 3000 pixels each axis, 4 million
+  source pixels, detect and forbid animated PNG/WebP; read JPEG EXIF
+  orientation and apply raw RGBA orientation before WebP re-encode.
+- `tools/work-media-edge/worker.mjs`: synthetic local Worker loads
+  JPEG/PNG/WebP WASM decoders, encodes one metadata-free WebP,
+  returns bytes to a synthetic-only test harness. It has no R2/D1,
+  Images/Shopify/Google, secrets, network fetches or storage calls.
+- `tools/work-media-edge/wrangler.jsonc`: independent
+  `jill-work-edge-codec-local-only` Worker, `workers_dev:false`,
+  no live Worker IDs, routes, migrations, bindings or paid services.
+- `services/jill-order-desk/app-home/scripts/test-workerd-media-edge.mjs`:
+  actual Cloudflare local workerd integration through official
+  Wrangler `createTestHarness`, generating genuine PNG, EXIF-bearing
+  JPEG and WebP files using the existing locally installed Sharp,
+  and re-decoding/validating WebP outputs to verify dimensions,
+  actual changed bytes, EXIF/ICC/XMP removal, color sanity and
+  malformed/mislabeled/oversized/two-frame WebP rejection.
+- `work:hq:media:edge:install` + `test:work-hq-media-edge-workerd`
+  are root npm scripts; WORK App Home CI installs WASM package and
+  synthetic fixture dependencies and runs the genuine local Worker test.
+
+**IMPORTANT:** this is a genuine WASM *implementation candidate* and
+source-only test. Neither codec bootstrapping with the exact installed
+npm package versions nor real workerd runtime CPU/memory, orientation
+handling for phone JPEGs, production-scale throughput nor any server
+upload/preview path has been certified. The owner's Windows test
+result is the next gate. WebP output is an intentional format
+conversion, and the older quarantine adapter currently assumes
+same-MIME output and MUST NOT be connected without redesign.
+
+Run from clean synced Windows WORK branch:
+```powershell
+npm.cmd run work:hq:media:edge:install
+if ($LASTEXITCODE -ne 0) { throw 'STOP: WASM codec install failed' }
+npm.cmd run test:work-hq-media-edge-workerd
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Real local Worker codec test failed' }
+```
+
+The npm codec install is local to `tools/work-media-edge/` with
+`--ignore-scripts`; no keys, local files from customers, free-to-paid
+plan changes, Worker deploys or Cloudflare API use occur.
+Even after a real local workerd PASS, account-wide no-bill guarantee,
+retention/recovery, authenticated Shopify Owner entry, D1 migrations
+0004–0006 and actual R2 quarantine remain separately on HOLD.
