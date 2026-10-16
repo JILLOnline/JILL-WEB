@@ -776,3 +776,50 @@ usage and deletion/retention recovery still need authoritative review.
 No 0004/0005/0006 migrations, real media writes, Worker bindings,
 customer routes, Cloudflare Images subscriptions, or LIVE/KEEP/
 Rewards/Google QA changes are authorized.
+
+## Phase 14 — D1 transactional quota+intent batch contract (SOURCE ONLY)
+
+The owner confirmed Phase 13 OFFLINE Windows tests PASS:
+`test:work-hq-r2-object-intent` and `test:work-hq-r2-quota-plan`.
+No D1/R2 remote changes occurred.
+
+Cloudflare D1 official documentation (as of 2026-10-16) specifies
+`D1Database::batch()` runs prepared SQL sequentially as one
+transaction, and a failed statement rolls back the entire batch:
+https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+
+Source-only `work-private-r2-d1-batch-plan.mjs` composes exactly two
+prepared statements, with no intervening statements:
+(1) the existing conditional `UPDATE ... RETURNING` 0005 quota
+reservation; (2) the 0006 immutable object intent `INSERT ...
+RETURNING` with a first NOT NULL column guarded by
+`CASE WHEN changes()=1 THEN ? ELSE NULL END`. The latter deliberately
+throws on zero rows updated: monthly/lifetime quota exhaustion must
+never leave an intent record. A duplicate, invalid HMAC, missing FK,
+or other intent INSERT failure must roll back the quota update.
+No separate `.run()` calls or SQL `BEGIN/COMMIT` are part of the
+Cloudflare Worker API design; one `.batch()` transaction is required.
+
+Offline regression `test:work-hq-r2-d1-batch-plan` uses only
+in-memory `node:sqlite` and a D1-like batch facade, with active
+0001–0003 and inert 0004–0006 locally. It simulates 40 distinct
+canonical reference slots, the 41st quota-denied request, duplicate
+slot retry, forged MAC, a missing row/forged receipt, and ensures a
+failed INSERT leaves quota counters unchanged. A real
+`D1Database::batch()` on WORK has **NOT** been exercised, and
+the compatibility of SQLite's `changes()` with the deployed D1
+Worker binding still requires a separately approved **local
+workerd-only** runtime test before any remote migration.
+
+This is a PLANNER, not a call site. It exposes an object key solely
+to a hypothetical trusted private server; DO NOT log or serialize the
+planner or its reserved intent into an HTTP response. Receipt
+inspection never grants R2 PUT, GET, preview, retry or quota refund.
+Real production use still requires a verified online Shopify Owner
+session and D1 authority, signed exact Google detail, fresh private
+bucket status, authoritative account-wide R2 usage/quota gates,
+persistent retention/recovery, and explicit approval for migrations.
+
+**Release HOLD:** no deployed R2/Images bindings; no customer files,
+remote R2/D1 writes, migrations 0004–0006, Cloudflare paid plan,
+LIVE/KEEP, Rewards or Google QA modifications.
