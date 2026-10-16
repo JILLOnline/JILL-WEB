@@ -223,6 +223,9 @@ jobs:
         env:
           JILL_BUILD_TARGET: canary
         run: npm run build
+      - name: Verify real generated WORK v34-compatible manifest (no candidate, no deployment)
+        run: node scripts/prepare-work-hq-v34-ui-local.mjs --inspect-existing-base
+
       - name: Verify exact WORK canary deployment manifest and dry-run package
         working-directory: services/jill-order-desk/app-home
         run: |
