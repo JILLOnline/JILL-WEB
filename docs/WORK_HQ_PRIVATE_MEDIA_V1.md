@@ -1592,3 +1592,34 @@ It is NOT a My JILL customer-account or guest upload endpoint.
 Rejecting browser-supplied customer identity prevents bypassing the
 canonical request/attachment binding. Future customer-to-customer
 privacy requires a SEPARATE customer authentication policy.
+### Phase 21 first Windows verification — SOURCE FIX, rerun required
+
+Owner's Windows results after Phase 21 commit `5c79abc`:
+- `test:work-hq-media-owner-boundary` failed BEFORE executing tests:
+  invalid JavaScript regular expression flags in a static
+  `assert.match(ingress,...)` check that accidentally left `/app`
+  unescaped in the regex literal.
+- `npm.cmd run typecheck --prefix services/jill-order-desk/app-home`
+  failed TS2353: the imported JS media handler destructured parameter
+  was inferred too narrowly as `{ enabled?: boolean }`, so TS rejected
+  the route's `request` property.
+- The later standalone green `Write-Host PASS` was only user-visible
+  console text, NOT evidence of a test pass. Phase 21 remains PENDING.
+
+Corrective commits:
+- replace the brittle regex literal with
+  `ingress.includes('url.pathname==="/app/requests/media/inspect"')`,
+  retaining the early host/origin route wiring assertion;
+- add an explicit JSDoc parameter contract to
+  `handleWorkPrivateMediaOwnerInspect`, covering request, stage,
+  enabled, authenticate, D1, and signed exact detail callback.
+
+Neither correction changes authorization logic, storage, route
+activation, or production safeguards. Re-run both commands in one
+guarded PowerShell block and require exit 0 from BOTH the Node
+regression and `react-router typegen && tsc --noEmit` before any
+Phase 21 certification.
+
+**Release HOLD:** media inspection feature flag OFF in both tracked
+WORK and canary manifests. No R2 binding, remote D1 migrations,
+real image upload/preview, paid plan, or LIVE/KEEP changes.
