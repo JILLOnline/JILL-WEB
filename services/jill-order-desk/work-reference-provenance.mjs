@@ -11,6 +11,13 @@ export function describeWorkReference(value){
     return Object.freeze({kind:'unverified',label:'Unverified reference',
       identifier:'Not verified'});
   const original=value.trim();
+  // Canonical JILL/file reference IDs can contain a colon. URL() treats
+  // every "jill:..." ID as a custom scheme, so detect safe IDs first;
+  // always reject real URL/executable schemes before declaring an ID.
+  if(ALLOWED_ID.test(original) &&
+    !/^(?:https?|javascript|data|blob|file|ftp):/i.test(original))
+    return Object.freeze({kind:'opaque_id',
+      label:'Opaque reference ID',identifier:original});
   // Recognize only the strict Cloudinary path structure. Classification
   // does NOT establish the true account, file ownership or file privacy.
   // Never output the original URL or a browser-usable destination.
@@ -32,9 +39,6 @@ export function describeWorkReference(value){
     return Object.freeze({kind:'external_url_unverified',
       label:'External URL reference',identifier:'Not verified'});
   }catch{
-    if(ALLOWED_ID.test(original))
-      return Object.freeze({kind:'opaque_id',
-        label:'Opaque reference ID',identifier:original});
     return Object.freeze({kind:'unverified',
       label:'Unverified reference',identifier:'Not verified'});
   }
