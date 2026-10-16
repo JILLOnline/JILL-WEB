@@ -619,3 +619,49 @@ checks, canonical exact detail endpoint, enforceable R2 account-wide
 storage/operations budget, operator-attested bucket privacy state,
 provider object linkage and recovery/retention strategy. No LIVE,
 KEEP, Rewards or Google QA changes are authorized from this test.
+
+## Phase 11 — read-only real R2 empty/private preflight (source only)
+
+Owner's Windows console confirmed Phase 10 offline **PASS**: authentic
+Sharp JPEG re-encoding with synthetic EXIF removal, simulated Owner +
+WORK D1 access control and canonical exact-request projection,
+in-memory fake R2 PUT/HEAD, and denial of unsafe/public/legacy uploads.
+No network or Cloudflare object usage was involved.
+
+Added `scripts/inspect-work-hq-r2-private-preflight.mjs` and offline
+regression `scripts/test-work-hq-r2-private-preflight.mjs`. Remote
+inspection is read-only and is allowed only when the tracked Git
+WORK branch is clean and up-to-date locally, the local-only
+`wrangler.r2-local.jsonc` has the expected binding with
+`remote:false`, and both canonical WORK/canary Wrangler configs have
+NO deployed R2 bindings.
+
+Strict Wrangler metadata command allowlist: `whoami`,
+`d1 info jill-order-desk-work ... --json`,
+`r2 bucket info jill-work-private-artwork --json`,
+`r2 bucket dev-url get jill-work-private-artwork`, and
+`r2 bucket domain list jill-work-private-artwork`. The inspector
+requires the pinned Cloudflare account, WORK D1 UUID, Standard storage,
+**zero objects and zero bytes**, disabled public r2.dev and zero custom
+domains. Any unexpected or changed condition STOPs instead of
+repairing or deploying; no customer object listing/GET/PUT and no
+D1 migrations or secret operations.
+
+Run on Windows after pulling and offline test:
+```powershell
+npm.cmd run test:work-hq-r2-private-preflight
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Offline R2 inspector tests failed' }
+npm.cmd run work:hq:r2:private:inspect
+if ($LASTEXITCODE -ne 0) { throw 'STOP: R2 privacy metadata preflight failed' }
+```
+
+This is a **point-in-time privacy/empty-bucket check**, not authoritative
+account-wide R2 cost accounting or a spending cap. Later legitimate
+objects require a separately reviewed inspector revision rather than
+weakening this gate. Before any real R2 upload: implement and certify
+durable per-account operation/storage quotas, authenticated server-only
+source ingestion, object linkage with D1 reconciliation, and controlled
+retention. R2 storage and operations remain separately metered.
+No R2 Worker binding, upload/preview route, D1 0004 migration,
+Images subscription change, LIVE/KEEP/Rewards or Google QA mutation
+was authorized or made.
