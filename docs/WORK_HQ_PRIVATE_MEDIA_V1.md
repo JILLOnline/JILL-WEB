@@ -912,3 +912,71 @@ regardless of a separately printed PowerShell status.
 
 **HOLD:** no D1 migrations 0004/0005/0006, R2 writes or Worker deploy;
 LIVE/KEEP/Rewards/Google QA unchanged, paid features off.
+
+### Phase 15 — CERTIFIED with actual local workerd D1, 2026-10-16
+
+After the comment-loader repair at commit `104e0ab`, the owner
+pulled and ran `npm.cmd run test:work-hq-r2-d1-workerd-local` on
+Windows. **PASS**, confirmed by process exit 0 and program output:
+
+`INFO local WORKERD: 23 synthetic schema statements loaded`
+then `PASS local WORKERD D1 batch`. The local D1 test confirmed a
+successful 2-statement quota/intent transaction, duplicate and forged
+MAC rollback, 40/41 monthly quota denial and zero orphan records.
+The only database was a synthetic `remote:false` D1 binding.
+This certifies local runtime SQL behavior, not remote D1 or application
+authentication. The older "still NOT certified" section above describes
+the earlier failure and is superseded by this exact passed rerun.
+
+## Phase 16 — guarded pre-write account evidence (SOURCE ONLY)
+
+New source-only validator:
+`services/jill-order-desk/work-private-r2-prewrite-evidence.mjs`,
+with offline regression `scripts/test-work-hq-r2-prewrite-evidence.mjs`.
+
+This guard demands matching:
+- A validated two-statement committed intent receipt from the
+  previously certified Phase 15 D1 batch contract.
+- The exact image input bytes SHA-256 and byte count matching the
+  immutable intended private object; declared MIME must match bytes.
+  **This test does not decode images** — full Sharp sanitation is a
+  separate prerequisite.
+- A fresh (at most five minutes old), complete account-wide
+  R2 usage snapshot, including all buckets and other account
+  services, not a single WORK bucket's size.
+- Conservative **advisory** account thresholds: 512 MiB current
+  Standard storage, 1 GB-month projected Standard storage,
+  10,000 Class A and 20,000 Class B operations per UTC month.
+- Private WORK R2 bucket with no public r2.dev URL/custom domains,
+  matching account identity and fresh privacy evidence.
+
+All usage/provenance values are merely **test contracts** for
+yet-unimplemented trusted server provider readers. A client can forge
+the strings `source`, `complete`, or `billable_overage_possible`.
+Neither this validator nor a snapshot can guarantee a $0 bill or
+atomically stop other services in the Cloudflare account from
+consuming allowance. If the provider does not expose authoritative
+current/projected metrics, real uploads must remain DISABLED instead
+of trusting estimates, dashboards, or caller statements.
+
+The gate's only success state is
+`synthetic_prewrite_checks_satisfied` and it always reports
+`upload_authorized:false`, `preview_enabled:false`,
+`auto_retry:false`, `quota_refund:false` and
+`remote_migration_authorized:false`. No D1/R2/Cloudflare call
+or Worker route occurs. The previous unpersisted source-only
+`stageWorkOwnerR2Quarantine` has not been wired to real R2;
+do not deploy it as an upload handler. Before real R2 PUT,
+architecture must replace that path with server-owned persistent
+intent plus authentic account-use proof, stable recovery, bucket
+privacy, and separate owner approval.
+
+The synthetic test checks 29 adverse scenarios: mismatched bytes,
+MIME/receipts, foreign account/shop, incomplete or stale metrics,
+cost threshold crossing, paid-plan responses, public bucket and
+spoofed evidence, with no cloud operations. It must PASS on Windows
+before treating this *source-only phase* as checked. GitHub CI
+runs the same regression.
+
+**HOLD:** migrations 0004–0006 not applied; real uploads, previews,
+Cloudflare Images paid subscription and LIVE/KEEP changes OFF.
