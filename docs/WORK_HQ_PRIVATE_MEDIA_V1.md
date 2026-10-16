@@ -1153,7 +1153,10 @@ https://developers.cloudflare.com/workers/runtime-apis/webassembly/javascript/
   JPEG and WebP files using the existing locally installed Sharp,
   and re-decoding/validating WebP outputs to verify dimensions,
   actual changed bytes, EXIF/ICC/XMP removal, color sanity and
-  malformed/mislabeled/oversized/two-frame WebP rejection.
+  malformed/mislabeled/oversized/two-frame WebP rejection. It also
+  benchmarks a genuine 1280x720 patterned synthetic JPEG and checks
+  EXIF Orientation=6 pixel rotation and metadata stripping.
+  Elapsed milliseconds are NOT Cloudflare billed CPU measurements.
 - `work:hq:media:edge:install` + `test:work-hq-media-edge-workerd`
   are root npm scripts; WORK App Home CI installs WASM package and
   synthetic fixture dependencies and runs the genuine local Worker test.
