@@ -169,6 +169,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-local-recovery
 
+      - name: Verify disabled Owner-only media HTTP boundary with real local D1 policy
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-owner-boundary
+
       - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-r2-d1-batch
