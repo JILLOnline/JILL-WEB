@@ -219,3 +219,52 @@ Gate B — production-capable, separately authorized service with
 provider-authenticated evidence and retention/cost approval —
 **NOT complete**. Gate E–H remain NOT APPROVED. LIVE/KEEP and real
 Cloudflare data untouched.
+
+## Phase 22 — Windows LOCAL transaction certification (PASS)
+
+Owner synced to commit `e91a0b3` and ran all checks in Windows
+PowerShell, 2026-10-16. The two JavaScript `node --check`
+commands, `npm.cmd run test:work-hq-media-local-transaction`, and
+`npm.cmd run typecheck --prefix services/jill-order-desk/app-home`
+(`react-router typegen && tsc --noEmit`) all exited with code 0.
+A conditional PowerShell PASS followed these successful steps.
+
+The complete synthetic local test logged
+`PASS WORK Phase 22 LOCAL transaction`: actual WebAssembly PNG
+to sanitized WebP, actual WORK merchant Owner policy against local D1
+with synthetic online-session shape, exact canonical reference,
+synthetic provider precheck, atomic D1 monotonic quota/intent,
+conditional **fake local R2** PUT and SHA-256 readback, lost-ACK
+reconciliation and corrupt-metadata ambiguity, duplicate and invalid
+input rejection, no automatic retry, deletion, quota refund, customer
+preview, or remote action.
+
+**Certification limit:** An explicitly forgeable
+`synthetic_local_phase22_snapshot_only` stands in for Cloudflare
+account and bucket evidence; it cannot be used to authorize a real
+R2 write or guarantee a $0 bill. Shopify session shape, signed-detail
+projection, and D1 policy have not yet been composed into a real
+deployed customer upload route. This is LOCAL gate A, not gate B.
+
+The Phase 22 initial "NOT CERTIFIED" note earlier in this document
+is historic and superseded by this Windows PASS. Remote WORK upload
+is still **HOLD**. 0004–0006 are inert; no WORK/canary R2 binding
+or image subscription has been activated.
+
+### Pre-release decision point
+
+For future, separately approved remote work, the existing real
+read-only inspectors are:
+- `npm.cmd run work:hq:r2:private:inspect`: verifies pinned
+  WORK account/D1, private empty Standard bucket, no R2 public URL,
+  no custom domain and no normal/canary R2 binding.
+- `npm.cmd run work:hq:r2:account:inspect`: reads account-wide
+  storage metrics and Cloudflare GraphQL monthly operations. These
+  observations can lag or be sampled; no predicted billing/overage
+  guarantee can be derived.
+
+The external provider-account scope, *freshness*, billing risk,
+retention/incident response, and explicit owner approval are
+unresolved production requirements. Do not treat local PASS, either
+read-only inspector, or a generic prior GO as permission for a remote
+migration, binding, real R2 object write or customer release.
