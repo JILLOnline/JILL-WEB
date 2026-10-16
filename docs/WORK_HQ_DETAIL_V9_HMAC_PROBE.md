@@ -350,3 +350,55 @@ mutations. If the audit still stops, capture that phase and run **only**
 the matching known read-only Wrangler command directly to expose its
 native error. Never repeat ON/OFF release or stage because of an audit
 failure.
+
+## Browser Owner acceptance verified — reference URL provenance (2026-10-16)
+
+The WORK Owner opened an existing QA request in Shopify JILL HQ after
+activating Cloudflare detail-ON v34. The actual **Original request · Items
+& personalization** panel displayed verified revision **2**, the QA
+customer/event, one **Coloring Books** product and variant, quantity 1,
+pickup, saved request-level attributes, and one Cloudinary URL under
+request-level references. The test submission selected no per-unit
+personalization, so this is proof of real Owner detail reads but **not**
+a P1/P2 multi-group acceptance test. That needs a separate disposable
+WORK request; do not mutate this original QA submission for testing.
+
+Source investigation found the storefront form's existing
+`theme/assets/jill-custom-order.js` uploads artwork via Cloudinary's
+image/upload API using an upload preset and stores each returned
+`secure_url` in the immutable original intake `reference_ids`.
+Therefore these values are sometimes **legacy delivery URLs, not opaque
+IDs**. The same QA reference was independently found as a PNG in the
+connected Cloudinary library with delivery type `upload` and no
+explicit access-control restriction. An HTTPS URL does not itself make
+artwork private. Do not blindly embed or hyperlink these URLs in JILL HQ,
+or represent them as Owner-authenticated media.
+
+The source-only WORK UI follow-up now classifies a narrowly validated
+legacy Cloudinary URL for labeling, shows only the safe filename rather
+than its full delivery URL, and keeps previews/downloads disabled.
+Unknown URL shapes and malformed references remain unverified.
+Classification is **display-only** and never grants media permission,
+contact with the external URL, access to customer data or billing.
+
+**Private media prerequisite before any clickable preview**:
+1. Establish the actual Cloudinary cloud/store boundary and current
+   unsigned preset policy separately for WORK vs LIVE. Preserve old
+   references; do not delete/rotate customer images as a quick fix.
+2. Add an Owner+D1-authorized resolver for the exact canonical
+   `submission_id`, checking that each media reference belongs to that
+   specific request. Never let an arbitrary caller-supplied URL or ID
+   become a media download authorization.
+3. Require a provider-verified immutable asset identity and private
+   delivery policy. New originals/proofs should use authenticated/private
+   asset storage (Cloudinary authenticated delivery or private R2), with
+   short-expiry scoped access issued **after** ownership verification.
+   Existing public-style Cloudinary assets may need an explicit migration
+   before privacy can be promised.
+4. Test wrong staff, wrong shop, guessed request IDs, copied URLs,
+   multiple items, P1/P2 groups, image/PDF limits and missing files with
+   synthetic data before enabling any real preview route.
+
+This work adds no Cloudinary asset mutations, Worker deployment,
+Shopify publication, LIVE/KEEP modifications, status event write,
+customer email, or public media links.
