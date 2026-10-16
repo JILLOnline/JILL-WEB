@@ -4,7 +4,7 @@
 // Never use with LIVE/KEEP, real customer data or real remote D1.
 // Authenticated app-proxy input must be established by a future adapter;
 // setting a flag or passing a shop value cannot authenticate a caller.
-import {createHmac} from 'node:crypto';
+import {createHmac,timingSafeEqual} from 'node:crypto';
 import {validateCustomOrderPayload}
   from '../../backend/custom-order-gateway.mjs';
 const SHOP='jill-work.myshopify.com';
@@ -97,7 +97,8 @@ export function inspectLocalWorkIntakeExisting({plan,row}={}){
      !integer(row.updated_at_ms)||
      !['reserved','forwarding','ambiguous','confirmed'].includes(row.state)||
      ![0,1].includes(row.dispatch_attempts))FAIL();
-  const same= (a,b)=>a.length===b.length&&a===b;
+  const same=(a,b)=>HEX.test(a)&&HEX.test(b)&&
+    timingSafeEqual(Buffer.from(a,'hex'),Buffer.from(b,'hex'));
   if(!same(plan.identity_mac,row.payload_mac)||
      !same(plan.owner_mac,row.owner_binding_mac))
     return failSafe({kind:'payload_or_owner_conflict',
