@@ -42,6 +42,16 @@ const EMPTY_BINDING_ARRAYS=Object.freeze([
 // ANY real capability still fail closed.
 function inertSection(key,value){
   if(value===undefined)return true;
+  if(key==='queues'){
+    // Wrangler's generated Queue schema is an object containing
+    // optional producers/consumers arrays, not necessarily [].
+    // Only ZERO producers and ZERO consumers count as inert.
+    if(Array.isArray(value))return value.length===0;
+    if(!object(value))return false;
+    return Object.keys(value).every(field=>
+      ['producers','consumers'].includes(field)&&
+      Array.isArray(value[field])&&value[field].length===0);
+  }
   if(EMPTY_BINDING_ARRAYS.includes(key))
     return Array.isArray(value)&&value.length===0;
   if(key==='images')
