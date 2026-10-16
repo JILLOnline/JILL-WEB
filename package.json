@@ -178,6 +178,8 @@
     "test:work-hq-r2-prewrite-evidence": "node scripts/test-work-hq-r2-prewrite-evidence.mjs",
     "test:work-hq-r2-account-usage": "node scripts/test-work-hq-r2-account-usage.mjs",
     "work:hq:r2:account:inspect": "node scripts/inspect-work-hq-r2-account-usage.mjs --inspect",
+    "test:work-hq-media-release-preflight": "node scripts/test-work-hq-media-release-preflight.mjs",
+    "work:hq:media:release:inspect": "node scripts/inspect-work-hq-media-release-preflight.mjs --inspect",
     "test:work-hq-r2-d1-workerd-local": "npm run test:workerd-r2-d1-batch --prefix services/jill-order-desk/app-home",
     "work:hq:r2:private:inspect": "node scripts/inspect-work-hq-r2-private-preflight.mjs --inspect",
     "test:work-hq-media-registry": "node scripts/test-work-hq-media-registry.mjs",
