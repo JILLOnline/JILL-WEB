@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {spawnSync,execFileSync} from 'node:child_process';
+import {spawn,spawnSync,execFileSync} from 'node:child_process';
 import {createInterface} from 'node:readline/promises';
 import {randomUUID,createHash} from 'node:crypto';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -146,6 +146,7 @@ function inspectLocal(){
 function call(program,args,{
   cwd=ROOT,stdio='pipe',input,timeout=60000,
 }={}){
+  // Metadata-only noninteractive subprocess; never use for a TTY prompt.
   const p=spawnSync(program,args,{
     cwd,encoding:'utf8',shell:false,windowsHide:true,
     maxBuffer:8*1024*1024,stdio,input,timeout,
@@ -153,6 +154,32 @@ function call(program,args,{
   if(p.error||p.status!==0)
     fail('work_0003_command_failed');
   return String(p.stdout||'');
+}
+// A synchronous Windows subprocess can show Wrangler's (Y/n) prompt,
+// yet fail to accept input. Use an ASYNCHRONOUS inherited console so
+// Wrangler, not the parent Node readline, owns the second confirmation.
+// Generic runner is exported for OFFLINE synthetic process regression;
+// production always invokes it with the pinned Wrangler path/args.
+export async function runWork0003InheritedTerminal(program,args,{
+  cwd=ROOT,stdio='inherit',timeout=180000,
+}={}){
+  if(!['inherit','pipe'].includes(stdio))
+    fail('work_0003_unsafe_terminal_mode');
+  return await new Promise((resolve,reject)=>{
+    const child=spawn(program,args,{
+      cwd,shell:false,windowsHide:false,stdio,timeout,
+    });
+    let stdout='',stderr='';
+    if(stdio==='pipe'){
+      child.stdout?.on('data',part=>{stdout+=String(part);});
+      child.stderr?.on('data',part=>{stderr+=String(part);});
+    }
+    child.once('error',()=>reject(Error('work_0003_command_failed')));
+    child.once('close',(code,signal)=>{
+      if(code===0&&signal===null)resolve(Object.freeze({exitCode:0,stdout,stderr}));
+      else reject(Error('work_0003_command_failed'));
+    });
+  });
 }
 function readBaseline(){
   const s=call(process.execPath,[BASELINE,'--inspect']);
@@ -262,10 +289,22 @@ async function runMain(){
   try{
     const mode=process.argv[2];
     if(process.argv.length!==3||
-      !['--inspect','--apply'].includes(mode))
+      !['--inspect','--apply','--verify'].includes(mode))
       fail('work_0003_mode_invalid');
     phase='verify_git_and_exact_migration_source';
     const head=gitGuard(),local=inspectLocal();
+    if(mode==='--verify'){
+      // A failed/ambiguous apply must be independently certifiable
+      // WITHOUT requiring the pre-0003 four-table baseline.
+      phase='verify_live_0003_postflight_read_only';
+      const receipt=verifyPostflight();
+      console.log('PASS WORK D1 0003 independently verified: '+
+        receipt.tables_verified+' JILL tables, '+
+        receipt.migrations_verified+' ledger entries, '+
+        receipt.initial_index_rows+' empty index seed.');
+      console.log('READ ONLY. WORK v34 preserved; fast inbox OFF; no migration, retry or restore.');
+      return;
+    }
     phase='verify_real_work_d1_prechange';
     readBaseline();
     if(mode==='--inspect'){
@@ -307,7 +346,7 @@ async function runMain(){
     console.log('STOP after any ambiguous migration outcome; NEVER auto-restore or reapply.');
     phase='apply_exact_pending_work_0003';
     writeStarted=true;
-    call(process.execPath,[WRANGLER,
+    await runWork0003InheritedTerminal(process.execPath,[WRANGLER,
       ...work0003ReleaseCommand('apply_0003')],{
         cwd:APP,stdio:'inherit',timeout:180000,
       });
@@ -322,6 +361,7 @@ async function runMain(){
   }catch(e){
     const allowed=new Set([
       'work_0003_mode_invalid','work_0003_git_unverified',
+      'work_0003_unsafe_terminal_mode',
       'work_0003_wrangler_missing','work_0003_migration_source_drift',
       'work_0003_command_failed','work_0003_remote_json_invalid',
       'work_0003_bookmark_not_found','work_0003_windows_dpapi_required',
