@@ -152,6 +152,15 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
+      - name: Install standalone free WASM codecs and synthetic image fixtures
+        run: |
+          npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
+          npm install --prefix tools/work-media-local --no-audit --no-fund
+
+      - name: Verify genuine PNG JPEG WebP WASM conversion in LOCAL workerd
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-edge
+
       - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-r2-d1-batch
