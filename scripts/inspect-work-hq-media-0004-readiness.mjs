@@ -67,7 +67,9 @@ export function assertMedia0004Post0003Baseline({
   if(!ledger.inbox_0003_recorded||ledger.migration_count!==3)
     fail('media_0004_requires_certified_0003');
   const expected=assertWork0003Postflight({
-    schema:{success:true,results:WORK_MEDIA_BASE_TABLES.map(name=>({name}))},
+    schema:[{success:true,
+      results:WORK_MEDIA_BASE_TABLES.map(name=>({name})),
+      meta:{changed_db:false,rows_written:0}}],
     ledger:ledgerHistory,
     seed,
   });
