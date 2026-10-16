@@ -412,3 +412,66 @@ private files and account settings remain unverified by
 this inspector. No private routes are called authenticated,
 no Customer Account activity, mutations, remote migrations,
 deployment or paid upgrades.
+
+## Phase 28 Owner Windows LIVE WORK anonymous audit — PASS
+
+Owner fast-forwarded `jill/rewards-work` to `9029eaa`.
+Both `npm.cmd run test:work-hq-live-anonymous-v1`
+(27 synthetic adversarial cases) and
+`npm.cmd run work:hq:live:anonymous:inspect` exited 0.
+The real deployed WORK CANARY returned:
+- `GET /healthz`: HTTP 200, WORK D1 healthy.
+- `GET /auth/login`: HTTP 200, WORK Shopify login reachable.
+- `GET /app/requests`: HTTP 410, anonymous merchant route denied.
+- `GET /app/setup-owner`: HTTP 410, anonymous Owner setup denied.
+
+Reported:
+`oauth_login_public_and_private_routes_denied`.
+The guarded PowerShell PASS correctly followed both exit-0 checks.
+The local tests did not inspect real customers, and the live four-GET
+read-only probe sent NO Shopify credentials or admin sessions.
+
+**Important non-claims:** HTTP 410 anonymous denial is not evidence
+that the signed-in merchant page is usable; this check did not
+verify the deployed Worker version or compare runtime bindings.
+It did NOT test real Owner access, signed Google QA request retrieval,
+actual merchant writes, exact detail, My JILL customer tracking,
+billing, media or full end-to-end rollout.
+
+Latest GitHub Actions `My JILL WORK account certification` for
+commit `9029eaa`, run 38982121088, completed SUCCESS; the
+separate `JILL Theme Core Pipeline`, run 38982121106, also succeeded.
+Both are CI/source checks; the owner's real browser test remains
+outstanding.
+
+### Phase 29 next: signed-in WORK HQ merchant acceptance test (NO mutation)
+
+Open **Shopify Admin for `jill-work.myshopify.com`** using the
+actual registered account Owner, open **Apps → JILL HQ → Custom
+Orders** in the embedded Shopify interface (not a public direct
+Worker URL or LIVE Admin session).
+
+Verify the JILL HQ landing page shows merchant identity recognized,
+its Custom Orders navigation appears, the inbox shows
+`Verified WORK source` and an accurate count, and an existing
+disposable WORK QA request can open its workspace. The list
+is a signed, nine-field canonical projection; customer contact
+details are deliberately not shown in the inbox.
+
+Check the exact-detail pane separately: depending on the actual
+deployed WORK flag it may be disabled/unavailable. Do not confuse
+missing detailed panel with an inbox-source failure. Do not click
+status updates/send emails or submit new orders until a separately
+reviewed mutation acceptance test is authorized.
+
+If any step fails, report only route-level status, visible
+state banners (`source_not_connected`, `source_unavailable`,
+`access_denied`, or `ready`), whether there are request cards,
+and sanitized timing **labels**. Never paste cookies, browser
+tokens, full unredacted customer names/emails/phones, URLs with
+session parameters or raw Google QA response bodies.
+
+PASS requires a verified signed-in Owner, correct WORK shop,
+a signed source showing the expected existing disposable
+requests, and a request-workspace render. It is NOT proven by
+anonymous route checks alone. LIVE and KEEP remain out of scope.
