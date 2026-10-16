@@ -63,8 +63,11 @@ export function summarizeWorkPrivateMediaRetention({
     k,Object.freeze({...groups[k]}),
   ])));
   return Object.freeze({
-    state:rows.length?'manual_owner_review_required':
-      'no_records_in_approved_projection',
+    state:rows.length||quotaReservedBytes||quotaLifetimeReservations?
+      'manual_owner_review_required':'no_records_in_approved_projection',
+    unmatched_accounting_possible:
+      sum!==quotaReservedBytes||
+      rows.length!==quotaLifetimeReservations,
     reporting_scope:'synthetic_or_authorized_server_aggregate_only',
     intent_count:rows.length,
     bytes_in_retained_intent_records:sum,
