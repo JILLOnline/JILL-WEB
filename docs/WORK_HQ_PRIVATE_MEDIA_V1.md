@@ -353,3 +353,54 @@ Remaining gates before ANY actual 0004 D1 migration or image-preview route:
 **No remote 0004 schema writes, secret provisioning, Cloudinary/R2
 upload/download, private-link generation or Worker deployment is part
 of this source phase.**
+
+
+## Phase 5 — WORK private artwork ingress bytes contract (source only)
+
+Owner's 2026-10-16 read-only remote inspection PASS confirms the
+expected v34 WORK D1 database, migration 0003 complete, five JILL
+tables, three ledger records, and one initial empty inbox cache row.
+The 0004 registry remains absent/inert. No private-storage capability
+or media authorization is implied by this result.
+
+New pure server-side boundary:
+`services/jill-order-desk/work-private-media-ingest-contract.mjs`
+exports `inspectWorkPrivateArtworkBytes({bytes,declaredMime})`.
+
+- Accepts **byte arrays only**, never a Cloudinary link, external URL,
+  reference ID, customer-controlled storage path or asset identifier.
+- Limits input to **8 MiB** and validates declared MIME against a
+  PNG/JPEG/WebP signature. PNG additionally checks its IHDR
+  dimensions, with maximum side 10,000 pixels and area 40 megapixels.
+  SVG, HTML, PDF, ZIP, arbitrary content, HEIC/HEIF and unmatched
+  MIME signatures are rejected from this staging path.
+- Produces only an immutable fingerprint/size/type candidate with
+  `storage_state:not_written`, `privacy_attested:false` and
+  `delivery_state:disabled`. It returns no file content, private or
+  public URL, provider ID, object key or delivery token.
+- **Not full image decoding, sanitization, malware scanning, or
+  provider-side private object validation.** In particular, checking
+  format headers alone cannot detect every malformed or malicious
+  image. A future authenticated ingestion service must decode and
+  safely re-encode artwork, enforce dimensions/resource budgets,
+  write to dedicated private WORK storage and independently attest the
+  written object's confidentiality and ownership.
+- Must be called **after** actual Shopify online Owner + WORK D1
+  authorization, not directly from an anonymous upload route.
+  This source module is not that authentication boundary.
+- Existing legacy public `res.cloudinary.com/.../image/upload`
+  links remain unresolved original evidence. They are **not copied,
+  relabeled or made private** by this code, and never authorize a
+  preview or a registry row by themselves.
+
+Offline adversarial regression:
+`npm.cmd run test:work-hq-private-media-ingest-contract`.
+CI executes it without any real Cloudflare, Shopify, Google, R2,
+Cloudinary, secret, D1 write, file read or customer submission.
+
+**Still HOLD:** choose/verify WORK private storage provider and
+separate WORK credentials, implement the authenticated ingest route
+and full image decode/sanitization, certify owned private objects with
+revocation/retention, then seek a **new separate approval** for 0004.
+Do not run `wrangler d1 migrations apply` or deploy WORK v35
+based only on this source contract.
