@@ -186,4 +186,11 @@ assert.match(terminalSource,/stdio:'inherit',timeout:180000/);
 assert.doesNotMatch(terminalSource,/apply_0003'\)\],\{[\s\S]*?stdio:'pipe'/);
 assert.match(terminalSource,/mode==='--verify'/);
 
+assert.match(terminalSource,/mode==='--terminal-probe'/);
+assert.match(terminalSource,/TEST JILL WORK TERMINAL/);
+assert.match(terminalSource,/SYNTHETIC Wrangler confirm \(Y\/n\)/);
+assert.match(terminalSource,/mode==='--verify'/);
+assert.match(terminalSource,/phase='verify_live_0003_postflight_read_only'/);
+assert.match(terminalSource,/const receipt=verifyPostflight\(\)/);
+assert.doesNotMatch(terminalSource,/--yes|--force/);
 console.log('PASS WORK 0003 OWNER-GATED release OFFLINE: async terminal Y/n fixture, explicit Owner approval and Windows DPAPI recovery, strict 0003 postflight, 0004/LIVE blocked; NO remote writes.');
