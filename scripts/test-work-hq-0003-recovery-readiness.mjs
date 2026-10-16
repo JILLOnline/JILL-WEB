@@ -39,6 +39,25 @@ assert.deepEqual(assertWork0003D1Info({
 assert.deepEqual(assertWork0003D1Info({result:{
   name:'jill-order-desk-work',id,version:'production',
 }}),{database:'jill-order-desk-work',backend:'production'});
+// Exact field names observed in the real WORK Wrangler JSON on 2026-10-16.
+// The optional storage "version" is absent: this alone must NEVER claim
+// a production backend. The bookmark endpoint must prove capability.
+const actualInfo={
+  uuid:id,name:'jill-order-desk-work',
+  created_at:'2026-10-14T00:00:00Z',num_tables:6,
+  running_in_region:'ENAM',read_replication:{mode:'disabled'},
+  jurisdiction:null,database_size:69632,
+  read_queries_24h:22,write_queries_24h:0,
+  rows_read_24h:70,rows_written_24h:0,
+};
+assert.equal(Object.hasOwn(actualInfo,'version'),false);
+assert.deepEqual(assertWork0003D1Info(actualInfo),{
+  database:'jill-order-desk-work',backend:'not_reported',
+});
+assert.deepEqual(assertWork0003D1Info({result:actualInfo}),{
+  database:'jill-order-desk-work',backend:'not_reported',
+});
+assert.notEqual(assertWork0003D1Info(actualInfo).backend,'production');
 for(const bad of [
   null,[],{},{
     name:'jill-order-desk-work',uuid:id,version:'alpha',
@@ -49,6 +68,12 @@ for(const bad of [
   },{
     name:'jill-order-desk-work',version:'production',
   },
+  {...actualInfo,version:'alpha'},
+  {...actualInfo,version:'staging'},
+  {...actualInfo,version:null},
+  {...actualInfo,uuid:'LIVE_DB'},
+  {...actualInfo,id:'LIVE_DB'},
+  {...actualInfo,name:'jillonlinestore'},
 ]){
   assert.throws(()=>assertWork0003D1Info(bad),
     /work_0003_time_travel_backend_unverified/);
@@ -78,4 +103,4 @@ assert.match(runtime,/bookmark NOT printed or stored/);
 assert.doesNotMatch(runtime,/\b(?:spawnSync|execFileSync)\([^)]*['"]restore['"]/);
 assert.doesNotMatch(runtime,/d1.*\bmigrations.*apply/);
 assert.doesNotMatch(runtime,/wrangler.*\bsecret\s+put/);
-console.log('PASS WORK 0003 recovery readiness contract: exact WORK v34/UUID+0003 HOLD, production D1 backend, read-only Time Travel current bookmark, zero bookmark exposure, destructive operations refused; no real provider calls.');
+console.log('PASS WORK 0003 recovery contract: observed D1 info without version accepted only for read-only Time Travel probe; explicit alpha/unknown rejected, exact WORK UUID pinned, bookmark unexposed; no real provider calls.');
