@@ -33,6 +33,14 @@ export const WORK_MEDIA_SCHEMA_SQL=
 export const WORK_MEDIA_CORE_TABLES=Object.freeze(
   WORK_MEDIA_BASE_TABLES.filter(x=>
     x!=='jill_work_verified_inbox_index'));
+export const WORK_MEDIA_LEDGER_PRESENCE_SQL=
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='d1_migrations'";
+export const WORK_MEDIA_LEDGER_HISTORY_SQL=
+  "SELECT name FROM d1_migrations ORDER BY name";
+export const WORK_MEDIA_KNOWN_MIGRATIONS=Object.freeze([
+  '0001_staff_authority.sql','0002_shopify_sessions.sql',
+  '0003_work_verified_inbox_index.sql',
+]);
 function gate(value,message){if(!value)throw Error(message);}
 export function assertWorkMediaD1Config(config){
   const databases=config?.d1_databases;
@@ -114,6 +122,41 @@ export function assertWorkMediaD1Schema(payload){
     pending_0003_inbox_index:missingIndex,
   });
 }
+// Inspect only migration filenames. Never run migrations list/apply here:
+// the Cloudflare CLI migration helpers may initialize tracking state.
+export function assertWorkMediaD1LedgerPresence(payload){
+  const p=Array.isArray(payload)&&payload.length===1?payload[0]:
+    (!Array.isArray(payload)?payload:null);
+  gate(p?.success===true && Array.isArray(p.results),
+    'work_media_ledger_presence_unverifiable');
+  gate(p.results.length<=1 &&
+    p.results.every(x=>x?.name==='d1_migrations' &&
+      Object.keys(x).length===1),
+    'work_media_ledger_presence_unexpected');
+  return p.results.length===1;
+}
+export function assertWorkMediaD1LedgerHistory(payload,{
+  inboxTablePresent=false,
+}={}){
+  const p=Array.isArray(payload)&&payload.length===1?payload[0]:
+    (!Array.isArray(payload)?payload:null);
+  gate(p?.success===true && Array.isArray(p.results),
+    'work_media_ledger_history_unverifiable');
+  const names=p.results.map(x=>x?.name);
+  gate(p.results.every(x=>
+    typeof x?.name==='string'&&Object.keys(x).length===1) &&
+    names.length<=WORK_MEDIA_KNOWN_MIGRATIONS.length &&
+    new Set(names).size===names.length &&
+    names.every(n=>WORK_MEDIA_KNOWN_MIGRATIONS.includes(n)),
+    'work_media_unknown_migration_record');
+  const recorded=names.includes('0003_work_verified_inbox_index.sql');
+  gate(!recorded||inboxTablePresent,
+    'work_media_0003_recorded_but_table_missing');
+  return Object.freeze({
+    migration_count:names.length,
+    inbox_0003_recorded:recorded,
+  });
+}
 export function workMediaD1ReadCommand(step){
   switch(step){
     case 'worker_status':
@@ -126,6 +169,12 @@ export function workMediaD1ReadCommand(step){
     case 'schema_only':
       return ['d1','execute',DATABASE,'--remote','--config',CONF,
         '--command',WORK_MEDIA_SCHEMA_SQL,'--json'];
+    case 'ledger_presence':
+      return ['d1','execute',DATABASE,'--remote','--config',CONF,
+        '--command',WORK_MEDIA_LEDGER_PRESENCE_SQL,'--json'];
+    case 'ledger_history':
+      return ['d1','execute',DATABASE,'--remote','--config',CONF,
+        '--command',WORK_MEDIA_LEDGER_HISTORY_SQL,'--json'];
     default:
       throw Error('disallowed_work_media_d1_operation');
   }
@@ -181,6 +230,16 @@ if(invoked){
     phase='remote_schema_metadata';
     const schema=assertWorkMediaD1Schema(
       JSON.parse(readCloudflare('schema_only')));
+    phase='migration_ledger_presence';
+    const ledgerExists=assertWorkMediaD1LedgerPresence(
+      JSON.parse(readCloudflare('ledger_presence')));
+    let ledger=null;
+    if(ledgerExists){
+      phase='migration_ledger_history';
+      ledger=assertWorkMediaD1LedgerHistory(
+        JSON.parse(readCloudflare('ledger_history')),
+        {inboxTablePresent:!schema.pending_0003_inbox_index});
+    }
     // Guard against a concurrent Worker change during metadata inspection.
     phase='worker_status_recheck';
     gate(currentWorkerVersion(readCloudflare('worker_status'))===
@@ -190,9 +249,17 @@ if(invoked){
       ' existing JILL tables; media registry ABSENT.');
     if(schema.pending_0003_inbox_index){
       console.log('HOLD: jill_work_verified_inbox_index is MISSING from remote D1.');
-      console.log('HOLD: migration 0003 application history NOT confirmed; inspect the migration ledger before any schema change.');
+      console.log(ledgerExists?
+        'HOLD: D1 ledger contains '+ledger.migration_count+
+        ' recognized migration name(s); 0003 not recorded.':
+        'HOLD: D1 migrations ledger table is ABSENT; applied 0003 history cannot be established.');
     }else{
-      console.log('PASS WORK inbox-index table exists; migration application ledger NOT yet verified.');
+      console.log('PASS WORK inbox-index table is present.');
+      console.log(ledgerExists?
+        (ledger.inbox_0003_recorded?
+          'PASS migration 0003 is recorded in D1 ledger.':
+          'HOLD: 0003 exists as a table but is not recorded in D1 migration ledger.'):
+        'HOLD: D1 migration ledger table absent; 0003 history unverified.');
     }
     console.log('PASS 0004 proposal remains outside active D1 migrations; no registry key or media storage writes.');
     console.log('READ ONLY. No customer rows, keys, D1 changes, Cloudflare traffic switches, Google or Shopify writes.');
@@ -212,6 +279,11 @@ if(invoked){
       'work_media_schema_invalid_or_duplicated',
       'work_media_registry_already_exists','work_media_core_table_missing',
       'work_media_unknown_jill_table','work_media_schema_inconsistent',
+      'work_media_ledger_presence_unverifiable',
+      'work_media_ledger_presence_unexpected',
+      'work_media_ledger_history_unverifiable',
+      'work_media_unknown_migration_record',
+      'work_media_0003_recorded_but_table_missing',
     ]);
     console.error('WORK MEDIA D1 PREFLIGHT STOPPED: '+
       (known.has(e?.message)?e.message:'work_media_preflight_unverified'));
