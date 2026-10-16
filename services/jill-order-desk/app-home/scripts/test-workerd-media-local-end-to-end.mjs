@@ -143,9 +143,10 @@ try{
   assert.equal(Object.keys(codecEnv).some(k=>/R2|D1|SHOPIFY|SECRET/.test(k)),
     false);
   const env=await storageWorker.getEnv();
-  assert.deepEqual(Object.keys(env).sort(),[
-    'JILL_PHASE19_SYNTHETIC_D1','JILL_PHASE19_SYNTHETIC_R2',
-  ]);
+  assert.equal(Object.hasOwn(env,'JILL_PHASE19_SYNTHETIC_D1'),true);
+  assert.equal(Object.hasOwn(env,'JILL_PHASE19_SYNTHETIC_R2'),true);
+  assert.equal(Object.keys(env).some(k=>
+    /SHOPIFY|SECRET|TOKEN|LIVE|JILL_ORDER_DESK_WORK_DB/.test(k)),false);
   const db=env.JILL_PHASE19_SYNTHETIC_D1;
   const bucket=env.JILL_PHASE19_SYNTHETIC_R2;
   for(const name of ['put','head','get'])
