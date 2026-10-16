@@ -104,6 +104,51 @@ try{
       Math.round(performance.now()-started)+'ms elapsed (NOT CPU billing).');
   }
 
+  // Realistic HD JPEG: exercise both codec WASM and Worker memory/time.
+  // Deterministic synthetic pattern, not personal or customer artwork.
+  const W=1280,H=720;
+  const noise=Buffer.alloc(W*H*3);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=(y*W+x)*3;
+    noise[i]=(x*17+y*3)&255;
+    noise[i+1]=(x*5+y*11)&255;
+    noise[i+2]=((x^y)*7)&255;
+  }
+  const hd=await sharp(noise,{raw:{width:W,height:H,channels:3}})
+    .jpeg({quality:88}).toBuffer();
+  const bigStart=performance.now();
+  const hdResponse=await call('image/jpeg',hd);
+  const hdResult=Buffer.from(await hdResponse.arrayBuffer());
+  assert.equal(hdResponse.status,200,'HD photo must decode and encode');
+  const hdMeta=await sharp(hdResult).metadata();
+  assert.equal(hdMeta.width,W);assert.equal(hdMeta.height,H);
+  assert.equal(hdMeta.format,'webp');assert.equal(hdMeta.exif,undefined);
+  assert.ok(hdResult.length<8*1024*1024);
+  completed++;
+  console.log('PASS LOCAL WORKERD HD 1280x720 JPEG -> WebP '+
+    hd.length+' to '+hdResult.length+' bytes, '+
+    Math.round(performance.now()-bigStart)+
+    'ms elapsed (NOT Cloudflare CPU billing).');
+
+  // EXIF Orientation 6 (common phone photo): rotate pixel geometry and
+  // remove the original orientation metadata in the output.
+  const withRotation=await sharp({create:{width:64,height:48,
+    channels:3,background:'#3f779d'}})
+    .jpeg().withExif({IFD0:{Orientation:6}}).toBuffer();
+  const rotationInput=await sharp(withRotation).metadata();
+  assert.equal(rotationInput.orientation,6,
+    'Fixture must actually include EXIF orientation 6');
+  const rotateResponse=await call('image/jpeg',withRotation);
+  const rotatedBytes=Buffer.from(await rotateResponse.arrayBuffer());
+  assert.equal(rotateResponse.status,200,
+    'EXIF-orientated JPEG must be corrected in local Worker');
+  const rotateMeta=await sharp(rotatedBytes).metadata();
+  assert.equal(rotateMeta.width,48);assert.equal(rotateMeta.height,64);
+  assert.equal(rotateMeta.orientation,undefined);
+  assert.equal(rotateMeta.exif,undefined);
+  completed++;
+  console.log('PASS LOCAL WORKERD real EXIF Orientation 6 correction.');
+
   // Use an actually animated, two-frame synthetic WebP fixture. Even
   // decoders capable of playing it must never accept it as one still image.
   const animated=Buffer.from(
@@ -135,7 +180,7 @@ try{
     assert.equal((await response.text()),'artwork_not_accepted');
     completed++;
   }
-  assert.equal(completed,11);
+  assert.equal(completed,13);
   console.log('PASS local WORKERD EDGE: genuine PNG/JPEG/WebP -> metadata-free WebP; animated, mislabeled, malformed, oversized denied. No R2/D1/cloud operations.');
 }catch(err){
   console.error('STOP local WORKERD edge WASM feasibility: '+
