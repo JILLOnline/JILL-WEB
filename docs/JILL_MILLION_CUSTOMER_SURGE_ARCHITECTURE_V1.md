@@ -358,3 +358,57 @@ Shopify merchant login, live Google QA signing, deployed production
 uploads or a one-million-customer measured load test. User Windows
 bundled verification remains PENDING. Existing signed WORK gateway,
 LIVE, KEEP, remote database/storage and paid plans unchanged.
+
+## Phase 27 Owner Windows bundled local certification — PASS
+
+Owner's 2026-10-16 PowerShell output after pulling
+`jill/rewards-work` to `f76de61` shows every step in
+`npm.cmd run work:hq:local:verify-all` returned success:
+- actual local WORK canary React Router build and local OAuth
+  candidate; source locked manifest stayed unchanged;
+- existing Shopify app-proxy HMAC, SQLite limiter, merchant commands,
+  Google QA mail-outbox, surge forecast and privacy retention;
+- local WORK OAuth browser/curl login and cross-site denial;
+- private media Owner access, D1 idempotent intake ledger,
+  signed Shopify -> mocked Google QA TWO-confirmation bridge,
+  real local WASM + synthetic D1/R2 private write/recovery;
+- React Router typegen and TypeScript zero errors.
+
+The final printed `PASS WORK HQ LOCAL BUNDLE` and guarded
+PowerShell `PASS: JILL HQ complete local verification succeeded`
+followed the successful executable checks. CI had independently
+passed commit `4c148334` before this Windows run.
+
+**Boundary:** the local OAuth smoke test /app and /app/setup-owner
+returned HTTP 410 for anonymous requests, which is expected
+denial; they did NOT prove a merchant-signed in HQ screen.
+All local D1/R2 data and Google/Shopify credentials were
+synthetic. The real WORK release, authenticated Owner UI and
+real QA request-to-account tracking still require separate
+interactive checks.
+
+## Phase 28 — Read-only live WORK anonymous commissioning evidence
+
+Source-only and safe to run with existing provider credentials
+(but it sends none): `scripts/inspect-work-hq-live-anonymous-v1.mjs`
+makes exactly four **uncredentialed GETs** against the exact
+WORK canary hostname, never follows redirects and does not
+read customer content: D1 /healthz; /auth/login; anonymous
+/app/requests; anonymous /app/setup-owner. It classifies
+`oauth_locked` versus `oauth_login_public_and_private_routes_denied`
+without assuming the locked Git manifests reflect the currently
+deployed Cloudflare Worker version.
+
+`scripts/test-work-hq-live-anonymous-v1.mjs` mocks all
+network calls and adversarially checks wrong host redirects,
+foreign Shopify store redirects, public Owner/custom-order
+responses, D1 errors, cache errors and inconsistent OAuth
+gates. These are OFFLINE assertions, not live evidence.
+CI includes them. Read-only script result is PENDING.
+
+The deployed source version, signed-in WORK Owner,
+actual Google QA verification, merchant emails, staff grants,
+private files and account settings remain unverified by
+this inspector. No private routes are called authenticated,
+no Customer Account activity, mutations, remote migrations,
+deployment or paid upgrades.
