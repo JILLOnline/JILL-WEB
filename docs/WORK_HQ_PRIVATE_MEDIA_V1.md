@@ -1352,9 +1352,9 @@ https://developers.cloudflare.com/r2/api/workers/workers-api-reference/
 
 Phase 19's synthetic PUT now explicitly specifies
 `storageClass:'Standard'`. The *LOCAL TEST ONLY* accepts HEAD
-`storageClass` being `'Standard'` or `''`, requires the PUT
-and HEAD class to agree, and logs an informative message if the local
-emulator leaves the field empty. No other provider metadata, hash,
+`storageClass` being `'Standard'` or `''`, independently checks that neither PUT nor HEAD reports
+`InfrequentAccess`, and logs an informative message if the local
+emulator leaves either field empty. No other provider metadata, hash,
 conditional write, duplicate reservation, or 404 checks have been
 relaxed. **An empty string cannot prove the actual WORK bucket is
 Standard and must NEVER be accepted by the production pre-upload
