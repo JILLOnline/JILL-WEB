@@ -49,7 +49,9 @@ export default {
     // A matching Origin is ONLY a browser CSRF precondition, never merchant
     // authorization: the downstream action still verifies Shopify Owner,
     // the WORK D1 grant, write flag, and the Google QA HMAC signature.
-    if(request.method==="POST" && url.pathname==="/app/requests/command" &&
+    if(request.method==="POST" &&
+       (url.pathname==="/app/requests/command" ||
+        url.pathname==="/app/requests/media/inspect") &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
     if(request.method==="GET" && url.pathname==="/healthz") {
