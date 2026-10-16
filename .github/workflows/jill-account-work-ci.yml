@@ -35,6 +35,11 @@ jobs:
       - name: Install dependencies and run all repository guards
         run: npm install
 
+      - name: Decode and sanitize synthetic artwork locally (Node only; no Cloudflare)
+        run: |
+          npm install --prefix tools/work-media-local --no-audit --no-fund
+          npm run test --prefix tools/work-media-local
+
       - name: Verify My JILL extension and canary boundaries
         run: npm run check:account-hub && npm run test:account-hub-canary && npm run test:account-hub-summary && npm run test:account-hub-template
 
