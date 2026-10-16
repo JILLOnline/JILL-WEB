@@ -1434,3 +1434,79 @@ GitHub CI includes this regression.
 **HOLD** remains: inert 0004–0006 migration proposals, no R2
 production bindings or writes, no Cloudflare Images paid feature,
 no customer uploads or previews, no LIVE/KEEP or Google QA changes.
+
+### Phase 20 Windows certification — PASS, 2026-10-16
+
+Owner fast-forwarded WORK to `502053a` and executed
+`npm.cmd run test:work-hq-media-local-recovery`. Process exit was 0;
+the test printed `PASS WORK Phase 20 LOCAL recovery` and the
+conditional PowerShell PASS message. Real LOCAL workerd D1/R2 verified:
+1. Intent committed, object not found -> `ambiguous`, quota retained.
+2. R2 PUT completed, acknowledgement lost -> HEAD+GET with full SHA-256
+   and immutable metadata -> `quarantined_unlinked` candidate.
+3. Inconsistent R2 custom metadata -> `ambiguous`, object retained.
+4. Terminal transitions guarded, retained quota accounting, no
+   retries/deletions/refunds or public HTTP access.
+All data and storage were synthetic; no remote D1/R2 operations.
+
+**Phases 18, 19, 20 are certified for their stated LOCAL workerd
+test scopes only.** Earlier "pending" phase notes above record
+historic failures and are superseded by their respective PASS results.
+
+## Production release gate — source audit after Phase 20 (HOLD)
+
+Read-only inspection of `jill/rewards-work` source establishes:
+- Deployable entry point
+  `services/jill-order-desk/app-home/workers/app.ts`
+  invokes React Router for authorized WORK requests after host,
+  schema and OAuth checks. It has no registered artwork upload,
+  quarantine recovery, customer media preview or download handler.
+  Source Wrangler `wrangler.jsonc` and `wrangler.canary.jsonc`
+  configure only WORK D1, no R2 or Cloudflare Images binding;
+  `JILL_WORK_OAUTH_ENABLED` is `false` in both tracked files.
+  Actual deployed environment overrides must be independently audited,
+  rather than inferred from source settings.
+- `work-private-media-intent.mjs` requires online Shopify Owner plus
+  D1 server authorization and exact request detail, but is an
+  **unwired candidate contract**, not a production authentication
+  adapter or proven production upload route.
+- Existing `work-private-r2-quarantine.mjs` has an unpersisted
+  generated R2 key and **writes without atomically persisted quota
+  and intent**. It must NEVER be wired as a production upload.
+  It also requires input/output MIME equality; the certified WASM
+  sanitizer intentionally converts PNG/JPEG/WebP into WebP.
+  Production flow must bind sanitized **output** WebP bytes, MIME,
+  SHA-256 and length to the committed D1 intent and R2 metadata.
+- `work-private-r2-local-recovery.mjs` accepts caller-provided
+  HEAD/body evidence and returns transition candidates; real
+  provider origin/authenticity has NOT been established. Real recovery
+  needs a privileged server-held R2 reader, retention policy, audited
+  incident resolution, immutable history and no automatic replay.
+- The `0004` registry, `0005` quota guard, and `0006` immutable
+  intent migration files are still under `migration-plans/`, NOT the
+  active `migrations/` directory, which contains only 0001–0003.
+  Their application requires a specific reviewed remote WORK release.
+- Real R2 account-wide analytics were read on 2026-10-16, and
+  observed 0 stored bytes/objects and 7 prior operations. Adaptive
+  metrics and provider snapshots **cannot guarantee a $0 bill**.
+  The Phase 16 prewrite function explicitly returns
+  `upload_authorized:false` even on matching synthetic evidence.
+  Never promote an analytics summary to payment or storage authority.
+- `quarantined_unlinked` is not a customer-available object state.
+  There is no authorized customer preview/download, migration/claim
+  of legacy public assets, expiry/deletion, nor complete private
+  audit trail. These are separate release decisions.
+
+**Recommended next work, without remote mutations:** draft a
+WORK-only authenticated integration and release manifest (exact
+Owner/session checks, operation-level use of D1 batch, trusted
+provider privacy/usage checks, WebP output contract, D1 recovery
+state, retention/manual cleanup and rollback), together with tests
+of host/role/CSRF/guest rejection. Then pause for separate explicit
+owner approval of every remote WORK D1 migration, binding change,
+synthetic test PUT, route deployment and any billing risk. Do not
+use an old general "GO FOR IT" for those specific remote actions.
+
+**Status: NO-GO for live uploads/previews.** No production migration,
+real bucket write or binding, Cloudflare Images paid activation,
+LIVE/KEEP deployment or customer artwork access is authorized.
