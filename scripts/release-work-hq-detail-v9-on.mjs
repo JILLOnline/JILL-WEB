@@ -115,21 +115,25 @@ async function checkAnonymousSafety(){
     commandError:body?.error??null,
   });
 }
-async function verifiedSource(){
+async function verifiedSource({requireGoogle=true}={}){
   gate(git('branch','--show-current')==='jill/rewards-work' &&
     git('rev-parse','HEAD')===
       git('rev-parse','refs/remotes/origin/jill/rewards-work') &&
     !git('status','--porcelain','--untracked-files=no'),
     'work_source_not_synced');
-  const google=await reconcileWorkQaDetailRemote({root:ROOT});
-  gate(google.state==='present_unprobed'&&google.version===9,
-    'work_google_v9_drift');
-  verifyWorkQaDetailSourcePin({
-    deploymentId:google.deploymentId,version:google.version,
-  });
+  // Emergency rollback cannot depend on Google availability. It is
+  // entirely constrained to exact known Cloudflare v34 -> v33 versions.
+  if(requireGoogle){
+    const google=await reconcileWorkQaDetailRemote({root:ROOT});
+    gate(google.state==='present_unprobed'&&google.version===9,
+      'work_google_v9_drift');
+    verifyWorkQaDetailSourcePin({
+      deploymentId:google.deploymentId,version:google.version,
+    });
+  }
 }
 async function inspect(mode){
-  await verifiedSource();
+  await verifiedSource({requireGoogle:mode==='release'});
   const current=deployed();
   return verifyExactDetailOnRelease({
     baseline:view(DETAIL_OFF_CANDIDATE),
@@ -174,7 +178,9 @@ if(invoked){
     const mode=process.argv[2]==='--rollback'?'rollback':'release';
     const pair=await inspect(mode);
     console.log('PASS exact WORK version: '+pair.from+' -> '+pair.to);
-    console.log('PASS verified Google QA @9; original v7 inbox/status isolated.');
+    console.log(mode==='release'?
+      'PASS verified Google QA @9; original v7 inbox/status isolated.':
+      'PASS exact Cloudflare v34/v33 rollback path; no Google dependency.');
     console.log('PASS only added binding is '+pair.flag+
       '; four secrets, D1, OAuth, Owner and status writes unchanged.');
     if(process.argv[2]==='--inspect'){
