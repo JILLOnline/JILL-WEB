@@ -38,3 +38,7 @@ services/jill-order-desk/app-home/node_modules/
 JILL-PRIVATE/
 JILL-SECRETS*.txt
 **/JILL-SECRETS*.backup-*.txt
+
+# Re-generated local-only dependency lock for the isolated Node sanitizer.
+# Never bundle native Sharp into Cloudflare Workers.
+/tools/work-media-local/package-lock.json
