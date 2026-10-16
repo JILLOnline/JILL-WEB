@@ -94,6 +94,65 @@ const buildPlan=(selector,overrides={})=>createPlan({
   shop,detail,submissionId:request,selector,registryKey,
   contentSha256:'a'.repeat(64),byteLength:1024,nowMs,...overrides,
 });
+// D1Database.exec() can treat leading SQL-comment-only lines as empty
+// statements. Unlike node:sqlite's DatabaseSync.exec(), D1's exec()
+// is unsuitable for loading our commented multi-statement SQL fixtures.
+// Parse only the six FIXED audited source files, then use one prepared
+// statement per DDL/INSERT. Preserve CREATE TRIGGER BEGIN...END bodies,
+// including their internal semicolons. This never touches remote D1.
+const EXPECTED_STATEMENTS=Object.freeze({
+  '0001_staff_authority.sql':5,
+  '0002_shopify_sessions.sql':2,
+  '0003_work_verified_inbox_index.sql':2,
+  '0004_work_private_media_registry.sql':5,
+  '0005_work_r2_quota_guard.sql':4,
+  '0006_work_r2_object_intents.sql':5,
+});
+function localFixtureStatements(file,sql){
+  assert.ok(Object.hasOwn(EXPECTED_STATEMENTS,file),
+    'Unapproved SQL fixture file');
+  const statements=[];
+  let current=[],inTrigger=false;
+  for(const line of sql.split(/\r?\n/)){
+    const trimmed=line.trim();
+    if(!trimmed||trimmed.startsWith('--'))continue;
+    assert.equal(trimmed.includes('--'),false,
+      'Fixture has unrecognized inline SQL comment');
+    if(current.length===0){
+      inTrigger=/^CREATE TRIGGER\b/i.test(trimmed);
+    }
+    current.push(trimmed);
+    // Non-trigger statements end with semicolons. For a trigger, only
+    // its outer END; closes the statement; inner RAISE(...); does not.
+    const finished=inTrigger?/^END;$/i.test(trimmed):/;$/.test(trimmed);
+    if(finished){
+      statements.push(current.join(' '));
+      current=[];
+      inTrigger=false;
+    }
+  }
+  assert.equal(current.length,0,'Incomplete local SQL fixture');
+  assert.equal(statements.length,EXPECTED_STATEMENTS[file],
+    'Unexpected SQL fixture statement count');
+  return statements;
+}
+async function seedLocalOnlySchema(db){
+  for(const file of [...EXPECTED_ACTIVE,...PLANS]){
+    const folder=EXPECTED_ACTIVE.includes(file)?'migrations':'migration-plans';
+    const sql=readFileSync(resolve(SOURCE,folder,file),'utf8');
+    const statements=localFixtureStatements(file,sql);
+    for(let i=0;i<statements.length;i++){
+      try{
+        await db.prepare(statements[i]).run();
+      }catch(error){
+        // Synthetic SQL only; never display customer records or secrets.
+        throw Error('local schema fixture '+file+' statement '+(i+1)+
+          ' failed: '+String(error?.message||'unverified').slice(0,240));
+      }
+    }
+  }
+}
+
 const server=createTestHarness({
   root:APP,
   workers:[{configPath:cfgPath}],
@@ -109,14 +168,8 @@ try{
   assert.equal(typeof db?.prepare,'function');
   assert.equal(typeof db?.exec,'function');
 
-  for(const file of EXPECTED_ACTIVE){
-    const contents=readFileSync(resolve(SOURCE,'migrations',file),'utf8');
-    await db.exec(contents);
-  }
-  for(const file of PLANS){
-    const contents=readFileSync(resolve(SOURCE,'migration-plans',file),'utf8');
-    await db.exec(contents);
-  }
+  await seedLocalOnlySchema(db);
+  console.log('PASS local WORKERD synthetic D1: 23 prepared schema statements loaded (no remote migrations).');
   await db.prepare(
     'INSERT INTO jill_merchant_authority '+
     '(shop,environment,app_client_id,owner_staff_id,owner_bound_at) '+
