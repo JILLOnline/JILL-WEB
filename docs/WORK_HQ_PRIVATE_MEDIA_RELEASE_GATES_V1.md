@@ -195,7 +195,8 @@ Local adversarial suite:
 It requires genuine WASM codec via synthetic local worker, real local
 D1 authority, local D1 proposals and synthetic local R2; tests disabled,
 wrong stage/shop, forged session/staff/reference, unsafe provider
-snapshot, malformed image and mislabeled type, duplicate slot,
+snapshot, malformed image and mislabeled type, forged WebP carrying
+EXIF despite claiming sanitized headers, duplicate slot,
 lost ACK, mismatched metadata, PUT failure, original-vs-output WebP
 SHA and negative public route access. CI includes it.
 
