@@ -36,7 +36,8 @@ function fake(items){
     assert.ok(init.signal);
     assert.equal(init.signal.aborted,false);
     assert.equal(url,ORIGIN+paths[at]);
-    return items[at++];
+    // Responses are consumed by the inspector; give each case fresh bytes.
+    return items[at++].clone();
   };
 }
 let checks=0;
