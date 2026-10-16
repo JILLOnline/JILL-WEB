@@ -1623,3 +1623,39 @@ Phase 21 certification.
 **Release HOLD:** media inspection feature flag OFF in both tracked
 WORK and canary manifests. No R2 binding, remote D1 migrations,
 real image upload/preview, paid plan, or LIVE/KEEP changes.
+
+## Phase 21 Windows certification — PASS, 2026-10-16
+
+The Owner's Windows PowerShell output after source corrections in
+commit `2d5f7a8` establishes all of the following exit-code-zero
+verification steps:
+- `node --check services/jill-order-desk/app-home/scripts/test-workerd-media-owner-boundary.mjs`: PASS.
+- `npm.cmd run test:work-hq-media-owner-boundary`: PASS;
+  genuine LOCAL workerd D1 permission tests with synthetic online
+  Shopify session SHAPES denied guest, delegated staff, offline/expired
+  session, foreign shop and forged customer fields. The exact
+  signed-request contract and disabled flag were validated;
+  zero uploads or previews.
+- `npm.cmd run typecheck --prefix services/jill-order-desk/app-home`:
+  PASS (`react-router typegen && tsc --noEmit`).
+- The guarded `PASS: Phase 21 authorization and TypeScript verified.`
+  appeared after both successful commands. The earlier first-run
+  syntax and TS failures are superseded by this confirmed rerun.
+
+**Scope limitation:** This certifies synthetic LOCAL workerd D1
+authorization and TypeScript integration, NOT a live Shopify
+authenticated production session, live account/customer media
+rights or a completed private upload pathway.
+
+New source-only release control document:
+`docs/WORK_HQ_PRIVATE_MEDIA_RELEASE_GATES_V1.md`.
+It records approved local evidence, outstanding complete WebP->D1->R2
+server composition, financial/privacy risk, retention, manual
+recovery and separate, explicitly approved WORK CANARY migration,
+deployment and tiny synthetic pilot gates.
+
+**Release decision remains HOLD:** The existing inspected media
+route always returns no-storage when authorized, media flags are
+not active in tracked WORK/canary manifests; no real R2 binding,
+remote migrations 0004-0006, real customer upload/preview, paid
+subscription, or LIVE/KEEP change has been authorized.
