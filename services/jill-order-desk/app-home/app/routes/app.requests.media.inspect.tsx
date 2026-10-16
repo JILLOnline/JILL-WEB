@@ -17,7 +17,8 @@ export async function loader(){
 
 export async function action({request,context}:ActionFunctionArgs){
   const env=context.cloudflare.env as typeof context.cloudflare.env & {
-    JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED?:string
+    JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED?:string;
+    JILL_WORK_HQ_DETAIL_ENABLED?:string;
   };
   // A source-only opt-in: the flag is intentionally ABSENT from all
   // deployable WORK/canary manifests. Even if someone opts it in later,
