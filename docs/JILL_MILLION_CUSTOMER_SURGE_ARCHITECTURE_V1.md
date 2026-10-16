@@ -184,3 +184,20 @@ because WORK queued a task.
 
 **No GO for paid tiers, remote writes or customer media** is
 implied by "whatever works" or by the capacity model.
+
+## Source-only verification commands
+
+Run only from a clean synchronized `jill/rewards-work` checkout:
+```powershell
+npm.cmd run test:work-hq-surge-capacity
+if ($LASTEXITCODE -ne 0) { throw 'STOP: WORK capacity invariants failed' }
+
+npm.cmd run work:hq:scale:simulate-million
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Million-demand forecast failed' }
+```
+
+These print an OFFLINE hypothetical capacity warning, not proof of
+throughput. **Do not run a million real requests** or enable paid
+services to "test" this plan. Independent controlled synthetic load
+testing needs separate authorization, infrastructure sizing and
+budget controls.
