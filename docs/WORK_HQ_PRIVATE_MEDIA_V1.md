@@ -476,3 +476,56 @@ Before any real R2 upload, additionally certify privacy audits, quotas,
 orphan/reconciliation/retention policy and D1 linkage. No paid-plan
 upgrade is authorized. Official pricing:
 https://developers.cloudflare.com/images/pricing/
+
+
+## Phase 8 — conservative Images Free budget reservation contract (source-only)
+
+Owner's Windows PowerShell PASS receipts certify all three existing
+offline suites following a clean `jill/rewards-work` fast-forward:
+Images sanitizer, R2 quarantine, and bytes intake validation. The
+local-only R2 configuration remains excluded through
+`.git/info/exclude`; neither canonical WORK nor canary is R2-bound.
+
+New pure module:
+`services/jill-order-desk/work-private-media-budget-gate.mjs`.
+Its offline regression is `npm.cmd run test:work-hq-media-budget-gate`,
+now included in source-only WORK CI. It provides a callback compatible
+with the existing sanitizer's budget-gate interface. This is **not**
+a live budget service: no Cloudflare account-usage reader, Images account
+plan attestor, or atomic transactional reservation adapter is installed.
+
+Default gate is fail-closed without trusted server-owned dependencies.
+Its synthetic contract pins the owner's known Cloudflare account and
+WORK Shopify shop. It denies non-Free/unknown plan, incomplete usage
+covering other Workers and shops, wrong month, usage older than five
+minutes, bad counters, missing or unsuccessful CAS reservation, and
+wrong nonce. The proposed local soft ceilings are 4,500 account-wide
+unique Images transformations (500 below the Free allowance) and 100
+WORK reservations per UTC month. *Neither is an enforceable Cloudflare
+billing ceiling or proof of real usage.* The atomic reservation provider
+must be a future durable cross-request compare-and-reserve transaction;
+in-memory increments, a bare SELECT/UPDATE, or an optimistic client
+response are forbidden. Tests use mocks only.
+
+Current Cloudflare documentation:
+- https://developers.cloudflare.com/images/pricing/ documents 5,000
+  unique Free transformations per calendar month; requests beyond Free
+  return 9422 with no overage charge while the Free plan remains active.
+- https://developers.cloudflare.com/images/optimization/binding/
+  documents raw-image-byte binding calls and says local low-fidelity
+  tests can avoid cloud usage.
+- https://developers.cloudflare.com/images/tutorials/optimize-user-uploaded-image/
+  still lists an Images Paid subscription in its prerequisites. Resolve
+  the exact account's entitlement **before** enabling real Images binding.
+- https://developers.cloudflare.com/r2/pricing/ documents Standard R2's
+  separate account-wide metered storage/operations with no guaranteed
+  hard $0 ceiling. This Images gate does NOT limit R2 billing.
+
+**Release HOLD continues:** no Images/R2 binding deployed, no account
+subscription change, no credential rotation, no real transformation,
+no request route, no customer uploads/preview, no 0004 D1 migration,
+no provider-private delivery or LIVE/KEEP/Rewards/Google QA change.
+Real usage must remain OFF until Owner approval of fully certified
+account-plan reads, atomic quota ledger, R2 account-wide capacity and
+operation budget, authenticated uploads, sanitizer output proof, storage
+privacy, object linkage and cleanup.
