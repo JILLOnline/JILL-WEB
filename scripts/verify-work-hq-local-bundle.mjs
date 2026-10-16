@@ -5,7 +5,9 @@
 import {spawnSync,execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {resolve,join} from 'node:path';
-import {readFileSync,readdirSync} from 'node:fs';
+import {readFileSync,readdirSync,existsSync} from 'node:fs';
+import {isDeepStrictEqual} from 'node:util';
+import {prepareOAuthManifest} from './prepare-work-canary-oauth-manifest.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=join(ROOT,'services/jill-order-desk/app-home');
 const SHOP='jill-work.myshopify.com';
@@ -70,11 +72,11 @@ function verifyGuard(){
      cloud.includes('work-intake-ledger-plan'))
     stop('unexpected_prod_intake_wiring');
 }
-function runStep(name,cmd,args,cwd){
+function runStep(name,cmd,args,cwd,extraEnv={}){
   process.stdout.write('\nHQ CHECK: '+name+'\n');
   const x=spawnSync(cmd,args,{
     cwd,encoding:'utf8',shell:false,windowsHide:true,
-    env:{...process.env,WRANGLER_SEND_METRICS:'false'},
+    env:{...process.env,WRANGLER_SEND_METRICS:'false',...extraEnv},
     timeout:180000,maxBuffer:2*1024*1024,
   });
   if(x.stdout)process.stdout.write(x.stdout.slice(-30000));
@@ -87,6 +89,31 @@ try{
   if(process.argv.length!==3||
      process.argv[2]!=='--verify-local')stop('invalid_cli');
   verifyGuard();
+  // The local OAuth smoke test requires the canary's compiled Worker.
+  // Build a fresh disposable LOCAL canary bundle; never deploy it.
+  if(process.platform==='win32'){
+    runStep('Compile LOCAL OAuth canary (no deployment)',
+      process.env.ComSpec||'cmd.exe',
+      ['/d','/s','/c','npm.cmd run build'],APP,
+      {JILL_BUILD_TARGET:'canary'});
+  }else{
+    runStep('Compile LOCAL OAuth canary (no deployment)',
+      'npm',['run','build'],APP,
+      {JILL_BUILD_TARGET:'canary'});
+  }
+  const buildManifest=join(APP,'dist/server/wrangler.json');
+  const oauthManifest=join(APP,'dist/server/wrangler.oauth-canary.json');
+  if(!existsSync(buildManifest))stop('canary_bundle_not_built');
+  const expected=prepareOAuthManifest(
+    JSON.parse(readFileSync(buildManifest,'utf8')));
+  if(!existsSync(oauthManifest)){
+    runStep('Generate LOCAL OAuth-only canary candidate (no deployment)',
+      process.execPath,[join(ROOT,
+        'scripts/prepare-work-canary-oauth-manifest.mjs')],ROOT);
+  }
+  if(!existsSync(oauthManifest)||
+     !isDeepStrictEqual(JSON.parse(readFileSync(oauthManifest,'utf8')),
+       expected))stop('local_oauth_candidate_drift');
   for(const test of steps){
     const cwd=test.root?ROOT:APP;
     const full=resolve(cwd,test.path);
