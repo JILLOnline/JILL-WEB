@@ -1184,3 +1184,41 @@ plan changes, Worker deploys or Cloudflare API use occur.
 Even after a real local workerd PASS, account-wide no-bill guarantee,
 retention/recovery, authenticated Shopify Owner entry, D1 migrations
 0004–0006 and actual R2 quarantine remain separately on HOLD.
+
+### Phase 18 first Windows run — WebP test fixture false positive (FIXED, awaiting rerun)
+
+Owner's 2026-10-16 Windows run at commit `c5e83fb`:
+`work:hq:media:edge:install` passed and downloaded the three free
+WASM codec packages. `test:work-hq-media-edge-workerd` confirmed
+REAL local workerd PNG-to-WebP (26 ms) and JPEG-to-WebP (11 ms),
+including EXIF stripping, then **failed** at
+`Codec must really re-encode` for WebP input. Exit was nonzero;
+the Phase 18 suite is **NOT yet certified**.
+
+Root cause: all three fixtures used a flat 64x48 image. A deterministic
+WebP encoder can produce byte-identical output after fully decoding
+and re-encoding an input that already uses the same WebP encoding
+parameters. An unconditional output-byte-inequality assertion for that
+degenerate fixture is an invalid proof of no decoding.
+
+Fix in `test-workerd-media-edge.mjs`:
+- Keep existing PNG and EXIF-bearing JPEG tests intact.
+- Replace the flat-color WebP input with a nonuniform 64x48 RGBA
+  pattern saved as **lossless WebP with actual EXIF Artist sentinel**.
+- Assert source EXIF exists and includes marker.
+- Convert the source with workerd's real WebP decoder and the
+  quality-80 WebP encoder; require changed encoded bytes and
+  absence of EXIF/XMP/ICC/marker in returned output.
+- Compare decoded output pixels against the actual synthetic pattern,
+  instead of expecting a constant color.
+
+A separate, local Sharp validation generated the proposed WebP source:
+404 bytes, a proper VP8X/VP8L+EXIF container, 64x48 pixels, EXIF
+sentinel present; Sharp output quality-80 WebP was 326 bytes and
+average RGB absolute difference 2.6/255 per channel. This local
+Sharp check DOES NOT establish what the JS WASM codec does; Windows
+must rerun the actual workerd suite.
+
+**Release HOLD remains:** migrations 0004–0006 inert; no customer
+uploads, private previews, R2 object writes, new Worker bindings or
+deployments, Cloudflare Images upgrade, LIVE/KEEP/Rewards mutations.
