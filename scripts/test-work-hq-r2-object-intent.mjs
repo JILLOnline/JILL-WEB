@@ -41,7 +41,7 @@ const payload={
       {id:'P1',allocations:[{unit_id:'unit-1'}],attributes:[]},
       {id:'P2',allocations:[{unit_id:'unit-2'}],attributes:[]},
     ],
-    reference_ids:['jill:opaque-one','jill:opaque-two']}],
+    reference_ids:['jill:opaque-one','jill:opaque-two','jill:opaque-three']}],
   request_attributes:[],
   reference_ids:['https://res.cloudinary.com/synthetic/image/upload/legacy.png'],
 };
@@ -50,6 +50,7 @@ const detail=project({rawPayload:JSON.stringify(payload),
 const selectors=[
   {scope:'item',itemId:'shopify-product:101',index:0},
   {scope:'item',itemId:'shopify-product:101',index:1},
+  {scope:'item',itemId:'shopify-product:101',index:2},
 ];
 const bindings=selectors.map(selector=>draftWorkMediaRegistryBinding({
   detail,submissionId:request,selector,registryKey:key,
@@ -145,16 +146,16 @@ try{
   assert.equal(countQuota().lifetime_reservations,2);
 
   // A bogus reference MAC cannot claim another request/slot.
-  const cross={...makeIntent(1),reference_index:0,
+  const cross={...makeIntent(1),reference_index:2,
     reference_mac:bindings[1].reference_mac};
   assert.throws(()=>insert.run(...params(cross)));
   const wrongShop={...makeIntent(1),shop:'jillonlinestore.myshopify.com'};
   assert.throws(()=>insert.run(...params(wrongShop)));
   const missing={...makeIntent(1),reference_index:7};
   assert.throws(()=>insert.run(...params(missing)));
-  const replaced={...makeIntent(1),object_key:first.object_key};
+  const replaced={...makeIntent(2),object_key:first.object_key};
   assert.throws(()=>insert.run(...params(replaced)));
-  const badId={...makeIntent(1),reservation_id:'INVALID'};
+  const badId={...makeIntent(2),reservation_id:'INVALID'};
   assert.throws(()=>insert.run(...params(badId)));
 
   const firstRow=db.prepare(
