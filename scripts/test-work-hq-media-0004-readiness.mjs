@@ -18,7 +18,7 @@ for(const changes of [
   {filenames:[...files,'0004_work_private_media_registry.sql']},
   {filenames:files.slice(0,2)},
   {proposal:proposal.replace('INERT PROPOSAL, NOT AN APPLIED D1 MIGRATION','ACTIVE')},
-  {proposal:proposal.replace('pending_verification','verified')},
+  {proposal:proposal.replaceAll('pending_verification','verified')},
   {config:{...config,d1_databases:[{
     ...config.d1_databases[0],database_id:'LIVE',
   }]}},
