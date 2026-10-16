@@ -582,3 +582,40 @@ The existing WORK R2 bucket stays empty/private; the proposed 0004
 registry stays inert and cannot be applied from this phase.
 No changes to LIVE, KEEP, Rewards, Google QA, customer data or
 Cloudflare account billing were authorized or performed.
+
+## Phase 10 — real local decoder through synthetic WORK quarantine
+
+Owner's PowerShell receipt confirms `npm.cmd run
+test:work-hq-media-local-sanitizer` PASSED on Windows with genuine
+PNG/JPEG/WebP pixels, EXIF removal, dimensional bounds, animated/malformed
+image rejection and **zero cloud operations**. The npm allow-scripts
+warning was nonfatal; do not globally approve additional scripts.
+
+The new `tools/work-media-local/test-quarantine-integration.mjs`
+executes `stageWorkOwnerR2Quarantine` with a **real Sharp decoder**,
+a fully synthetic Google detail projection and Owner+D1 authorization
+callback, and an in-memory fake R2 bucket. A test JPEG contains synthetic
+EXIF data and must be re-encoded without it before the fake conditional
+PUT. The fake HEAD verifies key, content hash, metadata, and size.
+Negative cases reject non-owner authorization before canonical detail,
+legacy public Cloudinary links, header-spoofed JPEG, publicly exposed
+or stale R2 account audit results. The stage response stays
+`quarantined_unlinked` and `private_delivery:disabled`.
+
+This is a real local *integration test*, not proof of real provider
+storage or server-held identity. CI runs both decoder and integration
+tests under the isolated `tools/work-media-local/` Node dependencies.
+It does not install native Sharp in the deployed Worker, create
+credentials, enable customer uploads, write actual R2, or run migration
+0004. For Windows:
+```powershell
+npm.cmd run test:work-hq-media-local-quarantine
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Local quarantine integration failed' }
+```
+
+**Remaining release blockers:** trustworthy deployed upload
+architecture (Sharp is local-only), real authenticated Owner session
+checks, canonical exact detail endpoint, enforceable R2 account-wide
+storage/operations budget, operator-attested bucket privacy state,
+provider object linkage and recovery/retention strategy. No LIVE,
+KEEP, Rewards or Google QA changes are authorized from this test.
