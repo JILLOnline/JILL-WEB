@@ -333,3 +333,28 @@ paid capacity, are available, but no plan, account upgrade,
 consent to variable charges, spending cap or remote deployment
 is yet specifically approved. Pricing and throttles must be
 re-validated at the approval gate.
+
+### Phase 27 clean GitHub CI — PASS
+
+On 2026-10-16 GitHub Actions run
+`38981314312` ("My JILL WORK account certification") completed
+**success** for commit `4c148334a05b53f6511bbe42295561310e9acfff`:
+https://github.com/JILLOnline/JILL-WEB/actions/runs/38981314312
+
+All four jobs passed: Rewards/WORK contracts, Windows Node 24
+postinstall, WORK embedded App Home build/typecheck/local workerd
+regressions including the newly added synthetic signed-intake
+two-Google-confirmation test, and WORK Cloudflare dry-run package.
+The separate theme pipeline also returned success.
+
+The newly added `work:hq:local:verify-all` runner builds its
+own LOCAL OAuth canary candidate, validates the manifest and
+runs focused signed gateway, merchant, QA mail, local OAuth,
+media Owner, intake, recovery and TypeScript checks, aborting on
+the first failure.
+
+**CI PASS is not owner Windows end-to-end certification**, nor real
+Shopify merchant login, live Google QA signing, deployed production
+uploads or a one-million-customer measured load test. User Windows
+bundled verification remains PENDING. Existing signed WORK gateway,
+LIVE, KEEP, remote database/storage and paid plans unchanged.
