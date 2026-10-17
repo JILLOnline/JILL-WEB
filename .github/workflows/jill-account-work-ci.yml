@@ -83,6 +83,9 @@ jobs:
       - name: Verify 100-v34 / zero-v35 owner deployment and safe rollback (OFFLINE only)
         run: npm run test:work-hq-quote-v35-zero-rollout
 
+      - name: Verify second 100-v34 / zero-v35 attempt once-only receipt and bounded recovery (OFFLINE)
+        run: npm run test:work-hq-quote-v35-zero-second
+
       - name: Diagnose legacy v34 HTTP smoke mismatch safely (OFFLINE only)
         run: npm run test:work-v34-quote-smoke-readonly-diagnosis
 
