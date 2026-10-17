@@ -55,7 +55,9 @@ assert.match(route,/Latest verified snapshot — not a complete status history/)
 assert.match(route,/WorkOriginalRequestDetails/);
 assert.match(route,/loadAuthorizedWorkRequestDetail/);
 assert.match(route,/export async function loader\(args:LoaderFunctionArgs\)/);
-assert.match(route,/Quotes, Shopify fulfillment and payments remain separate/);
+assert.match(route,/A private quote worksheet is available below/);
+assert.match(route,/Saving, customer approval, Shopify fulfillment and payments remain separate/);
+assert.match(route,/WorkQuoteWorksheet key=\{record\.submission_id\}/);
 assert.match(route,/WorkRequestQuickActions/);
 assert.match(route,/Source revision/);
 assert.match(route,/Last recorded update/);
