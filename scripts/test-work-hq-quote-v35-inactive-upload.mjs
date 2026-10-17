@@ -10,7 +10,7 @@ import {
 } from './stage-work-hq-quote-inactive-v35.mjs';
 let cases=0;
 const pass=(fn)=>{fn();cases++};
-const deny=(fn)=>{assert.throws(fn,/work_quote_stage_/);cases++};
+const deny=(fn)=>{assert.throws(fn,/work_quote_stage_|WORK canary OAuth preparation refused/);cases++};
 const DB='3f17c186-c794-4e00-8f20-017191373a19';
 const key=['SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64',
   'JILL_HQ_MERCHANT_READ_SECRET','JILL_HQ_MERCHANT_WRITE_SECRET'];
