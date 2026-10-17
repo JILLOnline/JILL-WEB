@@ -1,8 +1,7 @@
 // Cloudflare WORK gateway: read-only Worker/Google endpoint/binding audit.
 // Cloudflare does NOT allow reading back secret values. Never pretend it does.
 import {spawnSync} from 'node:child_process';
-import {join,fileURLToPath} from 'node:path';
-import {fileURLToPath as fileURL, pathToFileURL} from 'node:url';
+import {fileURLToPath} from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 import {currentWorkerVersion}
@@ -10,7 +9,7 @@ import {currentWorkerVersion}
 import {JILL_HQ_WORK_QA_GOOGLE_URL}
   from '../services/jill-order-desk/work-google-merchant-read.mjs';
 
-const ROOT=fileURL(new URL('../',import.meta.url));
+const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=path.join(ROOT,'services/custom-order-cloudflare');
 const CLI=path.join(APP,'node_modules/wrangler/bin/wrangler.js');
 const CFG='./wrangler.toml';
