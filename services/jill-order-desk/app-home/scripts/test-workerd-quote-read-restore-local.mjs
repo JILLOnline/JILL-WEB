@@ -105,7 +105,7 @@ try{
   session={shop:SHOP,isOnline:true,expires:new Date(Date.now()+600_000),
     onlineAccessInfo:{associated_user:{id:'123',account_owner:true},
       associated_user_scope:'read_orders,write_orders'}};
-  x=await invoke({req:request('not-a-request')});
+  x=await invoke({req:request('invalid/request/id')});
   assert.equal(x.status,400);checks++;
   x=await invoke({req:request(ID,'GET','/app/requests/quote-draft?extra=1&unused=1')});
   assert.equal(x.status,400);checks++;
