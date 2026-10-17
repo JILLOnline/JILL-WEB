@@ -18,7 +18,6 @@ const APP=join(ROOT,'services/jill-order-desk/app-home');
 const DIST=join(APP,'dist');
 const BASELINE='f75336c6520f7dd75217cc6b6815fc828083a87d';
 const APP_PREFIX='services/jill-order-desk/app-home/';
-const WORK_PREFIX='services/jill-order-desk/';
 const FILES=Object.freeze({
   [APP_PREFIX+'app/components/WorkOriginalRequestDetails.tsx']:'M',
   [APP_PREFIX+'app/routes.ts']:'M',
@@ -91,7 +90,7 @@ function safeTree(root){
   if(!existsSync(root)||lstatSync(root).isSymbolicLink()||
      !lstatSync(root).isDirectory())
     STOP('build_tree_unavailable');
-  const result=[],allowed=/\.(?:js|mjs|css|html|json|map|svg|png|jpg|jpeg|webp|ico|woff2?|txt)$/i;
+  const result=[],allowed=/\.(?:js|mjs|css|html|json|map|svg|png|jpg|jpeg|webp|gif|avif|ico|woff2?|ttf|otf|eot|webmanifest|wasm|txt)$/i;
   function walk(dir){
     const names=readdirSync(dir).sort();
     for(const n of names){
@@ -165,8 +164,8 @@ if(invoked){
     const worker=readFileSync(join(APP,'workers/app.ts'),'utf8');
     const component=readFileSync(join(APP,
       'app/components/WorkOriginalRequestDetails.tsx'),'utf8');
-    const provenance=readFileSync(join(WORK_PREFIX.replace(/\/$/,'')?
-      ROOT:ROOT,'services/jill-order-desk/work-reference-provenance.mjs'),'utf8');
+    const provenance=readFileSync(join(ROOT,
+      'services/jill-order-desk/work-reference-provenance.mjs'),'utf8');
     if(!component.includes('describeWorkReference(id)')||
        !provenance.includes("kind:'legacy_cloudinary_url'")||
        !worker.includes('private_media_not_enabled')||
