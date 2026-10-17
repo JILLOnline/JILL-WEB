@@ -224,6 +224,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-quote-save-owner-local
 
+      - name: Verify Owner-scoped draft price reload in REAL LOCAL D1 (HTTP disabled)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-read-restore-local
+
       - name: Verify Owner -> real WASM sanitizer -> local D1 and R2 transaction
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-local-transaction
