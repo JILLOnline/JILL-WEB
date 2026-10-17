@@ -24,8 +24,9 @@ pass(()=>{
   const cmd=splitTrafficArgs();
   assert.deepEqual(cmd.slice(0,4),['versions','deploy',
     ACTIVE+'@100%',CANDIDATE+'@0%']);
-  assert.deepEqual(cmd.slice(-6),['--config','./wrangler.canary.jsonc',
-    '--yes','--message','JILL HQ WORK v35 ZERO percent QA only; v34 remains 100 percent'].slice(-6));
+  assert.deepEqual(cmd.slice(-7),[
+    '--name',WORKER,'--config','./wrangler.canary.jsonc',
+    '--yes','--message','JILL HQ WORK v35 ZERO percent QA only; v34 remains 100 percent']);
   assert.equal(cmd.includes('jill-order-desk-canary-work'),true);
   assert.ok(Object.isFrozen(cmd));
 });
