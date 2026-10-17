@@ -840,3 +840,64 @@ artifact inventory, **not** comparison with actual deployed
 v34 Worker and browser bytes. Version staging and switching
 remain HOLD. LIVE, KEEP, Google QA, remote D1/R2 and paid
 plans untouched.
+
+### Phase 32 Owner Windows rerun — PASS, 2026-10-16
+
+Owner fast-forwarded to `59387f9` and ran the guarded
+`npm.cmd run test:work-hq-v35-source-review` successfully:
+**29** offline source and filesystem adversarial cases.
+
+`npm.cmd run work:hq:v35:source:review-local` completed
+successfully against the Owner's existing local build:
+- exactly **four** changed WORK runtime files relative to
+  historical pre-v34 Git checkpoint `f75336c`;
+- existing authentication/gateway source and source Wrangler
+  manifests unchanged in the inspected Git scope;
+- strict legacy-reference presentation and disabled-by-default
+  media inspection guard present;
+- **29** local compiled Worker + client artifact files;
+- **2,847,869** bytes total;
+- deterministic local artifact inventory SHA-256
+  `4c50e14fcc7045fe65b68fdee7e49cee2bb11fc2f1907b0db81733a4ed4d8e60`.
+
+The guarded exit-code checks succeeded after both commands.
+This supersedes the first-run STOP caused by
+`dist/client/.assetsignore`. GitHub Actions CI
+`38986801665`, commit `59387f9`, also completed
+all four jobs successfully, including the actual built-asset
+inventory.
+
+**CERTIFIED ONLY:** local historical source-delta boundary and
+locally compiled artifact inventory. The SHA-256 is a fingerprint
+of *local* candidate output, not a Cloudflare-deployed version
+digest. It does not establish source commit provenance of
+v34, byte-equivalence to v34's server bundle, or asset-delivery
+correctness. No remote actions or customer writes were
+performed by this phase.
+
+### Phase 33 release sequencing recommendation (HOLD)
+
+Do not treat the newly compiled candidate as a cosmetic-only UI
+hotfix: historical Git comparison confirms a new media-inspection
+route and Worker ingress guard, albeit disabled by default. A
+safer v35 release should minimize this extra runtime surface or
+explicitly review and negative-test it before staging.
+
+Before **any** separately authorized inactive WORK v35 upload:
+1. Capture deployed v34's code/artifact provenance or explicitly
+   label byte parity unresolved and require a full code-diff
+   security review; use v34 as the *immediate* rollback target.
+2. Verify synthetic signed-in Owner request detail, request
+   command/CSRF, Google QA @7/@9 isolation, media-inspect OFF,
+   cross-shop access denial, and absence of new storage bindings.
+3. Certify a **single real WORK QA** Received→Reviewing status
+   mutation with verified Google receipt, incremented revision,
+   reload persistence; this has not been observed.
+4. Require an explicit owner decision for the exact inactive
+   upload/version, and a separate decision for traffic release.
+   An inactive upload is NOT a merchant-visible change.
+5. Run post-release WORK-only Owner smoke checks, then roll back
+   to known-good v34 upon authentication, inbox, command or
+   detail regressions. Do not touch LIVE/KEEP or paid services.
+
+These are release gates, not instructions to stage/deploy now.
