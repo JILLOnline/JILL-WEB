@@ -157,6 +157,8 @@ for(const marker of [
   "fs.rmSync(tempdir,{recursive:true,force:true})",
   "approval_already_used",
   "matching_candidate_already_exists",
+  "gateway_code_changed_unapproved",
+  "backend/shopify-work-app-proxy-auth.mjs",
   "gateway_deployment_changed_after_readback",
   "getExactGatewayUploadVersion",
   "DO NOT RETRY",
