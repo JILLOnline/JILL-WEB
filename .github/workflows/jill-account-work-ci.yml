@@ -216,6 +216,10 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-intake-ledger-local
 
+      - name: Verify quote drafts in REAL LOCAL D1 with compare-and-swap, no deployment
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-draft-local
+
       - name: Verify Owner -> real WASM sanitizer -> local D1 and R2 transaction
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-media-local-transaction
