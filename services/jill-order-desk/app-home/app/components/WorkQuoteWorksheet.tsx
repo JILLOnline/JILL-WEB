@@ -1,7 +1,7 @@
-// Owner-scoped, browser-memory-only WORK draft estimate. This component
-// receives ONLY the separately verified immutable Google QA detail projection.
-// No calls to Shopify, Google, R2, D1, storage, checkout or external services.
-// Nothing is saved or sent; request navigation/unmount discards inputs.
+// Owner-scoped WORK quote worksheet. Input and verified saved-draft
+// projections are request-scoped. HTTP Save/Reload is available ONLY after
+// the new WORK quote capability and authenticated Owner checks pass.
+// No Shopify Draft Order, customer notice, R2 or payment action.
 import {useEffect,useRef,useState} from "react";
 import {useFetcher} from "react-router";
 import {evaluateWorkQuoteWorksheet,formatWorkUsd}
@@ -72,6 +72,9 @@ export function WorkQuoteWorksheet({
   const saveFetcher=useFetcher<DraftResult>();
   const readFetcher=useFetcher<DraftResult>();
   const operation=useRef<string|null>(null);
+  const initialReadStarted=useRef(false);
+  const merchantEdited=useRef(false);
+  const merchantExplicitReload=useRef(false);
   const [draftRevision,setDraftRevision]=useState(restored?.draftRevision??0);
   const [restoredActive,setRestoredActive]=useState(restored!==null);
   const [blocked,setBlocked]=useState(false);
@@ -79,6 +82,16 @@ export function WorkQuoteWorksheet({
   const busy=saveFetcher.state!=="idle"||readFetcher.state!=="idle";
   const verifiedSource=typeof sourceRevision==="number"&&
     model?.state==="ready"&&model.detail?.revision===sourceRevision;
+  // The first verified WORK page load retrieves the draft automatically.
+  // No remote call occurs with the current source-only OFF switch.
+  // If the merchant starts typing during this read, never silently
+  // replace the new unsaved input with an older draft.
+  useEffect(()=>{
+    if(!saveDraftEnabled||!verifiedSource||initialReadStarted.current)
+      return;
+    initialReadStarted.current=true;
+    readFetcher.load(workQuoteDraftReadPath(submissionId));
+  },[saveDraftEnabled,verifiedSource,submissionId]);
   // A failed or ambiguous commit is never automatically retried. Reopen
   // a freshly verified request to reconcile before another write.
   useEffect(()=>{
@@ -107,6 +120,13 @@ export function WorkQuoteWorksheet({
         submissionId,
       });
       if(projection){
+        if(merchantEdited.current&&!merchantExplicitReload.current){
+          setFeedback("A saved draft exists. Your newer unsaved inputs were "+
+            "kept. Select Reload saved draft to replace them explicitly.");
+          return;
+        }
+        merchantEdited.current=false;
+        merchantExplicitReload.current=false;
         setPrices(projection.prices);
         setFees(projection.fees as Fees);
         setDraftRevision(projection.draftRevision);
@@ -129,6 +149,7 @@ export function WorkQuoteWorksheet({
     model,submissionId]);
   const edited=()=>{
     // Do not replace the operation ID after an ambiguous commit.
+    merchantEdited.current=true;
     if(!blocked)operation.current=null;
     setRestoredActive(false);
     setFeedback("");
@@ -173,8 +194,9 @@ export function WorkQuoteWorksheet({
   };
   const onReloadDraft=()=>{
     if(!canUseDraft)return;
-    // Loading is always explicit: it may replace unsaved form inputs.
-    // It cannot be triggered by the disabled WORK UI.
+    // Explicit user action may replace unsaved form inputs. The
+    // initial automatic read cannot.
+    merchantExplicitReload.current=true;
     readFetcher.load(workQuoteDraftReadPath(submissionId));
   };
 
