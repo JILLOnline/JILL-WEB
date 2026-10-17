@@ -77,6 +77,15 @@ function accepted(planReceipt,row,binding){
     row?.draft_revision===binding.next_draft_revision&&
     row.quote_sha256===binding.quote_sha256;
 }
+/** @param {{
+  request?: Request,
+  enabled?: boolean,
+  authenticate?: {admin: (request: Request)=>Promise<{session:any}>},
+  db?: any,
+  readFreshList?: ()=>Promise<any>,
+  readExactDetail?: (args:{submissionId:string})=>Promise<any>,
+  now?: ()=>number
+}} [options] */
 export async function handleWorkQuoteDraftSave({
   request,enabled=false,authenticate,db,readFreshList,readExactDetail,
   now=Date.now,
