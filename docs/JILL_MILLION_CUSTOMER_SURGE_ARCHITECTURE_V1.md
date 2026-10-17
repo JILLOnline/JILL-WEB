@@ -946,3 +946,55 @@ rollback execution, or permission to upload a v35 version. The
 v34 `4973b74d-d479-41da-897c-e36129303279` remains the expected
 immediate rollback target for any future **separately authorized** WORK
 rollout. LIVE, KEEP, media, billing and remote databases remain HOLD.
+
+
+### Phase 33 Owner Windows verification — PASS, 2026-10-16
+
+Owner fast-forwarded `jill/rewards-work` to `a7bb623` and ran
+`npm.cmd run test:workerd-v35-media-off --prefix services/jill-order-desk/app-home`.
+The real LOCAL compiled canary workerd test returned exit zero:
+**6 media-disabled/Origin/foreign-host/command denials**, preserved v34
+security flags, synthetic secrets and emulated D1. The guarded
+PowerShell PASS followed only after the successful command. The PR
+`#125` CI run also completed four out of four jobs SUCCESS.
+
+**CERTIFIED ONLY:** local compiled workerd media-inspection-OFF
+ingress boundary. The absence of any active R2 binding, any v35 upload,
+real merchant mutation or deployed-v34 code/asset provenance remain
+separate. No LIVE/KEEP, Google QA, remote D1/R2 or billing change.
+
+### Phase 34 synthetic canonical merchant status and readback (PENDING)
+
+New offline-only regression
+`scripts/test-work-hq-phase34-local-status-readback.mjs` executes:
+- the real Node merchant command handler and signed v7/v9 source readers;
+- the ACTUAL repository Google QA source verifier, canonical event writer,
+  append helper, cache invalidation, HMAC read handlers, canonical list
+  and exact request detail in a JavaScript sandbox;
+- an *in-memory fixture* standing in for Google Sheets and a synthetic
+  Owner Shopify session/D1 authority record, not real provider sessions.
+
+It verifies a synthetic `received` revision 1 becoming
+`reviewing` revision 2; independent signed list/detail reads returning
+revision 2; append-only status and Owner actor; duplicate operation key
+causing no second append; stale different-key command returning conflict;
+invalid Origin denied; no real outgoing email or new worksheet.
+CI runs it without any accounts or secrets.
+
+Run only after merging the tested source into `jill/rewards-work`:
+
+```powershell
+npm.cmd run test:work-hq-phase34-local-status-readback
+if ($LASTEXITCODE -ne 0) {
+  throw 'STOP: Phase 34 synthetic canonical status readback failed'
+}
+```
+
+**PENDING** until CI and Windows exit code zero. Even success certifies
+ONLY the synthetic local status lifecycle, not real WORK QA event writes,
+actual Google @7/@9 currently deployed code, live authenticated Shopify
+Owner actions, real My JILL status propagation, or deployed v34 asset
+provenance. Do not exercise the actual merchant button without separate
+explicit Owner QA authorization and a disposable preexisting WORK request.
+Never test against a genuine customer request or LIVE/KEEP. No version
+staging, R2 uploads, remote D1 migrations or paid capacity changes.
