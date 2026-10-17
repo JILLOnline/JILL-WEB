@@ -10,7 +10,7 @@ import {pathToFileURL,fileURLToPath} from 'node:url';
 import {
   ACTIVE,CANDIDATE,FALLBACK,SOURCE,WORKER,ORIGIN,OVERRIDE,
   splitTrafficArgs,inspectDeploymentState,makeVersionOverride,
-  anonymousSmokeContract,
+  verifiedLegacyV34Baseline,anonymousSmokeContract,
 } from './work-quote-v35-zero-deployment-policy.mjs';
 import {
   verifyInspectedQuoteVersions,verifyQuoteTableReadback,MARKER,
@@ -109,25 +109,39 @@ function preflight(){
     before.id,'concurrent_deployment_change');
   return before;
 }
-async function probe({version=null}={}){
+async function probe({version=null,pathname='/app/requests/quote-draft'}={}){
+  requireTrue(pathname==='/healthz'||
+    pathname==='/app/requests/quote-draft',
+    'unapproved_anonymous_route');
   const headers={Accept:'application/json',
     'Cache-Control':'no-store'};
   if(version!==null)headers[OVERRIDE]=makeVersionOverride(version);
-  const r=await fetch(ORIGIN+'/app/requests/quote-draft',{
+  const r=await fetch(ORIGIN+pathname,{
     method:'GET',credentials:'omit',redirect:'manual',headers,
     signal:AbortSignal.timeout(15000),
   });
   const status=r.status,redirect=r.headers.get('location');
+  const mime=(r.headers.get('content-type')||'')
+    .split(';',1)[0].trim().toLowerCase();
   let j=null;
-  if((r.headers.get('content-type')||'').includes('application/json')){
+  if(mime==='application/json'){
     const body=await r.text();
     requireTrue(body.length<=2048,'unexpected_anonymous_response_size');
     try{j=JSON.parse(body);}catch{abort('response_json_unverifiable');}
   }
-  return Object.freeze({status,redirect,json:j});
+  return Object.freeze({status,redirect,json:j,mime});
+}
+async function originalBaseline(){
+  // The v34 quote route predates v35. Known v34 GET returns 410 HTML
+  // (NOT proof of a Shopify auth gate). Validate an independent health
+  // endpoint and the precise unserved quote-route response.
+  const health=await probe({pathname:'/healthz'});
+  const quote=await probe();
+  const proof=verifiedLegacyV34Baseline({health,quote});
+  return {health,quote,proof};
 }
 async function smoke(){
-  const baseline=await probe();
+  const baseline=await originalBaseline();
   // PROBE MUST NEVER SEND an Owner cookie, customer ID or POST payload.
   let c;
   for(let i=0;i<3;i++){
@@ -139,11 +153,17 @@ async function smoke(){
   const state=inspectDeploymentState(deployments(),'zero');
   requireTrue(current()===ACTIVE,'v34_no_longer_100pct');
   quoteTables();
+  // A valid v34 410 HTML CANNOT satisfy this v35 Owner-auth check.
   const proof=anonymousSmokeContract({baseline,candidate:c,after:state});
-  // An explicit v34 override must continue to reject quote requests.
+  // An explicit v34 override must match independently observed v34,
+  // not an invented v35-specific error response.
   const old=await probe({version:ACTIVE});
-  requireTrue(old.status===503&&old.json?.error===
-    'quote_drafts_not_enabled','v34_override_not_locked');
+  verifiedLegacyV34Baseline({health:baseline.health,quote:old});
+  requireTrue(old.status===baseline.quote.status&&
+    old.mime===baseline.quote.mime&&
+    old.redirect===baseline.quote.redirect&&
+    JSON.stringify(old.json)===JSON.stringify(baseline.quote.json),
+    'v34_override_does_not_match_ordinary_v34');
   requireTrue(inspectDeploymentState(deployments(),'zero').id===state.id&&
     current()===ACTIVE,'deployment_changed_during_smoke');
   return proof;
@@ -187,6 +207,14 @@ if(called){
       process.exit(0);
     }
     const baseline=preflight();
+    phase='pre_deployment_legacy_v34_http';
+    const observed=await originalBaseline();
+    console.log('PASS PRE-DEPLOY: v34 health 200 and legacy quote GET '+
+      observed.quote.status+' '+observed.quote.mime+
+      '; this is NOT an authorization gate or v35 test.');
+    requireTrue(current()===ACTIVE&&
+      inspectDeploymentState(deployments(),'baseline').id===baseline.id,
+      'pre_deploy_traffic_changed');
     console.log('PASS PRE-DEPLOY: exact v34 100%, v35 inactive, v33 fallback, WORK quote D1 and secret bindings.');
     phase='wrangler_zero_dry_run';
     cli([...splitTrafficArgs(),'--dry-run'],{timeout:60000});
@@ -202,7 +230,7 @@ if(called){
     console.log('PASS WORK ZERO ALLOCATION: v34 100%, v35 0%. New deployment '+post.id);
     phase='anonymous_override_smoke';
     await smoke();
-    console.log('PASS v34 ordinary quote endpoint denied; v35 override reaches Owner-denial boundary with NO credentials.');
+    console.log('PASS v34 legacy route unavailable; v35 override reached the Owner-auth denial boundary with NO credentials.');
     console.log('PASS v34 remains at 100%, v35 0%; v33 rollback retained.');
     console.log('HOLD: No authenticated quote Save/Reload QA, full remote asset byte parity, ordinary v35 traffic or customer data writes authorized.');
     console.log('NO Worker upload, extra D1 changes, R2, LIVE/KEEP, customer messages, Shopify payments or paid capacity.');
