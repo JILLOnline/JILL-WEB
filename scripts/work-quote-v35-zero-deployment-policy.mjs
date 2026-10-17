@@ -64,7 +64,8 @@ export function inspectDeploymentState(data,expected='baseline'){
   const zero=v.size===2&&v.get(ACTIVE)===100&&
     v.get(CANDIDATE)===0;
   const known=[...v.keys()].every(id=>
-    id===ACTIVE||id===CANDIDATE)&&v.has(ACTIVE)&&
+    id===ACTIVE||id===CANDIDATE)&&
+    (v.has(ACTIVE)||v.has(CANDIDATE))&&
     ![...v.values()].some(x=>x<0||x>100);
   if(expected==='baseline')ensure(baseline,
     'baseline_allocation_mismatch');
