@@ -72,8 +72,10 @@ for(const bad of ['-0.01','250000','3.1415',' 1','1e8']){
 }
 fail({lines,fees:{...fees,discount:'99999'}},
   'discount_exceeds_charges');
-fail({lines,fees:{...fees,tax:'99999.99'}},
-  'quote_over_limit');
+// Cross the million-dollar cap with only 11 cents of manual tax.
+fail({lines:[{id:'near-cap',quantity:10,unitPrice:'99999.99'}],
+  fees:{materials:'',labor:'',shipping:'',other:'',
+    discount:'',tax:'0.11'}},'quote_over_limit');
 assert.throws(()=>formatWorkUsd(-1),/invalid_cents/);cases++;
 assert.throws(()=>formatWorkUsd(100_000_001),/invalid_cents/);cases++;
 assert.equal(formatWorkUsd(0),'$0.00');cases++;
