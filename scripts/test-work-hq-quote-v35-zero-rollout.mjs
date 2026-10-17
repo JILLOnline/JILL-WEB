@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {
   ACTIVE,CANDIDATE,FALLBACK,SOURCE,WORKER,ORIGIN,OVERRIDE,APPROVAL,
   splitTrafficArgs,parseScopedDeployments,inspectDeploymentState,
-  makeVersionOverride,anonymousSmokeContract,
+  makeVersionOverride,verifiedLegacyV34Baseline,anonymousSmokeContract,
 } from './work-quote-v35-zero-deployment-policy.mjs';
 let cases=0;
 const pass=x=>{x();cases++;};
@@ -81,38 +81,77 @@ deny(()=>inspectDeploymentState(baseline,'promote'));
 pass(()=>assert.equal(makeVersionOverride(),WORKER+'="'+CANDIDATE+'"'));
 pass(()=>assert.equal(makeVersionOverride(ACTIVE),WORKER+'="'+ACTIVE+'"'));
 deny(()=>makeVersionOverride(FALLBACK));
-const ordinary={status:503,redirect:null,
+// Real Owner v34 diagnostic: /healthz 200 JSON and quote endpoint 410
+// HTML. A legacy route absence is NOT proof of Owner authorization.
+const health={status:200,mime:'application/json',redirect:null,
+  json:{ok:true,environment:'JILL_ORDER_DESK_WORK',
+    database_ready:true,admin_ready:false}};
+const legacyGone={status:410,mime:'text/html',redirect:null,json:null};
+const explicitOff={status:503,mime:'application/json',redirect:null,
   json:{ok:false,error:'quote_drafts_not_enabled'}};
+const ordinary={health,quote:legacyGone};
 const denied={status:403,redirect:null,
   json:{ok:false,code:'access_denied'}};
 const login={status:302,redirect:'/auth/login',json:null};
 const goodState=inspectDeploymentState(zero,'zero');
 pass(()=>{
+  const b=verifiedLegacyV34Baseline(ordinary);
+  assert.equal(b.v34_quote_route_unavailable,true);
+  assert.equal(b.legacy_v34_410_html,true);
+  assert.equal(b.v34_quote_authentication_gate_proven,false);
+});
+pass(()=>{
+  const p=verifiedLegacyV34Baseline({health,quote:explicitOff});
+  assert.equal(p.v34_quote_authentication_gate_proven,true);
+});
+pass(()=>{
   const r=anonymousSmokeContract({baseline:ordinary,candidate:denied,
     after:goodState});
   assert.equal(r.authenticated_browser_qa_complete,false);
   assert.equal(r.ordinary_traffic_to_v35,false);
+  assert.equal(r.legacy_v34_410_html,true);
+  assert.equal(r.v35_anonymous_owner_denied,true);
 });
 pass(()=>anonymousSmokeContract({baseline:ordinary,candidate:login,
   after:goodState}));
+pass(()=>anonymousSmokeContract({
+  baseline:{health,quote:explicitOff},candidate:denied,
+  after:goodState}));
 for(const wrong of [
-  {...ordinary,status:200},
-  {...ordinary,status:421},
-  {...ordinary,json:{...ordinary.json,error:'wrong_host'}},
-  {...ordinary,json:{...ordinary.json,token:'unsafe'}},
-])deny(()=>anonymousSmokeContract({
-  baseline:wrong,candidate:denied,after:goodState,
-}));
+  {...legacyGone,status:200},
+  {...legacyGone,status:404},
+  {...legacyGone,status:421},
+  {...legacyGone,mime:'text/plain'},
+  {...legacyGone,mime:'application/json'},
+  {...legacyGone,redirect:'/auth/login'},
+  {...legacyGone,json:{ok:true}},
+  {...explicitOff,json:{...explicitOff.json,error:'wrong_host'}},
+  {...explicitOff,json:{...explicitOff.json,token:'unsafe'}},
+]){
+  deny(()=>verifiedLegacyV34Baseline({health,quote:wrong}));
+}
 for(const wrong of [
+  {...health,status:503},
+  {...health,mime:'text/html'},
+  {...health,json:{...health.json,ok:false}},
+  {...health,json:{...health.json,database_ready:false}},
+  {...health,json:{...health.json,environment:'LIVE'}},
+]){
+  deny(()=>verifiedLegacyV34Baseline({health:wrong,quote:legacyGone}));
+}
+for(const wrong of [
+  {status:410,redirect:null,json:null,mime:'text/html'},
   {status:503,redirect:null,json:{ok:false,
     error:'quote_drafts_not_enabled'}},
   {status:200,redirect:null,json:{}},
   {status:403,redirect:null,json:{ok:false,code:'wrong_host'}},
   {status:302,redirect:'https://unknown.example/login',json:null},
   {status:302,redirect:'/evil/redirect',json:null},
-])deny(()=>anonymousSmokeContract({
-  baseline:ordinary,candidate:wrong,after:goodState,
-}));
+]){
+  deny(()=>anonymousSmokeContract({
+    baseline:ordinary,candidate:wrong,after:goodState,
+  }));
+}
 deny(()=>anonymousSmokeContract({
   baseline:ordinary,candidate:denied,
   after:inspectDeploymentState(accidental,'known'),
@@ -133,6 +172,11 @@ for(const marker of [
   "redirect:'manual'",
   "method:'GET'",
   "anonymousSmokeContract",
+  "verifiedLegacyV34Baseline",
+  "phase='pre_deployment_legacy_v34_http'",
+  "previous_rollout_approval_exhausted",
+  "probe({pathname:'/healthz'})",
+  "v34_override_does_not_match_ordinary_v34",
   "quoteTables();",
   "No deployment request made by this run.",
   "No LIVE, KEEP, R2",
