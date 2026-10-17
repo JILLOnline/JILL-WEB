@@ -6,7 +6,6 @@ import {spawnSync} from 'node:child_process';
 import {existsSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {createHash} from 'node:crypto';
 import {currentWorkerVersion} from './deploy-work-hq-inbox-shell.mjs';
 import {inspectDeploymentState,ACTIVE,ORIGIN}
   from './work-quote-v35-zero-deployment-policy.mjs';
