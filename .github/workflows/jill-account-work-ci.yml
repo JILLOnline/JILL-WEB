@@ -65,8 +65,11 @@ jobs:
       - name: Verify Owner-only custom quote worksheet pricing and no-write boundaries (OFFLINE)
         run: npm run test:work-hq-quote-worksheet
 
-      - name: Verify future quote Save and Reload UI remains hard OFF with no PII (OFFLINE)
+      - name: Verify verified Owner quote Save/Reload UI and privacy (OFFLINE, release flag absent)
         run: npm run test:work-hq-quote-ui-wiring
+
+      - name: Verify WORK-only quote release gates and auto-restore protection (OFFLINE)
+        run: npm run test:work-hq-quote-release-candidate
 
       - name: Test WORK-only quote D1 owner migration SQL, private backup and free-tier HOLD offline
         run: npm run test:work-hq-quote-d1-owner-migration
