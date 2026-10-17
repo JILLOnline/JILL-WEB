@@ -18,7 +18,7 @@ pass(()=>{
   assert.deepEqual(manifest.host_permissions,[
     'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/*']);
   assert.deepEqual(manifest.permissions,[
-    'activeTab','tabs','declarativeNetRequest','alarms']);
+    'activeTab','declarativeNetRequest','alarms']);
   assert.deepEqual(manifest.background,{service_worker:'background.js'});
   assert.equal(manifest.action.default_popup,'popup.html');
   assert.equal('content_scripts' in manifest,false);
