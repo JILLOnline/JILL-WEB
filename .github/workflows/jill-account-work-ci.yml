@@ -89,6 +89,9 @@ jobs:
       - name: Verify synthetic WORK quote owner QA preflight and temporary Chrome version pin (OFFLINE)
         run: npm run test:work-hq-v35-synthetic-qa-kit
 
+      - name: Verify non-mutating WORK Custom Order gateway signing and Cloudflare identity diagnostics (OFFLINE)
+        run: npm run test:work-custom-order-gateway-secret-diagnosis
+
       - name: Diagnose legacy v34 HTTP smoke mismatch safely (OFFLINE only)
         run: npm run test:work-v34-quote-smoke-readonly-diagnosis
 
