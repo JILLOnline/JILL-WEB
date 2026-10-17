@@ -86,11 +86,15 @@ export function reviewWorkV35RuntimeDelta(changes){
     real_status_mutation_verified:false,
   });
 }
-function safeTree(root){
+// Vite's Cloudflare adapter emits an extensionless root .assetsignore
+// file in dist/client. Allow THAT single exact generated filename only,
+// with a smaller size cap, not a general exception for dotfiles.
+const EXT=/\.(?:js|mjs|css|html|json|map|svg|png|jpg|jpeg|webp|gif|avif|ico|woff2?|ttf|otf|eot|webmanifest|wasm|txt)$/i;
+function safeTree(root,distRoot){
   if(!existsSync(root)||lstatSync(root).isSymbolicLink()||
      !lstatSync(root).isDirectory())
     STOP('build_tree_unavailable');
-  const result=[],allowed=/\.(?:js|mjs|css|html|json|map|svg|png|jpg|jpeg|webp|gif|avif|ico|woff2?|ttf|otf|eot|webmanifest|wasm|txt)$/i;
+  const result=[];
   function walk(dir){
     const names=readdirSync(dir).sort();
     for(const n of names){
@@ -100,8 +104,13 @@ function safeTree(root){
         STOP('build_tree_unsafe_type');
       if(stat.isDirectory())walk(p);
       else{
-        if(!allowed.test(n)||stat.size>16*1024*1024)
-          STOP('unexpected_build_file');
+        const name=relative(distRoot,p).split(sep).join('/');
+        // One exact generated root file, not all extensionless files.
+        const isIgnore=name==='client/.assetsignore';
+        if(!isIgnore&&!EXT.test(n))
+          STOP('unexpected_build_extension');
+        if(stat.size>(isIgnore?4096:16*1024*1024))
+          STOP('compiled_file_size_exceeded');
         result.push({path:p,bytes:stat.size});
         if(result.length>500)STOP('build_tree_too_large');
       }
@@ -111,18 +120,21 @@ function safeTree(root){
   if(result.length===0)STOP('empty_build_tree');
   return result;
 }
-function buildInventory(){
-  const dirs=[join(DIST,'server'),join(DIST,'client')];
+export function inventoryWorkHqLocalBuild(distRoot=DIST){
+  if(typeof distRoot!=='string'||!distRoot)
+    STOP('build_tree_unavailable');
+  const dirs=[join(distRoot,'server'),join(distRoot,'client')];
   if(!dirs.every(existsSync))STOP('compiled_assets_not_found');
-  const all=dirs.flatMap(safeTree);
-  if(!all.some(v=>v.path===join(DIST,'server/index.js')))
+  const all=dirs.flatMap(dir=>safeTree(dir,distRoot));
+  if(all.length>500)STOP('build_tree_too_large');
+  if(!all.some(v=>v.path===join(distRoot,'server/index.js')))
     STOP('compiled_worker_not_found');
   let size=0;
   const fingerprint=createHash('sha256');
   for(const f of all){
     size+=f.bytes;
     if(size>200*1024*1024)STOP('build_tree_too_large');
-    const name=relative(DIST,f.path).split(sep).join('/');
+    const name=relative(distRoot,f.path).split(sep).join('/');
     const hash=createHash('sha256').update(readFileSync(f.path)).digest('hex');
     fingerprint.update(name+'\0'+f.bytes+'\0'+hash+'\n');
   }
@@ -148,8 +160,20 @@ const invoked=process.argv[1]&&
 if(invoked){
   let phase='args';
   try{
-    if(process.argv.length!==3||process.argv[2]!=='--review-local')
+    if(process.argv.length!==3||
+       !['--review-local','--inventory-compiled-ci'].includes(process.argv[2]))
       STOP('invalid_mode');
+    // CI checkout has detached HEAD. Limit that mode to an inventory
+    // only; it NEVER emits the full source-review PASS or skips source
+    // validation for the operator's --review-local workflow.
+    if(process.argv[2]==='--inventory-compiled-ci'){
+      phase='local_build_inventory_ci';
+      const built=inventoryWorkHqLocalBuild();
+      console.log('PASS WORK Phase32 ACTUAL CI build inventory: '+
+        built.compiled_file_count+' files, '+
+        built.compiled_total_bytes+' bytes; no unexpected file types.');
+      console.log('READ ONLY: CI local compiled assets only; no historical source or deployed-v34 binary parity claim.');
+    }else{
     phase='git';
     checkSource();
     phase='runtime_source_delta';
@@ -178,7 +202,7 @@ if(invoked){
       prepareWorkHqV34LocalUi(base).candidate,local))
       STOP('candidate_drift');
     phase='local_build_inventory';
-    const build=buildInventory();
+    const build=inventoryWorkHqLocalBuild();
     console.log('PASS LOCAL source changes vs historic pre-v34 checkpoint: exactly '+scope.source_change_count+' reviewed runtime files.');
     console.log('PASS LOCAL unchanged existing authentication/gateway source and source Wrangler manifests.');
     console.log('PASS LOCAL reference classifier and disabled-by-default media inspection guard.');
@@ -187,6 +211,7 @@ if(invoked){
     console.log('HOLD: historical Git checkpoint is NOT independently proven as actual deployed v34 source.');
     console.log('HOLD: Active v34 compiled Worker/asset bytes NOT compared; candidate also adds a disabled media route, so this is NOT UI-only.');
     console.log('READ ONLY: No Cloudflare calls, uploads, deployments, D1 writes, Shopify/Google calls or paid changes.');
+    }
   }catch(e){
     const c=String(e?.message||'work_hq_v35_source_review_unverified');
     console.error('STOP WORK Phase32 SOURCE REVIEW: '+
