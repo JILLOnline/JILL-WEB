@@ -89,13 +89,15 @@ export async function syntheticQuotePreflight({
     versions:()=>json(scoped('versions','list','--json')),
     version:(id)=>json(scoped('versions','view',id,'--json'))},
   probe=anonymousPinnedProbe,
-  requireOwnerWindows=true,
+  verifyCheckout=()=>{
+    if(process.platform!=='win32')abort('windows_owner_only');
+    check(git('branch','--show-current')==='jill/rewards-work'&&
+      git('status','--porcelain','--untracked-files=no')===''&&
+      git('rev-parse','HEAD')===git('rev-parse','refs/remotes/origin/jill/rewards-work'),
+      'source_not_synced');
+  },
 }={}){
-  if(requireOwnerWindows)check(process.platform==='win32','windows_owner_only');
-  check(git('branch','--show-current')==='jill/rewards-work'&&
-    git('status','--porcelain','--untracked-files=no')===''&&
-    git('rev-parse','HEAD')===git('rev-parse','refs/remotes/origin/jill/rewards-work'),
-    'source_not_synced');
+  verifyCheckout();
   const allocation=inspectDeploymentState(metadata.deployments(),'zero');
   check(currentWorkerVersion(metadata.status())===ACTIVE,
     'v34_not_100_percent_active');
