@@ -174,6 +174,7 @@ for(const marker of [
   "anonymousSmokeContract",
   "verifiedLegacyV34Baseline",
   "phase='pre_deployment_legacy_v34_http'",
+  "previous_rollout_approval_exhausted",
   "probe({pathname:'/healthz'})",
   "v34_override_does_not_match_ordinary_v34",
   "quoteTables();",
