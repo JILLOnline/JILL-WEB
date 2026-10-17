@@ -5,6 +5,8 @@
 import {useState} from "react";
 import {evaluateWorkQuoteWorksheet,formatWorkUsd}
   from "../../../work-quote-worksheet.mjs";
+import {hydrateVerifiedWorkQuoteWorksheet}
+  from "../../../work-quote-restore-model.mjs";
 import "../styles/quote-worksheet.css";
 
 type QuoteItem={item_id:string;title:string;quantity:number};
@@ -34,11 +36,31 @@ const ERROR:Record<string,string>={
   quote_over_limit:"This estimate exceeds the $1,000,000 worksheet limit.",
   discount_exceeds_charges:"The discount cannot exceed the charges before tax.",
 };
-export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
+type VerifiedSavedDraft={
+  state:string;submission_id:string;draft_revision:number;
+  source_revision:number;estimated_total_cents:number;
+  lines:Array<{id:string;quantity:number;unitPrice:string}>;
+  fees:Fees;
+};
+export function WorkQuoteWorksheet({
+  model,submissionId,customerStatus,savedDraft=null,
+}:{
   model:VerifiedModel|undefined;submissionId:string;customerStatus:string;
+  savedDraft?:VerifiedSavedDraft|null;
 }){
-  const [prices,setPrices]=useState<Record<string,string>>({});
-  const [fees,setFees]=useState<Fees>({...EMPTY_FEES});
+  // Hydration only accepts the server's verified projection matched to the
+  // exact canonical item snapshot. This parent is keyed by submission ID.
+  const restored=hydrateVerifiedWorkQuoteWorksheet({
+    draft:savedDraft,
+    detail:model?.state==="ready"?model.detail:null,
+    submissionId,
+  });
+  const [prices,setPrices]=useState<Record<string,string>>(
+    ()=>restored?.prices??{},
+  );
+  const [fees,setFees]=useState<Fees>(
+    ()=>({...EMPTY_FEES,...restored?.fees}),
+  );
   const detail=model?.state==="ready"&&
     model.detail?.submission_id===submissionId?model.detail:null;
   const locked=customerStatus==="cancelled"||customerStatus==="completed";
@@ -63,12 +85,17 @@ export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
         <p className="jill-inbox__eyebrow">NEXT STEP · ESTIMATING</p>
         <h3 id="jill-quote-title">Quote worksheet</h3>
       </div>
-      <span className="jill-quote__tag">NOT SAVED · NOT SENT</span>
+      <span className="jill-quote__tag">
+        {restored?"RESTORED DRAFT · NOT SENT":"NOT SAVED · NOT SENT"}
+      </span>
     </div>
     <p className="jill-request__muted">
       Prepare a private USD price estimate from verified request items.
-      Item quantities come from the original submission. Your figures stay
-      in this browser view and are lost on refresh or navigation.
+      Item quantities come from the original submission.
+      {restored
+        ? " Verified draft revision "+restored.draftRevision+
+          " has been loaded into this browser view. Edits are not saved."
+        : " Your figures stay in this browser view and are lost on refresh or navigation."}
     </p>
     {!detail
       ? <p className="jill-quote__notice" role="status">
@@ -139,9 +166,12 @@ export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
           </div>
           <p className="jill-quote__disclaimer">
             This is an internal worksheet, not an approved customer quote.
-            Nothing is saved to the request, sent to My JILL, charged, taxed
-            by Shopify or converted to a Shopify Draft Order. The future
-            approval and invoice workflow will be separately enabled.
+            {restored
+              ? " A verified draft was loaded, but any new edits remain unsaved."
+              : " Nothing has been saved from this worksheet."}
+            Nothing is sent to My JILL, charged, taxed by Shopify or converted
+            to a Shopify Draft Order. The future approval and invoice workflow
+            will be separately enabled.
           </p>
         </>}
   </section>;

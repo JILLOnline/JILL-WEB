@@ -124,3 +124,52 @@ the complete authenticated Save Draft route + view/load contract
 authorization for any Worker version upload or traffic switch.
 Nothing here approves paid resources, Shopify Draft Orders/invoices,
 customer approval, LIVE/KEEP or remote D1/R2 operations.
+
+## Owner Windows Save Draft boundary certification — PASS
+
+Owner fast-forwarded WORK to `4a1456b` and ran
+`npm.cmd run test:workerd-quote-save-owner-local --prefix services/jill-order-desk/app-home`.
+Result: **42 LOCAL D1 / synthetic Shopify session tests PASS**.
+Certified only the independently invoked source adapter: D1 Owner
+authorization, Origin gate, fresh canonical Google QA fixture, CAS,
+idempotent receipt and privacy. The actual compiled route remains
+hard-disabled; no remote save or WORK migration occurred.
+
+## Prepared quote draft reload — source-only; no live enablement
+
+`work-quote-draft-read.mjs` implements a read-only Owner-scoped
+GET handler for a future `requests/quote-draft?submission_id=...`.
+It requires the Shopify SDK online Owner session and WORK D1 grant
+before parsing the request or fetching signed Google QA list/detail.
+Only an exact-ID canonical request is eligible; it fetches one
+bound row from D1 and validates the SHA-256 hash of both the stored
+quote JSON and the independently verified source item identity,
+quantity, item ordering and source revision.
+
+The projector recomputes all integer-cent subtotal, fee, discount,
+tax and total arithmetic; it rejects corrupt JSON, altered hashes,
+foreign shop/request, stale source revision and mismatched quantities.
+The response contains only verified item IDs, unit prices, fee
+amounts, draft revision and total—not the raw D1 record, customer
+contacts, original payload, artwork or tokens.
+
+`work-quote-restore-model.mjs` validates that projection one more
+time before it can hydrate the private quote worksheet form. The
+React component accepts optional `savedDraft` data, but current
+request loader DOES NOT supply it and the route stays OFF.
+
+The GET/POST route is still **HARD OFF** in both
+`app-home/workers/app.ts` and in the React Router handler:
+`enabled:false`. No D1 quote schema was activated or deployed.
+An incorrect or missing draft cannot be treated as an empty draft
+when a source/receipt mismatch occurred; stale returns a conflict.
+
+GitHub CI tests the future read adapter, local synthetic D1 row,
+source drift and tamper denials, and restore hydration separately
+from the ordinary merchant status/button workflows.
+
+**Future release gating:** the WORK-only remote D1 migration, a
+security-reviewed Worker re-enable, the actual request loader
+providing authenticated saved-draft values, real save/reload browser
+certification, and finally Shopify Draft Order/payment scopes
+all need distinct explicit Owner approval. LIVE/KEEP unchanged.
