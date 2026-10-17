@@ -6,7 +6,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {
-  checkMigrationSql,parseD1AccountInventory,parseD1Info,
+  checkMigrationSql,parseD1AccountInventory,parseD1Info,parseD1Size,
   parseD1Schema,parseEmptyQuotes,inspectBackupManifest,
 } from './owner-work-quote-d1-migration.mjs';
 
@@ -52,6 +52,46 @@ for(const bad of [
   {...info,file_size:null},{...info,file_size:Infinity},
   {...info,file_size:-1},{...info,file_size:32*1024*1024+1},
 ])deny(()=>parseD1Info(bad));
+// Wrangler 4 emits database_size; REST clients may emit file_size.
+// Refuse inferred sizes, ambiguous mixed formats or oversized databases.
+const modern={name:DB,uuid:ID,database_size:8192,
+  read_queries_24h:200,write_queries_24h:8,
+  rows_read_24h:9000,rows_written_24h:100};
+pass(()=>assert.equal(parseD1Info(modern).database_bytes,8192));
+pass(()=>assert.equal(parseD1Info({result:modern}).rows_read_24h,9000));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:'8.192 kB'})
+  .database_bytes,8192));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:'8 KiB'})
+  .database_bytes,8192));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:'0 B'})
+  .database_bytes,0));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:'32 MiB'})
+  .database_bytes,32*1024*1024));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:8192,
+  file_size:8192}).database_bytes,8192));
+pass(()=>assert.equal(parseD1Info({...modern,database_size:8192,
+  rows_read_24h:'unknown'}).rows_read_24h,null));
+pass(()=>assert.equal(parseD1Size('10.001 kB'),10001));
+for(const bad of [
+  {...modern,database_size:undefined},
+  {...modern,database_size:null},
+  {...modern,database_size:''},
+  {...modern,database_size:'unknown'},
+  {...modern,database_size:'1,024 B'},
+  {...modern,database_size:'32.001 MiB'},
+  {...modern,database_size:-1},
+  {...modern,database_size:0.25},
+  {...modern,database_size:'1.23 B'},
+  {...modern,database_size:8192,file_size:4096},
+  {...modern,database_size:'5e3'},
+  {...modern,database_size:'12 KB '},
+  {...modern,database_size:'12 terabytes'},
+  {...modern,database_size:'1 KiB\nDROP'},
+])deny(()=>parseD1Info(bad));
+for(const bad of [-1,Infinity,NaN,null,undefined,
+  {},'','-10 B','0.1 B','01 B','32.001 MiB',
+  '33 MiB','100 GB','32 MB!','1e3 B','1.0000 kB'])
+  deny(()=>parseD1Size(bad));
 const base=[
   'jill_merchant_audit','jill_merchant_authority',
   'jill_merchant_grants','jill_shopify_sessions',
@@ -141,6 +181,10 @@ for(const text of [
   'new_tables_not_empty',
   'MAX_DB=32*1024*1024',
   'MAX_EXPORT=64*1024*1024',
+  'database_size',
+  'file_size',
+  'rows_read_24h',
+  'rows_written_24h',
 ]){assert.ok(code.includes(text),'Missing required safety marker '+text);cases++;}
 for(const bad of [
   'versions upload','versions deploy','migrations apply',
@@ -148,6 +192,41 @@ for(const bad of [
 ]){
   assert.equal(code.includes(bad),false,'Unsafe command: '+bad);cases++;
 }
+
+// One-shot Windows workflow: no step may run after a failed previous
+// process. Confirm both the Free-tier review and remote write separately.
+const ps=readFileSync(new URL('./run-work-quote-d1-owner.ps1',
+  import.meta.url),'utf8');
+for(const required of [
+  "#Requires -Version 5.1",
+  "ValidateSet('Inspect', 'Migrate')",
+  "Set-StrictMode -Version Latest",
+  "$ErrorActionPreference = 'Stop'",
+  "function Invoke-Required",
+  "$LASTEXITCODE -ne 0",
+  'No further steps are authorized.',
+  "if ($Mode -ceq 'Inspect')",
+  "FREE VERIFIED",
+  "MIGRATE WORK QUOTES",
+  "Invoke-Required 'work:hq:quote:d1:inspect'",
+  "Invoke-Required 'work:hq:quote:d1:backup'",
+  "Invoke-Required 'work:hq:quote:d1:apply'",
+  "Invoke-Required 'work:hq:quote:d1:verify'",
+  "exit 1",
+]){
+  assert.ok(ps.includes(required),'Missing Owner PS gate: '+required);
+  cases++;
+}
+const order=["work:hq:quote:d1:inspect","FREE VERIFIED",
+  "work:hq:quote:d1:backup","MIGRATE WORK QUOTES",
+  "work:hq:quote:d1:apply","work:hq:quote:d1:verify"];
+for(let i=1;i<order.length;i++){
+  assert.ok(ps.indexOf(order[i-1])<ps.indexOf(order[i]),
+    'Owner PS allowed out-of-order write: '+order[i]);
+  cases++;
+}
+assert.doesNotMatch(ps,/Invoke-Expression|Start-Job|Invoke-WebRequest|Remove-Item|iex\b/);
+cases++;
 console.log('PASS WORK quote D1 owner migration OFFLINE: '+cases+
   ' security/schema/backup/cost-prompt/target/pinning fixtures. No Cloudflare calls, schema writes, customer data, Worker release or LIVE/KEEP.');
 console.log('HOLD: actual remote metadata, Workers billing tier/free usage, private export and two-table migration must still be verified on Owner Windows.');

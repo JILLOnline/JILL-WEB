@@ -67,13 +67,44 @@ export function parseD1AccountInventory(data){
     STOP('database_identity_mismatch');
   return Object.freeze({database:DB,id:DB_ID});
 }
+// Wrangler 4 CLI emits database_size, while the Cloudflare REST D1 API
+// may emit file_size. Accept only strict, unambiguous byte quantities.
+// If both are returned, they MUST agree; never infer missing metadata.
+export function parseD1Size(value){
+  let bytes;
+  if(typeof value==='number'){
+    bytes=value;
+  }else if(typeof value==='string'){
+    const m=/^(0|[1-9]\d{0,12})(?:\.(\d{1,3}))? ?(B|kB|MB|GB|KiB|MiB|GiB)$/.exec(value);
+    if(!m)STOP('database_info_or_size_unverified');
+    const unit={B:1,kB:1000,MB:1000000,GB:1000000000,
+      KiB:1024,MiB:1048576,GiB:1073741824}[m[3]];
+    if(m[3]==='B'&&m[2])STOP('database_info_or_size_unverified');
+    bytes=Math.ceil(Number(m[1]+(m[2]?'.'+m[2]:''))*unit);
+  }else STOP('database_info_or_size_unverified');
+  if(!Number.isSafeInteger(bytes)||bytes<0||bytes>MAX_DB)
+    STOP('database_info_or_size_unverified');
+  return bytes;
+}
+const usageCount=value=>{
+  if(value===null||value===undefined)return null;
+  return Number.isSafeInteger(value)&&value>=0?value:null;
+};
 export function parseD1Info(data){
   const info=data?.result && !Array.isArray(data?.result)?data.result:data;
-  if(!info||info.uuid!==DB_ID||info.name!==DB||
-     !Number.isSafeInteger(info.file_size)||info.file_size<0||
-     info.file_size>MAX_DB)
+  if(!info||info.uuid!==DB_ID||info.name!==DB)
     STOP('database_info_or_size_unverified');
-  return Object.freeze({database_bytes:info.file_size});
+  const hasCurrent=Object.hasOwn(info,'database_size');
+  const hasLegacy=Object.hasOwn(info,'file_size');
+  if(!hasCurrent&&!hasLegacy)STOP('database_info_or_size_unverified');
+  const bytes=parseD1Size(hasCurrent?info.database_size:info.file_size);
+  if(hasCurrent&&hasLegacy&&parseD1Size(info.file_size)!==bytes)
+    STOP('database_info_or_size_unverified');
+  return Object.freeze({database_bytes:bytes,
+    read_queries_24h:usageCount(info.read_queries_24h),
+    write_queries_24h:usageCount(info.write_queries_24h),
+    rows_read_24h:usageCount(info.rows_read_24h),
+    rows_written_24h:usageCount(info.rows_written_24h)});
 }
 export function parseD1Schema(data,{after=false}={}){
   const p=Array.isArray(data)&&data.length===1?data[0]:
@@ -257,7 +288,13 @@ if(own){
       console.log('WORK D1 bytes: '+before.database_bytes+
         '; core tables: '+before.core_tables_present+
         '; quote tables: 0; inbox index present: '+before.inbox_index_present+'.');
-      console.log('HOLD COST GATE: Wrangler metadata cannot verify Workers Free billing tier, account-wide D1 usage or remaining daily rows. Check Cloudflare billing + D1 Metrics before backup/apply.');
+      const metric=x=>x===null?'unavailable':String(x);
+      console.log('WORK D1 24h metrics (database-only): rows read='+
+        metric(before.rows_read_24h)+', rows written='+
+        metric(before.rows_written_24h)+', read queries='+
+        metric(before.read_queries_24h)+', write queries='+
+        metric(before.write_queries_24h)+'.');
+      console.log('HOLD COST GATE: These are NOT account-wide metrics or billing-tier proof. Verify Workers Free plan, D1 usage across every database, and remaining daily rows in Cloudflare Dashboard before backup/apply.');
       console.log('READ ONLY: No export, customer rows, schema change, paid service, Worker upload, LIVE or KEEP.');
     }else if(mode==='--backup'){
       phase='local_private_backup';

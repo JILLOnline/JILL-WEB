@@ -145,3 +145,47 @@ rewards, media R2 and any infrastructure billing remain unchanged.
 **Owner Windows results not yet provided:** this documentation and
 GitHub CI cannot certify live Cloudflare billing, a full private
 backup, or real remote quote schema changes on their own.
+
+## 2026-10-17 correction — Wrangler size field and fail-fast execution
+
+The Owner's real WORK diagnostic proved the database UUID/name match,
+but Wrangler JSON supplies **database_size**, not **file_size**.
+The original inspect, backup, apply and verify all stopped before any
+remote schema write. Free-tier review and migration consent were
+not confirmed; subsequent green PowerShell Write-Host messages did
+**not** demonstrate backup or migration success.
+
+The corrected parser accepts strict Wrangler database_size or REST
+file_size, preserving exact identity and conservative size bounds.
+Inspect now prints database-only 24h D1 metrics. These are not
+account-wide usage or billing proof; Dashboard verification of the
+**Workers Free plan and all D1 usage** remains mandatory.
+
+### ONE command for safe read-only inspection
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-work-quote-d1-owner.ps1 -Mode Inspect
+```
+
+### ONE command for approved migration (only after cost review)
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run-work-quote-d1-owner.ps1 -Mode Migrate
+```
+
+The one-shot Windows script performs clean Git fast-forward, offline
+guard tests, read-only inspection, genuine Free-tier/usage confirmation,
+private full local backup, separate migration confirmation, one
+two-table schema apply and read-only verification **in that order**.
+Any failed subprocess immediately stops the script with exit 1;
+the next step cannot run and no misleading PASS is printed.
+
+Do not enter FREE VERIFIED unless billing/usage were actually
+confirmed in Cloudflare Dashboard. Never retry a possibly committed
+schema change. The only release affected is the WORK D1 schema;
+the deployed Worker and LIVE/KEEP remain unchanged.
+
+Windows CI checks PowerShell script syntax **without executing**
+any Cloudflare command or migration.
