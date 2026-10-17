@@ -235,6 +235,8 @@
     "work:hq:quote:v35:deploy-zero": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --zero",
     "work:hq:quote:v35:recover-v34": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --recover",
     "test:work-hq-quote-v35-zero-second": "node scripts/test-work-quote-v35-second-zero-attempt.mjs",
+    "test:work-hq-v35-synthetic-qa-kit": "node scripts/test-work-hq-v35-synthetic-qa-kit.mjs",
+    "work:hq:quote:v35:synthetic:preflight": "node scripts/preflight-work-hq-v35-synthetic-qa.mjs",
     "work:hq:quote:v35:deploy-zero-second": "node scripts/deploy-work-hq-quote-v35-zero-second-owner.mjs --zero",
     "test:work-hq-quote-d1-owner-migration": "node scripts/test-work-hq-quote-d1-owner-migration.mjs",
     "work:hq:quote:d1:inspect": "node scripts/owner-work-quote-d1-migration.mjs --inspect",
