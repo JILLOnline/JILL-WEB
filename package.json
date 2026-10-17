@@ -147,6 +147,8 @@
     "work:hq:detail:v9:live:audit": "node scripts/audit-work-hq-detail-v9-live.mjs",
     "test:work-hq-v34-ui-local": "node scripts/test-work-hq-v34-ui-local.mjs",
     "test:work-hq-v34-compiled-manifest": "node scripts/test-work-hq-v34-compiled-manifest.mjs",
+    "test:work-hq-v34-ui-readiness": "node scripts/test-work-hq-v34-ui-readiness.mjs",
+    "work:hq:v34:ui:parity:inspect": "node scripts/inspect-work-hq-v34-ui-readiness.mjs --inspect",
     "work:hq:v34:ui:prepare-local": "node scripts/prepare-work-hq-v34-ui-local.mjs --prepare-local",
     "test:work-hq-detail-v9-live-audit": "node scripts/test-audit-work-hq-detail-v9-live.mjs",
     "work:hq:detail:v9:on:rollback": "node scripts/release-work-hq-detail-v9-on.mjs --rollback",
