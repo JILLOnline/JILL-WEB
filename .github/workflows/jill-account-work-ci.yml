@@ -68,6 +68,9 @@ jobs:
       - name: Verify future quote Save and Reload UI remains hard OFF with no PII (OFFLINE)
         run: npm run test:work-hq-quote-ui-wiring
 
+      - name: Test WORK-only quote D1 owner migration SQL, private backup and free-tier HOLD offline
+        run: npm run test:work-hq-quote-d1-owner-migration
+
       - name: Validate read-only WORK QA v34 metadata and Google pin preflight parser (OFFLINE)
         run: npm run test:work-hq-phase35-qa-preflight
 
