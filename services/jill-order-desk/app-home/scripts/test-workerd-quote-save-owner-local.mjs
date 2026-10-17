@@ -140,7 +140,7 @@ try{
   assert.equal(result.body.code,'source_revision_changed');
   tests+=2;
   result=await invoke();
-  assert.equal(result.status,200);
+  assert.equal(result.status,200,'first_save_'+result.body.code);
   assert.equal(result.body.code,'draft_saved');
   assert.equal(result.body.revision,1);
   assert.equal(result.body.duplicate,false);
