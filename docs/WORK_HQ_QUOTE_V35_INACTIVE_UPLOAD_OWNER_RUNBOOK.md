@@ -129,3 +129,71 @@ has not been exercised via authenticated WORK HTTP traffic.
 **Release approval remains separate.** Do not invoke Wrangler
 `versions deploy`, shift traffic, send customer messages, invoice,
 or modify LIVE, KEEP or paid infrastructure based only on this audit.
+
+## WORK v35 HTTP inspection without changing traffic
+
+An independent source review found an intentional Worker host pin:
+`workers/app.ts` returns HTTP **421 wrong_host** if an incoming
+request's origin is not the canonical
+`jill-order-desk-canary-work.jill-work-custom-orders.workers.dev`.
+A Cloudflare Version URL has a different hostname, so it **cannot**
+exercise authenticated quote Save/Reload. This is the correct
+OAuth-origin safety behavior, not an app defect.
+
+Cloudflare documents Version URLs as public when enabled. The
+optional diagnostic below sends exactly two **anonymous GETs**:
+one to v35's version URL `/healthz` expecting 421 wrong_host, and
+one to the current canonical WORK `/app/requests/quote-draft`
+expecting HTTP 503 quote_drafts_not_enabled from v34. It never
+follows redirects or sends cookies, authorization, request IDs,
+POST data or secrets. If Version URLs are disabled/inaccessible,
+the diagnostic stops; **do not enable public Version URLs**
+without separate security/cost review.
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+npm.cmd run work:hq:quote:v35:preview-readonly
+if ($LASTEXITCODE -ne 0) { throw 'STOP: v35 anonymous preview unavailable or changed' }
+```
+
+The result is only a limited hostname/anonymous denial check,
+NOT proof of byte-for-byte remote script/asset parity and NOT
+an authenticated quote workflow test.
+
+## Next conditional rollout plan — NOT YET APPROVED
+
+To test v35's *actual authenticated WORK hostname* before
+serving normal traffic, Cloudflare's version-override mechanism
+requires including the candidate in a deployment. A controlled
+deployment allocation of **100% v34 and 0% v35** would allow
+the Owner to send explicitly version-pinned requests on the
+canonical WORK host while keeping ordinary traffic on v34.
+**This is still a deployment configuration change** and is
+not authorized by the prior inactive-upload permission.
+
+The exact planned versions are:
+
+- 100% v34: `4973b74d-d479-41da-897c-e36129303279`.
+- 0% v35: `dbc6341f-de7f-41de-8e97-6bf971201eeb`.
+- Existing v33 rollback retained: `204d66c3-3296-430d-8288-39c354876600`.
+
+After **separate explicit Owner authorization**, a single guarded
+WORK-only rollout would check the version IDs and bindings again,
+require 0% v35 plus 100% v34, read back allocation, send
+only unauthenticated read-only version-override GET requests and
+verify that v35 security behavior differs from locked v34.
+Crucially, Cloudflare may ignore the override if not applied,
+so tests must distinguish a real v35 response from v34 fallback;
+a failed/ambiguous result is a STOP, not a traffic promotion.
+
+A rollback to v34 is a **new deployment operation**; explicit
+permission to recover 100% v34 must accompany rollout approval.
+0% v35 can be manually targeted with an override header by
+any capable requester, so treating it as totally inaccessible
+would be incorrect. Shopify Owner, signed Google detail,
+same-Origin and D1 checks remain mandatory.
+
+Only after a separate 0% QA and another traffic permission
+should any ordinary WORK traffic be sent to v35.
+No LIVE/KEEP, real customer request mutation, customer messages,
+payments, R2 or paid capacity is approved by this runbook.
