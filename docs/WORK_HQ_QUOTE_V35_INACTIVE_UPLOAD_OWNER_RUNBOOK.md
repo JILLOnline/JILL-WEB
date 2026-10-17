@@ -84,3 +84,48 @@ records and must not be used as disposable QA targets.
 Separately approve customer quote notification, My JILL approval,
 Shopify invoices/payments, any R2 storage and any possible billing
 change. LIVE and KEEP are never targets of this script.
+
+## Owner Windows upload completed successfully — October 17, 2026
+
+Owner-provided Windows log certifies source commit
+`4e4acfcc56e8b3ecb558fc7e10c80301f1cc0d9b`.
+The one-shot upload reported **inactive candidate**
+`dbc6341f-de7f-41de-8e97-6bf971201eeb`.
+The upload tool independently confirmed that WORK v34
+`4973b74d-d479-41da-897c-e36129303279` stayed 100% active,
+the original four WORK secrets, D1 binding and other existing
+bindings were preserved, and only the quote feature flag was
+added to the inactive candidate. Owner's local quote security
+tests, typecheck and build passed. **No traffic switch occurred.**
+
+## Independent read-only inspection — do not upload again
+
+After the owner syncs this inspection-only documentation and script,
+run from Windows:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:hq:quote:v35:inspect-inactive
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Read-only audit failed' }
+```
+
+This script **does not upload or deploy**. It checks the exact active
+v34 100% status both before and after inspection, confirms inactive
+v35 has the exact source commit marker, checks rollback v33 still
+exists, audits WORK v34/v35 version bindings and runtime settings,
+requires the unique latest candidate, and checks that the two
+WORK D1 quote tables are still present via metadata-only SELECT.
+It prints no secrets, customer details, raw versions JSON, or
+private backup contents.
+
+**Evidence boundary:** Cloudflare version metadata, etags and an
+upload source marker do not prove that every remote script byte or
+inactive static asset matches the local build. We record this
+as an explicit HOLD, not an invented certification. The candidate
+has not been exercised via authenticated WORK HTTP traffic.
+
+**Release approval remains separate.** Do not invoke Wrangler
+`versions deploy`, shift traffic, send customer messages, invoice,
+or modify LIVE, KEEP or paid infrastructure based only on this audit.
