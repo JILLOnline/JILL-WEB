@@ -748,3 +748,58 @@ migration, LIVE/KEEP changes or paid upgrade occurred.
 parity only*, not a binary or static asset hash match to deployed
 v34. The release remains on HOLD until the changed server and
 browser output is reviewed under a versioned rollback plan.
+
+## Phase 32 — Historical source delta and LOCAL artifact inventory (PENDING)
+
+The `f75336c6520f7dd75217cc6b6815fc828083a87d` Git
+checkpoint predates the known v34 WORK release activity, but
+**NO Cloudflare evidence currently binds this commit SHA to
+the exact deployed v34 Worker binary**. Do not use it as an
+authoritative deployed-source identification.
+
+GitHub tree comparison between this historical checkpoint and
+the Phase 31 source commit showed exactly four changed/added
+WORK App Home runtime files:
+- `app/components/WorkOriginalRequestDetails.tsx`: newer
+  strict Cloudinary reference label, no URL/link/media fetch;
+- `app/routes.ts`: adds the media inspection route;
+- `app/routes/app.requests.media.inspect.tsx`: new
+  disabled-by-default Owner-only inspection action;
+- `workers/app.ts`: early Origin/disabled feature
+  gate for that route; existing custom order command guard
+  otherwise remains in place.
+
+The historical diff shows unchanged `backend/`,
+`services/custom-order-cloudflare/`, and existing WORK
+Wrangler manifests in the selected source scope. It does
+NOT show complete code/binary/asset parity with active v34.
+There are extra new *test-only* files and private-media
+helper modules outside the four in-app runtime paths;
+the compiled Worker can still differ even if the routes are
+disabled. This is explicitly NOT a \"UI-only\" change.
+
+New source-only
+`scripts/review-work-hq-v35-source-delta.mjs` reads
+the local `git diff` for those exact runtime/auth/gateway
+scopes and fails closed on any addition beyond the four
+expected changed runtime files. It verifies the newer safe
+reference classifier, disabled media route and local
+candidate manifest. It then inventories local
+`dist/server` and `dist/client` artifacts, reporting only
+file count, total byte size and a deterministic SHA-256
+inventory digest, NEVER actual script, customer or secret
+contents. It does not access deployed v34 binary/assets.
+
+Offline synthetic negative tests in
+`scripts/test-work-hq-v35-source-review.mjs` run in CI.
+The real Windows read-only inventory is PENDING:
+`npm.cmd run work:hq:v35:source:review-local`.
+
+**HOLD:** even PASS does not approve inactive v35 upload,
+new media routes, remote D1, customer storage, billing or
+traffic switch. Before approval, independently tie the
+baseline commit to the actual deployed v34 code if possible,
+review the newly compiled security-critical Worker and route,
+compare browser assets to the authenticated version, and
+establish safe v35→v34 rollback rather than assuming v33
+rollback is enough. WORK, LIVE and KEEP remain unchanged.
