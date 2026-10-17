@@ -6,7 +6,6 @@
   "minimum_chrome_version": "128",
   "permissions": [
     "activeTab",
-    "tabs",
     "declarativeNetRequest",
     "alarms"
   ],
