@@ -1067,3 +1067,70 @@ new canonical revision in WORK. If stale/error/unknown commit status
 appears, STOP; do not generate a new operation_id or click repeatedly.
 Never touch real customers, LIVE/KEEP, Google PROD, R2, D1 migrations,
 billing or paid upgrades.
+
+### Phase 35 Owner Windows certification — PASS, 2026-10-17
+
+The Owner ran `test:work-hq-phase35-qa-preflight` (38 synthetic
+accept/reject fixtures) and `work:hq:phase35:qa:preflight`
+successfully, followed by the guarded Windows PASS. Cloudflare
+returned active v34 `4973b74d-d479-41da-897c-e36129303279`,
+preserved v33 `204d66c3-3296-430d-8288-39c354876600`,
+Google QA @9/@7 pin isolation and anonymous Owner-only route
+denials. Four WORK secrets/D1/OAuth/security flags were checked
+by binding metadata only. No original request, signed-in Owner
+or secret value was read by the preflight.
+
+**CERTIFIED ONLY:** fresh read-only WORK provider metadata and
+anonymous-route inspection. This is not binary/asset provenance,
+an authenticated merchant status write or a version-release grant.
+
+### Phase 36 anonymous v34 public browser asset sample — SOURCE ONLY (PENDING)
+
+Source-only read-only inspector:
+`scripts/inspect-work-hq-v34-public-assets.mjs --inspect`.
+The inspector runs only on clean synced WORK, requires a local
+compiled client tree and uses the pinned read-only Wrangler
+`deployments status` command to check v34 active before AND
+after a bounded anonymous public asset sample. It performs:
+
+- One anonymous GET `/auth/login` on the fixed WORK canary
+  workers.dev origin; no cookies, tokens or customer details.
+- Up to eight same-origin `/assets/<basename>.js|css` GETs
+  discovered in HTML `src`/`href` attributes. No redirects,
+  cross-domain fetches, user-provided URLs or arbitrary paths.
+- Bounded 512-KiB login HTML, at most 2 MiB per asset,
+  byte-level SHA256 comparing each downloaded public file with
+  the corresponding existing local `dist/client/assets` file.
+- Aggregate file counts, matches, differences, missing paths,
+  bytes and sample SHA256 only. No raw HTML, source or metadata
+  is printed, stored, uploaded or committed.
+- Explicit STOP on unexpected v34 deployment change, missing
+  public asset references, malformed response, oversized
+  payload, unsafe path, absent build or checkout drift.
+
+CI runs only the synthetic `test:work-hq-phase36-public-assets`
+parser/hash tests, with no remote HTTP calls. An actual owner
+run is required for any public asset evidence.
+
+After the reviewed change is merged and synced, run:
+
+```powershell
+npm.cmd run test:work-hq-phase36-public-assets
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Phase36 offline public asset fixtures failed' }
+
+npm.cmd run work:hq:phase36:public-assets:inspect
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Phase36 anonymous public v34 asset sample unverified' }
+```
+
+**Scope restriction:** Observed client files may match or differ
+from the newly built candidate; this is data, not a gate that
+declares a release safe. It is never a complete v34 static asset
+inventory, Worker script download/byte comparison, source commit
+provenance, or security audit of authenticated endpoints.
+Cloudflare Workers version-detail metadata has a script content
+etag, but the published version-detail schema does not include
+the full version-specific compiled Worker or asset bundle.
+STOP does not authorize fallback to another worker URL or an
+unapproved API token. The real WORK QA merchant mutation remains
+separately approval-gated. No versions deployed, Google QA writes,
+R2/D1 remote operations, LIVE/KEEP, paid service or traffic changes.
