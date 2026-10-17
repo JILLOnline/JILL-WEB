@@ -232,6 +232,9 @@ jobs:
       - name: Verify real generated WORK v34-compatible manifest (no candidate, no deployment)
         run: node scripts/test-work-hq-v34-compiled-manifest.mjs
 
+      - name: Verify real built WORK client/server artifact inventory (no deployment)
+        run: node scripts/review-work-hq-v35-source-delta.mjs --inventory-compiled-ci
+
       - name: Verify exact WORK canary deployment manifest and dry-run package
         working-directory: services/jill-order-desk/app-home
         run: |
