@@ -630,3 +630,22 @@ to WORK v34/v33 traffic, Google QA, LIVE, KEEP, D1/R2, app
 permissions, or paid resources. Only mark Phase 30 PASS after
 the actual compiled manifest check and owner's guarded Windows
 `work:hq:v34:ui:prepare-local` return exit code 0.
+
+### Phase 30 actual CI compiler finding — zero-Queue metadata vs active binding
+
+The first post-build CI inspection (run `38984058261`)
+rejected the **actual** generated canary manifest at
+`work_hq_v34_local_ui_base_active_queues`. This is materially
+better evidence than the synthetic suite: Wrangler/Vite emits
+a `queues` configuration section that may be object-shaped.
+The first repair still treated `queues` as an array-only field.
+
+The next targeted source correction recognizes only missing,
+empty-array, or object-form Queue metadata whose ONLY optional
+keys are `producers`/`consumers` and whose arrays have zero
+entries. Any actual Queue producer or consumer, unknown Queue
+field, value other than an array, new R2/Images/service/unsafe
+binding or extra D1 remains a hard stop. Negative tests cover
+both schema forms. The compile-and-inspect CI and guarded owner
+Windows rerun must PASS before Phase 30 is certified. This
+correction does not create or deploy a Queue.
