@@ -8,12 +8,15 @@ import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {readWorkMerchantPermission} from "../../../merchant-access.mjs";
 import {readWorkGoogleQaMerchantDetail}
   from "../../../work-google-merchant-detail.mjs";
+import {workQuoteDraftFeatureReady}
+  from "../../../work-quote-release-readiness.mjs";
 
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const headers={"cache-control":"private, no-store, max-age=0",
   "x-content-type-options":"nosniff"};
-function result(status:number,state:string,detail:unknown=null){
-  return Response.json({state,detail},{status,headers});
+function result(status:number,state:string,detail:unknown=null,
+  quoteDraftEnabled=false){
+  return Response.json({state,detail,quoteDraftEnabled},{status,headers});
 }
 export async function loadAuthorizedWorkRequestDetail({
   request,context,params,
@@ -46,7 +49,10 @@ export async function loadAuthorizedWorkRequestDetail({
       secret:env.JILL_HQ_MERCHANT_READ_SECRET,
       submissionId:id,
     });
-    return result(200,"ready",detail);
+    // ONLY after signed Google detail + Shopify online Owner/D1 grant.
+    // Merely surfacing this boolean never authorizes a write: the quote
+    // endpoint independently checks capability, origin, and fresh source.
+    return result(200,"ready",detail,workQuoteDraftFeatureReady(env));
   }catch{
     // No internal failure details, stale customer data, raw records or keys.
     return result(503,"source_unavailable");
