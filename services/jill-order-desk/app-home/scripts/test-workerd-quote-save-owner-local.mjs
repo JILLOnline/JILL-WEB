@@ -197,8 +197,14 @@ try{
   console.log('PASS WORK quote Save Draft owner boundary: '+tests+
     ' LOCAL D1/Shopify-session-stub cases, feature OFF, authenticated Owner, Origin, canonical revision, duplicate receipt, CAS and privacy.');
   console.log('HOLD: no real Shopify login/Google data, no enabled HTTP route, remote D1 migration, quote approval, payment, LIVE/KEEP or release.');
-}catch{
-  console.error('STOP WORK quote Save Draft LOCAL owner boundary unverified; remote unchanged.');
+}catch(error){
+  // The fixture is entirely synthetic. Report only safe assertion/SQL
+  // diagnostic text, never session values or raw records.
+  const type=error?.name==='AssertionError'?'assertion':'local_d1';
+  const detail=String(error?.message||'unverified').replace(
+    /[\r\n\t]+/g,' ').slice(0,240);
+  console.error('STOP WORK quote Save Draft LOCAL owner boundary '+type+
+    ': '+detail+'; remote unchanged.');
   process.exitCode=1;
 }finally{
   if(started)await harness.close().catch(()=>{process.exitCode=1;});
