@@ -649,3 +649,40 @@ binding or extra D1 remains a hard stop. Negative tests cover
 both schema forms. The compile-and-inspect CI and guarded owner
 Windows rerun must PASS before Phase 30 is certified. This
 correction does not create or deploy a Queue.
+
+### Phase 30 owner Windows certification — PASS, 2026-10-16
+
+The Owner fast-forwarded `jill/rewards-work` to `746158c`
+and ran guarded PowerShell commands successfully:
+- `npm.cmd run test:work-hq-v34-ui-local`: **52** synthetic
+  allow/deny manifest safety cases passed.
+- `npm.cmd run work:hq:v34:ui:prepare-local`: the four
+  WORK source regressions, React Router/TypeScript, clean
+  canary build, and local candidate creation all passed.
+- `npm.cmd run test:work-hq-v34-compiled-manifest`: **PASS**
+  against the actual locally compiled WORK canary manifest,
+  including inert zero-producer/zero-consumer Queues metadata.
+- The conditional `PASS: Phase 30 LOCAL UI candidate fully
+  prepared and verified.` appeared only after exit-code-zero
+  verification.
+
+Candidate path (local, ignored output, not Git tracked):
+`services/jill-order-desk/app-home/dist/server/wrangler.hq-v34-ui-LOCAL-NOUPLOAD.json`.
+
+CI run `38984295118` at commit `746158c` completed
+success across all four jobs, including actual generated
+Cloudflare canary-manifest validation.
+https://github.com/JILLOnline/JILL-WEB/actions/runs/38984295118
+
+The previous first-run failure and subsequent metadata-form
+repair are historical and superseded by this certified rerun.
+
+**CERTIFICATION SCOPE:** Phase 30 LOCAL v34-compatible
+configuration candidate, compile, and source test integrity
+only. The live Worker remained v34; v33 rollback was not
+invoked. No candidate version was uploaded, no binary/asset
+diff with deployed v34 has been verified, the live four
+secrets were not inspected by this local test, and no new
+authenticated merchant write was proven. UI release remains
+on HOLD pending real read-only v34 parity and explicit Owner
+approval for an inactive WORK-only version upload.
