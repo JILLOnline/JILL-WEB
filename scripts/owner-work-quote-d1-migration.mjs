@@ -75,7 +75,7 @@ export function parseD1Size(value){
   if(typeof value==='number'){
     bytes=value;
   }else if(typeof value==='string'){
-    const m=/^(0|[1-9]\\d{0,12})(?:\\.(\\d{1,3}))? ?(B|kB|MB|GB|KiB|MiB|GiB)$/.exec(value);
+    const m=/^(0|[1-9]\d{0,12})(?:\.(\d{1,3}))? ?(B|kB|MB|GB|KiB|MiB|GiB)$/.exec(value);
     if(!m)STOP('database_info_or_size_unverified');
     const unit={B:1,kB:1000,MB:1000000,GB:1000000000,
       KiB:1024,MiB:1048576,GiB:1073741824}[m[3]];
