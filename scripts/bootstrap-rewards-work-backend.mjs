@@ -1,0 +1,117 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync, execFileSync} from 'node:child_process';
+import {WORK_CLIENT_ID, WORK_STORE, WORK_CONFIG_FILE, assertRewardsWorkConfig} from './verify-rewards-work-target.mjs';
+
+const root = process.cwd();
+const output = path.join(root, '.work-backend');
+const projectFile = path.join(output, '.work-project.json');
+const claspFile = path.join(output, '.clasp.json');
+
+if (execFileSync('git', ['branch', '--show-current'], {cwd:root,encoding:'utf8'}).trim() !== 'jill/rewards-work') {
+  throw new Error('Refusing WORK backend bootstrap outside jill/rewards-work.');
+}
+if (!fs.existsSync(WORK_CONFIG_FILE)) {
+  throw new Error('Shopify WORK app config missing. Link JILL WORK Rewards first.');
+}
+// The WORK preview and WORK backend must use the same isolated scope owner.
+// Bring an older locally linked WORK config up to the canonical contract
+// before validating it. The preparation script refuses a LIVE app identity.
+execFileSync(process.execPath,['scripts/prepare-rewards-work-config.mjs'],{
+  cwd:root,stdio:'inherit',
+});
+assertRewardsWorkConfig(fs.readFileSync(WORK_CONFIG_FILE,'utf8'));
+
+// npx.cmd runs through Windows cmd.exe. Without quoting, a multi-word
+// --title value is split into three unwanted positional arguments by cmd.
+// Only fixed, internal clasp commands reach this function.
+function windowsClaspArg(value) {
+  if (/[\r\n"&|<>^%!]/.test(value)) {
+    throw new Error('Unsafe Windows clasp argument. Refusing command.');
+  }
+  return /\s/.test(value) ? `"${value}"` : value;
+}
+
+const runClasp = (...args) => {
+  const windows = process.platform === 'win32';
+  const binary = windows ? 'npx.cmd' : 'npx';
+  const cmdArgs = windows ? args.map(windowsClaspArg) : args;
+  const result = spawnSync(binary, ['--yes', '@google/clasp@3.4.1', ...cmdArgs], {
+    cwd:output, stdio:'inherit', shell:windows,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error('Google clasp command failed. Fix authorization/Google Apps Script API access and retry.');
+  }
+};
+
+execFileSync(process.execPath,['scripts/build-rewards-work-backend.mjs'],{cwd:root,stdio:'inherit'});
+const hadClasp = fs.existsSync(claspFile);
+const hadRecord = fs.existsSync(projectFile);
+if (hadClasp !== hadRecord) {
+  throw new Error('Incomplete WORK project metadata. Refusing to write to an unverified Google Apps Script project.');
+}
+if (!hadClasp) {
+  // Creating a project requires an interactive Google OAuth login. This is
+  // the user's own Google account; no token or secret passes through GitHub.
+  // clasp show-authorized-user exits successfully even when its output
+  // says "Not logged in". Parse the actual auth status, not only exit code.
+  const binary = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const authCheck = spawnSync(binary, [
+    '--yes','@google/clasp@3.4.1','show-authorized-user','--json'
+  ], {cwd:output,encoding:'utf8',shell:process.platform === 'win32'});
+  let googleLoggedIn = false;
+  if (authCheck.status === 0) {
+    try {
+      googleLoggedIn = JSON.parse(authCheck.stdout.trim()).loggedIn === true;
+    } catch {
+      console.log('Could not verify existing Google authorization.');
+    }
+  }
+  if (!googleLoggedIn) {
+    console.log('Google clasp login is required. Complete the browser authorization.');
+    runClasp('login');
+  }
+  runClasp('create-script','--type','standalone','--title','JILL WORK Rewards Engine');
+  if (!fs.existsSync(claspFile)) throw new Error('Google did not return a WORK Apps Script ID.');
+  const {scriptId} = JSON.parse(fs.readFileSync(claspFile,'utf8'));
+  if (!scriptId || typeof scriptId !== 'string') throw new Error('Invalid new Apps Script ID.');
+
+  // clasp create-script can pull a boilerplate Code.gs; never upload it
+  // alongside the two canonical JILL sources.
+  for (const filename of ['Code.gs','Code.js']) {
+    const starter = path.join(output,filename);
+    if (!fs.existsSync(starter)) continue;
+    const code = fs.readFileSync(starter,'utf8').replace(/\s+/g,'').replace(/;+/g,';');
+    if (!['','functionmyFunction(){}','functionmyFunction(){;}'].includes(code)) {
+      throw new Error('Unexpected starter script from Google. Refusing to overwrite or delete unknown source.');
+    }
+    fs.rmSync(starter);
+  }
+  fs.writeFileSync(projectFile,JSON.stringify({
+    scriptId,clientId:WORK_CLIENT_ID,shop:WORK_STORE,origin:'clasp create-script in isolated .work-backend',
+  },null,2)+'\n');
+}
+const current = JSON.parse(fs.readFileSync(claspFile,'utf8'));
+const record = JSON.parse(fs.readFileSync(projectFile,'utf8'));
+if (!current.scriptId || current.scriptId !== record.scriptId ||
+    record.clientId !== WORK_CLIENT_ID || record.shop !== WORK_STORE) {
+  throw new Error('WORK Apps Script project identity changed. Refusing to push.');
+}
+
+// Rebuild the manifest after clasp creates/clones the remote project, then
+// ensure the upload contains *only* the canonical scripts.
+execFileSync(process.execPath,['scripts/build-rewards-work-backend.mjs'],{cwd:root,stdio:'inherit'});
+const codeFiles = fs.readdirSync(output).filter(f=>/\.(?:gs|js|html)$/.test(f)).sort();
+const expected = ['JILL_Custom_Order_Automation_REWARDS.gs','JILL_Public_Promotions.gs'].sort();
+if (JSON.stringify(codeFiles)!==JSON.stringify(expected)) {
+  throw new Error('Unexpected WORK script files in isolated bundle; refusing clasp push.');
+}
+const manifest = JSON.parse(fs.readFileSync(path.join(output,'appsscript.json'),'utf8'));
+if (manifest.webapp?.access !== 'ANYONE_ANONYMOUS' || manifest.webapp?.executeAs !== 'USER_DEPLOYING') {
+  throw new Error('WORK webhook web-app manifest is invalid.');
+}
+runClasp('push','--force');
+console.log('WORK source pushed to the separately created Google project.');
+console.log('Google project: https://script.google.com/d/'+record.scriptId+'/edit');
+console.log('NOT DEPLOYED OR AUTHORIZED: configure WORK-only Script Properties and approve Google access before setupJillRewards().');

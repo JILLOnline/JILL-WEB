@@ -1,0 +1,98 @@
+import {useEffect, useState} from 'preact/hooks';
+import {HUB_ROUTES, canonicalRoute, routeFromEntry, extensionRoute} from './routes.mjs';
+import Overview from '../pages/Overview.jsx';
+import Rewards from '../pages/Rewards.jsx';
+import Coupons from '../pages/Coupons.jsx';
+import CustomOrders from '../pages/CustomOrders.jsx';
+import Celebrations from '../pages/Celebrations.jsx';
+import SavedPreferences from '../pages/SavedPreferences.jsx';
+import Settings from '../pages/Settings.jsx';
+
+// The hub is the one Shopify full-page entrypoint. Screen owners and native
+// Shopify account navigation remain unchanged; styling uses platform components.
+export default function AccountHub({accountState = null}) {
+  const [route, setRoute] = useState(() => {
+    if (typeof navigation === 'undefined') return 'overview';
+    return routeFromEntry(navigation.currentEntry);
+  });
+
+  useEffect(() => {
+    if (typeof navigation === 'undefined' || !navigation.addEventListener) return;
+    const onChange = () => setRoute(routeFromEntry(navigation.currentEntry));
+    navigation.addEventListener('currententrychange', onChange);
+    return () => navigation.removeEventListener('currententrychange', onChange);
+  }, []);
+
+  const onNavigate = (nextRoute) => {
+    const id = canonicalRoute(nextRoute);
+    setRoute(id);
+    if (typeof navigation !== 'undefined' && navigation.navigate) {
+      try {
+        const result = navigation.navigate(extensionRoute(id));
+        if (result && typeof result.catch === 'function') result.catch(() => {});
+      } catch {
+        // Never break in-page tabs if Shopify history is unavailable.
+      }
+    }
+  };
+
+  const screen = {
+    overview: <Overview accountState={accountState} onNavigate={onNavigate} />,
+    rewards: <Rewards accountState={accountState} onNavigate={onNavigate} />,
+    coupons: <Coupons onNavigate={onNavigate} />,
+    'custom-orders': <CustomOrders />,
+    celebrations: <Celebrations />,
+    saved: <SavedPreferences />,
+    settings: <Settings onNavigate={onNavigate} />,
+  }[canonicalRoute(route)];
+
+  return (
+    <s-page heading="My JILL" subheading="Your little corner of JILL — made for every celebration">
+      <s-section heading="Explore My JILL">
+        <s-stack direction="block" gap="small-300">
+          <s-text color="subdued">Your Rewards, Custom Orders, offers and party plans — all together.</s-text>
+          <s-box padding="base" background="subdued" borderRadius="large">
+            <s-stack direction="inline" gap="small-200">
+              {HUB_ROUTES.map((item) => (
+                <s-button key={item.id}
+                  variant={route === item.id ? 'primary' : 'secondary'}
+                  onClick={() => onNavigate(item.id)}>
+                  {item.label}
+                </s-button>
+              ))}
+            </s-stack>
+          </s-box>
+        </s-stack>
+      </s-section>
+      {accountState?.status === 'loading' && (
+        <s-section>
+          <s-stack direction="inline" gap="small-200" alignItems="center">
+            <s-spinner size="small"/>
+            <s-text color="subdued">Checking your verified Shopify account…</s-text>
+          </s-stack>
+        </s-section>
+      )}
+      {accountState?.status === 'error' && (
+        <s-section>
+          <s-banner tone="critical">
+            We couldn't load your account details. My JILL is still available.
+            Refresh this page to retry. No points or coupons were changed.
+          </s-banner>
+        </s-section>
+      )}
+      {screen}
+      <s-section>
+        <s-box padding="base" background="subdued" borderRadius="large">
+          <s-stack direction="block" gap="small-300">
+            <s-heading>More of your JILL account</s-heading>
+            <s-text color="subdued">Shopify securely manages your regular orders, addresses and sign-in.</s-text>
+            <s-stack direction="inline" gap="base">
+              <s-link href="shopify:customer-account/orders">Orders</s-link>
+              <s-link href="shopify:customer-account/profile">Profile & addresses</s-link>
+            </s-stack>
+          </s-stack>
+        </s-box>
+      </s-section>
+    </s-page>
+  );
+}

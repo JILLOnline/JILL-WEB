@@ -6,6 +6,9 @@ import {
   chooseSolvencyRevocations,
   rewardAccounting,
   rewardCouponStatus,
+  discountCartUrl,
+  storefrontOrigin,
+  loadCustomerAccountStorefront,
 } from '../shared/rewards.mjs';
 
 const FAR_FUTURE = '2099-10-01T00:00:00Z';
@@ -114,3 +117,77 @@ for (const [points, collapsedTier, collapsedState] of boundaries) {
 }
 
 console.log('JILL Rewards v13 state/accounting tests passed.');
+
+ 
+// The two Customer Account surfaces must share the same native Shopify route.
+// This is a link contract only, not a claim of session-bound cart persistence.
+assert.equal(
+  discountCartUrl('https://jillonlinestore.com', 'JILL-TEST'),
+  'https://jillonlinestore.com/discount/JILL-TEST?redirect=/cart',
+);
+assert.equal(
+  discountCartUrl('https://jillonlinestore.com/', 'HELLO 5%'),
+  'https://jillonlinestore.com/discount/HELLO%205%25?redirect=/cart',
+);
+assert.throws(() => discountCartUrl('javascript:alert(1)', 'CODE'));
+assert.throws(() => discountCartUrl('https://jillonlinestore.com', ''));
+
+ 
+// Both WORK and LIVE account extensions must navigate only to Shopify's
+// current shop. No hard-coded LIVE fallback is permitted in a WORK preview.
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com', storefrontUrl: 'https://jill-work.myshopify.com/'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jqtdgr-1y.myshopify.com', storefrontUrl: 'https://jillonlinestore.com/collections/all'}),
+  'https://jillonlinestore.com',
+);
+assert.equal(
+  storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  discountCartUrl(storefrontOrigin({myshopifyDomain: 'jill-work.myshopify.com'}), 'TEST 5'),
+  'https://jill-work.myshopify.com/discount/TEST%205?redirect=/cart',
+);
+assert.throws(() => storefrontOrigin({storefrontUrl: 'http://jill-work.myshopify.com'}), /invalid storefront URL/);
+assert.throws(() => storefrontOrigin({storefrontUrl: 'https://user:pass@jill-work.myshopify.com'}), /invalid storefront URL/);
+assert.throws(() => storefrontOrigin({myshopifyDomain: 'jillonlinestore.com'}), /identity is unavailable/);
+assert.throws(() => storefrontOrigin({}), /identity is unavailable/);
+
+assert.equal(
+  storefrontOrigin({url: 'https://jill-work.myshopify.com/collections/all', myshopifyDomain: 'jill-work.myshopify.com'}),
+  'https://jill-work.myshopify.com',
+);
+assert.equal(
+  storefrontOrigin({url: 'https://jillonlinestore.com/collections/all', myshopifyDomain: 'jqtdgr-1y.myshopify.com'}),
+  'https://jillonlinestore.com',
+);
+
+// Exercise the real shared storefront lookup without calling Shopify.
+// A general account page must not assume the order-only shopify.shop global.
+const originalFetch = globalThis.fetch;
+let capturedShopQuery = null;
+try {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, 'shopify://customer-account/api/2026-07/graphql.json');
+    capturedShopQuery = JSON.parse(options.body).query;
+    assert.match(capturedShopQuery, /shop \{ url myshopifyDomain \}/);
+    return {
+      ok: true,
+      json: async () => ({data: {shop: {
+        url: 'https://jill-work.myshopify.com',
+        myshopifyDomain: 'jill-work.myshopify.com',
+      }}}),
+    };
+  };
+  assert.equal(await loadCustomerAccountStorefront(), 'https://jill-work.myshopify.com');
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({errors: [{message:'Shop lookup unavailable'}]}),
+  });
+  await assert.rejects(loadCustomerAccountStorefront(), /Shop lookup unavailable/);
+} finally {
+  globalThis.fetch = originalFetch;
+}

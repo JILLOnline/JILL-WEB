@@ -1,0 +1,37 @@
+/* Single scoped owner for shared WORK inbox/detail actions. */
+.jill-actions{border-top:1px solid #eeebe6;padding:15px 20px;background:#fcfbf9}
+.jill-actions__heading{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.jill-actions__heading strong{font-size:13px;font-weight:730}
+.jill-actions__heading span{font-size:11px;color:#815d30}
+.jill-actions__hint{font-size:11px;color:#777b80;line-height:1.55;margin:8px 0}
+.jill-actions__tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.jill-actions button{font:inherit;font-size:12px;font-weight:690;cursor:pointer}
+.jill-actions__tabs button{border:1px solid #e1d9cc;background:white;color:#5b4d3c;
+  border-radius:8px;padding:8px 11px}
+.jill-actions__tabs button[aria-expanded="true"]{background:#f4ebde;border-color:#bca17b}
+.jill-actions__body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;padding-top:13px}
+.jill-actions__body label{font-size:11px;font-weight:680;display:grid;gap:6px;
+  color:#575b61;min-width:0}
+.jill-actions__body label:has(textarea),.jill-actions__body label:has(input),
+.jill-actions__body .jill-actions__hint,.jill-actions__primary{grid-column:1/-1}
+.jill-actions__body select,.jill-actions__body textarea,.jill-actions__body input{
+  font:inherit;font-size:12px;background:white;color:#292b30;border:1px solid #d9dadc;
+  border-radius:8px;padding:9px;width:100%;resize:vertical}
+.jill-actions__primary{justify-self:start;border:0;border-radius:9px;
+  background:#345b7b;color:white;padding:10px 15px}
+.jill-actions__primary:disabled{background:#e5e5e3;color:#767779;cursor:not-allowed}
+.jill-actions button:focus-visible,.jill-actions input:focus-visible,
+.jill-actions select:focus-visible,.jill-actions textarea:focus-visible{
+  outline:3px solid #316bc7;outline-offset:3px}
+.jill-actions__feedback{font-size:12px;background:#fff3e5;color:#775421;
+  border-radius:8px;padding:9px 11px;margin-top:12px}
+.jill-actions__feedback--ok{background:#e9f5ed;color:#2b6f45}
+.jill-actions__refresh{font-size:12px;line-height:1.5;background:#eef3fa;color:#394a5e;
+  padding:10px 12px;border-radius:8px;margin-top:10px}
+.jill-actions__refresh button{display:inline-flex;border:1px solid #c6d4e5;
+  border-radius:7px;color:#325a83;background:white;padding:6px 10px;margin-left:9px}
+.jill-actions__refresh button:disabled{opacity:.65;cursor:not-allowed}
+.jill-request .jill-actions{background:transparent;padding:0;border:0}
+@media(max-width:700px){.jill-actions{padding:13px 14px}
+  .jill-actions__body{grid-template-columns:1fr}}

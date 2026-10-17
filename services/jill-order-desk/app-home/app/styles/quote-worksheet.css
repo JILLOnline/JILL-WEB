@@ -1,0 +1,75 @@
+/* WORK quote worksheet — isolated merchant UI; no global Shopify changes. */
+.jill-quote{margin-top:16px}
+.jill-quote .jill-inbox__eyebrow{margin-bottom:5px}
+.jill-quote__tag{font-size:10px;font-weight:750;letter-spacing:.045em;
+  color:#795420;background:#fbf3e5;border:1px solid #e9dac0;
+  border-radius:999px;padding:6px 9px;white-space:nowrap}
+.jill-quote__notice{padding:14px;border:1px solid #eadbc3;border-radius:10px;
+  background:#fcf8f1;color:#775a32;font-size:12px;line-height:1.6}
+.jill-quote__lines{border:1px solid var(--jill-border);border-radius:12px;
+  overflow:hidden;margin:15px 0 22px}
+.jill-quote__row{display:grid;grid-template-columns:minmax(0,2fr) 70px minmax(120px,1fr);
+  gap:14px;align-items:center;padding:11px 14px;border-bottom:1px solid #e9e8e4}
+.jill-quote__row:last-child{border-bottom:none}
+.jill-quote__row--heading{background:var(--jill-soft);color:#666970;
+  font-size:11px;font-weight:760;letter-spacing:.025em}
+.jill-quote__row>div{min-width:0;overflow-wrap:anywhere}
+.jill-quote__row strong{font-size:12px;line-height:1.4;display:block}
+.jill-quote__row small{display:block;color:var(--jill-muted);font-size:10px;margin-top:4px}
+.jill-quote__qty{font-size:13px;font-weight:720;font-variant-numeric:tabular-nums}
+.jill-quote__mobile-label{display:none}
+.jill-quote__fees-title{font-size:13px;font-weight:760;margin:0 0 12px}
+.jill-quote__fees{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.jill-quote__fees label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.jill-quote__fees label>span{font-size:12px;font-weight:720}
+.jill-quote__fees label>small{font-size:10px;line-height:1.45;
+  color:var(--jill-muted);min-height:30px}
+.jill-quote input{font:inherit;color:#25272a;background:#fff;font-size:13px;
+  border-radius:8px;border:1px solid #cdd0d4;padding:10px;width:100%;
+  min-width:0;min-height:40px;font-variant-numeric:tabular-nums}
+.jill-quote input:focus-visible{outline:3px solid var(--jill-focus);outline-offset:2px}
+.jill-quote__summary{background:#f9faf9;border:1px solid #e1e6e0;
+  border-radius:12px;padding:15px;margin-top:20px}
+.jill-quote__summary>p{margin:0;font-size:12px;color:#76532e;line-height:1.5}
+.jill-quote__summary dl{margin:0}
+.jill-quote__summary dl>div{display:flex;justify-content:space-between;
+  align-items:baseline;gap:15px;padding:6px 0;font-size:12px}
+.jill-quote__summary dt{color:#62686b}
+.jill-quote__summary dd{font-weight:730;margin:0;font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.jill-quote__summary .jill-quote__total{border-top:1px solid #dce3dd;
+  margin-top:8px;padding-top:14px;font-size:17px;font-weight:800}
+.jill-quote__total dt{color:#202e26}
+.jill-quote__total dd{color:#28563c}
+.jill-quote__disclaimer{font-size:11px;color:var(--jill-muted);
+  margin:15px 0 0;line-height:1.6}
+@media(max-width:750px){
+ .jill-quote__fees{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:480px){
+ .jill-quote__row{grid-template-columns:minmax(0,1fr) 48px minmax(88px,.7fr);
+   padding:10px;gap:8px}
+ .jill-quote__row--heading{display:none}
+ .jill-quote__mobile-label{display:block;color:var(--jill-muted);
+   font-size:10px}
+ .jill-quote__fees{grid-template-columns:1fr}
+ .jill-quote__fees label>small{min-height:0}
+}
+
+
+.jill-quote__draft-actions{margin-top:18px;border-top:1px solid #e8e8e7;padding-top:16px}
+.jill-quote__draft-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.jill-quote__draft-buttons button{font:inherit;font-size:12px;font-weight:760;
+  min-height:40px;border-radius:9px;border:1px solid #282b2d;
+  color:#fff;background:#282b2d;padding:9px 15px;cursor:pointer}
+.jill-quote__draft-buttons button+button{background:#fff;color:#303639;
+  border-color:#c8cdd1}
+.jill-quote__draft-buttons button:disabled{color:#919292;background:#f0f1f1;
+  border-color:#d8dad9;cursor:not-allowed}
+.jill-quote__draft-buttons button:focus-visible{outline:3px solid var(--jill-focus);
+  outline-offset:2px}
+.jill-quote__draft-actions .jill-quote__notice{margin:0}
+@media(max-width:480px){
+  .jill-quote__draft-buttons{flex-direction:column}
+  .jill-quote__draft-buttons button{width:100%}
+}

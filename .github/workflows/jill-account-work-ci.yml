@@ -1,0 +1,333 @@
+name: My JILL WORK account certification
+
+# Source-only: isolated WORK branch; no app deployment, LIVE credentials,
+# privileged Shopify mutation, theme publish or Apps Script write.
+on:
+  push:
+    branches:
+      - jill/rewards-work
+  pull_request:
+    branches:
+      - jill/theme-core
+      - jill/rewards-work
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jill-account-work-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  account:
+    name: Verify single Rewards owner and WORK account contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout WORK source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies and run all repository guards
+        run: npm install
+
+      - name: Decode and sanitize synthetic artwork locally (Node only; no Cloudflare)
+        run: |
+          npm install --prefix tools/work-media-local --no-audit --no-fund
+          npm run test --prefix tools/work-media-local
+          npm run test:quarantine --prefix tools/work-media-local
+
+      - name: Verify My JILL extension and canary boundaries
+        run: npm run check:account-hub && npm run test:account-hub-canary && npm run test:account-hub-summary && npm run test:account-hub-template
+
+      - name: Verify authenticated Coupons projections
+        run: npm run test:customer-coupons
+
+      - name: Verify shared Rewards v13 state and transaction
+        run: npm run check:rewards && npm run test:rewards && npm run test:rewards-redemption
+
+      - name: Verify private My JILL Custom Orders and customer A/B isolation
+        run: |
+          npm run test:custom-order-ownership
+          npm run test:custom-order-account-read
+          npm run test:customer-custom-orders
+
+      - name: Verify WORK merchant online staff authorization and owner registry
+        run: npm run test:work-qa-read-audit && npm run test:work-hq-branding && npm run test:work-hq-merchant-release && npm run test:jill-private-catalog && npm run test:work-hq-stage-existing-key && npm run test:work-hq-existing-merchant-key && npm run test:work-hq-inbox-rollout && npm run test:work-hq-google-merchant-feed && npm run test:work-merchant-inbox && npm run test:work-hq-inbox-ui && npm run test:work-hq-request-detail && npm run test:work-hq-request-auth-stages && npm run test:work-hq-full-request-projection && npm run test:work-hq-google-exact-detail && npm run test:work-hq-qa-detail-stage && npm run test:work-hq-qa-detail-reconcile && npm run test:work-hq-qa-detail-probe && npm run test:work-hq-qa-detail-pin && npm run test:work-hq-detail-v9-stage && npm run test:work-hq-detail-v9-off-release && npm run test:work-hq-detail-v9-on-stage && npm run test:work-hq-detail-v9-on-release && npm run test:work-hq-detail-v9-live-audit && npm run test:work-hq-detail-view && npm run test:work-hq-reference-provenance && npm run test:work-hq-private-media-intent && npm run test:work-hq-private-media-ingest-contract && npm run test:work-hq-private-r2-quarantine && npm run test:work-hq-r2-private-preflight && npm run test:work-hq-r2-quota-plan && npm run test:work-hq-r2-object-intent && npm run test:work-hq-r2-d1-batch-plan && npm run test:work-hq-r2-prewrite-evidence && npm run test:work-hq-r2-account-usage && npm run test:work-hq-private-images-sanitizer && npm run test:work-hq-media-budget-gate && npm run test:work-hq-media-registry && npm run test:work-hq-media-registry-sql-plan && npm run test:work-hq-media-0004-readiness && npm run test:work-hq-media-d1-preflight && npm run test:work-hq-inbox-0003-readiness && npm run test:work-hq-0003-recovery-readiness && npm run test:work-hq-inbox-0003-release && npm run test:work-hq-source-cache && npm run test:work-hq-d1-index && npm run test:work-hq-google-source-cache && npm run test:work-hq-write-key && npm run test:work-hq-write-key-stage && npm run test:work-hq-qa-versions && npm run test:work-hq-qa-write-key-probe && npm run test:work-hq-write-release-stage && npm run test:work-hq-navigation-stage && npm run test:work-hq-navigation-activation && npm run test:work-hq-write-release-activation && npm run test:work-hq-merchant-command && npm run test:work-hq-mail-outbox && npm run test:work-hq-ui-rollout && npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary && npm run test:work-canary-runtime-audit && npm run test:work-canary-oauth-manifest && npm run test:work-owner-commissioning
+
+      - name: Verify canonical WORK QA synthetic status write and independent signed readback (OFFLINE)
+        run: npm run test:work-hq-phase34-local-status-readback
+
+      - name: Verify Owner-only custom quote worksheet pricing and no-write boundaries (OFFLINE)
+        run: npm run test:work-hq-quote-worksheet
+
+      - name: Verify verified Owner quote Save/Reload UI and privacy (OFFLINE, release flag absent)
+        run: npm run test:work-hq-quote-ui-wiring
+
+      - name: Verify WORK-only quote release gates and auto-restore protection (OFFLINE)
+        run: npm run test:work-hq-quote-release-candidate
+
+      - name: Verify inactive WORK quote upload bindings and no traffic switch (OFFLINE)
+        run: npm run test:work-hq-quote-v35-inactive-upload
+
+      - name: Verify v35 independent inactive version metadata inspector (OFFLINE, no Cloudflare)
+        run: npm run test:work-hq-quote-v35-readonly
+
+      - name: Verify anonymous read-only v35 Version URL host-pin behavior (OFFLINE)
+        run: npm run test:work-hq-quote-v35-preview-readonly
+
+      - name: Test WORK-only quote D1 owner migration SQL, private backup and free-tier HOLD offline
+        run: npm run test:work-hq-quote-d1-owner-migration
+
+      - name: Validate read-only WORK QA v34 metadata and Google pin preflight parser (OFFLINE)
+        run: npm run test:work-hq-phase35-qa-preflight
+
+      - name: Verify bounded public v34 browser asset comparator locally (no HTTP)
+        run: npm run test:work-hq-phase36-public-assets
+
+      - name: Check WORK v35 historical four-file runtime delta review contract (OFFLINE)
+        run: npm run test:work-hq-v35-source-review
+
+      - name: Verify WORK v34 remote-metadata/UI-candidate parity rejects unexpected permissions (OFFLINE)
+        run: npm run test:work-hq-v34-ui-readiness
+
+      - name: Prove current WORK HQ v34 UI flags and private media stay fail-closed (OFFLINE)
+        run: npm run test:work-hq-v34-ui-local
+
+      - name: Validate WORK HQ live anonymous OAuth and private-route inspector offline
+        run: npm run test:work-hq-live-anonymous-v1
+
+      - name: Verify JILL million-customer surge forecast denies unfunded capacity and false receipts
+        run: |
+          npm run test:work-hq-surge-capacity
+          npm run work:hq:scale:simulate-million
+
+      - name: Validate no-PII private artwork retention incident review policy (offline only)
+        run: npm run test:work-hq-media-retention-review
+
+      - name: Validate WORK private-media read-only Cloudflare release-preflight parser
+        run: npm run test:work-hq-media-release-preflight
+
+      - name: Verify public offers and legacy Coupons compatibility
+        run: npm run test:public-promotions && npm run test:account-coupons
+
+      - name: Ensure no tracked files were mutated
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "Tests mutated tracked WORK source." >&2
+            git status --short
+            exit 1
+          fi
+
+  windows:
+    name: Verify WORK postinstall on Windows Node 24
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout WORK source
+        uses: actions/checkout@v4
+
+      - name: Match local Windows Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Print runtime versions
+        shell: pwsh
+        run: |
+          node --version
+          npm.cmd --version
+
+      - name: Reproduce Windows npm install and full postinstall guard
+        shell: pwsh
+        run: npm.cmd install
+
+      - name: Run new account-transfer preflight explicitly
+        shell: pwsh
+        run: node scripts/check-account-transfer-readiness.mjs
+
+      - name: Verify offline WORK 0003 release and current-user Windows DPAPI roundtrip
+        shell: pwsh
+        run: npm.cmd run test:work-hq-inbox-0003-release
+
+      - name: Verify WORK D1 one-shot owner PowerShell syntax (NO execution or Cloudflare calls)
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $path = Join-Path $PWD 'scripts/run-work-quote-d1-owner.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            $path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -ne 0) { throw 'Owner one-shot PowerShell parse failed' }
+          Write-Host 'PASS WORK quote owner PowerShell syntax only; no remote DB calls.'
+
+
+      - name: Ensure tests did not change tracked source
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain --untracked-files=no
+          if ($dirty) { Write-Error "Tests changed tracked source: $dirty"; exit 1 }
+
+  cloudflare:
+    name: Package WORK Cloudflare Worker (dry run only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout WORK branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install Workers bundler
+        run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund
+
+      - name: Dry-run compile Worker and SQLite Durable Object (no account login)
+        working-directory: services/custom-order-cloudflare
+        run: npm run build
+
+      - name: Dry-run compile isolated WORK merchant Worker (no deployment)
+        working-directory: services/custom-order-cloudflare
+        run: npx wrangler deploy --dry-run --config ../jill-order-desk/wrangler.toml --outdir .wrangler-dist-merchant
+
+      - name: Check signed WORK gateway and shared SQLite quotas
+        run: node scripts/test-cloudflare-custom-order-gateway.mjs
+
+      - name: Verify no tracked files changed
+        run: test -z "$(git status --porcelain --untracked-files=no)"
+
+  merchant_app_home:
+    name: Build WORK embedded Shopify Admin App Home (no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout WORK source
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install isolated App Home dependencies
+        working-directory: services/jill-order-desk/app-home
+        run: npm install --no-audit --no-fund
+      - name: Install standalone free WASM codecs and synthetic image fixtures
+        run: |
+          npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
+          npm install --prefix tools/work-media-local --no-audit --no-fund
+
+      - name: Verify genuine PNG JPEG WebP WASM conversion in LOCAL workerd
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-edge
+
+      - name: Verify local WASM -> D1 quota and intent -> synthetic R2 readback
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-end-to-end
+
+      - name: Verify genuine local D1 and R2 uncertain-write recovery with no retry
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-recovery
+
+      - name: Verify disabled Owner-only media HTTP boundary with real local D1 policy
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-owner-boundary
+
+      - name: Verify signed Shopify WORK intake + local D1 ledger + actual double-confirm Google QA contract
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-signed-intake-local
+
+      - name: Verify source-only custom-order one-shot intake ledger in genuine LOCAL D1
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-intake-ledger-local
+
+      - name: Verify quote drafts in REAL LOCAL D1 with compare-and-swap, no deployment
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-draft-local
+
+      - name: Verify Owner-authenticated Save Draft local adapter and D1 (HTTP disabled)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-save-owner-local
+
+      - name: Verify Owner-scoped draft price reload in REAL LOCAL D1 (HTTP disabled)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-read-restore-local
+
+      - name: Verify Owner -> real WASM sanitizer -> local D1 and R2 transaction
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-media-local-transaction
+
+      - name: Verify atomic quota plus intent in REAL local workerd D1 (synthetic only)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-r2-d1-batch
+
+      - name: Validate encrypted D1 with actual Shopify SDK Session
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:shopify-session-real
+      - name: Initialize real Shopify SDK for WORK canary with synthetic credentials
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:shopify-real-init
+      - name: Validate Shopify Admin and Cloudflare host types
+        working-directory: services/jill-order-desk/app-home
+        run: npm run typecheck
+      - name: Build real React Router Cloudflare App Home (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run build
+      - name: Build isolated WORK canary App Home (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build
+      - name: Verify real generated WORK v34-compatible manifest (no candidate, no deployment)
+        run: node scripts/test-work-hq-v34-compiled-manifest.mjs
+
+      - name: Verify real built WORK client/server artifact inventory (no deployment)
+        run: node scripts/review-work-hq-v35-source-delta.mjs --inventory-compiled-ci
+
+      - name: Verify actual compiled Worker media inspection OFF with local workerd (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-v35-media-off
+
+      - name: Verify exact WORK canary deployment manifest and dry-run package
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ../../../scripts/check-jill-app-home-canary-manifest.mjs
+          npx wrangler deploy --dry-run --config dist/server/wrangler.json --outdir .wrangler-canary-dry-run
+
+      - name: Validate OAuth-only canary manifest and Wrangler package (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ../../../scripts/prepare-work-canary-oauth-manifest.mjs
+          npx wrangler deploy --dry-run --config dist/server/wrangler.oauth-canary.json --outdir .wrangler-oauth-canary-dry-run
+      - name: Validate single-use WORK Owner commissioning manifest only (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ../../../scripts/prepare-work-canary-owner-commissioning.mjs
+          npx wrangler deploy --dry-run --config dist/server/wrangler.owner-commissioning.json --outdir .wrangler-owner-dry-run
+
+      - name: Exercise Shopify routes in actual local Cloudflare workerd
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-oauth
+
+      - name: Certify deployable Cloudflare WORK canary bundle (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          echo "Cloudflare candidate output:"
+          find dist -maxdepth 6 -type f \( -name wrangler.json -o -name '_worker.js' -o -name 'index.js' \) | sort
+          manifest="$(find dist -maxdepth 6 -type f -name wrangler.json | head -n 1)"
+          if [ -z "$manifest" ]; then
+            echo "No generated deployable Wrangler manifest found. Do not provision secrets or deploy this host."
+            exit 1
+          fi
+          echo "Deploy manifest: $manifest"
+      - name: Verify no tracked files were mutated
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            git status --short
+            exit 1
+          fi

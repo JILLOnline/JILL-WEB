@@ -312,9 +312,15 @@ Customer Account Rewards surfaces refresh authoritative personal Rewards state e
 
 ## 14. Customer Account contract
 
-Desired JILL navigation:
+Desired JILL hybrid navigation:
 
-`Dashboard → Orders → Coupons → Contact JILL → Settings → Log Out`
+`My JILL (Overview / Rewards / Coupons / Custom Orders / Celebrations / Saved for You / JILL Settings) → native Shopify Orders / Profile / addresses / Log Out`
+
+My JILL is **one Customer Account full-page extension** with separate internal feature modules and Shopify-supported navigation. Its separate Profile block is a shortcut, not a second account dashboard. The former standalone Coupons full-page extension remains until the replacement is tested and its WORK menu entry intentionally retired. Do not duplicate Shopify authentication, checkout, native order list or addresses.
+
+A failure in one internal module or noncritical data source must not crash the entire account hub. The authenticated shell remains visible with a specific recoverable error, preserving other confirmed data. Customer account API errors are not treated as empty wallets, zero balances, or no customer orders. User-driven mutations (including reward redemption) require confirmed identity and their own pending/error state.
+
+Custom Orders, Celebrations and Saved for You must not display imaginary persisted activity. Such sections remain explicitly unavailable until authenticated request-history binding, event/preferences definitions, edit permissions, and reminder consent contracts are verified in Shopify WORK.
 
 Account modules share platform-safe JILL action/status primitives. They should visually belong to JILL while respecting Shopify Customer Account UI-extension constraints.
 

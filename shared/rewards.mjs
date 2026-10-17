@@ -229,3 +229,60 @@ export function buildRewardJourney(points, wallet, options = {}) {
     couponForTier,
   };
 }
+
+/**
+ * The Shopify shareable discount route applies the code to an existing or
+ * next cart.  The cart/browser retain that discount until removal; there is
+ * no Customer Account API guarantee of "until session ends".
+ */
+export function discountCartUrl(store, code) {
+  const base = String(store || '').replace(/\/$/, '');
+  const discount = String(code || '').trim();
+  if (!/^https:\/\/[a-z0-9.-]+$/i.test(base) || !discount) {
+    throw new Error('A valid storefront and coupon code are required.');
+  }
+  return `${base}/discount/${encodeURIComponent(discount)}?redirect=/cart`;
+}
+
+/**
+ * Resolve external customer-account links against Shopify's active shop.
+ * Shopify's shop API exposes storefrontUrl for customer-facing navigation,
+ * and myshopifyDomain as the stable store identity. Never default to LIVE.
+ */
+export function storefrontOrigin(shop) {
+  // The Customer Account API shop query returns "url"; the Shop target
+  // API exposes "storefrontUrl" only on eligible order-related surfaces.
+  const primary = String(shop?.url || shop?.storefrontUrl || '').trim();
+  if (primary) {
+    const url = new URL(primary);
+    if (url.protocol !== 'https:' || !url.hostname || url.username || url.password) {
+      throw new Error('Shopify provided an invalid storefront URL.');
+    }
+    return url.origin;
+  }
+
+  const domain = String(shop?.myshopifyDomain || '').trim().toLowerCase();
+  if (/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain)) {
+    return `https://${domain}`;
+  }
+  throw new Error('Shopify storefront identity is unavailable.');
+}
+
+// General Customer Account full pages and profile blocks do not expose the
+// order-specific "shopify.shop" target API. Read the real shop identity from
+// Shopify's authenticated Customer Account GraphQL endpoint instead.
+// All three JILL customer account extensions share this single owner.
+export async function loadCustomerAccountStorefront() {
+  const response = await fetch('shopify://customer-account/api/2026-07/graphql.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      query: 'query JillCustomerAccountShop { shop { url myshopifyDomain } }',
+    }),
+  });
+  const payload = await response.json();
+  if (!response.ok || payload?.errors?.length || !payload?.data?.shop) {
+    throw new Error(payload?.errors?.[0]?.message || 'Unable to verify this Shopify storefront.');
+  }
+  return storefrontOrigin(payload.data.shop);
+}

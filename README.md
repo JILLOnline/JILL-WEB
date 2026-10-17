@@ -28,6 +28,7 @@ The canonical product-system documents live in `docs/`:
 - `QA_CERTIFICATION.md` — proof-of-done gates
 - `DECISIONS.md` — dated architecture decisions and rationale
 - `PLATFORM_AUDIT.md` — current production JILL evidence/debt map for migration work
+- `CUSTOMER_ACCOUNT_HYBRID.md` — approved My JILL hybrid architecture, page routes, file migration/retirement, Shopify WORK evidence, certification and release gates
 
 ## Rule 1
 

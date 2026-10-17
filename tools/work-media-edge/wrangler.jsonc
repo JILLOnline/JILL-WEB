@@ -1,0 +1,7 @@
+{
+  "$schema": "../../services/jill-order-desk/app-home/node_modules/wrangler/config-schema.json",
+  "name": "jill-work-edge-codec-local-only",
+  "main": "./worker.mjs",
+  "compatibility_date": "2026-10-14",
+  "workers_dev": false
+}
