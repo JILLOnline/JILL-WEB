@@ -40,8 +40,15 @@ export function evaluateWorkQuoteWorksheet({lines,fees}={}){
       if(!Number.isSafeInteger(sub)||sub>MAX_TOTAL_CENTS)
         return invalid('quote_over_limit');
     }
-    const f={};
-    for(const key of FEES)f[key]=amount(fees[key]);
+    // Keep fee fields statically typed for the React Router/TSX consumer.
+    const f={
+      materials:amount(fees.materials),
+      labor:amount(fees.labor),
+      shipping:amount(fees.shipping),
+      other:amount(fees.other),
+      discount:amount(fees.discount),
+      tax:amount(fees.tax),
+    };
     if(missing)return incomplete();
     const charges=sub+f.materials+f.labor+f.shipping+f.other;
     if(!Number.isSafeInteger(charges)||charges>MAX_TOTAL_CENTS)
