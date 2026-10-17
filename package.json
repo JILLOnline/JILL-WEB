@@ -243,6 +243,8 @@
     "work:custom-order:gateway:upload-repair-inactive": "node scripts/upload-work-custom-order-gateway-repair-inactive.mjs",
     "test:work-custom-order-gateway-zero": "node scripts/test-work-custom-order-gateway-zero.mjs",
     "work:custom-order:gateway:deploy-repair-zero": "node scripts/deploy-work-custom-order-gateway-zero-owner.mjs",
+    "test:work-custom-order-gateway-version-tail": "node scripts/test-work-custom-order-gateway-version-tail-readonly.mjs",
+    "work:custom-order:gateway:prove-repaired-execution": "node scripts/prove-work-custom-order-gateway-v35-execution-readonly.mjs",
     "work:hq:quote:v35:deploy-zero-second": "node scripts/deploy-work-hq-quote-v35-zero-second-owner.mjs --zero",
     "test:work-hq-quote-d1-owner-migration": "node scripts/test-work-hq-quote-d1-owner-migration.mjs",
     "work:hq:quote:d1:inspect": "node scripts/owner-work-quote-d1-migration.mjs --inspect",
