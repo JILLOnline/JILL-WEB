@@ -44,7 +44,7 @@ export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
   const locked=customerStatus==="cancelled"||customerStatus==="completed";
   const items=detail?.items??[];
   // React route instance is keyed by submission ID in the parent. Prices
-  // are never written to localStorage, cookies, a backend or a URL.
+  // are never written to persistent browser data, a backend or a URL.
   const lines=items.map((item,index)=>({
     id:item.item_id||"invalid-"+index,
     quantity:item.quantity,
