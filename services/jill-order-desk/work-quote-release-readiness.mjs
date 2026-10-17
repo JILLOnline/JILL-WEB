@@ -24,7 +24,7 @@ export function workQuoteDraftFeatureReady(env){
     typeof read==='string'&&read.length>=32&&
     read!==env.SHOPIFY_API_SECRET&&
     read!==env.JILL_WORK_SESSION_KEY_B64&&
-    env?.JILL_ORDER_DESK_WORK_DB?.prepare instanceof Function;
+    typeof env?.JILL_ORDER_DESK_WORK_DB?.prepare==='function';
 }
 export async function workQuoteDraftSchemaReady(db){
   if(typeof db?.prepare!=='function')return false;
