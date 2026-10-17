@@ -55,8 +55,7 @@ const old=readFileSync(new URL('./deploy-work-hq-quote-v35-zero-owner.mjs',
 const next=readFileSync(new URL(
   './deploy-work-hq-quote-v35-zero-second-owner.mjs',import.meta.url),
   'utf8');
-pass(()=>assert.match(old,/
-    requireTrue\(false,'previous_rollout_approval_exhausted'\);/));
+pass(()=>assert.match(old,/requireTrue\(false,'previous_rollout_approval_exhausted'\);/));
 pass(()=>assert.doesNotMatch(next,
   /requireTrue\(false,'previous_rollout_approval_exhausted'\)/));
 for(const marker of [
