@@ -50,6 +50,18 @@ function ownerSource(){
     manifest?.private===true,'gateway_package_drift');
   guard(fs.existsSync(path.join(APP,'worker.mjs')),
     'worker_entry_missing');
+  // Only the HMAC secret and QA backend may change in the new version.
+  // Disallow unrelated source edits to the gateway entry, handler,
+  // Durable Object limiter, or cryptographic Shopify proxy logic.
+  const canonical='ee526d1bc321fd8be1a5332756d068d5abd18f67';
+  guard(git('cat-file','-t',canonical)==='commit',
+    'canonical_gateway_source_unavailable');
+  guard(!git('diff','--name-only',canonical,'HEAD','--',
+    'services/custom-order-cloudflare',
+    'backend/custom-order-gateway.mjs',
+    'backend/custom-order-work-proxy-route.mjs',
+    'backend/shopify-work-app-proxy-auth.mjs'),
+    'gateway_code_changed_unapproved');
   return git('rev-parse','HEAD');
 }
 function cli(args,{timeout=65000}={}){
