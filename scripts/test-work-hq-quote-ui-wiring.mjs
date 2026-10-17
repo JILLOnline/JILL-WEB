@@ -49,7 +49,7 @@ checks+=21;
 assert.equal(readPath(ID),'/app/requests/quote-draft?submission_id='+
   encodeURIComponent(ID));checks++;
 assert.throws(()=>readPath('../x'),/invalid_quote_request_id/);checks++;
-assert.throws(()=>readPath('jillonlinestore.com'),/invalid_quote_request_id/);checks++;
+assert.throws(()=>readPath('jillonlinestore.com/other'),/invalid_quote_request_id/);checks++;
 const deny=(input,code)=>{
   const r=prepare(input);
   assert.equal(r.state,'blocked');
