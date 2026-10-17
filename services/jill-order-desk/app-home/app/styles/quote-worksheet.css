@@ -50,7 +50,7 @@
  .jill-quote__row{grid-template-columns:minmax(0,1fr) 48px minmax(88px,.7fr);
    padding:10px;gap:8px}
  .jill-quote__row--heading{display:none}
- .jill-quote__mobile-label{display:block!important;color:var(--jill-muted);
+ .jill-quote__mobile-label{display:block;color:var(--jill-muted);
    font-size:10px}
  .jill-quote__fees{grid-template-columns:1fr}
  .jill-quote__fees label>small{min-height:0}
