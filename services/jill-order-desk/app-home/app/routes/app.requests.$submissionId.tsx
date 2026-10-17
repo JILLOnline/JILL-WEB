@@ -122,7 +122,7 @@ export default function WorkRequestDetail(){
                     </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
-                      A private quote worksheet is available below. Saving, customer approval, Shopify fulfillment and payments remain separate.
+                      The merchant quote worksheet is available below. Customer approval, Shopify fulfillment and payments remain separate.
                     </div>
                   </section>
                 </div>
@@ -132,7 +132,8 @@ export default function WorkRequestDetail(){
                 model={original} submissionId={record.submission_id}
                 customerStatus={record.customer_status}
                 sourceRevision={record.revision}
-                saveDraftEnabled={false}/>
+                saveDraftEnabled={original?.quoteDraftEnabled===true &&
+                  controlsEnabled}/>
             </>}
         <footer className="jill-inbox__footer">
           <strong>Verified WORK merchant view.</strong> The management tools save only after
