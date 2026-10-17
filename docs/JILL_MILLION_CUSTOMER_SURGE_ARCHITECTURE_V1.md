@@ -1134,3 +1134,41 @@ STOP does not authorize fallback to another worker URL or an
 unapproved API token. The real WORK QA merchant mutation remains
 separately approval-gated. No versions deployed, Google QA writes,
 R2/D1 remote operations, LIVE/KEEP, paid service or traffic changes.
+
+### Phase 36 Owner Windows certification — PASS, 2026-10-17
+
+Owner fast-forwarded `jill/rewards-work` to `a639ff0` and ran
+`npm.cmd run test:work-hq-phase36-public-assets` successfully:
+**28** offline parser/hash/bounds/version-pin cases. The owner then
+ran `npm.cmd run work:hq:phase36:public-assets:inspect` with
+guarded PowerShell PASS and exit code zero.
+
+The actual anonymous WORK v34 public login-page census found
+**5 JS/CSS assets / 270,036 bytes**, and **all five matched**
+the local client candidate's exact bytes. There were **zero**
+different and **zero** missing sampled assets. Public and local
+aggregate sample SHA-256 values were both:
+`4a3859c60f77eb0ff41c0d03250d6ff3b020f1dc12be58abf81e84d531f3b49b`.
+Cloudflare v34 `4973b74d-d479-41da-897c-e36129303279`
+was checked before and after; preserved v33 rollback unchanged.
+GitHub PR #128 CI completed all four jobs successfully.
+
+**CERTIFIED ONLY:** the read-only, anonymous five-file
+public-browser asset sample. It does not cover signed-in
+request-route bundles, all browser files, deployed v34 Worker
+binary/byte provenance or the source commit that built v34.
+No provider/customer mutation, R2/D1 read/write, version upload,
+traffic switch, LIVE/KEEP or paid upgrade was authorized.
+
+### Next acceptance gate — REAL WORK QA Owner status change (HOLD)
+
+The precise one-shot Owner procedure and exit conditions are in
+`docs/WORK_HQ_REAL_STATUS_QA_OWNER_RUNBOOK_V1.md`.
+It is documentation only, not permission to execute any mutation.
+Require separate **explicit Owner approval** for a single
+preexisting, verified disposable WORK-only request before the
+first real Received -> Reviewing mutation. After acknowledgement,
+the canonical revision/status must independently persist.
+No generated test order, customer message/email, cross-shop
+access, new cloud service, Worker upload or rollback is
+authorized as part of that test.
