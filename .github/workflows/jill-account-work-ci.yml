@@ -235,6 +235,10 @@ jobs:
       - name: Verify real built WORK client/server artifact inventory (no deployment)
         run: node scripts/review-work-hq-v35-source-delta.mjs --inventory-compiled-ci
 
+      - name: Verify actual compiled Worker media inspection OFF with local workerd (no deployment)
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-v35-media-off
+
       - name: Verify exact WORK canary deployment manifest and dry-run package
         working-directory: services/jill-order-desk/app-home
         run: |

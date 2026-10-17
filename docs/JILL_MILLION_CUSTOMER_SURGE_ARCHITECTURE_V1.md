@@ -901,3 +901,48 @@ Before **any** separately authorized inactive WORK v35 upload:
    detail regressions. Do not touch LIVE/KEEP or paid services.
 
 These are release gates, not instructions to stage/deploy now.
+
+
+### Phase 33 compiled local workerd guard — SOURCE ADDED, NOT CERTIFIED
+
+This phase adds `app-home/scripts/test-workerd-v35-media-off-compiled.mjs`
+and registers `test:workerd-v35-media-off` in App Home and the
+`merchant_app_home` CI job, after the genuine canary React Router build.
+
+The regression derives its *local-only* runtime flags using the existing
+audited `prepareWorkHqV34LocalUi` transform. It places a disposable
+manifest next to the generated `dist/server/index.js` entry, forces
+`D1 remote:false`, injects only synthetic secrets, then uses
+Cloudflare's **local workerd harness**. It executes the actual
+**compiled candidate** rather than only invoking the source handler.
+
+It asserts the media-inspection feature flag is **absent**, OAuth/details/
+merchant-command flags are preserved, Owner setup OFF, the temporary local
+D1 is healthy, anonymous same-origin media GET/POST cannot invoke the
+Shopify/Google route and instead return HTTP 503
+`private_media_not_enabled`, foreign/missing-Origin POST returns
+HTTP 403 `invalid_origin`, a foreign LIVE host returns HTTP 421,
+and the original merchant command Origin denial remains HTTP 403.
+The ephemeral manifest is removed after the test. No uploaded artifact,
+real Cloudflare R2/D1, customer data, Shopify/Google call, live deployment,
+traffic switch or paid service is involved.
+
+Run on Windows **after this change is merged into**
+`jill/rewards-work` and the operator has a freshly built compatible
+`dist/server/wrangler.json`:
+
+```powershell
+npm.cmd run test:workerd-v35-media-off --prefix services/jill-order-desk/app-home
+if ($LASTEXITCODE -ne 0) {
+  throw 'STOP: Phase 33 compiled WORK media-off regression failed'
+}
+```
+
+**Do not mark Phase 33 certified until CI and the guarded local command
+pass.** Even then, this is a synthetic compiled Worker ingress test,
+NOT an authenticated WORK merchant status mutation, provider-backed
+source/binary proof of deployed v34, v34-v35 browser asset comparison,
+rollback execution, or permission to upload a v35 version. The
+v34 `4973b74d-d479-41da-897c-e36129303279` remains the expected
+immediate rollback target for any future **separately authorized** WORK
+rollout. LIVE, KEEP, media, billing and remote databases remain HOLD.
