@@ -1,5 +1,7 @@
 import {createRequestHandler} from "react-router";
 import {workAppHomeOrigin} from "../../shopify-host/sdk-config.mjs";
+import {workQuoteDraftFeatureReady,workQuoteDraftSchemaReady}
+  from "../../work-quote-release-readiness.mjs";
 
 declare module "react-router" {
   interface AppLoadContext {
@@ -55,11 +57,16 @@ export default {
         url.pathname==="/app/requests/quote-draft") &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
-    // The quote-draft endpoint remains hard OFF at the Worker ingress,
-    // regardless of manifest flags, before D1, OAuth or any body read.
-    // Future enablement requires a new, separately approved source release.
-    if(url.pathname==="/app/requests/quote-draft")
-      return unavailable("quote_drafts_not_enabled");
+    // The current v34 Worker continues to deny quote routes. This
+    // SOURCE-ONLY candidate requires an entirely NEW, absent-by-default
+    // WORK-only explicit switch AND the two owner-migrated D1 tables.
+    // No release command or manifest flag is changed in this PR.
+    if(url.pathname==="/app/requests/quote-draft"){
+      if(!workQuoteDraftFeatureReady(env))
+        return unavailable("quote_drafts_not_enabled");
+      if(!await workQuoteDraftSchemaReady(env.JILL_ORDER_DESK_WORK_DB))
+        return unavailable("quote_storage_unavailable");
+    }
     // Media inspect is OFF before D1 access or Shopify OAuth by default.
     // Enabling this INSPECT flag never enables real uploads or delivery.
     if(url.pathname==="/app/requests/media/inspect"){
