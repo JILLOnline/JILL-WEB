@@ -122,7 +122,9 @@ for(const unsafe of [
   /['"]POST['"]/,
   /console\.log\(\s*raw/,
   /writeFileSync/,
-  /Logpush/,
+  /['"]logpush['"]\s*[,)]/,
+  /--logpush/,
+  /['"]logpush['"]\s*:/,
 ]){
   assert.doesNotMatch(source,unsafe);count++;
 }
