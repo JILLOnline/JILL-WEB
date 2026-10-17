@@ -111,7 +111,8 @@ export function gatewayConfigExactlyKnown(raw){
     'new_sqlite_classes = ["CustomOrderRateLimiter"]',
     '',
   ].join('\n');
-  req(raw===expected,'gateway_manifest_changed');
+  req(typeof raw==='string'&&raw.replace(/\r\n/g,'\n')===expected,
+    'gateway_manifest_changed');
   return true;
 }
 export function uploadArguments({file,commit}={}){
