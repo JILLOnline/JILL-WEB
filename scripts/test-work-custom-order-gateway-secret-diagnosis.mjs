@@ -8,6 +8,8 @@ import {
 } from './diagnose-work-custom-order-gateway-secret.mjs';
 import {JILL_HQ_WORK_QA_GOOGLE_URL}
   from '../services/jill-order-desk/work-google-merchant-read.mjs';
+import {inspectWorkGatewayBindings}
+  from './inspect-work-custom-order-gateway-bindings.mjs';
 let n=0;
 const goodKey='work-gateway-hmac-owner-confirmed-test-secret-123';
 const section='[WORK.GOOGLE_CUSTOM_ORDERS_QA]\n';
@@ -113,6 +115,39 @@ for(const [response,status] of [
       backendFetch:invalidReply(response,status),now:()=>now,uuid:()=>id}),
     /work_gateway_diagnosis_/);
   n++;
+}
+const cb=[
+  {name:'SHOPIFY_WORK_APP_SECRET',type:'secret_text'},
+  {name:'JILL_CUSTOM_ORDER_GATEWAY_SECRET',type:'secret_text'},
+  {name:'JILL_CUSTOM_ORDER_QA_BACKEND_URL',type:'plain_text',
+    text:JILL_HQ_WORK_QA_GOOGLE_URL},
+  {name:'RATE_LIMITER',type:'durable_object_namespace'},
+];
+pass(()=>{
+  const result=inspectWorkGatewayBindings({resources:{bindings:cb}});
+  assert.equal(result.required_secret_names_present,true);
+  assert.equal(result.backend_url_verified,true);
+  assert.equal(result.cloudflare_secret_value_verified,false);
+  assert.ok(Object.isFrozen(result));
+});
+pass(()=>{
+  const bindings=cb.map(x=>x.name==='JILL_CUSTOM_ORDER_QA_BACKEND_URL'?
+    {name:x.name,type:'secret_text'}:x);
+  const result=inspectWorkGatewayBindings({resources:{bindings}});
+  assert.equal(result.backend_url_not_visible,true);
+  assert.equal(result.backend_url_verified,false);
+});
+for(const value of [
+  null,{},{resources:{bindings:[]}},
+  {resources:{bindings:cb.filter(x=>x.name!=='RATE_LIMITER')}},
+  {resources:{bindings:cb.filter(x=>x.name!=='SHOPIFY_WORK_APP_SECRET')}},
+  {resources:{bindings:cb.filter(x=>x.name!=='JILL_CUSTOM_ORDER_GATEWAY_SECRET')}},
+  {resources:{bindings:[...cb,cb[1]]}},
+  {resources:{bindings:cb.map(x=>x.name==='JILL_CUSTOM_ORDER_QA_BACKEND_URL'?
+    {...x,text:'https://script.google.com/macros/s/AKfycbNOT_OUR_QA/exec'}:x)}},
+]){
+  assert.throws(()=>inspectWorkGatewayBindings(value),
+    /work_gateway_cloudflare_/);n++;
 }
 const code=fs.readFileSync(
   new URL('./diagnose-work-custom-order-gateway-secret.mjs',import.meta.url),
