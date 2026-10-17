@@ -225,6 +225,8 @@
     "test:work-hq-quote-release-candidate": "node scripts/test-work-hq-quote-release-candidate.mjs",
     "test:work-hq-quote-v35-inactive-upload": "node scripts/test-work-hq-quote-v35-inactive-upload.mjs",
     "work:hq:quote:v35:upload-inactive": "node scripts/stage-work-hq-quote-inactive-v35.mjs",
+    "test:work-hq-quote-v35-readonly": "node scripts/test-work-hq-quote-v35-readonly.mjs",
+    "work:hq:quote:v35:inspect-inactive": "node scripts/inspect-work-hq-quote-v35-readonly.mjs",
     "test:work-hq-quote-d1-owner-migration": "node scripts/test-work-hq-quote-d1-owner-migration.mjs",
     "work:hq:quote:d1:inspect": "node scripts/owner-work-quote-d1-migration.mjs --inspect",
     "work:hq:quote:d1:backup": "node scripts/owner-work-quote-d1-migration.mjs --backup --free-tier-reviewed",
