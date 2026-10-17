@@ -39,7 +39,13 @@ function FulfillmentName({value}:{value:string}){
     value==="shipping"?"Shipping":"Not provided"}</>;
 }
 export default function WorkRequestDetail(){
-  const original=useLoaderData<typeof loader>();
+  // React Router serializes the Response-returning child loader as
+  // 'never' in this route's generated type. The source server constructs
+  // the verified detail model; never cast arbitrary browser input as it.
+  type OriginalModel=NonNullable<
+    Parameters<typeof WorkOriginalRequestDetails>[0]["model"]
+  > & {quoteDraftEnabled?:boolean};
+  const original=useLoaderData<typeof loader>() as unknown as OriginalModel;
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const {submissionId}=useParams();
   const record=data.state==="ready"?
