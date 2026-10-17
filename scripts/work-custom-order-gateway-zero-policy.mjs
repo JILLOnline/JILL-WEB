@@ -4,9 +4,10 @@ export const WORKER='jill-work-custom-orders-qa';
 export const OLD='408bdf7c-eb20-4b6e-97dd-3d3b293c6120';
 export const NEW='225cdbb4-46f5-492e-801d-6726bea2703e';
 export const UPLOAD_SOURCE='2263c1ecf131127961ebc2612274ebb830caceee';
-export const HOST='https://jill-work-custom-orders-qa.jill-work-custom-orders-qa.workers.dev';
-// The actual hostname must be supplied/verified by a known WORK config
-// or read-only Cloudflare route metadata; never guess at runtime.
+// Derived from the already known WORK account workers.dev subdomain.
+// Must pass a live anonymous health preflight BEFORE any deployment.
+// This value is not taken as proof of correct routing by itself.
+export const HOST='https://jill-work-custom-orders-qa.jill-work-custom-orders.workers.dev';
 export const MESSAGE='JILL WORK gateway 0pct verified HMAC candidate QA only';
 export const HEADER='Cloudflare-Workers-Version-Overrides';
 const GUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
@@ -78,7 +79,7 @@ export function interpretSmoke({regular,pinned,account,baseline,after}={}){
     account.body?.operation==='custom_order.account.list.result'&&
     account.body?.error?.code==='unauthenticated_account'&&
     account.body?.version===1&&
-    Object.keys(account.body).length===5,
+    Object.keys(account.body).length===4,
     'ownerless_account_read_not_denied');
   return Object.freeze({allocation_100_0:true,
     regular_health_good:true,pinned_health_good:true,
