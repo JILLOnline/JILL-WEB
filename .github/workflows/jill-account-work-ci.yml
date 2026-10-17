@@ -143,6 +143,18 @@ jobs:
         shell: pwsh
         run: npm.cmd run test:work-hq-inbox-0003-release
 
+      - name: Verify WORK D1 one-shot owner PowerShell syntax (NO execution or Cloudflare calls)
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $path = Join-Path $PWD 'scripts/run-work-quote-d1-owner.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            $path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -ne 0) { throw 'Owner one-shot PowerShell parse failed' }
+          Write-Host 'PASS WORK quote owner PowerShell syntax only; no remote DB calls.'
+
+
       - name: Ensure tests did not change tracked source
         shell: pwsh
         run: |
