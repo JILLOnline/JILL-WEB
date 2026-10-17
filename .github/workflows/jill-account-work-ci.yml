@@ -95,6 +95,9 @@ jobs:
       - name: Verify approved WORK gateway inactive HMAC repair source-only and no-traffic upload gates (OFFLINE)
         run: npm run test:work-gateway-inactive-repair
 
+      - name: Verify approved WORK gateway 100 original / 0 repaired release and rollback (OFFLINE)
+        run: npm run test:work-custom-order-gateway-zero
+
       - name: Diagnose legacy v34 HTTP smoke mismatch safely (OFFLINE only)
         run: npm run test:work-v34-quote-smoke-readonly-diagnosis
 
