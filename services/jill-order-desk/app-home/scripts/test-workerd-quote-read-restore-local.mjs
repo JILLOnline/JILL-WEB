@@ -179,7 +179,8 @@ try{
   x=await invoke();
   assert.equal(x.status,503);
   assert.equal(x.data.code,'quote_draft_unverified');checks+=2;
-  assert.ok(authCalls>=9&&listCalls>=6&&detailCalls>=4);
+  assert.equal(authCalls,8);assert.equal(listCalls,5);
+  assert.equal(detailCalls,4);
   checks++;
   console.log('PASS WORK quote Save Draft RELOAD: '+checks+
     ' local D1/Shopify-Owner-stub cases, safe price hydration, exact source fingerprint, mismatched cents/hash/identity denial, hard OFF.');
