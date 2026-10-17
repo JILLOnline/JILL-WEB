@@ -77,6 +77,9 @@ jobs:
       - name: Verify v35 independent inactive version metadata inspector (OFFLINE, no Cloudflare)
         run: npm run test:work-hq-quote-v35-readonly
 
+      - name: Verify anonymous read-only v35 Version URL host-pin behavior (OFFLINE)
+        run: npm run test:work-hq-quote-v35-preview-readonly
+
       - name: Test WORK-only quote D1 owner migration SQL, private backup and free-tier HOLD offline
         run: npm run test:work-hq-quote-d1-owner-migration
 
