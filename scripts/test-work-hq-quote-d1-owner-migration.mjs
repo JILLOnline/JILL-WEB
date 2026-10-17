@@ -204,7 +204,7 @@ for(const required of [
   "$ErrorActionPreference = 'Stop'",
   "function Invoke-Required",
   "$LASTEXITCODE -ne 0",
-  "throw ('STOP:",
+  'No further steps are authorized.',
   "if ($Mode -ceq 'Inspect')",
   "FREE VERIFIED",
   "MIGRATE WORK QUOTES",
