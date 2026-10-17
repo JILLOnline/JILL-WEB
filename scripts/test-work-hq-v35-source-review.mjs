@@ -96,6 +96,9 @@ try{
  const accepted=inventory(tmp);
  assert.equal(accepted.compiled_file_count,3);cases++;
  unlinkSync(join(server,'index.js'));
+ // Keep a valid non-entry server asset so this tests the missing
+ // required Worker entry, not the distinct empty-server-tree guard.
+ writeFileSync(join(server,'other.js'),'export const test = true;');
  assert.throws(()=>inventory(tmp),
    /work_hq_v35_source_review_compiled_worker_not_found/);
  cases++;
