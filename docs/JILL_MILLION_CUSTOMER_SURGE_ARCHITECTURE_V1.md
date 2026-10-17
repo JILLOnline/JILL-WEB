@@ -803,3 +803,40 @@ review the newly compiled security-critical Worker and route,
 compare browser assets to the authenticated version, and
 establish safe v35→v34 rollback rather than assuming v33
 rollback is enough. WORK, LIVE and KEEP remain unchanged.
+
+### Phase 32 first Windows result — asset-inventory failure (NOT CERTIFIED)
+
+On 2026-10-16 the owner synchronized WORK to `1dc5dd9`.
+`npm.cmd run test:work-hq-v35-source-review` passed
+**22** synthetic checks, including exact four-file runtime
+delta acceptance. The actual
+`npm.cmd run work:hq:v35:source:review-local`
+stopped with `work_hq_v35_source_review_unexpected_build_file`
+during `local_build_inventory`.
+The later manually entered `Write-Host PASS` does **not**
+certify Phase 32 because the guarded STOP already occurred.
+
+Cause established from independent successful GitHub Vite/Cloudflare
+canary build logs: the compiler emits a normal extensionless
+`dist/client/.assetsignore` file, which was forbidden by the
+initial extension-only inventory allowlist. Its expected presence
+does not authorize broader dotfile inclusion or any new provider
+binding.
+
+The narrow repair permits **only**
+`dist/client/.assetsignore` (maximum 4096 bytes), still
+rejects unrelated hidden files, nested copies, unknown
+extensions, symlinks and overlarge assets, and continues to
+include its hash in the local inventory. New isolated
+temporary-filesystem regressions enforce this boundary.
+CI additionally runs the actual compiled client/server
+inventory check after the WORK canary build; it sends no
+Cloudflare requests and performs no deployment.
+
+**Pending:** CI proof of this full compiled inventory and
+owner Windows rerun with guarded exit codes. Even a
+successful retry certifies only the local source delta and
+artifact inventory, **not** comparison with actual deployed
+v34 Worker and browser bytes. Version staging and switching
+remain HOLD. LIVE, KEEP, Google QA, remote D1/R2 and paid
+plans untouched.
