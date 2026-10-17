@@ -16,6 +16,7 @@
     "test:workerd-detail-on": "node scripts/test-workerd-detail-on-anonymous.mjs",
     "test:workerd-v35-media-off": "node scripts/test-workerd-v35-media-off-compiled.mjs",
     "test:workerd-quote-draft-local": "node scripts/test-workerd-quote-draft-local.mjs",
+    "test:workerd-quote-save-owner-local": "node scripts/test-workerd-quote-save-owner-local.mjs",
     "test:workerd-r2-d1-batch": "node scripts/test-workerd-r2-d1-batch-local.mjs",
     "test:workerd-media-edge": "node scripts/test-workerd-media-edge.mjs",
     "test:workerd-media-local-end-to-end": "node scripts/test-workerd-media-local-end-to-end.mjs",
