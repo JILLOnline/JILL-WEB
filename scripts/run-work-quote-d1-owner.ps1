@@ -41,7 +41,7 @@ try {
 
     Push-Location $root
     try {
-        Invoke-Git @('pull','--ff-only','origin','jill/rewards-work')
+        Invoke-Git -GitArgs @('pull','--ff-only','origin','jill/rewards-work')
         Invoke-Required 'test:work-hq-quote-d1-owner-migration'
         Invoke-Required 'work:hq:quote:d1:inspect'
 
