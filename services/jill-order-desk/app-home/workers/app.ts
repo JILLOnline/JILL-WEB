@@ -51,9 +51,15 @@ export default {
     // the WORK D1 grant, write flag, and the Google QA HMAC signature.
     if(request.method==="POST" &&
        (url.pathname==="/app/requests/command" ||
-        url.pathname==="/app/requests/media/inspect") &&
+        url.pathname==="/app/requests/media/inspect" ||
+        url.pathname==="/app/requests/quote-draft") &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
+    // The quote-draft endpoint remains hard OFF at the Worker ingress,
+    // regardless of manifest flags, before D1, OAuth or any body read.
+    // Future enablement requires a new, separately approved source release.
+    if(url.pathname==="/app/requests/quote-draft")
+      return unavailable("quote_drafts_not_enabled");
     // Media inspect is OFF before D1 access or Shopify OAuth by default.
     // Enabling this INSPECT flag never enables real uploads or delivery.
     if(url.pathname==="/app/requests/media/inspect"){
