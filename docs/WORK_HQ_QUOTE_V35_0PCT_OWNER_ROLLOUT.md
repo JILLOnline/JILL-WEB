@@ -150,3 +150,38 @@ smoke acceptance logic must be justified by actual WORK v34
 behavior and verified independently. A second 0% deployment
 or promotion requires **fresh explicit Owner authorization**,
 separate from the exhausted first attempt.
+
+## 2026-10-17 actual canonical v34 HTTP diagnosis — completed
+
+Owner Windows verified Cloudflare is back at **100% v34**.
+Anonymous `GET /healthz` returned **HTTP 200 JSON**; anonymous
+`GET /app/requests/quote-draft` returned **HTTP 410 HTML**,
+without a redirect. The original rollback was caused by a faulty
+expectation that legacy v34 had the newer `503 JSON` quote route.
+
+**Interpretation:** v34's 410 is an observed route-unavailable
+baseline, NOT proof of a Shopify Owner authorization boundary.
+Cloudflare may route static asset requests before Worker code,
+depending on `assets.run_worker_first` and asset route matching.
+The source-only corrected smoke contract checks v34 health
+and its exact 410 HTML response **before** any deployment, checks
+it again during an approved 0% deployment, and will still reject
+v35 if its explicitly version-pinned request also returns 410.
+
+**For v35, only a separately verified unauthenticated Owner
+denial (403 JSON `access_denied`) or an allowed Shopify sign-in
+redirect (302) counts as success.** No 410/404, unauthenticated
+200 or unknown redirect may pass.
+
+The previously approved one-shot deployment
+`0020dec4-c97a-49a0-add1-96835e207861` has already been
+exercised and independently rolled back. The old `deploy-zero`
+operator is now **HARD STOPPED** with
+`previous_rollout_approval_exhausted`, before invoking Wrangler.
+No further deployment can occur through it without a distinct
+reviewed code change and fresh explicit Owner approval.
+
+Correction plus tests are source-only and change no deployed
+code, Worker bindings, D1 rows, Cloudflare plan, or LIVE/KEEP.
+
+Reference: https://developers.cloudflare.com/workers/static-assets/
