@@ -101,6 +101,7 @@ const toml=readFileSync(
   new URL('../services/custom-order-cloudflare/wrangler.toml',
     import.meta.url),'utf8');
 pass(()=>assert.equal(gatewayConfigExactlyKnown(toml),true));
+pass(()=>assert.equal(gatewayConfigExactlyKnown(toml.replace(/\n/g,'\r\n')),true));
 deny(()=>gatewayConfigExactlyKnown(toml.replace(
   'jill-work-custom-orders-qa','jill-custom-order-live')));
 deny(()=>gatewayConfigExactlyKnown(toml.replace(
