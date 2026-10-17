@@ -40,6 +40,10 @@ const fail=x=>{
   assert.throws(()=>verify(x),/work_hq_phase35_preflight_/);n++;
 };
 for(const value of [null,undefined,false,[],{},'pass'])fail(value);
+fail({...good,customer:'sensitive@invalid.example'});
+fail({...good,version:'v34'});
+fail({liveOutput:live});
+fail({parityOutput:parity});
 for(const [key,current] of Object.entries(good)){
   fail({...good,[key]:null});
   fail({...good,[key]:current+'\nSTOP: unexpected'});
