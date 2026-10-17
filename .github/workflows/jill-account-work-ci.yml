@@ -62,6 +62,9 @@ jobs:
       - name: Verify canonical WORK QA synthetic status write and independent signed readback (OFFLINE)
         run: npm run test:work-hq-phase34-local-status-readback
 
+      - name: Verify Owner-only custom quote worksheet pricing and no-write boundaries (OFFLINE)
+        run: npm run test:work-hq-quote-worksheet
+
       - name: Validate read-only WORK QA v34 metadata and Google pin preflight parser (OFFLINE)
         run: npm run test:work-hq-phase35-qa-preflight
 
