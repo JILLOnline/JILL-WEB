@@ -60,6 +60,7 @@ try{
   const worker=harness.getWorker(candidate.name);
   const env=await worker.getEnv();
   assert.equal(env.JILL_WORK_HQ_MEDIA_OWNER_INSPECT_ENABLED,undefined);
+  assert.equal(env.JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED,undefined);
   assert.equal(env.JILL_WORK_HQ_DETAIL_ENABLED,'true');
   assert.equal(env.JILL_WORK_MERCHANT_WRITES_ENABLED,'true');
   assert.equal(env.JILL_WORK_OWNER_BOOTSTRAP_ENABLED,'false');
@@ -102,6 +103,17 @@ try{
   await deny('/app/requests/command',{method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'probe=1'},403,'invalid_origin');
+  // New quote draft ingress must deny BEFORE OAuth or D1, even if the
+  // existing merchant writes flag is ON. There is no remote migration.
+  await deny('/app/requests/quote-draft',{method:'GET'},
+    503,'quote_drafts_not_enabled');
+  await deny('/app/requests/quote-draft',{method:'POST',headers:{
+    Origin:ORIGIN,'Content-Type':'application/json',
+  },body:'{}'},503,'quote_drafts_not_enabled');
+  await deny('/app/requests/quote-draft',{method:'POST',headers:{
+    Origin:'https://jillonlinestore.com',
+    'Content-Type':'application/json',
+  },body:'{}'},403,'invalid_origin');
   const wrong=await worker.fetch('https://jillonlinestore.com'+MEDIA,{
     method:'POST',headers:{Origin:'https://jillonlinestore.com',
       'Content-Type':'application/x-www-form-urlencoded'},body:'probe=1',
@@ -111,7 +123,7 @@ try{
   assert.deepEqual(await wrong.json(),{ok:false,error:'wrong_host'});
   cases++;
   console.log('PASS WORK Phase33 LOCAL compiled Worker: '+cases+
-    ' anonymous/media-OFF/Origin/foreign-host denials; exact v34 security flags; emulated D1 and synthetic keys only.');
+    ' anonymous/media-OFF/quote-OFF/Origin/foreign-host denials; exact v34 security flags; emulated D1 and synthetic keys only.');
   console.log('HOLD: deployed v34 Worker/asset byte provenance, signed-in Owner mutation and release approval NOT verified.');
 }catch{
   console.error('STOP WORK Phase33 LOCAL compiled Worker boundary unverified.');
