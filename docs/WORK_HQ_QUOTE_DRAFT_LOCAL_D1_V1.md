@@ -173,3 +173,61 @@ security-reviewed Worker re-enable, the actual request loader
 providing authenticated saved-draft values, real save/reload browser
 certification, and finally Shopify Draft Order/payment scopes
 all need distinct explicit Owner approval. LIVE/KEEP unchanged.
+
+## Owner Windows verified reload — PASS
+
+The Owner synced `jill/rewards-work` to `a9a3e5c` and ran
+`npm.cmd run test:workerd-quote-read-restore-local --prefix services/jill-order-desk/app-home`.
+**40 LOCAL D1/Shopify-session-fixture cases passed**, including
+request-bound price restoration, exact canonical source fingerprints,
+tampered cents/hash/identity denial and permanently disabled HTTP.
+This proves **only synthetic local** code and data, not a deployed
+or customer-visible saved quote.
+
+## Merchant Save Draft / Reload controls — source only, HARD OFF
+
+The request worksheet now has two merchant controls: `Save Draft`
+and `Reload saved draft`. They are both **disabled** in the actual
+request component because the parent explicitly passes
+`saveDraftEnabled={false}`; the component itself also defaults to
+`false`. The Worker entrance and both quote route methods still
+return `quote_drafts_not_enabled` before D1/provider reads.
+
+`work-quote-ui-payload.mjs` builds the future six-field Save payload
+from the exact verified source revision, item IDs, submitted
+quantities, USD price strings, validated fees, expected draft
+revision and a single idempotent `jill:hq:quote:` operation UUID.
+It never includes customer names, email, phone, raw intake data,
+artwork references or auth credentials. It validates using the
+same integer-cent quote arithmetic before any HTTP submission.
+
+The browser controller is prepared to send an explicit JSON Save
+and a bound GET Reload through React Router `useFetcher` only if
+its release-controlled `saveDraftEnabled` flag is **true**.
+It makes **no such requests in the currently committed WORK source**.
+A failed, stale or ambiguous save stops subsequent saving and
+does **not** generate or replay a new operation ID automatically.
+The user must verify the latest draft independently. Reload only
+hydrates the worksheet after independently verified source and
+total/revision checks; missing/corrupt drafts cannot overwrite
+local inputs. Browser entries are never persisted locally.
+
+CI includes `npm run test:work-hq-quote-ui-wiring` for strict
+payload privacy, disabled-route controls, input completeness and
+stale source denial, plus the normal App Home typecheck/build
+and real LOCAL D1 suites. These are source-only tests.
+
+**Activation approval needed (separate decisions):**
+
+1. Explicit Owner approval to install the inert quote SQL proposal
+   in the existing *WORK-only* D1 database, with an exact backup,
+   remote schema identity and free-tier/billing check before applying.
+   Any expected paid usage requires another explicit approval.
+2. Separate code/security review to enable only authenticated WORK
+   quote endpoints and readback, wire fresh verified saved-draft
+   data into the request loader and promote a new WORK Worker version.
+3. Separate approval for WORK traffic switching, followed by a
+   disposable WORK-only, Owner-authenticated Save → Reload test.
+
+**Do not change LIVE/KEEP, the current v34 traffic, real customers,
+Google QA canonical status, Shopify Draft Orders/invoices, or R2.**
