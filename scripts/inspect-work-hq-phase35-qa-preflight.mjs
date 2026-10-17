@@ -41,7 +41,15 @@ function checkLines(value,required){
     if(lines.filter(entry=>entry===line).length!==1)
       STOP('incomplete_provider_receipt');
 }
-export function verifyPhase35ReadOnlyReceipts({liveOutput,parityOutput}={}){
+export function verifyPhase35ReadOnlyReceipts(input={}){
+  // Validate the envelope BEFORE destructuring; null, arrays and extra
+  // provider/secret/customer fields must fail with the same stable code.
+  if(input===null||typeof input!=='object'||Array.isArray(input)||
+     Object.keys(input).length!==2||
+     !Object.hasOwn(input,'liveOutput')||
+     !Object.hasOwn(input,'parityOutput'))
+    STOP('invalid_receipt_envelope');
+  const {liveOutput,parityOutput}=input;
   checkLines(liveOutput,REQUIRED.live);
   checkLines(parityOutput,REQUIRED.parity);
   return Object.freeze({
