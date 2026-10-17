@@ -14,6 +14,8 @@ import {JILL_HQ_WORK_QA_GOOGLE_URL}
   from '../services/jill-order-desk/work-google-merchant-read.mjs';
 import {receiptSignature}
   from '../backend/custom-order-gateway.mjs';
+import {inspectWorkGatewayRemote}
+  from './inspect-work-custom-order-gateway-bindings.mjs';
 
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const SECTION='[WORK.GOOGLE_CUSTOM_ORDERS_QA]';
@@ -129,6 +131,12 @@ if(invoked){
       audit.deploymentFound===true&&
       /^[a-f0-9]{64}$/.test(audit.publishedDigest),
       'published_google_qa_not_verified');
+    const cloud=inspectWorkGatewayRemote();
+    console.log('PASS WORK Cloudflare Custom Order gateway secret binding names.');
+    if(cloud.backend_url_verified)
+      console.log('PASS WORK gateway targets the certified isolated Google QA endpoint.');
+    else
+      console.log('HOLD WORK gateway upstream URL stored as a secret; destination cannot be read back.');
     const {full,folder}=localFilePath({repo:ROOT});
     expect(fs.existsSync(full)&&!fs.lstatSync(full).isSymbolicLink()&&
       !fs.lstatSync(folder).isSymbolicLink(),
