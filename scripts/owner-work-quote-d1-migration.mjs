@@ -193,6 +193,20 @@ function privateDirectory(){
       STOP('backup_symlink_untrusted');
     if(p===resolve(p,'..'))break;
   }
+  // Full D1 export may include Shopify session secrets/customer details.
+  // Limit Windows ACL to the active Windows Owner SID before exporting.
+  const who=spawnSync('whoami.exe',['/user','/fo','csv','/nh'],{
+    shell:false,encoding:'utf8',windowsHide:true,
+    timeout:10000,maxBuffer:4096,
+  });
+  const sid=/S-1-5-21-(?:[0-9]+-){3}[0-9]+/.exec(who.stdout||'')?.[0];
+  if(who.status!==0||!sid)STOP('backup_windows_identity_unverified');
+  const acl=spawnSync('icacls.exe',[
+    dir,'/inheritance:r','/grant:r','*'+sid+':(OI)(CI)F',
+  ],{shell:false,encoding:'utf8',windowsHide:true,
+    timeout:10000,maxBuffer:4096});
+  if(acl.status!==0||acl.error||acl.signal)
+    STOP('backup_user_only_acl_failed');
   return dir;
 }
 function paths(){
