@@ -98,6 +98,9 @@ jobs:
       - name: Verify approved WORK gateway 100 original / 0 repaired release and rollback (OFFLINE)
         run: npm run test:work-custom-order-gateway-zero
 
+      - name: Verify WORK gateway version-tail proof requires independent candidate execution event (OFFLINE)
+        run: npm run test:work-custom-order-gateway-version-tail
+
       - name: Diagnose legacy v34 HTTP smoke mismatch safely (OFFLINE only)
         run: npm run test:work-v34-quote-smoke-readonly-diagnosis
 
