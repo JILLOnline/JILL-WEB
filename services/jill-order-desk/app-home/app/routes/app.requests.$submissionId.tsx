@@ -39,7 +39,13 @@ function FulfillmentName({value}:{value:string}){
     value==="shipping"?"Shipping":"Not provided"}</>;
 }
 export default function WorkRequestDetail(){
-  const original=useLoaderData<typeof loader>();
+  // React Router serializes the Response-returning child loader as
+  // 'never' in this route's generated type. The source server constructs
+  // the verified detail model; never cast arbitrary browser input as it.
+  type OriginalModel=NonNullable<
+    Parameters<typeof WorkOriginalRequestDetails>[0]["model"]
+  > & {quoteDraftEnabled?:boolean};
+  const original=useLoaderData<typeof loader>() as unknown as OriginalModel;
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const {submissionId}=useParams();
   const record=data.state==="ready"?
@@ -122,7 +128,7 @@ export default function WorkRequestDetail(){
                     </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
-                      A private quote worksheet is available below. Saving, customer approval, Shopify fulfillment and payments remain separate.
+                      The merchant quote worksheet is available below. Customer approval, Shopify fulfillment and payments remain separate.
                     </div>
                   </section>
                 </div>
@@ -132,7 +138,8 @@ export default function WorkRequestDetail(){
                 model={original} submissionId={record.submission_id}
                 customerStatus={record.customer_status}
                 sourceRevision={record.revision}
-                saveDraftEnabled={false}/>
+                saveDraftEnabled={original?.quoteDraftEnabled===true &&
+                  controlsEnabled}/>
             </>}
         <footer className="jill-inbox__footer">
           <strong>Verified WORK merchant view.</strong> The management tools save only after

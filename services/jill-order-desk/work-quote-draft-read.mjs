@@ -120,7 +120,7 @@ export function projectVerifiedWorkQuoteDraft({row,detail,submissionId}={}){
     updated_at_ms:row.updated_at_ms,
     lines:immutable(units),fees,
     estimated_total_cents:total,currency:'USD',
-    saved_in_real_work:false, // Local test data is not live evidence.
+    // This is a verified D1 draft projection, never payment evidence.
     customer_approved:false,invoice_sent:false,payment_confirmed:false,
   });
 }
