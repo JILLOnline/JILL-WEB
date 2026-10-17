@@ -206,6 +206,11 @@ if(called){
         '; v34 at 100%. No customer record, LIVE/KEEP or paid resource affected.');
       process.exit(0);
     }
+    // The owner-authorized one-time zero-percent rollout was exercised
+    // on 2026-10-17 (deployment 0020dec4-...), then rolled back.
+    // NO second deployment was approved. Fail before any Wrangler or HTTP
+    // call; a future, newly approved attempt needs its own reviewed code.
+    requireTrue(false,'previous_rollout_approval_exhausted');
     const baseline=preflight();
     phase='pre_deployment_legacy_v34_http';
     const observed=await originalBaseline();
