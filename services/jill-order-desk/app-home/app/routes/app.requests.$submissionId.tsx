@@ -130,7 +130,9 @@ export default function WorkRequestDetail(){
               <WorkOriginalRequestDetails model={original} submissionId={record.submission_id}/>
               <WorkQuoteWorksheet key={record.submission_id}
                 model={original} submissionId={record.submission_id}
-                customerStatus={record.customer_status}/>
+                customerStatus={record.customer_status}
+                sourceRevision={record.revision}
+                saveDraftEnabled={false}/>
             </>}
         <footer className="jill-inbox__footer">
           <strong>Verified WORK merchant view.</strong> The management tools save only after

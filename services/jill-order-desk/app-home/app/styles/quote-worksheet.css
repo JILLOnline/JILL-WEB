@@ -55,3 +55,21 @@
  .jill-quote__fees{grid-template-columns:1fr}
  .jill-quote__fees label>small{min-height:0}
 }
+
+
+.jill-quote__draft-actions{margin-top:18px;border-top:1px solid #e8e8e7;padding-top:16px}
+.jill-quote__draft-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.jill-quote__draft-buttons button{font:inherit;font-size:12px;font-weight:760;
+  min-height:40px;border-radius:9px;border:1px solid #282b2d;
+  color:#fff;background:#282b2d;padding:9px 15px;cursor:pointer}
+.jill-quote__draft-buttons button+button{background:#fff;color:#303639;
+  border-color:#c8cdd1}
+.jill-quote__draft-buttons button:disabled{color:#919292;background:#f0f1f1;
+  border-color:#d8dad9;cursor:not-allowed}
+.jill-quote__draft-buttons button:focus-visible{outline:3px solid var(--jill-focus);
+  outline-offset:2px}
+.jill-quote__draft-actions .jill-quote__notice{margin:0}
+@media(max-width:480px){
+  .jill-quote__draft-buttons{flex-direction:column}
+  .jill-quote__draft-buttons button{width:100%}
+}

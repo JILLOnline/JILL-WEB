@@ -221,6 +221,7 @@
     "test:work-hq-merchant-command": "node scripts/test-work-hq-merchant-command.mjs",
     "test:work-hq-phase34-local-status-readback": "node scripts/test-work-hq-phase34-local-status-readback.mjs",
     "test:work-hq-quote-worksheet": "node scripts/test-work-hq-quote-worksheet.mjs",
+    "test:work-hq-quote-ui-wiring": "node scripts/test-work-hq-quote-ui-wiring.mjs",
     "test:work-hq-phase35-qa-preflight": "node scripts/test-work-hq-phase35-qa-preflight.mjs",
     "test:work-hq-phase36-public-assets": "node scripts/test-work-hq-phase36-public-assets.mjs",
     "work:hq:phase36:public-assets:inspect": "node scripts/inspect-work-hq-v34-public-assets.mjs --inspect",

@@ -65,6 +65,9 @@ jobs:
       - name: Verify Owner-only custom quote worksheet pricing and no-write boundaries (OFFLINE)
         run: npm run test:work-hq-quote-worksheet
 
+      - name: Verify future quote Save and Reload UI remains hard OFF with no PII (OFFLINE)
+        run: npm run test:work-hq-quote-ui-wiring
+
       - name: Validate read-only WORK QA v34 metadata and Google pin preflight parser (OFFLINE)
         run: npm run test:work-hq-phase35-qa-preflight
 
