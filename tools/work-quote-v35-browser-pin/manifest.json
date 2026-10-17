@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "JILL WORK v35 — Temporary Quote QA",
+  "version": "1.0.0",
+  "description": "Opt-in 15-minute, one-tab version override on the exact JILL WORK Worker hostname only.",
+  "minimum_chrome_version": "128",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "declarativeNetRequest",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "JILL WORK v35 QA (OFF by default)"
+  }
+}
