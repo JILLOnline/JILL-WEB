@@ -725,3 +725,26 @@ traffic switch.
 **Merchant-status acceptance is also still PENDING**:
 the Owner has not supplied a confirmed `received -> reviewing`
 WORK QA revision readback. Do not assume status writes passed.
+
+## Phase 31 Owner Windows read-only parity — PASS
+
+Owner synchronized `jill/rewards-work` to `1e8fb06` on
+2026-10-16 and ran both commands with exit code zero:
+`npm.cmd run test:work-hq-v34-ui-readiness` (15 synthetic
+positive/negative cases) and
+`npm.cmd run work:hq:v34:ui:parity:inspect`.
+The real read-only Wrangler inspection logged:
+- active v34 and retained v33 rollback;
+- exactly four secret-binding names/types, exact WORK D1;
+- OAuth ON, Owner setup OFF, merchant writes ON, full details ON;
+- matching canary compatibility date and fetch handler.
+
+The conditional PowerShell PASS followed the successful checks.
+Earlier Phase 31 PENDING above is superseded. No uploaded
+version, Cloudflare traffic switch, customer write, remote
+migration, LIVE/KEEP changes or paid upgrade occurred.
+
+**Evidence limit:** this establishes *configuration/runtime metadata
+parity only*, not a binary or static asset hash match to deployed
+v34. The release remains on HOLD until the changed server and
+browser output is reviewed under a versioned rollback plan.
