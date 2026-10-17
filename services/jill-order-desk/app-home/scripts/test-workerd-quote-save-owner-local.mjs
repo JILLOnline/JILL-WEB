@@ -8,6 +8,10 @@ import {fileURLToPath} from 'node:url';
 import {createTestHarness} from 'wrangler';
 import {handleWorkQuoteDraftSave as save}
   from '../../work-quote-save-boundary.mjs';
+import {projectWorkMerchantInbox}
+  from '../../merchant-inbox-read.mjs';
+import {planLocalWorkQuoteDraftSave as plan}
+  from '../../work-quote-draft-plan.mjs';
 const ROOT=fileURLToPath(new URL('../../../../',import.meta.url));
 const APP=resolve(ROOT,'services/jill-order-desk/app-home');
 const SVC=resolve(ROOT,'services/jill-order-desk');
@@ -139,6 +143,17 @@ try{
   assert.equal(result.status,409);
   assert.equal(result.body.code,'source_revision_changed');
   tests+=2;
+  // Verify the synthetic source and pure plan contract independently
+  // before testing the adapter. A failure here is not D1 or OAuth.
+  const snapshot=projectWorkMerchantInbox(await list());
+  assert.equal(snapshot.records.length,1);
+  const sourceDetail=await detail({submissionId:ID});
+  const planned=plan({
+    shop:SHOP,submissionId:ID,detail:sourceDetail,
+    record:snapshot.records[0],lines,fees,
+    expectedDraftRevision:0,operationId:OP1,nowMs:NOW,
+  });
+  assert.equal(planned.next_draft_revision,1);
   result=await invoke();
   assert.equal(result.status,200,'first_save_'+result.body.code);
   assert.equal(result.body.code,'draft_saved');
