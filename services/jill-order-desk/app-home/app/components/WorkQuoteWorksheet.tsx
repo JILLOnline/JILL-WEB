@@ -51,7 +51,11 @@ export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
     unitPrice:prices[item.item_id]??"",
   }));
   const quote=evaluateWorkQuoteWorksheet({lines,fees});
-  const ready=detail!==null&&!locked&&quote.state==="ready";
+  const readyQuote=quote.state==="ready"?
+    quote as {state:"ready";itemsSubtotalCents:number;
+      discountCents:number;manualTaxCents:number;
+      estimatedTotalCents:number;feesCents:Record<FeeKey,number>}:null;
+  const ready=detail!==null&&!locked&&readyQuote!==null;
   return <section className="jill-request__panel jill-request__full jill-quote"
     aria-labelledby="jill-quote-title">
     <div className="jill-request__panel-head">
@@ -116,16 +120,16 @@ export function WorkQuoteWorksheet({model,submissionId,customerStatus}:{
           </div>
           <div className="jill-quote__summary" aria-live="polite">
             {ready?<dl>
-              <div><dt>Item subtotal</dt><dd>{formatWorkUsd(quote.itemsSubtotalCents)}</dd></div>
-              <div><dt>Materials</dt><dd>{formatWorkUsd(quote.feesCents.materials)}</dd></div>
-              <div><dt>Labor</dt><dd>{formatWorkUsd(quote.feesCents.labor)}</dd></div>
-              <div><dt>Shipping</dt><dd>{formatWorkUsd(quote.feesCents.shipping)}</dd></div>
-              <div><dt>Other charge</dt><dd>{formatWorkUsd(quote.feesCents.other)}</dd></div>
-              <div><dt>Discount</dt><dd>−{formatWorkUsd(quote.discountCents)}</dd></div>
-              <div><dt>Manual estimated tax</dt><dd>{formatWorkUsd(quote.manualTaxCents)}</dd></div>
+              <div><dt>Item subtotal</dt><dd>{formatWorkUsd(readyQuote!.itemsSubtotalCents)}</dd></div>
+              <div><dt>Materials</dt><dd>{formatWorkUsd(readyQuote!.feesCents.materials)}</dd></div>
+              <div><dt>Labor</dt><dd>{formatWorkUsd(readyQuote!.feesCents.labor)}</dd></div>
+              <div><dt>Shipping</dt><dd>{formatWorkUsd(readyQuote!.feesCents.shipping)}</dd></div>
+              <div><dt>Other charge</dt><dd>{formatWorkUsd(readyQuote!.feesCents.other)}</dd></div>
+              <div><dt>Discount</dt><dd>−{formatWorkUsd(readyQuote!.discountCents)}</dd></div>
+              <div><dt>Manual estimated tax</dt><dd>{formatWorkUsd(readyQuote!.manualTaxCents)}</dd></div>
               <div className="jill-quote__total">
                 <dt>Estimated total</dt>
-                <dd>{formatWorkUsd(quote.estimatedTotalCents)}</dd>
+                <dd>{formatWorkUsd(readyQuote!.estimatedTotalCents)}</dd>
               </div>
             </dl>:<p role="status">
               {quote.state==="incomplete"
