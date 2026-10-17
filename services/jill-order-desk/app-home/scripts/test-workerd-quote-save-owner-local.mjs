@@ -57,8 +57,8 @@ const list=async()=>{
 const detail=async({submissionId})=>{
   detailCount++;assert.equal(submissionId,ID);
   return {submission_id:ID,revision:sourceRevision,
-    items:[{item_id:'item-a',quantity:2,title:'Synthetic item A'},
-      {item_id:'item-b',quantity:3,title:'Synthetic item B'}]};
+    items:[{item_id:'synthetic-item-a',quantity:2,title:'Synthetic item A'},
+      {item_id:'synthetic-item-b',quantity:3,title:'Synthetic item B'}]};
 };
 const goodSession={
   shop:SHOP,isOnline:true,
@@ -76,8 +76,8 @@ const fees={
   other:'3',discount:'10',tax:'4.56',
 };
 const lines=[
-  {id:'item-a',quantity:2,unitPrice:'25.99'},
-  {id:'item-b',quantity:3,unitPrice:'0.01'},
+  {id:'synthetic-item-a',quantity:2,unitPrice:'25.99'},
+  {id:'synthetic-item-b',quantity:3,unitPrice:'0.01'},
 ];
 const body={
   submission_id:ID,operation_id:OP1,source_revision:3,
