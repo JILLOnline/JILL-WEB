@@ -230,6 +230,8 @@
     "test:work-hq-quote-v35-preview-readonly": "node scripts/test-work-hq-quote-v35-preview-readonly.mjs",
     "work:hq:quote:v35:preview-readonly": "node scripts/audit-work-hq-quote-v35-preview-readonly.mjs",
     "test:work-hq-quote-v35-zero-rollout": "node scripts/test-work-hq-quote-v35-zero-rollout.mjs",
+    "test:work-v34-quote-smoke-readonly-diagnosis": "node scripts/test-work-v34-quote-smoke-readonly-diagnosis.mjs",
+    "work:hq:quote:v34:diagnose-readonly": "node scripts/diagnose-work-v34-quote-rollback-readonly.mjs",
     "work:hq:quote:v35:deploy-zero": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --zero",
     "work:hq:quote:v35:recover-v34": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --recover",
     "test:work-hq-quote-d1-owner-migration": "node scripts/test-work-hq-quote-d1-owner-migration.mjs",

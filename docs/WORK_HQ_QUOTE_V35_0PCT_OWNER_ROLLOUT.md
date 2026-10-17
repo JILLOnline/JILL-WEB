@@ -99,3 +99,54 @@ https://developers.cloudflare.com/workers/wrangler/commands/workers/
 
 Cloudflare Version Overrides:
 https://developers.cloudflare.com/workers/versions-and-deployments/version-overrides/
+
+## 2026-10-17 Owner execution — 0% deployment followed by safe rollback
+
+Owner synced WORK to `44a8114` and ran the approved one-shot
+`npm run work:hq:quote:v35:deploy-zero` on Windows.
+The preflight passed. Cloudflare successfully created deployment
+`0020dec4-c97a-49a0-add1-96835e207861` containing
+**v34 100% / v35 0%**. The subsequent anonymous smoke failed
+with `quote_v35_zero_v34_quote_lock_not_proven`,
+**before certifying v35**. The operator then performed the
+previously authorized recovery and independently reported
+`WORK ROLLBACK VERIFIED: restored_v34_100`. No quote customer
+payload, authorized Shopify mutation, paid services, R2, LIVE or
+KEEP work was performed by the operator.
+
+**DO NOT RE-RUN** `work:hq:quote:v35:deploy-zero`. The one-time
+permission was exercised. After rollback, an override to v35 is
+no longer available unless another deployment is separately
+authorized.
+
+### Root-cause hypothesis and next safe action
+
+The smoke demanded an exact `503`
+`{ok:false,error:'quote_drafts_not_enabled'}` from the ordinary
+WORK route. However, **v34 predates the route introduced for
+v35**. A v34 404, Shopify authorization redirect, or another
+legacy denial response could be expected even though the
+deployment was correct. This explanation is a hypothesis, not
+an observed HTTP result; the smoke logs recorded only the
+failed assertion.
+
+The independent, read-only diagnostic checks that **v34 is
+still at 100%**, sends only anonymous GETs to `/healthz` and
+`/app/requests/quote-draft`, sanitizes HTTP statuses, known
+denial codes and redirect categories (without printing any
+body, location query, OAuth state or tokens), then checks the
+allocation again:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:hq:quote:v34:diagnose-readonly
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Read-only response diagnosis unverified' }
+```
+
+Following this measurement, any change to the original
+smoke acceptance logic must be justified by actual WORK v34
+behavior and verified independently. A second 0% deployment
+or promotion requires **fresh explicit Owner authorization**,
+separate from the exhausted first attempt.
