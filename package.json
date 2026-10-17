@@ -220,6 +220,8 @@
     "test:work-hq-write-key-stage": "node scripts/test-stage-work-hq-write-key.mjs",
     "test:work-hq-merchant-command": "node scripts/test-work-hq-merchant-command.mjs",
     "test:work-hq-phase34-local-status-readback": "node scripts/test-work-hq-phase34-local-status-readback.mjs",
+    "test:work-hq-phase35-qa-preflight": "node scripts/test-work-hq-phase35-qa-preflight.mjs",
+    "work:hq:phase35:qa:preflight": "node scripts/inspect-work-hq-phase35-qa-preflight.mjs --inspect",
     "test:work-hq-mail-outbox": "node scripts/test-work-hq-mail-outbox.mjs"
   },
   "devDependencies": {

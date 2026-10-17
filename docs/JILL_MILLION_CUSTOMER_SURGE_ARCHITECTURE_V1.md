@@ -998,3 +998,72 @@ provenance. Do not exercise the actual merchant button without separate
 explicit Owner QA authorization and a disposable preexisting WORK request.
 Never test against a genuine customer request or LIVE/KEEP. No version
 staging, R2 uploads, remote D1 migrations or paid capacity changes.
+
+### Phase 34 Owner Windows certification — PASS, 2026-10-17
+
+The Owner fast-forwarded WORK to `c277f03` and ran
+`npm.cmd run test:work-hq-phase34-local-status-readback` with exit code 0.
+The test printed `PASS WORK Phase34 OFFLINE synthetic status receipt`
+followed by explicit HOLD about synthetic-only sheet rows, sessions,
+keys, and provider responses. The guarded PowerShell PASS message
+occurred only after the successful process exit. GitHub PR #126 CI
+completed all four jobs successfully.
+
+**CERTIFIED ONLY:** simulated WORK status revision 1 Received ->
+revision 2 Reviewing, authentic repository QA source HMAC verifier and
+canonical event writer executed against *in-memory* sheet fixtures,
+cache invalidation, independent signed v7/v9 readers, idempotent retry,
+stale update denial and foreign Origin denial. No real Google QA
+event was appended or read back, no current Shopify Owner session
+was used, and deployed Cloudflare v34 code/browser asset provenance
+was not proven.
+
+### Phase 35 owner QA read-only preflight — SOURCE ONLY (PENDING)
+
+A narrow operator preflight
+`scripts/inspect-work-hq-phase35-qa-preflight.mjs --inspect`
+runs ONLY the two previously audited read-only inspectors:
+
+1. `audit-work-hq-detail-v9-live.mjs` verifies exact active WORK
+   Cloudflare v34 and preserved v33 rollback, pinned Google QA @9
+   deployment (separate @7 list/status), plus anonymous private-route
+   denial. It cannot read a signed-in Owner's private requests.
+2. `inspect-work-hq-v34-ui-readiness.mjs --inspect` cross-checks
+   existing active v34 metadata and the locally compiled candidate
+   security flag/D1/secret binding names/types without downloading
+   Worker binaries, modifying versions or reading secret values.
+
+All child outputs are treated as untrusted; the wrapper requires
+exact unique sanitized PASS/HOLD/READ ONLY markers from each, refuses
+missing/duplicate/error receipts, verifies a clean synced WORK Git
+checkout, and never echoes raw provider stdout/stderr. It prints
+fixed status labels only. Its separate OFFLINE parser adversarial
+regression `test:work-hq-phase35-qa-preflight` runs in CI.
+
+After merging and pulling the certified change:
+
+```powershell
+npm.cmd run test:work-hq-phase35-qa-preflight
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Phase35 offline preflight regression failed' }
+
+npm.cmd run work:hq:phase35:qa:preflight
+if ($LASTEXITCODE -ne 0) { throw 'STOP: WORK Phase35 read-only evidence missing' }
+```
+
+Both commands must pass on Owner Windows before recording a
+**fresh read-only preflight**. Even PASS is **NOT** a release gate
+for actual merchant writes; it does not prove a signed-in Owner
+session, status mutation, My JILL persistence, customer mail delivery,
+deployed v34 Worker binary/asset provenance, inactive v35 upload
+safety, rollback execution or cost containment.
+
+**Real QA mutation remains separately approval-gated.** When
+separately authorized, use exactly one preexisting disposable
+WORK-only QA request with confirmed `received` status/revision,
+record sanitized before/after revision + status, click only the
+existing WORK JILL HQ Save verified update once, require a
+source acknowledgement, then reload and independently observe the
+new canonical revision in WORK. If stale/error/unknown commit status
+appears, STOP; do not generate a new operation_id or click repeatedly.
+Never touch real customers, LIVE/KEEP, Google PROD, R2, D1 migrations,
+billing or paid upgrades.
