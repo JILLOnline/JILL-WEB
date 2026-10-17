@@ -686,3 +686,42 @@ secrets were not inspected by this local test, and no new
 authenticated merchant write was proven. UI release remains
 on HOLD pending real read-only v34 parity and explicit Owner
 approval for an inactive WORK-only version upload.
+
+## Phase 31 — Read-only v34 metadata vs prepared WORK UI candidate
+
+Source-only `scripts/inspect-work-hq-v34-ui-readiness.mjs`
+compares the EXACT locally built Phase 30 candidate manifest
+against its compiled base, then reads **only** Cloudflare
+deployment status, known v33/v34 version metadata and the
+version list, using existing audited Wrangler read-only argument
+builders. It reuses the v34-v33 release binding-integrity
+contract and additionally checks that the v34 5 plaintext
+security flags, 4 secret-binding *names and types*, exact
+WORK D1 UUID, compatibility date and fetch handler match
+the locally prepared manifest.
+
+The inspector never prints secret values, raw Cloudflare
+resource JSON, customer data or images. It cannot upload,
+activate, deploy, update Google QA, migrate D1, access R2,
+activate media or subscribe to a paid plan. It refuses altered
+WORK checkout, missing local candidate or unexpected active
+Worker versions.
+
+`scripts/test-work-hq-v34-ui-readiness.mjs` is its synthetic
+negative-case regression (no Cloudflare calls) in CI.
+Actual read-only Windows inspection is **PENDING**.
+
+**Important limit:** Even a PASS only compares verified
+configuration/runtime metadata. The existing v34 code and
+browser asset bytes are NOT available to this comparator,
+so candidate-server code and asset parity remains unproven
+until a separate code/asset review. A rollout may
+intentionally change the UI/compiled code; it must preserve
+server authentication and authorization behavior and have an
+approved safe v34 rollback. Neither a PASS nor prior broad
+GO authorizes an inactive Cloudflare version upload or a
+traffic switch.
+
+**Merchant-status acceptance is also still PENDING**:
+the Owner has not supplied a confirmed `received -> reviewing`
+WORK QA revision readback. Do not assume status writes passed.
