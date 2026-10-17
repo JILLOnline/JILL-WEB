@@ -85,14 +85,34 @@ export function makeVersionOverride(version=CANDIDATE){
   // RFC 8941 Dictionary: name=quoted version-id.
   return WORKER+'="'+version+'"';
 }
+// The OWNER observed canonical v34 in October 2026: GET /healthz
+// returned 200 JSON, while the quote path returned 410 HTML.
+// v34 predates this quote route. Its 410 MUST NOT be interpreted as
+// proof of a Shopify Owner auth gate or as a valid v35 response.
+export function verifiedLegacyV34Baseline({health,quote}={}){
+  ensure(health?.status===200&&
+    health.mime==='application/json'&&
+    health.redirect===null&&health.json?.ok===true&&
+    health.json?.database_ready===true&&
+    health.json?.environment==='JILL_ORDER_DESK_WORK',
+    'v34_health_not_verified');
+  const legacyGone=quote?.status===410&&
+    quote.mime==='text/html'&&quote.redirect===null&&
+    quote.json===null;
+  const explicitOff=quote?.status===503&&
+    quote.mime==='application/json'&&quote.redirect===null&&
+    quote.json?.ok===false&&
+    quote.json?.error==='quote_drafts_not_enabled'&&
+    Object.keys(quote.json).length===2;
+  ensure(legacyGone||explicitOff,'v34_route_response_changed');
+  return Object.freeze({v34_available_health:true,
+    v34_quote_route_unavailable:true,
+    v34_quote_authentication_gate_proven:explicitOff,
+    legacy_v34_410_html:legacyGone});
+}
 export function anonymousSmokeContract({baseline,candidate,after}={}){
-  ensure(baseline?.status===503&&
-    baseline.json?.ok===false&&
-    baseline.json?.error==='quote_drafts_not_enabled'&&
-    baseline.redirect===null&&
-    typeof baseline.json==='object'&&
-    Object.keys(baseline.json).length===2,
-    'v34_quote_lock_not_proven');
+  // Validated against the independently observed real v34 route state.
+  const legacy=verifiedLegacyV34Baseline(baseline);
   // An anonymous v35 request must reach Shopify Owner authentication
   // only after WORK-only feature readiness checks. A redirect/403 can
   // be valid; never claim 200 or normal quote access is safe.
@@ -106,7 +126,10 @@ export function anonymousSmokeContract({baseline,candidate,after}={}){
     'v35_owner_denial_not_proven');
   ensure(after?.state==='zero'&&after.active_pct===100&&
     after.candidate_pct===0,'traffic_changed_during_smoke');
-  return Object.freeze({v34_quote_locked:true,
+  return Object.freeze({v34_route_unavailable:legacy.v34_quote_route_unavailable,
+    v34_quote_authentication_gate_proven:
+      legacy.v34_quote_authentication_gate_proven,
+    legacy_v34_410_html:legacy.legacy_v34_410_html,
     v35_anonymous_owner_denied:true,
     ordinary_traffic_to_v35:false,
     authenticated_browser_qa_complete:false});
