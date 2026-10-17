@@ -66,7 +66,7 @@ export function safeHealthResponse(statusCode,contentType,payload){
 }
 function waitForTailAndProbe({url,sinceMs,untilMs}){
   return new Promise(async(resolve,reject)=>{
-    let settled=false,ready=false,matched=false;
+    let settled=false,ready=false,matched=false,responseVerified=false;
     const finish=(error,result)=>{
       if(settled)return;
       settled=true;
@@ -97,7 +97,7 @@ function waitForTailAndProbe({url,sinceMs,untilMs}){
       try{event=JSON.parse(line);}catch{return;}
       if(verifiedTailHealthEvent(event,{url,sinceMs,untilMs})){
         matched=true;
-        finish(null,true);
+        if(responseVerified)finish(null,true);
       }
     };
     const chunked=(stream,isStderr)=>stream.on('data',chunk=>{
@@ -148,7 +148,9 @@ function waitForTailAndProbe({url,sinceMs,untilMs}){
       catch{finish(Error('work_gateway_tail_health_unreadable'));return;}
       safeHealthResponse(res.status,
         res.headers.get('content-type'),body);
-      // Even if event arrived, require health response to be valid first.
+      responseVerified=true;
+      // Both a successful HTTP response AND Cloudflare candidate-tail
+      // correlation must occur before a PASS can be emitted.
       if(matched)finish(null,true);
     }catch{
       finish(Error('work_gateway_tail_probe_failed'));
