@@ -10,6 +10,7 @@ import {existsSync,readFileSync,writeFileSync,mkdirSync,lstatSync,statSync} from
 import {resolve,join,isAbsolute,relative,sep} from 'node:path';
 import {spawnSync,execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {currentWorkerVersion} from './deploy-work-hq-inbox-shell.mjs';
 
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=join(ROOT,'services/jill-order-desk/app-home');
@@ -173,7 +174,10 @@ function checkVersion(){
   // Narrow metadata read: never deploy, never fetch private request data.
   const stdout=wrangler(['deployments','status','--name',WORKER,
     '--config','./wrangler.canary.jsonc']);
-  if(!stdout.includes(WORK_VERSION))STOP('work_version_unverified');
+  try{
+    if(currentWorkerVersion(stdout)!==WORK_VERSION)
+      STOP('work_version_unverified');
+  }catch{STOP('work_version_unverified');}
 }
 function privateDirectory(){
   if(process.platform!=='win32'||!process.env.LOCALAPPDATA)
