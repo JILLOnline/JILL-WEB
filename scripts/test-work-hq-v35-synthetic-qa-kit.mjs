@@ -165,7 +165,7 @@ const dep='11111111-1111-4111-8111-111111111111';
 const deployment=[{id:dep,created_on:'2026-10-17T18:00:00Z',
   versions:[{version_id:ACTIVE,percentage:100},
     {version_id:CANDIDATE,percentage:0}]}];
-const status='4973b74d-d479-41da-897c-e36129303279 (100%)';
+const status='Version(s): (100%) 4973b74d-d479-41da-897c-e36129303279';
 const qa={
   deploymentFound:true,headMatchesCertifiedGit:true,
   publishedRevisionVerified:true,publishedVersion:7,
