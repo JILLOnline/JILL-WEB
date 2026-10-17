@@ -192,6 +192,41 @@ for(const bad of [
 ]){
   assert.equal(code.includes(bad),false,'Unsafe command: '+bad);cases++;
 }
+
+// One-shot Windows workflow: no step may run after a failed previous
+// process. Confirm both the Free-tier review and remote write separately.
+const ps=readFileSync(new URL('./run-work-quote-d1-owner.ps1',
+  import.meta.url),'utf8');
+for(const required of [
+  "#Requires -Version 5.1",
+  "ValidateSet('Inspect', 'Migrate')",
+  "Set-StrictMode -Version Latest",
+  "$ErrorActionPreference = 'Stop'",
+  "function Invoke-Required",
+  "$LASTEXITCODE -ne 0",
+  "throw ('STOP:",
+  "if ($Mode -ceq 'Inspect')",
+  "FREE VERIFIED",
+  "MIGRATE WORK QUOTES",
+  "Invoke-Required 'work:hq:quote:d1:inspect'",
+  "Invoke-Required 'work:hq:quote:d1:backup'",
+  "Invoke-Required 'work:hq:quote:d1:apply'",
+  "Invoke-Required 'work:hq:quote:d1:verify'",
+  "exit 1",
+]){
+  assert.ok(ps.includes(required),'Missing Owner PS gate: '+required);
+  cases++;
+}
+const order=["work:hq:quote:d1:inspect","FREE VERIFIED",
+  "work:hq:quote:d1:backup","MIGRATE WORK QUOTES",
+  "work:hq:quote:d1:apply","work:hq:quote:d1:verify"];
+for(let i=1;i<order.length;i++){
+  assert.ok(ps.indexOf(order[i-1])<ps.indexOf(order[i]),
+    'Owner PS allowed out-of-order write: '+order[i]);
+  cases++;
+}
+assert.doesNotMatch(ps,/Invoke-Expression|Start-Job|Invoke-WebRequest|Remove-Item|iex\b/);
+cases++;
 console.log('PASS WORK quote D1 owner migration OFFLINE: '+cases+
   ' security/schema/backup/cost-prompt/target/pinning fixtures. No Cloudflare calls, schema writes, customer data, Worker release or LIVE/KEEP.');
 console.log('HOLD: actual remote metadata, Workers billing tier/free usage, private export and two-table migration must still be verified on Owner Windows.');
