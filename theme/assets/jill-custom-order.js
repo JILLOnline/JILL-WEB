@@ -1210,11 +1210,19 @@
     try {receipt=await result.json();} catch {
       fail('your request has not been confirmed by JILL; retry using the same request');
     }
+    if (result.status === 409) {
+      // A deterministic rejection may indicate an immutable ID/payload
+      // conflict or owner-ledger mismatch. Never invite a second POST.
+      const error = new Error('JILL could not accept this request (WORK 409). '+
+        'Do not submit again. Please contact JILL with your request reference.');
+      error.jillTerminalSubmission = true;
+      throw error;
+    }
     if (!result.ok || receipt?.ok!==true || receipt?.verified!==true ||
         receipt?.operation!=='custom_order.submit.result' ||
         receipt?.submission_id!==request.submission_id ||
         receipt?.status!=='received') {
-      fail('JILL has not confirmed this request yet; retry without changing the request');
+      fail('JILL has not confirmed this request yet; please contact JILL before retrying');
     }
   }
 
@@ -2161,6 +2169,12 @@
         success.querySelector('[data-jill-success-title]')?.focus({preventScroll: true});
       } catch (error) {
         setStatus(error.message.replace(/^JILL custom order:\s*/, ''));
+        if (error?.jillTerminalSubmission === true) {
+          requestSubmit.disabled = true;
+          requestSubmit.setAttribute('aria-disabled', 'true');
+          requestSubmit.textContent = 'Request blocked — contact JILL';
+          return;
+        }
         requestSubmit.disabled = false;
         requestSubmit.setAttribute('aria-disabled', 'false');
         requestSubmit.textContent = root.dataset.requestLabel || 'Request Custom Order';
