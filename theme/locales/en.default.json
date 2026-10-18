@@ -101,7 +101,14 @@
       "contact_options": {
         "email": "Email",
         "phone": "Text / phone"
-      }
+      },
+      "account_title": "Your request will appear in My JILL",
+      "account_identity": "Signed-in account",
+      "account_help": "We automatically use your JILL account for tracking. You may change the contact email below for messages; this never transfers the request to another account.",
+      "guest_title": "Continue as a guest",
+      "guest_help": "No account is required to request a custom order. Guest requests are not automatically linked to My JILL. Sign in before submitting if you want tracking in your account.",
+      "guest_sign_in": "Sign in to track your request",
+      "contact_email_help": "Contact email for updates. This does not change the account that owns your request."
     },
     "order": {
       "title": "What are you ordering?",
