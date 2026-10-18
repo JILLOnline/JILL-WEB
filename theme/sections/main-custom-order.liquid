@@ -7,6 +7,7 @@
   assign option_surface_groups = 'product_options' | split: ','
   assign customer_name_label = 'custom_order.customer.name' | t
   assign customer_email_label = 'custom_order.customer.email' | t
+  assign customer_contact_email_help = 'custom_order.customer.contact_email_help' | t
   assign customer_phone_label = 'custom_order.customer.phone' | t
   assign theme_label = 'custom_order.design.theme' | t
   assign colors_label = 'custom_order.design.colors' | t
@@ -73,7 +74,7 @@
       {% endif %}
       <div class="jill-custom-order__customer" data-jill-custom-order-customer>
         {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name', value: customer.name %}
-        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email', value: customer.email, help: 'custom_order.customer.contact_email_help' | t %}
+        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email', value: customer.email, help: customer_contact_email_help %}
         <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
           <label class="jill-field__label" for="JillCustomOrderPhone">
             {{ customer_phone_label }}
