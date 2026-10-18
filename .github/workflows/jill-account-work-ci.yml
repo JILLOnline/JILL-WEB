@@ -230,6 +230,9 @@ jobs:
       - name: Verify one-use inactive metadata gateway release policy (OFFLINE)
         run: node scripts/test-work-gateway-version-metadata-inactive-upload.mjs
 
+      - name: Verify new 0% metadata gateway deployment safety and runtime identity gate (OFFLINE)
+        run: node scripts/test-work-gateway-version-metadata-zero.mjs
+
       - name: Verify no tracked files changed
         run: test -z "$(git status --porcelain --untracked-files=no)"
 
