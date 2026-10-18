@@ -235,7 +235,7 @@
     "work:hq:quote:v35:deploy-zero": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --zero",
     "work:hq:quote:v35:recover-v34": "node scripts/deploy-work-hq-quote-v35-zero-owner.mjs --recover",
     "test:work-hq-quote-v35-zero-second": "node scripts/test-work-quote-v35-second-zero-attempt.mjs",
-    "test:work-hq-v35-synthetic-qa-kit": "node scripts/test-work-hq-v35-synthetic-qa-kit.mjs",
+    "test:work-hq-v35-synthetic-qa-kit": "node scripts/test-work-gateway-synthetic-readiness.mjs && node scripts/test-work-hq-v35-synthetic-qa-kit.mjs",
     "work:hq:quote:v35:synthetic:preflight": "node scripts/preflight-work-hq-v35-synthetic-qa.mjs",
     "test:work-custom-order-gateway-secret-diagnosis": "node scripts/test-work-custom-order-gateway-secret-diagnosis.mjs",
     "work:custom-order:gateway:diagnose-readonly": "node scripts/diagnose-work-custom-order-gateway-secret.mjs",

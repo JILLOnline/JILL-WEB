@@ -28,17 +28,28 @@ npm.cmd run work:hq:quote:v35:synthetic:preflight
 if ($LASTEXITCODE -ne 0) { throw 'STOP: Preflight failed, create NO synthetic order' }
 ```
 
-The preflight verifies v34 100% + v35 0% allocation, exact inactive
+The updated preflight verifies v34 100% + v35 0% allocation, exact inactive
 v35 metadata/secret names and v33 rollback, the published isolated
 Google Custom Orders QA source against Git (including sandbox flag
 and a different spreadsheet from LIVE), and anonymous version-
-overridden Owner access refusal on v35. It never prints secrets
-or reads customer request rows. **If any check fails, stop.**
+overridden Owner access refusal on v35. It also requires the separate
+WORK Custom Order gateway to remain at the Owner-observed deployment
+`88e7616d-5d3f-4eed-b112-960b034717af`: reviewed candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100%, original
+`408bdf7c-eb20-4b6e-97dd-3d3b293c6120` at 0%, preserved
+gateway binding names, and an anonymous **unpinned** health response
+that reports the candidate's Cloudflare runtime version. The previous
+preflight PASS did not include this gateway check; rerun this command
+after syncing the updated source before creating the synthetic request.
+It never prints secrets or reads customer request rows. **If any check
+fails, stop.** This read-only proof does not compare the Cloudflare
+secret value, prove the Shopify app-proxy mapping, or send a signed POST.
 
 ## One synthetic request — existing WORK form only
 
 1. Go to **jill-work.myshopify.com**, not `jillonlinestore.com`.
-   Use the already verified WORK Custom Order form. If the WORK
+   Confirm the published form routes through the WORK app proxy
+   `/apps/jill-custom-order`; use that WORK Custom Order form. If the WORK
    app proxy/form is unavailable or the store password is unknown,
    STOP; do not submit directly to a guessed Apps Script endpoint.
 2. Use a clearly fake QA identity such as

@@ -175,6 +175,8 @@ const metadata={status:()=>status,deployments:()=>deployment,
   versions:()=>versions,version:id=>versions.find(v=>v.id===id)};
 const config={
   qaAudit:async()=>qa,metadata,probe:async()=>true,
+  gatewayAudit:async()=>({unpinned_runtime_proven:true,
+    shopify_signed_post_proven:false,google_hmac_proven:false}),
   verifyCheckout:()=>{},
 };
 pass(()=>assert.equal(SOURCE,
@@ -187,7 +189,11 @@ pass(()=>{
   assert.equal(ok.synthetic_submission_created,false);
   assert.equal(ok.quote_draft_saved,false);
   assert.equal(ok.anonymous_version_override_owner_denial,true);
+  assert.equal(ok.ordinary_gateway_runtime_verified,true);
 });
+await bad(()=>syntheticQuotePreflight({...config,
+  gatewayAudit:async()=>({unpinned_runtime_proven:false,
+    shopify_signed_post_proven:false,google_hmac_proven:false})}));
 await bad(()=>syntheticQuotePreflight({...config,
   qaAudit:async()=>({...qa,publishedRevisionVerified:false})}));
 await bad(()=>syntheticQuotePreflight({...config,

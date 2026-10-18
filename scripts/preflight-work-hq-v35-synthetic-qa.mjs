@@ -12,6 +12,8 @@ import {inspectDeploymentState,ACTIVE,CANDIDATE,WORKER,ORIGIN,OVERRIDE,
   makeVersionOverride} from './work-quote-v35-zero-deployment-policy.mjs';
 import {verifyInspectedQuoteVersions,MARKER,SOURCE}
   from './inspect-work-hq-quote-v35-readonly.mjs';
+import {auditGatewayForSynthetic}
+  from './verify-work-gateway-synthetic-readiness.mjs';
 
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const APP=join(ROOT,'services/jill-order-desk/app-home');
@@ -84,6 +86,7 @@ async function anonymousPinnedProbe({backendFetch=fetch}={}){
 }
 export async function syntheticQuotePreflight({
   qaAudit=auditWorkQaReadOnly,
+  gatewayAudit=auditGatewayForSynthetic,
   metadata={status:()=>wrangler(scoped('deployments','status')),
     deployments:()=>json(scoped('deployments','list','--json')),
     versions:()=>json(scoped('versions','list','--json')),
@@ -115,6 +118,11 @@ export async function syntheticQuotePreflight({
     audit.publishedVersion>=1&&
     /^[a-f0-9]{64}$/.test(audit.publishedDigest||''),
     'qa_sandbox_published_source_unverified');
+  const gateway=await gatewayAudit();
+  check(gateway?.unpinned_runtime_proven===true&&
+    gateway?.shopify_signed_post_proven===false&&
+    gateway?.google_hmac_proven===false,
+    'gateway_route_unverified');
   await probe();
   const after=inspectDeploymentState(metadata.deployments(),'zero');
   check(after.id===allocation.id&&
@@ -125,6 +133,7 @@ export async function syntheticQuotePreflight({
     v35_version:CANDIDATE,google_qa_sandbox_verified:true,
     qa_published_version:audit.publishedVersion,
     anonymous_version_override_owner_denial:true,
+    ordinary_gateway_runtime_verified:true,
     permitted_synthetic_submissions:1,
     synthetic_submission_created:false,
     quote_draft_saved:false,existing_customers_affected:false,
@@ -140,13 +149,14 @@ if(called){
     console.log('PASS exact inactive v35 version, original bindings and source marker.');
     console.log('PASS certified isolated Google Custom Orders QA sandbox published @'+
       result.qa_published_version+'; no LIVE/Rewards cross-target.');
+    console.log('PASS ordinary WORK gateway runtime identifies the reviewed candidate; signed submission remains untested.');
     console.log('PASS anonymous pinned v35 request reaches Owner-denial boundary; ordinary v34 remains 410.');
     console.log('READY FOR OWNER: create exactly ONE synthetic WORK Custom Order through existing verified WORK form; then signed-in quote QA with temporary browser pin.');
     console.log('READ ONLY: NO Custom Order submitted, no D1 quote saved, no emails, no Worker traffic change, R2, LIVE/KEEP or paid plan changes.');
   }catch(err){
     const text=String(err?.message||'');
     console.error('STOP WORK synthetic quote QA preflight: '+
-      (/^(work_v35_synthetic_preflight_|work_quote_stage_|quote_v35_readonly_)[a-z0-9_]+$/.test(text)?text:
+      (/^(work_v35_synthetic_preflight_|work_quote_stage_|quote_v35_readonly_|work_gateway_synthetic_|work_custom_promotion_|work_gateway_cloudflare_|gateway_metadata_upload_)[a-z0-9_]+$/.test(text)?text:
         'work_v35_synthetic_preflight_unverified'));
     console.error('No request was created. Do not use v35 QA browser pin or write quotes until corrected.');
     process.exitCode=1;
