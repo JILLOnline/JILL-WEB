@@ -84,7 +84,15 @@ function waitForTailAndProbe({url,sinceMs,untilMs}){
       });
     child.on('error',()=>finish(Error('work_gateway_tail_session_unavailable')));
     // 'close' fires after stderr is drained; 'exit' can fire before the CLI error arrives.
-    child.on('close',()=>{if(!settled)finish(Error('work_gateway_tail_ended_'+classifyTailSessionExit(stderr)));});
+    child.on('close',(exitCode,signal)=>{
+      if(settled)return;
+      // Wrangler may report CLI errors on stdout even in JSON mode.
+      // Never print either stream: classify their bounded contents only.
+      const category=classifyTailSessionExit(stderr+'\\n'+stdout);
+      const status=signal?'signaled':exitCode===0?'exit0':
+        Number.isInteger(exitCode)&&exitCode>0&&exitCode<=255?'nonzero':'unknown';
+      finish(Error('work_gateway_tail_ended_'+category+'_'+status));
+    });
     const startDeadline=setTimeout(()=>finish(
       Error('work_gateway_tail_not_ready')),30000);
     const deadline=setTimeout(()=>finish(
