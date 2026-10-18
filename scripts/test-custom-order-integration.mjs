@@ -287,7 +287,7 @@ assert.doesNotMatch(section,/<input[^>]*name="(?:owner_gid|customer_id|logged_in
 const gatewaySource=fs.readFileSync('backend/custom-order-gateway.mjs','utf8');
 assert.match(gatewaySource,/auth\.loggedInCustomerId/,
   'Ownership must be derived from signed Shopify app proxy, not contact email');
-assert.match(gatewaySource,/ownerGid='gid:\/\/shopify\/Customer\/ '\.trim\(\)\+numeric|ownerGid='gid:\/\/shopify\/Customer\/'\+numeric/,
+assert.ok(gatewaySource.includes("ownerGid='gid://shopify/Customer/'+numeric"),
   'Account owner must be bound to the authenticated Shopify customer GID');
 
 console.log('JILL Custom Order LIVE-parity integration tests passed.');
