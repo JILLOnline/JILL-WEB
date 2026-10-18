@@ -1,6 +1,5 @@
-// WORK-only, non-mutating guard. Shopify app dev applies the LOCAL TOML
-// as a dev preview and can override an otherwise correct active app version.
-// Refuse to replace WORK HQ with Shopify's extension-only default homepage.
+// WORK-only read guard. Shopify app dev applies LOCAL TOML configuration
+// as an active dev preview; it can override a correctly released HQ App Home.
 import {readFileSync} from 'node:fs';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
@@ -8,41 +7,54 @@ import {
   WORK_CONFIG_FILE,assertRewardsWorkConfig,
 } from './verify-rewards-work-target.mjs';
 
-export const WORK_HQ_HOME=
+export const WORK_HQ_HOME =
   'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
-const WORK_HQ_CALLBACK=WORK_HQ_HOME+'/auth/callback';
+const CALLBACK=WORK_HQ_HOME+'/auth/callback';
 
 function stop() {
-  throw Error('WORK HQ dev preview blocked: local app URL, embedded setting, '+
-    'auth callback or build URL policy differs from the certified active '+
-    'JILL HQ WORK app. DO NOT run shopify app dev with this config.');
+  throw Error('local_work_hq_preview_config_unverified');
 }
 function oneAssignment(source,name) {
-  const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  // Names below are fixed trusted strings, not user-controlled regex inputs.
+  if(!/^[a-z_]+$/.test(name))stop();
   const matches=[...source.matchAll(
-    new RegExp('^[ \\t]*'+escaped+'[ \\t]*=[ \\t]*([^\\r\\n#]+)','gm')
+    new RegExp('^[ \t]*'+name+'[ \t]*=[ \t]*([^\r\n#]+)','gm')
   )];
   if(matches.length!==1)stop();
   return matches[0][1].trim();
 }
 function section(source,name) {
-  const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const matches=[...source.matchAll(
-    new RegExp('^[ \\t]*\\['+escaped+'\\][ \\t]*\\r?\\n([\\s\\S]*?)(?=^[ \\t]*\\[|\\s*$)','gm')
-  )];
-  if(matches.length!==1)stop();
-  return matches[0][1];
+  const lines=source.split(/\r?\n/);
+  const positions=lines.map((line,index)=>line.trim()==='['+name+']'?index:-1)
+    .filter(index=>index>=0);
+  if(positions.length!==1)stop();
+  const from=positions[0]+1;
+  let end=lines.length;
+  for(let i=from;i<lines.length;i++) {
+    if(/^\s*\[/.test(lines[i])){end=i;break;}
+  }
+  return lines.slice(from,end).join('\n');
+}
+function topLevel(source) {
+  const lines=source.split(/\r?\n/);
+  const end=lines.findIndex(line=>/^\s*\[/.test(line));
+  return lines.slice(0,end<0?lines.length:end).join('\n');
 }
 export function verifyWorkHqDevPreviewConfig(source) {
   assertRewardsWorkConfig(source,{requireHqName:true});
-  // Only accept exact, uniquely declared values. No string substitutions
-  // are performed and no secrets or customer data are read.
-  if(oneAssignment(source,'application_url')!==JSON.stringify(WORK_HQ_HOME)||
-     oneAssignment(source,'embedded')!=='true')stop();
+  // The released WORK version is embedded and points to the active canary.
+  // A storefront extension preview must not replace its Admin homepage.
+  const root=topLevel(source);
+  if(oneAssignment(root,'application_url')!==JSON.stringify(WORK_HQ_HOME)||
+     oneAssignment(root,'embedded')!=='true')stop();
   const auth=section(source,'auth');
-  const redirects=auth.match(/^[ \\t]*redirect_urls[ \\t]*=[ \\t]*\\[([\\s\\S]*?)\\]/m);
-  if(!redirects ||
-     !redirects[1].includes(JSON.stringify(WORK_HQ_CALLBACK)))stop();
+  const blocks=[...auth.matchAll(
+    /^[ \t]*redirect_urls[ \t]*=[ \t]*\[([\s\S]*?)\]/gm
+  )];
+  if(blocks.length!==1)stop();
+  const urls=[...blocks[0][1].matchAll(/"([^"\r\n]+)"/g)].map(m=>m[1]);
+  if(!urls.includes(CALLBACK))stop();
+  // Never let a CLI tunnel silently overwrite the pinned WORK HQ URL.
   const build=section(source,'build');
   if(oneAssignment(build,'automatically_update_urls_on_dev')!=='false')stop();
   return true;
@@ -53,13 +65,12 @@ if(process.argv[1] &&
     if(process.argv.length!==2)stop();
     const file=resolve(process.cwd(),WORK_CONFIG_FILE);
     verifyWorkHqDevPreviewConfig(readFileSync(file,'utf8'));
-    console.log('PASS local WORK preview preserves HQ App Home, embedded '+
-      'mode, OAuth callback and disables automatic URL updates.');
-    console.log('READ ONLY: no Shopify preview started or configuration changed.');
-  }catch {
-    console.error('STOP WORK preview: incorrect local App Home configuration. '+
-      'Existing Shopify dev preview should be inspected/cleaned separately '+
-      'only with Owner approval; never run app dev with placeholder.');
+    console.log('PASS: WORK dev preview preserves embedded HQ App Home, '+
+      'OAuth callback, and fixed URL policy.');
+    console.log('READ ONLY: Shopify preview not started and settings unchanged.');
+  } catch {
+    console.error('STOP: Local WORK dev config could replace JILL HQ with '+
+      'Shopify default app home. No preview launched; no settings modified.');
     process.exitCode=1;
   }
 }
