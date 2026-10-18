@@ -44,6 +44,9 @@ jobs:
       - name: Verify My JILL extension and canary boundaries
         run: npm run check:account-hub && npm run test:account-hub-canary && npm run test:account-hub-summary && npm run test:account-hub-template
 
+      - name: Prevent WORK dev preview from overriding released HQ App Home (OFFLINE)
+        run: npm run test:work-hq-dev-preview-config
+
       - name: Verify authenticated Coupons projections
         run: npm run test:customer-coupons
 
