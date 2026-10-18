@@ -327,6 +327,30 @@ await assert.rejects(
   'Upstream 409 must be terminal and must never propose resubmission');
 assert.equal(mockSubmissionCalls,1,
   'One caller attempt must produce exactly one POST, no hidden retry');
+const identityReview=browserSandbox.JILLCustomOrder.reviewAccountContext;
+const signedReview=identityReview({
+  loggedIn:true,
+  accountEmail:'account@example.invalid',
+  contactEmail:'other-contact@example.invalid',
+});
+assert.equal(signedReview.mode,'signed-in');
+assert.equal(signedReview.account,'account@example.invalid');
+assert.equal(signedReview.contact,'other-contact@example.invalid');
+assert.match(signedReview.note,/verified Shopify sign-in/);
+assert.match(signedReview.note,/not the contact email/);
+assert.ok(!Object.hasOwn(signedReview,'ownerGid'));
+const guestReview=identityReview({
+  loggedIn:false,
+  accountEmail:'account@example.invalid',
+  contactEmail:'guest@example.invalid',
+});
+assert.equal(guestReview.mode,'guest');
+assert.equal(guestReview.account,'');
+assert.equal(guestReview.contact,'guest@example.invalid');
+assert.match(guestReview.note,/will not appear/);
+assert.match(runtime,/jill-custom-order__identity-review-note/);
+assert.match(runtime,/Signed-in account email/);
+
 assert.match(runtime,/let terminalRejected = false/);
 assert.match(runtime,/if \(terminalRejected\) \{[\s\S]*?Do not submit again; contact JILL/,
   'Back-to-edit must not unlock another submit after terminal rejection');
