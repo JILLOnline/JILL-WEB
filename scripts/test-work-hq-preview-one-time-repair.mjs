@@ -44,6 +44,15 @@ const expected=source
 assert.equal(current.candidate,expected,
   'The exact candidate must change ONLY the four approved fields.');
 assert.equal(current.changed,true);
+// A freshly linked WORK extension app can have an empty OAuth callback list.
+const emptyRedirects=source.replace(
+  'redirect_urls = ["https://old-work.example.com/auth/callback"]',
+  'redirect_urls = []');
+const emptyResult=proposeWorkHqPreviewRepair(emptyRedirects);
+assert.equal(emptyResult.summary.auth_redirect_urls,
+  '0_url(s)_to_pinned_work_hq_callback');
+assert.equal(emptyResult.candidate,expected,
+  'Empty redirects must be repaired to the certified WORK callback only.');
 assert.equal(proposeWorkHqPreviewRepair(expected).changed,false);
 const withoutBuild=source.replace(
   '\n[build]\nautomatically_update_urls_on_dev = true','');
