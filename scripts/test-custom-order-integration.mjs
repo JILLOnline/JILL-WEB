@@ -260,4 +260,34 @@ assert.match(runtime, /function applyLoggedInCustomerPrefill/, 'Custom Order mus
 assert.match(runtime, /applyLoggedInCustomerPrefill\(root\);[\s\S]*applyCatalogPrefill\(root\);/, 'customer prefill and Catalog prefill must coexist in initialization order');
 assert.doesNotMatch(runtime, /preferred_contact[^\n]*=.*customer/, 'logged-in customer prefill must not silently choose a preferred contact method');
 
+// A verified Shopify storefront session owns an account request regardless
+// of the user-editable contact email. Guest submissions remain unowned and
+// must not imply automatic account claiming.
+const locale=JSON.parse(fs.readFileSync('theme/locales/en.default.json','utf8'));
+const identityCopy=locale.custom_order?.customer||{};
+for(const key of [
+  'account_title','account_identity','account_help',
+  'guest_title','guest_help','guest_sign_in','contact_email_help',
+])assert.ok(typeof identityCopy[key]==='string'&&identityCopy[key].length>12,
+  'Custom Order identity explanation missing: '+key);
+assert.match(section,/data-jill-customer-account-context data-mode="signed-in"/);
+assert.match(section,/data-jill-customer-account-context data-mode="guest"/);
+assert.match(section,/\{% if customer %\}[\s\S]*data-mode="signed-in"/,
+  'Signed-in account status must be server-rendered from Shopify customer');
+assert.match(section,/\{\{ customer\.email \| escape \}\}/,
+  'Shopify account email must be escaped when shown');
+assert.match(section,/href="\{\{ routes\.account_login_url \}\}"/,
+  'Guest must be able to sign in before submission');
+assert.match(section,/name: 'email'[^\n]*value: customer\.email/,
+  'The customer contact email should be prefilled on the server');
+assert.match(runtime,/function applyLoggedInCustomerPrefill/,
+  'Keep the JS prefill fallback for signed-in customers');
+assert.doesNotMatch(section,/<input[^>]*name="(?:owner_gid|customer_id|logged_in_customer_id)"/,
+  'No browser-controlled owner identity fields');
+const gatewaySource=fs.readFileSync('backend/custom-order-gateway.mjs','utf8');
+assert.match(gatewaySource,/auth\.loggedInCustomerId/,
+  'Ownership must be derived from signed Shopify app proxy, not contact email');
+assert.match(gatewaySource,/ownerGid='gid:\/\/shopify\/Customer\/ '\.trim\(\)\+numeric|ownerGid='gid:\/\/shopify\/Customer\/'\+numeric/,
+  'Account owner must be bound to the authenticated Shopify customer GID');
+
 console.log('JILL Custom Order LIVE-parity integration tests passed.');
