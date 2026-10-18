@@ -236,6 +236,9 @@ jobs:
       - name: Verify signed WORK Custom Order candidate acceptance routing gate (OFFLINE)
         run: node scripts/test-work-custom-order-acceptance-route.mjs
 
+      - name: Verify candidate 100pct WORK-only promotion and unpinned runtime guard (OFFLINE)
+        run: node scripts/test-work-custom-order-candidate-promotion.mjs
+
       - name: Verify no tracked files changed
         run: test -z "$(git status --porcelain --untracked-files=no)"
 
