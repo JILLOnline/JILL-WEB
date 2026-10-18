@@ -1,3 +1,45 @@
+## Status update — 2026-10-17 (Owner upload succeeded)
+
+The Owner ran the one-time Windows-only inactive upload successfully,
+with all 63 offline safety checks passing beforehand. Cloudflare returned
+NEW **inactive** version
+\`9322193f-5e87-4479-88c9-39229dddb5f2\` and the guarded
+readback confirmed that deployment
+\`f6809b0e-c8b7-47b6-9cc9-13d071d1ecbb\`
+remained exactly original
+\`408bdf7c-eb20-4b6e-97dd-3d3b293c6120\` **100%** /
+previous repair
+\`225cdbb4-46f5-492e-801d-6726bea2703e\` **0%**.
+The inactive-upload approval is SPENT. Never rerun
+\`scripts/upload-work-gateway-version-metadata-inactive-owner.mjs\`.
+
+The NEXT separate **unapproved** stage is one version allocation update
+to original@100% + newly uploaded metadata candidate@0%.
+The prior 0% repair will then leave the deployment allocation, but remain
+in Cloudflare version history. This is NOT a normal traffic promotion.
+It requires new explicit Owner approval. Source-only preparation:
+
+- \`scripts/work-gateway-version-metadata-zero-policy.mjs\`
+- \`scripts/deploy-work-gateway-version-metadata-zero-owner.mjs\`
+- \`scripts/test-work-gateway-version-metadata-zero.mjs\`
+
+The new script enforces an exact old 100/0 deployment, immutable uploaded
+candidate ID and marker, runtime binding/name preservation, branch and
+source pin, single-use LOCALAPPDATA receipt before its sole possible
+Cloudflare deployment write, and exact new original@100% / candidate@0%
+readback. After the deployment, it sends only ONE anonymous pinned
+GET \`/healthz?jill_work_version_probe=<random UUID>\`, and requires the
+response header \`x-jill-work-gateway-version\` to equal the exact new
+candidate ID. Its one optional anonymous baseline GET cannot prove
+candidate identity and is treated only as a preflight.
+
+On any post-write HOLD or timeout: never retry, never auto-rollback, and
+inspect deployment read-only. The original must remain 100%. Nothing
+in this approval authorizes signed Shopify POSTs, Google QA writes,
+customer-account testing, LIVE/KEEP changes, or paid infrastructure.
+
+---
+
 # JILL WORK — deterministic repaired gateway version proof (SOURCE-ONLY)
 
 ## Problem this replaces
