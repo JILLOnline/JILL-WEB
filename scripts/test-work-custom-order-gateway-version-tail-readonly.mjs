@@ -5,6 +5,7 @@ import {
   WORKER,ACTIVE,CANDIDATE,DEPLOYMENT,HOST,OVERRIDE,
   candidateTailArguments,pinnedHealthUrl,versionOverrideHeader,
   verifiedTailHealthEvent,inspectGatewayZeroAllocation,
+  classifyTailSessionExit,
 } from './work-custom-order-gateway-version-tail-policy.mjs';
 import {safeHealthResponse}
   from './prove-work-custom-order-gateway-v35-execution-readonly.mjs';
@@ -86,6 +87,26 @@ for(const [status,mime,body] of [
   [200,'application/json','{not JSON}'],
   [200,'application/json','x'.repeat(600)],
 ])deny(()=>safeHealthResponse(status,mime,body));
+
+// Only fixed categorical codes may be reported; never raw private log lines.
+for(const [privateDiagnostic,expectedCode] of [
+  ['', 'unclassified'],
+  ['Unauthorized access: API token invalid. bearer SECRET-EXAMPLE', 'authentication'],
+  ['Not logged in. Please authenticate', 'authentication'],
+  ['error code: 10000', 'authentication'],
+  ['Forbidden: missing permission for workers tail', 'permission'],
+  ['HTTP 403 from API', 'permission'],
+  ['HTTP 429 too many requests', 'rate_limited'],
+  ['Worker version not found', 'target_missing'],
+  ['WebSocket connection failed, private host: example.invalid', 'transport'],
+  ['fetch failed: private token example-token', 'transport'],
+  ['unknown argument --version-id', 'unsupported_cli_option'],
+  ['Private unknown diagnostic token=ABCDEF', 'unclassified'],
+]){
+  pass(()=>assert.equal(classifyTailSessionExit(privateDiagnostic),expectedCode));
+  assert.doesNotMatch(classifyTailSessionExit(privateDiagnostic),/ABCDEF|SECRET|example-token|example\.invalid/);
+  count++;
+}
 
 const source=readFileSync(new URL(
   './prove-work-custom-order-gateway-v35-execution-readonly.mjs',
