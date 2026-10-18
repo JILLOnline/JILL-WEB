@@ -323,7 +323,7 @@ const mockRequest={
 };
 await assert.rejects(
   browserSandbox.JILLCustomOrder.submitRequest(mockRoot,mockRequest),
-  error=>error?.jillTerminalSubmission===true&&/Do not submit again/.test(error.message),
+  error=>error?.jillTerminalSubmission===true&&/Do not submit again/.test(error.message)&&error.message.includes(mockRequest.submission_id),
   'Upstream 409 must be terminal and must never propose resubmission');
 assert.equal(mockSubmissionCalls,1,
   'One caller attempt must produce exactly one POST, no hidden retry');
