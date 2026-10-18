@@ -4,6 +4,7 @@ import {
   CUSTOM_ORDER_STATUS,customOrderStatus,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
 } from '../extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs';
+import {requestShortId} from '../services/jill-order-desk/inbox-display.mjs';
 
 // Presentation tests: no authenticated identity, backend requests or
 // customer data mutations. Only already-public, validated order projections.
@@ -29,8 +30,15 @@ assert.equal(customOrderTitle({items:[{title:'Pinata',quantity:1},
 assert.equal(customOrderTitle({items:[{title:'Pinata',quantity:1},
   {title:'Stickers',quantity:2},{title:'Banner',quantity:1}]}),
   'Pinata + 2 more items');
-assert.equal(customOrderShortId('jill:92b32355-900e-47ba-8946-ccd93190a3b7'),
-  '#92B32355');
+const ownedWorkRequest='jill:92b32355-900e-47ba-8946-ccd93190a3b7';
+assert.equal(customOrderShortId(ownedWorkRequest),'#3190A3B7');
+assert.equal(customOrderShortId(ownedWorkRequest),
+  '#'+requestShortId(ownedWorkRequest),
+  'My JILL and Owner HQ must show the SAME reference for an owned request.');
+const syntheticWorkRequest='jill:qa:owned-111';
+assert.equal(customOrderShortId(syntheticWorkRequest),
+  '#'+requestShortId(syntheticWorkRequest),
+  'QA request labels must stay consistent across merchant and customer views.');
 assert.equal(customOrderShortId(''), 'JILL request');
 assert.equal(customOrderDateOnly('2026-10-30'),'Oct 30, 2026');
 assert.equal(customOrderDateOnly('2026-02-30'),'Date unavailable');
