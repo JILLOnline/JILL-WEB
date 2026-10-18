@@ -91,6 +91,35 @@ const authenticated=await run(request(),{
 });
 assert.equal(authenticated.status,200);
 assert.equal(ownerCalls.length,2);
+// The customer can choose another CONTACT email without transferring
+// ownership. The immutable owner comes exclusively from Shopify's signed
+// logged_in_customer_id, never from the browser's email field.
+const alternateEmail='different-contact@example.invalid';
+const differentContactBody=form();
+const differentContactRaw={...raw,customer:{...raw.customer,email:alternateEmail}};
+differentContactBody.set('email',alternateEmail);
+differentContactBody.set('raw_payload',JSON.stringify(differentContactRaw));
+const differentContactResponse=await run(request(differentContactBody),{
+  authenticateProxy:async()=>({shop,loggedInCustomerId:'123456'}),
+  backendFetch:async(_url,opts)=>{
+    const params=new URLSearchParams(opts.body);
+    const action=params.has('jill_order_receipt')?'receipt':'submit';
+    if(action==='submit') {
+      assert.equal(params.get('email'),alternateEmail);
+      assert.equal(params.get('jill_order_owner_gid'),ownerGid);
+      assert.equal(params.get('jill_order_gateway_sig'),receiptSignature({
+        action,id,timestamp:params.get('jill_order_gateway_ts'),
+        rawPayload:params.get('raw_payload'),ownerGid,secret,
+      }));
+    }
+    return validResult(action==='submit'
+      ? {operation:'custom_order.submit.result',ok:true,submission_id:id,
+         status:'received',duplicate:false}
+      : {operation:'custom_order.receipt.result',ok:true,submission_id:id,
+         status:'received',revision:1});
+  },
+});
+assert.equal(differentContactResponse.status,200);
 assert.equal((await run(request(),{
   authenticateProxy:async()=>({shop,loggedInCustomerId:'gid://shopify/Customer/111'}),
 })).status,401,'Only validated numeric Shopify app-proxy customer IDs accepted');
