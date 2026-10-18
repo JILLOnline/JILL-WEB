@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {handleCustomOrderProxy,receiptSignature,validateCustomOrderPayload} from '../backend/custom-order-gateway.mjs';
+import {handleCustomOrderProxy,receiptSignature,validateCustomOrderPayload,classifyCustomOrderUpstreamRejection} from '../backend/custom-order-gateway.mjs';
 
 const id='jill:12345678-abcd-4def-abcd-111111111111';
 const secret='qa-testing-secret-at-least-32-bytes-please';
@@ -147,6 +147,50 @@ assert.equal((await run(request(),{backendFetch:async(_url,opts)=>{
 assert.equal((await run(request(),{backendFetch:async()=>new Response('<html>login</html>')})).status,503);
 assert.equal((await run(request(),{backendFetch:async()=>validResult({
   operation:'custom_order.submit.result',ok:false,error:{code:'submission_conflict',retryable:false}})})).status,409);
+for(const [reason,category] of Object.entries({
+  invalid_email:'contact_validation',
+  invalid_source:'source_validation',
+  gateway_required:'gateway_authentication',
+  submission_conflict:'immutable_request_conflict',
+  owner_conflict:'account_ownership_conflict',
+  owner_not_enabled:'account_ownership_unavailable',
+  customer_secret_key:'unclassified',
+  'customer@example.invalid':'unclassified',
+})) {
+  assert.equal(classifyCustomOrderUpstreamRejection({
+    operation:'custom_order.submit.result',ok:false,
+    error:{code:reason,retryable:false,details:'Never output personal details'},
+  }),category);
+}
+assert.equal(classifyCustomOrderUpstreamRejection({ok:false,error:{
+  code:'owner_conflict',retryable:true,
+}}),'unclassified');
+const privateDiagnostic=[];
+const originalWarn=console.warn;
+try {
+  console.warn=(...parts)=>privateDiagnostic.push(parts.join(' '));
+  const rejected=await run(request(),{
+    backendFetch:async()=>validResult({
+      operation:'custom_order.submit.result',ok:false,
+      error:{code:'owner_conflict',retryable:false,
+        details:'NEVER_SHOW_EMAIL_OR_CUSTOMER_GID',
+      },
+    }),
+  });
+  assert.equal(rejected.status,409);
+  const publicReply=await rejected.json();
+  assert.equal(publicReply.error.code,'upstream_rejected');
+  assert.equal('category' in publicReply.error,false,
+    'Client-facing reply must not expose owner enumeration signals.');
+  assert.equal(privateDiagnostic.length,1);
+  assert.equal(privateDiagnostic[0],
+    'WORK Custom Order upstream rejection category: account_ownership_conflict');
+  assert.ok(!JSON.stringify(privateDiagnostic).includes('NEVER_SHOW_EMAIL'),
+    'Private log must not include untrusted Google error bodies');
+} finally {
+  console.warn=originalWarn;
+}
+
 
 // Same protocol in the actual Google Apps Script source, tested without
 // a second hand-coded verifier implementation.
