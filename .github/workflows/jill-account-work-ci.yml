@@ -47,6 +47,9 @@ jobs:
       - name: Prevent WORK dev preview from overriding released HQ App Home (OFFLINE)
         run: npm run test:work-hq-dev-preview-config
 
+      - name: Prove one-time local WORK HQ preview repair, diff and backup guards (OFFLINE)
+        run: node scripts/test-work-hq-preview-one-time-repair.mjs
+
       - name: Verify authenticated Coupons projections
         run: npm run test:customer-coupons
 
