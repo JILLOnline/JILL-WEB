@@ -26,8 +26,9 @@ sandbox and key, then uploads an **inactive** version using `--keep-vars`
 with no secret file. It reads the new version and bindings back, extracts
 Cloudflare's version URL and makes one owner-signed, nonexistent-receipt
 probe through that URL. It rechecks the unchanged deployment afterward.
-Version URLs can route directly to uploaded versions, so this check does
-not need a 0% deployment or a change to ordinary traffic. If the command
+This Version URL approach proved unavailable for this Worker, because it
+implements a Durable Object rate limiter and Cloudflare does not generate
+Version URLs for Workers that implement Durable Objects. If the command
 stops after attempting upload, its local one-use receipt prevents an
 accidental second version; inspect remote versions read-only before any
 further action. It does not read secret values, enable Observability,
@@ -56,10 +57,37 @@ if ($LASTEXITCODE -ne 0) { throw 'STOP: Git pull failed.' }
 npm.cmd run work:custom-order:gateway:recover-diagnostic-readonly
 ```
 
-This recovery path contains no Wrangler upload/deploy, no secret change,
-no Custom Order submit and no use of the untrusted URL from prior output.
-If the version URL is disabled or its runtime ID differs, stop and
-inspect version settings read-only. No second submission is permitted.
+The Owner's recovery stopped at `work_gateway_recovery_health_response_unreadable`
+before a signed probe. A Version URL cannot be used for this Worker. Do not
+repeat the recovery command. The uploaded version remains inactive.
+
+### Exact 0% diagnostic deployment
+
+Cloudflare's version override only applies to a version in the current
+deployment. The reviewed one-use command attaches the already uploaded
+diagnostic version at 0%, with the existing candidate at 100%, replacing
+the earlier 0% original in the two-version deployment. It checks the
+current 100/0 allocation, unique uploaded marker and inherited bindings,
+the active runtime, the Owner's local Google QA key and a deployment dry run
+before writing. After deploying, it reads back the exact 100/0 allocation,
+proves the diagnostic version through Cloudflare's runtime metadata header
+with an override, then makes the owner-signed nonexistent-receipt query
+through that exact override. No Custom Order is created. A private one-use
+receipt is written before deployment; if it stops after this point, inspect
+deployments read-only and never retry blindly.
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git pull failed.' }
+npm.cmd run work:custom-order:gateway:deploy-diagnostic-zero-once
+```
+
+This changes the WORK deployment composition, though ordinary requests
+remain on the same candidate at 100%. It does not upload a new Worker,
+change secrets, enable paid features or touch LIVE/KEEP. The previous 0%
+original remains in version history. No second Custom Order submission is
+permitted by this diagnostic.
 
 ## Observed failure, 2026-10-17
 

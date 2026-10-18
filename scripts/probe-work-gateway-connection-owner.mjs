@@ -127,13 +127,13 @@ export async function verifyGoogle(secret){
   check(result.googleQaSigningKeyMatches===true,
     'local_key_not_google_qa');
 }
-export async function probe(url,secret){
+export async function probe(url,secret,{headers:extraHeaders={}}={}){
   const timestamp=String(Date.now()),nonce=randomUUID();
   const signature=gatewayDiagnosticSignature({secret,timestamp,nonce});
   let response;
   try{response=await fetch(url+'/jill-work-gateway-diagnostic',{
     method:'POST',redirect:'manual',credentials:'omit',
-    headers:{'x-jill-qa-diagnostic-ts':timestamp,
+    headers:{...extraHeaders,'x-jill-qa-diagnostic-ts':timestamp,
       'x-jill-qa-diagnostic-nonce':nonce,
       'x-jill-qa-diagnostic-signature':signature},
     signal:AbortSignal.timeout(20000),

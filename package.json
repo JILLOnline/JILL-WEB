@@ -242,6 +242,8 @@
     "test:work-gateway-diagnostic-release": "node scripts/test-work-gateway-diagnostic-release.mjs",
     "work:custom-order:gateway:probe-inactive-once": "node scripts/probe-work-gateway-connection-owner.mjs",
     "work:custom-order:gateway:recover-diagnostic-readonly": "node scripts/recover-work-gateway-diagnostic-readonly.mjs",
+    "test:work-gateway-diagnostic-zero": "node scripts/test-work-gateway-diagnostic-zero.mjs",
+    "work:custom-order:gateway:deploy-diagnostic-zero-once": "node scripts/deploy-work-gateway-diagnostic-zero-owner.mjs",
     "test:work-gateway-inactive-repair": "node scripts/test-work-custom-order-gateway-inactive-repair.mjs",
     "work:custom-order:gateway:upload-repair-inactive": "node scripts/upload-work-custom-order-gateway-repair-inactive.mjs",
     "test:work-custom-order-gateway-zero": "node scripts/test-work-custom-order-gateway-zero.mjs",
