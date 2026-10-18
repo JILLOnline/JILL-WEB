@@ -1449,3 +1449,29 @@
     }
   }
 }
+
+
+/* Custom Order identity disclosure: Shopify's signed session determines
+   ownership; the editable email field is only a contact destination. */
+.jill-custom-order__account-context {
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--jill-border, #e1d9e8);
+  border-radius: 0.9rem;
+  background: var(--jill-surface, #faf8fc);
+  font-size: 0.925rem;
+  line-height: 1.45;
+}
+.jill-custom-order__account-context strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.jill-custom-order__account-context p {
+  margin: 0.3rem 0;
+  overflow-wrap: anywhere;
+}
+.jill-custom-order__account-context a {
+  display: inline-block;
+  margin-top: 0.4rem;
+  text-underline-offset: 0.15em;
+}
