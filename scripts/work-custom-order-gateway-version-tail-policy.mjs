@@ -56,3 +56,24 @@ export function inspectGatewayZeroAllocation(versions){
   return Object.freeze({deployment_id:DEPLOYMENT,active_pct:100,
     candidate_pct:0});
 }
+
+
+// Classify Wrangler CLI termination without ever exposing raw stderr,
+// which may include access tokens, URLs, user data or account metadata.
+// The absence of a recognizable CLI error MUST remain a HOLD.
+export function classifyTailSessionExit(stderr) {
+  const diagnostic=typeof stderr==='string'?stderr.slice(-16000):'';
+  if(/(?:authentication|unauthorized|not logged in|login required|invalid api token|expired api token|error code:\s*10000)/i.test(diagnostic))
+    return 'authentication';
+  if(/(?:forbidden|permission denied|insufficient permission|access denied|error code:\s*10013|\b403\b)/i.test(diagnostic))
+    return 'permission';
+  if(/(?:too many requests|rate.limit|\b429\b)/i.test(diagnostic))
+    return 'rate_limited';
+  if(/(?:version|worker|script)[^\r\n]{0,80}(?:not found|does not exist|unknown)|\b404\b/i.test(diagnostic))
+    return 'target_missing';
+  if(/(?:websocket|web socket|connect(?:ion)? (?:refused|closed|reset|failed)|econnreset|econnrefused|etimedout|network error|fetch failed|tls|certificate)/i.test(diagnostic))
+    return 'transport';
+  if(/(?:unknown argument|unrecognized option|unsupported option|invalid option)/i.test(diagnostic))
+    return 'unsupported_cli_option';
+  return 'unclassified';
+}
