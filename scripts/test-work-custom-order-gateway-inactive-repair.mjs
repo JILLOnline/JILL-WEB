@@ -97,16 +97,36 @@ for(const wrong of [
     {...v,annotations:{'workers/message':'wrong'}}:v),
 ])deny(()=>getExactGatewayUploadVersion({
   versions:wrong,marker,active:activeId}));
-const toml=readFileSync(
+const currentToml=readFileSync(
   new URL('../services/custom-order-cloudflare/wrangler.toml',
     import.meta.url),'utf8');
-pass(()=>assert.equal(gatewayConfigExactlyKnown(toml),true));
-pass(()=>assert.equal(gatewayConfigExactlyKnown(toml.replace(/\n/g,'\r\n')),true));
-deny(()=>gatewayConfigExactlyKnown(toml.replace(
+// Preserve the literal original manifest for the SPENT one-time upload.
+// New metadata source must be REJECTED by that old authorization path.
+const historicalToml=[
+  'name = "jill-work-custom-orders-qa"',
+  'main = "worker.mjs"',
+  'compatibility_date = "2026-10-12"',
+  'workers_dev = true',
+  '',
+  '[[durable_objects.bindings]]',
+  'name = "RATE_LIMITER"',
+  'class_name = "CustomOrderRateLimiter"',
+  '',
+  '[[migrations]]',
+  'tag = "v1"',
+  'new_sqlite_classes = ["CustomOrderRateLimiter"]',
+  '',
+].join('\n');
+pass(()=>assert.equal(gatewayConfigExactlyKnown(historicalToml),true));
+pass(()=>assert.equal(gatewayConfigExactlyKnown(
+  historicalToml.replace(/\n/g,'\r\n')),true));
+deny(()=>gatewayConfigExactlyKnown(currentToml));
+pass(()=>assert.match(currentToml,/\[version_metadata\]\s*\nbinding = "CF_VERSION_METADATA"/));
+deny(()=>gatewayConfigExactlyKnown(historicalToml.replace(
   'jill-work-custom-orders-qa','jill-custom-order-live')));
-deny(()=>gatewayConfigExactlyKnown(toml.replace(
+deny(()=>gatewayConfigExactlyKnown(historicalToml.replace(
   'new_sqlite_classes','new_classes')));
-deny(()=>gatewayConfigExactlyKnown(toml+'\n'));
+deny(()=>gatewayConfigExactlyKnown(historicalToml+'\n'));
 const secret='verified-work-only-secret-32-characters-long';
 pass(()=>{
   const obj=stagedSecrets({secret});
