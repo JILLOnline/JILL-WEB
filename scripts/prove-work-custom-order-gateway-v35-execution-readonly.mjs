@@ -83,7 +83,8 @@ function waitForTailAndProbe({url,sinceMs,untilMs}){
         stdio:['ignore','pipe','pipe'],
       });
     child.on('error',()=>finish(Error('work_gateway_tail_session_unavailable')));
-    child.on('exit',()=>{if(!settled)finish(Error('work_gateway_tail_ended_'+classifyTailSessionExit(stderr)));});
+    // 'close' fires after stderr is drained; 'exit' can fire before the CLI error arrives.
+    child.on('close',()=>{if(!settled)finish(Error('work_gateway_tail_ended_'+classifyTailSessionExit(stderr)));});
     const startDeadline=setTimeout(()=>finish(
       Error('work_gateway_tail_not_ready')),30000);
     const deadline=setTimeout(()=>finish(
