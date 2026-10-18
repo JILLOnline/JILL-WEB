@@ -66,5 +66,12 @@ assert.match(model,/title:'JILL HQ — WORK'/);
 for(const title of ['Requests &amp; Operations','Customers &amp; Loyalty','Store &amp; Commerce','Team, Analytics &amp; Audit'])
   assert.ok(page.includes(title),'Missing HQ module '+title);
 assert.match(page,/data.state==="staff_verified"/);
+assert.match(page,/const owner=verified && data.role==="owner"/);
+assert.match(page,/<Link to="\/app\/requests"/);
+for(const path of ['/products','/collections','/customers','/orders'])
+  assert.ok(page.includes('WORK_ADMIN}'+path),'Missing native WORK Shopify path '+path);
+assert.ok(page.includes('Current coupons retain their issued terms'));
+assert.ok(page.includes('Conversation</strong><small>My JILL Inbox and HQ thread · planned'));
+assert.doesNotMatch(page,/jillonlinestore\.com|jill-live|\bLIVE\b/);
 assert.doesNotMatch(page,/fetch\(|customer\.email|discountCodeBasicCreate|draftOrderCreate/i);
 console.log('PASS JILL HQ WORK branding: exact app ID, safe name transition, idempotent config, no LIVE mutation, bounded management shell.');

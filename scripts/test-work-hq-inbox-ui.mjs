@@ -64,7 +64,7 @@ const landing=readFileSync(
 // Shopify App Bridge must authenticate route DATA requests. React Router's
 // automatic prefetch link requests may lack a fresh embedded session token;
 // they have historically generated spurious /auth/login 200 navigation.
-assert.match(landing,/<Link to="\/app\/requests">/);
+assert.match(landing,/<Link to="\/app\/requests"/);
 assert.doesNotMatch(landing,/prefetch\s*=/);
 assert.doesNotMatch(route,/prefetch\s*=/);
 const serverLoader=readFileSync(
