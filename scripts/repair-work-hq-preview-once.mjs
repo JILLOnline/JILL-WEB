@@ -82,10 +82,14 @@ function redirects(lines,range){
   let array;
   try{array=JSON.parse(raw.slice(0,end+1).replace(/,\s*]$/,']'));}
   catch{abort('redirect_array_unparseable');}
-  ensure(Array.isArray(array)&&array.length>0&&array.length<=8&&
-    array.every(x=>typeof x==='string'&&/^https:\/\//.test(x)&&
-      !/jillonlinestore\.com|jqtdgr-1y\.myshopify\.com/i.test(x)),
-    'redirect_array_unexpected');
+  // A freshly linked Shopify extension-only app may legitimately have
+  // redirect_urls = []. A verified WORK Admin callback is installed below.
+  // Never accept LIVE, non-HTTPS or malformed preexisting redirect entries.
+  ensure(Array.isArray(array)&&array.length<=8,'redirect_array_shape');
+  ensure(array.every(x=>typeof x==='string'),'redirect_array_type');
+  ensure(array.every(x=>!(/jillonlinestore\.com|jqtdgr-1y\.myshopify\.com/i.test(x))),
+    'redirect_array_live_risk');
+  ensure(array.every(x=>/^https:\/\//.test(x)),'redirect_array_non_https');
   lines.splice(from,stop-from+1,m[1]+'["'+AUTH_URL+'"]');
   return array.length;
 }
