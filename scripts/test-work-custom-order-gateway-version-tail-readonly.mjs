@@ -128,7 +128,10 @@ for(const marker of [
   "verifiedTailHealthEvent(event",
   "child.kill()",
   "child.on('close'",
-  "classifyTailSessionExit(stderr)",
+  "classifyTailSessionExit(stderr+",
+  "child.on('close',(exitCode,signal)",
+  "exitCode===0?'exit0'",
+  "'nonzero':'unknown'",
   "No deployment retry",
   "not independently proven",
 ]){
