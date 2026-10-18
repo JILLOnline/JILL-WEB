@@ -1456,9 +1456,9 @@
 .jill-custom-order__account-context {
   padding: 1rem 1.1rem;
   margin-bottom: 1rem;
-  border: 1px solid var(--jill-border, #e1d9e8);
+  border: 1px solid color-mix(in srgb, var(--jill-color-accent) 18%, var(--jill-color-foreground) 8%);
   border-radius: 0.9rem;
-  background: var(--jill-surface, #faf8fc);
+  background: color-mix(in srgb, var(--jill-color-accent) 3%, var(--jill-color-background));
   font-size: 0.925rem;
   line-height: 1.45;
 }
