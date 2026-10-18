@@ -1,3 +1,34 @@
+## Source-only preparation: candidate as ordinary WORK traffic (NOT AUTHORIZED)
+
+The separate reviewed acceptance promotion is prepared in the WORK
+branch **but has not been executed**:
+
+- \`scripts/work-custom-order-candidate-promotion-policy.mjs\`
+- \`scripts/promote-work-custom-order-candidate-owner.mjs\`
+- \`scripts/test-work-custom-order-candidate-promotion.mjs\`
+
+This proposed new Cloudflare deployment would change the WORK gateway
+from original@100%/candidate@0% to
+**candidate@100%/original@0%**. Unlike the previous inactive upload and
+0% deployment, this would route ALL ordinary traffic for the isolated
+WORK gateway to the new candidate. This is a separate potentially
+customer-facing change: Owner must explicitly approve this specific
+allocation after reviewing the offline guards and the WORK store's
+current testing activity. Original version remains in the deployment at
+0% as recovery material; automatic rollback is NOT included.
+
+The one-use script checks exact reviewed Git checkout and unchanged
+Worker code, prior unique 100/0 deployment, candidate version and
+metadata binding, and dry-run before reserving a private one-time
+receipt. Only then could it perform ONE exact Cloudflare deployment.
+If the deployment succeeds, ONE anonymous **unpinned** GET with a
+random UUID must return the actual candidate runtime ID. A missing or
+mismatched header is HOLD; no retry or automatic rollback. It does not
+submit orders or establish authenticated Shopify/Google/HQ/My JILL
+acceptance. All such writes need a further separate Owner authorization.
+
+---
+
 ## Status update — runtime version proved, acceptance route pending
 
 The Owner's **single authorized** anonymous pinned GET returned HTTP 200,
