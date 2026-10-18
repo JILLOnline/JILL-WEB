@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const section = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const productSection = fs.readFileSync('theme/sections/main-product.liquid', 'utf8');
@@ -289,5 +290,44 @@ assert.match(gatewaySource,/auth\.loggedInCustomerId/,
   'Ownership must be derived from signed Shopify app proxy, not contact email');
 assert.ok(gatewaySource.includes("ownerGid='gid://shopify/Customer/'+numeric"),
   'Account owner must be bound to the authenticated Shopify customer GID');
+
+// A terminal 409 is NEVER a safe invitation to POST the same request
+// again. Exercise the real browser submission adapter with fake fetch.
+let mockSubmissionCalls=0;
+const browserSandbox={
+  URL,URLSearchParams,Response,
+  location:{origin:'https://jill-work.myshopify.com'},
+  fetch:async()=>{
+    mockSubmissionCalls++;
+    return new Response(JSON.stringify({
+      version:1,operation:'custom_order.submit.result',
+      ok:false,error:{code:'upstream_rejected',retryable:false},
+    }),{status:409,headers:{'content-type':'application/json'}});
+  },
+};
+vm.createContext(browserSandbox);
+vm.runInContext(runtime,browserSandbox);
+const mockRoot={dataset:{
+  submitEndpoint:'https://script.google.com/macros/s/AKfycbQA/exec',
+  verifiedSubmitEndpoint:'/apps/jill-custom-order',
+}};
+const mockRequest={
+  version:1,operation:'custom_order.submit',
+  submission_id:'jill:99999999-aaaa-4bbb-8ccc-555555555555',
+  submitted_at:'2026-10-18T10:00:00.000Z',
+  customer:{name:'WORK QA',email:'another-contact@example.invalid'},
+  planning:{date_needed:'2026-11-20',fulfillment:'pickup'},
+  items:[{quantity:1,title:'QA item'}],
+  request_attributes:[],reference_ids:[],
+  marketing_consent:{granted:false},
+};
+await assert.rejects(
+  browserSandbox.JILLCustomOrder.submitRequest(mockRoot,mockRequest),
+  error=>error?.jillTerminalSubmission===true&&/Do not submit again/.test(error.message),
+  'Upstream 409 must be terminal and must never propose resubmission');
+assert.equal(mockSubmissionCalls,1,
+  'One caller attempt must produce exactly one POST, no hidden retry');
+assert.match(runtime,/if \(error\?\.jillTerminalSubmission === true\) \{[\s\S]*?requestSubmit\.disabled = true/,
+  'UI must leave Submit disabled after deterministic upstream 409');
 
 console.log('JILL Custom Order LIVE-parity integration tests passed.');
