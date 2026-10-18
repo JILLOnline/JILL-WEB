@@ -1242,8 +1242,10 @@
     if (result.status === 409) {
       // A deterministic rejection may indicate an immutable ID/payload
       // conflict or owner-ledger mismatch. Never invite a second POST.
+      const reference = /^[A-Za-z0-9._:-]{8,128}$/.test(request.submission_id || '')
+        ? request.submission_id : 'unavailable';
       const error = new Error('JILL could not accept this request (WORK 409). '+
-        'Do not submit again. Please contact JILL with your request reference.');
+        'Do not submit again. Contact JILL with reference: '+reference);
       error.jillTerminalSubmission = true;
       throw error;
     }
