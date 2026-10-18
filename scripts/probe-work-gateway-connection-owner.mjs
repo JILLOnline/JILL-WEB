@@ -48,7 +48,7 @@ function git(...args){
     windowsHide:true,encoding:'utf8',timeout:15000,maxBuffer:8192,
   }).trim();}catch{stop('git_unavailable');}
 }
-function sourceGuard(){
+export function sourceGuard(){
   check(process.platform==='win32','owner_windows_only');
   check(git('branch','--show-current')==='jill/rewards-work'&&
     git('status','--porcelain','--untracked-files=no')===''&&
@@ -71,21 +71,21 @@ function cli(args,timeout=60000){
   check(!r.error&&!r.signal&&r.status===0,'cloudflare_command_failed');
   return String(r.stdout||'');
 }
-function json(args){
+export function json(args){
   try{return JSON.parse(cli(args));}catch{stop('cloudflare_json_invalid');}
 }
-const commands={
+export const commands={
   deployments:['deployments','list','--name',WORKER,'--config',CFG,'--json'],
   status:['deployments','status','--name',WORKER,'--config',CFG],
   versions:['versions','list','--name',WORKER,'--config',CFG,'--json'],
 };
-function version(id){
+export function version(id){
   return json(['versions','view',id,'--name',WORKER,'--config',CFG,'--json']);
 }
-function allocation(){
+export function allocation(){
   return baseline(json(commands.deployments),currentWorkerVersion(cli(commands.status)));
 }
-function receiptPath(){
+export function receiptPath(){
   const base=process.env.LOCALAPPDATA;
   check(typeof base==='string'&&path.isAbsolute(base)&&
     !/(?:^|[\\/])(OneDrive|Dropbox|Google Drive)(?:[\\/]|$)/i.test(base),
@@ -111,13 +111,13 @@ function replaceReceipt(file,data){
   check(!fs.lstatSync(file).isSymbolicLink(),'receipt_symlink');
   fs.writeFileSync(file,JSON.stringify(data)+'\n',{flag:'w',mode:0o600});
 }
-function ownerKey(){
+export function ownerKey(){
   const {full,folder}=localFilePath({repo:ROOT});
   check(fs.existsSync(full)&&!fs.lstatSync(full).isSymbolicLink()&&
     !fs.lstatSync(folder).isSymbolicLink(),'private_key_unavailable');
   return readVerifiedWorkGatewayKey(fs.readFileSync(full,'utf8'));
 }
-async function verifyGoogle(secret){
+export async function verifyGoogle(secret){
   verifyLocalWorkQaIdentity(ROOT);
   const audit=await auditWorkQaReadOnly({root:ROOT});
   check(audit?.publishedRevisionVerified===true&&
@@ -127,7 +127,7 @@ async function verifyGoogle(secret){
   check(result.googleQaSigningKeyMatches===true,
     'local_key_not_google_qa');
 }
-async function probe(url,secret){
+export async function probe(url,secret){
   const timestamp=String(Date.now()),nonce=randomUUID();
   const signature=gatewayDiagnosticSignature({secret,timestamp,nonce});
   let response;

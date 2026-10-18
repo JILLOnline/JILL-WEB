@@ -19,8 +19,7 @@ result would show that the deployed Worker can sign a Google QA receipt query
 with a key matching the owner's verified key. Invalid challenges make no
 upstream call; the route is subject to the existing gateway quota. It creates
 no Custom Order or receipt. It cannot recover the old rejection category or
-prove Shopify's signed submission path. **This code is only in Git source:**
-no new Worker version has been uploaded, deployed or queried. The one-use
+prove Shopify's signed submission path. The one-use
 Owner command `npm.cmd run work:custom-order:gateway:probe-inactive-once`
 first verifies the exact existing 100/0 WORK split, source hashes, QA
 sandbox and key, then uploads an **inactive** version using `--keep-vars`
@@ -36,6 +35,31 @@ create an order, change Shopify or touch LIVE/KEEP. A successful probe
 narrows the 409 investigation to the storefront's signed submission
 path or Google business rejection; it cannot identify the historical
 rejection category.
+
+### Inactive upload read-back recovery (2026-10-18)
+
+The Owner ran the one-use command. Exact source, 100/0 deployment,
+latest active candidate, local QA key and dry run passed. The command
+verified a newly uploaded inactive version and its inherited binding
+metadata, then stopped at `work_gateway_diagnostic_version_url_unavailable`
+because the returned URL could not be parsed. The private one-use
+receipt is spent. **Never run the upload command again.** The
+read-only recovery command below verifies the unique version marker
+and bindings, then checks that the derived version URL's `/healthz`
+response reports the exact Cloudflare version ID before sending the
+signed nonexistent-receipt query:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git pull failed.' }
+npm.cmd run work:custom-order:gateway:recover-diagnostic-readonly
+```
+
+This recovery path contains no Wrangler upload/deploy, no secret change,
+no Custom Order submit and no use of the untrusted URL from prior output.
+If the version URL is disabled or its runtime ID differs, stop and
+inspect version settings read-only. No second submission is permitted.
 
 ## Observed failure, 2026-10-17
 

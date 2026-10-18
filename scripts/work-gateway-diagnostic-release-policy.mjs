@@ -85,6 +85,23 @@ export function uploadedVersionUrl(output,id){
   check(valid.length===1,'version_url_unavailable');
   return valid[0].replace(/\/$/,'');
 }
+export function versionUrlForId(id){
+  check(UUID.test(id||''),'version_id_invalid');
+  const origin=new URL(HOST);
+  check(origin.protocol==='https:'&&origin.hostname.startsWith(WORKER+'.')&&
+    origin.pathname==='/'&&origin.search==='',
+    'work_host_invalid');
+  return `https://${id.slice(0,8)}-${origin.hostname}`;
+}
+export function certifyVersionHealth({status,mime,body,versionHeader,
+  cacheControl,redirect}={},id){
+  check(UUID.test(id||'')&&status===200&&mime==='application/json'&&
+    body&&Object.keys(body).length===2&&body.ok===true&&
+    body.environment==='WORK_CUSTOM_ORDERS_QA'&&
+    versionHeader===id&&cacheControl==='no-store'&&redirect===null,
+    'version_url_identity_unverified');
+  return true;
+}
 export function certifyProbe({status,body,cacheControl,redirect}={}){
   check(status===200&&cacheControl==='no-store'&&redirect===null&&
     body&&Object.keys(body).length===3&&body.ok===true&&

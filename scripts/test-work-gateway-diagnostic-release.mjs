@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {
   baseline,uploadArgs,candidateIsLatest,inspectUploaded,
   uploadedVersionUrl,certifyProbe,MARKER,
+  versionUrlForId,certifyVersionHealth,
 } from './work-gateway-diagnostic-release-policy.mjs';
 import {CANDIDATE,ORIGINAL,WORKER}
   from './work-custom-order-candidate-promotion-policy.mjs';
@@ -51,6 +52,13 @@ assert(!args.includes('deploy'));
 assert.equal(args.at(-1),MARKER);
 const url=`https://${id.slice(0,8)}-${WORKER}.jill-work-custom-orders.workers.dev`;
 assert.equal(uploadedVersionUrl('Version URL: '+url+'\n',id),url);
+assert.equal(versionUrlForId(id),url);
+assert.equal(certifyVersionHealth({status:200,mime:'application/json',
+  body:{ok:true,environment:'WORK_CUSTOM_ORDERS_QA'},
+  versionHeader:id,cacheControl:'no-store',redirect:null},id),true);
+assert.throws(()=>certifyVersionHealth({status:200,mime:'application/json',
+  body:{ok:true,environment:'WORK_CUSTOM_ORDERS_QA'},
+  versionHeader:CANDIDATE,cacheControl:'no-store',redirect:null},id));
 assert.throws(()=>uploadedVersionUrl('Version URL: https://example.com',id));
 assert.throws(()=>uploadedVersionUrl('Version URL: '+url,id.replace(/^f/,'a')));
 assert.equal(certifyProbe({status:200,cacheControl:'no-store',redirect:null,
@@ -64,4 +72,10 @@ const ownerSource=readFileSync(fileURLToPath(new URL(
 assert(!ownerSource.includes("'--secrets-file'"));
 assert(!ownerSource.includes("'versions','deploy'"));
 assert.match(ownerSource,/recordOnce\(file/);
+const recoverySource=readFileSync(fileURLToPath(new URL(
+  './recover-work-gateway-diagnostic-readonly.mjs',import.meta.url)),'utf8');
+assert.match(recoverySource,/one_use_receipt_missing/);
+assert.match(recoverySource,/certifyVersionHealth/);
+assert(!recoverySource.includes('uploadArgs'));
+assert(!recoverySource.includes('recordOnce('));
 console.log('PASS WORK diagnostic inactive upload policy, version URL, binding inheritance, exact response and one-use source guards.');
