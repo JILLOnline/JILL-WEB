@@ -327,6 +327,13 @@ await assert.rejects(
   'Upstream 409 must be terminal and must never propose resubmission');
 assert.equal(mockSubmissionCalls,1,
   'One caller attempt must produce exactly one POST, no hidden retry');
+assert.match(runtime,/let terminalRejected = false/);
+assert.match(runtime,/if \(terminalRejected\) \{[\s\S]*?Do not submit again; contact JILL/,
+  'Back-to-edit must not unlock another submit after terminal rejection');
+assert.match(runtime,/terminalRejected = true/,
+  'Upstream 409 must be remembered in this form session');
+assert.match(runtime,/if \(terminalRejected \|\| !request/,
+  'Submit handler must refuse a terminally rejected session');
 assert.match(runtime,/if \(error\?\.jillTerminalSubmission === true\) \{[\s\S]*?requestSubmit\.disabled = true/,
   'UI must leave Submit disabled after deterministic upstream 409');
 
