@@ -58,9 +58,22 @@
           <p>{{ 'custom_order.customer.help' | t }}</p>
         </div>
       </div>
+      {% if customer %}
+        <div class="jill-custom-order__account-context" data-jill-customer-account-context data-mode="signed-in">
+          <strong>{{ 'custom_order.customer.account_title' | t }}</strong>
+          <p>{{ 'custom_order.customer.account_identity' | t }}: {{ customer.email | escape }}</p>
+          <p>{{ 'custom_order.customer.account_help' | t }}</p>
+        </div>
+      {% else %}
+        <div class="jill-custom-order__account-context" data-jill-customer-account-context data-mode="guest">
+          <strong>{{ 'custom_order.customer.guest_title' | t }}</strong>
+          <p>{{ 'custom_order.customer.guest_help' | t }}</p>
+          <a href="{{ routes.account_login_url }}">{{ 'custom_order.customer.guest_sign_in' | t }}</a>
+        </div>
+      {% endif %}
       <div class="jill-custom-order__customer" data-jill-custom-order-customer>
-        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name' %}
-        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email' %}
+        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name', value: customer.name %}
+        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email', value: customer.email, help: 'custom_order.customer.contact_email_help' | t %}
         <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
           <label class="jill-field__label" for="JillCustomOrderPhone">
             {{ customer_phone_label }}
