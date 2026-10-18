@@ -227,6 +227,9 @@ jobs:
       - name: Verify WORK health runtime version attribution without Cloudflare (OFFLINE)
         run: node scripts/test-work-custom-order-version-metadata-offline.mjs
 
+      - name: Verify one-use inactive metadata gateway release policy (OFFLINE)
+        run: node scripts/test-work-gateway-version-metadata-inactive-upload.mjs
+
       - name: Verify no tracked files changed
         run: test -z "$(git status --porcelain --untracked-files=no)"
 
