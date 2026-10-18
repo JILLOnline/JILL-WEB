@@ -127,6 +127,8 @@ for(const marker of [
   "if(matched)finish(null,true)",
   "verifiedTailHealthEvent(event",
   "child.kill()",
+  "child.on('close'",
+  "classifyTailSessionExit(stderr)",
   "No deployment retry",
   "not independently proven",
 ]){
