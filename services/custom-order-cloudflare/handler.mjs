@@ -4,6 +4,11 @@ import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-accou
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
+// This is a non-sensitive deployment identifier, read from Cloudflare itself.
+// NEVER derive attribution from the caller's version override header.
+const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
+const VERSION_PROBE='jill_work_version_probe';
+const VERSION_HEADER='x-jill-work-gateway-version';
 const JSON_HEADERS={'content-type':'application/json; charset=utf-8',
   'cache-control':'no-store','x-content-type-options':'nosniff'};
 
@@ -62,7 +67,20 @@ export async function handleCloudflareCustomOrderWork(request,env) {
       config(env);
       const stub=env.RATE_LIMITER.getByName('jill-work-custom-orders-global');
       if(await stub.ping()!==true)throw Error('limiter unavailable');
-      return reply(200,{ok:true,environment:'WORK_CUSTOM_ORDERS_QA'});
+      const result=reply(200,{ok:true,environment:'WORK_CUSTOM_ORDERS_QA'});
+      const query=new URL(request.url).searchParams;
+      // An opt-in GET-only probe preserves the ordinary health contract.
+      // The *running* Worker version must supply the ID; client headers
+      // and the code's compiled version must never be trusted as evidence.
+      if(query.has(VERSION_PROBE)) {
+        const values=query.getAll(VERSION_PROBE);
+        const version=env?.CF_VERSION_METADATA?.id;
+        if(query.size!==1||values.length!==1||!UUID.test(values[0])||
+           typeof version!=='string'||!UUID.test(version))
+          return reply(503,{ok:false});
+        result.headers.set(VERSION_HEADER,version);
+      }
+      return result;
     } catch {
       return reply(503,{ok:false});
     }
