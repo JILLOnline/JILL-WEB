@@ -942,6 +942,24 @@
     return pill;
   }
 
+  // Presentation only: Shopify's signed app-proxy customer ID, never a
+  // form email or this Liquid snapshot, decides server-side ownership.
+  function reviewAccountContext({loggedIn,accountEmail,contactEmail} = {}) {
+    const owner = loggedIn === true && typeof accountEmail === 'string' &&
+      accountEmail.trim().length > 0 ? accountEmail.trim() : '';
+    const contact = typeof contactEmail === 'string' ? contactEmail.trim() : '';
+    return {
+      mode: loggedIn === true ? 'signed-in' : 'guest',
+      account: owner,
+      contact,
+      note: loggedIn === true
+        ? 'My JILL tracking uses your verified Shopify sign-in, not the contact email entered here. '
+          + 'Your request is attached only if Shopify authenticates that account at submission.'
+        : 'Guest request: no account is needed to submit, but this request will not appear '
+          + 'in My JILL automatically. Sign in before submitting to enable account tracking.',
+    };
+  }
+
   function renderReview(root, request) {
     const review = root.querySelector('[data-jill-custom-order-review]');
     const content = root.querySelector('[data-jill-custom-order-review-content]');
@@ -955,12 +973,23 @@
     const preferredValue = request.customer.phone && request.customer.preferred_contact === 'phone'
       ? `${preferredContact} · ${request.customer.phone}`
       : preferredContact;
+    const identity = reviewAccountContext({
+      loggedIn: root.dataset.customerLoggedIn === 'true',
+      accountEmail: root.dataset.customerEmail,
+      contactEmail: request.customer.email,
+    });
     appendRows(customerDetails, [
       reviewRow('Name', request.customer.name, 'jill-custom-order-review__summary-item'),
-      reviewRow('Email', request.customer.email, 'jill-custom-order-review__summary-item'),
+      reviewRow('Contact email', identity.contact, 'jill-custom-order-review__summary-item'),
+      identity.account
+        ? reviewRow('Signed-in account email', identity.account, 'jill-custom-order-review__summary-item')
+        : null,
       reviewRow('Preferred contact', preferredValue, 'jill-custom-order-review__summary-item'),
     ]);
     customer.append(customerDetails);
+    const identityNote = node('p', 'jill-custom-order__identity-review-note', identity.note);
+    identityNote.dataset.jillAccountMode = identity.mode;
+    customer.append(identityNote);
     sheet.append(customer);
 
     const itemsSection = node('section', 'jill-custom-order-review__card jill-custom-order-review__items-card jill-card');
@@ -2222,6 +2251,7 @@
       requestedProductHandle,
       applyCatalogPrefill,
       submitRequest,
+      reviewAccountContext,
     }),
     configurable: false,
     enumerable: false,
