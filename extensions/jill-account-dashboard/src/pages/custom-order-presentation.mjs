@@ -29,11 +29,11 @@ export function customOrderTitle(summary) {
 }
 
 export function customOrderShortId(id) {
-  // Friendly, non-authoritative display label only; keep full reference below.
+  // Match the WORK merchant inbox reference: the LAST eight characters
+  // of the immutable submission ID. Keep the complete ID below for audit.
+  // This is display-only and never used to authorize account reads.
   const value=String(id || '');
-  const segments=value.split(':');
-  const suffix=segments.at(-1) || '';
-  return suffix.length>=8 ? '#'+suffix.slice(0,8).toUpperCase() : 'JILL request';
+  return value.length>=8 ? '#'+value.slice(-8).toUpperCase() : 'JILL request';
 }
 
 export function customOrderDateTime(value,locale='en-US') {
