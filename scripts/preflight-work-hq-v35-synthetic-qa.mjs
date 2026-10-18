@@ -134,8 +134,8 @@ export async function syntheticQuotePreflight({
     qa_published_version:audit.publishedVersion,
     anonymous_version_override_owner_denial:true,
     ordinary_gateway_runtime_verified:true,
-    permitted_synthetic_submissions:1,
-    synthetic_submission_created:false,
+    permitted_synthetic_submissions:0,
+    synthetic_attempt_rejected_409:true,
     quote_draft_saved:false,existing_customers_affected:false,
   });
 }
@@ -151,8 +151,9 @@ if(called){
       result.qa_published_version+'; no LIVE/Rewards cross-target.');
     console.log('PASS ordinary WORK gateway runtime identifies the reviewed candidate; signed submission remains untested.');
     console.log('PASS anonymous pinned v35 request reaches Owner-denial boundary; ordinary v34 remains 410.');
-    console.log('READY FOR OWNER: create exactly ONE synthetic WORK Custom Order through existing verified WORK form; then signed-in quote QA with temporary browser pin.');
+    console.error('HOLD: the single authorized synthetic attempt returned WORK 409. Do not submit another order or pin v35 for quote QA.');
     console.log('READ ONLY: NO Custom Order submitted, no D1 quote saved, no emails, no Worker traffic change, R2, LIVE/KEEP or paid plan changes.');
+    process.exitCode=1;
   }catch(err){
     const text=String(err?.message||'');
     console.error('STOP WORK synthetic quote QA preflight: '+

@@ -1,5 +1,14 @@
 # JILL HQ WORK — authorized one-request synthetic Save Draft + Reload QA
 
+**HOLD (2026-10-18):** The one authorized storefront submission returned
+`WORK 409 / upstream_rejected`; no verified receipt was shown. The attempt
+is spent. This historical runbook is retained for evidence, but its steps
+below are suspended. Do not submit another request, run v35 quote QA, or
+interpret another metadata preflight PASS as permission to create an order.
+Cloudflare Workers Observability was disabled when the failure occurred;
+enabling it now cannot recover that rejection category. The prepared
+read-only gateway diagnostic in source has not been deployed or executed.
+
 ## Scope
 
 Owner explicitly approved creation of **one new synthetic WORK Custom

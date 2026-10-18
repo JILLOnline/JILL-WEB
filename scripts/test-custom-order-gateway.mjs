@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {handleCustomOrderProxy,receiptSignature,validateCustomOrderPayload,classifyCustomOrderUpstreamRejection} from '../backend/custom-order-gateway.mjs';
+import {handleCustomOrderProxy,receiptSignature,validateCustomOrderPayload,classifyCustomOrderUpstreamRejection,gatewayDiagnosticSignature,handleCustomOrderGatewayDiagnostic} from '../backend/custom-order-gateway.mjs';
 
 const id='jill:12345678-abcd-4def-abcd-111111111111';
 const secret='qa-testing-secret-at-least-32-bytes-please';
@@ -36,6 +36,68 @@ const upstream=async(_url,opts)=>{
 const config={expectedShop:shop,appsScriptEndpoint:endpoint,receiptSecret:secret,
   authenticateProxy:async()=>({shop}),rateLimit:async()=>true,
   allowedOrigins:['https://jill-work.myshopify.com'],backendFetch:upstream,now:()=>1791741600000};
+// A deployed Worker can check its own secret and upstream without an intake
+// POST. Wrong/stale challenges never reach Google; valid ones can only ask
+// for a deliberately nonexistent receipt.
+const diagnosticNonce='1c56163e-ae74-411b-81d6-84070badb0b5';
+const diagnosticTime='1791741600000';
+const diagnosticRequest=(signature=gatewayDiagnosticSignature({
+  secret,timestamp:diagnosticTime,nonce:diagnosticNonce,
+}),timestamp=diagnosticTime)=>new Request(
+  'https://example.workers.dev/jill-work-gateway-diagnostic',{
+    method:'POST',headers:{
+      'x-jill-qa-diagnostic-ts':timestamp,
+      'x-jill-qa-diagnostic-nonce':diagnosticNonce,
+      'x-jill-qa-diagnostic-signature':signature,
+    },
+  });
+let diagnosticCalls=0;
+const diagnosticConfig={
+  receiptSecret:secret,appsScriptEndpoint:endpoint,now:()=>Number(diagnosticTime),
+  uuid:()=>diagnosticNonce,rateLimit:async()=>true,
+  backendFetch:async(url,opts)=>{
+    diagnosticCalls++;
+    assert.equal(url,endpoint);
+    const data=new URLSearchParams(opts.body);
+    assert.deepEqual([...data.keys()].sort(),[
+      'jill_order_gateway_sig','jill_order_gateway_ts',
+      'jill_order_receipt','submission_id',
+    ]);
+    assert.equal(data.get('submission_id'),
+      'jill:qa-gateway-diagnostic:'+diagnosticNonce);
+    assert.equal(data.get('jill_order_gateway_sig'),receiptSignature({
+      action:'receipt',id:data.get('submission_id'),
+      timestamp:data.get('jill_order_gateway_ts'),secret,
+    }));
+    return validResult({version:1,operation:'custom_order.receipt.result',
+      ok:false,error:{code:'receipt_not_found',retryable:true}});
+  },
+};
+const diagnostic=await handleCustomOrderGatewayDiagnostic({
+  ...diagnosticConfig,request:diagnosticRequest(),
+});
+assert.equal(diagnostic.status,200);
+assert.deepEqual(await diagnostic.json(),{
+  ok:true,code:'gateway_google_signature_verified',order_created:false,
+});
+assert.equal(diagnosticCalls,1);
+assert.equal((await handleCustomOrderGatewayDiagnostic({
+  ...diagnosticConfig,request:diagnosticRequest('0'.repeat(64)),
+})).status,403);
+assert.equal((await handleCustomOrderGatewayDiagnostic({
+  ...diagnosticConfig,request:diagnosticRequest(undefined,'1791741400000'),
+})).status,403);
+assert.equal(diagnosticCalls,1);
+assert.equal((await handleCustomOrderGatewayDiagnostic({
+  ...diagnosticConfig,request:diagnosticRequest(),
+  backendFetch:async()=>validResult({version:1,
+    operation:'custom_order.receipt.result',ok:false,
+    error:{code:'unauthorized_receipt',retryable:false}}),
+})).status,503);
+assert.equal((await handleCustomOrderGatewayDiagnostic({
+  ...diagnosticConfig,request:diagnosticRequest(),
+  rateLimit:async()=>false,
+})).status,429);
 const run=(req=request(),extra={})=>handleCustomOrderProxy({...config,...extra,request:req});
 const response=await run();
 assert.equal(response.status,200);

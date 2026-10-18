@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createCustomOrderWorkProxyRoute} from '../../backend/custom-order-work-proxy-route.mjs';
+import {handleCustomOrderGatewayDiagnostic} from '../../backend/custom-order-gateway.mjs';
 import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-account-read.mjs';
 
 const MAX_BYTES=256*1024;
@@ -84,6 +85,20 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     } catch {
       return reply(503,{ok:false});
     }
+  }
+  if(pathname==='/jill-work-gateway-diagnostic') {
+    let settings;
+    try {settings=config(env);}
+    catch {return reply(503,{ok:false,code:'diagnostic_unverified'});}
+    return handleCustomOrderGatewayDiagnostic({
+      request,receiptSecret:settings.googleGatewaySecret,
+      appsScriptEndpoint:settings.googleQaEndpoint,
+      rateLimit:async()=>{
+        const limiter=env.RATE_LIMITER.getByName('jill-work-custom-orders-global');
+        return limiter.allow({shop:'jill-work.myshopify.com',
+          client:clientId(request),minute:Math.floor(Date.now()/60000)});
+      },
+    });
   }
   // Account reads are a distinct, bearer-JWT-authenticated endpoint.
   // Unlike Shopify app-proxy submissions, extension fetches do NOT pass

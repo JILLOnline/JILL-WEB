@@ -76,6 +76,15 @@ assert.equal((await handleCloudflareCustomOrderWork(new Request('https://example
 })).status,503);
 assert.equal((await handleCloudflareCustomOrderWork(
   new Request('https://example.workers.dev/other'),env)).status,404);
+const diagnosticUrl='https://example.workers.dev/jill-work-gateway-diagnostic';
+assert.equal((await handleCloudflareCustomOrderWork(
+  new Request(diagnosticUrl),env)).status,403);
+assert.equal((await handleCloudflareCustomOrderWork(
+  new Request(diagnosticUrl,{method:'POST',headers:{
+    'x-jill-qa-diagnostic-ts':String(t),
+    'x-jill-qa-diagnostic-nonce':'1c56163e-ae74-411b-81d6-84070badb0b5',
+    'x-jill-qa-diagnostic-signature':'0'.repeat(64),
+  }}),env)).status,403,'Unproved callers must never reach Google QA');
 // Shopify app proxies append a trailing slash to their configured upstream
 // path. This was previously a Worker-generated 404 even when the Shopify
 // app version declared the correct proxy destination. A signed, deliberately

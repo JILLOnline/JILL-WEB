@@ -1,5 +1,29 @@
 # JILL WORK Custom Order — 409 upstream_rejected / gateway_required
 
+## 2026-10-18 update — current rejection is unclassified
+
+The newer single synthetic WORK request returned `409 / upstream_rejected`
+without a verified receipt or the underlying Google error code. The older
+`gateway_required` screenshot is evidence of an earlier attempt, **not proof**
+of the newer request's cause. The candidate gateway was promoted after the
+older diagnosis; its current secret and destination cannot be inferred from
+binding names. Workers Observability was disabled at the time, so there is
+no stored category to retrieve by enabling it now. The synthetic approval
+was consumed. Do not retry or start HQ v35 quote QA.
+
+Source now prepares a narrowly scoped, owner-authenticated diagnostic route
+on the **same WORK gateway**. A 60-second HMAC challenge derived from the
+owner's existing WORK QA key is required before the Worker asks its configured
+Google endpoint for a fresh, deliberately nonexistent receipt. A successful
+result would show that the deployed Worker can sign a Google QA receipt query
+with a key matching the owner's verified key. Invalid challenges make no
+upstream call; the route is subject to the existing gateway quota. It creates
+no Custom Order or receipt. It cannot recover the old rejection category or
+prove Shopify's signed submission path. **This code is only in Git source:**
+no new Worker version has been uploaded, deployed or queried. An inactive
+WORK version, identity/binding review and exact version-pinned read-only
+probe are required before considering any traffic change.
+
 ## Observed failure, 2026-10-17
 
 Owner's WORK Custom Order screenshot shows: `WORK 409 / upstream_rejected /

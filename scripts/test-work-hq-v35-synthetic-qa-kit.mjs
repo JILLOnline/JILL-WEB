@@ -186,7 +186,8 @@ pass(()=>{
   assert.equal(ok.work_v34_pct,100);
   assert.equal(ok.work_v35_pct,0);
   assert.equal(ok.qa_published_version,7);
-  assert.equal(ok.synthetic_submission_created,false);
+  assert.equal(ok.permitted_synthetic_submissions,0);
+  assert.equal(ok.synthetic_attempt_rejected_409,true);
   assert.equal(ok.quote_draft_saved,false);
   assert.equal(ok.anonymous_version_override_owner_denial,true);
   assert.equal(ok.ordinary_gateway_runtime_verified,true);

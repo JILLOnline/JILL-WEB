@@ -1,4 +1,4 @@
-import {createHmac} from 'node:crypto';
+import {createHmac,timingSafeEqual,randomUUID} from 'node:crypto';
 
 // Portable Shopify App Proxy handler; deploy behind a real Shopify
 // authenticate.public.appProxy request verifier. NEVER use this module
@@ -94,6 +94,69 @@ const failure=(status,code,retryable=false)=>response(status,{
     : 'Your request could not be accepted. Check your details and try again.',
     retryable},
 });
+
+// Owner-only, read-only WORK diagnostic. The local Owner proves possession
+// of the existing QA signing key before this Worker contacts Google. The
+// domain-separated challenge is never accepted as a submission signature.
+const DIAGNOSTIC_NONCE=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
+export function gatewayDiagnosticSignature({secret,timestamp,nonce}) {
+  if(typeof secret!=='string'||secret.length<32||
+     !/^[0-9]{13}$/.test(String(timestamp))||!DIAGNOSTIC_NONCE.test(nonce||''))
+    throw new Error('Invalid WORK gateway diagnostic challenge.');
+  return createHmac('sha256',secret)
+    .update(`work_gateway_diagnostic\n${timestamp}\n${nonce}`,'utf8')
+    .digest('hex');
+}
+
+export async function handleCustomOrderGatewayDiagnostic({
+  request,receiptSecret,appsScriptEndpoint,rateLimit,
+  backendFetch=fetch,now=Date.now,uuid=randomUUID,
+}) {
+  const deny=()=>response(403,{ok:false,code:'diagnostic_denied'});
+  if(request?.method!=='POST'||
+     !BACKEND.test(appsScriptEndpoint||'')||
+     typeof receiptSecret!=='string'||receiptSecret.length<32||
+     typeof rateLimit!=='function'||typeof backendFetch!=='function')
+    return deny();
+  const timestamp=request.headers.get('x-jill-qa-diagnostic-ts');
+  const nonce=request.headers.get('x-jill-qa-diagnostic-nonce');
+  const signature=request.headers.get('x-jill-qa-diagnostic-signature');
+  if(request.body!==null||
+     ![null,'0'].includes(request.headers.get('content-length'))||
+     !/^[0-9]{13}$/.test(timestamp||'')||
+     Math.abs(now()-Number(timestamp))>60000||
+     !DIAGNOSTIC_NONCE.test(nonce||'')||
+     !/^[a-f0-9]{64}$/.test(signature||''))return deny();
+  const expected=gatewayDiagnosticSignature({
+    secret:receiptSecret,timestamp,nonce,
+  });
+  if(!timingSafeEqual(Buffer.from(signature,'hex'),Buffer.from(expected,'hex')))
+    return deny();
+  let permitted=false;
+  try{permitted=await rateLimit();}catch{}
+  if(permitted!==true)return response(429,{ok:false,code:'diagnostic_rate_limited'});
+  const challenge=uuid();
+  const id='jill:qa-gateway-diagnostic:'+challenge;
+  if(!REQUEST_ID.test(id)||!DIAGNOSTIC_NONCE.test(challenge))
+    return response(503,{ok:false,code:'diagnostic_unverified'});
+  const receipt=new URLSearchParams({
+    jill_order_receipt:'1',submission_id:id,
+    jill_order_gateway_ts:String(now()),
+  });
+  receipt.set('jill_order_gateway_sig',receiptSignature({
+    action:'receipt',id,timestamp:receipt.get('jill_order_gateway_ts'),
+    secret:receiptSecret,
+  }));
+  let result;
+  try{result=await readBackendResult(backendFetch,appsScriptEndpoint,receipt,2048);}
+  catch{return response(503,{ok:false,code:'diagnostic_unverified'});}
+  if(result?.version===1&&result.operation==='custom_order.receipt.result'&&
+     result.ok===false&&result.error?.code==='receipt_not_found'&&
+     result.error.retryable===true)
+    return response(200,{ok:true,code:'gateway_google_signature_verified',
+      order_created:false});
+  return response(503,{ok:false,code:'diagnostic_unverified'});
+}
 
 export async function readBackendResult(backendFetch,url,body,maxBytes=8192) {
   if(!Number.isSafeInteger(maxBytes)||maxBytes<1024||maxBytes>131072)
