@@ -243,3 +243,11 @@ Add a new entry only for a real architectural/product-system decision. Routine i
 
 **Proof and file map:** `docs/CUSTOMER_ACCOUNT_HYBRID.md` owns the staged roadmap. Contract semantics stay in `FEATURE_CONTRACTS.md`, file/domain ownership stays in `DOMAIN_OWNERSHIP.md`, evidence stays in `QA_CERTIFICATION.md`.
 
+## 2026-10-18 — One points conversion across website and future playground
+
+**Decision:** The merchant selected 1 point = $1, with 0.1 point earned per $1 of eligible paid items and 0.1-point redemption steps. Each $1 discount requires at least $10 of eligible item subtotal. This replaces the earlier proposed 20% purchase limit and unequal future reward tiers, but does not retroactively change the terms of issued v13 coupons. The customer can choose a small amount for a snack or admission; reaching 50 points is not an unlock requirement.
+
+**Why:** A common minimum-purchase formula permits a small on-site purchase and a large web order to use the same wallet and rate, without adding a separate playground Rewards engine. It sets a 10% transaction discount ceiling and keeps the previously selected 50 points = $50 value.
+
+**Consequence:** `docs/JILL_REWARDS_WORK_FLEX_REDEMPTION.md` defines the integer-cents/tenths math and the migration proof. Shopify remains the item, discount, checkout and order authority; the canonical Rewards backend owns balances and reservation/reconciliation, while My JILL and HQ are customer and merchant views. Current v13 has fixed whole-point tiers and remains active until a versioned WORK ledger, coupon integrity migration, eligible-product scope and Shopify checkout/draft tests pass. LIVE and KEEP remain untouched.
+

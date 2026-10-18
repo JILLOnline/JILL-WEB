@@ -1,6 +1,6 @@
 # JILL HQ — WORK | Merchant Management Center
 
-For the cross-domain WORK system map, current proof boundaries and data joins, see `JILL_HQ_WORK_SYSTEM_MAP.md`. For the customer Inbox, quote approval and Shopify handoff, see `JILL_HQ_MY_JILL_CUSTOMER_HANDOFF.md`. Physical machines and capacity are outside this release. The dated rollout notes below record the state when each phase was written.
+For the cross-domain WORK system map, current proof boundaries and data joins, see `JILL_HQ_WORK_SYSTEM_MAP.md`. For the customer Inbox, quote approval and Shopify handoff, see `JILL_HQ_MY_JILL_CUSTOMER_HANDOFF.md`. For the unified website/playground Rewards conversion and purchase minimum, see `JILL_REWARDS_WORK_FLEX_REDEMPTION.md`. Physical machines and capacity are outside this release. The dated rollout notes below record the state when each phase was written.
 
 Status: WORK branding + management shell SOURCE CANDIDATE ONLY (2026-10-14).
 App identity: existing WORK Shopify app client ID `f8e1ebdbae84490dc8ea5b133637e6c0` on `jill-work.myshopify.com`.
