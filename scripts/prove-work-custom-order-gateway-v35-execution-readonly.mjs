@@ -11,6 +11,7 @@ import {
   ACTIVE,CANDIDATE,DEPLOYMENT,HOST,OVERRIDE,
   candidateTailArguments,pinnedHealthUrl,versionOverrideHeader,
   verifiedTailHealthEvent,inspectGatewayZeroAllocation,
+  classifyTailSessionExit,
 } from './work-custom-order-gateway-version-tail-policy.mjs';
 import {currentWorkerVersion} from './deploy-work-hq-inbox-shell.mjs';
 
@@ -82,7 +83,7 @@ function waitForTailAndProbe({url,sinceMs,untilMs}){
         stdio:['ignore','pipe','pipe'],
       });
     child.on('error',()=>finish(Error('work_gateway_tail_session_unavailable')));
-    child.on('exit',()=>{if(!settled)finish(Error('work_gateway_tail_ended_without_proof'));});
+    child.on('exit',()=>{if(!settled)finish(Error('work_gateway_tail_ended_'+classifyTailSessionExit(stderr)));});
     const startDeadline=setTimeout(()=>finish(
       Error('work_gateway_tail_not_ready')),30000);
     const deadline=setTimeout(()=>finish(
