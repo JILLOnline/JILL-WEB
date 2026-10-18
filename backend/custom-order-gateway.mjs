@@ -11,6 +11,24 @@ const REQUEST_ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const STORE=/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
 const BACKEND=/^https:\/\/script\.google\.com\/macros\/s\/AKfycb[A-Za-z0-9_-]+\/exec$/;
 
+// Only fixed categories reach private Worker diagnostics. Never print Google
+// response bodies, customer contacts, submission IDs, secret material or HMACs.
+const UPSTREAM_REJECT_CATEGORY=Object.freeze({
+  invalid_email:'contact_validation',
+  invalid_source:'source_validation',
+  gateway_required:'gateway_authentication',
+  submission_conflict:'immutable_request_conflict',
+  owner_conflict:'account_ownership_conflict',
+  owner_not_enabled:'account_ownership_unavailable',
+});
+export function classifyCustomOrderUpstreamRejection(result) {
+  if(result?.ok!==false || result?.error?.retryable!==false) return 'unclassified';
+  const code=result?.error?.code;
+  if(typeof code!=='string')return 'unclassified';
+  return Object.hasOwn(UPSTREAM_REJECT_CATEGORY,code)
+    ? UPSTREAM_REJECT_CATEGORY[code] : 'unclassified';
+}
+
 export function receiptSignature({action,id,timestamp,rawPayload='',secret,ownerGid=''}) {
   if (!['submit','receipt','customer_list'].includes(action) ||
       !REQUEST_ID.test(String(id)) || !/^[0-9]{13}$/.test(String(timestamp)) ||
@@ -164,8 +182,12 @@ export async function handleCustomOrderProxy(args) {
   if(result?.operation!=='custom_order.submit.result' ||
       result.ok!==true || result.submission_id!==id ||
       result.status!=='received') {
-    if(result?.ok===false && result?.error?.retryable===false)
+    if(result?.ok===false && result?.error?.retryable===false) {
+      const category=classifyCustomOrderUpstreamRejection(result);
+      // No user-supplied payload or request identifier can enter this line.
+      console.warn('WORK Custom Order upstream rejection category: '+category);
       return failure(409,'upstream_rejected');
+    }
     return failure(503,'receipt_unconfirmed',true);
   }
   const receipt=new URLSearchParams({
