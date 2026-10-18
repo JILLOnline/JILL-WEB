@@ -1908,6 +1908,7 @@
     root.dataset.jillOptionsFinished = 'false';
     let request = null;
     let requestSentOnce = false;
+    let terminalRejected = false;
     let editScroll = 0;
 
     for (const item of root.querySelectorAll('[data-jill-custom-order-item]')) initializeVariantAllocation(item);
@@ -2099,6 +2100,10 @@
     }
 
     function openReview() {
+      if (terminalRejected) {
+        setStatus('This request was rejected. Do not submit again; contact JILL.');
+        return;
+      }
       setStatus('');
       const issue = firstReviewIssue();
       if (issue) {
@@ -2144,7 +2149,7 @@
     }
 
     async function submit() {
-      if (!request || !reviewConfirm.checked || requestSubmit.disabled) return;
+      if (terminalRejected || !request || !reviewConfirm.checked || requestSubmit.disabled) return;
       requestSubmit.disabled = true;
       requestSubmit.setAttribute('aria-disabled', 'true');
       requestSubmit.textContent = root.dataset.sendingLabel || 'Sending request…';
@@ -2170,6 +2175,7 @@
       } catch (error) {
         setStatus(error.message.replace(/^JILL custom order:\s*/, ''));
         if (error?.jillTerminalSubmission === true) {
+          terminalRejected = true;
           requestSubmit.disabled = true;
           requestSubmit.setAttribute('aria-disabled', 'true');
           requestSubmit.textContent = 'Request blocked — contact JILL';
@@ -2184,7 +2190,7 @@
     reviewOpen?.addEventListener('click', openReview);
     reviewBack?.addEventListener('click', backToEdit);
     reviewConfirm?.addEventListener('change', () => {
-      const enabled = reviewConfirm.checked && Boolean(request);
+      const enabled = !terminalRejected && reviewConfirm.checked && Boolean(request);
       requestSubmit.disabled = !enabled;
       requestSubmit.setAttribute('aria-disabled', enabled ? 'false' : 'true');
     });
