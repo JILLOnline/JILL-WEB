@@ -20,9 +20,22 @@ with a key matching the owner's verified key. Invalid challenges make no
 upstream call; the route is subject to the existing gateway quota. It creates
 no Custom Order or receipt. It cannot recover the old rejection category or
 prove Shopify's signed submission path. **This code is only in Git source:**
-no new Worker version has been uploaded, deployed or queried. An inactive
-WORK version, identity/binding review and exact version-pinned read-only
-probe are required before considering any traffic change.
+no new Worker version has been uploaded, deployed or queried. The one-use
+Owner command `npm.cmd run work:custom-order:gateway:probe-inactive-once`
+first verifies the exact existing 100/0 WORK split, source hashes, QA
+sandbox and key, then uploads an **inactive** version using `--keep-vars`
+with no secret file. It reads the new version and bindings back, extracts
+Cloudflare's version URL and makes one owner-signed, nonexistent-receipt
+probe through that URL. It rechecks the unchanged deployment afterward.
+Version URLs can route directly to uploaded versions, so this check does
+not need a 0% deployment or a change to ordinary traffic. If the command
+stops after attempting upload, its local one-use receipt prevents an
+accidental second version; inspect remote versions read-only before any
+further action. It does not read secret values, enable Observability,
+create an order, change Shopify or touch LIVE/KEEP. A successful probe
+narrows the 409 investigation to the storefront's signed submission
+path or Google business rejection; it cannot identify the historical
+rejection category.
 
 ## Observed failure, 2026-10-17
 
