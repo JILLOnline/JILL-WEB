@@ -24,7 +24,12 @@ for(const wrong of [
 const manifest=readFileSync(
   new URL('../services/custom-order-cloudflare/wrangler.toml',import.meta.url),'utf8');
 pass(()=>assert.equal(exactManifest(manifest),true));
-pass(()=>assert.equal(exactManifest(manifest.replace(/\n/g,'\r\n')),true));
+// Windows Git may have already checked out this file with CRLF.
+// Normalize the fixture FIRST; otherwise converting LF to CRLF twice
+// creates CRCRLF and falsely fails the strict unchanged manifest gate.
+const manifestLF=manifest.replace(/\r\n/g,'\n');
+pass(()=>assert.equal(exactManifest(manifestLF.replace(/\n/g,'\r\n')),true));
+reject(()=>exactManifest(manifestLF.replace(/\n/g,'\r\r\n')));
 for(const bad of [
   manifest.replace('workers_dev = true','workers_dev = false'),
   manifest.replace('CF_VERSION_METADATA','ANOTHER_BINDING'),
