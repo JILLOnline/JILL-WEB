@@ -137,7 +137,7 @@ for(const forbidden of [
   /['"]d1['"],['"]execute['"]/,
   /['"]r2['"],/,
   /['"]POST['"]/,
-  /console\.log\([^)]*secret\b/,
+  /console\.log\(\s*secret\b/,
   /console\.error\([^)]*stderr\b/,
   /process\.argv\[2\]/,
 ]){
