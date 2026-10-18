@@ -108,7 +108,7 @@
       "guest_title": "Continue as a guest",
       "guest_help": "No account is required to request a custom order. Guest requests are not automatically linked to My JILL. Sign in before submitting if you want tracking in your account.",
       "guest_sign_in": "Sign in to track your request",
-      "contact_email_help": "Contact email for updates. This does not change the account that owns your request."
+      "contact_email_help": "JILL uses this email to contact you. Typing an email never links or transfers a request to a My JILL account."
     },
     "order": {
       "title": "What are you ordering?",
