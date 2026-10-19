@@ -497,3 +497,19 @@ no upload, activation, signed POST, raw tail storage or receipt mutation. See
 `WORK_HQ_INTERMITTENT_REQUESTS_DIAGNOSIS_2026-10-19.md` for precise reproduction,
 privacy checks and interpretation limits. Root cause and authenticated acceptance
 remain unverified; visual work pauses. All earlier release receipts remain spent.
+
+
+## Empty navigation capture and corrected diagnostic readiness — 2026-10-19
+
+Owner runner `8941382e8925912b279a782f5420934eb518e9d5` retained zero events;
+allocation remained unchanged and no upload/deployment occurred. Empty retained
+records do not prove absent traffic or locate the Requests stall. A reproduced
+collector bug dropped Cloudflare's valid null Worker-name HTTP envelopes; the
+actual Owner envelope is unknown, so attribution of this empty run is unverified.
+Corrected WORK-only projection and matched unsigned health-event self-check now
+require READY before the 75-second navigation capture starts. Actual installed
+Wrangler JSON transport and subscription cleanup pass against a loopback mock;
+app runtime, credentials, data and spent release receipts are unchanged.
+See `WORK_HQ_INTERMITTENT_REQUESTS_DIAGNOSIS_2026-10-19.md` and
+`evidence/work-hq-navigation-empty-capture-2026-10-19.json`. Requests root cause,
+authenticated incident resolution and full WORK acceptance remain OPEN.

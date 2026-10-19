@@ -45,10 +45,14 @@ clean, synced branch on the existing Owner machine:
 npm.cmd run work:hq:navigation:diagnose
 ```
 
-It verifies the exact active WORK allocation before subscribing. After its
-capture message, allow five seconds to connect, then reproduce Home → Requests
-→ detail → back. When loading hangs, wait 20 seconds and refresh once. Let the
-75-second window finish and share only this command's filtered JSON output.
+It verifies the exact active WORK allocation before subscribing, then sends at
+most five unsigned `/healthz` GETs with a fresh diagnostic nonce. The existing
+canonical health certifier checks the exact runtime; the collector must also
+receive the matching health request through the tail stream. Wait for **READY**,
+then reproduce Home → Requests → detail → back. When loading hangs, wait 20
+seconds and refresh once. The 75-second window begins only after READY. Share
+only this command's filtered JSON output. If the self-check fails, the runner
+stops without asking for clicks and reports safe parse/filter counters.
 No status/message/quote writes are needed. No deployment command should run.
 
 The subscription is only for `jill-order-desk-canary-work`. It pipes raw output
@@ -56,6 +60,10 @@ privately in memory, retains only fixed route categories, opaque phase traces,
 numeric durations/status, allowlisted outcome/error categories and validated
 runtime UUID. Raw URLs, query strings, headers, customer/request identifiers,
 unrelated logs and exception messages/stacks are never printed or saved.
+Cloudflare permits null/missing `scriptName` in its tail envelope. Such events
+are accepted only for the exact fixed WORK HTTP origin, within the CLI's explicit
+WORK-only subscription. An explicitly foreign Worker name is still rejected.
+A missing runtime UUID is still unverified; it is never inferred from the name.
 The parser handles chunked/formatted JSON with bounded memory and at most 400
 projected events. The runner stops via Wrangler's SIGINT cleanup handler over
 IPC (Windows-compatible), with a bounded forced-child fallback, then independently
@@ -91,5 +99,34 @@ Verified locally: fragmented/oversized event handling, exclusion of synthetic
 private tokens/customer IDs/headers/URLs/stack traces, exact/unknown version
 attribution and baseline drift denial. Existing navigation runtime guard passes
 with its seven reviewed files unchanged. The installed CLI direct entry and
-IPC preload were exercised with `--version`; no provider credentials, app writes
-or live tail were accessed by the executor.
+IPC preload were exercised with `--version`. The full installed Wrangler CLI
+also passed a loopback-only API/WebSocket test, delivering null-name phase
+events through the actual JSON formatter/parser and deleting its simulated
+subscription on graceful IPC stop. No provider credentials, app writes or live
+tail were accessed by the executor.
+
+## Owner capture at runner 8941382: no retained events
+
+Owner returned `allocation_unchanged: true`, `tail_events_received: 0`, empty
+records, graceful stop requested, forced stop false, and no reported tail command
+failure. This proves neither that no traffic arrived nor that any backend phase
+completed. The previous runner had no end-to-end subscription readiness proof.
+Evidence: `evidence/work-hq-navigation-empty-capture-2026-10-19.json`.
+
+Source review reproduced a definite collector defect: its exact Worker-name
+filter silently dropped a valid documented `scriptName: null` HTTP event.
+Official format reference:
+https://developers.cloudflare.com/workers/observability/logs/real-time-logs/.
+No raw Owner event was retained, so its actual envelope and the exact reason
+for this zero-result run cannot be reconstructed. The collector defect can
+explain the result but is not proven to have caused it. It does not establish
+the application's Requests root cause.
+
+The corrected parser, safe input counters and matched health-event handshake
+are diagnostic-only changes. Tests cover null/missing/foreign names and origins,
+unknown/mismatched runtime versions, wrong probe nonce, absent event, unhealthy
+response, callback failure cleanup, private field exclusion, and actual CLI
+subscription deletion through a local mock provider. No app runtime release is
+needed. Owner credentials are still the only missing capability for observing
+the real intermittent authenticated navigation. Incident and WORK acceptance
+remain OPEN; all existing release/upload receipts remain spent.
