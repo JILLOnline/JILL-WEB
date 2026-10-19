@@ -390,3 +390,38 @@ DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
 All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
 wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
 actual authenticated navigation/new-tab proof after a reviewed repair release.
+
+## Navigation repair activated — 2026-10-19 19:53 UTC
+
+Owner receipt supersedes preceding repair-not-deployed status. Runner/source
+`576d6b0bcde43c43fda939f42513eefcb5adefb7`; package SHA-256
+`2576094d1cbfdc196c07f6b8a47dbbda0677b7ab8d1903324517958d5e31d5f4`.
+Runtime `6473444f-86f8-4a83-a47a-56d1a2e19f05` is at 100%; quote canary
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` remains at 0%. Deployment
+`1ffdde49-e556-43a6-b7bb-e10cd3a71048`, created
+`2026-10-19T19:53:44.176641Z`. Exact runtime health and allocation verified by
+Owner; upload and activation acknowledged and both receipts SPENT. Never repeat
+`work:hq:navigation:repair:release-once` or reset receipts. Read-only inspection
+uses `work:hq:navigation:repair:inspect`. Prior studio runtime `d301efb4-b015-40d4-87ad-159a9fff82eb`
+is the guarded restoration baseline, not ordinary active traffic.
+
+Independent executor GETs verified the exact active version and database-ready
+health at 19:55:29 UTC; top-level `/app/requests` now returns 302 to the existing
+WORK Shopify Admin app/Requests path with no-store; anonymous `.data` bootstrap
+retains App Bridge and no longer contains the reproduced Unexpected Server
+Error. These reads send no signed POST, grant no access and do not certify a
+signed-in browser session. Canonical evidence:
+`docs/evidence/work-hq-navigation-activation-2026-10-19.json`.
+
+Change scope is explicitly navigation transport and authorized dashboard,
+`visual_only: false`. All current bindings/flags preserved: catalog ON, quote
+and conversation OFF, quote canary unchanged. No secret, schema/data command,
+new billable service, gateway, app release, extension, wallet or LIVE change.
+
+Next gate: refresh the existing authenticated WORK app; verify the single
+Requests entry, Home counts against inbox, repeated Home → Requests → detail →
+back navigation and a new-tab request entering Shopify Admin successfully.
+Capture actual UI/screenshots and timings without tokens or private customer
+records. No write/status/message/quote submission is required for this check.
+The authenticated navigation incident remains OPEN until this Owner UI proof
+passes. Full WORK operational acceptance and separate LIVE review remain open.
