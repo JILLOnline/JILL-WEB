@@ -19,7 +19,7 @@ export default function JillHQ() {
   const verified=data.state==="staff_verified";
   const owner=verified && data.role==="owner";
 
-  return <s-page heading="JILL HQ — WORK">
+  return <s-page inlineSize="large" heading="JILL HQ — WORK">
     <div className="jill-hq" role="region" aria-label="JILL HQ WORK merchant home">
       <header className="jill-hq__hero">
         <div className="jill-hq__hero-copy">

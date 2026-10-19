@@ -1,5 +1,19 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — shared HQ visual theme, synthetic browser certification
+
+Shared presentation theme and full-width `s-page` layouts cover all six
+existing HQ pages. Root postinstall, typecheck, canary build, actual local
+compiled Worker boundary checks and existing inbox/detail/quote contracts
+PASS. Visual-only AST/file guard and release policy negative tests PASS.
+Actual route components + published Polaris in local Chromium passed 24 cases
+at 1600/1024/390/320px without horizontal overflow; phone native controls are
+at least 44px. Existing local filtering, opening status UI and quote arithmetic
+passed without submission. See `evidence/work-hq-visual-local-review-2026-10-19.json`.
+No authenticated visual/performance acceptance, deployment or LIVE readiness
+is claimed. Existing one-use upload/activation receipts remain spent.
+
+
 ## 2026-10-19 — exact WORK HQ deployment/runtime acceptance only
 
 Owner provider read-back and unpinned runtime health verify deployment

@@ -1,5 +1,19 @@
 # JILL HQ WORK — integrated execution plan
 
+## Visual-only steering — shared compact HQ theme prepared
+
+The Owner requested a wider, more compact, consistent design across all HQ
+tabs. `JILL_HQ_VISUAL_SYSTEM.md` defines the shared theme/template and the NEW
+one-use WORK visual release. Six actual route components passed 24 local
+Chromium/Polaris viewport cases with synthetic data, no horizontal overflow
+and 44px phone controls. The AST/file guard proves handlers, hooks, behavior
+attributes, controls and customer/policy copy unchanged. No visual deployment
+has been performed yet; Owner Cloudflare credentials remain necessary.
+Current operational baseline/receipts below are retained, all spent receipts
+remain spent. Existing quote/conversation/media/commerce/Rewards activation
+and acceptance gates are unchanged. Full WORK NOT PASSED; LIVE separate.
+
+
 ## Superseding successful WORK HQ activation — 2026-10-19 14:08 UTC
 
 Owner runner `5bacc072da880df28b27a21ec5074cb1885a9a35` completed the exact

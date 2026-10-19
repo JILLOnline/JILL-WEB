@@ -16,21 +16,21 @@ type Catalog={state:string;as_of?:string;next_cursor?:string;view?:string;curren
     variants?:{id:string;title:string;price:string}[]}[]};
 export default function Catalog(){
   const data=useLoaderData<typeof loader>() as unknown as Catalog;
-  return <s-page heading="JILL HQ — Catalog">
+  return <s-page inlineSize="large" heading="JILL HQ — Catalog">
     <s-section><main className="jill-inbox">
       <Link className="jill-inbox__back" to="/app">← HQ overview</Link>
-      <nav aria-label="Catalog views">
-        <Link to="?view=products">Products</Link>{" · "}
-        <Link to="?view=collections">Collections</Link>{" · "}
-        <Link to="?view=inventory">Inventory</Link>{" · "}
-        <Link to="?view=locations">Locations</Link>
+      <nav className="jill-workspace__tabs" aria-label="Catalog views">
+        <Link aria-current={(data.view||"products")==="products"?"page":undefined} to="?view=products">Products</Link>
+        <Link aria-current={(data.view||"products")==="collections"?"page":undefined} to="?view=collections">Collections</Link>
+        <Link aria-current={(data.view||"products")==="inventory"?"page":undefined} to="?view=inventory">Inventory</Link>
+        <Link aria-current={(data.view||"products")==="locations"?"page":undefined} to="?view=locations">Locations</Link>
       </nav>
       <h2>Shopify {data.view||"catalog"}</h2>
       {data.state!=="ready"?<p role="status">{data.state==="access_denied"?
         "The current account needs Owner access and Shopify permission for this view.":
         "The catalog source is unavailable. No product or stock counts are assumed."}</p>:<>
         <p>Verified {data.as_of}. Store currency: {data.currency}. Inventory tracking does not measure production capacity.</p>
-        {data.records?.length===0?<p>No records on this page.</p>:data.records?.map(product=>
+        {data.records?.length===0?<p>No records on this page.</p>:<div className="jill-workspace__cards">{data.records?.map(product=>
           <section key={product.id} className="jill-request__panel">
             <h3><a href={product.admin_url} target="_top">{product.product_title&&product.product_title+" · "}{product.title}</a>{product.status&&" · "+product.status}</h3>
             <ul>{product.variants?.map(variant=><li key={variant.id}>{variant.title} — {variant.price}</li>)}</ul>
@@ -42,7 +42,7 @@ export default function Catalog(){
             {product.tracked===true&&product.locations?.length===0&&<p>No stocking locations returned.</p>}
             {product.locations_truncated&&<p>Additional locations are available in Shopify Admin.</p>}
             {product.variants_truncated&&<p>More variants are available in Shopify Admin.</p>}
-          </section>)}
+          </section>)}</div>}
         {data.next_cursor&&<Link to={"?"+new URLSearchParams({view:data.view||"products",after:data.next_cursor})}>Next page →</Link>}
       </>}
       <a href="https://admin.shopify.com/store/jill-work/products" target="_top">Manage products in Shopify</a>

@@ -4,6 +4,7 @@ import {Outlet,useLoaderData,useRouteError,type LoaderFunctionArgs,type HeadersF
 import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {JILL_WORK_MERCHANT_CLIENT_ID} from "../../../../../backend/jill-merchant-auth.mjs";
+import "../styles/hq-theme.css";
 export async function loader({request,context}:LoaderFunctionArgs) {
   await authenticateWorkAdminOnce({
     scope:context.cloudflare,
@@ -29,7 +30,7 @@ export function shouldRevalidate({
 export default function App(){
   const {apiKey}=useLoaderData<typeof loader>();
   return <AppProvider apiKey={apiKey}>
-    <Outlet/>
+    <div className="jill-workspace"><Outlet/></div>
   </AppProvider>;
 }
 export function ErrorBoundary(){return boundary.error(useRouteError());}

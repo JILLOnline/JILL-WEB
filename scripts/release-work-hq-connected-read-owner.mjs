@@ -200,6 +200,7 @@ async function execute(mode){
     process.exitCode=1;
   }
 }
+export {snapshot as readConnectedDeployment,health as readConnectedHealth,readReceipt as readConnectedReceipt};
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
   if(process.argv.length!==3||!['--activate-once','--inspect','--restore-once'].includes(process.argv[2])){
     console.error('STOP work_hq_connected_release_explicit_mode_required');process.exitCode=1;

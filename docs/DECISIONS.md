@@ -1,5 +1,17 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 — one compact visual theme for all HQ tabs
+
+Use one authenticated parent CSS foundation with shared palette, density,
+controls and focus. Existing screen CSS owns compositions; use the documented
+Polaris large page width, not shadow-DOM overrides, zoom or duplicate page
+styles. Preserve labels, notices and controls. A source/AST guard prevents
+behavior, policy/copy, backend, theme or extension changes. The new WORK visual
+release preserves the current exact bindings/flags and 0% quote canary, uses
+new one-use receipts, and requires exact provider/runtime read-back. No paid
+resources, new product dependency, schema, wallet, app identity or LIVE work.
+
+
 ## 2026-10-19 — exact uploaded HQ activation with owned restoration
 
 Reuse the canonical staging metadata/receipt helpers; never build or upload

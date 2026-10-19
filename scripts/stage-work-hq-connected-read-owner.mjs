@@ -125,19 +125,19 @@ export function read(args){
 export const view=id=>read(['versions','view',id]);
 export const allocation=()=>currentAllocation(read(['deployments','list']));
 export const connectedUploadReceipt=()=>path.join(path.dirname(receiptPath()),'work-hq-connected-read-v1-upload-once-20261019.json');
-function findVersion(value,source){
+export function findVersion(value,source){
   const list=Array.isArray(value)?value:value?.versions||value?.result;
   check(Array.isArray(list)&&list.length<101,'versions_unavailable');
   const matches=list.filter(x=>x.annotations?.['workers/message']===HQ_MARKER+source);
   check(matches.length<=1,'candidate_not_unique');return matches[0]?.id||null;
 }
-function runNpm(script,cwd,{canary=false}={}){
+export function runNpm(script,cwd,{canary=false}={}){
   const r=spawnSync(process.env.ComSpec||'cmd.exe',['/d','/s','/c','npm.cmd run '+script],{
     cwd,shell:false,stdio:'inherit',windowsHide:true,timeout:180000,
     env:{...process.env,WRANGLER_SEND_METRICS:'false',...(canary?{JILL_BUILD_TARGET:'canary'}:{})}});
   check(!r.error&&!r.signal&&r.status===0,'local_check_failed');
 }
-function bundleDigest(directory){
+export function bundleDigest(directory){
   const hash=createHash('sha256');
   function walk(folder){for(const name of fs.readdirSync(folder).sort()){
     const file=path.join(folder,name),stat=fs.lstatSync(file);check(!stat.isSymbolicLink(),'symlinked_bundle');

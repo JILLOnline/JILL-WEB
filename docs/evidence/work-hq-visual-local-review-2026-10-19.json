@@ -1,0 +1,56 @@
+{
+  "environment": "WORK",
+  "scope": "visual_only",
+  "runtime_base_source": "69b709d9c2c6d0a4c075bef073381ec698b39373",
+  "screens": [
+    "home",
+    "inbox",
+    "request_detail_and_quote",
+    "catalog",
+    "owner_access",
+    "owner_setup_unavailable"
+  ],
+  "viewport_widths_css_px": [
+    1600,
+    1024,
+    390,
+    320
+  ],
+  "render_cases_passed": 24,
+  "renderer": "Real local Chromium with actual route components and Shopify Polaris web components",
+  "data_source": "Explicit synthetic local loaders; no authenticated backend connection",
+  "horizontal_overflow": false,
+  "phone_native_control_minimum_height_css_px": 44,
+  "inbox_filter_verified": true,
+  "status_panel_open_verified_without_submit": true,
+  "existing_quote_calculation_verified": {
+    "quantities": [
+      12,
+      2
+    ],
+    "unit_prices_usd": [
+      "5.00",
+      "10.00"
+    ],
+    "displayed_total_usd": "80.00"
+  },
+  "visual_boundary_ast_check": "PASS",
+  "server_handlers_hooks_and_behavior_attributes": "unchanged",
+  "customer_policy_copy": "unchanged",
+  "backend_theme_extensions": "unchanged",
+  "authenticated_visual_acceptance": false,
+  "operational_acceptance": false,
+  "visual_release_deployed": false,
+  "new_billable_services": false,
+  "limitations": [
+    "Synthetic rendering is not authenticated Shopify acceptance",
+    "No authenticated performance or complete WCAG certification claimed",
+    "Existing quote canary remains unchanged"
+  ],
+  "fresh_package_dry_run": {
+    "result": "PASS",
+    "server_modules": 2,
+    "gzip_kib": 195.24,
+    "stale_generated_modules_excluded": true
+  }
+}
