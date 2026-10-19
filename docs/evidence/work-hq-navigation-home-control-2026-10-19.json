@@ -1,0 +1,113 @@
+{
+  "environment": "WORK",
+  "source": "Owner-provided filtered receipt and browser report received 2026-10-19",
+  "owner_reported_hang_this_attempt": false,
+  "full_75_second_capture_started": false,
+  "receipt": {
+    "environment": "WORK",
+    "mode": "read_only",
+    "runner": "e4f25c794d4298aec7e55d6cc0932b85899f3609",
+    "expected_runtime": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+    "allocation_unchanged": true,
+    "capture_outcome": "log_stream_self_check_failed",
+    "log_stream_verified": false,
+    "health_probe": {
+      "exact_runtime_verified": true,
+      "matching_tail_event_seen": false,
+      "version_mismatch_seen": false,
+      "attempts": 5
+    },
+    "tail_events_received": 1,
+    "application_events_received": 1,
+    "input_diagnostics": {
+      "json_objects": 8,
+      "invalid_json": 0,
+      "oversized_json": 0,
+      "worker_name_missing": 0,
+      "worker_name_expected": 8,
+      "worker_name_other": 0,
+      "projected": 1,
+      "filtered": 7
+    },
+    "dropped_events": 0,
+    "graceful_stop_requested": true,
+    "forced_child_stop": false,
+    "tail_command_failure": null,
+    "records": [
+      {
+        "route": "home",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 89
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 4016
+          },
+          {
+            "trace": "9a105060-8468-4c65-baa3-8ed68d717592",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 4105
+          }
+        ],
+        "exceptions": []
+      }
+    ],
+    "raw_tail_printed": false,
+    "raw_tail_saved": false,
+    "no_upload_or_deployment": true,
+    "no_signed_post": true,
+    "no_receipt_changes": true,
+    "root_cause_verified": false,
+    "operational_acceptance": false
+  },
+  "interpretation": {
+    "home_invocation_observed": true,
+    "requests_route_invocation_observed": false,
+    "canonical_records_independently_verified": false,
+    "total_inbox_phase_ms": 4105,
+    "google_feed_phase_ms": 4016,
+    "work_owner_phase_ms": 89,
+    "shopify_auth_phase_ms_rounded": 0,
+    "browser_end_to_end_navigation_duration_verified": false,
+    "indefinite_hang_root_cause_verified": false,
+    "unique_probe_correlation_verified": false,
+    "app_runtime_changed": false
+  }
+}

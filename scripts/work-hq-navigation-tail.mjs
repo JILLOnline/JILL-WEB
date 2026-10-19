@@ -5,7 +5,7 @@ export const EXPECTED_HQ_DEPLOYMENT='1ffdde49-e556-43a6-b7bb-e10cd3a71048';
 export const TAIL_STOP_PRELOAD='process.on("message",m=>{if(m==="JILL_WORK_TAIL_STOP"){if(process.listenerCount("SIGINT"))process.emit("SIGINT");else process.exit(0);if(process.connected)process.disconnect();}});';
 const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const PHASES=new Set(['inbox','shopify_auth','work_owner','google_feed']);
-const OUTCOMES=new Set(['ok','exception','exceededCpu','exceededMemory','canceled','unknown']);
+const OUTCOMES=new Set(['ok','exception','exceededCpu','exceededMemory','canceled','responseStreamDisconnected','scriptNotFound','unknown']);
 const ORIGIN='https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev';
 const PROBE_KEY='jill_work_hq_tail_probe';
 export function verifyNavigationTailBaseline(state){
@@ -16,7 +16,8 @@ export function verifyNavigationTailBaseline(state){
 }
 function routeKind(raw,probeNonce){
  try{const u=new URL(raw);if(u.origin!==ORIGIN)return 'other';
-  if(u.pathname==='/healthz'&&UUID.test(probeNonce||'')&&u.searchParams.get(PROBE_KEY)===probeNonce)return 'diagnostic_probe';
+  if(u.pathname==='/healthz'&&UUID.test(probeNonce||'')&&
+   [probeNonce,'REDACTED'].includes(u.searchParams.get(PROBE_KEY)))return 'diagnostic_probe';
   if(['/app','/app/','/app.data'].includes(u.pathname))return 'home';
   if(['/app/requests','/app/requests.data'].includes(u.pathname))return 'inbox';
   if(u.pathname.startsWith('/app/requests/'))return 'detail';
@@ -54,6 +55,7 @@ export function projectNavigationTail(raw,{probeNonce}={}){
  const version=UUID.test(raw.scriptVersion?.id||'')?raw.scriptVersion.id:null;
  const status=raw.event?.response?.status;
  return {route,runtime_version:version,exact_version_verified:version===EXPECTED_HQ_VERSION,
+  ...(route==='diagnostic_probe'?{probe_correlation:new URL(raw.event.request.url).searchParams.get(PROBE_KEY)===probeNonce?'exact_nonce':'redacted_marker'}:{}),
   outcome:OUTCOMES.has(raw.outcome)?raw.outcome:'unknown',
   status:Number.isInteger(status)&&status>=100&&status<=599?status:null,
   phases,exceptions:(Array.isArray(raw.exceptions)?raw.exceptions:[]).slice(0,5).map(errorKind)};
@@ -82,8 +84,9 @@ export function navigationTailParser(onRecord,{probeNonce,onMetric=()=>{}}={}){
  }};
 }
 
-// Independent unsigned GET plus a matching nonce-bearing event tests the
-// entire tail transport. The nonce is random diagnostic data, never a token.
+// Independent unsigned GET plus a WORK health-marker event tests tail liveness.
+// Cloudflare redacts UUID-shaped URL substrings. A redacted marker verifies
+// stream liveness, not the identity of one unique request. Never unredact logs.
 export async function readNavigationTailProbe(nonce,{fetcher=fetch}={}){
  if(!UUID.test(nonce||''))throw Error('work_hq_tail_probe_nonce_invalid');
  const url=new URL('/healthz',ORIGIN);url.searchParams.set(PROBE_KEY,nonce);
@@ -109,7 +112,7 @@ export async function observeNavigationTail({child,probe,probeNonce,onReady=()=>
  const timers=new Set();
  const wait=ms=>new Promise(resolve=>{const timer=setTimeout(()=>{timers.delete(timer);resolve();},ms);timers.add(timer);});
  let dropped=0,stderr='',closed=false,interrupted=false,stopRequested=false,forced=false;
- let resolveClose,resolveInterrupt,probeEventSeen=false,probeVerified=false,probeAttempts=0,probeVersionMismatch=false;
+ let resolveClose,resolveInterrupt,probeEventSeen=false,probeVerified=false,probeAttempts=0,probeVersionMismatch=false,probeCorrelation=null;
  const ended=new Promise(resolve=>resolveClose=resolve);
  const interrupt=new Promise(resolve=>resolveInterrupt=resolve);
  child.once('error',error=>{closed=true;resolveClose({error});});
@@ -117,6 +120,7 @@ export async function observeNavigationTail({child,probe,probeNonce,onReady=()=>
  const parse=navigationTailParser(record=>{
   if(record.route==='diagnostic_probe'){
    probeEventSeen=true;
+   if(probeCorrelation!=='exact_nonce')probeCorrelation=record.probe_correlation;
    if(record.runtime_version&&record.runtime_version!==EXPECTED_HQ_VERSION)probeVersionMismatch=true;
   }
   if(records.length<400)records.push(record);else dropped++;
@@ -142,7 +146,7 @@ export async function observeNavigationTail({child,probe,probeNonce,onReady=()=>
    if(!closed){forced=true;child.kill();await Promise.race([ended,wait(1000)]);}
   }
   const result=closed?await ended:{status:null,signal:null};
-  return {ready,probe_verified:probeVerified,probe_event_seen:probeEventSeen,probe_attempts:probeAttempts,probe_version_mismatch:probeVersionMismatch,
+  return {ready,probe_verified:probeVerified,probe_event_seen:probeEventSeen,probe_attempts:probeAttempts,probe_version_mismatch:probeVersionMismatch,probe_correlation:probeCorrelation,
    records,metrics,dropped,stopRequested,forced,result,stderr,interrupted};
  }finally{
   // Also close a subscription if the caller's readiness callback fails.

@@ -6,8 +6,12 @@ import {spawn} from 'node:child_process';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {WebSocketServer,WebSocket} from 'ws';
-import {observeNavigationTail,EXPECTED_HQ_VERSION,TAIL_STOP_PRELOAD} from '../../../../scripts/work-hq-navigation-tail.mjs';
+import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
+const requireApp=createRequire(new URL('../services/jill-order-desk/app-home/package.json',import.meta.url));
+const {WebSocketServer,WebSocket}=requireApp('ws');
+const APP=fileURLToPath(new URL('../services/jill-order-desk/app-home/',import.meta.url));
+import {observeNavigationTail,EXPECTED_HQ_VERSION,TAIL_STOP_PRELOAD} from './work-hq-navigation-tail.mjs';
 const nonce='12345678-1234-1234-1234-123456789abc';
 const privateValue='SYNTHETIC_PRIVATE_FIELD_MUST_NOT_ESCAPE';
 const account='0'.repeat(32),tailId='aaaaaaaa-1234-1234-1234-123456789abc';
@@ -41,18 +45,20 @@ try{
   CLOUDFLARE_API_BASE_URL:`http://127.0.0.1:${server.address().port}/client/v4`,CI:'true',WRANGLER_SEND_METRICS:'false',
   CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'false',HTTP_PROXY:'',HTTPS_PROXY:'',ALL_PROXY:'',http_proxy:'',https_proxy:'',all_proxy:''};
  child=spawn(process.execPath,['--import','data:text/javascript,'+encodeURIComponent(TAIL_STOP_PRELOAD),
-  resolve('node_modules/wrangler/wrangler-dist/cli.js'),'tail','jill-order-desk-canary-work','--config',config,'--format','json'],
-  {cwd:process.cwd(),env,stdio:['ignore','pipe','pipe','ipc'],shell:false});
+  resolve(APP,'node_modules/wrangler/wrangler-dist/cli.js'),'tail','jill-order-desk-canary-work','--config',config,'--format','json'],
+  {cwd:APP,env,stdio:['ignore','pipe','pipe','ipc'],shell:false});
  const record=url=>({outcome:'ok',scriptName:null,exceptions:[],logs:[],eventTimestamp:Date.now(),
   event:{request:{url,method:'GET',headers:{authorization:privateValue}}}});
  const observed=await observeNavigationTail({child,probeNonce:nonce,connectAttempts:30,connectWaitMs:100,captureMs:100,stopWaitMs:5000,
   probe:async()=>{
-   if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(record('https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/healthz?jill_work_hq_tail_probe='+nonce)));
+   // Provider TailRequest redacts UUID-shaped URL substrings by default.
+   if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(record('https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/healthz?jill_work_hq_tail_probe=REDACTED')));
    return {exact_version_verified:true,runtime_version:EXPECTED_HQ_VERSION};
   },onReady:()=>socket.send(JSON.stringify({...record('https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/app/requests.data?id_token='+privateValue),
    logs:[{message:['JILL_WORK_INBOX_PHASE',JSON.stringify({trace:nonce,phase:'shopify_auth',event:'begin'})]}]})),
  });
  assert.equal(observed.ready,true,'actual CLI null-name envelope must pass stream handshake');
+ assert.equal(observed.probe_correlation,'redacted_marker','liveness must not claim unique nonce attribution');
  assert.equal(observed.forced,false,'actual CLI cleanup must complete');
  assert.equal(observed.result.status,0);assert.equal(created,1);assert.equal(deleted,1,'CLI must delete the local subscription on IPC stop');
  assert.equal(unexpected,0);assert.ok(observed.records.some(x=>x.route==='inbox'&&x.phases.length===1));

@@ -456,3 +456,18 @@ app runtime, credentials, data and spent release receipts are unchanged.
 See `WORK_HQ_INTERMITTENT_REQUESTS_DIAGNOSIS_2026-10-19.md` and
 `evidence/work-hq-navigation-empty-capture-2026-10-19.json`. Requests root cause,
 authenticated incident resolution and full WORK acceptance remain OPEN.
+
+
+## Home control observed; full Requests capture still pending — 2026-10-19
+
+Owner reports no hang in this attempt. Runner e4f25c7 captured one exact-runtime
+Home event (HTTP 200, outcome ok, no reported exceptions): inbox phase 4,105 ms,
+Google phase 4,016 ms, WORK Owner phase 89 ms, auth phase rounded to 0 ms. These
+are server phases, not browser timings or independent record read-back. No
+Requests-route event was retained. The nonce readiness check failed, so the
+75-second capture never started. Provider URL redaction makes UUID equality
+unsuitable; the corrected diagnostic accepts an explicitly labeled redacted
+WORK health marker for liveness without claiming unique request attribution.
+Runtime/data/auth/cache/secrets and spent releases are unchanged. Evidence and
+limits: `evidence/work-hq-navigation-home-control-2026-10-19.json` and
+`WORK_HQ_INTERMITTENT_REQUESTS_DIAGNOSIS_2026-10-19.md`. Incident remains OPEN.

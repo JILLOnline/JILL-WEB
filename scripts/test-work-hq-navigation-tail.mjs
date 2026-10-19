@@ -75,6 +75,12 @@ await assert.rejects(()=>readNavigationTailProbe(nonce,{fetcher:async()=>new Res
 const probeRecord={outcome:'ok',scriptName:null,logs:[],exceptions:[],event:{request:{
  url:'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev/healthz?jill_work_hq_tail_probe='+nonce}}};
 assert.equal(projectNavigationTail(probeRecord,{probeNonce:nonce}).route,'diagnostic_probe');
+const redactedProbe={...probeRecord,event:{request:{url:probeRecord.event.request.url.replace(nonce,'REDACTED')}}};
+assert.equal(projectNavigationTail(redactedProbe,{probeNonce:nonce}).route,'diagnostic_probe');
+assert.equal(projectNavigationTail(redactedProbe,{probeNonce:nonce}).probe_correlation,'redacted_marker');
+assert.equal(projectNavigationTail(probeRecord,{probeNonce:nonce}).probe_correlation,'exact_nonce');
+assert.equal(projectNavigationTail({...redactedProbe,scriptName:'foreign-worker'},{probeNonce:nonce}),null);
+assert.equal(projectNavigationTail({...redactedProbe,event:{request:{url:redactedProbe.event.request.url.replace('/healthz','/unrelated')}}},{probeNonce:nonce}),null);
 assert.equal(projectNavigationTail(probeRecord,{probeNonce:trace}),null,'unmatched health GET cannot acknowledge subscription');
 assert.equal(projectNavigationTail(probeRecord),null,'ordinary health reads are not captured');
 class SyntheticTail extends EventEmitter{
@@ -91,6 +97,11 @@ assert.equal(readyCalls,1);assert.equal(observed.ready,true);
 assert.equal(observed.probe_event_seen,true);assert.equal(observed.records.length,2);
 assert.equal(observed.records[1].route,'detail');assert.equal(observed.stopRequested,true);assert.equal(observed.forced,false);
 assert.ok(!JSON.stringify(observed.records).includes(privateValue));
+const redactedTail=new SyntheticTail();let redactedReady=false;
+const redactedObserved=await observeNavigationTail({child:redactedTail,probeNonce:nonce,captureMs:1,connectWaitMs:1,stopWaitMs:100,
+ probe:async()=>{redactedTail.stdout.write(JSON.stringify(redactedProbe));return probe;},onReady:()=>{redactedReady=true;}});
+assert.equal(redactedReady,true);assert.equal(redactedObserved.probe_correlation,'redacted_marker');
+assert.equal(projectNavigationTail({...raw,outcome:'responseStreamDisconnected'}).outcome,'responseStreamDisconnected');
 for(const scenario of ['no_tail_event','wrong_nonce','wrong_health_version','wrong_tail_version']){
  const quiet=new SyntheticTail();let askedToReproduce=false;
  const noReady=await observeNavigationTail({child:quiet,probeNonce:nonce,captureMs:1,connectAttempts:2,connectWaitMs:1,stopWaitMs:100,

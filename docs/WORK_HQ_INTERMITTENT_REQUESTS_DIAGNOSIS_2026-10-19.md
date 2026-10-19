@@ -48,7 +48,10 @@ npm.cmd run work:hq:navigation:diagnose
 It verifies the exact active WORK allocation before subscribing, then sends at
 most five unsigned `/healthz` GETs with a fresh diagnostic nonce. The existing
 canonical health certifier checks the exact runtime; the collector must also
-receive the matching health request through the tail stream. Wait for **READY**,
+receive a WORK health-marker event through the tail stream. Cloudflare may
+redact its UUID value, so this verifies stream liveness rather than uniquely
+identifying one request. The report distinguishes exact from redacted-marker
+correlation and never claims unique attribution for a redacted marker. Wait for **READY**,
 then reproduce Home → Requests → detail → back. When loading hangs, wait 20
 seconds and refresh once. The 75-second window begins only after READY. Share
 only this command's filtered JSON output. If the self-check fails, the runner
@@ -130,3 +133,47 @@ subscription deletion through a local mock provider. No app runtime release is
 needed. Owner credentials are still the only missing capability for observing
 the real intermittent authenticated navigation. Incident and WORK acceptance
 remain OPEN; all existing release/upload receipts remain spent.
+
+
+## Successful Home control, failed strict nonce check — 2026-10-19
+
+Owner runner `e4f25c794d4298aec7e55d6cc0932b85899f3609` parsed eight JSON
+events, all with the expected Worker name; retained one Home event at exact
+runtime `6473444f-86f8-4a83-a47a-56d1a2e19f05`. Owner reports no hang during
+this attempt. Allocation stayed unchanged; the health probe reported exact runtime verification
+after five attempts. No command failure or forced stop was reported.
+The strict nonce check saw no matching event, so READY never appeared and
+the full 75-second application capture did NOT begin. Evidence:
+`evidence/work-hq-navigation-home-control-2026-10-19.json`.
+
+The observed Home invocation returned HTTP 200/outcome ok/no reported exceptions.
+Its inbox phase took 4,105 ms: Shopify-auth phase rounded to 0 ms, WORK Owner
+phase 89 ms, Google-feed phase 4,016 ms. This is a server phase measurement for
+a Home dashboard feed read, not browser navigation time, a Requests-route
+measurement, or independent verification of returned canonical records. The
+zero auth duration does not measure all authentication work in the parent
+loaders. Google dominates this measured control; this does not prove the
+cause of the prior indefinite hang or a timeout/secret/cache defect.
+
+A second definite diagnostic defect was reproduced against the provider
+contract: UUID-shaped URL values are redacted to `REDACTED`, so equality to
+the original UUID is unsuitable as the only stream-readiness condition.
+Official reference: https://developers.cloudflare.com/workers/runtime-apis/handlers/tail/.
+The seven filtered Owner events were not retained, so their exact URLs and
+the cause of this particular failed check cannot be reconstructed.
+
+The collector now recognizes either the exact nonce or the provider-redacted
+marker, ONLY at the fixed WORK origin, `/healthz` path and known probe query
+key, inside the explicit WORK subscription. The independent health response
+must still certify the exact runtime; a mismatched event runtime still blocks
+READY. A redacted marker certifies liveness and does not uniquely correlate
+one request. There is no attempt to unredact provider data. The report makes
+that limit explicit. Actual installed-CLI loopback coverage now models UUID
+URL redaction as well as null names, privacy projection and graceful cleanup.
+The loopback test lives under root `scripts/`, preserving the exact seven-file
+application release guard without weakening its inventory checks.
+
+No app runtime, allocation, auth/cache policy, Google source, canonical
+record, secret, paid service or release receipt changed. A full authenticated
+Requests/detail capture and any recurrent failure event remain needed; the
+intermittent incident and full WORK operational acceptance remain OPEN.

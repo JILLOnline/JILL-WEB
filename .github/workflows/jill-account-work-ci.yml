@@ -356,8 +356,7 @@ jobs:
       - name: Verify WORK diagnostic log privacy and baseline guards
         run: npm run test:work-hq-navigation-tail
       - name: Verify installed Wrangler tail transport and cleanup against loopback provider
-        working-directory: services/jill-order-desk/app-home
-        run: node scripts/test-wrangler-tail-transport-local.mjs
+        run: node scripts/test-work-hq-tail-transport-local.mjs
       - name: Verify HQ studio presentation and distinct release profile
         run: npm run test:work-hq-studio
       - name: Build real React Router Cloudflare App Home (no deployment)
