@@ -1,5 +1,25 @@
 # JILL HQ WORK — integrated execution plan
 
+## Exact inactive HQ candidate receipt — 2026-10-19
+
+Owner runner `69b709d9c2c6d0a4c075bef073381ec698b39373` uploaded and
+independently inspected candidate `e866e2f2-0746-44d0-8caa-b37a1c9bcf45`.
+Package SHA-256: `02aae15f15057c74286dac63400e3883189a3d7f5701ea25f35f99a77655a035`.
+Existing bindings/runtime were preserved; catalog ON, quote drafts and
+conversation OFF. Original HQ deployment `d10596df-fb98-4e6d-8b3d-a3bd0e4deaf0`
+remains old version 100% / existing quote canary 0%. No deployment, secret,
+data/schema or billing change occurred. Upload receipt is SPENT; never stage
+again. Structured evidence: `evidence/work-hq-connected-read-inactive-2026-10-19.json`.
+All three triggered CI runs for that source succeeded; this is not operational
+acceptance. The prior candidate-not-uploaded paragraphs are historical.
+
+Exact WORK activation and read-only recovery are prepared in
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. Activation still requires the
+Owner's existing Cloudflare credentials. Authenticated catalog/staff proof,
+quote Save/leave/Reload, conversation A/B, commerce, Rewards, guest/media and
+performance acceptance remain OPEN. Full WORK NOT PASSED; LIVE separate.
+
+
 ## 2026-10-19: scope consent complete, HQ catalog candidate prepared
 
 Owner inventory at 13:36 UTC confirms the existing HQ 100/0 allocation and

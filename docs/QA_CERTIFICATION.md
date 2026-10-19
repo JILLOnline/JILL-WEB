@@ -1,5 +1,18 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — inactive HQ receipt and exact activation recovery tests
+
+Owner actual Windows build/local Worker tests and one inactive upload PASS.
+Candidate `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` preserves bindings/runtime,
+with catalog enabled and quote/conversation disabled. Provider read-back
+confirms original allocation unchanged. All three CI runs for `69b709d` PASS.
+No activation/authenticated UI claim follows. New activation/restore tests
+PASS for exact upload receipt, 100/0 allocation, quote preservation, runtime
+attribution, lost CLI acknowledgement and held read/concurrency failures.
+Root postinstall PASS. See `WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`.
+WORK acceptance remains NOT PASSED; Owner Cloudflare activation is pending.
+
+
 ## 2026-10-19 — connected HQ candidate, no remote acceptance
 
 Root postinstall and connected catalog/writer/policy tests PASS. Owner online

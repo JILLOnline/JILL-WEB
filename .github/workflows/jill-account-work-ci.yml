@@ -151,6 +151,9 @@ jobs:
       - name: Verify one-use inactive HQ catalog upload preserves the current WORK allocation
         run: npm run test:work-hq-connected-stage
 
+      - name: Verify exact WORK HQ activation, runtime read-back and owned restoration
+        run: npm run test:work-hq-connected-release
+
       - name: Ensure no tracked files were mutated
         run: |
           set -euo pipefail

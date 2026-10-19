@@ -1,4 +1,76 @@
 # WORK HQ connected catalog/access candidate
+## Exact inactive HQ candidate receipt — 2026-10-19
+
+Owner runner `69b709d9c2c6d0a4c075bef073381ec698b39373` uploaded and
+independently inspected candidate `e866e2f2-0746-44d0-8caa-b37a1c9bcf45`.
+Package SHA-256: `02aae15f15057c74286dac63400e3883189a3d7f5701ea25f35f99a77655a035`.
+Existing bindings/runtime were preserved; catalog ON, quote drafts and
+conversation OFF. Original HQ deployment `d10596df-fb98-4e6d-8b3d-a3bd0e4deaf0`
+remains old version 100% / existing quote canary 0%. No deployment, secret,
+data/schema or billing change occurred. Upload receipt is SPENT; never stage
+again. Structured evidence: `evidence/work-hq-connected-read-inactive-2026-10-19.json`.
+All three triggered CI runs for that source succeeded; this is not operational
+acceptance. The prior candidate-not-uploaded paragraphs are historical.
+
+Exact WORK activation and read-only recovery are prepared in
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. Activation still requires the
+Owner's existing Cloudflare credentials. Authenticated catalog/staff proof,
+quote Save/leave/Reload, conversation A/B, commerce, Rewards, guest/media and
+performance acceptance remain OPEN. Full WORK NOT PASSED; LIVE separate.
+
+## Reviewed exact activation — prepared, not executed
+
+New command: `npm.cmd run work:hq:connected:activate-once`. It performs no
+upload, build, secret operation or data/schema write. It checks clean synced
+WORK source, the original SPENT upload receipt's exact source/package hash,
+immutable old/candidate/quote version metadata and the original 100/0 allocation.
+It atomically reserves a NEW private activation receipt before requesting one
+version deployment: candidate `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` 100% plus
+existing quote canary `dbc6341f-de7f-41de-8e97-6bf971201eeb` 0%.
+
+Independent provider read-back must match the allocation and a unique operation
+message; an unpinned, cache-busted GET must return the exact candidate runtime
+UUID, healthy D1 schema and no-store response. A lost CLI acknowledgement is
+resolved through these reads, never by repeating deployment. Success does not
+claim authenticated UI or staff acceptance.
+
+If activation verification fails, automatic restoration is allowed only when
+fresh provider reads identify this operation's exact candidate allocation and
+unique message, with no intervening deployment. It reserves a separate NEW
+restore receipt, deploys the original version 100% / quote canary 0% once, then
+reads provider allocation and health. Missing/changed/unreadable state holds
+without further commands. Provider deployment APIs have no compare-and-swap
+lease; the runner rechecks immediately before each requested transition.
+
+NEW private files in the existing Owner receipt directory:
+
+- `work-hq-connected-read-v1-activate-once-20261019.json`
+- `work-hq-connected-read-v1-restore-once-20261019.json`
+
+Never reset/repeat either receipt. If output stops or is uncertain, use only
+`npm.cmd run work:hq:connected:release:inspect`; it performs metadata reads and
+an unsigned health GET, no deployment/upload/signed POST. The older staging
+inspector expects the original allocation, so use this NEW release inspector
+once activation has been attempted. A separately explicit
+`work:hq:connected:restore-once` uses the same guarded one-use restore path
+and cannot run after automatic restoration already consumed its receipt.
+
+After successful activation, refresh the existing WORK Shopify app, open
+Owner access diagnostics and verify runtime ID and online scope intersections.
+Then open catalog products/collections/inventory/locations and independently
+read matching Shopify records. If the online token is stale, use official SDK
+reauthentication. Do not substitute app-installation scopes for this proof.
+Record actual links/screenshots, denials and outages. The retained quote
+canary still needs its authentic Save → leave → Reload certification. Rebase
+its reviewed pin workflow's baseline guard against the actual NEW deployment
+without widening existing fixture/testing approvals or reusing old receipts.
+
+Activation policy tests pass for wrong/spent upload identity, foreign or
+changed allocation, missing runtime attribution, exact quote canary retention,
+lost deployment acknowledgement, restore acknowledgement loss, and held
+read/concurrent-deployment failures. No Cloudflare execution occurred here.
+
+The earlier preparation paragraphs below are historical where superseded.
 
 ## Current evidence and scope
 

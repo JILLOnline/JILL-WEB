@@ -79,23 +79,24 @@ export function inspectConnectedVersion({active,candidate,source}={}){
   return {id:candidate.id,source,existing_bindings_preserved:true,
     catalog_enabled:true,quote_drafts_enabled:false,conversation_enabled:false};
 }
-function git(...args){return execFileSync('git',['-C',ROOT,...args],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']}).trim();}
-function sourceGuard(){
+export function git(...args){return execFileSync('git',['-C',ROOT,...args],{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']}).trim();}
+export function sourceGuard(){
   check(process.platform==='win32','owner_windows_required');
   check(git('branch','--show-current')==='jill/rewards-work'&&
     git('status','--porcelain','--untracked-files=no')===''&&
     git('rev-parse','HEAD')===git('rev-parse','origin/jill/rewards-work'),'source_not_clean_and_synced');
   check(fs.existsSync(CLI),'local_wrangler_missing');return git('rev-parse','HEAD');
 }
-function cloud(args){
+export function cloud(args){
   const r=spawnSync(process.execPath,[CLI,...args],{cwd:APP,encoding:'utf8',shell:false,
     timeout:120000,maxBuffer:12*1024*1024,windowsHide:true,
     env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false',CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'false'}});
   check(!r.error&&!r.signal&&r.status===0,'cloudflare_command_unverified');return r.stdout;
 }
-function read(args){try{return JSON.parse(cloud([...args,'--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--json']));}catch{fail('cloudflare_read_unverified');}}
-const view=id=>read(['versions','view',id]);
-const allocation=()=>currentAllocation(read(['deployments','list']));
+export function read(args){try{return JSON.parse(cloud([...args,'--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--json']));}catch{fail('cloudflare_read_unverified');}}
+export const view=id=>read(['versions','view',id]);
+export const allocation=()=>currentAllocation(read(['deployments','list']));
+export const connectedUploadReceipt=()=>path.join(path.dirname(receiptPath()),'work-hq-connected-read-v1-upload-once-20261019.json');
 function findVersion(value,source){
   const list=Array.isArray(value)?value:value?.versions||value?.result;
   check(Array.isArray(list)&&list.length<101,'versions_unavailable');
@@ -123,7 +124,7 @@ async function execute(mode){
   let attempted=false,phase='preflight';
   try{
     const source=sourceGuard();
-    const receipt=path.join(path.dirname(receiptPath()),'work-hq-connected-read-v1-upload-once-20261019.json');
+    const receipt=connectedUploadReceipt();
     let previous=null;
     if(fs.existsSync(receipt)){check(!fs.lstatSync(receipt).isSymbolicLink(),'symlinked_receipt');previous=JSON.parse(fs.readFileSync(receipt,'utf8'));}
     if(mode==='--stage-once')check(previous===null,'upload_attempt_spent_inspect_only');

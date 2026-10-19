@@ -1,5 +1,18 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 — exact uploaded HQ activation with owned restoration
+
+Reuse the canonical staging metadata/receipt helpers; never build or upload
+again to activate an already verified candidate. Bind activation to the exact
+Owner-provided candidate, source and package hash. Keep the original quote
+canary at 0% and conversation/quote drafts disabled on ordinary traffic.
+Resolve ambiguous deploy acknowledgements by read-back, not repetition.
+Restore only this runner's uniquely attributed unchanged deployment, once,
+and hold on changed/unreadable state. No secret rotation, schema/resources,
+new billing, app-dev URL changes or LIVE operation. Source checks and health
+cannot substitute for authenticated end-to-end WORK acceptance.
+
+
 ## 2026-10-19 — bounded catalog reads and expired-create recovery
 
 Extend the existing catalog projection/screen rather than creating a new
