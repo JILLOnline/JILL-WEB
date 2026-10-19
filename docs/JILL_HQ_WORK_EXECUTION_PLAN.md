@@ -292,3 +292,14 @@ operations validate against Admin API 2026-07; connector execution version is
 not exposed. No HQ calculation route or release is activated. Scope/limits and
 next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
 `evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+Completed source slice: version-2 exact delivery terms, owned customer projection,
+stored-term integrity and draft delivery mismatch quarantine, with actual LOCAL
+D1 tests. No remote activation. Next operational gate remains exact original 409
+ID/payload/history → canonical reconciliation → approved Owner canary proof.
+Then finish consuming quote routes/UI, accepted event, real Shopify adapters and
+explicit invoice/test checkout. Requests stays as-is; spent receipts stay spent.
+Contracts/evidence limits: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`.

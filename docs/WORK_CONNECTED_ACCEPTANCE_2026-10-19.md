@@ -550,3 +550,19 @@ operations validate against Admin API 2026-07; connector execution version is
 not exposed. No HQ calculation route or release is activated. Scope/limits and
 next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
 `evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+Source-built only: exact private delivery terms are frozen in quote version 2,
+with a canonical-owned customer projection and delivery mismatch quarantine.
+Real LOCAL D1 ownership/outage/tamper/expiry/atomic/recovery tests pass; repository
+guards, connected source tests and HQ typecheck/build pass. No customer HTTP
+route, quote UI or remote activation is included. This is not UI-to-platform
+acceptance. Requests stays as-is. See
+`WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md` for contracts and limits.
+
+Original uncertain 409 ID/payload remains unestablished after history recovery;
+synthetic QA HOLD is unchanged. Exact original request evidence is needed before
+canonical reconciliation and the approved Owner Save/Reload gate. All spent
+release receipts remain spent. Full WORK NOT PASSED; LIVE remains separate.

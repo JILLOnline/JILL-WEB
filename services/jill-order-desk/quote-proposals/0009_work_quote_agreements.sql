@@ -1,6 +1,7 @@
 -- REVIEWED SOURCE PROPOSAL ONLY. Outside migrations/: no remote activation.
 -- Terms are private, owner-scoped records. No JWT, email, payment data or raw
--- intake/artwork. Shipping address is represented by a Shopify-verified hash.
+-- intake/artwork. Version-2 terms contain the exact private delivery address
+-- and shipping label plus their calculation fingerprint; never log terms_json.
 CREATE TABLE jill_work_quote_heads (
   shop TEXT NOT NULL CHECK(shop='jill-work.myshopify.com'),
   submission_id TEXT NOT NULL,

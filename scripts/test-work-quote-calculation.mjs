@@ -25,6 +25,12 @@ const frozen=freezeWorkQuote({submissionId:'jill:synthetic-calculation-111',revi
  source:{customer_gid:CUSTOMER,revision:2,sha256:'a'.repeat(64)},calculation:calculated.calculation,
  nowMs:now,expiresAtMs:now+3600000,staffId:'123'});
 assert.equal(frozen.terms.totals.total_cents,606);
+assert.equal(frozen.terms.version,2);
+assert.deepEqual(frozen.terms.address,prepared.intent.address);
+assert.equal(frozen.terms.shipping_title,intent.shipping.title);
+const savedCity=frozen.terms.address.city;
+calculated.calculation.address.city='Caller mutation';
+assert.equal(frozen.terms.address.city,savedCity,'immutable terms copy the normalized private address');
 const absent=prepare({...intent,address:null}),preview=project({prepared:absent,result:result(absent),nowMs:now});
 assert.equal(preview.state,'address_required');assert.equal(preview.calculation,null);assert.equal(preview.publishable,false);
 assert.throws(()=>freezeWorkQuote({submissionId:'jill:synthetic-calculation-111',revision:1,

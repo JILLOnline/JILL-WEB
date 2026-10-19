@@ -379,3 +379,15 @@ DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
 All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
 wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
 actual authenticated navigation/new-tab proof after a reviewed repair release.
+
+
+## 2026-10-19 — Exact delivery terms belong to the immutable agreement
+
+Extend the canonical agreement owner rather than add an address/quote store.
+Version-2 publications bind the exact private address and shipping label as well
+as their calculation fingerprint. Owned reads first verify canonical ownership;
+errors do not become absence. Accepted terms survive later event revisions with
+unchanged immutable ownership/payload. Actual draft delivery mismatches quarantine
+the commerce intent and never authorize another create. This is inactive source,
+not a remote migration or operational pass. The prior uncertain-intake hold and
+separate LIVE review remain in force. See WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md.

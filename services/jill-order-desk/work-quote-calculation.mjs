@@ -1,7 +1,7 @@
 // Server-only Shopify pricing adapter. No public route, create, invoice,
 // completion, wallet mutation, persistence or automatic retry. Source callers
 // must load the quote intent from the existing authorized draft/source owners.
-import {agreementHash} from './work-quote-agreement.mjs';
+import {agreementHash,normalizeWorkQuoteAddress} from './work-quote-agreement.mjs';
 import {readWorkMerchantPermission} from './merchant-access.mjs';
 import {JILL_WORK_MERCHANT_SHOP as SHOP,JILL_WORK_MERCHANT_CLIENT_ID as CLIENT} from '../../backend/jill-merchant-auth.mjs';
 const MAX=100000000;
@@ -44,7 +44,6 @@ export const WORK_QUOTE_CALCULATE=`mutation JillWorkQuoteCalculate($input: Draft
   userErrors { field message }
  }
 }`;
-const ADDRESS=['address1','address2','city','provinceCode','zip','countryCode','firstName','lastName'];
 export function prepareWorkQuoteCalculation(intent){
  check(keys(intent,['customer_gid','lines','fulfillment','address','shipping','reward']),'input_invalid');
  check(gid(intent.customer_gid,'Customer')&&['pickup','shipping'].includes(intent.fulfillment),'input_invalid');
@@ -57,13 +56,7 @@ export function prepareWorkQuoteCalculation(intent){
  });
  check(new Set(lines.map(x=>x.variant_id)).size===lines.length,'duplicate_variant');
  check(cents(lines.reduce((sum,line)=>sum+line.quantity*line.unit_price_cents,0)),'quote_over_limit');
- let address=null;
- if(intent.address!==null){
-  check(keys(intent.address,ADDRESS,['address1','city','zip','countryCode']),'address_invalid');
-  address=Object.fromEntries(ADDRESS.map(key=>[key,intent.address[key]??'']));
-  check(Object.values(address).every(x=>text(x,255))&&address.address1.trim()&&address.city.trim()&&
-   address.zip.trim()&&/^[A-Z]{2}$/.test(address.countryCode),'address_invalid');
- }
+ const address=intent.address===null?null:normalizeWorkQuoteAddress(intent.address);
  check(keys(intent.shipping,['title','amount_cents'])&&text(intent.shipping.title,255)&&
   intent.shipping.title.trim()&&cents(intent.shipping.amount_cents),'shipping_invalid');
  let reward=null;
@@ -127,7 +120,8 @@ export function projectWorkQuoteCalculation({prepared,result,nowMs=Date.now()}={
  if(!p.intent.address)return {state:'address_required',calculation:null,preview:{currency:'USD',totals},publishable:false};
  return {state:'calculated',publishable:true,calculation:{shop:SHOP,customer_gid:p.intent.customer_gid,currency:'USD',
   input_sha256:p.input_sha256,address_sha256:p.address_sha256,calculated_at_ms:nowMs,
-  lines,fulfillment:p.intent.fulfillment,shipping_cents:totals.shipping_cents,tax_cents:totals.tax_cents,
+  lines,fulfillment:p.intent.fulfillment,address:p.intent.address,shipping_title:p.intent.shipping.title,
+  shipping_cents:totals.shipping_cents,tax_cents:totals.tax_cents,
   discount_cents:totals.discount_cents,total_cents:totals.total_cents,reward:p.intent.reward}};
 }
 async function graphql(admin,query,variables){

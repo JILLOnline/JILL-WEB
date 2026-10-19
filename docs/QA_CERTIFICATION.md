@@ -771,3 +771,15 @@ operations validate against Admin API 2026-07; connector execution version is
 not exposed. No HQ calculation route or release is activated. Scope/limits and
 next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
 `evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+PASS SOURCE/LOCAL: exact private address/shipping terms, canonical-owned customer
+projection, A/B/foreign-shop denial, read outages, stored-term tamper denial,
+expiry/stale-source hold, accepted-event revision recovery, atomic D1 rollback,
+lost-create hold and address/shipping/fulfillment mismatch quarantine. Existing
+postinstall guards, connected source tests and HQ typecheck/build pass. GraphQL
+operations are unchanged. No remote/customer UI acceptance or deployment is
+claimed; original intake and Owner canary gates remain held. Details:
+`WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`. Full WORK NOT PASSED; LIVE separate.

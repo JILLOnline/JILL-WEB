@@ -18,6 +18,18 @@ function stable(value){
   deny('invalid_terms');
 }
 export const agreementHash=value=>createHash('sha256').update(stable(value)).digest('hex');
+// One normalized address shape is shared by calculation, immutable terms and
+// Shopify read-back. It is private data, never telemetry or a default-address lookup.
+export function normalizeWorkQuoteAddress(value){
+  const fields=['address1','address2','city','provinceCode','zip','countryCode','firstName','lastName'];
+  if(!value||Object.getPrototypeOf(value)!==Object.prototype||
+    Object.keys(value).some(k=>!fields.includes(k)))deny('invalid_address');
+  const address=Object.fromEntries(fields.map(k=>[k,value[k]??'']));
+  if(Object.values(address).some(x=>typeof x!=='string'||x.length>255||/[\x00-\x1f\x7f]/.test(x))||
+    !address.address1.trim()||!address.city.trim()||!address.zip.trim()||
+    !/^[A-Z]{2}$/.test(address.countryCode))deny('invalid_address');
+  return address;
+}
 function key(submissionId,operationId){
   if(!ID.test(submissionId||'')||!UUID.test(operationId||''))deny('invalid_key');
 }
@@ -36,6 +48,10 @@ export function freezeWorkQuote({submissionId,revision,source,calculation,
     nowMs-c.calculated_at_ms>30000||!Array.isArray(c.lines)||
     c.lines.length<1||c.lines.length>20||
     !['pickup','shipping'].includes(c.fulfillment))deny('calculation_unverified');
+  const address=normalizeWorkQuoteAddress(c.address);
+  if(agreementHash(address)!==c.address_sha256||typeof c.shipping_title!=='string'||
+    !c.shipping_title.trim()||c.shipping_title.length>255||/[\x00-\x1f\x7f]/.test(c.shipping_title))
+    deny('delivery_unverified');
   const lines=c.lines.map(line=>{
     if(!/^gid:\/\/shopify\/ProductVariant\/[1-9][0-9]*$/.test(line.variant_id)||
       !integer(line.quantity,999)||line.quantity<1||!integer(line.subtotal_cents)||
@@ -58,10 +74,11 @@ export function freezeWorkQuote({submissionId,revision,source,calculation,
       !['v13','universal_v1'].includes(r.policy))deny('reward_unverified');
     reward={reservation_id:r.reservation_id,code:r.code,discount_cents:r.discount_cents,policy:r.policy};
   }
-  const terms={version:1,shop:SHOP,submission_id:submissionId,revision,
+  if(!reward&&totals.discount_cents!==0)deny('reward_unverified');
+  const terms={version:2,shop:SHOP,submission_id:submissionId,revision,
     customer_gid:source.customer_gid,source_revision:source.revision,
     source_sha256:source.sha256,currency:'USD',lines,totals,reward,
-    fulfillment:c.fulfillment,address_sha256:c.address_sha256,
+    fulfillment:c.fulfillment,address,shipping_title:c.shipping_title,address_sha256:c.address_sha256,
     calculation_input_sha256:c.input_sha256,expires_at_ms:expiresAtMs};
   const json=stable(terms);if(Buffer.byteLength(json)>25000)deny('terms_too_large');
   return {terms,json,hash:agreementHash(terms),staffId,nowMs};
@@ -69,7 +86,7 @@ export function freezeWorkQuote({submissionId,revision,source,calculation,
 const first=(db,sql,...values)=>db.prepare(sql).bind(...values).first();
 export async function publishWorkQuote({db,frozen,operationId,expectedRevision}={}){
   const t=frozen.terms;key(t.submission_id,operationId);
-  if(!integer(expectedRevision,99)||t.revision!==expectedRevision+1||
+  if(t.version!==2||!integer(expectedRevision,99)||t.revision!==expectedRevision+1||
     agreementHash(JSON.parse(frozen.json))!==frozen.hash||
     agreementHash(t)!==frozen.hash)deny('publication_changed');
   const previous=await first(db,'SELECT * FROM jill_work_quote_publications WHERE shop=? AND operation_id=?',SHOP,operationId);
@@ -87,28 +104,67 @@ export async function publishWorkQuote({db,frozen,operationId,expectedRevision}=
   if(saved?.quote_sha256!==frozen.hash)deny('publication_revision_changed');
   return {revision:t.revision,hash:frozen.hash};
 }
+function verifiedStoredTerms(row,submissionId,customerGid){
+  const t=JSON.parse(row.terms_json);
+  if(t.version!==2||agreementHash(t)!==row.quote_sha256||t.shop!==SHOP||
+    t.submission_id!==submissionId||t.customer_gid!==customerGid||t.revision!==row.revision||
+    t.source_revision!==row.source_revision||t.source_sha256!==row.source_sha256||
+    t.expires_at_ms!==row.expires_at_ms||agreementHash(normalizeWorkQuoteAddress(t.address))!==t.address_sha256)
+    deny('stored_terms_changed');
+  return t;
+}
+// Identity must already be verified by the existing account boundary. The
+// canonical Google owner/hash read precedes D1; failures propagate, never zero.
+export async function readOwnedWorkQuote({db,submissionId,identity,readOwnedSource,nowMs=Date.now()}={}){
+  if(!ID.test(submissionId||'')||identity?.shop!==SHOP||!GID.test(identity.customerGid)||
+    !Number.isSafeInteger(nowMs)||nowMs<1)deny('unauthorized');
+  const source=await readOwnedSource({submissionId,customerGid:identity.customerGid});
+  if(source?.customer_gid!==identity.customerGid||!HASH.test(source.sha256)||
+    !integer(source.revision,100)||source.revision<1)deny('owner_unverified');
+  const row=await first(db,`SELECT p.*,a.operation_id AS accepted_operation_id
+    FROM jill_work_quote_publications p JOIN jill_work_quote_heads h
+    ON p.shop=h.shop AND p.submission_id=h.submission_id AND p.revision=h.revision
+    LEFT JOIN jill_work_quote_acceptances a ON a.shop=p.shop AND a.submission_id=p.submission_id
+    WHERE p.shop=? AND p.submission_id=? AND p.customer_gid=?`,SHOP,submissionId,identity.customerGid);
+  if(!row)return {state:'no_quote',quote:null};
+  const t=verifiedStoredTerms(row,submissionId,identity.customerGid);
+  if(source.sha256!==t.source_sha256||(!row.accepted_operation_id&&source.revision!==t.source_revision))
+    return {state:'source_changed',quote:null};
+  // Explicit customer projection: no staff IDs, owner/source fingerprints,
+  // reservation IDs, coupon codes, raw intake or internal notes.
+  const quote={revision:t.revision,hash:row.quote_sha256,currency:t.currency,
+    lines:t.lines,totals:t.totals,fulfillment:t.fulfillment,address:t.address,
+    shipping_title:t.shipping_title,expires_at_ms:t.expires_at_ms};
+  return {state:row.accepted_operation_id?'accepted':t.expires_at_ms<=nowMs?'expired':'available',quote};
+}
 export async function acceptWorkQuote({db,submissionId,operationId,revision,hash,
   identity,readOwnedSource,nowMs=Date.now()}={}){
   key(submissionId,operationId);
   if(identity?.shop!==SHOP||!GID.test(identity.customerGid)||!HASH.test(hash)||
-    !integer(revision,100)||revision<1)deny('unauthorized');
+    !integer(revision,100)||revision<1||!Number.isSafeInteger(nowMs)||nowMs<1)deny('unauthorized');
   // Server derives identity; this callback must query the canonical Google
   // owner ledger with that GID and immutable intake hash, not contact email.
   const source=await readOwnedSource({submissionId,customerGid:identity.customerGid});
-  if(source?.customer_gid!==identity.customerGid||!HASH.test(source.sha256))deny('owner_unverified');
+  if(source?.customer_gid!==identity.customerGid||!HASH.test(source.sha256)||
+    !integer(source.revision,100)||source.revision<1)deny('owner_unverified');
   const existing=await first(db,'SELECT * FROM jill_work_quote_acceptances WHERE shop=? AND (submission_id=? OR operation_id=?)',SHOP,submissionId,operationId);
   if(existing){
     if(existing.customer_gid!==identity.customerGid||existing.submission_id!==submissionId||
       existing.quote_revision!==revision||existing.quote_sha256!==hash)deny('acceptance_conflict');
     return {operation_id:existing.operation_id,state:'processing',duplicate:true};
   }
+  const publication=await first(db,'SELECT * FROM jill_work_quote_publications WHERE shop=? AND submission_id=? AND revision=? AND customer_gid=?',
+    SHOP,submissionId,revision,identity.customerGid);
+  if(!publication)deny('stale_or_expired_quote');
+  verifiedStoredTerms(publication,submissionId,identity.customerGid);
   await db.batch([
     db.prepare(`INSERT INTO jill_work_quote_acceptances
       SELECT p.shop,p.submission_id,p.revision,p.quote_sha256,p.customer_gid,?,?
       FROM jill_work_quote_publications p JOIN jill_work_quote_heads h
       ON p.shop=h.shop AND p.submission_id=h.submission_id AND p.revision=h.revision
       WHERE p.shop=? AND p.submission_id=? AND p.revision=? AND p.quote_sha256=?
-      AND p.customer_gid=? AND p.source_revision=? AND p.source_sha256=? AND p.expires_at_ms>?`)
+      AND p.customer_gid=? AND p.source_revision=? AND p.source_sha256=? AND p.expires_at_ms>?
+      AND json_extract(p.terms_json,'$.version')=2`)
       .bind(operationId,nowMs,SHOP,submissionId,revision,hash,identity.customerGid,source.revision,source.sha256,nowMs),
     db.prepare(`INSERT INTO jill_work_commerce_intents
       SELECT shop,submission_id,operation_id,'accepted_pending_event',NULL
@@ -173,6 +229,8 @@ export async function advanceWorkCommerce({db,submissionId,confirmPublicAcceptan
     actual.submission_id!==submissionId||actual.operation_id!==intent.operation_id||
     actual.input_sha256!==terms.calculation_input_sha256||
     actual.address_sha256!==terms.address_sha256||actual.currency!==terms.currency||
+    agreementHash(actual.address??null)!==agreementHash(terms.address)||
+    actual.shipping_title!==terms.shipping_title||actual.fulfillment!==terms.fulfillment||
     agreementHash(actual.totals)!==agreementHash(terms.totals)||
     agreementHash(actual.lines)!==agreementHash(terms.lines)||
     agreementHash(actual.reward??null)!==agreementHash(terms.reward)){

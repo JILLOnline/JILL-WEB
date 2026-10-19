@@ -345,3 +345,13 @@ operations validate against Admin API 2026-07; connector execution version is
 not exposed. No HQ calculation route or release is activated. Scope/limits and
 next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
 `evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+The existing agreement owner now freezes exact normalized private address and
+shipping label in version-2 terms and exposes an ownership-first customer terms
+projection. Shopify calculation reuses that address normalizer. No second store,
+HTTP route, quote UI or remote activation is introduced. Actual draft delivery
+fields must match accepted terms or commerce quarantines. Details/limits:
+`WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`. Full WORK remains NOT PASSED.

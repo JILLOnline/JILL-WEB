@@ -505,3 +505,25 @@ preflight or consume the one-use attempt again. The independent native pricing
 calculation above created no request/draft and did not run that held workflow.
 The first operational gate remains exact intake reconciliation, followed by
 verification of the approved canary record/testing limits and Owner session.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+Version-2 immutable quotes now retain the exact private address and shipping
+label. The existing agreement owner provides an ownership-first customer terms
+projection; stale unaccepted offers are held, accepted terms survive later event
+revisions with the same immutable payload, and read errors remain errors. Real
+LOCAL D1 verifies A/B denial, tampering, expiry, atomic recovery and quarantine
+for address/shipping/fulfillment mismatch. No route/UI, remote schema change,
+Shopify resource, deployment or release receipt was activated.
+
+The recovered master brief section 6 confirms operational WORK is the target;
+LIVE remains a separate reviewed release. Original failed-request ID/payload
+were not established by private history searches. Next dependent Owner input:
+the original 409 request reference plus its original saved outbound payload and
+private history. Never substitute a familiar row, replay it or create a new one.
+After exact reconciliation, verify the approved canary fixture/remaining limits
+before Owner Save → leave → Reload. Requests remains as-is; all spent release
+receipts stay spent. Public quote/UI, canonical accepted event, Shopify create/
+read, invoice review and test checkout remain open. Full WORK NOT PASSED.
+Details: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`.

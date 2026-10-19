@@ -55,8 +55,10 @@ request, quote, customer or address store. No caller is connected yet.
   agreement model; callers must not drop these fees to force conversion.
 - A complete calculation produces the existing `freezeWorkQuote` calculation
   shape. Its exact input hash and address hash bind the supplied server intent.
-  These fingerprints do not independently prove the real-world address or
-  replace the later customer-readable exact-address agreement presentation.
+  Version-2 agreement terms now also persist the exact normalized private
+  address and shipping label for the customer-owned projection. These
+  fingerprints do not independently prove the real-world address; consuming
+  public routes and customer presentation are still unfinished.
 - Each SDK request is bounded and uses `tries: 1`. No automatic external retry,
   create, order completion or manual paid state is introduced. The existing
   one-create claim and ambiguous-create reconciliation remain unchanged.
@@ -137,3 +139,47 @@ release requires the completed route/source/address composition and a distinct
 reviewed functional release, after uncertain-intake reconciliation and the
 still-open Owner canary gate. The actual native calculation in this checkpoint
 was non-persisting and did not run the held synthetic intake/quote QA workflow.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+The existing agreement owner now freezes version-2 terms containing the exact
+normalized private address and shipping service label, alongside fulfillment,
+lines/personalization, integer totals, reward reference, expiry and revision/hash.
+Calculation and agreement share one address normalizer. Address/hash disagreement,
+missing delivery terms and an unreferenced discount block publication. This is
+source-only; no stored publication was rewritten or migrated, and hash-only v1
+terms cannot be newly accepted through this source. Any future v1 record needs
+an explicitly reviewed new publication, never an inferred address/backfill.
+
+`readOwnedWorkQuote` requires the existing verified account identity and a fresh
+canonical Google owner/hash read before D1. It returns only current customer
+terms, excluding staff/source fingerprints, raw intake, internal notes and
+reservation/coupon internals. Source changes hold an unaccepted offer. After
+acceptance, a later canonical event revision preserves the accepted terms when
+the immutable payload hash and owner still match. Read failures remain failures,
+not no-quote/zero. Stored-term tampering blocks reads and new acceptance. The
+existing one-create recovery now also compares actual address, shipping label
+and fulfillment, quarantining mismatches even when metadata/hash match.
+
+Real LOCAL workerd/D1 verification covers persistence/read-back, A/B and foreign
+shop denial, outages, tampering, stale/expired terms, atomic rollback, accepted
+revision recovery, lost-create hold and three isolated delivery-mismatch cases.
+Connected source tests, repository postinstall guards and HQ typecheck/build
+pass. GraphQL operations are unchanged from the previously pinned 2026-07
+validation; no Shopify mutation, remote migration or deployment ran in this slice.
+There is still no consuming customer HTTP route or quote UI; this is NOT deployed
+Owner/customer flow acceptance. Current Requests runtime/navigation stays as-is.
+
+The original master brief section 6 was recovered and reviewed. It explicitly
+requires operational WORK before separate LIVE review. Recovery searches and
+older private terminal history did not establish the original uncertain 409
+submission's exact ID/payload; failed retrieval is not absence. The synthetic
+quote QA HOLD remains. Next dependent operational input is that original failed
+request reference plus its original saved outbound payload/private history;
+then canonical intake/received-event/immutable owner reconciliation, followed by
+verification of the approved fixture and remaining Owner Save/Reload limits.
+Do not replay, guess an ID, create a new request or reuse spent release receipts.
+Public route/UI, canonical accepted-event composition, real Shopify create/read,
+explicit invoice review and test checkout/reconciliation remain unfinished.
+Full WORK operational acceptance is NOT PASSED; customer-facing LIVE is separate.
