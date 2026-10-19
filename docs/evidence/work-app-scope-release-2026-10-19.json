@@ -28,7 +28,7 @@
   ],
   "independent_installation_read": "authenticated WORK connector after release",
   "granted_added_scopes": [],
-  "owner_scope_consent": "not verified; actual installation still reports previous scope set",
+  "owner_scope_consent": "verified by independent installed-scope read after Owner update; historical ungranted receipt retained above",
   "online_staff_intersection": "unverified",
   "hq_worker_activation": false,
   "google_conversation_activation": false,
@@ -37,5 +37,26 @@
     "The version message ends in unreleased because it was assigned during staging; active status is authoritative.",
     "Staging and release completed. Do not repeat either command.",
     "The first stage guard stopped before upload due to PowerShell JSON array wrapping; normalized parsing subsequently confirmed the unchanged baseline."
-  ]
+  ],
+  "post_preview_cleanup": {
+    "owner_report": "Dev preview stopped on jill-work.myshopify.com; active version restored",
+    "independent_read": "All five added scopes now requested; still ungranted before Owner update",
+    "preview_masked_released_configuration": true
+  },
+  "post_owner_consent": {
+    "reported_at": "2026-10-19T13:34:47Z",
+    "owner_report": "ok i updated it",
+    "independent_read": "Authenticated WORK App/installation GraphQL read after Owner consent",
+    "added_scopes_granted": [
+      "read_products",
+      "read_inventory",
+      "read_locations",
+      "read_draft_orders",
+      "write_draft_orders"
+    ],
+    "requested_and_granted_scope_sets_match": true,
+    "app_identity_unchanged": true,
+    "installation_identity_unchanged": true,
+    "online_staff_intersection": "not verified by app-installation read"
+  }
 }

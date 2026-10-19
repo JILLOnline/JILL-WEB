@@ -1,5 +1,21 @@
 # Connected WORK execution and precise continuation
 
+## Permission update verified — 2026-10-19 13:34 UTC
+
+The Owner stopped the existing WORK dev preview and restored the active app
+version. An independent connector read then showed all five added scopes in
+the requested set. After the Owner approved the update, a second independent
+read verified `read_products`, `read_inventory`, `read_locations`,
+`read_draft_orders` and `write_draft_orders` in the **granted** set of the same
+WORK installation `738058829959`. Requested/granted sets now match.
+The installation scope gap is closed; effective online staff permissions,
+HQ Worker/catalog activation and full acceptance remain unverified.
+No new app release, dev preview, customer request or diagnostic is needed
+for this completed gate. The previous pending-consent paragraphs below are
+historical. Structured proof is appended to
+`evidence/work-app-scope-release-2026-10-19.json`.
+
+
 ## WORK app release receipt — 2026-10-19 13:26 UTC
 
 Owner CLI read-back confirms `jill-hq-work-scopes-9dd96ba` /
