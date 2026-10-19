@@ -5,7 +5,8 @@ import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {MARKER,inspectUploaded,certifyVersionHealth}
+import {MARKER,inspectUploaded,certifyVersionHealth,EMPTY_POST_MARKER,
+  EMPTY_POST_BASELINE,inspectEmptyPostVersion,emptyPostAllocation}
   from './work-gateway-diagnostic-release-policy.mjs';
 import {CANDIDATE,HOST,WORKER}
   from './work-custom-order-candidate-promotion-policy.mjs';
@@ -123,7 +124,9 @@ export async function collectWorkRuntime({owner=false}={}){
     const deployments=()=>currentAllocation(read(['deployments','list']));
     const before=deployments();report.gateway.allocation=before;
     const versions=read(['versions','list']);
-    const matches=array(versions,'versions').filter(x=>x.annotations?.['workers/message']===MARKER);
+    const matches=array(versions,'versions').filter(x=>
+      [MARKER,EMPTY_POST_MARKER].includes(x.annotations?.['workers/message'])&&
+      before.versions.some(v=>v.id===x.id&&v.percentage===0));
     if(matches.length!==1)fail('diagnostic_marker_not_unique');
     const id=matches[0].id;
     if(!UUID.test(id)||!before.versions.some(x=>x.id===id&&x.percentage===0)||
@@ -131,9 +134,14 @@ export async function collectWorkRuntime({owner=false}={}){
       fail('current_diagnostic_allocation_changed');
     const active=read(['versions','view',CANDIDATE]);
     const diagnostic=read(['versions','view',id]);
-    inspectUploaded({versions,active,uploaded:diagnostic});
+    if(diagnostic.annotations?.['workers/message']===EMPTY_POST_MARKER){
+      inspectEmptyPostVersion({versions,active,previous:read(['versions','view',EMPTY_POST_BASELINE.diagnostic]),uploaded:diagnostic});
+      emptyPostAllocation(before,id);
+    }else inspectUploaded({versions,active,uploaded:diagnostic});
     report.gateway.diagnostic={id,marker_verified:true,bindings:bindings(diagnostic)};
     report.gateway.pinned_health=await health(HOST,{version:id});
+    if(report.gateway.pinned_health.exact_version_verified!==true)
+      fail('diagnostic_pinned_health_unverified');
     const after=deployments();report.gateway.post_read_allocation=after;
     if(JSON.stringify(before)!==JSON.stringify(after))fail('allocation_changed_during_inventory');
     report.gateway.ordinary_traffic_unchanged=true;

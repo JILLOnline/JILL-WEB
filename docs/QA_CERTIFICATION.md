@@ -1,5 +1,21 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 UTC — Owner inventory and minimal diagnostic preparation
+
+The Owner supplied a clean synced `3a6db45` runtime inventory: exact existing
+gateway 100/0 allocation and pinned diagnostic health/bindings verified,
+Owner edge clock near zero, HQ active/0% version flags observed. Quote-draft
+enablement is on the 0% version only. The replacement diagnostic source package
+is limited to the old source plus zero-byte handling and response attribution;
+its policy/receipt tests, exact staged Workers HTTP test and Wrangler upload
+dry run pass locally. No new upload/deployment or signed runtime success is
+claimed. Actual Preact/DOM recovery tests pass for preserved unsent drafts,
+stale refresh, in-flight remount, exact uncertain receipt, outage and account
+switch privacy. The offline Shopify component validator could not run because
+its bundled types index is missing; no component source was uploaded. Actual
+Shopify browser/accessibility certification remains open. Details and new
+Owner command: `WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md`.
+
 ## 2026-10-19 UTC — connected WORK local checkpoint, not runtime certification
 
 Fresh read-only Shopify plan/app scope/catalog/capability/QA wallet inventory,

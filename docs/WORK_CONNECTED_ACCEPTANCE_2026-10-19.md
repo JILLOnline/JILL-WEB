@@ -11,13 +11,31 @@ contracts, and universal policy/migration planning. No Worker, app, Google
 deployment, remote D1 schema, coupon, customer balance, invoice, draft or order
 was changed by this execution. No synthetic intake was submitted.
 
-**Publication gate:** four scoped implementation commits are present locally.
-Automatic approval review rejected their push to the existing public GitHub
-repository because public code/internal WORK metadata disclosure was not
-explicitly authorized. No alternate publication route was used. A complete
-review patch is supplied privately. Approve the exact four-commit public
-WORK-branch push before expecting `git pull` on the Owner PC to obtain these
-changes; the inventory command below becomes runnable there only afterward.
+**Published source:** the original four approved trees were published through
+GitHub's connected app at `3a6db455e15156cc2b7ce313bad38f86ef6dc1d6`.
+All push/PR CI workflows passed. The Owner pulled that exact SHA successfully.
+This is source publication, not a runtime deployment.
+
+**Owner runtime update, 2026-10-19 00:28 UTC:** clean synced checkout;
+gateway deployment `3c025657-0c60-482d-bb41-4987d87bd848` unchanged before/after;
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100%, diagnostic
+`1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f` at 0%. Exact diagnostic override
+health and five inherited binding names/types pass. Tightest Owner edge-clock
+interval is −785..+252 ms (38 ms RTT); pinned diagnostic interval is
+−568..+572 ms. These are edge observations, not isolate-clock proof. HQ is
+`4973b74d-d479-41da-897c-e36129303279` at 100% and
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0%; only the 0% version has
+`JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED=true`. Normal traffic therefore does not
+have verified quote-draft activation. Google QA revision, effective online
+staff scopes, actual app version, remote D1 schema and usage remain unverified.
+`blockers: []` in the inventory means those collector checks passed; it does
+not mean full acceptance passed.
+
+The next separately scoped diagnostic package and one-use operation are in
+`WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md`. Old receipts stay spent.
+Conversation draft recovery now passes a real local Preact/DOM test through
+history remount, stale revision, lost acknowledgement, receipt recovery,
+read outage and verified account switch. No extension release is claimed.
 
 ## Fresh observed facts
 
@@ -47,9 +65,9 @@ repository**. Never put personal coupon codes or customer records in Git.
 
 | Area | Implemented and tested | Not implemented or not proved |
 | --- | --- | --- |
-| Gateway diagnostic | Canonical bounded zero-byte stream validator shared with the account reader; HMAC, timestamp window and no-order behavior retained. Real local HTTP regression and bundler dry run pass. | Correction is not deployed. The existing 0% diagnostic ID/allocation/bindings, Owner clock and signed Google connection remain unverified. No claim of key mismatch. |
+| Gateway diagnostic | Canonical bounded zero-byte stream validator shared with the account reader; HMAC, timestamp window and no-order behavior retained. Real local HTTP regression and bundler dry run pass. | Correction is not deployed. The Owner subsequently verified the old diagnostic ID/allocation/bindings and edge clock; the corrected signed Google connection remains unverified. No claim of key mismatch. |
 | Shared conversation | Customer reply ingress verifies a fresh WORK JWT, derives Customer GID, signs a distinct internal envelope, and uses the existing locked Google event writer. Receipt reads recover a lost acknowledgement. Source v2 public timeline excludes internal-only events and private fields. HQ public-thread reader requires online Owner/D1 before source reads. | Needs a reviewed Google QA revision and gateway/HQ deployment with both conversation gates enabled. Real A/B account round trip and authentic staff revocation still pending. |
-| Screens | HQ public-thread panel and bounded catalog route; My JILL replies with EN/ES composer, pending/receipt handling and preserved text after failed send. All existing extension UIDs and canonical wallet preserved. My JILL Preact bundle, HQ type check and normal/canary builds pass. | No real authenticated screenshots or responsive/keyboard browser certification. A full history refresh remounts the composer; stale replies currently instruct copying text before refresh. This recovery UX must be completed before broad rollout. |
+| Screens | HQ public-thread panel and bounded catalog route; My JILL replies with EN/ES composer, pending/receipt handling and preserved text after failed send. All existing extension UIDs and canonical wallet preserved. My JILL Preact bundle, HQ type check and normal/canary builds pass. | No real authenticated screenshots or responsive/keyboard browser certification. Full history refresh preserves the in-memory composer and exact uncertain operation; fresh verified account history prunes other requests. Browser certification is still required. |
 | Catalog | Owner-only `catalog.read`, online `read_products`, 20 products/page and 10 variants/product; continuation/truncation and source-unavailable states; native Admin edits. Query validates against 2026-07 schema. | Scope release/online reauthorization and deployment needed. HQ collection, inventory/location and minimized customer context screens remain unfinished; current catalog screen does not claim those feeds. |
 | Agreement foundation | Immutable hashed publication revisions, source/customer binding, expiry, atomic D1 acceptance plus commerce intent, canonical accepted-event prerequisite, one draft claim, ambiguous-create hold/read-back, customer mismatch quarantine, draft/order link uniqueness. Actual local workerd D1 tests pass. | Internal repository/orchestrator only. No public publish/accept route or customer quote UI, actual Shopify calculation/create/read adapter, canonical public accepted-event command, invoice send boundary, webhook inbox or scheduled reconciliation is connected. Shipping address is a verified fingerprint contract; exact customer-readable address presentation remains to implement. Do not activate this proposal as a complete commerce feature. |
 | Universal Rewards | Backend-only integer arithmetic, boundary table, fractional carry, versioned snapshot migration plan, legacy coupon terms, enrolled-order delta, refund debt and verified-unused release prerequisites. Actual QA snapshot also reconciles as a plan. | Planner is not wired into the active Apps Script v13 owner. No store-wide snapshot/CAS migration, native discount proof, persisted reservation lifecycle or web/HQ shared-wallet checkout. No second wallet created. |
@@ -65,7 +83,7 @@ active `migrations/`; there was no remote migration.
 
 | Gate from the brief | Current result |
 | --- | --- |
-| Fresh runtime baseline | PARTIAL: public runtime, actual WORK plan/catalog and installed app scopes verified. Cloudflare allocations/flags, active app-version label, online staff, QA revision and remote D1 schema/usage blocked. |
+| Fresh runtime baseline | PARTIAL: public runtime, actual WORK plan/catalog and installed app scopes verified. Cloudflare allocations/flags and Owner edge clock now verified; active app-version label, online staff, QA revision and remote D1 schema/usage blocked. |
 | Gateway | LOCAL PASS / RUNTIME BLOCKED: real HTTP defect reproduced and corrected; signed exact-version Google probe and original uncertain intake reconciliation still required. |
 | Ownership | LOCAL PASS: verified GID/ledger, foreign account denial, contact email cannot transfer ownership. Runtime A/B proof pending. |
 | Conversation | LOCAL PASS: actual canonical writer HQ → customer → HQ, internal-only event exclusion, lost acknowledgement, receipt, duplicate/stale/altered command and dual feature gates. Deployed browser proof pending. |
@@ -100,28 +118,14 @@ active `migrations/`; there was no remote migration.
 
 ## Next unavoidable Owner action
 
-No Cloudflare plugin was found in available plugin discovery, and this
-executor has no Cloudflare/Google/developer CLI credentials. The Owner's
-existing PC session is required for the current deployment metadata. This
-is a read-only action, not a request for another deployment approval:
+The Owner read-only inventory above passed. The new corrected diagnostic
+package is prepared and locally tested; its signed deployed connection is
+not yet proved. Use only the new scoped command and failure handoff in
+`WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md`, from its published clean SHA.
+This executor has no Cloudflare/Google CLI credentials; the existing Owner
+PC session is required. No login credentials should be pasted into chat.
 
-```powershell
-cd C:\Users\itzen\JILL-WEB
-git pull --ff-only origin jill/rewards-work
-if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
-npm.cmd run work:runtime:inventory:owner
-```
-
-Return only the collector's safe JSON. It reads current deployment lists,
-discovers the existing diagnostic by its exact marker, checks inherited
-binding metadata and pinned health, measures the Owner clock versus HTTP Date,
-then reads gateway allocation again. It performs no upload, deployment,
-secret access/rotation, quota-counter POST, receipt reset, D1 write or intake.
-If local Wrangler or auth is absent, its fixed error is the blocker; do not
-replace this with a generic deploy command. This collector does not pretend
-to verify Google revision, Shopify developer version or account-wide quotas.
-
-After metadata arrives, the implementation owner must do these dependent
+Using the verified allocation above, the implementation owner must do these dependent
 actions, preserving the exact existing identifiers:
 
 1. Pin both current Worker allocations and rollback IDs. Review a NEW
@@ -141,8 +145,8 @@ actions, preserving the exact existing identifiers:
    Keep current URLs, proxy and UIDs; no second app or Plus dependency.
 4. Certify existing Owner quote Save/Reload and a designated A/B customer
    fixture. Stage the conversation source under both OFF gates; verify the
-   new QA revision and each exact Worker before activation. Complete the
-   stale-refresh composer recovery and actual browser/accessibility checks.
+   new QA revision and each exact Worker before activation. Certify the completed
+   local composer recovery in the actual browser/accessibility checks.
 5. Wire the agreement foundation to real trusted Shopify calculations,
    owner-bound quote read/publish/accept endpoints, exact displayed terms and
    canonical accepted-event writer. Add explicit recipient/amount invoice

@@ -1,5 +1,18 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 UTC — current inventory and minimal diagnostic operation
+
+The Owner's fresh metadata and edge clock confirm the existing 0% diagnostic
+can be inspected without reusing its spent deployment receipt. Build its
+replacement from the exact old source, selecting only canonical zero-byte
+handling and a runtime response header. Keep ordinary traffic on the same
+100% candidate, inherit the original five bindings, and reserve distinct new
+upload/deployment receipts atomically. Ambiguous outcomes go to read-only
+inspection, never automatic replay or secret rotation. Full feature builds
+are independently gated. Keep My JILL composer drafts only in composing-screen
+memory across refresh and prune against each fresh verified account response;
+an uncertain send retains its original operation until receipt recovery.
+
 ## 2026-10-19 UTC — HTTP emptiness, one conversation and held financial activation
 
 **Decision:** Authenticate the gateway diagnostic challenge first, then

@@ -12,6 +12,7 @@ export default function CustomOrders() {
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[]});
   const [refreshing,setRefreshing]=useState(false);
+  const [drafts,setDrafts]=useState({});
 
   useEffect(()=>{
     let active=true;
@@ -21,7 +22,14 @@ export default function CustomOrders() {
       ? shopify.sessionToken : null;
     loadWorkCustomerCustomOrders({sessionToken})
       .then(orders=>{
-        if(active){setState({status:'ready',orders});setRefreshing(false);}
+        if(active){
+          // Keep text and the SAME uncertain operation only for requests in
+          // the newly verified account response. Other accounts' drafts go.
+          setDrafts(previous=>Object.fromEntries(orders.map(order=>[
+            order.submission_id,previous[order.submission_id]||{},
+          ])));
+          setState({status:'ready',orders});setRefreshing(false);
+        }
       })
       .catch(()=>{
         if(active){setState({status:'error',orders:[]});setRefreshing(false);}
@@ -146,7 +154,10 @@ export default function CustomOrders() {
                       </s-grid>
                     ))}
                   </s-stack>
-                  <RequestConversation order={order} onRefresh={()=>setAttempt(value=>value+1)}/>
+                  <RequestConversation order={order} draft={drafts[order.submission_id]||{}}
+                    onDraftChange={change=>setDrafts(previous=>Object.hasOwn(previous,order.submission_id)?
+                      {...previous,[order.submission_id]:{...previous[order.submission_id],...change}}:previous)}
+                    onRefresh={()=>setAttempt(value=>value+1)}/>
                   <s-divider/>
                   <s-stack direction="block" gap="small-100">
                     <s-text color="subdued">Your request reference</s-text>

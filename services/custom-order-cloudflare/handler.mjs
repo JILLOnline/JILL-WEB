@@ -91,7 +91,7 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     let settings;
     try {settings=config(env);}
     catch {return reply(503,{ok:false,code:'diagnostic_unverified'});}
-    return handleCustomOrderGatewayDiagnostic({
+    const result=await handleCustomOrderGatewayDiagnostic({
       request,receiptSecret:settings.googleGatewaySecret,
       appsScriptEndpoint:settings.googleQaEndpoint,
       rateLimit:async()=>{
@@ -100,6 +100,10 @@ export async function handleCloudflareCustomOrderWork(request,env) {
           client:clientId(request),minute:Math.floor(Date.now()/60000)});
       },
     });
+    const version=env?.CF_VERSION_METADATA?.id;
+    if(typeof version==='string'&&UUID.test(version))
+      result.headers.set(VERSION_HEADER,version);
+    return result;
   }
   // Account reads are a distinct, bearer-JWT-authenticated endpoint.
   // Unlike Shopify app-proxy submissions, extension fetches do NOT pass

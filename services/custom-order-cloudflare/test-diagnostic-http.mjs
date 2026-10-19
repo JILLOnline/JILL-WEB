@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {stageDiagnosticPackage} from '../../scripts/prepare-work-gateway-diagnostic.mjs';
 import {gatewayDiagnosticSignature,receiptSignature}
   from '../../backend/custom-order-gateway.mjs';
 
@@ -14,7 +18,10 @@ const {Miniflare,convertV4MiniflareOptions}=workerRequire('miniflare');
 const {build}=workerRequire('esbuild');
 const runtimeOptions=convertV4MiniflareOptions||((value)=>value);
 
-const ROOT=fileURLToPath(new URL('./',import.meta.url));
+assert(process.argv.length===2||process.argv.length===3&&process.argv[2]==='--release-snapshot');
+const staged=process.argv[2]?fs.mkdtempSync(path.join(os.tmpdir(),'jill-diagnostic-http-')):null;
+const ROOT=staged?stageDiagnosticPackage(staged).app:fileURLToPath(new URL('./',import.meta.url));
+const VERSION='11111111-2222-4333-8444-555555555555';
 const SECRET='synthetic-local-diagnostic-secret-000000000000';
 const ENDPOINT='https://script.google.com/macros/s/AKfycbLOCAL_DIAGNOSTIC/exec';
 const bundle=await build({stdin:{contents:`
@@ -35,7 +42,7 @@ const mf=new Miniflare(runtimeOptions({modules:true,script:bundle.outputFiles[0]
   compatibilityDate:'2026-10-12',compatibilityFlags:['nodejs_compat'],
   bindings:{SHOPIFY_WORK_APP_SECRET:'synthetic-shopify-secret-111111111111111',
     JILL_CUSTOM_ORDER_GATEWAY_SECRET:SECRET,
-    JILL_CUSTOM_ORDER_QA_BACKEND_URL:ENDPOINT},
+    JILL_CUSTOM_ORDER_QA_BACKEND_URL:ENDPOINT,CF_VERSION_METADATA:{id:VERSION}},
   durableObjects:{RATE_LIMITER:{className:'CustomOrderRateLimiter',useSQLite:true}},
   outboundService:async request=>{
     upstream++;
@@ -70,6 +77,7 @@ try {
       content_length:response.headers.get('x-test-content-length'),
       status:response.status}));
     assert.equal(response.status,200,'Zero-byte HTTP POST must pass a valid challenge');
+    assert.equal(response.headers.get('x-jill-work-gateway-version'),VERSION);
     assert.equal((await response.json()).code,'gateway_google_signature_verified');
   }
   assert.equal(upstream,3);
@@ -77,8 +85,9 @@ try {
     {secret:'different-synthetic-secret-000000000000000'}]) {
     const response=await send(args);
     assert.equal(response.status,403);
+    assert.equal(response.headers.get('x-jill-work-gateway-version'),VERSION);
     assert.deepEqual(await response.json(),{ok:false,code:'diagnostic_denied'});
   }
   assert.equal(upstream,3,'Denied challenges must not contact Google');
   console.log('PASS actual Workers HTTP empty POST, HMAC, clock and nonempty-body denial. No remote calls.');
-} finally {await mf.dispose();}
+} finally {await mf.dispose();if(staged)fs.rmSync(staged,{recursive:true,force:true});}

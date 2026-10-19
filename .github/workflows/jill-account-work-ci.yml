@@ -213,6 +213,8 @@ jobs:
     steps:
       - name: Checkout WORK branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
@@ -236,6 +238,16 @@ jobs:
       - name: Verify real Workers HTTP normalization of an empty diagnostic POST
         working-directory: services/custom-order-cloudflare
         run: npm run test:diagnostic-http
+
+      - name: Verify minimal zero-byte release package and actual staged Workers HTTP
+        run: |
+          npm run test:work-gateway-empty-post-release
+          npm run test:work-gateway-empty-post-http
+
+      - name: Verify actual Preact conversation refresh and receipt recovery locally
+        run: |
+          npm install --prefix tools/work-account-local --no-audit --no-fund
+          npm run test:work-conversation-ui-local
 
       - name: Verify WORK health runtime version attribution without Cloudflare (OFFLINE)
         run: node scripts/test-work-custom-order-version-metadata-offline.mjs

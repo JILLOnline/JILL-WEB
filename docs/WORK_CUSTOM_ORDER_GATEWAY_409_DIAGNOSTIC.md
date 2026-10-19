@@ -2,6 +2,15 @@
 
 ## Current handoff — 2026-10-19 UTC
 
+The Owner subsequently ran the new read-only collector successfully. It
+verified the existing diagnostic `1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f`
+at 0%, the same ordinary candidate at 100%, exact pinned health and inherited
+binding names/types. Owner edge-clock evidence is near zero. The separately
+prepared minimal correction and **new** one-use operation are documented in
+[WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md](WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md).
+They have not run remotely. The collector command below records the earlier
+read-only step; do not confuse it with a deployment or full acceptance.
+
 The inactive-upload, Version URL recovery and 0% deployment commands below
 are **historical, spent procedures; do not run them again**. The Owner's last
 0% deployment reached the signed probe, which returned `403 diagnostic_denied`.
@@ -16,7 +25,8 @@ bytes with bounded reads/time, and retains the unchanged HMAC and 60-second
 window. Real local HTTP regression passes for omitted, empty-string and
 empty-byte bodies; nonempty bodies, wrong keys and stale clocks remain denied.
 This correction has **not** been uploaded/deployed. It does not establish the
-actual diagnostic's current ID, inherited secrets or Google connectivity.
+Google connectivity or secret values. The later Owner collector established
+the old diagnostic's ID/allocation and inherited binding metadata only.
 
 Fresh public GETs reported gateway version
 `9322193f-5e87-4479-88c9-39229dddb5f2` and healthy gateway/HQ. This session's

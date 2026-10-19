@@ -1,0 +1,9 @@
+{
+  "name": "jill-work-account-local-tests",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "linkedom": "0.18.12",
+    "preact": "10.27.1"
+  }
+}

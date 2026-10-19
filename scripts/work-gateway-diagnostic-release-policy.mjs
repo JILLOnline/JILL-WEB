@@ -110,3 +110,71 @@ export function certifyProbe({status,body,cacheControl,redirect}={}){
   return Object.freeze({google_signature_verified:true,
     customer_order_created:false,shopify_submission_tested:false});
 }
+
+// Separate reviewed release after the Owner's 2026-10-19 read-only inventory.
+// The old upload/recovery/deployment receipts and their policies stay spent.
+export const EMPTY_POST_BASELINE=Object.freeze({
+  deployment:'3c025657-0c60-482d-bb41-4987d87bd848',
+  diagnostic:'1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f',
+});
+export const EMPTY_POST_MARKER='JILL WORK zero-byte diagnostic v1 b9f36124574463205b4b11d63a2d013f34c66686';
+export function emptyPostBaseline(state){
+  check(state?.deployment===EMPTY_POST_BASELINE.deployment&&
+    state.versions?.length===2&&
+    state.versions.some(v=>v.id===CANDIDATE&&v.percentage===100)&&
+    state.versions.some(v=>v.id===EMPTY_POST_BASELINE.diagnostic&&v.percentage===0),
+    'empty_post_baseline_changed');
+  return state;
+}
+export function emptyPostVersion(versions){
+  const arr=Array.isArray(versions)?versions:versions?.versions||versions?.result;
+  check(Array.isArray(arr)&&arr.length>0&&arr.length<=100,'version_list_invalid');
+  check(arr.every(v=>UUID.test(v?.id||'')&&
+    Number.isFinite(Date.parse(v.metadata?.created_on))), 'version_list_invalid');
+  const matches=arr.filter(v=>v.annotations?.['workers/message']===EMPTY_POST_MARKER);
+  check(matches.length<=1,'empty_post_marker_not_unique');
+  const latest=[...arr].sort((a,b)=>Date.parse(b.metadata.created_on)-Date.parse(a.metadata.created_on));
+  check(latest.length===1||Date.parse(latest[0].metadata.created_on)>
+    Date.parse(latest[1].metadata.created_on),'ambiguous_latest_version');
+  if(!matches.length){
+    check(latest[0].id===EMPTY_POST_BASELINE.diagnostic,'newer_version_exists');
+    return null;
+  }
+  check(matches[0].id===latest[0].id&&
+    ![CANDIDATE,ORIGINAL,EMPTY_POST_BASELINE.diagnostic].includes(matches[0].id),
+    'empty_post_version_not_latest');
+  return matches[0].id;
+}
+export function inspectEmptyPostVersion({versions,active,previous,uploaded}){
+  check(previous?.id===EMPTY_POST_BASELINE.diagnostic&&
+    previous.annotations?.['workers/message']===MARKER&&active?.id===CANDIDATE,
+    'empty_post_prior_identity_changed');
+  inspectGatewayCandidate({active,candidate:previous});
+  inspectGatewayCandidate({active:previous,candidate:uploaded});
+  check(active.resources.bindings.length===5&&
+    active.resources.bindings.some(b=>b.name==='CF_VERSION_METADATA'&&b.type==='version_metadata')&&
+    uploaded?.id===emptyPostVersion(versions)&&
+    uploaded.annotations?.['workers/message']===EMPTY_POST_MARKER,
+    'empty_post_bindings_or_marker_changed');
+  return uploaded.id;
+}
+export function emptyPostAllocation(state,id){
+  check(UUID.test(id||'')&&![CANDIDATE,ORIGINAL,EMPTY_POST_BASELINE.diagnostic].includes(id)&&
+    UUID.test(state?.deployment||'')&&state.deployment!==EMPTY_POST_BASELINE.deployment&&
+    state.versions?.length===2&&
+    state.versions.some(v=>v.id===CANDIDATE&&v.percentage===100)&&
+    state.versions.some(v=>v.id===id&&v.percentage===0),
+    'empty_post_allocation_unverified');
+  return state;
+}
+export function emptyPostUploadArgs(){
+  return Object.freeze(['versions','upload','--config','./wrangler.toml',
+    '--name',WORKER,'--strict','--keep-vars','--message',EMPTY_POST_MARKER]);
+}
+export function emptyPostDeployArgs(id){
+  check(UUID.test(id||'')&&![CANDIDATE,ORIGINAL,EMPTY_POST_BASELINE.diagnostic].includes(id),
+    'empty_post_id_invalid');
+  return Object.freeze(['versions','deploy',CANDIDATE+'@100%',id+'@0%',
+    '--name',WORKER,'--config','./wrangler.toml','--yes','--message',
+    'JILL WORK zero-byte diagnostic v1 0pct; existing candidate remains 100pct']);
+}

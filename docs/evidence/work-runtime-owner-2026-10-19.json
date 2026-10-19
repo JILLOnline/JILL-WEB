@@ -1,0 +1,291 @@
+{
+  "captured_at": "2026-10-19T00:28:09.014Z",
+  "environment": "WORK",
+  "source": {
+    "branch": "jill/rewards-work",
+    "commit": "3a6db455e15156cc2b7ce313bad38f86ef6dc1d6",
+    "tracked_clean": true
+  },
+  "app": {
+    "client_id": "f8e1ebdbae84490dc8ea5b133637e6c0",
+    "identity_evidence": "source_configuration_only",
+    "shop": "jill-work.myshopify.com",
+    "active_version": "unverified",
+    "effective_scopes": "unverified",
+    "plan": "unverified",
+    "staff_permissions": "unverified",
+    "extensions": [
+      {
+        "handle": "jill-account-coupons",
+        "uid": "dfb3e6f0-162d-b114-19a1-d854706d0d45166f43aa",
+        "api_version": "2026-07"
+      },
+      {
+        "handle": "jill-account-dashboard",
+        "uid": "2f093e56-265e-4263-57fc-eb7b7a8a3f49ccd3b19a",
+        "api_version": "2026-07"
+      },
+      {
+        "handle": "jill-account-home",
+        "uid": "923e30e6-dbf9-f48a-57a6-0dbd1ab57763f55ebbde",
+        "api_version": "2026-07"
+      }
+    ]
+  },
+  "gateway": {
+    "unpinned_health": {
+      "status": 200,
+      "healthy": true,
+      "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+      "exact_version_verified": false,
+      "clock": {
+        "rtt_ms": 212,
+        "offset_min_ms": -389,
+        "offset_max_ms": 822,
+        "outside_challenge_window": false,
+        "source": "http_date_edge_not_worker_clock"
+      }
+    },
+    "clock_samples": [
+      {
+        "status": 200,
+        "healthy": true,
+        "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+        "exact_version_verified": false,
+        "clock": {
+          "rtt_ms": 355,
+          "offset_min_ms": -746,
+          "offset_max_ms": 608,
+          "outside_challenge_window": false,
+          "source": "http_date_edge_not_worker_clock"
+        }
+      },
+      {
+        "status": 200,
+        "healthy": true,
+        "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+        "exact_version_verified": false,
+        "clock": {
+          "rtt_ms": 38,
+          "offset_min_ms": -785,
+          "offset_max_ms": 252,
+          "outside_challenge_window": false,
+          "source": "http_date_edge_not_worker_clock"
+        }
+      }
+    ],
+    "allocation": {
+      "deployment": "3c025657-0c60-482d-bb41-4987d87bd848",
+      "created_at": "2026-10-18T19:37:48.146321Z",
+      "versions": [
+        {
+          "id": "9322193f-5e87-4479-88c9-39229dddb5f2",
+          "percentage": 100
+        },
+        {
+          "id": "1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f",
+          "percentage": 0
+        }
+      ]
+    },
+    "diagnostic": {
+      "id": "1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f",
+      "marker_verified": true,
+      "bindings": [
+        {
+          "name": "CF_VERSION_METADATA",
+          "type": "version_metadata"
+        },
+        {
+          "name": "JILL_CUSTOM_ORDER_GATEWAY_SECRET",
+          "type": "secret_text"
+        },
+        {
+          "name": "JILL_CUSTOM_ORDER_QA_BACKEND_URL",
+          "type": "secret_text"
+        },
+        {
+          "name": "RATE_LIMITER",
+          "type": "durable_object_namespace"
+        },
+        {
+          "name": "SHOPIFY_WORK_APP_SECRET",
+          "type": "secret_text"
+        }
+      ]
+    },
+    "pinned_health": {
+      "status": 200,
+      "healthy": true,
+      "runtime_version": "1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f",
+      "exact_version_verified": true,
+      "clock": {
+        "rtt_ms": 141,
+        "offset_min_ms": -568,
+        "offset_max_ms": 572,
+        "outside_challenge_window": false,
+        "source": "http_date_edge_not_worker_clock"
+      }
+    },
+    "post_read_allocation": {
+      "deployment": "3c025657-0c60-482d-bb41-4987d87bd848",
+      "created_at": "2026-10-18T19:37:48.146321Z",
+      "versions": [
+        {
+          "id": "9322193f-5e87-4479-88c9-39229dddb5f2",
+          "percentage": 100
+        },
+        {
+          "id": "1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f",
+          "percentage": 0
+        }
+      ]
+    },
+    "ordinary_traffic_unchanged": true
+  },
+  "hq": {
+    "public_health": {
+      "status": 200,
+      "healthy": true,
+      "runtime_version": null,
+      "exact_version_verified": false,
+      "clock": {
+        "rtt_ms": 244,
+        "offset_min_ms": -30,
+        "offset_max_ms": 1213,
+        "outside_challenge_window": false,
+        "source": "http_date_edge_not_worker_clock"
+      }
+    },
+    "allocation": {
+      "deployment": "d10596df-fb98-4e6d-8b3d-a3bd0e4deaf0",
+      "created_at": "2026-10-17T19:27:35.355412Z",
+      "versions": [
+        {
+          "id": "4973b74d-d479-41da-897c-e36129303279",
+          "percentage": 100
+        },
+        {
+          "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+          "percentage": 0
+        }
+      ]
+    },
+    "versions": [
+      {
+        "id": "4973b74d-d479-41da-897c-e36129303279",
+        "percentage": 100,
+        "bindings": [
+          {
+            "name": "JILL_HQ_MERCHANT_READ_SECRET",
+            "type": "secret_text"
+          },
+          {
+            "name": "JILL_HQ_MERCHANT_WRITE_SECRET",
+            "type": "secret_text"
+          },
+          {
+            "name": "JILL_ORDER_DESK_WORK_DB",
+            "type": "d1"
+          },
+          {
+            "name": "JILL_WORK_HOST_STAGE",
+            "type": "plain_text"
+          },
+          {
+            "name": "JILL_WORK_HQ_DETAIL_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_MERCHANT_WRITES_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_OAUTH_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_OWNER_BOOTSTRAP_ENABLED",
+            "type": "plain_text",
+            "enabled": false
+          },
+          {
+            "name": "JILL_WORK_SESSION_KEY_B64",
+            "type": "secret_text"
+          },
+          {
+            "name": "SHOPIFY_API_SECRET",
+            "type": "secret_text"
+          }
+        ]
+      },
+      {
+        "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+        "percentage": 0,
+        "bindings": [
+          {
+            "name": "JILL_HQ_MERCHANT_READ_SECRET",
+            "type": "secret_text"
+          },
+          {
+            "name": "JILL_HQ_MERCHANT_WRITE_SECRET",
+            "type": "secret_text"
+          },
+          {
+            "name": "JILL_ORDER_DESK_WORK_DB",
+            "type": "d1"
+          },
+          {
+            "name": "JILL_WORK_HOST_STAGE",
+            "type": "plain_text"
+          },
+          {
+            "name": "JILL_WORK_HQ_DETAIL_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_MERCHANT_WRITES_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_OAUTH_ENABLED",
+            "type": "plain_text",
+            "enabled": true
+          },
+          {
+            "name": "JILL_WORK_OWNER_BOOTSTRAP_ENABLED",
+            "type": "plain_text",
+            "enabled": false
+          },
+          {
+            "name": "JILL_WORK_SESSION_KEY_B64",
+            "type": "secret_text"
+          },
+          {
+            "name": "SHOPIFY_API_SECRET",
+            "type": "secret_text"
+          }
+        ]
+      }
+    ]
+  },
+  "qa": {
+    "published_revision": "unverified"
+  },
+  "budget": {
+    "new_billable_services_enabled": false,
+    "usage": "unverified",
+    "private_media_activation": "held"
+  },
+  "blockers": []
+}

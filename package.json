@@ -266,7 +266,12 @@
     "work:runtime:inventory:owner": "node scripts/collect-work-runtime-readonly.mjs --owner",
     "test:work-connected-source": "node scripts/test-work-conversation.mjs && node scripts/test-work-catalog-and-inventory.mjs && node scripts/test-rewards-universal-policy.mjs",
     "test:work-gateway-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare",
-    "test:work-hq-quote-agreement-local": "npm run test:workerd-quote-agreement-local --prefix services/jill-order-desk/app-home"
+    "test:work-hq-quote-agreement-local": "npm run test:workerd-quote-agreement-local --prefix services/jill-order-desk/app-home",
+    "work:gateway:empty-post:inspect": "node scripts/release-work-gateway-diagnostic-owner.mjs --inspect",
+    "work:gateway:empty-post:release-once": "node scripts/release-work-gateway-diagnostic-owner.mjs --release-once",
+    "test:work-gateway-empty-post-release": "node scripts/test-work-gateway-empty-post-release.mjs",
+    "test:work-gateway-empty-post-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare -- --release-snapshot",
+    "test:work-conversation-ui-local": "node tools/work-account-local/test-conversation.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
