@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {loadJillOrderDeskHome} from '../services/jill-order-desk/admin-home.mjs';
+import {loadJillOrderDeskHome,readWorkOwnerAccessEvidence} from '../services/jill-order-desk/admin-home.mjs';
 import {
   JILL_WORK_MERCHANT_SHOP,JILL_WORK_MERCHANT_CLIENT_ID,
 } from '../backend/jill-merchant-auth.mjs';
@@ -125,3 +125,25 @@ assert.match(source,/authenticate\.admin\(request\)/);
 assert.match(source,/readWorkMerchantPermission/);
 assert.doesNotMatch(source,/customer[_-]?id|discountCodeBasicCreate|draftOrderCreate|paymentCapture|fetch\(/i);
 console.log('WORK merchant App Home contract passed: official Shopify auth first, D1 deny-by-default, staff roles, no writes, redirects preserved.');
+
+const evidenceSession=session(123,true);
+evidenceSession.scope='read_products,read_inventory,read_locations,write_draft_orders';
+evidenceSession.accessToken='SYNTHETIC_TOKEN_NEVER_EXPOSE';
+let evidence=await readWorkOwnerAccessEvidence({request,authenticate:authenticated(evidenceSession),db:mockDb(),runtimeVersion:'11111111-2222-4333-8444-555555555555'});
+let model=await evidence.json();
+assert.equal(model.state,'verified_owner');assert.equal(model.online,true);
+assert.equal(model.actions.find(a=>a.action==='catalog.read').shopify_scope_intersection,false,
+  'App scopes cannot substitute for verified online staff scopes');
+assert(!JSON.stringify(model).includes(evidenceSession.accessToken));
+assert.match(evidence.headers.get('cache-control'),/no-store/);
+evidenceSession.onlineAccessInfo.associated_user_scope=evidenceSession.scope;
+evidence=await readWorkOwnerAccessEvidence({request,authenticate:authenticated(evidenceSession),db:mockDb()});
+model=await evidence.json();assert.equal(model.actions.find(a=>a.action==='inventory.read').shopify_scope_intersection,true);
+assert.equal(model.actions.find(a=>a.action==='draft.create').feature_enabled,false,
+  'Shopify permission does not enable unfinished commerce');
+for(const bad of [session(444,false),session(123,true,false),{...session(123,true),shop:'foreign.myshopify.com'},
+  {...session(123,true),expires:new Date(Date.now()-1)}]){
+  assert.equal((await readWorkOwnerAccessEvidence({request,authenticate:authenticated(bad),db:mockDb()})).status,403);
+}
+assert.equal((await readWorkOwnerAccessEvidence({request,authenticate:authenticated(session(123,true)),db:mockDb({found:null})})).status,403);
+console.log('PASS Owner online access evidence: D1/current SDK identity, online scope intersection, foreign/offline/revoked authority denied, no token exposure or commerce activation.');

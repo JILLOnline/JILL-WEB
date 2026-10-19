@@ -5,6 +5,7 @@ export default [
   route("auth/*","routes/auth.catchall.tsx"),
   route("app","routes/app.tsx",[
     index("routes/app.index.tsx"),
+    route("access","routes/app.access.tsx"),
     route("catalog","routes/app.catalog.tsx"),
     route("requests","routes/app.requests.layout.tsx",[
       index("routes/app.requests.tsx"),

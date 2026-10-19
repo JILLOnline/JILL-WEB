@@ -86,7 +86,10 @@ export default {
       return Response.json({
         ok:ready,environment:"JILL_ORDER_DESK_WORK",
         database_ready:ready,admin_ready:false,
-      },{status:ready?200:503,headers});
+      },{status:ready?200:503,headers:{...headers,
+        ...(env.CF_VERSION_METADATA?.id&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(env.CF_VERSION_METADATA.id)
+          ? {"X-JILL-WORK-HQ-Version":env.CF_VERSION_METADATA.id}:{}),
+      }});
     }
     if(!await schemaReady(env.JILL_ORDER_DESK_WORK_DB))
       return unavailable("merchant_storage_unavailable");

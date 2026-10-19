@@ -4,6 +4,8 @@
 // No direct public endpoint, OAuth implementation, HTTP listener, or mutation
 // is registered by this module.
 import {readWorkMerchantPermission} from './merchant-access.mjs';
+import {requireWorkMerchantIdentity} from '../../backend/jill-merchant-auth.mjs';
+import {JILL_MERCHANT_ACTIONS} from '../../backend/jill-merchant-policy.mjs';
 
 const HEADERS=Object.freeze({
   'cache-control':'private, no-store, max-age=0',
@@ -47,4 +49,22 @@ export async function loadJillOrderDeskHome({request,authenticate,db}={}) {
   if(access.code==='unauthenticated')
     return outcome(401,'online_staff_required');
   return outcome(403,'access_denied');
+}
+
+// Owner-only operational read: verified online intersection, never app-level
+// scopes or browser identity. No token, customer, secret or D1 session payload.
+/** @param {{request?:Request,authenticate?:any,db?:any,runtimeVersion?:string|null}} options */
+export async function readWorkOwnerAccessEvidence({request,authenticate,db,runtimeVersion=null}={}) {
+  const result=(status,body)=>Response.json(body,{status,headers:HEADERS});
+  if(request?.method!=='GET')return result(405,{state:'unavailable'});
+  const {session}=await authenticate.admin(request);
+  const permission=await readWorkMerchantPermission({db,session,action:'team.read'});
+  if(!permission.allowed||permission.role!=='owner')return result(403,{state:'access_denied'});
+  const identity=requireWorkMerchantIdentity(session);
+  const actions=['catalog.read','locations.read','inventory.read','draft.create','invoice.send'];
+  return result(200,{state:'verified_owner',shop:identity.shop,online:true,
+    runtime_version:typeof runtimeVersion==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(runtimeVersion)?runtimeVersion:null,
+    staff_id:identity.staffId,scopes:[...identity.scopes].sort(),
+    actions:actions.map(action=>({action,feature_enabled:JILL_MERCHANT_ACTIONS[action].enabled,
+      shopify_scope_intersection:JILL_MERCHANT_ACTIONS[action].scopes.every(scope=>identity.scopes.includes(scope))}))});
 }

@@ -1,5 +1,23 @@
 # Connected WORK execution and precise continuation
 
+## Fresh runtime baseline and NEW inactive HQ source candidate
+
+Owner inventory at `2026-10-19T13:36:11.906Z` confirms unchanged gateway and
+HQ allocation: `4973b74d-d479-41da-897c-e36129303279` 100%,
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` 0%, quote drafts on 0% only.
+The Shopify scope release/consent is complete; a separate HQ Worker
+update is needed for the newer interface/catalog. The new, tested inactive
+candidate and one-use Owner runner are described in
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. No upload or deployment has
+been performed for this candidate. Owner Cloudflare credentials are absent
+in the executor. Do not reuse any historical upload/release receipt.
+
+New Owner-only online access evidence fails closed without current SDK/D1
+Owner authority. It does not certify actual staff permissions until an
+authenticated deployed read succeeds. Full WORK remains NOT PASSED; the
+inventory's empty blockers array is not acceptance.
+
+
 ## Permission update verified — 2026-10-19 13:34 UTC
 
 The Owner stopped the existing WORK dev preview and restored the active app

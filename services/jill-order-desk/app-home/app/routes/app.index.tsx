@@ -47,6 +47,7 @@ export default function JillHQ() {
         {verified ? <span className="jill-hq__environment">WORK ONLY</span> : null}
       </div>
 
+      {owner?<p><Link to="/app/access">Owner access diagnostics</Link></p>:null}
       {verified ? <>
         <section className="jill-hq__section" aria-labelledby="hq-work-heading">
           <div className="jill-hq__section-heading">

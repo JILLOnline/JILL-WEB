@@ -1,5 +1,16 @@
 # JILL HQ WORK — integrated execution plan
 
+## 2026-10-19: scope consent complete, HQ catalog candidate prepared
+
+Owner inventory at 13:36 UTC confirms the existing HQ 100/0 allocation and
+quote flag on the 0% version only. The Shopify scope release and independent
+granted-scope read are complete; online staff evidence remains open.
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md` defines the NEW inactive HQ
+catalog/access upload and its immutable one-use receipt. No provider upload,
+HQ traffic change, conversation/media activation or operational acceptance
+is claimed. Preserve the existing quote canary and all spent receipts.
+
+
 ## Current continuation — authenticated reads and independent source
 
 See `WORK_OPERATIONAL_HANDOFF_2026-10-19.md` for the exact completed source,

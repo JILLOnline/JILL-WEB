@@ -1,5 +1,22 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — connected HQ candidate, no remote acceptance
+
+Root postinstall and connected catalog/writer/policy tests PASS. Owner online
+access tests deny missing/revoked/offline/foreign authority and prevent app
+scopes substituting for online staff scopes. HQ typecheck and canary build
+PASS; actual candidate Wrangler versions-upload dry-run PASS. New staging
+policy tests cover exact allocation, binding/runtime preservation, disabled
+quote/conversation and a non-resettable one-use upload receipt. The compiled
+local workerd test uses synthetic secrets and emulated D1; it cannot certify
+an authenticated Owner or provider deployment. WORK CI includes these checks.
+
+Owner fresh runtime inventory confirms HQ/gateway baseline, not operational
+acceptance. See `WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. Actual candidate
+upload/activation, authenticated UI, A/B, staff revocation and performance
+remain OPEN. No LIVE promotion, new billing or secret changes.
+
+
 ## 2026-10-19 — authenticated source read-back and focused regressions
 
 The exact current scope gaps and all four catalog queries were independently

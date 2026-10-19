@@ -13,6 +13,7 @@
     "test:shopify-session-real": "node scripts/test-real-shopify-session.mjs",
     "test:shopify-real-init": "node scripts/test-real-shopify-initialization.mjs",
     "test:workerd-oauth": "node scripts/test-workerd-oauth-integration.mjs",
+    "test:workerd-connected-read-local": "node scripts/test-workerd-connected-read-local.mjs",
     "test:workerd-detail-on": "node scripts/test-workerd-detail-on-anonymous.mjs",
     "test:workerd-v35-media-off": "node scripts/test-workerd-v35-media-off-compiled.mjs",
     "test:workerd-quote-draft-local": "node scripts/test-workerd-quote-draft-local.mjs",

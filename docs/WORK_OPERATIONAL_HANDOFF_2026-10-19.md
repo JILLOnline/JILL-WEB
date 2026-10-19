@@ -1,5 +1,23 @@
 # WORK continuation: verified reads, source changes and exact remaining gates
 
+## Fresh runtime baseline and NEW inactive HQ source candidate
+
+Owner inventory at `2026-10-19T13:36:11.906Z` confirms unchanged gateway and
+HQ allocation: `4973b74d-d479-41da-897c-e36129303279` 100%,
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` 0%, quote drafts on 0% only.
+The Shopify scope release/consent is complete; a separate HQ Worker
+update is needed for the newer interface/catalog. The new, tested inactive
+candidate and one-use Owner runner are described in
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. No upload or deployment has
+been performed for this candidate. Owner Cloudflare credentials are absent
+in the executor. Do not reuse any historical upload/release receipt.
+
+New Owner-only online access evidence fails closed without current SDK/D1
+Owner authority. It does not certify actual staff permissions until an
+authenticated deployed read succeeds. Full WORK remains NOT PASSED; the
+inventory's empty blockers array is not acceptance.
+
+
 ## Permission update verified — 2026-10-19 13:34 UTC
 
 The Owner stopped the existing WORK dev preview and restored the active app
@@ -151,11 +169,11 @@ unfinished; this is not an operational commerce activation.
    and `dbc6341f-de7f-41de-8e97-6bf971201eeb` 0%, quote flag on 0% only.
    Use the already reviewed canary pin workflow for Save → leave → Reload
    with its existing fixture/testing limits. Do not run generic app-dev.
-3. Use the Owner's existing linked config to prepare the five-scope diff.
-   Review the complete app version, all three existing extension UIDs/bundles,
-   proxy, App Home and callbacks before its existing WORK app release.
-   Consent and fresh online staff authentication are required; then verify
-   actual granted scopes and staff intersection independently.
+3. Installation scope release/consent is COMPLETE (receipt above). Do not
+   repeat preparation, upload, release or dev preview. Stage the NEW inactive
+   HQ catalog/access candidate through its dedicated runner, inspect the
+   exact receipt, then prepare its separate WORK activation. Fresh online
+   staff authentication and actual scope intersection remain required.
 4. Cloudflare/clasp Owner credentials are necessary for the reviewed
    Google/gateway/HQ/extension activation. Start from fresh runtime reads;
    do not replay historical one-use commands. No secret values are needed

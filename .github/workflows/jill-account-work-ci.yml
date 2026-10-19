@@ -148,6 +148,9 @@ jobs:
       - name: Verify canonical conversation, scoped catalog and universal policy planning
         run: npm run test:work-connected-source
 
+      - name: Verify one-use inactive HQ catalog upload preserves the current WORK allocation
+        run: npm run test:work-hq-connected-stage
+
       - name: Ensure no tracked files were mutated
         run: |
           set -euo pipefail
@@ -353,6 +356,10 @@ jobs:
         run: npm run build
       - name: Verify real generated WORK v34-compatible manifest (no candidate, no deployment)
         run: node scripts/test-work-hq-v34-compiled-manifest.mjs
+
+      - name: Verify built connected catalog/access candidate in local workerd only
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-connected-read-local
 
       - name: Verify real built WORK client/server artifact inventory (no deployment)
         run: node scripts/review-work-hq-v35-source-delta.mjs --inventory-compiled-ci
