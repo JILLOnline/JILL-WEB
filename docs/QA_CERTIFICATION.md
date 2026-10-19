@@ -703,3 +703,18 @@ Capture actual UI/screenshots and timings without tokens or private customer
 records. No write/status/message/quote submission is required for this check.
 The authenticated navigation incident remains OPEN until this Owner UI proof
 passes. Full WORK operational acceptance and separate LIVE review remain open.
+
+
+## Requests intermittent loading remains OPEN — 2026-10-19
+
+Owner now confirms Requests works initially but can hang after repeated navigation;
+waiting and refreshing can restore it. Current theme/other tabs are reported good.
+The earlier SDK Response-body repair does not establish this remaining root cause.
+Local actual workerd concurrent/cancelled source-cache reads completed successfully;
+no cache or SDK change is justified by that result. Runtime stays unchanged.
+Prepared `work:hq:navigation:diagnose` captures only filtered existing WORK phase
+logs using Owner credentials, with exact allocation guards and bounded cleanup;
+no upload, activation, signed POST, raw tail storage or receipt mutation. See
+`WORK_HQ_INTERMITTENT_REQUESTS_DIAGNOSIS_2026-10-19.md` for precise reproduction,
+privacy checks and interpretation limits. Root cause and authenticated acceptance
+remain unverified; visual work pauses. All earlier release receipts remain spent.

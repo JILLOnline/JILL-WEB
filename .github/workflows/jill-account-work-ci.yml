@@ -353,6 +353,8 @@ jobs:
         run: npm run test:work-hq-visual-release
       - name: Verify WORK auth response recovery and canonical dashboard
         run: npm run test:work-hq-navigation-recovery
+      - name: Verify WORK diagnostic log privacy and baseline guards
+        run: npm run test:work-hq-navigation-tail
       - name: Verify HQ studio presentation and distinct release profile
         run: npm run test:work-hq-studio
       - name: Build real React Router Cloudflare App Home (no deployment)

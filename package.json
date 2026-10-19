@@ -294,7 +294,9 @@
     "test:work-hq-navigation-recovery": "node scripts/test-work-hq-request-auth-stages.mjs && node scripts/test-work-hq-navigation-recovery.mjs",
     "work:hq:navigation:repair:release-once": "node scripts/release-work-hq-navigation-owner.mjs --release-once",
     "work:hq:navigation:repair:inspect": "node scripts/release-work-hq-navigation-owner.mjs --inspect",
-    "work:hq:navigation:repair:restore-once": "node scripts/release-work-hq-navigation-owner.mjs --restore-once"
+    "work:hq:navigation:repair:restore-once": "node scripts/release-work-hq-navigation-owner.mjs --restore-once",
+    "work:hq:navigation:diagnose": "node scripts/collect-work-hq-navigation-tail-owner.mjs",
+    "test:work-hq-navigation-tail": "node scripts/test-work-hq-navigation-tail.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
