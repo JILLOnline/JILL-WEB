@@ -1,5 +1,12 @@
 # JILL HQ WORK — integrated execution plan
 
+Current execution evidence and exact remaining work:
+[`WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
+The old diagnostic upload/recovery/0% deployment receipts are spent. No command
+in a historical stage supersedes the read-only current-deployment collector.
+Independent conversation/catalog/quote-recovery/Rewards source and local tests
+have advanced; full WORK acceptance remains blocked and must not be claimed.
+
 Updated 2026-10-18. Scope is the existing WORK app/store, My JILL, Shopify commerce, isolated Custom Orders QA and WORK D1. No physical machines, paid infrastructure, LIVE or KEEP release. This plan follows `JILL_HQ_WORK_SYSTEM_MAP.md`, `JILL_HQ_MY_JILL_CUSTOMER_HANDOFF.md` and `JILL_REWARDS_WORK_FLEX_REDEMPTION.md`.
 
 ## One identity and one record per business fact
@@ -18,7 +25,7 @@ Updated 2026-10-18. Scope is the existing WORK app/store, My JILL, Shopify comme
 | Stage | Work | Acceptance before next stage |
 | --- | --- | --- |
 | 1. HQ home and request workspace | Keep existing online staff/D1 gate; replace static home with a clear WORK launchpad and native Shopify links. Preserve Owner-only request workspace and its source states. | Authenticated Owner opens inbox; denied staff see no request link/data; Products, Collections, Customers and Orders links stay pinned to WORK. No fabricated metrics. **Source built in this change.** |
-| 2. Source health and speed | The one authorized synthetic request returned an unclassified WORK 409 without a verified receipt. Hold v35 quote QA and further submissions. The gateway implements a Durable Object, so its inactive Version URL is unavailable. Attach the already uploaded diagnostic at 0% with the current candidate at 100%, then prove its exact runtime by version override before a signed nonexistent-receipt query. Reconcile the failed request by exact ID if available. Certify D1-index fast inbox before its feature flag; retain signed Google read and overflow denial. | Existing candidate stays at 100%; a signed read-only connection probe passes before a separately reviewed submission gate. Any uncertain intake stays unavailable, never a fabricated zero or success. |
+| 2. Source health and speed | Read existing allocations/bindings/flags using `work:runtime:inventory:owner`; do not rerun the spent deployment. The old diagnostic rejects a zero-byte HTTP stream before Google; its source correction passes real local workerd HTTP tests. Pin metadata/rollback before reviewing a NEW exact-version gate. Reconcile the original uncertain request by its actual receipt/ID. Keep indexed-read authorization and overflow denial. | Existing traffic unchanged; exact-version signed read-only connection and original intake reconciliation still required. Measure authenticated 20-run performance separately from public health RTT. |
 | 3. Catalog and customer reads | Audit current WORK scopes/version and real products, collections, variants, customer permissions. Add `read_products`/inventory only through a reviewed WORK app version; expose bounded Shopify GID projections with server-side staff policy. | Product/collection counts and price/stock agree with fresh Shopify reads; customer A/B privacy and staff revocation pass. Native Admin remains edit authority until a reviewed command exists. |
 | 4. One conversation | Version public request events; authenticated customer reply verifies Customer GID and owner ledger. HQ writes through existing merchant command boundary, with internal notes separate from customer messages. Guest claim requires independent proof. | Merchant→My JILL→merchant round trip, duplicate/timeout recovery, denial for another customer, and no message sent to a contact-only email account. |
 | 5. Quote and Shopify order | Exact product variant/quantity/price/address/shipping/tax calculation; customer accepts immutable quote version; one linked Draft Order is created, HQ explicitly invoices, Shopify checkout creates Order. | Changed totals invalidate acceptance; duplicate clicks create one draft; uncertain writes reconcile by operation ID and read-back; paid/refund/fulfillment observations match Shopify. |

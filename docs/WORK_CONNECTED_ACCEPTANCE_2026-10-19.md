@@ -1,0 +1,167 @@
+# Connected WORK execution and precise continuation
+
+2026-10-19 UTC (October 18 in New York). Target: `jill/rewards-work`,
+`jill-work.myshopify.com`. Initial repository checkpoint:
+`ae680c8bef856df7c5470768457f22bde8c021d9`.
+
+**Full WORK acceptance: NOT PASSED. No connected operational WORK or LIVE
+release is claimed.** This delivery contains a reproduced/corrected diagnostic,
+connected conversation source, a gated catalog screen, local agreement/recovery
+contracts, and universal policy/migration planning. No Worker, app, Google
+deployment, remote D1 schema, coupon, customer balance, invoice, draft or order
+was changed by this execution. No synthetic intake was submitted.
+
+**Publication gate:** four scoped implementation commits are present locally.
+Automatic approval review rejected their push to the existing public GitHub
+repository because public code/internal WORK metadata disclosure was not
+explicitly authorized. No alternate publication route was used. A complete
+review patch is supplied privately. Approve the exact four-commit public
+WORK-branch push before expecting `git pull` on the Owner PC to obtain these
+changes; the inventory command below becomes runnable there only afterward.
+
+## Fresh observed facts
+
+| Evidence | Result and limits |
+| --- | --- |
+| Source inventory | Existing branch at `ae680c8` before edits; same app and all three extension UIDs retained; account API remains 2026-07. |
+| Public gateway GET | HTTP 200; runtime metadata reports `9322193f-5e87-4479-88c9-39229dddb5f2`. Does not prove the current deployment allocation or diagnostic version. |
+| HQ public health | HTTP 200. Authenticated version/allocation/flags remain unknown. Historical v34/v35 allocations are not current proof. |
+| Clock | Three gateway HTTP Date intervals collected; tightest −382 to +738 ms relative to this executor. This is edge-clock evidence, not the Owner PC or isolate clock. |
+| Empty POST | BEFORE correction, real loopback HTTP → workerd, correct synthetic secret/time, omitted body: stream present, Content-Length 0, HTTP 403. AFTER correction: omitted/string/bytes empty POSTs all 200; real bytes, wrong HMAC and ±61-second clock errors remain 403 without an upstream request. |
+| WORK Shopify identity | Fresh connector read verifies `jill-work.myshopify.com`, USD, Basic App Development. The connection was reauthorized to WORK; no LIVE store data was modified. |
+| Existing custom app | `JILL HQ — WORK`, Client ID `f8e1ebdbae84490dc8ea5b133637e6c0`, App GID `433779736577`, installation GID `738058829959`. Active developer app-version label and online staff intersection remain unverified. |
+| Installed custom app scopes | `customer_read_customers`, `customer_read_orders`, `customer_write_customers`, `read_customers`, `read_discounts`, `read_orders`, `write_app_proxy`, `write_customers`, `write_discounts`, `write_orders`, `read_app_proxy`. These are this custom app's scopes, not the connector's scopes. |
+| Confirmed scope gap | No `read_products`, `read_inventory`, `read_locations`, `read_draft_orders` or `write_draft_orders`. `write_orders` cannot substitute for draft-order permission. Calculator/create/invoice integration through this app is blocked. |
+| Catalog audit | All 15 products and 60 variants read with complete pagination. All products active; all 15 capability JSON profiles pass the canonical repository resolver. Two apparel variant connections required explicit continuation and were completed. |
+| Collections and stock | Seven collections, two active locations, no overflow. Party Favors collection is empty. All 60 variants have inventory tracking OFF; this is not proof of stock or production capacity. No inventory setting was changed. |
+| Canonical QA wallet | One previously designated QA customer found. Existing ledger fields and coupon JSON read with compareDigests. The planner reconciles its integer balances and preserves its v13 coupon. Actual discount-object/operation reconciliation and store-wide migration snapshot are still required. No migration performed. |
+| Budget | No paid infrastructure or billable activation enabled. Actual Workers/D1/R2 account usage and storage authorization remain unverified. |
+
+Public-only runtime evidence is in
+`docs/evidence/work-runtime-public-2026-10-18.json`. Full catalog, capability,
+inventory and QA wallet records are kept in the private
+`JILL_WORK_Shopify_Audit_2026-10-19.json` deliverable, **not in this public Git
+repository**. Never put personal coupon codes or customer records in Git.
+
+## Delivered source and verification
+
+| Area | Implemented and tested | Not implemented or not proved |
+| --- | --- | --- |
+| Gateway diagnostic | Canonical bounded zero-byte stream validator shared with the account reader; HMAC, timestamp window and no-order behavior retained. Real local HTTP regression and bundler dry run pass. | Correction is not deployed. The existing 0% diagnostic ID/allocation/bindings, Owner clock and signed Google connection remain unverified. No claim of key mismatch. |
+| Shared conversation | Customer reply ingress verifies a fresh WORK JWT, derives Customer GID, signs a distinct internal envelope, and uses the existing locked Google event writer. Receipt reads recover a lost acknowledgement. Source v2 public timeline excludes internal-only events and private fields. HQ public-thread reader requires online Owner/D1 before source reads. | Needs a reviewed Google QA revision and gateway/HQ deployment with both conversation gates enabled. Real A/B account round trip and authentic staff revocation still pending. |
+| Screens | HQ public-thread panel and bounded catalog route; My JILL replies with EN/ES composer, pending/receipt handling and preserved text after failed send. All existing extension UIDs and canonical wallet preserved. My JILL Preact bundle, HQ type check and normal/canary builds pass. | No real authenticated screenshots or responsive/keyboard browser certification. A full history refresh remounts the composer; stale replies currently instruct copying text before refresh. This recovery UX must be completed before broad rollout. |
+| Catalog | Owner-only `catalog.read`, online `read_products`, 20 products/page and 10 variants/product; continuation/truncation and source-unavailable states; native Admin edits. Query validates against 2026-07 schema. | Scope release/online reauthorization and deployment needed. HQ collection, inventory/location and minimized customer context screens remain unfinished; current catalog screen does not claim those feeds. |
+| Agreement foundation | Immutable hashed publication revisions, source/customer binding, expiry, atomic D1 acceptance plus commerce intent, canonical accepted-event prerequisite, one draft claim, ambiguous-create hold/read-back, customer mismatch quarantine, draft/order link uniqueness. Actual local workerd D1 tests pass. | Internal repository/orchestrator only. No public publish/accept route or customer quote UI, actual Shopify calculation/create/read adapter, canonical public accepted-event command, invoice send boundary, webhook inbox or scheduled reconciliation is connected. Shipping address is a verified fingerprint contract; exact customer-readable address presentation remains to implement. Do not activate this proposal as a complete commerce feature. |
+| Universal Rewards | Backend-only integer arithmetic, boundary table, fractional carry, versioned snapshot migration plan, legacy coupon terms, enrolled-order delta, refund debt and verified-unused release prerequisites. Actual QA snapshot also reconciles as a plan. | Planner is not wired into the active Apps Script v13 owner. No store-wide snapshot/CAS migration, native discount proof, persisted reservation lifecycle or web/HQ shared-wallet checkout. No second wallet created. |
+| Media/guest/staff/playground | Existing protections retained; guest email still grants no account ownership. New endpoints remain Owner/customer scoped. | Guest claim proof, media activation/expiry, narrow staff grants/revocation and reviewed playground SKUs/margins remain unaccepted. Do not enable paid storage or invent products/costs. |
+
+`JILL_WORK_CONVERSATION_ENABLED` is absent from deployment manifests and
+defaults OFF. Google independently requires the same Script Property to be
+`true`, WORK runtime and sandbox. `JILL_WORK_CATALOG_ENABLED` defaults OFF.
+No broad staff permission was enabled. Agreement schema `0009` remains outside
+active `migrations/`; there was no remote migration.
+
+## Acceptance matrix
+
+| Gate from the brief | Current result |
+| --- | --- |
+| Fresh runtime baseline | PARTIAL: public runtime, actual WORK plan/catalog and installed app scopes verified. Cloudflare allocations/flags, active app-version label, online staff, QA revision and remote D1 schema/usage blocked. |
+| Gateway | LOCAL PASS / RUNTIME BLOCKED: real HTTP defect reproduced and corrected; signed exact-version Google probe and original uncertain intake reconciliation still required. |
+| Ownership | LOCAL PASS: verified GID/ledger, foreign account denial, contact email cannot transfer ownership. Runtime A/B proof pending. |
+| Conversation | LOCAL PASS: actual canonical writer HQ → customer → HQ, internal-only event exclusion, lost acknowledgement, receipt, duplicate/stale/altered command and dual feature gates. Deployed browser proof pending. |
+| Private quote Save/Reload | LOCAL PASS: existing 42 Save and 40 Reload cases pass. Authentic Owner Save → leave → Reload remains pending. |
+| Exact agreement | LOCAL FOUNDATION PASS: changed/expired/stale/foreign acceptance denied, acceptance and intent commit/rollback together. UI and runtime contracts unfinished. |
+| Shopify draft/invoice/order | NOT PASSED: fake adapter plus real local D1 recovery only; no actual business draft, reviewed invoice, test payment or verified order created. |
+| Rewards migration/platform/lifecycle | NOT PASSED: arithmetic/planner tests and one read-only QA snapshot only. Native mixed-basket/cheap-line/changed-cart/no-stacking and issuance/refund/expiry proofs remain. |
+| Guest/media/catalog customer/staff/playground | NOT PASSED; see explicit unfinished scope above. |
+| Speed | NOT MEASURED: no 20-run authenticated p50/p95, cold measurement or quota receipt. Public health RTT is not application navigation performance. |
+| Visual/accessibility | Build/source review only. External component validator upload blocked by automatic approval review; use local checks and real WORK browser QA. |
+| Full WORK acceptance / LIVE readiness | NOT PASSED / NOT AUTHORIZED. Separate LIVE review package: `WORK_CUSTOMER_LIVE_RELEASE_REVIEW.md`. |
+
+## Checks executed
+
+- Entire existing root `npm run postinstall` passes. One pre-existing
+  source-string assertion incorrectly rejected a styled React Router Owner
+  setup link; it now accepts attributes while still requiring Router Link.
+- `npm run test:work-connected-source` passes canonical conversation,
+  Owner/product-scope boundaries, inventory/clock parsing and universal policy.
+- `npm run test:work-gateway-http` passes genuine HTTP → Workers tests.
+- `npm run test:work-hq-quote-agreement-local` passes genuine local D1 CAS,
+  immutable revisions, owner/expiry denial, forced atomic batch rollback,
+  duplicate intent, ambiguous-create hold and quarantine. Shopify is simulated.
+- Existing Owner quote Save/Reload local D1 tests pass (42 + 40 cases).
+- HQ type check, regular build, canary build, compiled manifest guard and
+  compiled artifact inventory pass. The latter inventories bytes; it does not
+  certify parity with any deployed v34/v35 version.
+- My JILL entrypoint bundles locally through Preact; original extension
+  identity, theme, ingress, Rewards v13 and mailbox-outbox guards pass.
+- Local workerd emitted a non-fatal warning that remote `Request.cf` metadata
+  was unavailable. D1 tests still executed successfully using local storage.
+
+## Next unavoidable Owner action
+
+No Cloudflare plugin was found in available plugin discovery, and this
+executor has no Cloudflare/Google/developer CLI credentials. The Owner's
+existing PC session is required for the current deployment metadata. This
+is a read-only action, not a request for another deployment approval:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:runtime:inventory:owner
+```
+
+Return only the collector's safe JSON. It reads current deployment lists,
+discovers the existing diagnostic by its exact marker, checks inherited
+binding metadata and pinned health, measures the Owner clock versus HTTP Date,
+then reads gateway allocation again. It performs no upload, deployment,
+secret access/rotation, quota-counter POST, receipt reset, D1 write or intake.
+If local Wrangler or auth is absent, its fixed error is the blocker; do not
+replace this with a generic deploy command. This collector does not pretend
+to verify Google revision, Shopify developer version or account-wide quotas.
+
+After metadata arrives, the implementation owner must do these dependent
+actions, preserving the exact existing identifiers:
+
+1. Pin both current Worker allocations and rollback IDs. Review a NEW
+   gateway source/version marker containing the zero-byte correction; never
+   reuse the spent upload or zero-deployment receipt. Prepare a new explicit
+   version/runtime gate with unchanged ordinary traffic. No speculative key
+   rotation; the old source has a proved envelope defect.
+2. Verify isolated Google QA HEAD and published revision through the existing
+   read-only audit. Obtain the original uncertain submission ID/receipt from
+   existing private evidence and reconcile it before any new intake. Do not
+   guess an ID or use a real request as a disposable fixture.
+3. Prepare the existing WORK app scope diff and all three extension bundles
+   together: add `read_products`; review `read_inventory`/`read_locations` for
+   their feeds and `read_draft_orders`/`write_draft_orders` for calculation and
+   commerce. Verify implied read permissions versus requested scope strings,
+   active developer app version and online staff intersection after consent.
+   Keep current URLs, proxy and UIDs; no second app or Plus dependency.
+4. Certify existing Owner quote Save/Reload and a designated A/B customer
+   fixture. Stage the conversation source under both OFF gates; verify the
+   new QA revision and each exact Worker before activation. Complete the
+   stale-refresh composer recovery and actual browser/accessibility checks.
+5. Wire the agreement foundation to real trusted Shopify calculations,
+   owner-bound quote read/publish/accept endpoints, exact displayed terms and
+   canonical accepted-event writer. Add explicit recipient/amount invoice
+   review, actual Shopify adapter, reconciliation jobs and exception UI.
+   Migrate `0009` only with a reviewed WORK schema/data rollback. Approval
+   alone must never complete a draft or mark paid.
+6. Integrate the universal planner into the SAME Rewards owner with actual
+   v13 snapshots, operations and discount read-back; prove native enforcement
+   on the actual plan before enabling any new customer redemption. Complete
+   the rest of the acceptance matrix, then review LIVE separately.
+
+## Recovery and rollback
+
+This delivery has made no remote runtime/data change to roll back. Reverting
+these scoped source commits restores the previous source; it does not imply
+the previous source was an operational integration. Before any future upload,
+record fresh actual allocations and exact version binding/flag differences.
+After future data activation, preserve publication, acceptance, intent, link,
+wallet and reconciliation receipts during code rollback. A code rollback
+cannot delete an external draft/invoice or undo ledger accounting. Ambiguous
+creation stays held; customer mismatch stays quarantined pending reviewed
+operator action. Do not drop tables or recreate customer requests as recovery.

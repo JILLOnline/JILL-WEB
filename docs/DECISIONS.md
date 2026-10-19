@@ -1,5 +1,35 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 UTC — HTTP emptiness, one conversation and held financial activation
+
+**Decision:** Authenticate the gateway diagnostic challenge first, then
+validate zero bytes through a bounded HTTP stream reader. Never infer a key
+mismatch from a 403 alone. Real workerd HTTP converts the Owner's empty POST
+into a non-null stream with Content-Length 0; the previous null-stream check
+rejects the correct key/time. HMAC and the 60-second window stay unchanged.
+
+**Decision:** Customer replies reuse the existing locked Google event writer
+and immutable owner ledger with a domain-separated signed ingress and receipt
+read. Version-two public history filters internal-only events; HQ and My JILL
+consume that same whitelist. No general chat store, additional extension or
+email-derived ownership. Activation is gated independently in Google/Worker.
+
+**Decision:** Keep agreement publications/acceptance/commerce intent in the
+existing WORK D1 boundary, with additive schema outside active migrations
+until runtime review. Commit acceptance and intent atomically, confirm the
+canonical public accepted event, claim one creation, then reconcile ambiguous
+Shopify results without a second create. Quarantine does not clear itself.
+This local foundation does not implement the missing public quote routes,
+invoice flow, actual Shopify adapter or scheduler.
+
+**Decision:** Universal Rewards arithmetic/migration planning is backend-only
+and prepares the existing owner for a later versioned activation. v13 remains
+the active wallet/discount owner. Issued coupons retain original terms; no
+new customer deduction occurs in HQ. Fresh WORK app scope reads confirm draft
+and product/inventory/location scopes are missing; connector authority does
+not bypass those application/staff gates. Full local and runtime evidence is
+recorded in `WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`.
+
 This log records decisions and rationale so future contributors do not repeatedly reopen settled architecture questions. It does not replace the Constitution or contracts.
 
 ## 2026-09-08 — Theme Core starts clean

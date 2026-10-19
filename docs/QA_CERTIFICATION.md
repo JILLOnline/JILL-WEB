@@ -1,5 +1,17 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 UTC — connected WORK local checkpoint, not runtime certification
+
+Fresh read-only Shopify plan/app scope/catalog/capability/QA wallet inventory,
+real local Workers HTTP diagnostic reproduction/correction, canonical writer
+conversation round trip, real local D1 agreement/recovery tests, existing
+quote Save/Reload, root postinstall guards, My JILL local Preact bundle and HQ
+normal/canary builds pass. No authenticated 20-run performance, real workflow
+screenshots, customer acceptance/checkout, migration or remote activation
+passed. External component-source upload was rejected by automatic approval
+review; it was not bypassed. The complete pass/blocked matrix and exact Owner
+read-only action are in `WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`.
+
 This document owns proof-of-done. A feature is not certified because it looks right once.
 
 ## Certification layers

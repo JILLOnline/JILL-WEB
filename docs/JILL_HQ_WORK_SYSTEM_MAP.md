@@ -1,5 +1,31 @@
 # JILL HQ — WORK system map and connection contract
 
+## Fresh execution addendum — 2026-10-19 UTC
+
+The authoritative continuation is
+[`WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
+Fresh WORK Shopify reads verified the existing custom app and its 11 installed
+scopes, USD Basic App Development, 15 products/60 variants, seven collections,
+two active locations, 15 valid capability profiles and one canonical QA wallet
+snapshot. Product/inventory/location and draft-order scopes are absent; all
+variants have inventory tracking off. Connector read authority is not the
+custom app's online staff authority.
+
+Public gateway runtime reports `9322193f-5e87-4479-88c9-39229dddb5f2`; both
+gateway and HQ public health pass. Current allocations/diagnostic ID, HQ flags,
+Google published revision, remote D1 schema and quotas still require
+authenticated metadata. Historical allocation paragraphs below are not fresh
+proof and must not be used to run a deployment.
+
+The diagnostic null-body check was reproduced as HTTP 403 in real local
+workerd for a correct zero-byte POST and corrected in source. Shared
+conversation source now commits customer replies through the same event
+writer, excludes internal-only events, and supports a receipt after a lost
+acknowledgement. HQ/catalog/account source builds and local tests pass, but
+new gates are OFF. Immutable agreement/recovery and universal Rewards planning
+are local foundations, not connected customer acceptance, invoice, wallet
+migration or operational WORK. LIVE promotion has a separate blocked review.
+
 Updated 2026-10-18. Scope: `jill/rewards-work`, `jill-work.myshopify.com`, the isolated WORK app and QA services. This is the current integration map and the acceptance contract for the remaining HQ work. The stage-by-stage build order is `JILL_HQ_WORK_EXECUTION_PLAN.md`; the customer conversation, approval and Shopify handoff decision is `JILL_HQ_MY_JILL_CUSTOMER_HANDOFF.md`. The detailed domain contracts remain in `DOMAIN_OWNERSHIP.md`, `JILL_ORDER_DESK_MASTER_BLUEPRINT.md`, `CUSTOMER_ACCOUNT_HYBRID.md`, `JILL_HQ_WORK_SCOPE.md` and the WORK release records. Earlier dated status paragraphs in those documents are historical, not a current deployment inventory. Physical machines/capacity, LIVE and the Git KEEP branch are outside this release.
 
 ## One business graph

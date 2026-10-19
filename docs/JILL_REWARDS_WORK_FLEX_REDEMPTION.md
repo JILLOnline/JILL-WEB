@@ -1,5 +1,15 @@
 # JILL Rewards WORK — universal redemption decision
 
+2026-10-19 UTC implementation checkpoint: `backend/rewards-policy.mjs`
+implements backend-only integer arithmetic, legacy issuance terms, a
+once-only snapshot migration plan, enrolled-order spend deltas, refund debt
+and verified-unused release prerequisites. Boundary/failure tests pass; one
+fresh read-only WORK QA wallet snapshot also reconciles as a plan. The module
+is **not wired into the active v13 owner**, and no balance or coupon changed.
+Store-wide snapshots/operation/discount reconciliation, native checkout proof
+and persisted reservation CAS still block activation. See
+`WORK_CONNECTED_ACCEPTANCE_2026-10-19.md` for the complete handoff.
+
 Updated 2026-10-18. The merchant chose **1 point = $1**, retaining **50 points = $50**. This supersedes this document's earlier 20%-of-purchase proposal and four unequal suggested tiers. It is the target policy for My JILL, the website, JILL HQ, and future indoor-playground sales. It is **not yet the active v13 engine**: this source decision does not change balances, existing coupons, Shopify discounts, app versions, or LIVE/KEEP. Playground SKUs and margins have not been verified.
 
 ## One exact rule for every eligible purchase

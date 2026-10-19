@@ -1,5 +1,14 @@
 # JILL HQ ↔ My JILL customer handoff — WORK decision
 
+2026-10-19 UTC source update: the customer reply ingress, canonical Google
+reply/receipt path, version-two public projection and shared HQ/My JILL thread
+screens are source-built and locally tested. Both Worker and Google conversation
+gates default OFF. Quote agreements and uncertain-commerce recovery have a
+local D1 foundation only; publish/accept UI, actual Shopify adapters and
+canonical accepted-event ingress remain unfinished. Full acceptance evidence
+and the next credential gate are in `WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`.
+Do not interpret the lifecycle design below as a deployed customer feature.
+
 Updated 2026-10-18. Scope: the existing WORK Shopify app, My JILL full-page extension, HQ merchant app, WORK custom-request gateway/Google QA and WORK D1. Physical machine inventory, production capacity, LIVE and KEEP are outside this release. This document refines `JILL_ORDER_DESK_MASTER_BLUEPRINT.md` and `WORK_HQ_ORDER_WORKSPACE_ROADMAP.md`; it does not activate a Shopify scope, customer write, invoice, deployment or email.
 
 ## Decision: one request, two authorized views, one Shopify purchase

@@ -145,6 +145,9 @@ jobs:
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
 
+      - name: Verify canonical conversation, scoped catalog and universal policy planning
+        run: npm run test:work-connected-source
+
       - name: Ensure no tracked files were mutated
         run: |
           set -euo pipefail
@@ -230,6 +233,10 @@ jobs:
       - name: Check signed WORK gateway and shared SQLite quotas
         run: node scripts/test-cloudflare-custom-order-gateway.mjs
 
+      - name: Verify real Workers HTTP normalization of an empty diagnostic POST
+        working-directory: services/custom-order-cloudflare
+        run: npm run test:diagnostic-http
+
       - name: Verify WORK health runtime version attribution without Cloudflare (OFFLINE)
         run: node scripts/test-work-custom-order-version-metadata-offline.mjs
 
@@ -302,6 +309,10 @@ jobs:
       - name: Verify Owner-scoped draft price reload in REAL LOCAL D1 (HTTP disabled)
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-quote-read-restore-local
+
+      - name: Verify immutable agreement and uncertain commerce recovery in REAL LOCAL D1
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-quote-agreement-local
 
       - name: Verify Owner -> real WASM sanitizer -> local D1 and R2 transaction
         working-directory: services/jill-order-desk/app-home

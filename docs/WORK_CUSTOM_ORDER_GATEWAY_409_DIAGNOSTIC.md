@@ -1,5 +1,44 @@
 # JILL WORK Custom Order — 409 upstream_rejected / gateway_required
 
+## Current handoff — 2026-10-19 UTC
+
+The inactive-upload, Version URL recovery and 0% deployment commands below
+are **historical, spent procedures; do not run them again**. The Owner's last
+0% deployment reached the signed probe, which returned `403 diagnostic_denied`.
+This does not prove a key mismatch. The current continuation and acceptance
+record is [WORK_CONNECTED_ACCEPTANCE_2026-10-19.md](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
+
+Actual local HTTP → workerd reproduction of the Owner's omitted-body POST
+produced `body_stream=true`, `content-length=0`, HTTP 403 with a correct test
+key and clock. The canonical diagnostic incorrectly required a null stream.
+The source now authenticates first, checks that the stream contains zero
+bytes with bounded reads/time, and retains the unchanged HMAC and 60-second
+window. Real local HTTP regression passes for omitted, empty-string and
+empty-byte bodies; nonempty bodies, wrong keys and stale clocks remain denied.
+This correction has **not** been uploaded/deployed. It does not establish the
+actual diagnostic's current ID, inherited secrets or Google connectivity.
+
+Fresh public GETs reported gateway version
+`9322193f-5e87-4479-88c9-39229dddb5f2` and healthy gateway/HQ. This session's
+tightest HTTP Date offset interval was −382 to +738 ms. HTTP Date measures
+the edge clock, not the Worker isolate or the Owner PC. Never sign using an
+untrusted remote timestamp or broaden the acceptance window.
+
+The replacement read-only metadata collector is:
+
+```powershell
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:runtime:inventory:owner
+```
+
+Run from the existing Owner checkout. It discovers the diagnostic by marker,
+reads both Worker allocations/binding metadata, checks pinned health and
+rechecks gateway allocation afterward. It never opens, resets or consumes a
+deployment receipt, signs a command, uploads, deploys, rotates a secret,
+changes D1 or retries intake. Shopify plan/scopes, Google revision and quota
+remain explicitly unverified if their authenticated evidence is absent.
+
 ## 2026-10-18 update — current rejection is unclassified
 
 The newer single synthetic WORK request returned `409 / upstream_rejected`

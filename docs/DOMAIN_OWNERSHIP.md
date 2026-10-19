@@ -84,6 +84,18 @@ This registry answers one question: **where does this behavior belong?**
 
 ## Registry rule
 
+WORK connected release additions (2026-10-18):
+
+| Domain | Canonical owner | Boundary |
+| --- | --- | --- |
+| Zero-byte HTTP body validation | `backend/empty-http-body.mjs` | Bounded stream validation shared by account reads and gateway diagnostics; no authentication decisions. |
+| Customer reply ingress | `backend/custom-order-conversation.mjs` | Fresh WORK customer session, bounded command, domain-separated HMAC; the existing Google event writer remains the only event commit authority. |
+| Public request thread | Existing Google `CustomOrderEvents` writer and `jillCustomOrderPublicThread_`, with the account projection in `backend/custom-order-account-read.mjs` | Public messages/status only, no internal notes or staff identity. |
+| Fresh runtime inventory | `scripts/collect-work-runtime-readonly.mjs` | Current allocations and metadata, no deployment/receipt reuse or credential mutation. |
+| WORK catalog read projection | `services/jill-order-desk/work-catalog-read.mjs` | Owner plus online product scope; bounded Shopify reads, native Admin edits, no D1 catalog copy. |
+| Immutable quote agreements and recoverable commerce intent | `services/jill-order-desk/work-quote-agreement.mjs` and `quote-proposals/0009_work_quote_agreements.sql` | Exact calculation/owner/source fingerprint, atomic acceptance/outbox, one resource link; no manual paid state. Remote migration/activation remains gated. |
+| Universal Rewards arithmetic and migration planning | `backend/rewards-policy.mjs` | Backend-only versioned policy consumed by the canonical Rewards owner on activation; no independent HQ wallet or active v13 policy change. |
+
 A new domain requires an explicit row here before it receives a new canonical owner. Two rows may not claim the same responsibility.
 
 Placeholder language such as `when introduced` or `when extracted` means the responsibility is reserved but no implementation file should be created until the feature actually exists. Empty scaffolding does not count as architecture.
