@@ -339,3 +339,27 @@ wallet and reconciliation receipts during code rollback. A code rollback
 cannot delete an external draft/invoice or undo ledger accounting. Ambiguous
 creation stays held; customer mismatch stays quarantined pending reviewed
 operator action. Do not drop tables or recreate customer requests as recovery.
+
+## Visual release preflight stop — Windows source comparison
+
+Owner runner `4da85f24c92e7150656f9e4ffc6ae3693f9d5d4f` stopped with
+`work_hq_visual_unverified` at preflight; its output explicitly reports no
+upload or activation requested. No visual runtime change is certified.
+
+Locally reproduced: converting the unchanged Requests route from LF to Windows
+CRLF makes the visual AST comparison fail because TypeScript preserves JSX
+line endings inside helper declarations. The guard now normalizes line endings
+before parsing. Regression coverage compares all seven actual routes both ways
+and retains rejection of auth, hook, event handler, control and copy changes,
+including CRLF inputs. A genuine behavioral mismatch now reports the safe
+repository route path instead of hiding behind the generic preflight error.
+No browser, server, flag, deployment, secret or receipt behavior changed.
+
+Next Owner step: pull the correction, run `work:hq:visuals:check` and
+`test:work-hq-visual-release`, then `work:hq:visuals:inspect` read-only. Preserve
+the output. Confirm all three visual receipt-presence fields are false and
+allocation remains `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` at 100% with
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0% before considering the first actual
+visual upload. Any receipt present or changed/unreadable allocation holds;
+never reset receipts or repeat an upload/activation with uncertain outcome.
+Full authenticated visual and WORK operational acceptance remain open.

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {assertVisualModule} from './check-work-hq-visual-only.mjs';
 import {visualBaseline,inspectVisualCandidate,ownedVisualAllocation,VISUAL_BASE,VISUAL_DEPLOYMENT} from './release-work-hq-visual-theme-owner.mjs';
 import {HQ_ACTIVE,HQ_QUOTE,HQ_MARKER} from './stage-work-hq-connected-read-owner.mjs';
@@ -6,9 +7,17 @@ import {CONNECTED_SOURCE} from './release-work-hq-connected-read-owner.mjs';
 const module=`import "./inbox.css"; export async function loader(){return {allowed:false}};
  export default function Page(){const [n,setN]=useState(0);return <s-page heading="WORK"><button onClick={()=>setN(n+1)}>Save</button></s-page>}`;
 assertVisualModule(module,module.replace('<s-page heading','<s-page inlineSize="large" heading'));
+for(const name of ['app','app.index','app.requests','app.requests.$submissionId','app.catalog','app.access','app.setup-owner']){
+  const source=fs.readFileSync(new URL('../services/jill-order-desk/app-home/app/routes/'+name+'.tsx',import.meta.url),'utf8').replace(/\r\n?/g,'\n');
+  const windows=source.replace(/\n/g,'\r\n');
+  assertVisualModule(source,windows);assertVisualModule(windows,source);
+}
 for(const mutate of [s=>s.replace('allowed:false','allowed:true'),s=>s.replace('useState(0)','useState(9)'),
   s=>s.replace('setN(n+1)','setN(n+2)'),s=>s.replace('>Save<','>Invoice<'),
-  s=>s.replace('<button onClick={()=>setN(n+1)}>Save</button>','')])assert.throws(()=>assertVisualModule(module,mutate(module)));
+  s=>s.replace('<button onClick={()=>setN(n+1)}>Save</button>','')]){
+  assert.throws(()=>assertVisualModule(module,mutate(module)));
+  assert.throws(()=>assertVisualModule(module,mutate(module).replace(/\n/g,'\r\n')));
+}
 const baseline={deployment:VISUAL_DEPLOYMENT,versions:[{id:VISUAL_BASE,percentage:100},{id:HQ_QUOTE,percentage:0}]};
 visualBaseline(baseline);assert.throws(()=>visualBaseline({...baseline,deployment:HQ_ACTIVE}));
 assert.throws(()=>visualBaseline({...baseline,versions:[{id:VISUAL_BASE,percentage:99},{id:HQ_QUOTE,percentage:1}]}));

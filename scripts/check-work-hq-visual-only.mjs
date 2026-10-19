@@ -14,6 +14,9 @@ const routes=['app','app.index','app.requests','app.requests.$submissionId','app
 const styles=['hq-theme','hq-home','inbox','request-detail','request-actions','quote-worksheet'];
 const allowed=new Set([...routes.map(x=>APP+'app/routes/'+x+'.tsx'),...styles.map(x=>APP+'app/styles/'+x+'.css')]);
 function behavior(source){
+  // Git checkouts may use CRLF on Windows. TypeScript's printer retains line
+  // endings in JSX text inside helper declarations, so normalize before parsing.
+  source=source.replace(/\r\n?/g,'\n');
   const tree=ts.createSourceFile('route.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
   const printer=ts.createPrinter({removeComments:true});
   const print=node=>printer.printNode(ts.EmitHint.Unspecified,node,tree);
@@ -44,7 +47,12 @@ export function checkWorkHqVisualOnly(){
   for(const file of changed)assert(allowed.has(file),'Non-visual runtime file changed: '+file);
   for(const name of routes){
     const file=APP+'app/routes/'+name+'.tsx';
-    assertVisualModule(git('show',VISUAL_BASE_SOURCE+':'+file),fs.readFileSync(path.join(ROOT,file),'utf8'));
+    try{assertVisualModule(git('show',VISUAL_BASE_SOURCE+':'+file),fs.readFileSync(path.join(ROOT,file),'utf8'));}
+    catch(error){
+      if(error?.code!=='ERR_ASSERTION')throw error;
+      const failure=new Error('work_hq_visual_behavior_changed');
+      failure.safeCliDiagnostic={check:'visual_module_behavior',file};throw failure;
+    }
   }
   for(const name of styles){const css=fs.readFileSync(path.join(ROOT,APP+'app/styles/'+name+'.css'),'utf8');
     assert(!/!important|\bzoom\s*:|scale\(|\.Polaris|::part\(/i.test(css),'Forbidden visual override/scaling');}

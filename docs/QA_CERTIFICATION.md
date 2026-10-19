@@ -576,3 +576,11 @@ Customer-facing seven-section template was visually accepted by the merchant in 
 
 The WORK-only ignored diagnostic preview now copies both account adapters and canonical Rewards helpers; no changes to Shopify extension UID/target or published WORK version. Source tests `test:customer-coupons`, `test:account-hub-template`, `test:account-hub-canary` and the full postinstall pipeline passed on GitHub (run `38082982646`). This is not customer-browser E2E proof. **Required next evidence:** merchant runs `npm.cmd run rewards:work:hub:template`, opens **My JILL → Coupons**, and verifies "You do not have any personal Rewards coupons yet" plus the current sanitized free-shipping promotion. If the promotion sync is stale, preserve the explicit error and inspect backend freshness, don't display old offers. Capture actual browser screenshots and first extension-console error, if any. Redemption tests remain blocked until the wallet read passes.
 
+
+## WORK visual guard Windows regression — 2026-10-19
+
+Unchanged Requests TSX reproduced a false behavioral mismatch with CRLF.
+Normalize line endings before AST parsing; all seven actual route LF/CRLF
+comparisons and behavior mutation rejection checks pass. Visual scope and
+connected release policy tests pass. Owner preflight stopped before upload or
+activation; runtime visual acceptance remains pending read-only inspection.
