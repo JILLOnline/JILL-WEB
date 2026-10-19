@@ -177,3 +177,16 @@ No app runtime, allocation, auth/cache policy, Google source, canonical
 record, secret, paid service or release receipt changed. A full authenticated
 Requests/detail capture and any recurrent failure event remain needed; the
 intermittent incident and full WORK operational acceptance remain OPEN.
+
+
+## Owner direction: leave behavior in place and resume master work
+
+The a82f268 capture completed READY plus the full 75-second window. It retained
+15 app events on the exact ordinary WORK runtime: 9 inbox, 3 Home, 3 detail;
+13 ok/HTTP 200 and 2 canceled, no reported exceptions. Completed inbox phases
+were 123–3,211 ms. Owner reports no hang again and explicitly directs no further
+active diagnosis. No additional capture, speculative cache/auth change or
+deployment is needed. The historical root cause remains unverified, not called
+fixed; reopen only with a new reported recurrence. Preserve the exact receipt
+in `evidence/work-hq-navigation-no-hang-window-2026-10-19.json`. Resume the
+master task and keep full operational acceptance separate.

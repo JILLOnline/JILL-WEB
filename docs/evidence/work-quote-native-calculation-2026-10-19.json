@@ -1,0 +1,57 @@
+{
+  "environment": "WORK",
+  "operation": "draftOrderCalculate",
+  "shop": "jill-work.myshopify.com",
+  "source_api_version": "2026-07",
+  "connector_execution_api_version": "not_exposed",
+  "operation_sha256": "c49744e63f6e866f99c69bcbc78fa47f059182fb6cc572a472bde6ea53f7b98f",
+  "line_count": 2,
+  "expected_items_cents": 18298,
+  "customer_read_back_matched": true,
+  "quantities_and_personalization_matched": true,
+  "exact_decimal_totals_reconciled": true,
+  "projection": {
+    "state": "address_required",
+    "calculation": null,
+    "preview": {
+      "currency": "USD",
+      "totals": {
+        "items_cents": 18298,
+        "shipping_cents": 0,
+        "tax_cents": 0,
+        "discount_cents": 0,
+        "total_cents": 18298
+      }
+    },
+    "publishable": false
+  },
+  "customer_address_present": false,
+  "draft_order_created": false,
+  "invoice_sent": false,
+  "order_created": false,
+  "inventory_reserved": false,
+  "wallet_or_coupon_changed": false,
+  "authenticated_hq_staff_flow_verified": false,
+  "operational_acceptance": false,
+  "resources": [
+    {
+      "product_title": "Custom 11 oz Coffee Mug \u2013 Personalized Print",
+      "product_admin_url": "https://admin.shopify.com/store/jill-work/products/8892626993287"
+    },
+    {
+      "product_title": "Custom Handmade Pi\u00f1ata \u2013 36 Inch \u2013 Includes Stick",
+      "product_admin_url": "https://admin.shopify.com/store/jill-work/products/8895938789511"
+    }
+  ],
+  "source_module_sha256": "b83b9c2064d9fc93dbce43e203520415ad02f612dd33f02f70bebe3621ea829d",
+  "schema_validation": {
+    "success": true,
+    "resolved_version": "2026-07",
+    "required_scopes": [
+      "write_draft_orders",
+      "read_draft_orders",
+      "read_customers",
+      "read_products"
+    ]
+  }
+}

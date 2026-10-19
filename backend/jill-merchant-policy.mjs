@@ -24,6 +24,9 @@ export const JILL_MERCHANT_ACTIONS=Object.freeze({
   'production.update':      {roles:['owner','administrator','order_manager'],scopes:[],enabled:false},
   'production.internal_note':{roles:['owner','administrator','order_manager','production'],scopes:[],enabled:false,assigned:true},
   'quote.prepare':          {roles:['owner','administrator','order_manager'],scopes:[],enabled:false},
+  // Calculation previews do not create drafts or publish customer agreements.
+  // No HTTP ingress is connected; the adapter also requires explicit opt-in.
+  'quote.calculate':        {roles:['owner'],scopes:['write_draft_orders','read_draft_orders','read_customers','read_products'],enabled:true},
   'draft.create':           {roles:['owner','administrator'],scopes:['write_draft_orders'],enabled:false},
   'invoice.send':           {roles:['owner','administrator'],scopes:['write_draft_orders'],enabled:false,explicitGrant:true},
   'fulfillment.manage':     {roles:['owner','administrator'],scopes:[],enabled:false},

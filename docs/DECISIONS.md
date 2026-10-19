@@ -1,5 +1,19 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 — real quote calculation before commerce creation
+
+The existing agreement owner consumes exact Shopify calculations through one
+server-only adapter. Reuse online Owner/D1 authority, verify the same WORK
+installation, require effective product/customer/draft scopes, disable extra
+discounts, and reconcile exact integer amounts/personalization/customer before
+freezing. A missing address is explicitly unpublishable; never turn a provisional
+zero tax into a final quote. Calculation creates no draft or invoice, changes
+no wallet, and does not activate an HTTP route or release. Owner's latest
+no-hang direction leaves navigation in place while this work proceeds. See
+`WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md` for actual platform evidence and
+remaining gates. Existing one-create/reconciliation and LIVE boundaries stand.
+
+
 ## 2026-10-19 — one compact visual theme for all HQ tabs
 
 Use one authenticated parent CSS foundation with shared palette, density,

@@ -270,3 +270,25 @@ Capture actual UI/screenshots and timings without tokens or private customer
 records. No write/status/message/quote submission is required for this check.
 The authenticated navigation incident remains OPEN until this Owner UI proof
 passes. Full WORK operational acceptance and separate LIVE review remain open.
+
+
+## Owner leaves navigation in place; native quote calculation advanced — 2026-10-19
+
+Owner reports no hang again and explicitly stops active diagnosis. The complete
+75-second capture at runner a82f268 contains 15 app events: 9 inbox, 3 Home,
+3 detail; 13 ok/HTTP 200, 2 canceled, zero reported exceptions. Completed inbox
+server phases range 123–3,211 ms. Cancellations' causes are unverified; these
+are not browser TTFB/performance measurements or proof of the historical root
+cause. Preserve current runtime 6473444f... at 100% and quote canary at 0%.
+No more diagnostic runs or navigation changes requested. Structured evidence:
+`evidence/work-hq-navigation-no-hang-window-2026-10-19.json`.
+
+The next source slice is the canonical Shopify quote calculation adapter,
+with existing online Owner/D1 policy and same-app WORK checks. A real two-line
+WORK calculation reconciled $182.98 through its projection without creating
+a draft, invoice, order, reservation or wallet entry. The QA customer has no
+address, so the result correctly holds publication as address_required. Source
+operations validate against Admin API 2026-07; connector execution version is
+not exposed. No HQ calculation route or release is activated. Scope/limits and
+next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
+`evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
