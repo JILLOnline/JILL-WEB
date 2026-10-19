@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {HQ_ACTIVE,HQ_QUOTE,HQ_DEPLOYMENT} from './stage-work-hq-connected-read-owner.mjs';
 import {CONNECTED_CANDIDATE,CONNECTED_SOURCE,CONNECTED_PACKAGE,verifyConnectedUploadReceipt,
   verifyQuoteCanary,verifyConnectedAllocation,verifyOwnedActivation,certifyConnectedHealth,
-  restoreConnectedOnce,readBackConnectedActivation} from './release-work-hq-connected-read-owner.mjs';
+  restoreConnectedOnce,readBackConnectedActivation,createConnectedActivationAttempt} from './release-work-hq-connected-read-owner.mjs';
 const nonce='11111111-2222-4333-8444-555555555555';
 const deployment='22222222-3333-4444-8555-666666666666';
 const restoredId='33333333-4444-4555-8666-777777777777';
@@ -13,8 +13,9 @@ verifyConnectedUploadReceipt(upload);
 for(const change of [{source:'a'.repeat(40)},{package_sha256:'b'.repeat(64)},{retry_allowed:true},
   {operation:'GATEWAY_UPLOAD'},{baseline:{...baseline,deployment}}])
   assert.throws(()=>verifyConnectedUploadReceipt({...upload,...change}));
-const attempt={operation:'HQ_CONNECTED_READ_V1_ACTIVATE',runner:CONNECTED_SOURCE,source:CONNECTED_SOURCE,
-  package_sha256:CONNECTED_PACKAGE,candidate:CONNECTED_CANDIDATE,baseline,nonce,retry_allowed:false};
+const attempt=createConnectedActivationAttempt({runner:CONNECTED_SOURCE,baseline,nonce});
+assert.equal(attempt.retry_allowed,false,'In-memory receipt must support guarded automatic restoration before file reload');
+assert.throws(()=>createConnectedActivationAttempt({runner:'wrong-source',baseline,nonce}));
 const active={deployment,versions:[{id:CONNECTED_CANDIDATE,percentage:100},{id:HQ_QUOTE,percentage:0}],
   message:'JILL HQ WORK catalog/access v1 activate '+nonce};
 verifyOwnedActivation(active,attempt);

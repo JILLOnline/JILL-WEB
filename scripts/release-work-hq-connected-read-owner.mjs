@@ -85,6 +85,12 @@ function verifyAttempt(attempt){
     attempt.retry_allowed===false,'activation_receipt_unverified');
   connectedBaseline(attempt.baseline);
 }
+export function createConnectedActivationAttempt({runner,baseline,nonce=randomUUID()}={}){
+  const attempt={operation:'HQ_CONNECTED_READ_V1_ACTIVATE',runner,source:CONNECTED_SOURCE,
+    package_sha256:CONNECTED_PACKAGE,candidate:CONNECTED_CANDIDATE,baseline,nonce,
+    reserved_at:new Date().toISOString(),retry_allowed:false};
+  verifyAttempt(attempt);return attempt;
+}
 function fixedVersions(){
   const active=view(HQ_ACTIVE),quote=view(HQ_QUOTE),candidate=view(CONNECTED_CANDIDATE);
   verifyQuoteCanary(active,quote);
@@ -143,8 +149,7 @@ async function execute(mode){
     const before=snapshot();connectedBaseline(before);await health(null);
     fixedVersions();
     check(sourceGuard()===runner&&isDeepStrictEqual(before,snapshot()),'source_or_allocation_changed');
-    attempt={operation:'HQ_CONNECTED_READ_V1_ACTIVATE',runner,source:CONNECTED_SOURCE,package_sha256:CONNECTED_PACKAGE,
-      candidate:CONNECTED_CANDIDATE,baseline:before,nonce:randomUUID(),reserved_at:new Date().toISOString()};
+    attempt=createConnectedActivationAttempt({runner,baseline:before});
     phase='activation';reserveConnectedAttempt(file,attempt);attempted=true;
     phase='independent_readback';
     const activated=await readBackConnectedActivation({attempt,deploy,readState:snapshot,verifyVersions:fixedVersions,health});
