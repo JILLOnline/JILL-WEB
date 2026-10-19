@@ -37,7 +37,7 @@ export default function WorkOwnerSetup() {
   const submitting=fetcher.state!=="idle";
   const bound=loaded.state==="already_bound" ||
     submitted?.state==="owner_bound";
-  return <s-page inlineSize="large" heading="JILL HQ — WORK / Owner setup">
+  return <s-page heading="JILL HQ — WORK / Owner setup" inlineSize="large">
     <s-section heading="Shopify WORK ownership">
       <s-paragraph>
         This page registers only the verified Shopify account owner of

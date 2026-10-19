@@ -16,7 +16,7 @@ type Catalog={state:string;as_of?:string;next_cursor?:string;view?:string;curren
     variants?:{id:string;title:string;price:string}[]}[]};
 export default function Catalog(){
   const data=useLoaderData<typeof loader>() as unknown as Catalog;
-  return <s-page inlineSize="large" heading="JILL HQ — Catalog">
+  return <s-page heading="JILL HQ — Catalog" inlineSize="large">
     <s-section><main className="jill-inbox">
       <Link className="jill-inbox__back" to="/app">← HQ overview</Link>
       <nav className="jill-workspace__tabs" aria-label="Catalog views">

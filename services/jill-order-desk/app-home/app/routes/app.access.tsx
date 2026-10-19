@@ -13,7 +13,7 @@ type Evidence={state:string;shop?:string;staff_id?:string;runtime_version?:strin
   scopes?:string[];actions?:{action:string;feature_enabled:boolean;shopify_scope_intersection:boolean}[]};
 export default function OwnerAccess(){
   const data=useLoaderData<typeof loader>() as unknown as Evidence;
-  return <s-page inlineSize="large" heading="JILL HQ — Owner access">
+  return <s-page heading="JILL HQ — Owner access" inlineSize="large">
     <s-section><main className="jill-inbox">
       <Link className="jill-inbox__back" to="/app">← HQ overview</Link>
       {data.state!=="verified_owner"?<p role="status">Current Owner access could not be verified.</p>:<>

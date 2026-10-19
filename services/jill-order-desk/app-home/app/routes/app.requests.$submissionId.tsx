@@ -53,7 +53,7 @@ export default function WorkRequestDetail(){
     data.records.find(item=>item.submission_id===submissionId)??null:null;
   const state=data.state==="ready"&&!record?"not_found":data.state;
   const controlsEnabled=data.controlsEnabled===true && state==="ready";
-  return <s-page inlineSize="large" heading="JILL HQ — WORK / Request details">
+  return <s-page heading="JILL HQ — WORK / Request details" inlineSize="large">
     <s-section>
       <main className="jill-inbox jill-request" aria-label="Custom Order request workspace">
         <nav className="jill-inbox__nav" aria-label="Request navigation">

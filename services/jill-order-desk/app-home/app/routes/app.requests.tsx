@@ -102,7 +102,7 @@ export default function WorkMerchantInbox() {
   const visible=useMemo(()=>selectInboxRecords(data.records,{query,status,sort}),
     [data.records,query,status,sort]);
 
-  return <s-page inlineSize="large" heading="JILL HQ — WORK / Custom Orders">
+  return <s-page heading="JILL HQ — WORK / Custom Orders" inlineSize="large">
     <s-section>
       <main className="jill-inbox" aria-label="JILL HQ Custom Orders">
         <div className="jill-inbox__nav">
