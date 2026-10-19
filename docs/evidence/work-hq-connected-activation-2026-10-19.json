@@ -1,0 +1,60 @@
+{
+  "environment": "WORK",
+  "evidence_source": "Owner CLI activation and independent provider/runtime read-back supplied in conversation",
+  "runner": "5bacc072da880df28b27a21ec5074cb1885a9a35",
+  "source": "69b709d9c2c6d0a4c075bef073381ec698b39373",
+  "package_sha256": "02aae15f15057c74286dac63400e3883189a3d7f5701ea25f35f99a77655a035",
+  "candidate": {
+    "id": "e866e2f2-0746-44d0-8caa-b37a1c9bcf45",
+    "existing_bindings_preserved": true,
+    "catalog_enabled": true,
+    "quote_drafts_enabled": false,
+    "conversation_enabled": false
+  },
+  "allocation": {
+    "deployment": "d5d1f522-fcc0-4fbb-9052-dc9d951e6029",
+    "created_at": "2026-10-19T14:08:50.75794Z",
+    "versions": [
+      {
+        "id": "e866e2f2-0746-44d0-8caa-b37a1c9bcf45",
+        "percentage": 100
+      },
+      {
+        "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+        "percentage": 0
+      }
+    ],
+    "message": "JILL HQ WORK catalog/access v1 activate c0269ec4-ae3e-4606-92dd-bd61f53ead4c"
+  },
+  "health": {
+    "status": 200,
+    "database_ready": true,
+    "runtime_version": "e866e2f2-0746-44d0-8caa-b37a1c9bcf45",
+    "exact_version_verified": true
+  },
+  "command_acknowledged": true,
+  "activation_receipt_spent": true,
+  "existing_quote_canary_preserved": true,
+  "upload_performed": false,
+  "secret_changes": false,
+  "data_or_schema_changes": false,
+  "new_billable_services": false,
+  "authenticated_owner_ui_verified": false,
+  "operational_acceptance": false,
+  "pre_activation_inspection": {
+    "all_five_metadata_reads_passed": true,
+    "original_allocation_unchanged": true,
+    "activation_receipt_present": false,
+    "restore_receipt_present": false,
+    "earlier_cloudflare_read_failure_cause": "not reproduced; unknown"
+  },
+  "next_step": "Authenticated Owner access screen and catalog UI, independent Shopify record read-back",
+  "independent_executor_health": {
+    "source": "Separate executor unsigned no-store GET to existing HQ healthz with cache-busting query",
+    "observed_on": "2026-10-19",
+    "status": 200,
+    "database_ready": true,
+    "runtime_version": "e866e2f2-0746-44d0-8caa-b37a1c9bcf45",
+    "exact_version_verified": true
+  }
+}

@@ -1,5 +1,11 @@
 # Customer-facing LIVE promotion — separate blocked release review
 
+WORK HQ catalog/access candidate is now active with exact provider/runtime
+read-back (`e866e2f2-0746-44d0-8caa-b37a1c9bcf45` 100%, existing quote 0%).
+This is WORK only. Authenticated UI and full operational acceptance remain
+incomplete; customer-facing LIVE promotion is still blocked and separate.
+
+
 The corrected WORK gateway diagnostic now has exact-version signed Google
 verification in the Owner receipt recorded in
 `evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`. This closes

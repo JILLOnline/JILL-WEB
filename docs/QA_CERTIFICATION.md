@@ -1,5 +1,19 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — exact WORK HQ deployment/runtime acceptance only
+
+Owner provider read-back and unpinned runtime health verify deployment
+`d5d1f522-fcc0-4fbb-9052-dc9d951e6029`: candidate
+`e866e2f2-0746-44d0-8caa-b37a1c9bcf45` 100%, original quote canary 0%.
+HTTP 200/D1 ready/exact runtime UUID PASS. A separate executor unsigned GET
+also independently validated that exact candidate runtime. Upload/activation
+receipts spent.
+No secrets, schema/data, new resources or billing change. Authenticated Owner
+scope/catalog UI and end-to-end WORK acceptance remain OPEN. See
+`evidence/work-hq-connected-activation-2026-10-19.json`. Do not infer UI,
+performance, conversation, quote, commerce, Rewards or LIVE acceptance.
+
+
 ## 2026-10-19 — read-only HQ preflight failure isolation
 
 Owner activation stopped before receipt reservation/deployment because a

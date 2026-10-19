@@ -1,5 +1,36 @@
 # JILL HQ — WORK system map and connection contract
 
+## Superseding successful WORK HQ activation — 2026-10-19 14:08 UTC
+
+Owner runner `5bacc072da880df28b27a21ec5074cb1885a9a35` completed the exact
+reviewed activation. Deployment `d5d1f522-fcc0-4fbb-9052-dc9d951e6029` serves
+`e866e2f2-0746-44d0-8caa-b37a1c9bcf45` at 100%, retaining existing quote
+canary `dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0%. Unpinned health returned
+HTTP 200, healthy D1 and that exact candidate runtime UUID. Catalog is ON;
+ordinary quote drafts and conversation are OFF. Existing bindings were
+preserved. No re-upload, secret, schema/data or billing change occurred.
+
+Upload and activation receipts are SPENT. Do not repeat either command or
+reset receipts. The successful read-only inspection before activation proved
+all five metadata reads and the unchanged original allocation, with no
+activation/restore receipt present. The earlier Cloudflare read failure was
+not reproduced; its underlying cause remains unknown. Structured receipt:
+`evidence/work-hq-connected-activation-2026-10-19.json`.
+
+**This supersedes the earlier pending/not-activated status below.** Actual
+online Owner scope intersections and catalog UI/source read-back are still
+OPEN. Next use the authenticated existing WORK app: Owner access diagnostics,
+then catalog products/collections/inventory/locations. Expected runtime UUID
+is `e866e2f2-0746-44d0-8caa-b37a1c9bcf45`. Preserve screenshot/resource proof;
+never infer stock/capacity from the 60 untracked variants. No further release
+or generic app-dev command is needed for this UI check.
+
+Quote canary Save → leave → Reload, original uncertain intake reconciliation,
+Google/conversation A/B activation, exact commerce, canonical Rewards, staff
+revocation, guest/media and authenticated performance remain OPEN. Full WORK
+operational acceptance: NOT PASSED. Customer-facing LIVE: separate review.
+
+
 ## Exact inactive HQ candidate receipt — 2026-10-19
 
 Owner runner `69b709d9c2c6d0a4c075bef073381ec698b39373` uploaded and
