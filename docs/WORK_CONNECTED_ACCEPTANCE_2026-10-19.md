@@ -363,3 +363,30 @@ allocation remains `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` at 100% with
 visual upload. Any receipt present or changed/unreadable allocation holds;
 never reset receipts or repeat an upload/activation with uncertain outcome.
 Full authenticated visual and WORK operational acceptance remain open.
+
+## Visual theme activated on WORK — 2026-10-19 18:26 UTC
+
+Owner release receipt supersedes earlier not-uploaded/not-deployed visual status.
+Runner `9a92d0287e69628c63bd7bec9a5e3dace63f1c94` uploaded and activated
+`80b47610-4d8a-4186-a4c8-fe4f05daf964` at 100%, retaining existing quote canary
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0%. Deployment:
+`dc3350e2-c394-4a5f-9d48-325ed23a1394`. Package SHA-256:
+`f936ee373297bd042c63a1e024bf6f988cd5a576ebca832298916a890b7b3e81`.
+Independent provider allocation and unpinned exact runtime health were verified
+by the Owner runner (HTTP 200, database ready). Canonical evidence:
+`docs/evidence/work-hq-visual-activation-2026-10-19.json`.
+
+Current flags/bindings and quote canary preserved; catalog ON, quote drafts and
+conversation OFF on ordinary traffic. No secret, data/schema or paid-service
+change. Visual upload and activation receipts are SPENT: never rerun the
+release or reset receipts. Read-back uses `work:hq:visuals:inspect` only.
+Prior catalog/access version `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` is the
+visual release's guarded restoration baseline, not the ordinary active runtime.
+
+Authenticated Owner browser verification remains pending: refresh the existing
+WORK app; inspect Home, Requests, request detail, Catalog and Access at desktop
+and narrow widths; verify navigation, readable focus and no horizontal overflow.
+Do not invoke commissioning or create new requests/quotes for visual review.
+Record screenshots and authenticated performance evidence. This receipt proves
+deployment, not authenticated visual or full WORK operational acceptance.
+Customer-facing LIVE promotion remains a separate reviewed release.
