@@ -404,3 +404,30 @@ authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
 is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
 spent; never rerun historical releases or reset receipts. WORK operational
 acceptance and separate customer-facing LIVE review remain incomplete.
+
+## Visual theme v2 activated — 2026-10-19 19:00 UTC
+
+Successful Owner receipt supersedes all preceding v2 prepared/not-deployed
+status. Runner `5815213b29999310ea44049ef99d20b5178948c5`; package SHA-256
+`c6652c586a6db71625764869306e816c19e1eebb0325e7c331119c613fd60719`.
+Current HQ ordinary runtime: `d301efb4-b015-40d4-87ad-159a9fff82eb` at 100%.
+Existing quote canary `dbc6341f-de7f-41de-8e97-6bf971201eeb` stays at 0%.
+Deployment `3fbc20ff-1f9e-4e70-8f14-3e941638347c`, created
+`2026-10-19T19:00:42.066909Z`. Provider allocation and unpinned exact runtime
+health verified by the Owner runner; HTTP 200, database ready.
+Canonical receipt: `docs/evidence/work-hq-studio-activation-2026-10-19.json`.
+
+Visual v2 upload/activation receipts are SPENT. Never repeat
+`work:hq:studio:release-once`, reset receipts or repeat historical releases.
+Read-only inspection uses `work:hq:studio:inspect`. Visual v1
+`80b47610-4d8a-4186-a4c8-fe4f05daf964` is now the guarded restoration baseline,
+not ordinary active traffic. Current bindings and flags preserved: catalog ON,
+quote drafts/conversation OFF, commissioning OFF. No secret, data/schema or
+new billable service change. Existing quote testing limits remain unchanged.
+
+Next visual check: refresh the existing authenticated JILL HQ — WORK app and
+review Home, Requests, detail, Catalog and Access; verify shared navigation,
+button affordances, technical disclosures, focus and narrow-width rendering.
+Do not create requests/quotes or submit commands for a visual review.
+Authenticated visual acceptance and full WORK operational acceptance remain
+open. Customer-facing LIVE promotion remains a separate reviewed release.
