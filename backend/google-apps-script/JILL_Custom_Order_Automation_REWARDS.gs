@@ -107,6 +107,12 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  if (clean_(e && e.parameter && e.parameter.jill_order_customer_reply) === '1') {
+    return jillWorkCustomerReply_(e);
+  }
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_thread) === '1') {
+    return jillWorkMerchantThread_(e);
+  }
   // Distinct WORK HQ merchant-wide read. Rejected in LIVE and in WORK Rewards;
   // HMAC uses a separate dedicated read-only secret, not the guest gateway key.
   if (clean_(e && e.parameter && e.parameter.jill_order_merchant_list) === '1') {
@@ -610,15 +616,15 @@ function jillCustomOrderMerchantUpdate(command) {
 // One canonical event writer for editor-authorized desk commands and separately
 // HMAC-authorized Shopify WORK Owner requests. Validation, lock, revision CAS,
 // transition rules and idempotency are deliberately not duplicated.
-function jillCustomOrderMerchantUpdateAsActor_(command,actor) {
+function jillCustomOrderMerchantUpdateAsActor_(command,actor,customerOwnerGid,receiptOnly) {
   jillCustomOrderAssertLive_();
   if(typeof actor!=='string'||actor.length<3||actor.length>150)
     throw new Error('Invalid merchant actor.');
   const data=command || {};
   const id=String(data.submission_id || '').trim();
   const op=String(data.operation_id || '').trim();
-  const status=String(data.customer_status || '').trim();
-  const internal=String(data.internal_status || '').trim();
+  let status=String(data.customer_status || '').trim();
+  let internal=String(data.internal_status || '').trim();
   const note=String(data.public_note || '').trim();
   const privateNote=String(data.internal_note || '').trim();
   const evidence=String(data.handoff_reference || '').trim();
@@ -640,15 +646,43 @@ function jillCustomOrderMerchantUpdateAsActor_(command,actor) {
     const source=getSheet_();
     const row=findSubmissionRow_(source,id);
     if (!row) throw new Error('Custom Order request does not exist.');
+    if(customerOwnerGid) {
+      if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+         !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(customerOwnerGid)||
+         actor!=='shopify:WORK:customer:'+customerOwnerGid.split('/').pop()||
+         privateNote||evidence||!note||
+         !/^jill:customer:reply:[0-9a-f-]{36}$/.test(op))
+        throw new Error('Customer reply forbidden.');
+      const ownerSheet=jillCustomOrderOwnersSheet_(false);
+      if(!ownerSheet||ownerSheet.getLastRow()>5001||source.getLastRow()>5001)
+        throw new Error('Customer reply forbidden.');
+      const owners=jillCustomOrderOwnerRows_(ownerSheet);
+      if(owners.length>5000||new Set(owners.map(function(x){return x.id;})).size!==owners.length)
+        throw new Error('Customer reply forbidden.');
+      const owner=owners.filter(function(x){return x.id===id;});
+      const raw=String(source.getRange(row,HEADERS.indexOf('raw_payload')+1).getValue()||'');
+      if(owner.length!==1||owner[0].gid!==customerOwnerGid||
+         !raw||jillCustomOrderOwnerHash_(raw)!==owner[0].hash)
+        throw new Error('Customer reply forbidden.');
+    }
     const sheet=jillCustomOrderEventsSheet_();
+    if(customerOwnerGid&&sheet.getLastRow()>501)
+      throw new Error('Customer reply history full.');
     let events=jillCustomOrderEventsFor_(sheet,id);
     if (!events.length) {
+      if(customerOwnerGid)throw new Error('Customer reply receipt not found.');
       const at=source.getRange(row,HEADERS.indexOf('submitted_at')+1).getValue();
       jillCustomOrderEnsureReceived_(id,String(at||''));
       events=jillCustomOrderEventsFor_(sheet,id);
     }
     const duplicate=events.find(function(item){return item.event_id===op;});
     if (duplicate) {
+      if(customerOwnerGid) {
+        status=duplicate.customer_status;internal=duplicate.internal_status;
+        if(duplicate.actor!==actor||duplicate.source!=='customer_reply_v1'||
+           Number(duplicate.revision)!==expected+1)
+          throw new Error('Idempotency key was reused for different content.');
+      }
       if (duplicate.customer_status!==status ||
           (internal && duplicate.internal_status!==internal) ||
           duplicate.public_note!==note || duplicate.internal_note!==privateNote ||
@@ -658,7 +692,16 @@ function jillCustomOrderMerchantUpdateAsActor_(command,actor) {
       return {ok:true,duplicate:true,revision:Number(duplicate.revision),
         customer_status:duplicate.customer_status};
     }
+    if(customerOwnerGid&&receiptOnly===true)throw new Error('Customer reply receipt not found.');
     const current=events[events.length-1];
+    if(customerOwnerGid) {
+      // Customer replies may never advance production, set an internal stage,
+      // attach handoff evidence or manufacture an approval/payment event.
+      status=current.customer_status;internal=current.internal_status;
+      if(['cancelled','completed'].indexOf(status)>=0)
+        throw new Error('Customer reply thread closed.');
+      if(events.length>=100)throw new Error('Customer reply history full.');
+    }
     if (events.length!==expected) {
       throw new Error('Custom Order was updated elsewhere; reload current revision.');
     }
@@ -675,7 +718,7 @@ function jillCustomOrderMerchantUpdateAsActor_(command,actor) {
       customer_status:status,internal_status:internal||current.internal_status,
       public_note:note,internal_note:privateNote,evidence_ref:evidence,
       actor:actor,occurred_at:new Date().toISOString(),
-      source:'merchant'
+      source:customerOwnerGid?'customer_reply_v1':'merchant'
     };
     // One canonical append-only event is the commit. No mirrored mutable
     // status cell exists to get out of sync with this revision.
@@ -996,7 +1039,10 @@ function jillCustomOrderGatewayCustomerList_(e) {
         throw new Error('Owner refers to conflicting payload.');
       const history=jillCustomOrderEventsFor_(events,row.id);
       if(!history.length)throw new Error('Missing Custom Order status history.');
-      return jillCustomOrderCustomerProjection_(row.id,history,stored);
+      return PropertiesService.getScriptProperties()
+        .getProperty('JILL_WORK_CONVERSATION_ENABLED')==='true'?
+        jillCustomOrderPublicThread_(row.id,history,stored):
+        jillCustomOrderCustomerProjection_(row.id,history,stored);
     });
     return json_({version:1,operation:'custom_order.account.list.result',
       ok:true,orders:result});
@@ -1006,6 +1052,115 @@ function jillCustomOrderGatewayCustomerList_(e) {
   } finally {lock.releaseLock();}
 }
 /* END WORK CUSTOM ORDER OWNERSHIP V1 */
+
+/* WORK CUSTOM ORDER CONVERSATION — same event writer, additive gated ingress */
+function jillCustomOrderPublicThread_(id,history,rawPayload) {
+  if(!history.length||history.length>100)throw new Error('Invalid bounded history.');
+  let previous='';
+  const timeline=[];
+  history.forEach(function(event){
+    const changed=event.customer_status!==previous;
+    previous=event.customer_status;
+    if(!changed&&!event.public_note)return;
+    const customer=event.source==='customer_reply_v1';
+    timeline.push({revision:Number(event.revision),
+      kind:customer?'customer_reply':event.public_note?'merchant_message':'status',
+      author:customer?'customer':event.source==='intake'?'system':'jill',
+      status:event.customer_status,note:event.public_note||'',occurred_at:event.occurred_at});
+  });
+  if(!timeline.length)throw new Error('Missing public history.');
+  return {submission_id:id,summary:jillCustomOrderAccountSummary_(rawPayload),
+    timeline_version:2,revision:history.length,status:previous,
+    updated_at:timeline[timeline.length-1].occurred_at,timeline:timeline};
+}
+function jillWorkCustomerReply_(e) {
+  const failed=function(code){return json_({version:1,
+    operation:'custom_order.account.reply.result',ok:false,error:{code:code}});};
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+     PropertiesService.getScriptProperties().getProperty('JILL_WORK_CONVERSATION_ENABLED')!=='true')
+    return failed('forbidden');
+  const p=e&&e.parameter||{};
+  const fields=['jill_order_customer_reply','shop','jill_order_owner_gid',
+    'submission_id','operation_id','expected_revision','text','mode',
+    'jill_order_gateway_ts','jill_order_reply_nonce','jill_order_gateway_sig'];
+  if(Object.keys(p).length!==fields.length||fields.some(function(k){
+    return !e.parameters||!Array.isArray(e.parameters[k])||e.parameters[k].length!==1;
+  }))return failed('forbidden');
+  const gid=String(p.jill_order_owner_gid||''),ts=String(p.jill_order_gateway_ts||'');
+  const nonce=String(p.jill_order_reply_nonce||''),text=String(p.text||'');
+  const sig=String(p.jill_order_gateway_sig||'');
+  if(p.shop!=='jill-work.myshopify.com'||
+     !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(gid)||
+     !/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>60000||
+     !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(nonce)||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(String(p.submission_id))||
+     !/^jill:customer:reply:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(String(p.operation_id))||
+     !/^[1-9][0-9]?$/.test(String(p.expected_revision))||
+     !['send','receipt'].includes(p.mode)||!text||text.trim()!==text||text.length>500||
+     !/^[a-f0-9]{64}$/.test(sig))return failed('forbidden');
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'');
+  if(secret.length<32)return failed('forbidden');
+  const canonical=['customer_reply_v1','jill-work.myshopify.com',gid,
+    p.submission_id,p.operation_id,String(p.expected_revision),ts,nonce,p.mode,JSON.stringify(text)].join('\n');
+  const expected=Utilities.computeHmacSha256Signature(canonical,secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);}).join('');
+  if(!constantTimeEqual_(sig,expected))return failed('forbidden');
+  try {
+    const result=jillCustomOrderMerchantUpdateAsActor_({
+      submission_id:String(p.submission_id),operation_id:String(p.operation_id),
+      expected_revision:Number(p.expected_revision),customer_status:'received',
+      internal_status:'none',public_note:text,internal_note:'',handoff_reference:''
+    },'shopify:WORK:customer:'+gid.split('/').pop(),gid,p.mode==='receipt');
+    return json_({version:1,operation:'custom_order.account.reply.result',ok:true,
+      submission_id:p.submission_id,operation_id:p.operation_id,
+      revision:result.revision,duplicate:result.duplicate});
+  }catch(error){
+    const message=String(error&&error.message||'');
+    if(message.indexOf('updated elsewhere')>=0)return failed('stale_revision');
+    if(message.indexOf('receipt not found')>=0)return failed('receipt_not_found');
+    if(message.indexOf('thread closed')>=0)return failed('thread_closed');
+    if(message.indexOf('history full')>=0)return failed('history_full');
+    if(message.indexOf('forbidden')>=0)return failed('forbidden');
+    return failed('reply_unconfirmed');
+  }
+}
+function jillWorkMerchantThread_(e) {
+  const failed=function(){return json_({version:1,
+    operation:'custom_order.merchant.thread.result',ok:false,error:{code:'thread_unavailable'}});};
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+     PropertiesService.getScriptProperties().getProperty('JILL_WORK_CONVERSATION_ENABLED')!=='true')return failed();
+  const p=e&&e.parameter||{};
+  const keys=['jill_order_merchant_thread','shop','submission_id',
+    'jill_hq_read_ts','jill_hq_read_nonce','jill_hq_read_sig'];
+  if(Object.keys(p).length!==keys.length||keys.some(function(k){
+    return !e.parameters||!Array.isArray(e.parameters[k])||e.parameters[k].length!==1;
+  }))return failed();
+  const ts=String(p.jill_hq_read_ts||''),nonce=String(p.jill_hq_read_nonce||'');
+  const id=String(p.submission_id||''),sig=String(p.jill_hq_read_sig||'');
+  const secret=String(PropertiesService.getScriptProperties().getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(p.shop!=='jill-work.myshopify.com'||secret.length<32||
+     !/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>60000||
+     !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(nonce)||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(id)||!/^[a-f0-9]{64}$/.test(sig))return failed();
+  const expected=Utilities.computeHmacSha256Signature(
+    ['merchant_thread_v1','jill-work.myshopify.com',id,ts,nonce].join('\n'),secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);}).join('');
+  if(!constantTimeEqual_(sig,expected))return failed();
+  const lock=LockService.getScriptLock();lock.waitLock(10000);
+  try {
+    const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const source=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+    const events=jillWorkHqReadOnlySheet_(ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+    if(source.getLastRow()>51||events.getLastRow()>501)return failed();
+    const row=findSubmissionRow_(source,id);if(!row)return failed();
+    const raw=String(source.getRange(row,HEADERS.indexOf('raw_payload')+1).getValue()||'');
+    const history=jillCustomOrderEventsFor_(events,id);
+    return json_({version:1,operation:'custom_order.merchant.thread.result',ok:true,
+      thread:jillCustomOrderPublicThread_(id,history,raw)});
+  }catch{return failed();}finally{lock.releaseLock();}
+}
+/* END WORK CUSTOM ORDER CONVERSATION */
 
 /* WORK HQ MERCHANT READ V1 — canonical QA only; NO HTTP WRITES
    This is a separate HMAC from customer account reads and checkout submissions.

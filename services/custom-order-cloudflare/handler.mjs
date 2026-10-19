@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {createCustomOrderWorkProxyRoute} from '../../backend/custom-order-work-proxy-route.mjs';
 import {handleCustomOrderGatewayDiagnostic} from '../../backend/custom-order-gateway.mjs';
 import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-account-read.mjs';
+import {handleWorkCustomerReply} from '../../backend/custom-order-conversation.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -121,6 +122,16 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     } catch {
       return handleWorkCustomOrderAccountRead(request,{});
     }
+  }
+  if(pathname==='/jill-custom-order-reply') {
+    let settings;
+    try{settings=config(env);}catch{return handleWorkCustomerReply(request,{});}
+    return handleWorkCustomerReply(request,{
+      ...settings,enabled:env.JILL_WORK_CONVERSATION_ENABLED==='true',
+      rateLimit:async({shop})=>env.RATE_LIMITER
+        .getByName('jill-work-custom-orders-global').allow({
+          shop,client:clientId(request),minute:Math.floor(Date.now()/60000)}),
+    });
   }
   // Shopify may append "/" to the app-proxy destination when the
   // storefront requests /apps/jill-custom-order. Treat only these two

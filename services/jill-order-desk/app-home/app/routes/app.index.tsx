@@ -72,6 +72,7 @@ export default function JillHQ() {
               <h3>Store &amp; Commerce</h3>
               <p>Products, collections, checkout and orders stay in Shopify. HQ will add authorized views without copying prices or payments.</p>
               <div className="jill-hq__card-links">
+                {owner?<Link to="/app/catalog" className="jill-hq__card-link">HQ catalog view →</Link>:null}
                 <s-link href={`${WORK_ADMIN}/products`}>Products ↗</s-link>
                 <s-link href={`${WORK_ADMIN}/collections`}>Collections ↗</s-link>
                 <s-link href={`${WORK_ADMIN}/orders`}>Orders ↗</s-link>

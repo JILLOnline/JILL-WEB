@@ -138,7 +138,7 @@ const homeUI=readFileSync(
 // A full-page link or form navigation in embedded Shopify Admin can lose
 // the SDK/App Bridge context and show an unhelpful successful HTTP page.
 assert.match(homeUI,/import \{Link,/);
-assert.match(homeUI,/<Link to="\/app\/setup-owner">/);
+assert.match(homeUI,/<Link\b[^>]*\bto="\/app\/setup-owner"[^>]*>/);
 assert.doesNotMatch(homeUI,/<a href="\/app\/setup-owner">/);
 assert.match(setupUI,/useFetcher<Result>\(\)/);
 assert.match(setupUI,/<fetcher\.Form method="post">/);

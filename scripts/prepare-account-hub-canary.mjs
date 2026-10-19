@@ -130,7 +130,7 @@ export function prepareCanary(mode) {
         path.join(dest,'src','hub','routes.mjs'));
       fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
       for (const page of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-        'Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+        'RequestConversation.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
       }

@@ -3,6 +3,29 @@
 // Never send a user-supplied email, customer ID or order ID to the endpoint.
 export const WORK_CUSTOM_ORDER_ACCOUNT_URL=
   'https://jill-work-custom-orders-qa.jill-work-custom-orders.workers.dev/jill-custom-order-account';
+const REPLY_URL=new URL('/jill-custom-order-reply',WORK_CUSTOM_ORDER_ACCOUNT_URL).href;
+
+// Kept in memory by the composing screen across failed sends. A fresh token
+// is acquired for EACH send or receipt read. No customer identity in input.
+export async function sendWorkCustomerReply({sessionToken,command,request=fetch}={}){
+  if(typeof sessionToken?.get!=='function')throw Error('session_unavailable');
+  const jwt=await sessionToken.get();
+  if(typeof jwt!=='string'||jwt.length<32||jwt.length>8192)throw Error('session_unavailable');
+  const response=await request(REPLY_URL,{method:'POST',
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+jwt},
+    body:JSON.stringify(command),signal:AbortSignal.timeout(25000)});
+  const data=await response.json();
+  if(data?.version!==1||data.operation!=='custom_order.account.reply.result')
+    throw Error('reply_unconfirmed');
+  if(!response.ok||!data.ok){
+    const code=data.error?.code;
+    throw Error(['stale_revision','receipt_not_found','request_unavailable',
+      'thread_closed','history_full','conversation_not_connected'].includes(code)?code:'reply_unconfirmed');
+  }
+  if(data.submission_id!==command.submission_id||data.operation_id!==command.operation_id||
+    data.revision!==command.expected_revision+1)throw Error('reply_unconfirmed');
+  return {operation_id:data.operation_id,revision:data.revision};
+}
 
 // This is display-only, after the Worker has already verified JWT owner and
 // stripped all private fields. Never allow the customer to choose an owner.
@@ -39,6 +62,7 @@ export async function loadWorkCustomerCustomOrders({
     throw new Error('Shopify could not verify your current session.');
   const response=await request(endpoint,{
     method:'POST',
+    signal:AbortSignal.timeout(20000),
     headers:{
       'Content-Type':'application/json',
       Authorization:'Bearer '+jwt,
@@ -58,18 +82,23 @@ export async function loadWorkCustomerCustomOrders({
   // Gateway already returns a strict public-only projection and validates
   // the JWT; use a tiny second check for corrupted data during rendering.
   return data.orders.map(item=>{
+    const thread=item.timeline_version===2;
     if(typeof item.submission_id!=='string'||item.submission_id.length>128||
        !Number.isSafeInteger(item.revision)||item.revision<1||
        typeof item.status!=='string'||!Array.isArray(item.timeline)||
-       item.timeline.length!==item.revision||item.timeline.length>100)
+       item.timeline.length<1||
+       (thread?item.timeline.length>item.revision:item.timeline.length!==item.revision)||
+       item.timeline.length>100)
       throw new Error('Invalid Custom Order history.');
     return {
+      ...(thread?{timeline_version:2}:{}),
       submission_id:item.submission_id,
       summary:readAccountOrderSummary(item.summary),
       status:item.status,
       revision:item.revision,
       updated_at:String(item.updated_at||''),
       timeline:item.timeline.map(event=>({
+        ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
         status:String(event.status||''),
         note:String(event.note||'').slice(0,500),
         occurred_at:String(event.occurred_at||''),

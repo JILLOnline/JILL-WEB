@@ -7,6 +7,7 @@ import "../styles/request-detail.css";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
 import {WorkOriginalRequestDetails} from "../components/WorkOriginalRequestDetails";
 import {WorkQuoteWorksheet} from "../components/WorkQuoteWorksheet";
+import {WorkRequestConversation} from "../components/WorkRequestConversation";
 import {loadAuthorizedWorkRequestDetail} from "./app.requests-detail-source.server";
 
 export async function loader(args:LoaderFunctionArgs){
@@ -134,6 +135,7 @@ export default function WorkRequestDetail(){
                 </div>
               </div>
               <WorkOriginalRequestDetails model={original} submissionId={record.submission_id}/>
+              <WorkRequestConversation key={record.submission_id} submissionId={record.submission_id}/>
               <WorkQuoteWorksheet key={record.submission_id}
                 model={original} submissionId={record.submission_id}
                 customerStatus={record.customer_status}

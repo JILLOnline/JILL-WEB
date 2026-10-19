@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadWorkCustomerCustomOrders} from '../../../../shared/customer-custom-orders.mjs';
+import RequestConversation from './RequestConversation.jsx';
 import {
   customOrderStatus,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
@@ -10,18 +11,20 @@ import {
 export default function CustomOrders() {
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[]});
+  const [refreshing,setRefreshing]=useState(false);
 
   useEffect(()=>{
     let active=true;
     setState({status:'loading',orders:[]});
+    setRefreshing(true);
     const sessionToken=typeof shopify!=='undefined'
       ? shopify.sessionToken : null;
     loadWorkCustomerCustomOrders({sessionToken})
       .then(orders=>{
-        if(active)setState({status:'ready',orders});
+        if(active){setState({status:'ready',orders});setRefreshing(false);}
       })
       .catch(()=>{
-        if(active)setState({status:'error',orders:[]});
+        if(active){setState({status:'error',orders:[]});setRefreshing(false);}
       });
     return ()=>{active=false;};
   },[attempt]);
@@ -67,7 +70,7 @@ export default function CustomOrders() {
               </s-stack>
             </s-box>
           )}
-          {state.status==='ready' && state.orders.map((order)=> {
+          {state.orders.map((order)=> {
             const current=customOrderStatus(order.status);
             const summary=order.summary;
             const firstEvent=order.timeline[0];
@@ -87,7 +90,7 @@ export default function CustomOrders() {
                   <s-box background="subdued" padding="base" borderRadius="large">
                     <s-stack direction="block" gap="small-300">
                       <s-text type="strong">{current.detail}</s-text>
-                      <s-text color="subdued">Last update: {customOrderDateTime(order.updated_at)} · Revision {order.revision}</s-text>
+                      <s-text color="subdued">Last update: {customOrderDateTime(order.updated_at)}{refreshing?' · Refreshing…':''}</s-text>
                     </s-stack>
                   </s-box>
 
@@ -136,13 +139,14 @@ export default function CustomOrders() {
                           )}
                         </s-stack>
                         <s-stack direction="block" gap="small-100">
-                          <s-text type="strong">{customOrderStatus(event.status).label}</s-text>
+                          <s-text type="strong">{event.author==='customer'?'You':event.kind==='merchant_message'?'JILL':customOrderStatus(event.status).label}</s-text>
                           <s-text color="subdued">{customOrderDateTime(event.occurred_at)}</s-text>
                           {event.note && <s-text>{event.note}</s-text>}
                         </s-stack>
                       </s-grid>
                     ))}
                   </s-stack>
+                  <RequestConversation order={order} onRefresh={()=>setAttempt(value=>value+1)}/>
                   <s-divider/>
                   <s-stack direction="block" gap="small-100">
                     <s-text color="subdued">Your request reference</s-text>

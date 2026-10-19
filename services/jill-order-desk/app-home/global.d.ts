@@ -7,6 +7,8 @@ interface Env {
   // WORK-only signed command key; must differ from read/gateway/Shopify keys.
   JILL_HQ_MERCHANT_WRITE_SECRET?: string;
   JILL_WORK_MERCHANT_WRITES_ENABLED?: string;
+  JILL_WORK_CONVERSATION_ENABLED?: string;
+  JILL_WORK_CATALOG_ENABLED?: string;
   JILL_WORK_OWNER_BOOTSTRAP_ENABLED?: string;
   JILL_WORK_OAUTH_ENABLED?: string;
   JILL_WORK_HOST_STAGE: 'work'|'canary';
