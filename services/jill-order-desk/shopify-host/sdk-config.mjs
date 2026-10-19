@@ -56,3 +56,14 @@ export function createWorkShopifyHost({
   }
   return client;
 }
+
+// Public navigation destination, never merchant authentication. Open bare
+// Worker documents in the existing WORK Shopify Admin app, not a standalone
+// App Bridge bootstrap without its parent. No token/query is forwarded.
+export function workAdminAppDestination(pathname){
+  if(typeof pathname!=='string'||!/^\/app(?:\/|$)/.test(pathname)||
+     pathname.endsWith('.data')||pathname.length>512||/[?#\r\n]/.test(pathname))
+    throw Error('invalid_work_admin_path');
+  return 'https://admin.shopify.com/store/'+JILL_WORK_MERCHANT_SHOP.replace('.myshopify.com','')+'/apps/'+
+    JILL_WORK_MERCHANT_CLIENT_ID+pathname;
+}

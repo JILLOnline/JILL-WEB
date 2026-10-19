@@ -652,3 +652,19 @@ button affordances, technical disclosures, focus and narrow-width rendering.
 Do not create requests/quotes or submit commands for a visual review.
 Authenticated visual acceptance and full WORK operational acceptance remain
 open. Customer-facing LIVE promotion remains a separate reviewed release.
+
+## Navigation incident and Home dashboard — 2026-10-19
+
+Owner reports Requests not opening and raw-Worker new-tab `200 OK`; Home had
+three Requests links. Local compiled SDK/data-route reproduction found shared
+thrown Response body consumption across parallel loaders. Repair preserves one
+SDK attempt but clones rejected Responses per loader, restores top-level new-tab
+entry through the existing WORK Admin app, and makes Home a canonical streamed
+counts dashboard with one Requests navigation entry. See
+`docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md` for evidence, source/denial tests,
+new isolated repair receipts and required authenticated checks. This is an
+explicitly authorized navigation/dashboard change, NOT visual-only. It is NOT
+DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
+All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
+wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
+actual authenticated navigation/new-tab proof after a reviewed repair release.

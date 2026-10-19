@@ -47,7 +47,8 @@ function metadata(candidate,source,profile){
   check(base.id===baseId,'base_version_changed');
   verifyQuoteCanary(original,view(HQ_QUOTE));
   inspectConnectedVersion({active:original,candidate:base,source:baseSource});
-  return candidate?inspectVisualCandidate({original,base,candidate:view(candidate),source,baseId,baseSource}):null;
+  return candidate?{...inspectVisualCandidate({original,base,candidate:view(candidate),source,baseId,baseSource}),
+    visual_only:profile?.visualOnly??true,...(profile?.changeScope?{change_scope:profile.changeScope}:{})}:null;
 }
 function deploy(id,message){cloud(['versions','deploy',id+'@100',HQ_QUOTE+'@0',
   '--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--message',message,'--yes']);}
@@ -96,7 +97,7 @@ export async function executeVisualRelease(mode,profile){
     check(upload===null&&attempt===null&&!fs.existsSync(restoreFile),'release_receipt_spent_inspect_only');
     const before=readConnectedDeployment();visualBaseline(before,profile);metadata(undefined,undefined,profile);await readConnectedHealth(base);
     check(findVersion(read(['versions','list']),runner)===null,'source_already_uploaded');
-    phase='local_visual_checks';
+    phase='local_source_checks';
     runNpm(profile?.checkCommand||'work:hq:visuals:check',ROOT);runNpm('test:work-hq-visual-release',ROOT);
     if(profile?.testCommand)runNpm(profile.testCommand,ROOT);
     runNpm('typecheck',APP);
@@ -106,6 +107,7 @@ export async function executeVisualRelease(mode,profile){
       fs.renameSync(dist,path.join(tmpdir(),'jill-hq-visual-previous-'+randomUUID()));
     }
     runNpm('build',APP,{canary:true});runNpm('test:workerd-connected-read-local',APP);
+    for(const test of profile?.compiledTests||[])runNpm(test,APP);
     const target=path.join(APP,'dist/server/wrangler.hq-visual-theme.json');
     fs.writeFileSync(target,JSON.stringify(prepareConnectedManifest(JSON.parse(fs.readFileSync(path.join(APP,'dist/server/wrangler.json'),'utf8'))),null,2)+'\n',{mode:0o600});
     const args=['versions','upload','--config',target,'--keep-vars','--message',HQ_MARKER+runner];
@@ -125,7 +127,8 @@ export async function executeVisualRelease(mode,profile){
     check(isDeepStrictEqual(after,readConnectedDeployment()),'changed_after_activation');
     console.log(JSON.stringify({environment:'WORK',runner,package_sha256:digest,candidate,allocation:after,health,
       command_acknowledged:acknowledged,upload_receipt_spent:true,activation_receipt_spent:true,
-      current_flags_and_bindings_preserved:true,quote_canary_preserved:true,visual_only:true,
+      current_flags_and_bindings_preserved:true,quote_canary_preserved:true,visual_only:profile?.visualOnly??true,
+      ...(profile?.changeScope?{change_scope:profile.changeScope}:{}),
       secret_changes:false,data_or_schema_changes:false,new_billable_services:false,
       authenticated_visual_acceptance:false,operational_acceptance:false},null,2));
   }catch(error){

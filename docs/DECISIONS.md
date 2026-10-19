@@ -349,3 +349,19 @@ authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
 is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
 spent; never rerun historical releases or reset receipts. WORK operational
 acceptance and separate customer-facing LIVE review remain incomplete.
+
+## Navigation incident and Home dashboard — 2026-10-19
+
+Owner reports Requests not opening and raw-Worker new-tab `200 OK`; Home had
+three Requests links. Local compiled SDK/data-route reproduction found shared
+thrown Response body consumption across parallel loaders. Repair preserves one
+SDK attempt but clones rejected Responses per loader, restores top-level new-tab
+entry through the existing WORK Admin app, and makes Home a canonical streamed
+counts dashboard with one Requests navigation entry. See
+`docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md` for evidence, source/denial tests,
+new isolated repair receipts and required authenticated checks. This is an
+explicitly authorized navigation/dashboard change, NOT visual-only. It is NOT
+DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
+All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
+wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
+actual authenticated navigation/new-tab proof after a reviewed repair release.

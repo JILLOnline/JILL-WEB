@@ -10,7 +10,7 @@ const oneRequest={}; // Equivalent to context.cloudflare for ONE fetch.
 const task=()=>{calls++;return new Promise(resolve=>{release=resolve;});};
 const p1=once({scope:oneRequest,authenticate:task});
 const p2=once({scope:oneRequest,authenticate:task});
-assert.equal(p1,p2,'Concurrent parent+child must get the same SDK promise');
+// SDK work is shared; each caller may independently consume SDK responses.
 await Promise.resolve();
 assert.equal(calls,1);
 release({session:{shop:'jill-work.myshopify.com'}});
@@ -29,8 +29,8 @@ const badScope={};
 const rejected=once({scope:badScope,
   authenticate:async()=>{throw Error('Shopify auth rejection');}});
 await assert.rejects(rejected,/Shopify auth rejection/);
-assert.equal(once({scope:badScope,
-  authenticate:async()=>{throw Error('unexpected retry');}}),rejected);
+await assert.rejects(once({scope:badScope,
+  authenticate:async()=>{throw Error('unexpected retry');}}),/Shopify auth rejection/);
 assert.throws(()=>once({scope:null,authenticate:task}),
   /invalid_work_admin_auth_scope/);
 assert.throws(()=>once({scope:{}}),/invalid_work_admin_auth_scope/);
@@ -71,3 +71,14 @@ assert.deepEqual(phases,['shopify_auth','work_owner'],
   'Unauthorized request must never call Google');
 assert.deepEqual(time,[['shopify_auth',7],['work_owner',0]]);
 console.log('PASS WORK pending-data diagnostics: one Shopify auth promise per incoming HTTP fetch, second request reauthenticates, rejected auth never bypasses Owner, stage markers do not reveal identity.');
+
+// A thrown SDK response is consumable once per parallel route, never shared.
+for(const status of [200,401,403,302]){
+ const scope={},body='<script>SYNTHETIC_SHOPIFY_BOOTSTRAP</script>';
+ let count=0;
+ const authenticate=async()=>{count++;throw new Response(body,{status,headers:{'content-type':'text/html','x-synthetic-auth':'preserved',...(status===302?{location:'/auth/session-token'}:{})}})};
+ const rejected=await Promise.allSettled([once({scope,authenticate}),once({scope,authenticate}),once({scope,authenticate})]);
+ assert.equal(count,1);assert.equal(new Set(rejected.map(x=>x.reason)).size,3);
+ for(const item of rejected){assert.equal(item.status,'rejected');assert.equal(item.reason.status,status);assert.equal(item.reason.headers.get('x-synthetic-auth'),'preserved');assert.equal(await item.reason.text(),body);}
+}
+console.log('PASS per-loader SDK response bodies: parallel HTML bootstrap, 401/403 denial and redirect preserve status/headers/body with one SDK authentication attempt.');

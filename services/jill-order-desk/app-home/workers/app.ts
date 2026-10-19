@@ -1,5 +1,5 @@
 import {createRequestHandler} from "react-router";
-import {workAppHomeOrigin} from "../../shopify-host/sdk-config.mjs";
+import {workAppHomeOrigin,workAdminAppDestination} from "../../shopify-host/sdk-config.mjs";
 import {workQuoteDraftFeatureReady,workQuoteDraftSchemaReady}
   from "../../work-quote-release-readiness.mjs";
 
@@ -46,6 +46,16 @@ export default {
     catch {return unavailable("work_host_unavailable");}
     const url=new URL(request.url);
     if(url.origin!==expected)return unavailable("wrong_host",421);
+    // A new browser tab has no Shopify iframe parent. Re-enter the existing
+    // WORK Admin app before SDK bootstrap; do not redirect data requests,
+    // iframe reloads, authenticated requests or any command POST.
+    if(request.method==="GET" && /^\/app(?:\/|$)/.test(url.pathname) &&
+       !url.pathname.endsWith(".data") && !request.headers.has("authorization") &&
+       request.headers.get("sec-fetch-dest")==="document"){
+      return new Response(null,{status:302,headers:{...headers,
+        Location:workAdminAppDestination(url.pathname),
+      }});
+    }
     // Anonymous/foreign-origin command posts must fail before Shopify's
     // embedded auth redirect machinery, D1 or any request body processing.
     // A matching Origin is ONLY a browser CSRF precondition, never merchant

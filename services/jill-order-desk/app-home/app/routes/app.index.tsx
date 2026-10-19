@@ -1,18 +1,43 @@
-import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
+import {Suspense} from "react";
+import {Link,Await,data as routeData,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {loadWorkShopifyAdminRoute} from "../../../shopify-host/app-home-route.mjs";
+import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
+import {loadVerifiedMerchantInbox} from "./app.requests-source.server";
+import {inboxStats} from "../../../inbox-display.mjs";
 import "../styles/hq-home.css";
 
 const WORK_ADMIN="https://admin.shopify.com/store/jill-work";
 
-export async function loader({request,context}:LoaderFunctionArgs) {
-  const env=context.cloudflare.env;
-  return loadWorkShopifyAdminRoute({
-    request,authenticate:workShopify(env).authenticate,env,
+type RequestSummary={state:string;stats?:{total:number;reviewing:number;needsQuote:number}};
+type HomeModel={state:string;description:string;role?:string;requestSummary:Promise<RequestSummary|null>};
+export async function loader(args:LoaderFunctionArgs) {
+  const {request,context}=args,env=context.cloudflare.env;
+  const response=await loadWorkShopifyAdminRoute({
+    request,authenticate:{admin:()=>authenticateWorkAdminOnce({
+      scope:context.cloudflare,authenticate:()=>workShopify(env).authenticate.admin(request),
+    })},env,
   });
+  const home=await response.json() as Omit<HomeModel,"requestSummary">;
+  // Stream counts after the authorized shell. Reuse the canonical Owner-only
+  // inbox projection and cache; never copy customer records into Home data.
+  const requestSummary=home.state==="staff_verified"&&home.role==="owner"
+    ? (async()=>{
+        const result=await loadVerifiedMerchantInbox(args);
+        const model=await result.json() as {state:string;records:unknown[]};
+        return model.state==="ready"?{state:model.state,stats:inboxStats(model.records)}:{state:model.state};
+      })()
+    : Promise.resolve(null);
+  return routeData({...home,requestSummary},{status:response.status,headers:response.headers});
 }
-
-type HomeModel={state:string;description:string;role?:string};
+function RequestOverview({summary}:{summary:RequestSummary|null}){
+  if(summary?.state!=="ready"||!summary.stats)return <p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>;
+  return <div className="jill-hq__metrics" aria-label="Request overview">
+    <div><span>Requests</span><strong>{summary.stats.total}</strong></div>
+    <div><span>In review</span><strong>{summary.stats.reviewing}</strong></div>
+    <div><span>Needs a quote</span><strong>{summary.stats.needsQuote}</strong></div>
+  </div>;
+}
 
 export default function JillHQ() {
   const data=useLoaderData() as HomeModel;
@@ -24,11 +49,8 @@ export default function JillHQ() {
       <header className="jill-hq__hero">
         <div className="jill-hq__hero-copy">
           <p className="jill-hq__eyebrow">JILL HQ <span aria-hidden="true">/</span> WORK</p>
-          <h1>Big ideas. Beautifully managed.</h1>
-          <p className="jill-hq__lead">Your requests, your store, your next move.</p>
-          {owner ? <Link to="/app/requests" className="jill-hq__primary">
-            Open requests <span aria-hidden="true">→</span>
-          </Link> : null}
+          <h1>Your day, at a glance.</h1>
+          <p className="jill-hq__lead">A little clarity. A lot of possibility.</p>
           {data.state==="merchant_setup_required"
             ? <Link to="/app/setup-owner" className="jill-hq__primary">Set up Owner access <span aria-hidden="true">→</span></Link>
             : null}
@@ -48,27 +70,28 @@ export default function JillHQ() {
       </div>
 
 
+      {owner?<section className="jill-hq__section" aria-labelledby="hq-overview-heading">
+        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2></div>
+        <Suspense fallback={<p className="jill-hq__summary-state" role="status">Loading request counts…</p>}>
+          <Await resolve={data.requestSummary} errorElement={<p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>}>
+            {summary=><RequestOverview summary={summary}/>}
+          </Await>
+        </Suspense>
+      </section>:null}
       {verified ? <>
         <section className="jill-hq__section" aria-labelledby="hq-work-heading">
           <div className="jill-hq__section-heading">
-            <div><p className="jill-hq__eyebrow">MAKE SOMETHING GREAT</p><h2 id="hq-work-heading">Your workspace</h2></div>
+            <div><p className="jill-hq__eyebrow">MAKE SOMETHING GREAT</p><h2 id="hq-work-heading">Store shortcuts</h2></div>
           </div>
           <div className="jill-hq__grid">
-            <article className="jill-hq__card jill-hq__card--featured">
-              <div className="jill-hq__card-top"><span className="jill-hq__card-number">01</span><span className="jill-hq__pill jill-hq__pill--ready">HQ workspace</span></div>
-              <h3>Custom requests</h3>
-              <p>Review details. Keep things moving.</p>
-              {owner ? <Link to="/app/requests" className="jill-hq__card-link">View requests <span aria-hidden="true">↗</span></Link>
-                : <span className="jill-hq__card-note">Request access is assigned by the Owner.</span>}
-            </article>
             <article className="jill-hq__card">
-              <div className="jill-hq__card-top"><span className="jill-hq__card-number">02</span><span className="jill-hq__pill">Shopify source</span></div>
+              <div className="jill-hq__card-top"><span className="jill-hq__card-number">01</span><span className="jill-hq__pill">Shopify source</span></div>
               <h3>Customers</h3>
               <p>Find your people in Shopify.</p>
               <a className="jill-button" href={`${WORK_ADMIN}/customers`} target="_top">Customers ↗</a>
             </article>
             <article className="jill-hq__card">
-              <div className="jill-hq__card-top"><span className="jill-hq__card-number">03</span><span className="jill-hq__pill">Shopify source</span></div>
+              <div className="jill-hq__card-top"><span className="jill-hq__card-number">02</span><span className="jill-hq__pill">Shopify source</span></div>
               <h3>Your store</h3>
               <p>Browse your catalog or jump into Shopify.</p>
               <div className="jill-hq__card-links">
@@ -79,7 +102,7 @@ export default function JillHQ() {
               </div>
             </article>
             <article className="jill-hq__card">
-              <div className="jill-hq__card-top"><span className="jill-hq__card-number">04</span><span className="jill-hq__pill">Owner governed</span></div>
+              <div className="jill-hq__card-top"><span className="jill-hq__card-number">03</span><span className="jill-hq__pill">Owner governed</span></div>
               <h3>Access &amp; permissions</h3>
               <p>Check your verified Shopify permissions.</p>
               {owner?<Link to="/app/access" className="jill-hq__card-link">View access →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}

@@ -72,11 +72,11 @@ const model=readFileSync('services/jill-order-desk/admin-home.mjs','utf8');
 assert.match(page,/s-page heading="JILL HQ — WORK"/);
 assert.match(owner,/s-page heading="JILL HQ — WORK \/ Owner setup"/);
 assert.match(model,/title:'JILL HQ — WORK'/);
-for(const title of ['Custom requests','Customers','Your store','Access &amp; permissions'])
+for(const title of ['Request overview','Customers','Your store','Access &amp; permissions'])
   assert.ok(page.includes(title),'Missing HQ module '+title);
 assert.match(page,/data.state==="staff_verified"/);
 assert.match(page,/const owner=verified && data.role==="owner"/);
-assert.match(page,/<Link to="\/app\/requests"/);
+assert.doesNotMatch(page,/to="\/app\/requests"/);
 for(const path of ['/products','/collections','/customers','/orders'])
   assert.ok(page.includes('WORK_ADMIN}'+path),'Missing native WORK Shopify path '+path);
 assert.doesNotMatch(page,/jill-hq__footnote|Rewards policy ready/);

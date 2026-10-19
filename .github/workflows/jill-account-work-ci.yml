@@ -351,6 +351,8 @@ jobs:
         run: npm run typecheck
       - name: Verify HQ visual-only boundary and release policy unit contracts
         run: npm run test:work-hq-visual-release
+      - name: Verify WORK auth response recovery and canonical dashboard
+        run: npm run test:work-hq-navigation-recovery
       - name: Verify HQ studio presentation and distinct release profile
         run: npm run test:work-hq-studio
       - name: Build real React Router Cloudflare App Home (no deployment)
@@ -367,6 +369,10 @@ jobs:
       - name: Verify built connected catalog/access candidate in local workerd only
         working-directory: services/jill-order-desk/app-home
         run: npm run test:workerd-connected-read-local
+
+      - name: Verify compiled Shopify SDK navigation and new-tab recovery
+        working-directory: services/jill-order-desk/app-home
+        run: npm run test:workerd-navigation-local
 
       - name: Verify real built WORK client/server artifact inventory (no deployment)
         run: node scripts/review-work-hq-v35-source-delta.mjs --inventory-compiled-ci

@@ -115,3 +115,13 @@ The current combined Apps Script file remains production code during migration. 
 - `jill-forms.css` owns Custom Order large-card botanical presentation and consumes the same `--jill-botanical-field` foundation asset. It does not own a second botanical asset or decorate ordinary controls.
 
 HQ visual edition release profiles reuse `scripts/release-work-hq-visual-theme-owner.mjs`; v2 static profile is `scripts/release-work-hq-studio-owner.mjs`, with exact reviewed presentation inventory/logic guard in `scripts/check-work-hq-studio-only.mjs`. They own release commands only, never merchant, quote or wallet truth. See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md`.
+
+## HQ navigation and dashboard ownership
+
+| Domain | Canonical owner | Allowed inputs and responsibility | Prohibited responsibility |
+| --- | --- | --- | --- |
+| WORK SDK authentication fan-out | `services/jill-order-desk/work-admin-auth-once.mjs` | One SDK attempt per incoming request; independent rejected Response bodies per parallel loader | Cross-request sessions, fake auth, repeated exchanges, swallowed redirects |
+| WORK raw-document Admin destination | Existing `services/jill-order-desk/shopify-host/sdk-config.mjs` + Worker HTTP entry | Canonical WORK shop/client, path-only destination for top-level documents | Query/token forwarding, public data access, alternate app or shop |
+| HQ dashboard counts | Existing Home loader and canonical inbox reader/`inboxStats` | Authorized Owner projection, streamed aggregate-only Home stats | Separate counter store, customer records in Home, zero from failed reads |
+
+Navigation repair release profile `scripts/release-work-hq-navigation-owner.mjs` delegates to the existing release driver with a separate reviewed inventory and unused receipt namespace; scope is explicitly not visual-only. See `docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md`.

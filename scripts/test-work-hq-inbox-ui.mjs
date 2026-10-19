@@ -64,7 +64,7 @@ const landing=readFileSync(
 // Shopify App Bridge must authenticate route DATA requests. React Router's
 // automatic prefetch link requests may lack a fresh embedded session token;
 // they have historically generated spurious /auth/login 200 navigation.
-assert.match(landing,/<Link to="\/app\/requests"/);
+assert.match(readFileSync('services/jill-order-desk/app-home/app/routes/app.tsx','utf8'),/<NavLink to="\/app\/requests"/);
 assert.doesNotMatch(landing,/prefetch\s*=/);
 assert.doesNotMatch(route,/prefetch\s*=/);
 const serverLoader=readFileSync(
@@ -88,7 +88,7 @@ assert.match(style,/@media\(max-width:700px\)/);
 assert.match(style,/:focus-visible/);
 assert.match(style,/prefers-reduced-motion/);
 assert.ok(style.includes('.jill-inbox__card'));
-assert.ok(landing.includes('Open requests'));
+assert.doesNotMatch(landing,/to="\/app\/requests"/);
 assert.doesNotMatch(style,/!important|@import|url\(/i);
 assert.doesNotMatch(route,/onClick=\{[^}]*fetch|useFetcher|fetch\(|useSubmit|action\s*\(|<form|<button\s+type="submit"|window\.location/i);
 assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.cookie|window\.|https?:\/\//i);

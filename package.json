@@ -289,7 +289,12 @@
     "test:work-hq-studio": "node scripts/test-work-hq-studio.mjs",
     "work:hq:studio:release-once": "node scripts/release-work-hq-studio-owner.mjs --release-once",
     "work:hq:studio:inspect": "node scripts/release-work-hq-studio-owner.mjs --inspect",
-    "work:hq:studio:restore-once": "node scripts/release-work-hq-studio-owner.mjs --restore-once"
+    "work:hq:studio:restore-once": "node scripts/release-work-hq-studio-owner.mjs --restore-once",
+    "work:hq:navigation:repair:check": "node scripts/check-work-hq-navigation-only.mjs",
+    "test:work-hq-navigation-recovery": "node scripts/test-work-hq-request-auth-stages.mjs && node scripts/test-work-hq-navigation-recovery.mjs",
+    "work:hq:navigation:repair:release-once": "node scripts/release-work-hq-navigation-owner.mjs --release-once",
+    "work:hq:navigation:repair:inspect": "node scripts/release-work-hq-navigation-owner.mjs --inspect",
+    "work:hq:navigation:repair:restore-once": "node scripts/release-work-hq-navigation-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",

@@ -1,0 +1,36 @@
+{
+  "environment": "WORK",
+  "kind": "navigation_incident_and_local_repair",
+  "reported_runtime": "d301efb4-b015-40d4-87ad-159a9fff82eb",
+  "screenshots": [
+    {
+      "owner_uploaded_filename": "image(20261019-190527).png",
+      "sha256": "d3020aeee4695d71a797192843a8c53dc1fa845ff4319a2da8957c6eb0d795b5",
+      "raw_image_in_git": false
+    },
+    {
+      "owner_uploaded_filename": "image(20261019-190534).png",
+      "sha256": "b2a0035db838246d3657e4ac06ac8802e9debc7f418e4ad41c8ccc1791848a13",
+      "raw_image_in_git": false
+    },
+    {
+      "owner_uploaded_filename": "image(20261019-190554).png",
+      "sha256": "d9b2915e42d6b75aa317585ca95ae9c99ee5438ab6aa4e18089b23de070be690",
+      "raw_image_in_git": false
+    },
+    {
+      "owner_uploaded_filename": "image(20261019-190650).png",
+      "sha256": "26591ec6014535b65246e34ba7267e65c6079e663f150c91856ad7b782403cf7",
+      "raw_image_in_git": false
+    }
+  ],
+  "compiled_data_response_reproduced": "SDK bootstrap plus sanitized error from shared rejected Response body",
+  "repaired_local_compiled_sdk_navigation": "passed",
+  "actual_loader_aggregate_projection_and_streaming": "passed",
+  "local_browser_cases": 24,
+  "home_requests_navigation_entries": 1,
+  "horizontal_overflow": false,
+  "deployment_performed": false,
+  "authenticated_incident_resolution": false,
+  "operational_acceptance": false
+}

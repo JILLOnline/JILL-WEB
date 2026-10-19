@@ -1,6 +1,6 @@
 /* Authenticated WORK App Home only; Shopify Admin chrome stays native. */
 .jill-hq{color:var(--jill-ink);width:100%;margin:0 auto 24px;line-height:1.45}
-.jill-hq__hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:20px;align-items:center;min-height:164px;padding:24px 28px;color:#fff;background:radial-gradient(ellipse at 95% 0%,#dd335c77,transparent 52%),linear-gradient(115deg,#25132f 0%,#682399 65%,#8f174e 100%);border-radius:16px}
+.jill-hq__hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:20px;align-items:center;min-height:140px;padding:24px 28px;color:#fff;background:radial-gradient(ellipse at 95% 0%,#dd335c77,transparent 52%),linear-gradient(115deg,#25132f 0%,#682399 65%,#8f174e 100%);border-radius:16px}
 .jill-hq__hero:after{content:"";position:absolute;right:-65px;bottom:-220px;width:380px;height:380px;border:28px solid rgba(243,202,120,.17);border-radius:50%;pointer-events:none}
 .jill-hq__hero-copy{position:relative;z-index:1;max-width:980px}
 .jill-hq__eyebrow{margin:0 0 8px;font-size:11px;line-height:1.4;font-weight:750;letter-spacing:.15em;text-transform:uppercase;color:var(--jill-accent)}
@@ -19,7 +19,6 @@
 .jill-hq__section-heading{display:flex;justify-content:space-between;gap:15px;align-items:end;margin:0 0 14px}.jill-hq__section-heading h2{margin:0;font-size:21px;letter-spacing:-.025em;line-height:1.2}.jill-hq__section-heading>p{margin:0 0 2px;color:var(--jill-muted);font-size:12px;text-align:right}
 .jill-hq__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .jill-hq__card{display:flex;flex-direction:column;min-height:196px;padding:16px;border:1px solid var(--jill-border);border-radius:12px;background:#fff;box-shadow:0 5px 18px rgba(47,30,41,.035)}
-.jill-hq__card--featured{background:linear-gradient(142deg,#fff 15%,#f6ebff 100%);border-color:#cda9e5}
 .jill-hq__card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
 .jill-hq__card-number{font-size:12px;color:#705762;font-weight:800;letter-spacing:.06em}
 .jill-hq__pill{border-radius:999px;padding:5px 9px;background:#f4f2f3;color:#665b65;font-size:10px;font-weight:720;white-space:nowrap}.jill-hq__pill--ready{background:#e9f4eb;color:#35634b}
@@ -30,10 +29,17 @@
 .jill-hq a:focus-visible,.jill-hq s-link:focus-visible{outline:3px solid var(--jill-focus);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.jill-hq *{scroll-behavior:auto}}
 
-@media(min-width:1120px){.jill-hq__grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:1120px){.jill-hq__grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-.jill-hq__card:nth-child(2){border-top:3px solid #be2356}
-.jill-hq__card:nth-child(3){border-top:3px solid #bc8522}
-.jill-hq__card:nth-child(4){border-top:3px solid #7735ac}
+.jill-hq__card:nth-child(1){border-top:3px solid #be2356}
+.jill-hq__card:nth-child(2){border-top:3px solid #bc8522}
+.jill-hq__card:nth-child(3){border-top:3px solid #7735ac}
 @media(max-width:800px){.jill-hq__hero{grid-template-columns:1fr}.jill-hq__hero-mark{display:none}}
 @media(max-width:600px){.jill-hq__hero{padding:22px 18px;min-height:0}.jill-hq__hero h1{font-size:28px}.jill-hq__primary{width:100%;justify-content:space-between}.jill-hq__grid{grid-template-columns:1fr}.jill-hq__card{min-height:0}.jill-hq__section-heading{display:block}.jill-hq__status{align-items:flex-start}.jill-hq__environment{display:none}}
+
+.jill-hq__metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.jill-hq__metrics>div{display:flex;flex-direction:column;gap:8px;padding:16px 20px;background:#fff;border:1px solid var(--jill-border);border-radius:12px;border-top:3px solid var(--jill-plum)}
+.jill-hq__metrics span{font-size:13px;font-weight:650;color:var(--jill-muted)}
+.jill-hq__metrics strong{font-size:30px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums;color:var(--jill-ink)}
+.jill-hq__summary-state{padding:16px;border:1px solid var(--jill-border);border-radius:12px;background:#fff;color:var(--jill-muted)}
+@media(max-width:600px){.jill-hq__metrics{gap:8px}.jill-hq__metrics>div{padding:12px}.jill-hq__metrics strong{font-size:26px}}
