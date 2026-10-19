@@ -27,7 +27,7 @@ const fixture=(name,id=WORK_CLIENT_ID)=>[
 const prep=resolve('scripts/prepare-rewards-work-config.mjs');
 const dir=mkdtempSync(join(tmpdir(),'jill-hq-work-name-'));
 const path=join(dir,'shopify.app.work.toml');
-const run=()=>execFileSync(process.execPath,[prep],{cwd:dir,encoding:'utf8'});
+const run=(...args)=>execFileSync(process.execPath,[prep,...args],{cwd:dir,encoding:'utf8'});
 try {
   const before=fixture(WORK_APP_LEGACY_NAME);
   writeFileSync(path,before);
@@ -51,6 +51,15 @@ try {
     assert.throws(run,'Unknown or LIVE Shopify config must be refused');
     assert.equal(readFileSync(path,'utf8'),rejected,'Rejected app config must not be changed');
   }
+  writeFileSync(path,after);
+  run('--minimum-hq-scopes');
+  const withScopes=readFileSync(path,'utf8');
+  const additions=['read_products','read_inventory','read_locations','read_draft_orders','write_draft_orders'];
+  assert.equal(withScopes.replace(','+additions.join(','),''),after,
+    'Minimum scopes must preserve every other configuration byte');
+  run('--minimum-hq-scopes');assert.equal(readFileSync(path,'utf8'),withScopes);
+  assert.throws(()=>run('--unknown'));
+  assert.equal(readFileSync(path,'utf8'),withScopes,'Invalid invocation never edits config');
   const validLegacy=after.replace(WORK_APP_NAME,WORK_APP_LEGACY_NAME);
   assert.equal(assertRewardsWorkConfig(validLegacy).name,WORK_APP_LEGACY_NAME);
   assert.throws(()=>assertRewardsWorkConfig(validLegacy,{requireHqName:true}),/JILL HQ/);

@@ -1,5 +1,12 @@
 # Customer-facing LIVE promotion — separate blocked release review
 
+The corrected WORK gateway diagnostic now has exact-version signed Google
+verification in the Owner receipt recorded in
+`evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`. This closes
+only that diagnostic; it establishes no intake, customer conversation, quote,
+checkout, migration or LIVE acceptance. All diagnostic deployment receipts
+are spent.
+
 Prepared 2026-10-19 UTC. **NOT APPROVED, NOT READY, no production commands.**
 WORK acceptance is recorded in `WORK_CONNECTED_ACCEPTANCE_2026-10-19.md` and
 has not passed. This package defines the concrete diff/receipts needed for a

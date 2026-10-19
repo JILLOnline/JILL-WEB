@@ -62,13 +62,18 @@ try{
       lines:q2.terms.lines,reward:q2.terms.reward})};
   assert.equal((await advanceWorkCommerce(args)).state,'accepted_pending_event');
   assert.equal(creates,0,'No Shopify create before canonical public acceptance');
+  assert.equal((await advanceWorkCommerce({...args,nowMs:now+3600001})).reason,'quote_expired');
+  assert.equal(creates,0,'Expiry never permits a fresh create');
   eventConfirmed=true;
   assert.equal((await advanceWorkCommerce(args)).state,'needs_reconciliation');
   assert.equal(creates,1);
   for(let n=0;n<3;n++)assert.equal((await advanceWorkCommerce(args)).state,'needs_reconciliation');
   assert.equal(creates,1,'An empty search never authorizes another create');
+  assert.equal((await advanceWorkCommerce({...args,findDrafts:async()=>{throw Error('read outage');}})).state,'needs_reconciliation');
+  assert.equal(creates,1,'A read failure does not authorize another create');
   found=true;
-  assert.equal((await advanceWorkCommerce(args)).state,'draft_linked');
+  assert.equal((await advanceWorkCommerce({...args,nowMs:now+3600001})).state,'draft_linked',
+    'A create claimed before expiry remains recoverable after expiry');
   assert.equal((await advanceWorkCommerce(args)).draft_gid,'gid://shopify/DraftOrder/111');
   assert.equal(creates,1);
   const linked=await db.prepare('SELECT * FROM jill_work_commerce_links').first();

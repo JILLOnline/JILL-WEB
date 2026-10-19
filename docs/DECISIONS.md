@@ -1,5 +1,21 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 — bounded catalog reads and expired-create recovery
+
+Extend the existing catalog projection/screen rather than creating a new
+catalog owner. Keep products/collections under product scope and inventory/
+locations under their explicit Owner/online scope intersection. Verify the
+returned WORK shop and currency; untracked inventory is unknown availability,
+not zero stock or labor capacity. Minimum-scope preparation is explicit and
+local; actual app release, consent and online grants remain separate evidence.
+
+Once Shopify creation has been claimed, quote expiry may prohibit a new create
+but must not prevent read-only reconciliation of a resource already created.
+A failed search remains held; it never establishes absence or permits another
+create. No active agreement/Rewards/commerce service is enabled by this source.
+The corrected gateway diagnostic failure is closed by the Owner's exact signed
+receipt; all deployment receipts are spent and secret rotation is unwarranted.
+
 ## 2026-10-19 UTC — current inventory and minimal diagnostic operation
 
 The Owner's fresh metadata and edge clock confirm the existing 0% diagnostic

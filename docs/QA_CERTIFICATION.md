@@ -1,5 +1,44 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — authenticated source read-back and focused regressions
+
+The exact current scope gaps and all four catalog queries were independently
+read through the verified WORK connector. All 60 inventory variants were read
+across three pages and remain untracked. Isolated Google QA row/event/owner
+reads succeeded, and stored raw payload hashes match both immutable owner
+records. The original failed-operation ID/payload remains uncorrelated.
+Pinned 2026-07 GraphQL validation, root postinstall, focused connected-source
+and config-preservation tests, actual local D1 recovery-after-expiry tests,
+HQ typecheck and both builds pass. This is not deployed HQ/extension proof.
+No A/B UI, authentic Owner Save/Reload, staff revocation, native checkout,
+media/guest/Rewards activation or authenticated performance acceptance is
+claimed. Exact handoff: `WORK_OPERATIONAL_HANDOFF_2026-10-19.md`.
+
+## Superseding Owner receipt — 2026-10-19
+
+The Owner completed the corrected diagnostic from runner `432f2bc4923bc6f794c2a8b65351574d60a76ecc`.
+Source package SHA-256: `eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3`.
+Gateway deployment `4fad4b6f-3596-4797-83a3-05edb7f89097` retains ordinary candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100% and corrected diagnostic
+`b6237ad9-3343-4c8b-8b65-7a0194ddc50e` at 0%. The signed response identified
+that exact corrected version and verified the Google signature. No customer
+order was created or Shopify submission tested; ordinary traffic, old receipts
+and secrets were unchanged. Owner-to-edge interval: −458..+687 ms, RTT 146 ms.
+The isolated Google QA audit/key preflight passed; the numeric revision was
+not in the final receipt and remains to be retrieved read-only when needed.
+
+**The diagnostic failure is closed. The original uncertain intake / earlier
+409 remains unreconciled. Full WORK acceptance remains NOT PASSED.** This is
+Owner-supplied runtime evidence, not a new signed probe by this executor.
+Structured receipt: `docs/evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`.
+
+**All old and new upload/deployment receipts are spent. Never rerun
+`work:gateway:empty-post:release-once`, reset receipts or replay historical
+upload/recovery/deployment commands.** Only `work:gateway:empty-post:inspect`
+may be used for necessary read-only deployment read-back; it sends no signed
+POST. Do not restart secret-mismatch diagnosis or rotate keys.
+
+
 ## 2026-10-19 UTC — Owner inventory and minimal diagnostic preparation
 
 The Owner supplied a clean synced `3a6db45` runtime inventory: exact existing

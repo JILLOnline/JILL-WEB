@@ -1,0 +1,36 @@
+{
+  "environment": "WORK",
+  "evidence_type": "owner_reported_successful_runner_receipt",
+  "reported_in": "2026-10-19 continuation instruction",
+  "runner": "432f2bc4923bc6f794c2a8b65351574d60a76ecc",
+  "source_package_sha256": "eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3",
+  "gateway_deployment": "4fad4b6f-3596-4797-83a3-05edb7f89097",
+  "versions": [
+    {
+      "id": "9322193f-5e87-4479-88c9-39229dddb5f2",
+      "percentage": 100
+    },
+    {
+      "id": "b6237ad9-3343-4c8b-8b65-7a0194ddc50e",
+      "percentage": 0
+    }
+  ],
+  "signed_response_version": "b6237ad9-3343-4c8b-8b65-7a0194ddc50e",
+  "google_signature_verified": true,
+  "customer_order_created": false,
+  "shopify_submission_tested": false,
+  "ordinary_traffic_unchanged": true,
+  "old_receipts_untouched": true,
+  "secret_changes": false,
+  "owner_edge_clock": {
+    "offset_min_ms": -458,
+    "offset_max_ms": 687,
+    "rtt_ms": 146
+  },
+  "google_numeric_revision": null,
+  "google_preflight": "isolated QA audit and local key preflight passed; numeric revision absent from final receipt",
+  "diagnostic_failure": "closed",
+  "original_uncertain_intake": "unreconciled",
+  "all_deployment_receipts": "spent; never replay",
+  "full_work_acceptance": false
+}

@@ -1,7 +1,33 @@
 # WORK zero-byte diagnostic release
 
+## Superseding Owner receipt — 2026-10-19
+
+The Owner completed the corrected diagnostic from runner `432f2bc4923bc6f794c2a8b65351574d60a76ecc`.
+Source package SHA-256: `eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3`.
+Gateway deployment `4fad4b6f-3596-4797-83a3-05edb7f89097` retains ordinary candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100% and corrected diagnostic
+`b6237ad9-3343-4c8b-8b65-7a0194ddc50e` at 0%. The signed response identified
+that exact corrected version and verified the Google signature. No customer
+order was created or Shopify submission tested; ordinary traffic, old receipts
+and secrets were unchanged. Owner-to-edge interval: −458..+687 ms, RTT 146 ms.
+The isolated Google QA audit/key preflight passed; the numeric revision was
+not in the final receipt and remains to be retrieved read-only when needed.
+
+**The diagnostic failure is closed. The original uncertain intake / earlier
+409 remains unreconciled. Full WORK acceptance remains NOT PASSED.** This is
+Owner-supplied runtime evidence, not a new signed probe by this executor.
+Structured receipt: `docs/evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`.
+
+**All old and new upload/deployment receipts are spent. Never rerun
+`work:gateway:empty-post:release-once`, reset receipts or replay historical
+upload/recovery/deployment commands.** Only `work:gateway:empty-post:inspect`
+may be used for necessary read-only deployment read-back; it sends no signed
+POST. Do not restart secret-mismatch diagnosis or rotate keys.
+
+
 Prepared after the Owner's read-only inventory at 2026-10-19 00:28 UTC.
-**Not uploaded or deployed by this execution. Full WORK acceptance remains open.**
+Historical preparation record follows. The superseding Owner receipt above
+confirms deployed diagnostic verification. Full WORK acceptance remains open.
 
 ## Verified baseline and exact scope
 
@@ -36,18 +62,14 @@ The exact package passes Wrangler `versions upload --dry-run` (34.57 KiB)
 and the real Workers HTTP regression with synthetic secrets and no upstream
 network. Current full-source HTTP tests pass separately.
 
-## Owner execution
+## Historical execution — SPENT, do not run
 
 Use the existing PC Cloudflare and clasp logins. No secrets are displayed or
 uploaded. The existing private WORK key catalog is read locally only to sign
 the already supported QA receipt checks.
 
-```powershell
-cd C:\Users\itzen\JILL-WEB
-git pull --ff-only origin jill/rewards-work
-if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
-npm.cmd run work:gateway:empty-post:release-once
-```
+The historical mutating command has been removed from this handoff. Its one-use
+upload and deployment receipts are spent.
 
 The runner checks the clean synced source, exact current deployment/latest
 old diagnostic/bindings and pinned health/Owner edge clock. It audits Google

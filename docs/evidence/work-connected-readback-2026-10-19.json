@@ -1,0 +1,74 @@
+{
+  "captured_at": "2026-10-19T13:08:28.261Z",
+  "environment": "WORK",
+  "source_commit": "432f2bc4923bc6f794c2a8b65351574d60a76ecc",
+  "proof_level": "authenticated connector read; not deployed HQ UI or online staff proof",
+  "shop": "jill-work.myshopify.com",
+  "app_id": "gid://shopify/App/433779736577",
+  "installation_id": "gid://shopify/AppInstallation/738058829959",
+  "scope_gap": [
+    "read_products",
+    "read_inventory",
+    "read_locations",
+    "read_draft_orders",
+    "write_draft_orders"
+  ],
+  "catalog": {
+    "products": 15,
+    "products_complete": true,
+    "collections": 7,
+    "collections_complete": true,
+    "locations": 2,
+    "locations_complete": true,
+    "variants": 60,
+    "inventory_pages": 3,
+    "inventory_complete": true,
+    "tracked_variants": 0,
+    "capacity": "unknown; untracked inventory is not zero stock"
+  },
+  "google": {
+    "read_access": "authenticated QA spreadsheet connector",
+    "canonical_intake_rows": 3,
+    "owner_rows": 2,
+    "received_events": 3,
+    "owned_raw_payload_hashes_match": true,
+    "existing_received_history_verified": true,
+    "failed_operation_exact_id_correlated": false,
+    "no_write_or_replay": true
+  },
+  "browser": {
+    "hq": "Shopify sign-in required; no authenticated Owner flow",
+    "screenshots": "no operational screenshot claimed"
+  },
+  "credentials": {
+    "cloudflare_cli": false,
+    "google_clasp": false,
+    "shopify_cli": false
+  },
+  "diagnostic": "Owner success recorded separately; no signed probe repeated",
+  "acceptance": "NOT PASSED",
+  "graphql_validation": {
+    "schema": "2026-07",
+    "queries": [
+      "JillWorkCatalog",
+      "JillWorkCollections",
+      "JillWorkInventory",
+      "JillWorkLocations"
+    ],
+    "all_passed": true,
+    "scope_note": "Validator lists Location alternative scopes as a union. read_markets_home is not requested; explicit per-feed JILL policy requires read_locations and, for inventory, read_inventory/read_products."
+  },
+  "granted_app_scopes": [
+    "customer_read_customers",
+    "customer_read_orders",
+    "customer_write_customers",
+    "read_customers",
+    "read_discounts",
+    "read_orders",
+    "write_app_proxy",
+    "write_customers",
+    "write_discounts",
+    "write_orders",
+    "read_app_proxy"
+  ]
+}

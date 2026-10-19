@@ -13,6 +13,8 @@ export const JILL_MERCHANT_ROLES=Object.freeze([
 // a deployed HTTP route exists. High-risk actions stay intentionally disabled
 // until their phase-specific source and browser certification.
 export const JILL_MERCHANT_ACTIONS=Object.freeze({
+  'inventory.read':         {roles:['owner'],scopes:['read_products','read_inventory','read_locations'],enabled:true},
+  'locations.read':         {roles:['owner'],scopes:['read_locations'],enabled:true},
   'catalog.read':           {roles:['owner'],scopes:['read_products'],enabled:true},
   'requests.read':          {roles:JILL_MERCHANT_ROLES,scopes:[],enabled:true,assigned:true},
   'team.read':              {roles:['owner'],scopes:[],enabled:true},

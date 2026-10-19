@@ -1,5 +1,41 @@
 # JILL HQ WORK — integrated execution plan
 
+## Current continuation — authenticated reads and independent source
+
+See `WORK_OPERATIONAL_HANDOFF_2026-10-19.md` for the exact completed source,
+read-back evidence, missing failed-operation correlation and Owner credential/
+consent gates. Fresh authenticated Google QA reads verify existing rows,
+received events and immutable owner hashes; they do not yet identify the
+original uncertain operation. Current Shopify grants still have the five
+reviewed gaps. Catalog collections/inventory/locations now have bounded
+Owner/scope-gated source and UI; not activated in HQ. Agreement recovery now
+survives expiry without repeating a create. Full WORK acceptance remains open.
+
+## Superseding Owner receipt — 2026-10-19
+
+The Owner completed the corrected diagnostic from runner `432f2bc4923bc6f794c2a8b65351574d60a76ecc`.
+Source package SHA-256: `eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3`.
+Gateway deployment `4fad4b6f-3596-4797-83a3-05edb7f89097` retains ordinary candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100% and corrected diagnostic
+`b6237ad9-3343-4c8b-8b65-7a0194ddc50e` at 0%. The signed response identified
+that exact corrected version and verified the Google signature. No customer
+order was created or Shopify submission tested; ordinary traffic, old receipts
+and secrets were unchanged. Owner-to-edge interval: −458..+687 ms, RTT 146 ms.
+The isolated Google QA audit/key preflight passed; the numeric revision was
+not in the final receipt and remains to be retrieved read-only when needed.
+
+**The diagnostic failure is closed. The original uncertain intake / earlier
+409 remains unreconciled. Full WORK acceptance remains NOT PASSED.** This is
+Owner-supplied runtime evidence, not a new signed probe by this executor.
+Structured receipt: `docs/evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`.
+
+**All old and new upload/deployment receipts are spent. Never rerun
+`work:gateway:empty-post:release-once`, reset receipts or replay historical
+upload/recovery/deployment commands.** Only `work:gateway:empty-post:inspect`
+may be used for necessary read-only deployment read-back; it sends no signed
+POST. Do not restart secret-mismatch diagnosis or rotate keys.
+
+
 Current execution evidence and exact remaining work:
 [`WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
 The old diagnostic upload/recovery/0% deployment receipts are spent. No command

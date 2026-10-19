@@ -1,5 +1,41 @@
 # Connected WORK execution and precise continuation
 
+## Current continuation — authenticated reads and independent source
+
+See `WORK_OPERATIONAL_HANDOFF_2026-10-19.md` for the exact completed source,
+read-back evidence, missing failed-operation correlation and Owner credential/
+consent gates. Fresh authenticated Google QA reads verify existing rows,
+received events and immutable owner hashes; they do not yet identify the
+original uncertain operation. Current Shopify grants still have the five
+reviewed gaps. Catalog collections/inventory/locations now have bounded
+Owner/scope-gated source and UI; not activated in HQ. Agreement recovery now
+survives expiry without repeating a create. Full WORK acceptance remains open.
+
+## Superseding Owner receipt — 2026-10-19
+
+The Owner completed the corrected diagnostic from runner `432f2bc4923bc6f794c2a8b65351574d60a76ecc`.
+Source package SHA-256: `eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3`.
+Gateway deployment `4fad4b6f-3596-4797-83a3-05edb7f89097` retains ordinary candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100% and corrected diagnostic
+`b6237ad9-3343-4c8b-8b65-7a0194ddc50e` at 0%. The signed response identified
+that exact corrected version and verified the Google signature. No customer
+order was created or Shopify submission tested; ordinary traffic, old receipts
+and secrets were unchanged. Owner-to-edge interval: −458..+687 ms, RTT 146 ms.
+The isolated Google QA audit/key preflight passed; the numeric revision was
+not in the final receipt and remains to be retrieved read-only when needed.
+
+**The diagnostic failure is closed. The original uncertain intake / earlier
+409 remains unreconciled. Full WORK acceptance remains NOT PASSED.** This is
+Owner-supplied runtime evidence, not a new signed probe by this executor.
+Structured receipt: `docs/evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`.
+
+**All old and new upload/deployment receipts are spent. Never rerun
+`work:gateway:empty-post:release-once`, reset receipts or replay historical
+upload/recovery/deployment commands.** Only `work:gateway:empty-post:inspect`
+may be used for necessary read-only deployment read-back; it sends no signed
+POST. Do not restart secret-mismatch diagnosis or rotate keys.
+
+
 2026-10-19 UTC (October 18 in New York). Target: `jill/rewards-work`,
 `jill-work.myshopify.com`. Initial repository checkpoint:
 `ae680c8bef856df7c5470768457f22bde8c021d9`.
@@ -65,7 +101,7 @@ repository**. Never put personal coupon codes or customer records in Git.
 
 | Area | Implemented and tested | Not implemented or not proved |
 | --- | --- | --- |
-| Gateway diagnostic | Canonical bounded zero-byte stream validator shared with the account reader; HMAC, timestamp window and no-order behavior retained. Real local HTTP regression and bundler dry run pass. | Correction is not deployed. The Owner subsequently verified the old diagnostic ID/allocation/bindings and edge clock; the corrected signed Google connection remains unverified. No claim of key mismatch. |
+| Gateway diagnostic | Canonical bounded zero-byte stream validator shared with the account reader; HMAC, timestamp window and no-order behavior retained. Real local HTTP regression and bundler dry run pass. | Owner verified the corrected exact-version signed Google connection; see superseding receipt. Original uncertain intake remains unreconciled. |
 | Shared conversation | Customer reply ingress verifies a fresh WORK JWT, derives Customer GID, signs a distinct internal envelope, and uses the existing locked Google event writer. Receipt reads recover a lost acknowledgement. Source v2 public timeline excludes internal-only events and private fields. HQ public-thread reader requires online Owner/D1 before source reads. | Needs a reviewed Google QA revision and gateway/HQ deployment with both conversation gates enabled. Real A/B account round trip and authentic staff revocation still pending. |
 | Screens | HQ public-thread panel and bounded catalog route; My JILL replies with EN/ES composer, pending/receipt handling and preserved text after failed send. All existing extension UIDs and canonical wallet preserved. My JILL Preact bundle, HQ type check and normal/canary builds pass. | No real authenticated screenshots or responsive/keyboard browser certification. Full history refresh preserves the in-memory composer and exact uncertain operation; fresh verified account history prunes other requests. Browser certification is still required. |
 | Catalog | Owner-only `catalog.read`, online `read_products`, 20 products/page and 10 variants/product; continuation/truncation and source-unavailable states; native Admin edits. Query validates against 2026-07 schema. | Scope release/online reauthorization and deployment needed. HQ collection, inventory/location and minimized customer context screens remain unfinished; current catalog screen does not claim those feeds. |
@@ -84,7 +120,7 @@ active `migrations/`; there was no remote migration.
 | Gate from the brief | Current result |
 | --- | --- |
 | Fresh runtime baseline | PARTIAL: public runtime, actual WORK plan/catalog and installed app scopes verified. Cloudflare allocations/flags and Owner edge clock now verified; active app-version label, online staff, QA revision and remote D1 schema/usage blocked. |
-| Gateway | LOCAL PASS / RUNTIME BLOCKED: real HTTP defect reproduced and corrected; signed exact-version Google probe and original uncertain intake reconciliation still required. |
+| Gateway | DIAGNOSTIC RUNTIME PASS (Owner receipt); original uncertain intake reconciliation remains blocked. This is not Shopify submission acceptance. |
 | Ownership | LOCAL PASS: verified GID/ledger, foreign account denial, contact email cannot transfer ownership. Runtime A/B proof pending. |
 | Conversation | LOCAL PASS: actual canonical writer HQ → customer → HQ, internal-only event exclusion, lost acknowledgement, receipt, duplicate/stale/altered command and dual feature gates. Deployed browser proof pending. |
 | Private quote Save/Reload | LOCAL PASS: existing 42 Save and 40 Reload cases pass. Authentic Owner Save → leave → Reload remains pending. |
@@ -116,23 +152,21 @@ active `migrations/`; there was no remote migration.
 - Local workerd emitted a non-fatal warning that remote `Request.cf` metadata
   was unavailable. D1 tests still executed successfully using local storage.
 
-## Next unavoidable Owner action
+## Current continuation
 
-The Owner read-only inventory above passed. The new corrected diagnostic
-package is prepared and locally tested; its signed deployed connection is
-not yet proved. Use only the new scoped command and failure handoff in
-`WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md`, from its published clean SHA.
-This executor has no Cloudflare/Google CLI credentials; the existing Owner
-PC session is required. No login credentials should be pasted into chat.
+The corrected diagnostic is complete; do not run its release command again.
+Reconcile the original uncertain request using its exact existing private ID,
+payload and canonical Google row/event/owner history. No new intake is permitted
+by that reconciliation. A failed read establishes no absence. The current
+executor has no authenticated Google/Cloudflare CLI session or HQ browser
+session; connector read authority does not substitute for those identities.
 
 Using the verified allocation above, the implementation owner must do these dependent
 actions, preserving the exact existing identifiers:
 
-1. Pin both current Worker allocations and rollback IDs. Review a NEW
-   gateway source/version marker containing the zero-byte correction; never
-   reuse the spent upload or zero-deployment receipt. Prepare a new explicit
-   version/runtime gate with unchanged ordinary traffic. No speculative key
-   rotation; the old source has a proved envelope defect.
+1. Preserve the superseding successful diagnostic receipt and spent attempts.
+   A necessary fresh allocation read uses the existing read-only inspector;
+   no upload, attach, signed POST or secret rotation.
 2. Verify isolated Google QA HEAD and published revision through the existing
    read-only audit. Obtain the original uncertain submission ID/receipt from
    existing private evidence and reconcile it before any new intake. Do not

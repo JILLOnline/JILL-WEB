@@ -135,8 +135,10 @@ export async function advanceWorkCommerce({db,submissionId,confirmPublicAcceptan
   const terms=JSON.parse(publication.terms_json);
   if(agreementHash(terms)!==publication.quote_sha256)deny('stored_terms_changed');
   if(!await authorizeStaff(publication.staff_id))deny('staff_revoked');
-  if(terms.expires_at_ms<=nowMs)return {state:'needs_reconciliation',reason:'quote_expired'};
   let state=intent.state;
+  // Expiry blocks a new external create, never read-back of an already claimed create.
+  if(terms.expires_at_ms<=nowMs&&['accepted_pending_event','event_confirmed'].includes(state))
+    return {state:'needs_reconciliation',reason:'quote_expired'};
   if(state==='accepted_pending_event'){
     const event=await confirmPublicAcceptance({submissionId,operationId:intent.operation_id,
       quoteHash:publication.quote_sha256,sourceRevision:publication.source_revision});
@@ -155,8 +157,10 @@ export async function advanceWorkCommerce({db,submissionId,confirmPublicAcceptan
       return {state:'needs_reconciliation'};
     }
   }else if(['creating_draft','needs_reconciliation'].includes(state)){
-    const candidates=intent.draft_gid?[{id:intent.draft_gid}]:
-      await findDrafts({submissionId,quoteHash:publication.quote_sha256});
+    let candidates;
+    try{candidates=intent.draft_gid?[{id:intent.draft_gid}]:
+      await findDrafts({submissionId,quoteHash:publication.quote_sha256});}
+    catch{return {state:'needs_reconciliation'};}
     if(!Array.isArray(candidates)||candidates.length!==1)return {state:'needs_reconciliation'};
     id=candidates[0].id;
   }else return {state};
