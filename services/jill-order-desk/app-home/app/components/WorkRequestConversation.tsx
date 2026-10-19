@@ -19,7 +19,7 @@ export function WorkRequestConversation({submissionId}:{submissionId:string}){
     </div>
     {!thread&&<p className="jill-request__muted" role="status">
       {fetcher.data&&!fetcher.data.ok?"The conversation could not be verified. Try again after the connection is ready.":
-        "View the same public request conversation the customer sees in My JILL. Private production notes stay separate."}
+        "Customer-visible messages only. Internal notes stay private."}
     </p>}
     {thread&&<>
       <p className="jill-request__muted">Last public update {dateLabel(thread.updated_at,{includeTime:true})}</p>

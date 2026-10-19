@@ -51,10 +51,7 @@ function OpaqueReferences({ids,label}:{ids:string[];label:string}){
         <span>{ref.label} {i+1}: <code>{ref.identifier}</code></span>
       </li>;
     })}</ul>
-    <p className="jill-request__muted">Legacy requests can contain
-      Cloudinary delivery URLs, not just Reference IDs. They do not
-      establish private file ownership or permission. Secure file preview/download
-      remains disabled until a verified Owner-scoped media connection exists.</p>
+    <p className="jill-request__muted">Secure previews and downloads are unavailable. File references do not verify ownership.</p>
   </div>;
 }
 export function WorkOriginalRequestDetails({model,submissionId}:{
@@ -64,7 +61,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
     ?model.detail:null;
   return <section className="jill-request__panel jill-request__full" aria-labelledby="original-request-detail">
     <div className="jill-request__panel-head">
-      <h3 id="original-request-detail">Original request · Items & personalization</h3>
+      <h3 id="original-request-detail">Items & personalization</h3>
       {details?<span className="jill-request__source-tag">Verified revision {details.revision}</span>:null}
     </div>
     {!details?
@@ -97,7 +94,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
           </dl>
         </div>
         <div>
-          <h4>Request-level instructions</h4>
+          <h4>Special instructions</h4>
           <Attributes values={[...details.planning.attributes,
             ...details.request_attributes]}/>
         </div>
@@ -106,11 +103,12 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
         {details.items.map((item,i)=><article key={item.item_id} className="jill-request__original-item">
           <div className="jill-request__item-header">
             <div>
-              <span className="jill-inbox__eyebrow">Item {i+1} · {item.item_id}</span>
+              <span className="jill-inbox__eyebrow">Item {i+1}</span>
               <h4>{item.title||"Custom item"}</h4>
-              <p className="jill-request__muted">
-                Product: {item.product_id}{item.variant_id?" · Variant: "+item.variant_id:""}
-              </p>
+              <details className="jill-request__references"><summary>Product references</summary>
+                <p>Item: {item.item_id}</p>
+                <p>Product: {item.product_id}{item.variant_id?" · Variant: "+item.variant_id:""}</p>
+              </details>
             </div>
             <strong className="jill-request__item-quantity">Qty {item.quantity}</strong>
           </div>
@@ -138,8 +136,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
       </div>
       <OpaqueReferences ids={details.reference_ids} label="Request-level references"/>
       <p className="jill-request__muted">
-        This is the original customer submission, not an approved quote.
-        Pricing, proofs and revisions will be managed separately.
+        Original request · Not an approved quote.
       </p>
     </>}
   </section>;

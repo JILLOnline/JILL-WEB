@@ -20,63 +20,69 @@ const ACTIVATE='JILL HQ WORK visual theme v1 activate ';
 const RESTORE='JILL HQ WORK visual theme v1 restore ';
 const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const check=(ok,code)=>{if(!ok)throw Error('work_hq_visual_'+code);};
-export function visualBaseline(state){
-  check(state?.deployment===VISUAL_DEPLOYMENT&&state.versions?.length===2&&
-    state.versions.some(x=>x.id===VISUAL_BASE&&x.percentage===100)&&
+export function visualBaseline(state,{base=VISUAL_BASE,deployment=VISUAL_DEPLOYMENT}={}){
+  check(state?.deployment===deployment&&state.versions?.length===2&&
+    state.versions.some(x=>x.id===base&&x.percentage===100)&&
     state.versions.some(x=>x.id===HQ_QUOTE&&x.percentage===0),'baseline_changed');
 }
-export function inspectVisualCandidate({original,base,candidate,source}){
-  inspectConnectedVersion({active:original,candidate:base,source:CONNECTED_SOURCE});
-  check(base.id===VISUAL_BASE,'base_version_changed');
+export function inspectVisualCandidate({original,base,candidate,source,baseId=VISUAL_BASE,baseSource=CONNECTED_SOURCE}){
+  inspectConnectedVersion({active:original,candidate:base,source:baseSource});
+  check(base.id===baseId,'base_version_changed');
   const result=inspectConnectedVersion({active:original,candidate,source});
-  check(candidate.id!==VISUAL_BASE&&candidate.resources.script.etag!==base.resources.script.etag,'visual_code_unverified');
+  check(candidate.id!==baseId&&candidate.resources.script.etag!==base.resources.script.etag,'visual_code_unverified');
   const ordered=x=>[...x.resources.bindings].sort((a,b)=>a.name.localeCompare(b.name));
   check(isDeepStrictEqual(ordered(base),ordered(candidate)),'current_bindings_changed');
   return {...result,visual_only:true,current_flags_and_bindings_preserved:true};
 }
-export function ownedVisualAllocation(state,attempt,{restored=false}={}){
-  check(UUID.test(attempt?.candidate||'')&&![VISUAL_BASE,HQ_ACTIVE,HQ_QUOTE].includes(attempt.candidate)&&
-    UUID.test(attempt?.nonce||'')&&UUID.test(state?.deployment||'')&&state.deployment!==VISUAL_DEPLOYMENT&&
-    state.message===(restored?RESTORE:ACTIVATE)+attempt.nonce&&state.versions?.length===2&&
-    state.versions.some(x=>x.id===(restored?VISUAL_BASE:attempt.candidate)&&x.percentage===100)&&
+export function ownedVisualAllocation(state,attempt,{restored=false,base=VISUAL_BASE,deployment=VISUAL_DEPLOYMENT,activate=ACTIVATE,restore=RESTORE}={}){
+  check(UUID.test(attempt?.candidate||'')&&![base,HQ_ACTIVE,HQ_QUOTE].includes(attempt.candidate)&&
+    UUID.test(attempt?.nonce||'')&&UUID.test(state?.deployment||'')&&state.deployment!==deployment&&
+    state.message===(restored?restore:activate)+attempt.nonce&&state.versions?.length===2&&
+    state.versions.some(x=>x.id===(restored?base:attempt.candidate)&&x.percentage===100)&&
     state.versions.some(x=>x.id===HQ_QUOTE&&x.percentage===0),'deployment_not_owned');
 }
-function metadata(candidate,source){
-  const original=view(HQ_ACTIVE),base=view(VISUAL_BASE);
-  check(base.id===VISUAL_BASE,'base_version_changed');
+function metadata(candidate,source,profile){
+  const baseId=profile?.base||VISUAL_BASE,baseSource=profile?.baseSource||CONNECTED_SOURCE;
+  const original=view(HQ_ACTIVE),base=view(baseId);
+  check(base.id===baseId,'base_version_changed');
   verifyQuoteCanary(original,view(HQ_QUOTE));
-  inspectConnectedVersion({active:original,candidate:base,source:CONNECTED_SOURCE});
-  return candidate?inspectVisualCandidate({original,base,candidate:view(candidate),source}):null;
+  inspectConnectedVersion({active:original,candidate:base,source:baseSource});
+  return candidate?inspectVisualCandidate({original,base,candidate:view(candidate),source,baseId,baseSource}):null;
 }
 function deploy(id,message){cloud(['versions','deploy',id+'@100',HQ_QUOTE+'@0',
   '--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--message',message,'--yes']);}
-async function restore(attempt,file){
-  const before=readConnectedDeployment();ownedVisualAllocation(before,attempt);
-  metadata(attempt.candidate,attempt.source);sourceGuard();
+async function restore(attempt,file,profile){
+  const base=profile?.base||VISUAL_BASE,restoreMessage=profile?.restore||RESTORE;
+  const before=readConnectedDeployment();ownedVisualAllocation(before,attempt,profile);
+  metadata(attempt.candidate,attempt.source,profile);sourceGuard();
   check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_before_restore');
-  reserveConnectedAttempt(file,{operation:'HQ_VISUAL_V1_RESTORE',activation:before.deployment,nonce:attempt.nonce});
-  let acknowledged=true;try{deploy(VISUAL_BASE,RESTORE+attempt.nonce);}catch{acknowledged=false;}
-  const after=readConnectedDeployment();ownedVisualAllocation(after,attempt,{restored:true});
+  reserveConnectedAttempt(file,{operation:profile?.restoreOperation||'HQ_VISUAL_V1_RESTORE',activation:before.deployment,nonce:attempt.nonce});
+  let acknowledged=true;try{deploy(base,restoreMessage+attempt.nonce);}catch{acknowledged=false;}
+  const after=readConnectedDeployment();ownedVisualAllocation(after,attempt,{...profile,restored:true});
   check(after.deployment!==before.deployment,'restore_deployment_unverified');
-  const health=await readConnectedHealth(VISUAL_BASE);
+  const health=await readConnectedHealth(base);
   check(isDeepStrictEqual(after,readConnectedDeployment()),'changed_after_restore');
   return {allocation:after,health,baseline_restored:true,restore_acknowledged:acknowledged,restore_receipt_spent:true};
 }
-async function execute(mode){
+export async function executeVisualRelease(mode,profile){
+  const base=profile?.base||VISUAL_BASE;
+  const guard=profile?.guard||checkWorkHqVisualOnly;
+  const stem=profile?.receiptStem||'work-hq-visual-theme-v1';
+  const activationOperation=profile?.activationOperation||'HQ_VISUAL_V1_ACTIVATE';
   let uploadReserved=false,activationReserved=false,attempt=null,restoreFile=null,phase='preflight';
   try{
-    const runner=sourceGuard();checkWorkHqVisualOnly();
+    const runner=sourceGuard();guard();
     const directory=path.dirname(connectedUploadReceipt()); // Directory only; never opens any old receipt.
-    const uploadFile=path.join(directory,'work-hq-visual-theme-v1-upload-once-20261019.json');
-    const activationFile=path.join(directory,'work-hq-visual-theme-v1-activate-once-20261019.json');
-    restoreFile=path.join(directory,'work-hq-visual-theme-v1-restore-once-20261019.json');
+    const uploadFile=path.join(directory,stem+'-upload-once-20261019.json');
+    const activationFile=path.join(directory,stem+'-activate-once-20261019.json');
+    restoreFile=path.join(directory,stem+'-restore-once-20261019.json');
     const upload=readConnectedReceipt(uploadFile,{optional:true});
     attempt=readConnectedReceipt(activationFile,{optional:true});
     if(mode==='--inspect'){
       const before=readConnectedDeployment(),source=upload?.source||runner;
       const id=findVersion(read(['versions','list']),source);
-      const candidate=metadata(id,source);
-      let health;try{health=await readConnectedHealth(before.versions.some(x=>x.id===id&&x.percentage===100)?id:VISUAL_BASE);}
+      const candidate=metadata(id,source,profile);
+      let health;try{health=await readConnectedHealth(before.versions.some(x=>x.id===id&&x.percentage===100)?id:base);}
       catch{health={state:'unverified'};}
       check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_during_inspection');
       console.log(JSON.stringify({environment:'WORK',mode:'read_only',allocation:before,candidate,health,
@@ -84,14 +90,15 @@ async function execute(mode){
         restore_receipt_present:fs.existsSync(restoreFile),no_upload_or_deployment:true,no_signed_post:true},null,2));return;
     }
     if(mode==='--restore-once'){
-      check(attempt!==null&&attempt.operation==='HQ_VISUAL_V1_ACTIVATE'&&attempt.retry_allowed===false,'activation_receipt_unverified');
-      console.log(JSON.stringify({environment:'WORK',...await restore(attempt,restoreFile),operational_acceptance:false},null,2));return;
+      check(attempt!==null&&attempt.operation===activationOperation&&attempt.retry_allowed===false,'activation_receipt_unverified');
+      console.log(JSON.stringify({environment:'WORK',...await restore(attempt,restoreFile,profile),operational_acceptance:false},null,2));return;
     }
     check(upload===null&&attempt===null&&!fs.existsSync(restoreFile),'release_receipt_spent_inspect_only');
-    const before=readConnectedDeployment();visualBaseline(before);metadata();await readConnectedHealth(VISUAL_BASE);
+    const before=readConnectedDeployment();visualBaseline(before,profile);metadata(undefined,undefined,profile);await readConnectedHealth(base);
     check(findVersion(read(['versions','list']),runner)===null,'source_already_uploaded');
     phase='local_visual_checks';
-    runNpm('work:hq:visuals:check',ROOT);runNpm('test:work-hq-visual-release',ROOT);
+    runNpm(profile?.checkCommand||'work:hq:visuals:check',ROOT);runNpm('test:work-hq-visual-release',ROOT);
+    if(profile?.testCommand)runNpm(profile.testCommand,ROOT);
     runNpm('typecheck',APP);
     const dist=path.join(APP,'dist');
     if(fs.existsSync(dist)){
@@ -102,19 +109,19 @@ async function execute(mode){
     const target=path.join(APP,'dist/server/wrangler.hq-visual-theme.json');
     fs.writeFileSync(target,JSON.stringify(prepareConnectedManifest(JSON.parse(fs.readFileSync(path.join(APP,'dist/server/wrangler.json'),'utf8'))),null,2)+'\n',{mode:0o600});
     const args=['versions','upload','--config',target,'--keep-vars','--message',HQ_MARKER+runner];
-    cloud([...args,'--dry-run']);check(sourceGuard()===runner,'source_changed');checkWorkHqVisualOnly();
-    metadata();check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_before_upload');
+    cloud([...args,'--dry-run']);check(sourceGuard()===runner,'source_changed');guard();
+    metadata(undefined,undefined,profile);check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_before_upload');
     const digest=bundleDigest(path.join(APP,'dist'));phase='inactive_upload';
-    reserveConnectedAttempt(uploadFile,{operation:'HQ_VISUAL_V1_INACTIVE_UPLOAD',source:runner,package_sha256:digest,baseline:before});uploadReserved=true;
+    reserveConnectedAttempt(uploadFile,{operation:profile?.uploadOperation||'HQ_VISUAL_V1_INACTIVE_UPLOAD',source:runner,package_sha256:digest,baseline:before});uploadReserved=true;
     cloud(args);check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_after_upload');
     const id=findVersion(read(['versions','list']),runner);check(id!==null,'upload_unverified');
-    const candidate=metadata(id,runner);
+    const candidate=metadata(id,runner,profile);
     check(sourceGuard()===runner&&isDeepStrictEqual(before,readConnectedDeployment()),'changed_before_activation');
-    attempt={operation:'HQ_VISUAL_V1_ACTIVATE',source:runner,package_sha256:digest,candidate:id,nonce:randomUUID(),retry_allowed:false};
+    attempt={operation:activationOperation,source:runner,package_sha256:digest,candidate:id,nonce:randomUUID(),retry_allowed:false};
     phase='activation';reserveConnectedAttempt(activationFile,attempt);activationReserved=true;
-    let acknowledged=true;try{deploy(id,ACTIVATE+attempt.nonce);}catch{acknowledged=false;}
-    const after=readConnectedDeployment();ownedVisualAllocation(after,attempt);
-    metadata(id,runner);const health=await readConnectedHealth(id);
+    let acknowledged=true;try{deploy(id,(profile?.activate||ACTIVATE)+attempt.nonce);}catch{acknowledged=false;}
+    const after=readConnectedDeployment();ownedVisualAllocation(after,attempt,profile);
+    metadata(id,runner,profile);const health=await readConnectedHealth(id);
     check(isDeepStrictEqual(after,readConnectedDeployment()),'changed_after_activation');
     console.log(JSON.stringify({environment:'WORK',runner,package_sha256:digest,candidate,allocation:after,health,
       command_acknowledged:acknowledged,upload_receipt_spent:true,activation_receipt_spent:true,
@@ -126,15 +133,15 @@ async function execute(mode){
     console.error('STOP '+code+' at '+phase+'.');
     if(error?.safeCliDiagnostic)console.error(JSON.stringify(error.safeCliDiagnostic));
     if(activationReserved){try{console.log(JSON.stringify({environment:'WORK',activation_verified:false,
-      ...await restore(attempt,restoreFile),operational_acceptance:false},null,2));}
-      catch{console.error('HOLD: state/restoration unverified. Do not repeat; use work:hq:visuals:inspect.');}}
+      ...await restore(attempt,restoreFile,profile),operational_acceptance:false},null,2));}
+      catch{console.error('HOLD: state/restoration unverified. Do not repeat; use '+(profile?.inspectCommand||'work:hq:visuals:inspect')+'.');}}
     else console.error(uploadReserved||mode==='--restore-once'?
-      'Outcome may be uncertain. Do not repeat; use work:hq:visuals:inspect.':'No upload or activation requested.');
+      'Outcome may be uncertain. Do not repeat; use '+(profile?.inspectCommand||'work:hq:visuals:inspect')+'.':'No upload or activation requested.');
     process.exitCode=1;
   }
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
   if(process.argv.length!==3||!['--release-once','--inspect','--restore-once'].includes(process.argv[2])){
     console.error('STOP work_hq_visual_explicit_mode_required');process.exitCode=1;
-  }else await execute(process.argv[2]);
+  }else await executeVisualRelease(process.argv[2]);
 }

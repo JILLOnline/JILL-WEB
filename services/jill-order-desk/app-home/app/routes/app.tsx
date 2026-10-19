@@ -1,6 +1,6 @@
 import {AppProvider} from "@shopify/shopify-app-react-router/react";
 import {boundary} from "@shopify/shopify-app-react-router/server";
-import {Outlet,useLoaderData,useRouteError,type LoaderFunctionArgs,type HeadersFunction,type ShouldRevalidateFunctionArgs} from "react-router";
+import {NavLink,Outlet,useLoaderData,useRouteError,type LoaderFunctionArgs,type HeadersFunction,type ShouldRevalidateFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {JILL_WORK_MERCHANT_CLIENT_ID} from "../../../../../backend/jill-merchant-auth.mjs";
@@ -30,7 +30,19 @@ export function shouldRevalidate({
 export default function App(){
   const {apiKey}=useLoaderData<typeof loader>();
   return <AppProvider apiKey={apiKey}>
-    <div className="jill-workspace"><Outlet/></div>
+    <div className="jill-workspace">
+      <nav className="jill-workspace__navigation" aria-label="JILL HQ navigation">
+        <span className="jill-workspace__brand" aria-label="JILL HQ">JILL<span>HQ</span></span>
+        <div className="jill-workspace__navigation-items">
+          <NavLink to="/app" end>Home</NavLink>
+          <NavLink to="/app/requests">Requests</NavLink>
+          <NavLink to="/app/catalog">Catalog</NavLink>
+          <NavLink to="/app/access">Access</NavLink>
+        </div>
+        <span className="jill-workspace__work">WORK</span>
+      </nav>
+      <Outlet/>
+    </div>
   </AppProvider>;
 }
 export function ErrorBoundary(){return boundary.error(useRouteError());}

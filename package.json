@@ -284,7 +284,12 @@
     "work:gateway:empty-post:release-once": "node scripts/release-work-gateway-diagnostic-owner.mjs --release-once",
     "test:work-gateway-empty-post-release": "node scripts/test-work-gateway-empty-post-release.mjs",
     "test:work-gateway-empty-post-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare -- --release-snapshot",
-    "test:work-conversation-ui-local": "node tools/work-account-local/test-conversation.mjs"
+    "test:work-conversation-ui-local": "node tools/work-account-local/test-conversation.mjs",
+    "work:hq:studio:check": "node scripts/check-work-hq-studio-only.mjs",
+    "test:work-hq-studio": "node scripts/test-work-hq-studio.mjs",
+    "work:hq:studio:release-once": "node scripts/release-work-hq-studio-owner.mjs --release-once",
+    "work:hq:studio:inspect": "node scripts/release-work-hq-studio-owner.mjs --inspect",
+    "work:hq:studio:restore-once": "node scripts/release-work-hq-studio-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",

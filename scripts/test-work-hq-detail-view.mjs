@@ -33,9 +33,9 @@ assert.match(route,/export async function loader\(args:LoaderFunctionArgs\)/);
 assert.match(route,/loadAuthorizedWorkRequestDetail\(args\)/);
 assert.match(route,/useLoaderData<typeof loader>\(\)/);
 assert.match(route,/WorkOriginalRequestDetails model=\{original\}/);
-assert.match(component,/Original request · Items & personalization/);
+assert.match(component,/Items & personalization/);
 for(const feature of [
-  'Customer & event','Request-level instructions','Selected variations',
+  'Customer & event','Special instructions','Selected variations',
   'Per-unit personalization','Item references','Request-level references',
   'Qty {item.quantity}','Verified revision {details.revision}',
   'No unverified information is shown',
@@ -44,9 +44,9 @@ assert.match(component,/details\.items\.map/);
 assert.match(component,/item\.personalization_groups\.map/);
 assert.match(component,/g\.allocations\.map/);
 assert.match(component,/reference_ids/);
-assert.match(component,/Cloudinary delivery URLs/);
+assert.match(component,/File references do not verify ownership/);
 assert.match(component,/describeWorkReference/);
-assert.match(component,/Secure file preview\/download/);
+assert.match(component,/Secure previews and downloads are unavailable/);
 assert.doesNotMatch(component,/<a\s+href=|<img\s+src=|fetch\(|URL\.createObjectURL/);
 assert.doesNotMatch(styling,/!important|@import|url\(/i);
 assert.match(styling,/jill-request__personalization-grid/);

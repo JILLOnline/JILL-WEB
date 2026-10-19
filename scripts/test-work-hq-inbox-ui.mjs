@@ -76,8 +76,7 @@ for(const expected of [
 for(const expected of [
   'readOnly:boolean',
   'inboxStats','selectInboxRecords','useMemo','type="search"',
-  'aria-live="polite"','View request details','<details',
-  'Customer contact details,','Read-only WORK preview',
+  'aria-live="polite"','Record details','<details',
 ])assert.ok(route.includes(expected),expected);
 assert.match(route,/data\.state==="source_unavailable"/);
 assert.doesNotMatch(route,/loadWorkMerchantInbox|workShopify\(|readWorkGoogleQaMerchantList|export async function loader/);
@@ -89,7 +88,7 @@ assert.match(style,/@media\(max-width:700px\)/);
 assert.match(style,/:focus-visible/);
 assert.match(style,/prefers-reduced-motion/);
 assert.ok(style.includes('.jill-inbox__card'));
-assert.ok(landing.includes('verified WORK Custom Orders inbox'));
+assert.ok(landing.includes('Open requests'));
 assert.doesNotMatch(style,/!important|@import|url\(/i);
 assert.doesNotMatch(route,/onClick=\{[^}]*fetch|useFetcher|fetch\(|useSubmit|action\s*\(|<form|<button\s+type="submit"|window\.location/i);
 assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.cookie|window\.|https?:\/\//i);

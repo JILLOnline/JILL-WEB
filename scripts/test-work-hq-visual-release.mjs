@@ -43,6 +43,13 @@ for(const mutate of [
   x=>x.resources.script.etag='current',x=>x.resources.script_runtime.compatibility_date='2026-10-19',
   x=>x.resources.bindings.find(b=>b.type==='d1').id=id,
 ]){const bad=structuredClone(candidate);mutate(bad);assert.throws(()=>inspectVisualCandidate({original,base,candidate:bad,source}));}
+// A new edition must compare against its own exact active source and code.
+const studioBase=structuredClone(base);studioBase.id='80b47610-4d8a-4186-a4c8-fe4f05daf964';
+studioBase.annotations['workers/message']=HQ_MARKER+'9a92d0287e69628c63bd7bec9a5e3dace63f1c94';
+studioBase.resources.script.etag='studio-baseline';
+assert.equal(inspectVisualCandidate({original,base:studioBase,candidate,source,
+  baseId:studioBase.id,baseSource:'9a92d0287e69628c63bd7bec9a5e3dace63f1c94'}).current_flags_and_bindings_preserved,true);
+assert.throws(()=>inspectVisualCandidate({original,base:studioBase,candidate,source}));
 const attempt={candidate:id,nonce:'22222222-3333-4444-8555-666666666666'};
 const active={deployment:'33333333-4444-4555-8666-777777777777',message:'JILL HQ WORK visual theme v1 activate '+attempt.nonce,
   versions:[{id,percentage:100},{id:HQ_QUOTE,percentage:0}]};

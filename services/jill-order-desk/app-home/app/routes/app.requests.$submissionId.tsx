@@ -57,7 +57,7 @@ export default function WorkRequestDetail(){
     <s-section>
       <main className="jill-inbox jill-request" aria-label="Custom Order request workspace">
         <nav className="jill-inbox__nav" aria-label="Request navigation">
-          <Link className="jill-inbox__back" to="/app/requests">← Custom Orders inbox</Link>
+          <Link className="jill-inbox__back" to="/app/requests">← Requests</Link>
           <span className="jill-inbox__readonly">WORK · {controlsEnabled?"MANAGEMENT":"READ ONLY"}</span>
         </nav>
         {state!=="ready" || !record
@@ -71,7 +71,7 @@ export default function WorkRequestDetail(){
             </div>
           : <>
               <header className="jill-request__header">
-                <p className="jill-inbox__eyebrow">CUSTOM ORDER · VERIFIED WORK SOURCE</p>
+                <p className="jill-inbox__eyebrow">CUSTOM REQUEST</p>
                 <div className="jill-request__heading">
                   <div>
                     <h2>Request #{requestShortId(record.submission_id)}</h2>
@@ -87,11 +87,8 @@ export default function WorkRequestDetail(){
                 <div><span>Internal stage</span><strong>{internalStatusLabel(record.internal_status)}</strong></div>
               </div>
               <div className="jill-request__grid">
-                <section className="jill-request__panel" aria-labelledby="request-record">
-                  <div className="jill-request__panel-head">
-                    <h3 id="request-record">Request record</h3>
-                    <span className="jill-request__source-tag">Source verified</span>
-                  </div>
+                <details className="jill-request__panel jill-workspace__disclosure">
+                  <summary>Record details</summary>
                   <dl className="jill-request__data">
                     <div><dt>Full request reference</dt><dd className="jill-inbox__ref">{record.submission_id}</dd></div>
                     <div><dt>Customer-facing status</dt><dd>{customerStatusLabel(record.customer_status)}</dd></div>
@@ -100,7 +97,7 @@ export default function WorkRequestDetail(){
                     <div><dt>Last updated</dt><dd>{dateLabel(record.updated_at,{includeTime:true})}</dd></div>
                     <div><dt>Source revision</dt><dd>{record.revision}</dd></div>
                   </dl>
-                </section>
+                </details>
                 <div className="jill-request__side">
                   <section className="jill-request__panel" aria-labelledby="request-activity">
                     <h3 id="request-activity">Source activity</h3>
@@ -124,12 +121,11 @@ export default function WorkRequestDetail(){
                     <h3 id="request-next">Request management</h3>
                     <WorkRequestQuickActions record={record} enabled={controlsEnabled}/>
                     <p className="jill-request__muted">
-                      Status updates use canonical Google QA confirmation.
-                      Detailed customer intake is loaded separately below.
+                      Changes are confirmed before they appear.
                     </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
-                      The merchant quote worksheet is available below. Customer approval, Shopify fulfillment and payments remain separate.
+                      Quotes below are internal drafts. Customer approval and Shopify payments are not enabled here.
                     </div>
                   </section>
                 </div>
@@ -143,11 +139,7 @@ export default function WorkRequestDetail(){
                 saveDraftEnabled={original?.quoteDraftEnabled===true &&
                   controlsEnabled}/>
             </>}
-        <footer className="jill-inbox__footer">
-          <strong>Verified WORK merchant view.</strong> The management tools save only after
-          canonical Google QA confirmation. Shopify orders, payments and
-          fulfillment remain separate.
-        </footer>
+
       </main>
     </s-section>
   </s-page>;

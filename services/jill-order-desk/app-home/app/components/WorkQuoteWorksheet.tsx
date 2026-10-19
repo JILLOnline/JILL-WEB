@@ -204,7 +204,7 @@ export function WorkQuoteWorksheet({
     aria-labelledby="jill-quote-title">
     <div className="jill-request__panel-head">
       <div>
-        <p className="jill-inbox__eyebrow">NEXT STEP · ESTIMATING</p>
+        <p className="jill-inbox__eyebrow">ESTIMATE</p>
         <h3 id="jill-quote-title">Quote worksheet</h3>
       </div>
       <span className="jill-quote__tag">
@@ -212,16 +212,14 @@ export function WorkQuoteWorksheet({
       </span>
     </div>
     <p className="jill-request__muted">
-      Prepare a private USD price estimate from verified request items.
-      Item quantities come from the original submission.
+      Private USD estimate. Quantities match the original request.
       {restoredActive
-        ? " A verified draft was loaded into this browser view. Edits are not saved."
-        : " Your figures stay in this browser view and are lost on refresh or navigation."}
+        ? " Loaded draft. New edits are unsaved."
+        : " Unsaved entries are lost when you leave or refresh."}
     </p>
     {!detail
       ? <p className="jill-quote__notice" role="status">
-          Verified original item details are required before pricing.
-          The worksheet cannot use unverified inbox summaries.
+          Verified original items are required before pricing.
         </p>
       : locked
         ? <p className="jill-quote__notice" role="status">
@@ -301,21 +299,13 @@ export function WorkQuoteWorksheet({
               </button>
             </div>
             {!saveDraftEnabled&&<p className="jill-quote__notice" role="status">
-              Secure draft storage is prepared, but Save Draft and Reload
-              are not activated in WORK yet. You may calculate estimates;
-              your unsaved entries will not persist after refresh.
+              Saving is unavailable in this WORK version. Entries are lost on refresh.
             </p>}
             {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
               role="status">{feedback}</p>}
           </div>
           <p className="jill-quote__disclaimer">
-            This is an internal worksheet, not an approved customer quote.
-            {restoredActive
-              ? " A verified draft was loaded, but any new edits remain unsaved."
-              : " Current worksheet entries are not saved unless a future enabled Save Draft response confirms them."}
-            Nothing is sent to My JILL, charged, taxed by Shopify or converted
-            to a Shopify Draft Order. The future approval and invoice workflow
-            will be separately enabled.
+            Internal estimate only. No customer message, payment, Shopify tax calculation or Shopify order is created.
           </p>
         </>}
   </section>;

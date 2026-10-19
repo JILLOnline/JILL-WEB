@@ -72,15 +72,15 @@ const model=readFileSync('services/jill-order-desk/admin-home.mjs','utf8');
 assert.match(page,/s-page heading="JILL HQ — WORK"/);
 assert.match(owner,/s-page heading="JILL HQ — WORK \/ Owner setup"/);
 assert.match(model,/title:'JILL HQ — WORK'/);
-for(const title of ['Requests &amp; Operations','Customers &amp; Loyalty','Store &amp; Commerce','Team, Analytics &amp; Audit'])
+for(const title of ['Custom requests','Customers','Your store','Access &amp; permissions'])
   assert.ok(page.includes(title),'Missing HQ module '+title);
 assert.match(page,/data.state==="staff_verified"/);
 assert.match(page,/const owner=verified && data.role==="owner"/);
 assert.match(page,/<Link to="\/app\/requests"/);
 for(const path of ['/products','/collections','/customers','/orders'])
   assert.ok(page.includes('WORK_ADMIN}'+path),'Missing native WORK Shopify path '+path);
-assert.ok(page.includes('Current coupons retain their issued terms'));
-assert.ok(page.includes('Conversation</strong><small>My JILL Inbox and HQ thread · planned'));
+assert.doesNotMatch(page,/jill-hq__footnote|Rewards policy ready/);
+assert.doesNotMatch(page,/jill-hq__journey/);
 assert.doesNotMatch(page,/jillonlinestore\.com|jill-live|\bLIVE\b/);
 assert.doesNotMatch(page,/fetch\(|customer\.email|discountCodeBasicCreate|draftOrderCreate/i);
 console.log('PASS JILL HQ WORK branding: exact app ID, safe name transition, idempotent config, no LIVE mutation, bounded management shell.');

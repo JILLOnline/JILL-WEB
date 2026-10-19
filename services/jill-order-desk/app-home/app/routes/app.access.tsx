@@ -15,20 +15,21 @@ export default function OwnerAccess(){
   const data=useLoaderData<typeof loader>() as unknown as Evidence;
   return <s-page heading="JILL HQ — Owner access" inlineSize="large">
     <s-section><main className="jill-inbox">
-      <Link className="jill-inbox__back" to="/app">← HQ overview</Link>
+      <Link className="jill-inbox__back" to="/app">← Home</Link>
       {data.state!=="verified_owner"?<p role="status">Current Owner access could not be verified.</p>:<>
-        <h2>Verified online Owner session</h2>
+        <h2>Your access</h2>
+        <p>Permissions verified for your current Shopify session.</p>
+        <h3>Available actions</h3>
+        <ul className="jill-workspace__scope-list">{data.actions?.map(item=><li key={item.action}>
+          {item.action}: Shopify {item.shopify_scope_intersection?"verified":"missing"};
+          {" "}HQ {item.feature_enabled?"enabled":"disabled"}.
+        </li>)}</ul>
+        <details className="jill-workspace__disclosure"><summary>Session details &amp; technical permissions</summary>
         <p>Store: {data.shop}. Staff: {data.staff_id}.</p>
         <p>HQ version: {data.runtime_version||"Not attributed"}.</p>
-        <p>These permissions come from your authenticated online session. Shopify app consent alone does not verify staff access.</p>
-        <h3>Scope checks</h3>
-        <ul className="jill-workspace__scope-list">{data.actions?.map(item=><li key={item.action}>
-          {item.action}: Shopify scope intersection {item.shopify_scope_intersection?"verified":"missing"};
-          {" "}HQ policy {item.feature_enabled?"enabled":"disabled"}.
-        </li>)}</ul>
         <h3>Online scopes</h3>
         <ul className="jill-workspace__scope-list">{data.scopes?.map(scope=><li key={scope}>{scope}</li>)}</ul>
-        <p>Full WORK operational acceptance remains incomplete.</p>
+        </details>
       </>}
     </main></s-section>
   </s-page>;

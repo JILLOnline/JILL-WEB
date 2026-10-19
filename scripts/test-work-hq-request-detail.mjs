@@ -23,7 +23,7 @@ assert.match(routes,/route\(":submissionId","routes\/app\.requests\.\$submission
 assert.match(routes,/route\("requests\/command","routes\/app\.requests\.command\.tsx"\)/);
 assert.match(inbox,/useRouteLoaderData\("routes\/app\.requests\.layout"\)/);
 assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
-assert.match(inbox,/Open request workspace/);
+assert.match(inbox,/Open request/);
 const source=readFileSync(base+'routes/app.requests-source.server.ts','utf8');
 assert.match(layout,/import \{loadVerifiedMerchantInbox\} from\s*".\/app.requests-source.server"/);
 assert.match(layout,/await loadVerifiedMerchantInbox\(args\)/);
@@ -55,13 +55,13 @@ assert.match(route,/Latest verified snapshot — not a complete status history/)
 assert.match(route,/WorkOriginalRequestDetails/);
 assert.match(route,/loadAuthorizedWorkRequestDetail/);
 assert.match(route,/export async function loader\(args:LoaderFunctionArgs\)/);
-assert.match(route,/The merchant quote worksheet is available below/);
-assert.match(route,/Customer approval, Shopify fulfillment and payments remain separate/);
+assert.match(route,/Quotes below are internal drafts/);
+assert.match(route,/Customer approval and Shopify payments are not enabled here/);
 assert.match(route,/WorkQuoteWorksheet key=\{record\.submission_id\}/);
 assert.match(route,/WorkRequestQuickActions/);
 assert.match(route,/Source revision/);
 assert.match(route,/Last recorded update/);
-assert.match(route,/Custom Orders inbox/);
+assert.match(route,/← Requests/);
 assert.match(app,/export function shouldRevalidate/);
 assert.match(app,/if\(!formMethod && !formAction/);
 assert.match(styles,/@media\(max-width:750px\)/);

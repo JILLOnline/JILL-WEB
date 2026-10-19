@@ -231,3 +231,17 @@ Do not invoke commissioning or create new requests/quotes for visual review.
 Record screenshots and authenticated performance evidence. This receipt proves
 deployment, not authenticated visual or full WORK operational acceptance.
 Customer-facing LIVE promotion remains a separate reviewed release.
+
+## JILL visual theme v2 prepared — 2026-10-19
+
+User-authorized presentation-only continuation: bolder purple/cherry/gold/ink
+palette, shared active-tab navigation, button-style actions, shorter task copy
+and native disclosures for technical evidence. Quote/customer/security/error
+boundaries remain visible. Canonical visual owner remains `hq-theme.css` and
+the existing page styles; runtime backend, hooks and command props are unchanged.
+See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md` for reviewed source,
+24 local browser cases, guarded new v2 release/receipt boundaries and remaining
+authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
+is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
+spent; never rerun historical releases or reset receipts. WORK operational
+acceptance and separate customer-facing LIVE review remain incomplete.

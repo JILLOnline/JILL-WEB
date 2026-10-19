@@ -105,7 +105,7 @@ must(ui.includes('setBlocked(true)'));
 must(ui.includes('onReloadDraft'));
 must(ui.includes('Save Draft'));
 must(ui.includes('Reload saved draft'));
-must(ui.includes('are not activated in WORK yet'));
+must(ui.includes('Saving is unavailable in this WORK version'));
 must(ui.includes('readFetcher.load(workQuoteDraftReadPath(submissionId))'));
 must(worker.includes('if(url.pathname==="/app/requests/quote-draft")'));
 must(worker.includes('quote_drafts_not_enabled'));

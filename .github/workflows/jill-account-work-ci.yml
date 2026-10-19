@@ -351,6 +351,8 @@ jobs:
         run: npm run typecheck
       - name: Verify HQ visual-only boundary and release policy unit contracts
         run: npm run test:work-hq-visual-release
+      - name: Verify HQ studio presentation and distinct release profile
+        run: npm run test:work-hq-studio
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build

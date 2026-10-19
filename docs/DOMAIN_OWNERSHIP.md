@@ -113,3 +113,5 @@ The current combined Apps Script file remains production code during migration. 
 - `jill-custom-order.js` may orchestrate cross-product Custom Order personalization, but physical eligible-unit identity/count must come from `JILLPersonalization` and canonical product capability profiles. It must not own separate units-per-quantity arithmetic.
 - Product-level required personalization/reference semantics come from the full canonical Shopify capability profile; the generic Custom Order choices may only become stricter from that truth, never weaker.
 - `jill-forms.css` owns Custom Order large-card botanical presentation and consumes the same `--jill-botanical-field` foundation asset. It does not own a second botanical asset or decorate ordinary controls.
+
+HQ visual edition release profiles reuse `scripts/release-work-hq-visual-theme-owner.mjs`; v2 static profile is `scripts/release-work-hq-studio-owner.mjs`, with exact reviewed presentation inventory/logic guard in `scripts/check-work-hq-studio-only.mjs`. They own release commands only, never merchant, quote or wallet truth. See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md`.

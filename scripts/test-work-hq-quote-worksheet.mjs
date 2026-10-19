@@ -88,7 +88,7 @@ for(const marker of ['model?.state==="ready"',
   'customerStatus==="cancelled"||customerStatus==="completed"',
   'NOT SAVED · NOT SENT','estimatedTotalCents',
   'items.map','unitPrice:prices','NOT SAVED',
-  'remain','not an approved customer quote']){
+  'remain','Internal estimate only']){
   if(marker==='NOT SAVED'||marker==='remain')continue;
   assert.ok(ui.includes(marker),marker);cases++;
 }

@@ -335,3 +335,17 @@ Add a new entry only for a real architectural/product-system decision. Routine i
 
 **Consequence:** `docs/JILL_REWARDS_WORK_FLEX_REDEMPTION.md` defines the integer-cents/tenths math and the migration proof. Shopify remains the item, discount, checkout and order authority; the canonical Rewards backend owns balances and reservation/reconciliation, while My JILL and HQ are customer and merchant views. Current v13 has fixed whole-point tiers and remains active until a versioned WORK ledger, coupon integrity migration, eligible-product scope and Shopify checkout/draft tests pass. LIVE and KEEP remain untouched.
 
+
+## JILL visual theme v2 prepared — 2026-10-19
+
+User-authorized presentation-only continuation: bolder purple/cherry/gold/ink
+palette, shared active-tab navigation, button-style actions, shorter task copy
+and native disclosures for technical evidence. Quote/customer/security/error
+boundaries remain visible. Canonical visual owner remains `hq-theme.css` and
+the existing page styles; runtime backend, hooks and command props are unchanged.
+See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md` for reviewed source,
+24 local browser cases, guarded new v2 release/receipt boundaries and remaining
+authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
+is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
+spent; never rerun historical releases or reset receipts. WORK operational
+acceptance and separate customer-facing LIVE review remain incomplete.

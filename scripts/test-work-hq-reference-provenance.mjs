@@ -47,7 +47,7 @@ const component=readFileSync(
 assert.match(component,/describeWorkReference\(id\)/);
 assert.match(component,/ref\.label/);
 assert.match(component,/ref\.identifier/);
-assert.match(component,/Cloudinary delivery URLs/);
-assert.match(component,/Secure file preview\/download/);
+assert.match(component,/File references do not verify ownership/);
+assert.match(component,/Secure previews and downloads are unavailable/);
 assert.doesNotMatch(component,/<a\s+href=|<img\s+src=|fetch\(|URL\.createObjectURL/);
 console.log('PASS WORK HQ legacy Cloudinary reference classification: real test PNG detected without URL linking, unsigned/untrusted URLs never converted to previews, opaque IDs preserved, no LIVE/media mutations.');

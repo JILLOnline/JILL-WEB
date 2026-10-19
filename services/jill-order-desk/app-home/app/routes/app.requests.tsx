@@ -71,7 +71,7 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       </div>
     </div>
     <details className="jill-inbox__details">
-      <summary>View request details <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
+      <summary>Record details <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
       <dl>
         <div><dt>Full request ID</dt><dd className="jill-inbox__ref">{item.submission_id}</dd></div>
         <div><dt>Customer status</dt><dd>{customerStatusLabel(item.customer_status)}</dd></div>
@@ -79,15 +79,11 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
         <div><dt>Last updated</dt><dd>{dateLabel(item.updated_at,{includeTime:true})}</dd></div>
         <div><dt>Source revision</dt><dd>{item.revision}</dd></div>
       </dl>
-      <p className="jill-inbox__details-note">
-        This is the verified request summary. Customer contact details,
-        private notes and order changes are not exposed in this view.
-      </p>
     </details>
     <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
     <div className="jill-inbox__open">
       <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
-        Open request workspace →
+        Open request →
       </Link>
     </div>
   </article>;
@@ -106,13 +102,13 @@ export default function WorkMerchantInbox() {
     <s-section>
       <main className="jill-inbox" aria-label="JILL HQ Custom Orders">
         <div className="jill-inbox__nav">
-          <Link to="/app" className="jill-inbox__back">← Back to JILL HQ</Link>
+          <Link to="/app" className="jill-inbox__back">← Home</Link>
           <span className="jill-inbox__readonly">WORK · {data.controlsEnabled===true?"MANAGEMENT":"READ ONLY"}</span>
         </div>
         <header className="jill-inbox__intro">
-          <p className="jill-inbox__eyebrow">REQUESTS &amp; OPERATIONS</p>
-          <h2>Custom Orders inbox</h2>
-          <p>Follow incoming requests, deadlines and production stages in one place.</p>
+          <p className="jill-inbox__eyebrow">MAKE IT HAPPEN</p>
+          <h2>Requests</h2>
+          <p>Every detail. Every deadline. One place.</p>
         </header>
         {data.state==="source_not_connected"
           ? <s-banner tone="warning">
@@ -135,15 +131,15 @@ export default function WorkMerchantInbox() {
                   <div className="jill-inbox__stats" aria-label="Inbox overview">
                     <div className="jill-inbox__metric">
                       <span>All requests</span><strong>{stats.total}</strong>
-                      <small>Verified records</small>
+
                     </div>
                     <div className="jill-inbox__metric">
                       <span>In review</span><strong>{stats.reviewing}</strong>
-                      <small>Customer-facing stage</small>
+
                     </div>
                     <div className="jill-inbox__metric">
                       <span>Needs a quote</span><strong>{stats.needsQuote}</strong>
-                      <small>Internal workflow</small>
+
                     </div>
                   </div>
                   <div className="jill-inbox__toolbar" aria-label="Filter requests">
@@ -187,11 +183,7 @@ export default function WorkMerchantInbox() {
                           : "No requests match these filters. Try a different search or status."}
                       </div>}
                 </>}
-        <footer className="jill-inbox__footer">
-          <strong>{data.controlsEnabled===true?"Verified WORK merchant operations enabled.":"Read-only WORK preview."}</strong> Quotes, invoices, payments,
-          Shopify fulfillment and direct production-file editing are not enabled.
-          Existing My JILL customer tracking is unaffected.
-        </footer>
+
       </main>
     </s-section>
   </s-page>;
