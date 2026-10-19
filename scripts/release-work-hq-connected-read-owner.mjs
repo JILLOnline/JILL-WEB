@@ -74,6 +74,35 @@ async function health(expected){
     mime:(response.headers.get('content-type')||'').split(';')[0],body,
     cache_control:response.headers.get('cache-control'),runtime_version:response.headers.get('x-jill-work-hq-version')},expected);
 }
+// Independent reads continue after an individual failure. Never prints raw
+// provider output, bindings/secret contents, access tokens or private paths.
+export async function inspectConnectedRelease({readMetadata,readHealth,activationReceiptPresent,restoreReceiptPresent}){
+  const reads=[],values={};
+  for(const [label,args] of [
+    ['allocation_before',['deployments','list']],
+    ['original_version',['versions','view',HQ_ACTIVE]],
+    ['quote_canary',['versions','view',HQ_QUOTE]],
+    ['uploaded_candidate',['versions','view',CONNECTED_CANDIDATE]],
+    ['allocation_after',['deployments','list']],
+  ]){
+    try{values[label]=await readMetadata(args);reads.push({read:label,ok:true});}
+    catch(error){reads.push({read:label,ok:false,diagnostic:error.safeCliDiagnostic||{classification:'read_unverified'}});}
+  }
+  let allocation=null,metadata_verified=false,verification='incomplete';
+  try{
+    const before=currentAllocation(values.allocation_before),after=currentAllocation(values.allocation_after);
+    check(isDeepStrictEqual(before,after),'allocation_changed_during_inspection');allocation=after;
+    verifyQuoteCanary(values.original_version,values.quote_canary);
+    check(values.uploaded_candidate?.id===CONNECTED_CANDIDATE,'wrong_candidate');
+    inspectConnectedVersion({active:values.original_version,candidate:values.uploaded_candidate,source:CONNECTED_SOURCE});
+    metadata_verified=true;verification='verified';
+  }catch(error){verification=/^work_hq_connected_[a-z_]+$/.test(error?.message)?error.message:'metadata_incomplete';}
+  let runtime;try{runtime=await readHealth(allocation?.versions.some(x=>x.id===CONNECTED_CANDIDATE&&x.percentage===100)?CONNECTED_CANDIDATE:null);}
+  catch{runtime={state:'unverified'};}
+  return {environment:'WORK',mode:'read_only',reads,metadata_verified,verification,allocation,health:runtime,
+    activation_receipt_present:activationReceiptPresent,restore_receipt_present:restoreReceiptPresent,
+    no_upload_or_deployment:true,no_signed_post:true,operational_acceptance:false};
+}
 function deploy(id,message){
   cloud(['versions','deploy',id+'@100',HQ_QUOTE+'@0','--name',HQ_WORKER,
     '--config','./wrangler.canary.jsonc','--message',message,'--yes']);
@@ -130,16 +159,13 @@ async function execute(mode){
     const file=path.join(directory,'work-hq-connected-read-v1-activate-once-20261019.json');
     restoreFile=path.join(directory,'work-hq-connected-read-v1-restore-once-20261019.json');
     attempt=readReceipt(file,{optional:true});if(attempt)verifyAttempt(attempt);
-    const candidate=fixedVersions();
     if(mode==='--inspect'){
-      const before=snapshot();let runtime=null;
-      try{runtime=await health(before.versions.some(x=>x.id===CONNECTED_CANDIDATE&&x.percentage===100)?CONNECTED_CANDIDATE:null);}
-      catch{runtime={state:'unverified'};}
-      check(isDeepStrictEqual(before,snapshot()),'allocation_changed_during_inspection');
-      console.log(JSON.stringify({environment:'WORK',mode:'read_only',candidate,allocation:before,health:runtime,
-        activation_receipt_present:attempt!==null,restore_receipt_present:fs.existsSync(restoreFile),
-        no_upload_or_deployment:true,no_signed_post:true,operational_acceptance:false},null,2));return;
+      const report=await inspectConnectedRelease({readMetadata:read,readHealth:health,
+        activationReceiptPresent:attempt!==null,restoreReceiptPresent:fs.existsSync(restoreFile)});
+      console.log(JSON.stringify(report,null,2));
+      if(!report.metadata_verified)process.exitCode=1;return;
     }
+    phase='version_preflight';const candidate=fixedVersions();
     if(mode==='--restore-once'){
       check(attempt!==null,'activation_receipt_unavailable');phase='explicit_restore';
       const restored=await restoreOnce(attempt,restoreFile);
@@ -161,6 +187,7 @@ async function execute(mode){
   }catch(error){
     const code=/^work_hq_connected_[a-z_]+$/.test(error?.message)?error.message:'work_hq_connected_release_unverified';
     console.error('STOP '+code+' at '+phase+'.');
+    if(error?.safeCliDiagnostic)console.error(JSON.stringify({cloudflare_read:error.safeCliDiagnostic}));
     if(attempted){
       // Restore only our uniquely attributed activation. If reads fail or
       // another deployment intervenes, hold and never overwrite newer work.

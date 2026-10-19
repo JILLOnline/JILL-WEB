@@ -87,13 +87,41 @@ export function sourceGuard(){
     git('rev-parse','HEAD')===git('rev-parse','origin/jill/rewards-work'),'source_not_clean_and_synced');
   check(fs.existsSync(CLI),'local_wrangler_missing');return git('rev-parse','HEAD');
 }
+// Return fixed categories/numbers only; provider stderr may contain private
+// paths or request details and must never be copied to a public receipt.
+export function safeCloudReadFailure(result){
+  const raw=String(result?.stdout||'')+'\n'+String(result?.stderr||'');
+  const api_codes=[...raw.matchAll(/\[code:\s*(\d{3,6})\]/g)].slice(0,5).map(x=>Number(x[1]));
+  const httpMatch=raw.match(/(?:HTTP(?:\/\d(?:\.\d)?)?|status(?: code)?)\s*[:=]?\s*([45]\d{2})\b/i);
+  const http_status=httpMatch?Number(httpMatch[1]):null;
+  const spawnCode=['ENOENT','EACCES','ETIMEDOUT','E2BIG'].includes(result?.error?.code)?result.error.code:null;
+  let classification='cloudflare_command_failed';
+  if(spawnCode==='ETIMEDOUT')classification='command_timeout';
+  else if(spawnCode)classification='command_start_failed';
+  else if(http_status===429||/too many requests|rate limit/i.test(raw))classification='rate_limited';
+  else if([401,403].includes(http_status)||api_codes.includes(10000)||/authentication error|not logged in|login required/i.test(raw))classification='authentication_or_permission';
+  else if(http_status===404)classification='resource_not_found';
+  else if(http_status>=500)classification='provider_server_error';
+  else if(/fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|socket|certificate/i.test(raw))classification='network_or_tls';
+  else if(/unknown argument|unexpected argument|invalid config|could not read.*config/i.test(raw))classification='argument_or_config';
+  return {classification,exit_code:Number.isInteger(result?.status)?result.status:null,
+    http_status,api_codes,spawn_code:spawnCode};
+}
 export function cloud(args){
   const r=spawnSync(process.execPath,[CLI,...args],{cwd:APP,encoding:'utf8',shell:false,
     timeout:120000,maxBuffer:12*1024*1024,windowsHide:true,
     env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false',CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'false'}});
-  check(!r.error&&!r.signal&&r.status===0,'cloudflare_command_unverified');return r.stdout;
+  if(r.error||r.signal||r.status!==0){
+    const error=Error('work_hq_connected_cloudflare_command_unverified');
+    error.safeCliDiagnostic=safeCloudReadFailure(r);throw error;
+  }
+  return r.stdout;
 }
-export function read(args){try{return JSON.parse(cloud([...args,'--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--json']));}catch{fail('cloudflare_read_unverified');}}
+export function read(args){
+  try{return JSON.parse(cloud([...args,'--name',HQ_WORKER,'--config','./wrangler.canary.jsonc','--json']));}
+  catch(cause){const error=Error('work_hq_connected_cloudflare_read_unverified');
+    error.safeCliDiagnostic=cause.safeCliDiagnostic||{classification:'non_json_output'};throw error;}
+}
 export const view=id=>read(['versions','view',id]);
 export const allocation=()=>currentAllocation(read(['deployments','list']));
 export const connectedUploadReceipt=()=>path.join(path.dirname(receiptPath()),'work-hq-connected-read-v1-upload-once-20261019.json');

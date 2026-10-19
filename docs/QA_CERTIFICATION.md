@@ -1,5 +1,16 @@
 # JILL Theme Core QA Certification
 
+## 2026-10-19 — read-only HQ preflight failure isolation
+
+Owner activation stopped before receipt reservation/deployment because a
+Cloudflare metadata read could not be verified. Actual cause/current traffic
+remain unverified. Read-only inspector tests PASS for independent continuation
+after failed reads, five fixed metadata queries, safe numeric error categories,
+private stderr exclusion and complete successful metadata comparison. Existing
+activation/one-use recovery and inactive-stage tests PASS. No new deployment,
+secret operation or operational acceptance is claimed.
+
+
 ## 2026-10-19 — inactive HQ receipt and exact activation recovery tests
 
 Owner actual Windows build/local Worker tests and one inactive upload PASS.

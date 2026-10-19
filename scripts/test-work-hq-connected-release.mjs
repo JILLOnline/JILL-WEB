@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import {HQ_ACTIVE,HQ_QUOTE,HQ_DEPLOYMENT} from './stage-work-hq-connected-read-owner.mjs';
+import {HQ_ACTIVE,HQ_QUOTE,HQ_DEPLOYMENT,HQ_MARKER,safeCloudReadFailure} from './stage-work-hq-connected-read-owner.mjs';
 import {CONNECTED_CANDIDATE,CONNECTED_SOURCE,CONNECTED_PACKAGE,verifyConnectedUploadReceipt,
   verifyQuoteCanary,verifyConnectedAllocation,verifyOwnedActivation,certifyConnectedHealth,
-  restoreConnectedOnce,readBackConnectedActivation,createConnectedActivationAttempt} from './release-work-hq-connected-read-owner.mjs';
+  restoreConnectedOnce,readBackConnectedActivation,createConnectedActivationAttempt,inspectConnectedRelease} from './release-work-hq-connected-read-owner.mjs';
 const nonce='11111111-2222-4333-8444-555555555555';
 const deployment='22222222-3333-4444-8555-666666666666';
 const restoredId='33333333-4444-4555-8666-777777777777';
@@ -79,4 +79,43 @@ for(const lostAck of [false,true]){
 // remains held without another command, receipt reset or code upload.
 const f=restoreFixture();f.args.health=async()=>{throw Error('health outage');};
 await assert.rejects(restoreConnectedOnce(f.args));assert.deepEqual(f.count,{reservations:1,deployments:1});
+
+// A failed provider read cannot hide subsequent read results or consume a
+// deployment receipt. Error receipts contain fixed categories and numbers.
+const privateText='SYNTHETIC_PRIVATE_TOKEN_AND_C_USER_PATH';
+for(const [stderr,classification] of [
+  ['Authentication error [code: 10000]','authentication_or_permission'],
+  ['HTTP 429 too many requests','rate_limited'],
+  ['HTTP 503','provider_server_error'],['HTTP 404','resource_not_found'],
+  ['fetch failed ECONNRESET','network_or_tls'],['Unknown argument: json','argument_or_config'],
+]){
+  const diagnostic=safeCloudReadFailure({status:1,stderr:stderr+' '+privateText});
+  assert.equal(diagnostic.classification,classification);assert(!JSON.stringify(diagnostic).includes(privateText));
+}
+assert.equal(safeCloudReadFailure({error:{code:'ETIMEDOUT'}}).classification,'command_timeout');
+let readCalls=0,healthCalls=0;
+const partial=await inspectConnectedRelease({activationReceiptPresent:false,restoreReceiptPresent:false,
+  async readMetadata(args){readCalls++;assert.ok(['versions','deployments'].includes(args[0]));
+    assert.ok(['view','list'].includes(args[1]));
+    const error=Error(privateText);error.safeCliDiagnostic={classification:'authentication_or_permission',api_codes:[10000]};throw error;},
+  async readHealth(){healthCalls++;throw Error(privateText);}});
+assert.equal(readCalls,5);assert.equal(healthCalls,1);assert.equal(partial.metadata_verified,false);
+assert.equal(partial.activation_receipt_present,false);assert.equal(partial.no_upload_or_deployment,true);
+assert(!JSON.stringify(partial).includes(privateText));assert.equal(partial.reads.length,5);
+old.resources.script={etag:'old',handlers:['fetch']};
+old.resources.script_runtime={compatibility_date:'2026-10-14',compatibility_flags:['nodejs_compat']};
+const inspectedCandidate={id:CONNECTED_CANDIDATE,annotations:{'workers/message':HQ_MARKER+CONNECTED_SOURCE},
+  resources:{bindings:[...bindings,
+    ...Object.entries({JILL_WORK_CATALOG_ENABLED:'true',JILL_WORK_CONVERSATION_ENABLED:'false',JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED:'false'})
+      .map(([name,text])=>({name,type:'plain_text',text})),{name:'CF_VERSION_METADATA',type:'version_metadata'}],
+    script:{etag:'new',handlers:['fetch']},script_runtime:old.resources.script_runtime}};
+const wire=[{id:HQ_DEPLOYMENT,created_on:'2026-10-17T19:27:35.355412Z',
+  versions:baseline.versions.map(x=>({version_id:x.id,percentage:x.percentage}))}];
+const complete=await inspectConnectedRelease({activationReceiptPresent:false,restoreReceiptPresent:false,
+  async readMetadata(args){return args[0]==='deployments'?wire:
+    args[2]===HQ_ACTIVE?old:args[2]===HQ_QUOTE?quote:inspectedCandidate;},
+  async readHealth(expected){assert.equal(expected,null);return {status:200,exact_version_verified:false};}});
+assert.equal(complete.metadata_verified,true);assert.equal(complete.allocation.deployment,HQ_DEPLOYMENT);
+assert.equal(complete.reads.every(x=>x.ok),true);assert.equal(complete.operational_acceptance,false);
 console.log('PASS exact WORK HQ activation: spent upload identity, quote canary preservation, runtime attribution, lost CLI ack read-back, single restoration and hold on concurrent deployment/read outage. No provider calls.');
+console.log('PASS independent read-only inspector: five safe read results despite failure, private error text excluded, no deployment/receipt mutation capability.');

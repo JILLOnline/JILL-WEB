@@ -1,4 +1,24 @@
 # WORK HQ connected catalog/access candidate
+
+## Activation stopped before any deployment request — 2026-10-19
+
+Owner runner `d02e6b85c2d824491e71eb889217e6deb744447a` stopped at preflight
+with `work_hq_connected_cloudflare_read_unverified`. This invocation did not
+reserve an activation receipt or request deployment. The exact failed read
+and underlying Cloudflare cause were suppressed by the previous wrapper;
+do not infer authentication failure, missing versions or changed traffic.
+Current remote allocation and any preexisting activation receipt still need
+independent inspection. Evidence:
+`evidence/work-hq-connected-preflight-stop-2026-10-19.json`.
+
+Use only `work:hq:connected:release:inspect` after syncing the updated source.
+The inspector now reports each of five exact version/allocation reads even
+when another read fails, plus safe error categories/numeric codes, current
+receipt-presence flags and unsigned public health. Raw provider errors,
+secret values and private paths are excluded. It performs no activation,
+restoration, upload, signed POST, key rotation or receipt reset. Do not repeat
+activation before inspecting this report. Full WORK acceptance remains OPEN.
+
 ## Exact inactive HQ candidate receipt — 2026-10-19
 
 Owner runner `69b709d9c2c6d0a4c075bef073381ec698b39373` uploaded and
