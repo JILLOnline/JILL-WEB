@@ -97,16 +97,23 @@ References:
 
 ## Next operational gates
 
-1. Existing quote canary: authentic Owner Save → leave → Reload still needs the
-   reviewed 0% workflow and an Owner browser/credentials. Its historical upload
-   and deployment receipts are spent. Ordinary quote drafts remain OFF.
-2. Wire the existing editor/source ownership into this adapter and collect a
+1. First reconcile the original uncertain intake using its exact existing
+   submission ID, original payload and private history. Those exact identifying
+   inputs remain unavailable in the executor; a familiar/latest row cannot be
+   substituted. The reviewed synthetic quote QA runbook is explicitly on HOLD
+   pending that reconciliation. Its submission attempt is spent.
+2. Only after that hold is resolved and the exact approved test record/remaining
+   one-use limits are verified may authentic Owner Save → leave → Reload use the
+   reviewed 0% workflow and Owner browser. Do not rerun its historical preflight,
+   create another synthetic request, or reuse any upload/deployment receipt.
+   Ordinary quote drafts remain OFF.
+3. Wire the existing editor/source ownership into this adapter and collect a
    verified customer-selected address before a final tax/shipping calculation.
    Public routes/UI must freeze and display that exact address/terms/revision.
-3. Finish canonical accepted-event integration, real create/read adapters,
+4. Finish canonical accepted-event integration, real create/read adapters,
    explicit invoice boundary and one reconciled Shopify test purchase. Ambiguous
    creation remains held for read-back; never create again or manually mark paid.
-4. Reviewed Google/gateway/HQ/extension conversation activation and actual A/B,
+5. Reviewed Google/gateway/HQ/extension conversation activation and actual A/B,
    internal-note exclusion and lost-ack proof remain separate Owner credential
    gates. Original uncertain intake needs its exact private operation history.
 
@@ -127,4 +134,6 @@ that sanitized receipt. This is a functional source change, so historical
 visual/navigation-only upload profiles must not be reused or weakened to
 release it. No new upload/activation receipt has been issued. The next runtime
 release requires the completed route/source/address composition and a distinct
-reviewed functional release, after the still-open Owner canary gate.
+reviewed functional release, after uncertain-intake reconciliation and the
+still-open Owner canary gate. The actual native calculation in this checkpoint
+was non-persisting and did not run the held synthetic intake/quote QA workflow.

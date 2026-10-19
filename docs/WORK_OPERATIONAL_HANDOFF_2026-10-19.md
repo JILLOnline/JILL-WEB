@@ -493,3 +493,15 @@ operations validate against Admin API 2026-07; connector execution version is
 not exposed. No HQ calculation route or release is activated. Scope/limits and
 next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
 `evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+### Quote QA hold remains in force
+
+`WORK_HQ_QUOTE_V35_SYNTHETIC_OWNER_QA.md` explicitly suspends Save/Reload QA
+until the original uncertain intake is reconciled. That exact submission ID,
+original payload and private request history are still missing in the executor.
+Do not substitute the newest row, issue another submission, run the historical
+preflight or consume the one-use attempt again. The independent native pricing
+calculation above created no request/draft and did not run that held workflow.
+The first operational gate remains exact intake reconciliation, followed by
+verification of the approved canary record/testing limits and Owner session.
