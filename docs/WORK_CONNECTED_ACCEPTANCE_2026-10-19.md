@@ -1,5 +1,22 @@
 # Connected WORK execution and precise continuation
 
+## WORK app release receipt — 2026-10-19 13:26 UTC
+
+Owner CLI read-back confirms `jill-hq-work-scopes-9dd96ba` /
+`gid://shopify/Version/1172776681473` is active in the existing WORK app.
+`jill-hq-work-7` / `1167552610305` is inactive and remains the prior release.
+All three existing extension bundles were included. The stored staging message
+says “unreleased”; the active status and release receipt supersede that message.
+**Do not repeat staging or release.**
+
+A fresh authenticated WORK connector read of installation `738058829959`
+still reports the prior scope set: none of the five added scopes is granted
+yet. Owner Shopify update consent and fresh online staff permission proof
+remain required. No HQ Worker or Google conversation activation follows from
+this Shopify app release. Full WORK acceptance remains NOT PASSED.
+Structured receipt: `evidence/work-app-scope-release-2026-10-19.json`.
+
+
 ## Current continuation — authenticated reads and independent source
 
 See `WORK_OPERATIONAL_HANDOFF_2026-10-19.md` for the exact completed source,
