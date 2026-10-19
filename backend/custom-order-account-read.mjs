@@ -1,5 +1,6 @@
 import {verifyWorkCustomerAccountSession} from './customer-account-work-session.mjs';
 import {receiptSignature,readBackendResult} from './custom-order-gateway.mjs';
+import {hasEmptyHttpBody} from './empty-http-body.mjs';
 
 // Authenticated Customer Account extension endpoint, distinct from the
 // public Shopify app proxy. It never accepts an email, owner GID or order ID
@@ -59,17 +60,30 @@ export function onlyPublicCustomOrderProjection(orders) {
   if(!Array.isArray(orders)||orders.length>20)throw Error('Invalid public order list.');
   const seen=new Set();
   return orders.map(item=>{
+    const thread=item?.timeline_version===2;
     if(!item||typeof item!=='object'||Array.isArray(item)||
        !SUBMISSION.test(item.submission_id)||seen.has(item.submission_id)||
        !Number.isSafeInteger(item.revision)||item.revision<1||
        item.revision>100||!PUBLIC_STATUS.has(item.status)||
-       !Array.isArray(item.timeline)||item.timeline.length!==item.revision||
+       !Array.isArray(item.timeline)||item.timeline.length<1||
+       (thread?item.timeline.length>item.revision:item.timeline.length!==item.revision)||
        item.timeline.length>100)throw Error('Invalid public order projection.');
     seen.add(item.submission_id);
+    let previous=0;
     const timeline=item.timeline.map((event)=>{
       if(!event||typeof event!=='object'||Array.isArray(event)||
          !PUBLIC_STATUS.has(event.status))throw Error('Invalid public timeline event.');
+      if(thread){
+        if(!Number.isSafeInteger(event.revision)||event.revision<=previous||
+          event.revision>item.revision||
+          !['status','merchant_message','customer_reply'].includes(event.kind)||
+          !['system','jill','customer'].includes(event.author)||
+          ((event.kind==='customer_reply')!==(event.author==='customer')))
+          throw Error('Invalid public thread event.');
+        previous=event.revision;
+      }
       return {
+        ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
         status:event.status,
         note:safeText(event.note,500),
         occurred_at:safeDate(event.occurred_at),
@@ -81,6 +95,7 @@ export function onlyPublicCustomOrderProjection(orders) {
     // Deliberately whitelist values even if upstream unexpectedly adds
     // internal_note, evidence_ref, actor, email or merchant data.
     return {
+      ...(thread?{timeline_version:2}:{}),
       submission_id:item.submission_id,
       summary:publicOrderSummary(item.summary),
       revision:item.revision,
@@ -121,21 +136,7 @@ export async function handleWorkCustomOrderAccountRead(request,{
   }
   // Verify the session first, then reject any nonempty body WITHOUT
   // allocating it; one stream read is enough to detect injected filters.
-  if(request.body) {
-    try {
-      const reader=request.body.getReader();
-      const first=await reader.read();
-      // Some runtimes produce a zero-byte chunk for an empty string body.
-      // Accept at most one such chunk, never a caller-selected payload.
-      const hasData=Boolean(first.value?.byteLength);
-      const second=!first.done&&!hasData ? await reader.read():null;
-      await reader.cancel();
-      if(hasData || (second && (!second.done||second.value?.byteLength)))
-        return failure(400,'invalid_request');
-    } catch {
-      return failure(400,'invalid_request');
-    }
-  }
+  if(!await hasEmptyHttpBody(request))return failure(400,'invalid_request');
   let permitted;
   try {permitted=await rateLimit({shop:identity.shop,customer:identity.customerGid});}
   catch {return failure(503,'rate_limit_unavailable');}

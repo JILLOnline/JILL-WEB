@@ -1,4 +1,5 @@
 import {createHmac,timingSafeEqual,randomUUID} from 'node:crypto';
+import {hasEmptyHttpBody} from './empty-http-body.mjs';
 
 // Portable Shopify App Proxy handler; deploy behind a real Shopify
 // authenticate.public.appProxy request verifier. NEVER use this module
@@ -121,8 +122,7 @@ export async function handleCustomOrderGatewayDiagnostic({
   const timestamp=request.headers.get('x-jill-qa-diagnostic-ts');
   const nonce=request.headers.get('x-jill-qa-diagnostic-nonce');
   const signature=request.headers.get('x-jill-qa-diagnostic-signature');
-  if(request.body!==null||
-     ![null,'0'].includes(request.headers.get('content-length'))||
+  if(![null,'0'].includes(request.headers.get('content-length'))||
      !/^[0-9]{13}$/.test(timestamp||'')||
      Math.abs(now()-Number(timestamp))>60000||
      !DIAGNOSTIC_NONCE.test(nonce||'')||
@@ -131,6 +131,10 @@ export async function handleCustomOrderGatewayDiagnostic({
     secret:receiptSecret,timestamp,nonce,
   });
   if(!timingSafeEqual(Buffer.from(signature,'hex'),Buffer.from(expected,'hex')))
+    return deny();
+  // Node's omitted body reaches workerd HTTP as a zero-byte stream with
+  // Content-Length: 0. Authenticate first; reject actual bytes, not streams.
+  if(!await hasEmptyHttpBody(request)||Math.abs(now()-Number(timestamp))>60000)
     return deny();
   let permitted=false;
   try{permitted=await rateLimit();}catch{}
