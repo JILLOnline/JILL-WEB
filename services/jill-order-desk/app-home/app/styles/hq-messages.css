@@ -47,3 +47,31 @@
   .jill-messages__conversation{min-height:120px}
 }
 @media(pointer:coarse){.jill-messages__thread{min-height:44px}}
+
+/* Search and status filter only the already Owner-authorized list.
+   They do not trigger additional data reads or a nested scroll container. */
+.jill-messages__filters{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto;
+  align-items:end;gap:10px;padding:10px;margin:10px 0 12px;
+  background:#faf7fc;border:1px solid var(--jill-border);border-radius:9px}
+.jill-messages__filters label{display:grid;gap:4px;min-width:0;font-size:11px;
+  font-weight:720;color:var(--jill-muted)}
+.jill-messages__filters input,.jill-messages__filters select{
+  display:block;width:100%;max-width:100%;min-height:38px;padding:7px 9px;
+  border:1px solid var(--jill-control-border);border-radius:7px;
+  background:#fff;color:var(--jill-ink);font:inherit;font-size:12px}
+.jill-messages__filters p{margin:0 0 9px;white-space:nowrap;font-size:11px;
+  color:var(--jill-muted)}
+.jill-messages__conversation-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.jill-messages__conversation-tools button{min-height:38px;white-space:nowrap}
+@media(max-width:850px){
+  .jill-messages__filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .jill-messages__filters p{grid-column:1/-1;margin:0}
+}
+@media(max-width:520px){
+  .jill-messages__filters{grid-template-columns:minmax(0,1fr)}
+  .jill-messages__filters p{grid-column:1}
+}
+@media(pointer:coarse){
+  .jill-messages__filters input,.jill-messages__filters select,
+  .jill-messages__conversation-tools button{min-height:44px}
+}
