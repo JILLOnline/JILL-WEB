@@ -308,6 +308,7 @@ jobs:
           npm run work:hq:messaging:check
           npm run work:hq:catalog:check
           npm run work:hq:catalog-quote:check
+          npm run work:hq:quote-units:check
           npm run test:work-hq-customer-name
           npm run test:work-hq-inbox-ui
           npm run test:work-hq-archive-search
