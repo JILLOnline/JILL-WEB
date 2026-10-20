@@ -15,10 +15,10 @@ export const ARCHIVE_SEARCH_CHANGED_BLOBS=Object.freeze({
   "services/jill-order-desk/app-home/app/routes.ts": "825f38d4b9346ad1d30b9450cf25eea4c9a83798",
   "services/jill-order-desk/app-home/app/routes/app.requests.archive.tsx": "80fb344bc06d9b554874c0c0653021666674ffb1",
   "services/jill-order-desk/app-home/app/routes/app.requests.search.tsx": "50e11bf07befbf64304bef3dd32412c1704def19",
-  "services/jill-order-desk/work-request-archive-model.mjs": "c32d9b1e8e611b7460b207c1c87e40951b176172",
-  "services/jill-order-desk/work-request-archive-store.mjs": "e17c7f6ea146e588fcff24ff925db1541bed30eb",
+  "services/jill-order-desk/work-request-archive-model.mjs": "bfdf5b41b39dee0dba5f5ee944384408817699bf",
+  "services/jill-order-desk/work-request-archive-store.mjs": "a791321f9051a7d3c642f5cf77389f92da908706",
   "services/jill-order-desk/work-request-detail-search.mjs": "adc423df9e7f34118677fdde0a7c5c912fd6721b",
-  "services/jill-order-desk/work-request-detail-search-action.mjs": "e3dcd63757e90675fb5502a31eb83cc7fd78ca38",
+  "services/jill-order-desk/work-request-detail-search-action.mjs": "bc73afa2b69d6700d51c0151e1e11e4fe2ab5415",
   "services/jill-order-desk/archive-proposals/0010_work_request_soft_archive.sql": "e6f8b2f8b23680919c82acc1c732ed9815b5e163"
 });
 export const ARCHIVE_SEARCH_BLOBS=Object.freeze({
