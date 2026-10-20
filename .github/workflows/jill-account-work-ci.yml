@@ -154,9 +154,6 @@ jobs:
       - name: Verify exact WORK HQ activation, runtime read-back and owned restoration
         run: npm run test:work-hq-connected-release
 
-      - name: Verify frozen WORK HQ inbox polish and guarded one-use release profile (OFFLINE)
-        run: npm run test:work-hq-inbox-polish-release
-
       - name: Ensure no tracked files were mutated
         run: |
           set -euo pipefail
@@ -290,6 +287,8 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
+      - name: Verify frozen WORK HQ inbox polish and guarded one-use release profile (OFFLINE)
+        run: npm run test:work-hq-inbox-polish-release
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
