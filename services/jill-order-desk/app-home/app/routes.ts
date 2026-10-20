@@ -12,6 +12,8 @@ export default [
       route(":submissionId","routes/app.requests.$submissionId.tsx"),
     ]),
     route("requests/command","routes/app.requests.command.tsx"),
+    route("requests/archive","routes/app.requests.archive.tsx"),
+    route("requests/search","routes/app.requests.search.tsx"),
     route("requests/thread","routes/app.requests.thread.tsx"),
     route("requests/quote-draft","routes/app.requests.quote-draft.tsx"),
     route("requests/media/inspect","routes/app.requests.media.inspect.tsx"),
