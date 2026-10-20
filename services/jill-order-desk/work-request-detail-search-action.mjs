@@ -71,9 +71,9 @@ export async function handleWorkRequestDetailSearch({
     const cursor=validateWorkDetailSearchCursor(input.cursor,records.length);
     const current=fingerprint(records);
     if(cursor>0&&input.snapshot!==current)
-      return respond(409,'source_changed');
+      return respond(409,'source_changed',{tag:input.tag});
     if(cursor===0&&input.snapshot!=='')
-      return respond(400,'invalid_search');
+      return respond(400,'invalid_search',{tag:input.tag});
     const page=records.slice(cursor,cursor+DETAIL_SEARCH_PAGE_SIZE);
     const matches=[];
     // At most TWO Google exact-ID detail reads are active at a time.
@@ -87,7 +87,7 @@ export async function handleWorkRequestDetailSearch({
         if(detail?.submission_id!==row.submission_id ||
            detail?.revision!==row.revision ||
            detail?.items?.length!==row.item_count)
-          return respond(409,'source_changed');
+          return respond(409,'source_changed',{tag:input.tag});
         if(matchesVerifiedWorkDetail(detail,input.q))
           matches.push(row.submission_id);
       }
@@ -99,5 +99,5 @@ export async function handleWorkRequestDetailSearch({
       snapshot:current,
       // No names, emails, phones, addresses, terms, raw details or snippets.
     });
-  }catch{return respond(503,'detail_search_unavailable');}
+  }catch{return respond(503,'detail_search_unavailable',{tag:input.tag});}
 }
