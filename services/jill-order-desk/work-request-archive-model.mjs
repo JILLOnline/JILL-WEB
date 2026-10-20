@@ -39,7 +39,7 @@ export const WORK_ARCHIVE_FILTERS=Object.freeze([
   ['all','All archive records'],['cancelled','Cancelled'],
   ['completed','Completed'],['removed','Removed'],
 ]);
-/** @param {Array<{submission_id:string,customer_status:string}>} records
+/** @param {ReadonlyArray<{submission_id:string,customer_status:string}>} records
  * @param {string} [category] @param {string[]} [removedIds] */
 export function filterArchivedRequests(records,category='all',removedIds=[]){
   if(!WORK_ARCHIVE_FILTERS.some(([v])=>v===category))
