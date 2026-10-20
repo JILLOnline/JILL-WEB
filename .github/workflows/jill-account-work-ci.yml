@@ -287,11 +287,11 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify WORK request workspace layout and fresh one-use WORK release (OFFLINE)
+      - name: Verify WORK inbox customer name and exact frozen 13-file source package (OFFLINE)
         run: |
-          npm run work:hq:workspace-layout:check
-          npm run test:work-hq-workspace-layout-draft
-          npm run test:work-hq-workspace-layout-release
+          npm run work:hq:customer-name:check
+          npm run test:work-hq-customer-name
+          npm run test:work-hq-customer-name-package
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
@@ -366,8 +366,8 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Prevent reuse of spent Order details releases after workspace UI changes (OFFLINE)
-        run: npm run test:work-hq-workspace-layout-draft
+      - name: Prevent reuse of spent WORK HQ visual release after customer name change (OFFLINE)
+        run: npm run test:work-hq-customer-name-package
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
