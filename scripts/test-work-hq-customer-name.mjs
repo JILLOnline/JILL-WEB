@@ -35,13 +35,15 @@ assert.match(route,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\
 assert.match(route,/original\?\.state==="ready"/);
 assert.match(route,/original\.detail\?\.submission_id===item\.submission_id/);
 assert.match(route,/typeof original\.detail\.customer\?\.name==="string"/);
-assert.match(route,/<span className="jill-inbox__card-kicker">CUSTOM ORDER<\/span>\s*\{customerName\?<p className="jill-inbox__customer-name">\{customerName\}<\/p>:null\}\s*<h3>Request #/);
+assert.match(route,/<div className="jill-inbox__cell jill-inbox__cell--customer"/);
+assert.match(route,/<span className="jill-inbox__customer-name" title=\{customerName\}>\{customerName\}<\/span>/);
+assert.match(route,/<Link className="jill-inbox__request-id"/);
 assert.match(style,/\.jill-inbox__customer-name\{/);
-assert.match(style,/font-size:clamp\(13px,1\.1vw,15px\)/);
+assert.match(style,/font-size:clamp\(12px,\.88vw,14px\)/);
 assert.match(style,/background:var\(--jill-card-wash\)/);
 assert.match(style,/color:var\(--jill-card-ink\)/);
 assert.match(style,/font-weight:790/);
-assert.match(style,/-webkit-line-clamp:2/);
+assert.match(style,/text-overflow:ellipsis/);
 assert.match(style,/overflow-wrap:anywhere/);
 assert.doesNotMatch(style,/!important|@import|url\(/);
 assert.match(ownerDetail,/loadAuthorizedWorkRequestDetail/);
