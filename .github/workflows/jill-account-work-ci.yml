@@ -303,7 +303,7 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify current 39-file WORK Requests, Messaging, Catalog and P1/P2 quote source (OFFLINE)
+      - name: Verify current 37-file WORK Requests, Messaging, Catalog and P1/P2 quote source (OFFLINE)
         run: |
           npm run work:hq:quote-units:check
           npm run test:work-hq-customer-name
