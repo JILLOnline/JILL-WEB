@@ -154,6 +154,9 @@ jobs:
       - name: Verify exact WORK HQ activation, runtime read-back and owned restoration
         run: npm run test:work-hq-connected-release
 
+      - name: Verify frozen WORK HQ inbox polish and guarded one-use release profile (OFFLINE)
+        run: npm run test:work-hq-inbox-polish-release
+
       - name: Ensure no tracked files were mutated
         run: |
           set -euo pipefail
