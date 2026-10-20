@@ -39,6 +39,11 @@ async function readInput(request) {
     snapshot:v.snapshot,tag:v.tag};
 }
 /** All three delegated reads are injectable for offline security tests. */
+/** @param {{request?:Request,enabled?:boolean,
+ * authenticate?:{admin:(request:Request)=>Promise<{session:any}>},
+ * db?:any,readFreshList?:()=>Promise<any>,
+ * readExactDetail?:(args:{submissionId:string})=>Promise<any>
+ * }} [options] */
 export async function handleWorkRequestDetailSearch({
   request,authenticate,db,enabled=false,readFreshList,
   readExactDetail,
