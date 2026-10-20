@@ -36,9 +36,21 @@ export default function WorkMessages(){
   const data=useLoaderData<typeof loader>() as Data;
   const threadRead=useFetcher<ThreadResult>();
   const [selected,setSelected]=useState<string|null>(null);
+  const [query,setQuery]=useState("");
+  const [status,setStatus]=useState("all");
   const records=useMemo(()=>data.state==="ready"?[...data.records].sort(
     (a,b)=>Date.parse(b.updated_at)-Date.parse(a.updated_at)||
       a.submission_id.localeCompare(b.submission_id)):[],[data]);
+  // Filters use ONLY the authorized nine-field list. Names or message text
+  // require the separately authenticated exact-ID detail/thread endpoint.
+  const filtered=useMemo(()=>{
+    const q=query.trim().toLocaleLowerCase().slice(0,120);
+    return records.filter(item=>
+      (status==="all"||item.customer_status===status)&&
+      (!q||item.submission_id.toLocaleLowerCase().includes(q)||
+       requestShortId(item.submission_id).toLocaleLowerCase().includes(q)||
+       customerStatusLabel(item.customer_status).toLocaleLowerCase().includes(q)));
+  },[records,query,status]);
   const record=records.find(x=>x.submission_id===selected)||null;
   const thread=record&&threadRead.data?.ok===true&&
     threadRead.data.thread?.submission_id===record.submission_id
@@ -78,10 +90,32 @@ export default function WorkMessages(){
               {" · "}Unread and delivery receipts are not yet available.
               The list is ordered by request activity, not message delivery.
             </p>
+            <div className="jill-messages__filters" role="search" aria-label="Find request conversations">
+              <label>Find request
+                <input type="search" value={query} maxLength={120}
+                  placeholder="Request ID or status" onChange={event=>setQuery(event.target.value)}/>
+              </label>
+              <label>Request status
+                <select value={status} onChange={event=>setStatus(event.target.value)}>
+                  <option value="all">All statuses</option>
+                  <option value="received">Received</option>
+                  <option value="reviewing">In review</option>
+                  <option value="awaiting_approval">Awaiting approval</option>
+                  <option value="in_production">In production</option>
+                  <option value="ready_pickup">Ready for pickup</option>
+                  <option value="on_hold">On hold</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </label>
+              <p role="status">{filtered.length} of {records.length} verified request threads</p>
+            </div>
             <div className="jill-messages__layout">
               <nav className="jill-messages__threads"
                 aria-label="Custom Order conversations">
-                {records.length===0?<p>No verified requests yet.</p>:records.map(item=>
+                {records.length===0?<p>No verified requests yet.</p>:
+                  filtered.length===0?<p>No matching requests. Clear your filters to see all threads.</p>:
+                  filtered.map(item=>
                   <button type="button" key={item.submission_id}
                     className={"jill-messages__thread"+
                       (selected===item.submission_id?" jill-messages__thread--active":"")}
@@ -102,9 +136,17 @@ export default function WorkMessages(){
                       <h3>Request #{requestShortId(record.submission_id)}</h3>
                       <p>{customerStatusLabel(record.customer_status)}</p>
                     </div>
-                    <Link to={"/app/requests/"+encodeURIComponent(record.submission_id)}>
-                      Open request →
-                    </Link>
+                    <div className="jill-messages__conversation-tools">
+                      {canRead&&<button type="button"
+                        disabled={threadRead.state!=="idle"}
+                        onClick={()=>threadRead.load("/app/requests/thread?"+
+                          new URLSearchParams({submission_id:record.submission_id}))}>
+                        {threadRead.state!=="idle"?"Verifying…":"Refresh conversation"}
+                      </button>}
+                      <Link to={"/app/requests/"+encodeURIComponent(record.submission_id)}>
+                        Open request →
+                      </Link>
+                    </div>
                   </div>
                   {!canRead?<p role="status">
                     Conversation history is waiting for the secure WORK connection.
