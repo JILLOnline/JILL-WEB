@@ -28,7 +28,7 @@ export const INBOX_POLISH_BLOBS=Object.freeze({
 const normalize=s=>s.replace(/\r\n?/g,'\n');
 const gitBlob=s=>{
   const body=normalize(s);
-  return createHash('sha1').update('blob '+Buffer.byteLength(body)+'\\0'.replace('\\0','\0')).update(body).digest('hex');
+  return createHash('sha1').update('blob '+Buffer.byteLength(body)+String.fromCharCode(0)).update(body).digest('hex');
 };
 const sourceFile=file=>fs.readFileSync(path.join(ROOT,file),'utf8');
 export function checkWorkHqInboxPolish(){
