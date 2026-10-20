@@ -167,7 +167,7 @@ assert.match(appRoutes,/route\("requests\/search"/);
 const archiveRoute=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.archive.tsx','utf8');
 assert.match(archiveRoute,/JILL_WORK_HQ_ARCHIVE_ENABLED==="true"/);
-assert.doesNotMatch(archiveRoute,/deleteFrom|removeOrder|\\.delete\\(/);
+assert.doesNotMatch(archiveRoute,/deleteFrom|removeOrder|\.delete\(/);
 const ui=readFileSync('services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
 assert.match(ui,/partitionWorkRequests/);
 assert.match(ui,/WORK_ARCHIVE_FILTERS/);
