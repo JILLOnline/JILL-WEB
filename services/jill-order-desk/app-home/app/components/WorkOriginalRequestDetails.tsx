@@ -98,20 +98,25 @@ export function WorkOrderDetailsContent({model,submissionId,stacked=false}:{mode
     </>;
 }
 export function WorkOrderDetails({model,submissionId}:{model:Model|undefined;submissionId:string}){
-  return <details className="jill-request__panel jill-workspace__disclosure">
-    <summary>Order details</summary>
+  // Always visible in the full request workspace, unlike its inbox preview.
+  return <section className="jill-request__panel jill-workspace__overview"
+    aria-labelledby="jill-request-order-details-title">
+    <h3 id="jill-request-order-details-title">Order details</h3>
     <WorkOrderDetailsContent model={model} submissionId={submissionId}/>
-  </details>;
+  </section>;
 }
 export function WorkOriginalRequestDetails({model,submissionId}:{
   model:Model|undefined;submissionId:string;
 }){
   const details=verifiedDetails(model,submissionId);
-  return <section className="jill-request__panel jill-request__full" aria-labelledby="original-request-detail">
-    <div className="jill-request__panel-head">
-      <h3 id="original-request-detail">Items & personalization</h3>
+  return <details className="jill-request__panel jill-request__full jill-request__fold"
+    aria-label="Items and personalization">
+    <summary className="jill-request__fold-head">
+      <span className="jill-request__fold-title">Items & personalization</span>
       {details?<span className="jill-request__source-tag">Verified revision {details.revision}</span>:null}
-    </div>
+      <span className="jill-request__fold-chevron" aria-hidden="true">⌄</span>
+    </summary>
+    <div className="jill-request__fold-body">
     {!details?
       <RequestDetailsUnavailable model={model}/>:
     <>
@@ -151,9 +156,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
         </article>)}
       </div>
       <OpaqueReferences ids={details.reference_ids} label="Request-level references"/>
-      <p className="jill-request__muted">
-        Original request · Not an approved quote.
-      </p>
     </>}
-  </section>;
+    </div>
+  </details>;
 }
