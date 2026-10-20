@@ -35,9 +35,11 @@ assert.match(route,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\
 assert.match(route,/original\?\.state==="ready"/);
 assert.match(route,/original\.detail\?\.submission_id===item\.submission_id/);
 assert.match(route,/typeof original\.detail\.customer\?\.name==="string"/);
-assert.match(route,/<div className="jill-inbox__cell jill-inbox__cell--customer"/);
+assert.match(route,/<span className="jill-inbox__cell jill-inbox__cell--customer"/);
 assert.match(route,/<span className="jill-inbox__customer-name" title=\{customerName\}>\{customerName\}<\/span>/);
-assert.match(route,/<Link className="jill-inbox__request-id"/);
+assert.match(route,/<span className="jill-inbox__request-id"/);
+assert.match(route,/<button type="button" className="jill-inbox__row-trigger"/);
+assert.match(route,/aria-label=\{\(detailsOpen\?"Hide":"Show"\)/);
 assert.match(style,/\.jill-inbox__customer-name\{/);
 assert.match(style,/font-size:clamp\(12px,\.88vw,14px\)/);
 assert.match(style,/background:var\(--jill-card-wash\)/);
