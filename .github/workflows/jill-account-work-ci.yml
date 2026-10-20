@@ -149,6 +149,9 @@ jobs:
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
 
+      - name: Verify Shopify Admin-backed WORK Catalog title search, SKU and inventory projection (OFFLINE)
+        run: npm run test:work-hq-shopify-catalog-browser
+
       - name: Verify canonical conversation, scoped catalog and universal policy planning
         run: npm run test:work-connected-source
 
