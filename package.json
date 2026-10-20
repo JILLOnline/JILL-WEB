@@ -317,6 +317,8 @@
     "test:work-hq-quick-pill": "node scripts/test-work-hq-quick-pill.mjs",
     "work:hq:quick-pill:polish:check": "node scripts/work-hq-quick-pill-polish-package.mjs",
     "test:work-hq-quick-pill-polish-hold": "node scripts/test-work-hq-quick-pill-polish-hold.mjs",
+    "work:hq:workspace-layout:check": "node scripts/work-hq-workspace-layout-draft.mjs",
+    "test:work-hq-workspace-layout-draft": "node scripts/test-work-hq-workspace-layout-draft.mjs",
     "test:work-hq-quick-pill-release": "node scripts/test-work-hq-quick-pill-release.mjs",
     "work:hq:quick-pill:inspect": "node scripts/release-work-hq-quick-pill-owner.mjs --inspect",
     "work:hq:quick-pill:release-once": "node scripts/release-work-hq-quick-pill-owner.mjs --release-once",
