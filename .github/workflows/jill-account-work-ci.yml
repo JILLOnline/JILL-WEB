@@ -287,8 +287,8 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify frozen WORK HQ inbox polish and guarded one-use release profile (OFFLINE)
-        run: npm run test:work-hq-inbox-polish-release
+      - name: Verify centered Quick Actions dropdown and frozen isolated UI overlay (OFFLINE)
+        run: npm run test:work-hq-quick-pill
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
