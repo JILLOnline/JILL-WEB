@@ -23,12 +23,16 @@ assert.match(routes,/route\(":submissionId","routes\/app\.requests\.\$submission
 assert.match(routes,/route\("requests\/command","routes\/app\.requests\.command\.tsx"\)/);
 assert.match(inbox,/useRouteLoaderData\("routes\/app\.requests\.layout"\)/);
 assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
-// The existing "Open request" navigation now belongs to the compact shared
-// Quick Actions component, not an isolated inbox card footer.
+// Requests uses the new native row disclosure, keeping separate direct
+// actions and the existing full-request navigation INSIDE expanded details.
+// The original menu remains available for other HQ consumers.
 const quickActions=readFileSync(base+'components/WorkRequestQuickActions.tsx','utf8');
-assert.match(inbox,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
-assert.doesNotMatch(inbox,/Open request|jill-inbox__open/);
-assert.match(quickActions,/\{compact\s*\? <div className="jill-actions__quick-menu">/);
+assert.match(inbox,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(inbox,/className="jill-inbox__row-trigger"/);
+assert.match(inbox,/Open full request/);
+assert.doesNotMatch(inbox,/jill-inbox__open/);
+assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
+assert.match(quickActions,/className="jill-actions__direct-buttons"/);
 assert.match(quickActions,/<details ref=\{quickMenu\}/);
 assert.match(quickActions,/<summary>[\s\S]*?QUICK ACTIONS/);
 assert.match(quickActions,/quickMenu\.current\.open=false/);
