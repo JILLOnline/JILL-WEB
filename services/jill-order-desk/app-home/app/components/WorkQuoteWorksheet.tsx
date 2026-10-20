@@ -200,23 +200,19 @@ export function WorkQuoteWorksheet({
     readFetcher.load(workQuoteDraftReadPath(submissionId));
   };
 
-  return <section className="jill-request__panel jill-request__full jill-quote"
-    aria-labelledby="jill-quote-title">
-    <div className="jill-request__panel-head">
-      <div>
-        <p className="jill-inbox__eyebrow">ESTIMATE</p>
-        <h3 id="jill-quote-title">Quote worksheet</h3>
-      </div>
+  // Native disclosure keeps the quote form mounted while collapsed.
+  // This is essential: collapsing the worksheet must never discard edits,
+  // reset pricing or trigger a network save/reload.
+  return <details className="jill-request__panel jill-request__full jill-quote jill-request__fold"
+    aria-label="Quote worksheet">
+    <summary className="jill-request__fold-head">
+      <span className="jill-request__fold-title">Quote worksheet</span>
       <span className="jill-quote__tag">
         {restoredActive?"RESTORED DRAFT · NOT SENT":"NOT SAVED · NOT SENT"}
       </span>
-    </div>
-    <p className="jill-request__muted">
-      Private USD estimate. Quantities match the original request.
-      {restoredActive
-        ? " Loaded draft. New edits are unsaved."
-        : " Unsaved entries are lost when you leave or refresh."}
-    </p>
+      <span className="jill-request__fold-chevron" aria-hidden="true">⌄</span>
+    </summary>
+    <div className="jill-request__fold-body">
     {!detail
       ? <p className="jill-quote__notice" role="status">
           Verified original items are required before pricing.
@@ -304,9 +300,7 @@ export function WorkQuoteWorksheet({
             {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
               role="status">{feedback}</p>}
           </div>
-          <p className="jill-quote__disclaimer">
-            Internal estimate only. No customer message, payment, Shopify tax calculation or Shopify order is created.
-          </p>
         </>}
-  </section>;
+    </div>
+  </details>;
 }
