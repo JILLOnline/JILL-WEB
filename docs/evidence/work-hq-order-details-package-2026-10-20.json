@@ -1,0 +1,26 @@
+{
+  "environment": "LOCAL_SYNTHETIC_ONLY",
+  "reviewed_ui_source": "5fa3b1fb6e7d859d9840fb6329150f7fa44a1aae",
+  "runtime_baseline": "576d6b0bcde43c43fda939f42513eefcb5adefb7",
+  "reviewed_files": 10,
+  "scope": "request_presentation_and_explicit_on_open_read",
+  "visual_only": false,
+  "checks": {
+    "isolated_business_source_comparison": "pass",
+    "typecheck": "pass",
+    "build": "pass",
+    "compiled_connected_read_denial": "pass",
+    "compiled_navigation_contract": "pass",
+    "wrangler_versions_upload_dry_run": "pass",
+    "unique_receipt_and_owned_restore_contract": "pass",
+    "read_only_inventory_header_selection": "pass"
+  },
+  "unreleased_quote_business_code_excluded": true,
+  "private_env_sessions_copied": false,
+  "actual_upload": false,
+  "deployment": false,
+  "signed_post": false,
+  "data_or_schema_changes": false,
+  "authenticated_visual_acceptance": false,
+  "operational_acceptance": false
+}

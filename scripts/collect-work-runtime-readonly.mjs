@@ -62,7 +62,11 @@ export function edgeClockInterval({start,end,date}){
     outside_challenge_window:server-end>60000||server+999-start< -60000,
     source:'http_date_edge_not_worker_clock'};
 }
-async function health(origin,{version=null}={}){
+export function observedWorkRuntimeVersion(headers,{hq=false}={}){
+  const value=headers.get(hq?'x-jill-work-hq-version':'x-jill-work-gateway-version');
+  return UUID.test(value||'')?value:null;
+}
+async function health(origin,{version=null,hq=false}={}){
   const url=new URL('/healthz',origin);
   url.searchParams.set('jill_work_version_probe',randomUUID());
   const headers={Accept:'application/json','Cache-Control':'no-store'};
@@ -74,7 +78,7 @@ async function health(origin,{version=null}={}){
     const end=Date.now(),raw=await response.text();
     if(raw.length>1024)fail('oversized_health');
     const body=JSON.parse(raw);
-    const observed=response.headers.get('x-jill-work-gateway-version');
+    const observed=observedWorkRuntimeVersion(response.headers,{hq});
     let verified=false;
     if(version){certifyVersionHealth({status:response.status,
       mime:(response.headers.get('content-type')||'').split(';')[0],body,
@@ -114,7 +118,7 @@ export async function collectWorkRuntime({owner=false}={}){
   report.gateway.clock_samples=[];
   for(let i=0;i<2;i++)report.gateway.clock_samples.push(await health(HOST));
   report.hq.public_health=await health(
-    'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev');
+    'https://jill-order-desk-canary-work.jill-work-custom-orders.workers.dev',{hq:true});
   if(!owner){report.blockers.push('owner_authenticated_runtime_metadata_required');return report;}
   if(report.source.branch!=='jill/rewards-work'||!report.source.tracked_clean||
      git('rev-parse','origin/jill/rewards-work')!==report.source.commit)

@@ -302,7 +302,12 @@
     "test:work-hq-compact": "node scripts/test-work-hq-compact.mjs",
     "work:hq:compact:release-once": "node scripts/release-work-hq-density-owner.mjs --release-once",
     "work:hq:compact:inspect": "node scripts/release-work-hq-density-owner.mjs --inspect",
-    "work:hq:compact:restore-once": "node scripts/release-work-hq-density-owner.mjs --restore-once"
+    "work:hq:compact:restore-once": "node scripts/release-work-hq-density-owner.mjs --restore-once",
+    "work:hq:order-details:check": "node scripts/work-hq-order-details-package.mjs",
+    "test:work-hq-order-details-release": "node scripts/test-work-hq-order-details-release.mjs",
+    "work:hq:order-details:release-once": "node scripts/release-work-hq-order-details-owner.mjs --release-once",
+    "work:hq:order-details:inspect": "node scripts/release-work-hq-order-details-owner.mjs --inspect",
+    "work:hq:order-details:restore-once": "node scripts/release-work-hq-order-details-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",

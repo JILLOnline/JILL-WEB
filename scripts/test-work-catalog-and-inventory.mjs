@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {handleWorkCatalogRead} from '../services/jill-order-desk/work-catalog-read.mjs';
-import {currentAllocation,edgeClockInterval} from './collect-work-runtime-readonly.mjs';
+import {currentAllocation,edgeClockInterval,observedWorkRuntimeVersion} from './collect-work-runtime-readonly.mjs';
 const SHOP='jill-work.myshopify.com';
 const authority={shop:SHOP,environment:'WORK',app_client_id:'f8e1ebdbae84490dc8ea5b133637e6c0',owner_staff_id:'123',policy_version:1};
 let current=authority;
@@ -86,4 +86,10 @@ assert.equal(currentAllocation([{id:a,created_on:'2026-10-18T00:00:00Z',versions
 assert.throws(()=>currentAllocation([{id:a,created_on:'2026-10-19',versions:[{version_id:version,percentage:1}]}]));
 assert.equal(edgeClockInterval({start:Date.parse('2026-10-19T00:00:00Z'),end:Date.parse('2026-10-19T00:00:01Z'),date:'Mon, 19 Oct 2026 00:00:00 GMT'}).outside_challenge_window,false);
 assert.equal(edgeClockInterval({start:Date.parse('2026-10-19T00:02:00Z'),end:Date.parse('2026-10-19T00:02:01Z'),date:'Mon, 19 Oct 2026 00:00:00 GMT'}).outside_challenge_window,true);
-console.log('PASS WORK catalog owner/product-scope denial before upstream reads, source outage/no fake zero, pagination and safe allocation/edge-clock classification.');
+
+const bothHeaders=new Headers({'x-jill-work-hq-version':a,'x-jill-work-gateway-version':b});
+assert.equal(observedWorkRuntimeVersion(bothHeaders,{hq:true}),a);
+assert.equal(observedWorkRuntimeVersion(bothHeaders),b);
+assert.equal(observedWorkRuntimeVersion(new Headers({'x-jill-work-gateway-version':b}),{hq:true}),null);
+assert.equal(observedWorkRuntimeVersion(new Headers({'x-jill-work-hq-version':'invalid'}),{hq:true}),null);
+console.log('PASS WORK catalog scope/owner denial, source outage, pagination, safe allocation/clock classification and distinct HQ/gateway health headers.');

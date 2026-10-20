@@ -38,21 +38,26 @@ export function checkWorkHqDensity(){
  return {runtime_scope:'presentation_only',reviewed_files:changed.length,server_hooks_commands_and_links_unchanged:true,
   build_runtime_baseline:DENSITY_RUNTIME_BASE,unreleased_functional_work_excluded:true};
 }
-export function prepareDensityBuild({runner}={}){
- assert.match(runner||'',/^[a-f0-9]{40}$/);assert.equal(git('rev-parse','HEAD'),runner);checkWorkHqDensity();
+// Reused source composer; each profile supplies its own frozen inventory and
+// guard. Historical density defaults and receipts are unchanged.
+export function prepareReviewedPresentationBuild({runner,manifest,guard,prefix='density-package-'}={}){
+ assert.match(runner||'',/^[a-f0-9]{40}$/);assert.equal(git('rev-parse','HEAD'),runner);guard();
+ assert.match(manifest.runtime_baseline,/^[a-f0-9]{40}$/);assert.match(prefix,/^[a-z-]+$/);
  const parent=path.join(ROOT,APP,'.wrangler');fs.mkdirSync(parent,{recursive:true});
- const directory=fs.mkdtempSync(path.join(parent,'density-package-'));
- // Archive tracked source only: no local secret files, sessions or credentials.
- const archive=execFileSync('git',['-C',ROOT,'archive','--format=tar',DENSITY_RUNTIME_BASE],{maxBuffer:40000000,stdio:['ignore','pipe','pipe']});
+ const directory=fs.mkdtempSync(path.join(parent,prefix));
+ const archive=execFileSync('git',['-C',ROOT,'archive','--format=tar',manifest.runtime_baseline],{maxBuffer:40000000,stdio:['ignore','pipe','pipe']});
  execFileSync('tar',['-xf','-','-C',directory],{input:archive,stdio:['pipe','pipe','pipe']});
- for(const [file,hash] of Object.entries(densityManifest().files)){
+ for(const [file,hash] of Object.entries(manifest.files)){
+  assert(file.startsWith(APP+'/app/')&&!file.includes('..')&&/\.(?:tsx|css)$/.test(file),'Invalid presentation path');
   const content=fs.readFileSync(path.join(ROOT,file));assert.equal(studioDigest(content.toString()),hash);
   fs.writeFileSync(path.join(directory,file),content);
  }
- // Reuse installed dependencies, never install/upgrade packages or copy env files.
  for(const relative of ['node_modules',APP+'/node_modules'])
   fs.symlinkSync(path.join(ROOT,relative),path.join(directory,relative),'junction');
- fs.writeFileSync(path.join(directory,'density-source.json'),JSON.stringify({runner,runtime_baseline:DENSITY_RUNTIME_BASE,files:densityManifest().files},null,2)+'\n');
+ fs.writeFileSync(path.join(directory,'density-source.json'),JSON.stringify({runner,runtime_baseline:manifest.runtime_baseline,files:manifest.files},null,2)+'\n');
  return path.join(directory,APP);
+}
+export function prepareDensityBuild({runner}={}){
+ return prepareReviewedPresentationBuild({runner,manifest:densityManifest(),guard:checkWorkHqDensity});
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url)console.log(JSON.stringify(checkWorkHqDensity(),null,2));

@@ -413,3 +413,16 @@ exact-request model and component owner. Inbox cards load the existing exact-ID
 route on opening only; no private preload or duplicate overview.
 Items/per-unit personalization remain distinct. Source/local review only;
 current runtime/compact receipt is needed before another reviewed release.
+
+
+## 2026-10-20 — Current HQ read-back and separate Order details package
+
+Accept Owner f9830ddf.../a67cfa4f... allocation as the current WORK baseline;
+retain quote canary at 0% and all historical spent receipts. Preserve the
+original null health observation while correcting the collector's HQ header.
+Strict unsigned HQ verification confirms exact f9830ddf... independently.
+Compose the existing runtime plus ten frozen UI files through the shared source
+composer, excluding unreleased quote work. A NEW one-use profile includes the
+explicit on-open authenticated read and therefore claims `visual_only: false`.
+Fresh provider metadata, exact baseline and unchanged bindings are required
+before mutation; no deployment or authenticated acceptance is claimed locally.

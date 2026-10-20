@@ -141,3 +141,13 @@ presentation; `WorkOriginalRequestDetails`
 owns item/variation/personalization rendering. Both consume the same verified
 exact-submission model and shared unavailable/ID guard. The inbox card controller invokes the existing authenticated exact-ID loader
 only on opening. Presentation owns no persisted request state or identity rule.
+
+
+Order details release packaging reuses `prepareReviewedPresentationBuild` in
+`scripts/work-hq-density-package.mjs`; the historical density defaults remain
+frozen. `scripts/work-hq-order-details-package.mjs` supplies the ten-file reviewed
+inventory and isolated build hook, and `release-work-hq-order-details-owner.mjs`
+supplies the exact current baseline/one-use namespace to the canonical visual
+release executor. This owns release boundaries only, not request truth.
+The existing runtime collector owns selecting the corresponding HQ/gateway
+health header; strict release health certification stays in its existing owner.

@@ -374,3 +374,31 @@ content renderer, with email/order_type omitted. The overview no longer repeats
 under items. No new endpoint/store/auth/command. Sixteen local browser cases pass;
 not deployed. Current compact receipt/allocation is required before a new release;
 existing profile inventories/receipts stay frozen.
+
+
+## Current Owner baseline and separate Order details release — 2026-10-20
+
+Owner read-only inventory at 00:30:57Z reports clean a3b0c82 source and HQ
+`f9830ddf-4ff7-4e24-896e-3618ee5686d7` at 100%, deployment
+`a67cfa4f-cea0-4590-b0b7-10f6f17acebc`; quote canary stays at 0%.
+This supersedes the prior missing-current-inventory gate. Historical compact
+receipts stay spent; final command acknowledgement/package digest were not
+supplied. The ordinary source annotation remains a fresh metadata preflight
+requirement, not an inference certified by this inventory.
+
+HQ's null inventory version came from selecting the gateway header. The
+read-only collector now uses the HQ header; existing strict unsigned HQ health
+independently verifies exact f9830ddf... and database readiness. No secret or
+runtime changes are indicated. Original observation is preserved in
+`evidence/work-hq-current-owner-inventory-2026-10-20.json`.
+
+NEW Order details package uses runtime base 576d6b0 plus ten frozen reviewed UI
+files from 5fa3b1f, excluding inactive quote business work. It reuses the source
+composer/release executor with distinct `work-hq-order-details-v1` receipts.
+Scope includes explicit authenticated read-on-open, so it is not strictly
+visual-only. Local isolated build, compiled denial/navigation and upload DRY
+RUN pass; no remote upload/deployment performed. Owner credentials are needed
+only for NEW `work:hq:order-details:release-once`, with inspect-only on uncertain
+outcome. Do not repeat any historical release. See
+`WORK_HQ_ORDER_DETAILS_RELEASE_2026-10-20.md` for baseline, safeguards and UI review.
+Authenticated visual acceptance and all broader WORK/LIVE gates remain open.
