@@ -89,7 +89,7 @@ for(const changed of [
   [{id:'a',label:'',value:'X'},{id:'a',label:'',value:'Y'}],
   [{id:'a',label:'',value:{untrusted:'x'}}],
   [{id:'a',label:'',value:'a'.repeat(501)}],
-  [{id:'a',label:'X\\nY',value:'foo'}],
+  [{id:'a',label:'X'+String.fromCharCode(10)+'Y',value:'foo'}],
   [{id:'a',label:'',value:['a',...Array(12).fill('b')]}],
   [{id:'a',label:'',value:1.5}],
 ]){
