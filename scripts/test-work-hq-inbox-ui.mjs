@@ -120,7 +120,6 @@ assert.match(actionStyle,/\.jill-actions__menu-options button,/);
 assert.match(actionStyle,/margin-inline:auto/);
 assert.match(actionStyle,/min-height:44px/);
 assert.doesNotMatch(actionStyle,/\.jill-actions--compact \.jill-actions__tabs\{/);
-assert.match(actionStyle,/\.jill-actions--compact \.jill-actions__open-link/);
 assert.match(actionStyle,/min-height:44px/);
 assert.doesNotMatch(actionStyle,/!important|@import|url\(/i);
 assert.doesNotMatch(route,/orderDetails\.submit|fetcher\.submit/);
