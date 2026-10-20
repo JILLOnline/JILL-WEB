@@ -259,6 +259,11 @@ jobs:
           npm install --prefix tools/work-account-local --no-audit --no-fund
           npm run test:work-conversation-ui-local
 
+      - name: Verify HQ and My JILL message inboxes share one public verified conversation (OFFLINE)
+        run: |
+          npm run test:work-message-inboxes
+          node scripts/test-work-conversation.mjs
+
       - name: Verify WORK health runtime version attribution without Cloudflare (OFFLINE)
         run: node scripts/test-work-custom-order-version-metadata-offline.mjs
 
