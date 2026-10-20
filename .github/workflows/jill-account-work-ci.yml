@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout WORK source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -63,7 +65,7 @@ jobs:
           npm run test:customer-custom-orders
 
       - name: Verify WORK merchant online staff authorization and owner registry
-        run: npm run test:work-qa-read-audit && npm run test:work-hq-branding && npm run test:work-hq-merchant-release && npm run test:jill-private-catalog && npm run test:work-hq-stage-existing-key && npm run test:work-hq-existing-merchant-key && npm run test:work-hq-inbox-rollout && npm run test:work-hq-google-merchant-feed && npm run test:work-merchant-inbox && npm run test:work-hq-inbox-ui && npm run test:work-hq-request-detail && npm run test:work-hq-request-auth-stages && npm run test:work-hq-full-request-projection && npm run test:work-hq-google-exact-detail && npm run test:work-hq-qa-detail-stage && npm run test:work-hq-qa-detail-reconcile && npm run test:work-hq-qa-detail-probe && npm run test:work-hq-qa-detail-pin && npm run test:work-hq-detail-v9-stage && npm run test:work-hq-detail-v9-off-release && npm run test:work-hq-detail-v9-on-stage && npm run test:work-hq-detail-v9-on-release && npm run test:work-hq-detail-v9-live-audit && npm run test:work-hq-detail-view && npm run test:work-hq-reference-provenance && npm run test:work-hq-private-media-intent && npm run test:work-hq-private-media-ingest-contract && npm run test:work-hq-private-r2-quarantine && npm run test:work-hq-r2-private-preflight && npm run test:work-hq-r2-quota-plan && npm run test:work-hq-r2-object-intent && npm run test:work-hq-r2-d1-batch-plan && npm run test:work-hq-r2-prewrite-evidence && npm run test:work-hq-r2-account-usage && npm run test:work-hq-private-images-sanitizer && npm run test:work-hq-media-budget-gate && npm run test:work-hq-media-registry && npm run test:work-hq-media-registry-sql-plan && npm run test:work-hq-media-0004-readiness && npm run test:work-hq-media-d1-preflight && npm run test:work-hq-inbox-0003-readiness && npm run test:work-hq-0003-recovery-readiness && npm run test:work-hq-inbox-0003-release && npm run test:work-hq-source-cache && npm run test:work-hq-d1-index && npm run test:work-hq-google-source-cache && npm run test:work-hq-write-key && npm run test:work-hq-write-key-stage && npm run test:work-hq-qa-versions && npm run test:work-hq-qa-write-key-probe && npm run test:work-hq-write-release-stage && npm run test:work-hq-navigation-stage && npm run test:work-hq-navigation-activation && npm run test:work-hq-write-release-activation && npm run test:work-hq-merchant-command && npm run test:work-hq-mail-outbox && npm run test:work-hq-ui-rollout && npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary && npm run test:work-canary-runtime-audit && npm run test:work-canary-oauth-manifest && npm run test:work-owner-commissioning
+        run: npm run test:work-qa-read-audit && npm run test:work-hq-branding && npm run test:work-hq-merchant-release && npm run test:jill-private-catalog && npm run test:work-hq-stage-existing-key && npm run test:work-hq-existing-merchant-key && npm run test:work-hq-inbox-rollout && npm run test:work-hq-google-merchant-feed && npm run test:work-merchant-inbox && npm run test:work-hq-master-v4 && npm run test:work-hq-request-detail && npm run test:work-hq-request-auth-stages && npm run test:work-hq-full-request-projection && npm run test:work-hq-google-exact-detail && npm run test:work-hq-qa-detail-stage && npm run test:work-hq-qa-detail-reconcile && npm run test:work-hq-qa-detail-probe && npm run test:work-hq-qa-detail-pin && npm run test:work-hq-detail-v9-stage && npm run test:work-hq-detail-v9-off-release && npm run test:work-hq-detail-v9-on-stage && npm run test:work-hq-detail-v9-on-release && npm run test:work-hq-detail-v9-live-audit && npm run test:work-hq-detail-view && npm run test:work-hq-reference-provenance && npm run test:work-hq-private-media-intent && npm run test:work-hq-private-media-ingest-contract && npm run test:work-hq-private-r2-quarantine && npm run test:work-hq-r2-private-preflight && npm run test:work-hq-r2-quota-plan && npm run test:work-hq-r2-object-intent && npm run test:work-hq-r2-d1-batch-plan && npm run test:work-hq-r2-prewrite-evidence && npm run test:work-hq-r2-account-usage && npm run test:work-hq-private-images-sanitizer && npm run test:work-hq-media-budget-gate && npm run test:work-hq-media-registry && npm run test:work-hq-media-registry-sql-plan && npm run test:work-hq-media-0004-readiness && npm run test:work-hq-media-d1-preflight && npm run test:work-hq-inbox-0003-readiness && npm run test:work-hq-0003-recovery-readiness && npm run test:work-hq-inbox-0003-release && npm run test:work-hq-source-cache && npm run test:work-hq-d1-index && npm run test:work-hq-google-source-cache && npm run test:work-hq-write-key && npm run test:work-hq-write-key-stage && npm run test:work-hq-qa-versions && npm run test:work-hq-qa-write-key-probe && npm run test:work-hq-write-release-stage && npm run test:work-hq-navigation-stage && npm run test:work-hq-navigation-activation && npm run test:work-hq-write-release-activation && npm run test:work-hq-merchant-command && npm run test:work-hq-mail-outbox && npm run test:work-hq-ui-rollout && npm run test:jill-merchant-auth && npm run test:jill-order-desk-home && npm run test:jill-order-desk-work-config && npm run test:work-merchant-runtime-audit && npm run test:jill-shopify-host-wiring && npm run test:jill-shopify-d1-sessions && npm run test:jill-shopify-runtime-composition && npm run test:jill-app-home-scaffold && npm run test:jill-work-owner-setup && npm run test:jill-app-home-canary && npm run test:work-canary-runtime-audit && npm run test:work-canary-oauth-manifest && npm run test:work-owner-commissioning
 
       - name: Verify canonical WORK QA synthetic status write and independent signed readback (OFFLINE)
         run: npm run test:work-hq-phase34-local-status-readback
@@ -307,9 +309,9 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify current 37-file WORK Requests row actions, Messaging, Catalog and Quote source (OFFLINE)
         run: |
-          npm run work:hq:row-disclosure:check
+          npm run work:hq:master-v4:check
           npm run test:work-hq-customer-name
-          npm run test:work-hq-inbox-ui
+          npm run test:work-hq-master-v4
           npm run test:work-hq-archive-search
           npm run test:work-hq-archive-soft-delete
           npm run test:work-message-inboxes
@@ -387,12 +389,10 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Verify WORK row-wide order detail disclosure and independent direct actions (OFFLINE)
+      - name: Certify new Master HQ V4 source and independently scoped editors (OFFLINE)
         run: |
-          npm run work:hq:row-disclosure:check
-          npm run test:work-hq-row-disclosure
-          npm run test:work-hq-row-disclosure-runtime
-          npm run work:hq:row-disclosure:runtime:check
+          npm run work:hq:master-v4:check
+          npm run test:work-hq-master-v4
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
@@ -457,3 +457,33 @@ jobs:
             git status --short
             exit 1
           fi
+
+  frozen_hq_v3:
+    name: Verify historical Requests release snapshot (OFFLINE)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Fetch full WORK Git history for prior source receipts
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Node 22 for historical pure-source guards
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original source without changing any spent receipt
+        env:
+          FROZEN_HQ_COMMIT: c47d081a868731e75ba8ab36736c5a15c4a70605
+        run: |
+          set -euo pipefail
+          git clone --local --no-hardlinks . "$RUNNER_TEMP/jill-hq-frozen-v3"
+          cd "$RUNNER_TEMP/jill-hq-frozen-v3"
+          git switch -C jill/rewards-work "$FROZEN_HQ_COMMIT"
+          test "$(git rev-parse HEAD)" = "$FROZEN_HQ_COMMIT"
+          node scripts/work-hq-row-disclosure-edition.mjs
+          node scripts/test-work-hq-inbox-ui.mjs
+          node scripts/test-work-hq-row-disclosure.mjs
+          node scripts/test-work-hq-row-disclosure-runtime-build.mjs
+          node scripts/work-hq-row-disclosure-runtime-build.mjs
+          test -z "$(git status --porcelain --untracked-files=no)"

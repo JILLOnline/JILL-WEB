@@ -6,6 +6,10 @@ import {dateLabel,requestShortId,customerStatusLabel}
   from "../../../inbox-display.mjs";
 import {summarizeMerchantPublicThread}
   from "../../../../../shared/custom-order-message-inbox.mjs";
+import {projectVerifiedConversation}
+  from "../../../../../shared/custom-order-conversation-view.mjs";
+import {reconcileOwnerRequestThread}
+  from "../../../../../shared/work-conversation-inbox-policy.mjs";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
 import "../styles/hq-messages.css";
 import "../styles/request-actions.css";
@@ -56,10 +60,16 @@ export default function WorkMessages(){
     threadRead.data.thread?.submission_id===record.submission_id
     ?threadRead.data.thread:null;
   const canRead=data.conversationEnabled===true;
+  const threadSync=record?reconcileOwnerRequestThread({
+    authorizedRequest:record,thread,
+  }):null;
   let last=null;
-  if(thread){
-    try{last=summarizeMerchantPublicThread(thread,record!.submission_id);}
-    catch{last=null;}
+  let visibleMessages:ReturnType<typeof projectVerifiedConversation>["messages"]=[];
+  if(thread&&threadSync?.state==="verified"){
+    try{
+      last=summarizeMerchantPublicThread(thread,record!.submission_id);
+      visibleMessages=threadSync.conversation!.messages;
+    }catch{last=null;visibleMessages=[];}
   }
   const open=(id:string)=>{
     if(!records.some(item=>item.submission_id===id))return;
@@ -158,7 +168,9 @@ export default function WorkMessages(){
                         ?"Conversation could not be verified. Try selecting the request again."
                         :"Select this request again to load the latest verified timeline."}
                     </p>:last===null?<p role="status">
-                      Conversation could not be verified. No untrusted messages are shown.
+                      {threadSync?.state==="thread_snapshot_stale"
+                        ?"The request has a newer revision. Refresh this conversation."
+                        :"Conversation could not be verified. No untrusted messages are shown."}
                     </p>:<>
                       {last.last_message?<p className="jill-messages__hint">
                         Latest public message from {last.last_message.author==="customer"?"Customer":"JILL"}
@@ -167,8 +179,7 @@ export default function WorkMessages(){
                         No public messages yet. Status events aren't customer replies.
                       </p>}
                       <ol className="jill-messages__timeline">
-                        {thread.timeline.filter(event=>event.kind==="customer_reply"||
-                            event.kind==="merchant_message").map(event=>
+                        {visibleMessages.map(event=>
                           <li key={event.revision}
                             className={event.author==="customer"?"jill-messages__customer":""}>
                             <strong>{event.author==="customer"?"Customer":"JILL"}</strong>
@@ -185,7 +196,11 @@ export default function WorkMessages(){
                           Sending must be acknowledged before it is considered saved.
                         </p>
                         <WorkRequestQuickActions key={record.submission_id}
-                          record={record} enabled={data.controlsEnabled===true}/>
+                          record={record} enabled={data.controlsEnabled===true}
+                          messageOnly onMessageCommitted={()=>{
+                            if(canRead)threadRead.load("/app/requests/thread?"+
+                              new URLSearchParams({submission_id:record.submission_id}));
+                          }}/>
                       </div>
                     </>}
                 </>}

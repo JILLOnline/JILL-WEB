@@ -116,10 +116,8 @@
 }
 .jill-request__fold-chevron{
   display:inline-flex;align-items:center;justify-content:center;
-  flex:none;font-size:18px;line-height:1;
-  transition:transform .16s ease
+  flex:none;min-width:20px;margin-inline-start:auto
 }
-.jill-request__fold[open] .jill-request__fold-chevron{transform:rotate(180deg)}
 .jill-request__fold-body{padding-top:var(--jill-fold-pad)}
 .jill-request__fold .jill-request__source-tag,
 .jill-request__fold .jill-quote__tag{flex:none;max-width:52%;white-space:normal;text-align:center}
@@ -134,3 +132,14 @@
 @media(prefers-reduced-motion:reduce){
   .jill-request__fold-chevron{transition:none}
 }
+
+/* Nested product references use the same end-aligned icon and no native glyph. */
+.jill-request__references>summary{
+  display:flex;align-items:center;gap:8px;list-style:none
+}
+.jill-request__references>summary::-webkit-details-marker{display:none}
+.jill-request__references>summary::marker{content:""}
+.jill-request__references>summary:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+.jill-request__fold>.jill-request__fold-head::marker{content:""}

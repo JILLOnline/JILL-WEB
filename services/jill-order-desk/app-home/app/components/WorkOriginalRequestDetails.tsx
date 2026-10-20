@@ -2,6 +2,7 @@
 // Legacy submissions may include Cloudinary public delivery URLs where
 // reference IDs are expected. Never trust, open or embed them as media.
 import {describeWorkReference} from "../../../work-reference-provenance.mjs";
+import {JillChevronDown} from "./JillChevronDown";
 type Attribute={id:string;label:string;value:string|number|boolean|
   Array<string|number|boolean>};
 type OriginalItem={
@@ -114,7 +115,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
     <summary className="jill-request__fold-head">
       <span className="jill-request__fold-title">Items & personalization</span>
       {details?<span className="jill-request__source-tag">Verified revision {details.revision}</span>:null}
-      <span className="jill-request__fold-chevron" aria-hidden="true">⌄</span>
+      <span className="jill-request__fold-chevron jill-ui__end-chevron" aria-hidden="true"><JillChevronDown/></span>
     </summary>
     <div className="jill-request__fold-body">
     {!details?
@@ -126,7 +127,7 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
             <div>
               <span className="jill-inbox__eyebrow">Item {i+1}</span>
               <h4>{item.title||"Custom item"}</h4>
-              <details className="jill-request__references"><summary>Product references</summary>
+              <details className="jill-request__references"><summary>Product references<span className="jill-ui__end-chevron"><JillChevronDown/></span></summary>
                 <p>Item: {item.item_id}</p>
                 <p>Product: {item.product_id}{item.variant_id?" · Variant: "+item.variant_id:""}</p>
               </details>

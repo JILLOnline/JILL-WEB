@@ -10,6 +10,7 @@ import "../styles/inbox.css";
 import "../styles/request-detail.css";
 import {WorkOrderDetailsContent} from "../components/WorkOriginalRequestDetails";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
+import {JillChevronDown} from "../components/JillChevronDown";
 import "../styles/request-actions.css";
 
 type InboxRecord={
@@ -34,6 +35,8 @@ type InboxModel={
   records:InboxRecord[];
   readOnly:boolean;
   controlsEnabled?:boolean;
+  // Only trusted server auth may eventually populate this field; no role grants here.
+  verifiedRole?:"owner"|"order_manager";
 };
 
 const STATUS_TONE:Record<string,string>={
@@ -80,6 +83,7 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
   type OrderModel=NonNullable<Parameters<typeof WorkOrderDetailsContent>[0]["model"]>;
   const orderDetails=useFetcher<OrderModel>();
   const [detailsOpen,setDetailsOpen]=useState(false);
+  const [editorHost,setEditorHost]=useState<HTMLDivElement|null>(null);
   const cardNode=useRef<HTMLElement|null>(null);
   const requestedId=useRef<string|null>(null);
   // The nine-field canonical list intentionally contains no customer PII.
@@ -145,7 +149,6 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       <span className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
         <span className="jill-inbox__request-id">
           #{requestShortId(item.submission_id)}
-          <span className="jill-inbox__row-chevron" aria-hidden="true">⌄</span>
         </span>
       </span>
       <span className="jill-inbox__cell jill-inbox__cell--status" data-label="Status">
@@ -170,10 +173,21 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       </span>
       </button>
       <div className="jill-inbox__cell jill-inbox__cell--actions" data-label="Actions">
-        <WorkRequestQuickActions record={item} enabled={controlsEnabled} direct/>
+        <WorkRequestQuickActions record={item} enabled={controlsEnabled}
+          direct editorHost={editorHost}/>
         <ArchiveControl item={item} removed={removed}
           enabled={archiveEnabled} onSaved={onArchiveChange}/>
       </div>
+      <button type="button" className="jill-inbox__row-end"
+        aria-label={(detailsOpen?"Hide":"Show")+" order details for request #"+
+          requestShortId(item.submission_id)}
+        aria-expanded={detailsOpen}
+        aria-controls={"jill-inbox-details-"+requestShortId(item.submission_id)}
+        onClick={toggleDetails}>
+        <JillChevronDown/>
+      </button>
+      <div className="jill-inbox__editor-slot" ref={setEditorHost}
+        id={"jill-inbox-editor-"+requestShortId(item.submission_id)}/>
     </div>
     <section className="jill-inbox__order-details"
       id={"jill-inbox-details-"+requestShortId(item.submission_id)}
@@ -271,17 +285,20 @@ export default function WorkMerchantInbox() {
     });
   },[detailSearch.data]);
   const searching=detailSearch.state!=="idle";
+  const accessLabel=data.state==="access_denied"?"REQUEST PERMISSIONS":
+    data.state==="ready"&&data.verifiedRole==="order_manager"?"SELLER":
+    data.state==="ready"?"MANAGEMENT":"ACCESS UNVERIFIED";
   return <s-page heading="JILL HQ — WORK / Custom Orders" inlineSize="large">
     <s-section>
       <main className="jill-inbox" aria-label="JILL HQ Custom Orders">
         <div className="jill-inbox__nav">
           <Link to="/app" className="jill-inbox__back">← Home</Link>
-          <span className="jill-inbox__readonly">WORK · {data.controlsEnabled===true?"MANAGEMENT":"READ ONLY"}</span>
+          <span className="jill-inbox__access-badge">
+            {accessLabel}
+          </span>
         </div>
         <header className="jill-inbox__intro">
-          <p className="jill-inbox__eyebrow">MAKE IT HAPPEN</p>
-          <h2>Requests</h2>
-          <p>Every detail. Every deadline. One place.</p>
+          <h2>REQUESTS</h2>
         </header>
         {data.state==="source_not_connected"
           ? <s-banner tone="warning">
@@ -297,10 +314,6 @@ export default function WorkMerchantInbox() {
                   Merchant inbox access is not authorized for this account.
                 </s-banner>
               : <>
-                  <div className="jill-inbox__source">
-                    <span className="jill-inbox__source-dot" aria-hidden="true"/>
-                    Verified WORK source <span aria-hidden="true">·</span> {data.controlsEnabled===true?"Owner-managed requests":"Read-only snapshot"}
-                  </div>
                   <div className="jill-inbox__stats" aria-label="Inbox overview">
                     <div className="jill-inbox__metric">
                       <span>Active requests</span><strong>{grouped.active.length}</strong>
@@ -350,6 +363,7 @@ export default function WorkMerchantInbox() {
                     </div>
                     <label>
                       Status
+                      <span className="jill-ui__select">
                       <select value={status} onChange={event=>setStatus(event.target.value)}>
                         {(view==="archive"?WORK_ARCHIVE_FILTERS:INBOX_FILTERS)
                           .filter(([value])=>view==="archive"||
@@ -357,14 +371,19 @@ export default function WorkMerchantInbox() {
                           .map(([value,label])=>
                             <option key={value} value={value}>{label}</option>)}
                       </select>
+                      <JillChevronDown/>
+                      </span>
                     </label>
                     <label>
                       Sort
+                      <span className="jill-ui__select">
                       <select value={sort} onChange={event=>setSort(event.target.value)}>
                         <option value="recent">Newest first</option>
                         <option value="oldest">Oldest first</option>
                         <option value="needed">Needed date</option>
                       </select>
+                      <JillChevronDown/>
+                      </span>
                     </label>
                   </div>
                   {search&&search.query===query.trim()?
@@ -390,7 +409,7 @@ export default function WorkMerchantInbox() {
                           <span>Customer</span><span>Request</span>
                           <span>Status</span><span>Stage</span>
                           <span>Needed by</span><span>Submitted</span>
-                          <span>Actions</span>
+                          <span>Actions</span><span aria-hidden="true"/>
                         </div>
                         <div className="jill-inbox__cards">
                           {visible.map((item:InboxRecord)=>

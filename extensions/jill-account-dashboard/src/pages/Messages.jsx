@@ -3,6 +3,8 @@ import {loadWorkCustomerCustomOrders}
   from '../../../../shared/customer-custom-orders.mjs';
 import {projectCustomerMessageInbox}
   from '../../../../shared/custom-order-message-inbox.mjs';
+import {projectVerifiedConversation}
+  from '../../../../shared/custom-order-conversation-view.mjs';
 import {customOrderShortId,customOrderDateTime,customOrderTitle}
   from './custom-order-presentation.mjs';
 import RequestConversation from './RequestConversation.jsx';
@@ -39,6 +41,7 @@ export default function Messages(){
     ?projectCustomerMessageInbox(state.orders):[],[state]);
   const order=state.orders.find(x=>x.submission_id===selected);
   const current=inbox.find(x=>x.submission_id===selected);
+  const visibleConversation=order&&current?projectVerifiedConversation(order):null;
   return <s-stack direction="block" gap="large">
     <s-section>
       <s-stack direction="block" gap="base">
@@ -115,13 +118,11 @@ export default function Messages(){
                 {order.timeline_version!==2?<s-banner tone="info">
                   This older request has status history only.
                   A verified conversation is not available here yet.
-                </s-banner>:order.timeline.filter(event=>event.kind==='merchant_message'||
-                  event.kind==='customer_reply').length===0?
+                </s-banner>:visibleConversation?.messages.length===0?
                   <s-text color="subdued">
                     No messages yet. Request status updates remain in Custom Orders.
                   </s-text>:null}
-                {order.timeline.filter(event=>event.kind==='merchant_message'||
-                  event.kind==='customer_reply').map(event=>
+                {visibleConversation?.messages.map(event=>
                   <s-box key={event.revision} padding="base" background="subdued"
                     borderRadius="large">
                     <s-stack direction="block" gap="small-100">

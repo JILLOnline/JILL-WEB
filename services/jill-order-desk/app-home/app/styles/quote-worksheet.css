@@ -95,3 +95,37 @@
 .jill-quote__unit-body section p{margin-top:5px}
 .jill-quote__unit-body .jill-quote__unit-warning{
   color:#876029;background:#fff7e8;padding:8px;border-radius:5px}
+
+/* Same end-aligned 14px SVG chevron as Requests and quote fold. */
+.jill-quote__unit-review>summary{
+  display:flex;align-items:center;gap:8px;list-style:none
+}
+.jill-quote__unit-review>summary::-webkit-details-marker{display:none}
+.jill-quote__unit-review>summary::marker{content:""}
+
+/* WORK-only review of why an estimate is not yet a customer quote. */
+.jill-quote__preflight{margin:14px 0;padding:12px;border:1px solid #e5d8ed;
+  border-radius:10px;background:#fbf9fd}
+.jill-quote__preflight h4{margin:0 0 5px;font-size:13px;color:#5a3274}
+.jill-quote__preflight>p{margin:0 0 11px;font-size:11px;color:#756980}
+.jill-quote__preflight ol{list-style:none;display:grid;gap:7px;margin:0;padding:0}
+.jill-quote__preflight li{display:flex;align-items:flex-start;flex-wrap:wrap;gap:7px;
+  padding:7px 9px;border:1px solid #e9e2ef;border-radius:7px;background:#fff;font-size:11px}
+.jill-quote__preflight li strong{font-size:10px;white-space:nowrap;color:#6f5584}
+.jill-quote__preflight li[data-state="hold"] strong{color:#98642f}
+.jill-quote__preflight li[data-state="clear"] strong{color:#31784c}
+@media(max-width:540px){.jill-quote__preflight li{flex-direction:column;gap:3px}}
+
+/* Authenticated Owner-only reversible per-unit quote review. NO commerce. */
+.jill-quote__unit-plan{margin:12px 0;padding:12px;border:1px solid #e1d7ed;
+ border-radius:10px;background:#fbf9fe}
+.jill-quote__unit-plan h4{font-size:13px;font-weight:780;margin:0 0 5px;color:#5b337b}
+.jill-quote__unit-plan p{font-size:11px;line-height:1.45;color:#756683;margin:0 0 8px}
+.jill-quote__unit-plan ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.jill-quote__unit-plan li{display:grid;grid-template-columns:70px 110px minmax(0,1fr);
+ align-items:center;gap:8px;padding:7px 9px;border:1px solid #ebe4f0;
+ border-radius:7px;background:#fff;font-size:11px}
+.jill-quote__unit-plan li strong{color:#51346b}
+.jill-quote__unit-plan li small{overflow-wrap:anywhere;color:#786a84}
+@media(max-width:520px){.jill-quote__unit-plan li{grid-template-columns:1fr 1fr}
+ .jill-quote__unit-plan li small{grid-column:1/-1}}

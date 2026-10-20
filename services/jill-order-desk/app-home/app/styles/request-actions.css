@@ -74,11 +74,8 @@
   outline:3px solid var(--jill-focus);outline-offset:3px
 }
 .jill-actions__menu-chevron{
-  display:inline-block;font-size:12px;font-weight:700;line-height:1;
-  opacity:.92;transition:transform .16s ease
-}
-.jill-actions__quick-menu details[open] .jill-actions__menu-chevron{
-  transform:rotate(180deg)
+  display:inline-flex;align-items:center;justify-content:center;
+  opacity:.92;margin-inline-start:auto
 }
 .jill-actions__menu-options{
   display:grid;gap:3px;box-sizing:border-box;

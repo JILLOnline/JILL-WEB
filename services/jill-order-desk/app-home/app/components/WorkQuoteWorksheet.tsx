@@ -4,6 +4,7 @@
 // No Shopify Draft Order, customer notice, R2 or payment action.
 import {useEffect,useRef,useState} from "react";
 import {useFetcher} from "react-router";
+import {JillChevronDown} from "./JillChevronDown";
 import {evaluateWorkQuoteWorksheet,formatWorkUsd}
   from "../../../work-quote-worksheet.mjs";
 import {hydrateVerifiedWorkQuoteWorksheet}
@@ -12,6 +13,10 @@ import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
   from "../../../work-quote-ui-payload.mjs";
 import {inspectWorkQuoteUnitReview}
   from "../../../work-quote-unit-review.mjs";
+import {inspectWorkQuotePreflight}
+  from "../../../work-quote-preflight-view.mjs";
+import {inspectWorkQuoteUnitLinePlan}
+  from "../../../work-quote-unit-line-plan.mjs";
 import "../styles/quote-worksheet.css";
 
 type QuoteValue=string|number|boolean|Array<string|number|boolean>;
@@ -61,7 +66,7 @@ function WorkQuoteUnitReview({item}:{item:QuoteItem}){
   const showValue=(v:QuoteValue)=>Array.isArray(v)?v.map(String).join(", "):
     typeof v==="boolean"?(v?"Yes":"No"):String(v);
   return <details className="jill-quote__unit-review">
-    <summary>Unit &amp; P1/P2 review · Qty {item.quantity}</summary>
+    <summary>Unit &amp; P1/P2 review · Qty {item.quantity}<span className="jill-ui__end-chevron"><JillChevronDown/></span></summary>
     {review.state==="held"
       ?<p role="status">Unit allocations need verification ({review.reason}).
         No per-unit pricing or Shopify invoice is authorized.</p>
@@ -217,6 +222,10 @@ export function WorkQuoteWorksheet({
     unitPrice:prices[item.item_id]??"",
   }));
   const quote=evaluateWorkQuoteWorksheet({lines,fees});
+  const preflight=inspectWorkQuotePreflight({
+    submissionId,detail,sourceRevision,worksheet:quote,
+  });
+  const unitPlan=inspectWorkQuoteUnitLinePlan({detail,lines});
   const readyQuote=quote.state==="ready"?
     quote as {state:"ready";itemsSubtotalCents:number;
       discountCents:number;manualTaxCents:number;
@@ -260,7 +269,7 @@ export function WorkQuoteWorksheet({
       <span className="jill-quote__tag">
         {restoredActive?"RESTORED DRAFT · NOT SENT":"NOT SAVED · NOT SENT"}
       </span>
-      <span className="jill-request__fold-chevron" aria-hidden="true">⌄</span>
+      <span className="jill-request__fold-chevron jill-ui__end-chevron" aria-hidden="true"><JillChevronDown/></span>
     </summary>
     <div className="jill-request__fold-body">
     {!detail
@@ -334,6 +343,38 @@ export function WorkQuoteWorksheet({
                 : ERROR[quote.code]??"The quote cannot be calculated."}
             </p>}
           </div>
+          <section className="jill-quote__preflight" aria-label="Quote release readiness">
+            <h4>Quote → Customer → Shopify readiness</h4>
+            <p>Estimate and source review only. Nothing below sends a quote,
+              creates an order or invoices a customer.</p>
+            <ol>
+              {preflight.checks.map((check:{
+                id:string;status:"clear"|"hold"|"verify";label:string;
+              })=><li key={check.id}
+                data-state={check.status}>
+                <strong>{check.status==="clear"?"Reviewed":
+                  check.status==="hold"?"Needs work":"Verification required"}</strong>
+                <span>{check.label}</span>
+              </li>)}
+            </ol>
+          </section>
+          <section className="jill-quote__unit-plan"
+            aria-label="Personalization unit mapping review">
+            <h4>P1/P2 + variants · review only</h4>
+            {unitPlan.state!=="review_only"?
+              <p role="status">Unit mapping held ({unitPlan.reason}).
+                Review original variant IDs, P1/P2 allocations and references.</p>:<>
+              <p>{unitPlan.unit_count} mapped units across
+                {" "}{unitPlan.variant_count} variant(s). Every personalized
+                unit stays separate. Shopify calculation is NOT authorized.</p>
+              <ul>{unitPlan.units.map(unit=><li
+                key={unit.source_item_id+":"+unit.unit_id}>
+                <strong>{unit.unit_id}</strong>
+                <span>{unit.group_id??"Item-wide"}</span>
+                <small>{unit.variant_id}</small>
+              </li>)}</ul>
+            </>}
+          </section>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
               <button type="button" disabled={!canUseDraft||!ready}

@@ -1,0 +1,33 @@
+/* Consistent native-button / details / select disclosure indicator.
+   Icon is decorative; the native interactive element retains its label. */
+.jill-ui__chevron{
+  display:block;width:14px;height:14px;flex:none;
+  color:inherit;transition:transform .16s ease
+}
+.jill-ui__end-chevron{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:none;min-width:20px;min-height:20px;margin-inline-start:auto
+}
+button[aria-expanded="true"] .jill-ui__chevron,
+details[open]>summary .jill-ui__chevron{
+  transform:rotate(180deg)
+}
+.jill-ui__select{
+  position:relative;display:block;min-width:0;width:100%
+}
+.jill-ui__select select{
+  appearance:none;-webkit-appearance:none;
+  background-image:none;width:100%;min-width:0
+}
+.jill-inbox .jill-ui__select select,
+.jill-actions .jill-ui__select select{
+  padding-inline-end:38px
+}
+.jill-ui__select>.jill-ui__chevron{
+  pointer-events:none;position:absolute;
+  right:12px;top:50%;transform:translateY(-50%);
+  color:#70488b
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-ui__chevron{transition:none}
+}

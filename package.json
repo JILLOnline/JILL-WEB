@@ -363,7 +363,9 @@
     "test:work-hq-row-disclosure-release": "node scripts/test-work-hq-row-disclosure-release.mjs",
     "work:hq:row-disclosure:inspect": "node scripts/release-work-hq-row-disclosure-owner.mjs --inspect",
     "work:hq:row-disclosure:release-once": "node scripts/release-work-hq-row-disclosure-owner.mjs --release-once",
-    "work:hq:row-disclosure:restore-once": "node scripts/release-work-hq-row-disclosure-owner.mjs --restore-once"
+    "work:hq:row-disclosure:restore-once": "node scripts/release-work-hq-row-disclosure-owner.mjs --restore-once",
+    "work:hq:master-v4:check": "node scripts/work-hq-master-v4-edition.mjs",
+    "test:work-hq-master-v4": "node scripts/test-work-hq-master-v4.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
