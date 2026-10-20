@@ -99,6 +99,14 @@
 .jill-inbox__card-kicker{
   font-size:11px;letter-spacing:.11em;color:var(--jill-muted);font-weight:760
 }
+.jill-inbox__customer-name{
+  margin:3px 0 1px;max-width:100%;min-width:0;
+  color:#5f4474;font-size:clamp(12px,1.2vw,14px);
+  line-height:1.25;font-weight:710;letter-spacing:-.008em;
+  overflow-wrap:anywhere;word-break:normal;
+  display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:2;line-clamp:2;overflow:hidden
+}
 .jill-inbox__card-heading h3{
   font-size:14px;line-height:1.3;letter-spacing:-.012em;
   font-weight:720;margin:4px 0 5px;overflow-wrap:anywhere
