@@ -303,9 +303,9 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify current 37-file WORK Requests, Messaging, Catalog and P1/P2 quote source (OFFLINE)
+      - name: Verify current 37-file WORK Requests row actions, Messaging, Catalog and Quote source (OFFLINE)
         run: |
-          npm run work:hq:quote-units:check
+          npm run work:hq:row-disclosure:check
           npm run test:work-hq-customer-name
           npm run test:work-hq-inbox-ui
           npm run test:work-hq-archive-search
@@ -385,8 +385,10 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Preserve earlier release receipts and certify current P1/P2 Catalog edition (OFFLINE)
-        run: npm run work:hq:quote-units:check
+      - name: Verify WORK row-wide order detail disclosure and independent direct actions (OFFLINE)
+        run: |
+          npm run work:hq:row-disclosure:check
+          npm run test:work-hq-row-disclosure
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
