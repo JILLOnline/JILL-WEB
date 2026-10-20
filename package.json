@@ -323,6 +323,8 @@
     "test:work-hq-customer-name-package": "node scripts/test-work-hq-customer-name-package.mjs",
     "work:hq:request-card-flow:check": "node scripts/work-hq-request-card-flow-package.mjs",
     "test:work-hq-request-card-flow": "node scripts/test-work-hq-request-card-flow.mjs",
+    "work:hq:archive-search:check": "node scripts/work-hq-archive-search-package.mjs",
+    "test:work-hq-archive-search": "node scripts/test-work-hq-archive-search.mjs",
     "test:work-hq-workspace-layout-draft": "node scripts/test-work-hq-workspace-layout-draft.mjs",
     "test:work-hq-workspace-layout-release": "node scripts/test-work-hq-workspace-layout-release.mjs",
     "work:hq:workspace-layout:inspect": "node scripts/release-work-hq-workspace-layout-owner.mjs --inspect",
