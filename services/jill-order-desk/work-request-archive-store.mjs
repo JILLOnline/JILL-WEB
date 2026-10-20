@@ -15,6 +15,7 @@ async function authorize({request,authenticate,db,action}){
     throw Error('access_denied');
   return grant;
 }
+/** @param {{db?:any}} [options] */
 export async function readWorkRemovedRequestIds({db}={}){
   if(typeof db?.prepare!=='function')throw Error('archive_database_unavailable');
   const result=await db.prepare('SELECT submission_id FROM jill_work_request_archive '+
@@ -24,6 +25,9 @@ export async function readWorkRemovedRequestIds({db}={}){
     throw Error('unverified_archive_rows');
   return result.results.map(row=>row.submission_id);
 }
+/** @param {{request?:Request,enabled?:boolean,
+ * authenticate?:{admin:(request:Request)=>Promise<{session:any}>},
+ * db?:any}} [options] */
 export async function handleWorkArchiveRead({request,enabled=false,
   authenticate,db}={}){
   if(request?.method!=='GET')return respond(405,'method_not_allowed');
@@ -74,6 +78,10 @@ function same(rec,input) {
   return rec?.submission_id===input.submission_id&&rec?.action===input.action&&
     rec?.source_revision===input.source_revision;
 }
+/** @param {{request?:Request,enabled?:boolean,
+ * authenticate?:{admin:(request:Request)=>Promise<{session:any}>},
+ * db?:any,readFreshList?:()=>Promise<any>,
+ * now?:()=>number}} [options] */
 export async function handleWorkArchiveWrite({request,enabled=false,
   authenticate,db,readFreshList,now=Date.now}={}){
   if(request?.method!=='POST')return respond(405,'method_not_allowed');
