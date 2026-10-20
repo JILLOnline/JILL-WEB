@@ -11,9 +11,19 @@ export function summarizePublicOrderThread(order){
   if(!object(order)||!ID.test(order.submission_id||'')||
      !Number.isSafeInteger(order.revision)||order.revision<1||
      order.revision>100||!date(order.updated_at)||
-     order.timeline_version!==2||!Array.isArray(order.timeline)||
-     order.timeline.length>100||order.timeline.length<1)
+     !Array.isArray(order.timeline)||
+     order.timeline.length>100||order.timeline.length<1||
+     (order.timeline_version!==undefined&&order.timeline_version!==2))
     throw Error('unverified_message_thread');
+  // Legacy v1 status-only histories have no author/kind/revision.
+  // Preserve the thread's existence without claiming "no messages" or
+  // manufacturing a sender. Reply remains disabled by existing v2 check.
+  if(order.timeline_version!==2)return Object.freeze({
+    submission_id:order.submission_id,revision:order.revision,
+    status:order.status,updated_at:order.updated_at,
+    timeline_version:1,last_message:null,unread_count:null,
+    read_receipt_verified:false,delivery_verified:false,
+  });
   let prior=0,last=null;
   for(const e of order.timeline){
     if(!object(e)||!Number.isSafeInteger(e.revision)||
@@ -31,7 +41,7 @@ export function summarizePublicOrderThread(order){
   }
   return Object.freeze({submission_id:order.submission_id,
     revision:order.revision,status:order.status,
-    updated_at:order.updated_at,
+    updated_at:order.updated_at,timeline_version:2,
     // No preview of raw private notes, staff events or unverified payloads.
     last_message:last?Object.freeze(last):null,
     unread_count:null,read_receipt_verified:false,
