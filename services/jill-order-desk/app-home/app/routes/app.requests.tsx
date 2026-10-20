@@ -109,7 +109,7 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
           if(!node)return;
           const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
           node.scrollIntoView({block:"start",inline:"nearest",
-            behavior:reduced?"instant":"smooth"});
+            behavior:reduced?"auto":"smooth"});
         });
       }
     }}>
