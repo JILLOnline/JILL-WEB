@@ -27,7 +27,11 @@ assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
 // actions and the existing full-request navigation INSIDE expanded details.
 // The original menu remains available for other HQ consumers.
 const quickActions=readFileSync(base+'components/WorkRequestQuickActions.tsx','utf8');
-assert.match(inbox,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(inbox,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
+assert.match(inbox,/const \[editorHost,setEditorHost\]=useState<HTMLDivElement\|null>\(null\)/);
+assert.match(inbox,/<div className="jill-inbox__editor-slot" ref=\{setEditorHost\}/);
+assert.match(quickActions,/direct&&editorHost&&editorVisible\?createPortal\(/);
+assert.match(quickActions,/aria-controls=\{editorHost\?\.id\}/);
 assert.match(inbox,/className="jill-inbox__row-trigger"/);
 assert.match(inbox,/Open full request/);
 assert.doesNotMatch(inbox,/jill-inbox__open/);
