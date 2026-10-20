@@ -27,15 +27,16 @@ async function readInput(request) {
   if(body.length>1024)throw Error('invalid_search_input');
   const entries=new URLSearchParams(body),v={};
   for(const [k,value] of entries){
-    if(!['q','cursor','snapshot'].includes(k)||Object.hasOwn(v,k))
+    if(!['q','cursor','snapshot','tag'].includes(k)||Object.hasOwn(v,k))
       throw Error('invalid_search_input');
     v[k]=value;
   }
-  if(Object.keys(v).length!==3||
-     !/^[0-9a-f]{64}$|^$/.test(v.snapshot||''))
+  if(Object.keys(v).length!==4||
+     !/^[0-9a-f]{64}$|^$/.test(v.snapshot||'')||
+     !/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/.test(v.tag||''))
     throw Error('invalid_search_input');
   return {q:validateWorkDetailSearch(v.q),cursor:v.cursor,
-    snapshot:v.snapshot};
+    snapshot:v.snapshot,tag:v.tag};
 }
 /** All three delegated reads are injectable for offline security tests. */
 export async function handleWorkRequestDetailSearch({
@@ -93,7 +94,7 @@ export async function handleWorkRequestDetailSearch({
     }
     const next=cursor+page.length;
     return respond(200,'search_page',{
-      matches,scanned:page.length,total:records.length,
+      matches,scanned:page.length,total:records.length,tag:input.tag,
       next_cursor:next<records.length?next:null,
       snapshot:current,
       // No names, emails, phones, addresses, terms, raw details or snippets.
