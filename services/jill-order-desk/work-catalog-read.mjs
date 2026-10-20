@@ -65,7 +65,8 @@ function unique(records){requireValue(new Set(records.map(x=>x.id)).size===recor
 // before inserting it: no raw parser operators, field names, wildcards,
 // parentheses, quotes or escaped constructs can cross this boundary.
 export function workCatalogProductSearch(value){
-  if(typeof value!=='string')throw Error('catalog_search_invalid');
+  if(typeof value!=='string'||/[\x00-\x1f\x7f]/.test(value))
+    throw Error('catalog_search_invalid');
   const input=value.trim().normalize('NFC').replace(/\s+/g,' ');
   if(input.length<2||input.length>64||
      !/^[\p{L}\p{N}][\p{L}\p{N} .,'&-]*$/u.test(input))
@@ -75,6 +76,10 @@ export function workCatalogProductSearch(value){
 const adminUrl=(kind,id)=>'https://admin.shopify.com/store/jill-work/'+kind+'/'+id.split('/').pop();
 function productRecord(p){
   gid(p.id,'Product');label(p.title);
+  requireValue(typeof p.handle==='string'&&/^[a-z0-9][a-z0-9-]*$/.test(p.handle)&&p.handle.length<=255);
+  requireValue(typeof p.vendor==='string'&&p.vendor.length<=255&&
+    typeof p.productType==='string'&&p.productType.length<=255);
+  requireValue(p.totalInventory===null||Number.isSafeInteger(p.totalInventory));
   requireValue(['ACTIVE','DRAFT','ARCHIVED','UNLISTED'].includes(p.status));
   const variants=connection(p.variants,10);
   return {id:p.id,title:p.title,status:p.status,admin_url:adminUrl('products',p.id),
