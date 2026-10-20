@@ -3,6 +3,8 @@ export const WORK_ARCHIVE_STATUSES=Object.freeze(['cancelled','completed']);
 export const WORK_ARCHIVE_VIEWS=Object.freeze(['active','archive']);
 const ARCHIVED=new Set(WORK_ARCHIVE_STATUSES);
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
+/** @param {Array<{submission_id:string,customer_status:string}>} records
+ * @param {{removedIds?:string[]}} [options] */
 export function partitionWorkRequests(records,{removedIds=[]}={}){
   if(!Array.isArray(records)||!Array.isArray(removedIds)||
      records.length>50||removedIds.length>50 ||
@@ -25,6 +27,8 @@ export function partitionWorkRequests(records,{removedIds=[]}={}){
     completed_count:archive.filter(r=>r.customer_status==='completed').length,
   });
 }
+/** @param {{submission_id?:string,customer_status?:string}|undefined} record
+ * @param {string[]} [removedIds] */
 export function archiveReason(record,removedIds=[]){
   if(removedIds.includes(record?.submission_id))return 'Removed';
   if(record?.customer_status==='cancelled')return 'Cancelled';
@@ -35,6 +39,8 @@ export const WORK_ARCHIVE_FILTERS=Object.freeze([
   ['all','All archive records'],['cancelled','Cancelled'],
   ['completed','Completed'],['removed','Removed'],
 ]);
+/** @param {Array<{submission_id:string,customer_status:string}>} records
+ * @param {string} [category] @param {string[]} [removedIds] */
 export function filterArchivedRequests(records,category='all',removedIds=[]){
   if(!WORK_ARCHIVE_FILTERS.some(([v])=>v===category))
     throw Error('invalid_archive_category');
