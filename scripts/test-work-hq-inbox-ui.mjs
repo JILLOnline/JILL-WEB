@@ -90,7 +90,12 @@ assert.match(style,/prefers-reduced-motion/);
 assert.ok(style.includes('.jill-inbox__card'));
 assert.doesNotMatch(landing,/to="\/app\/requests"/);
 assert.doesNotMatch(style,/!important|@import|url\(/i);
-assert.doesNotMatch(route,/onClick=\{[^}]*fetch|fetch\(|useSubmit|action\s*\(|<form|<button\s+type="submit"|window\.location/i);
+// Search and soft-archive actions are intentional new Owner-only routes.
+// They must use the dedicated WORK actions, never direct Google/browser IO.
+assert.match(route,/<form className="jill-inbox__search-form"/);
+assert.match(route,/action:"\/app\/requests\/search"/);
+assert.match(route,/action:"\/app\/requests\/archive"/);
+assert.doesNotMatch(route,/window\.location|SHOPIFY_ACCESS_TOKEN|JILL_SHEET_ID/);
 assert.match(route,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\(item\.submission_id\)\)/);
 const quickActions=readFileSync(
   'services/jill-order-desk/app-home/app/components/WorkRequestQuickActions.tsx','utf8');
