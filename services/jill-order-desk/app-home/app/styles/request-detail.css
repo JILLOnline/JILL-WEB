@@ -80,3 +80,57 @@
 .jill-request__references p{overflow-wrap:anywhere;margin:4px 0}
 
 .jill-request__full-overview--stacked{grid-template-columns:1fr;margin-bottom:0}
+
+/* Full request workspace hierarchy: visible Order details, expandable original
+   items and quote editor. Native details never unmount unsaved quote fields. */
+.jill-workspace__overview>h3{
+  color:var(--jill-plum);font-size:13px;
+  letter-spacing:.035em;font-weight:790;
+  margin:0 0 12px
+}
+.jill-request__fold{
+  --jill-fold-pad:10px
+}
+.jill-request__fold>.jill-request__fold-head{
+  display:flex;align-items:center;gap:9px;
+  margin:calc(-1 * var(--jill-fold-pad));
+  min-height:44px;padding:10px 12px;
+  border-radius:var(--jill-radius);
+  color:var(--jill-plum);
+  background:var(--jill-surface);
+  cursor:pointer;list-style:none;user-select:none
+}
+.jill-request__fold>.jill-request__fold-head::-webkit-details-marker{display:none}
+.jill-request__fold>.jill-request__fold-head:hover{background:var(--jill-soft)}
+.jill-request__fold>.jill-request__fold-head:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+.jill-request__fold[open]>.jill-request__fold-head{
+  border-bottom:1px solid var(--jill-border);
+  border-radius:var(--jill-radius) var(--jill-radius) 0 0
+}
+.jill-request__fold-title{
+  flex:1;min-width:0;
+  font-size:13px;font-weight:780;line-height:1.3;
+  letter-spacing:.01em;color:var(--jill-plum)
+}
+.jill-request__fold-chevron{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:none;font-size:18px;line-height:1;
+  transition:transform .16s ease
+}
+.jill-request__fold[open] .jill-request__fold-chevron{transform:rotate(180deg)}
+.jill-request__fold-body{padding-top:var(--jill-fold-pad)}
+.jill-request__fold .jill-request__source-tag,
+.jill-request__fold .jill-quote__tag{flex:none;max-width:52%;white-space:normal;text-align:center}
+@media(max-width:750px){
+  .jill-request__fold{--jill-fold-pad:13px}
+}
+@media(max-width:420px){
+  .jill-request__fold>.jill-request__fold-head{flex-wrap:wrap}
+  .jill-request__fold-title{flex-basis:100%}
+  .jill-request__fold-chevron{margin-inline-start:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-request__fold-chevron{transition:none}
+}
