@@ -95,7 +95,8 @@ export default function Messages(){
                     onClick={()=>setSelected(item.submission_id)}>
                     {customOrderShortId(item.submission_id)} ·
                     {' '}{customOrderTitle(source?.summary)}
-                    {item.last_message?' · '+(item.last_message.author==='customer'
+                    {item.timeline_version===1?' · Legacy request history'
+                      :item.last_message?' · '+(item.last_message.author==='customer'
                       ?'You':'JILL')+' replied':' · No messages yet'}
                   </s-button>;
                 })}
@@ -111,7 +112,10 @@ export default function Messages(){
                 </s-text>
                 <s-divider/>
                 <s-heading>Conversation</s-heading>
-                {order.timeline.filter(event=>event.kind==='merchant_message'||
+                {order.timeline_version!==2?<s-banner tone="info">
+                  This older request has status history only.
+                  A verified conversation is not available here yet.
+                </s-banner>:order.timeline.filter(event=>event.kind==='merchant_message'||
                   event.kind==='customer_reply').length===0?
                   <s-text color="subdued">
                     No messages yet. Request status updates remain in Custom Orders.
