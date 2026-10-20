@@ -76,7 +76,7 @@ for(const expected of [
 for(const expected of [
   'readOnly:boolean',
   'inboxStats','selectInboxRecords','useMemo','type="search"',
-  'aria-live="polite"','ORDER DETAILS','<details',
+  'aria-live="polite"','ORDER DETAILS','aria-expanded={detailsOpen}',
 ])assert.ok(route.includes(expected),expected);
 assert.match(route,/data\.state==="source_unavailable"/);
 assert.doesNotMatch(route,/loadWorkMerchantInbox|workShopify\(|readWorkGoogleQaMerchantList|export async function loader/);
@@ -88,6 +88,10 @@ assert.match(style,/@media\(max-width:700px\)/);
 assert.match(style,/:focus-visible/);
 assert.match(style,/prefers-reduced-motion/);
 assert.ok(style.includes('.jill-inbox__card'));
+assert.match(style,/--jill-list-cols/);
+assert.match(style,/\.jill-inbox__columns\{/);
+assert.match(style,/grid-template-columns:var\(--jill-list-cols\)/);
+assert.match(style,/@media\(max-width:760px\)/);
 assert.doesNotMatch(landing,/to="\/app\/requests"/);
 assert.doesNotMatch(style,/!important|@import|url\(/i);
 // Search and soft-archive actions are intentional new Owner-only routes.
@@ -103,9 +107,15 @@ const actionStyle=readFileSync(
   'services/jill-order-desk/app-home/app/styles/request-actions.css','utf8');
 // Compact card: one submitted timestamp, no duplicate three-field overview,
 // one prominent uppercase disclosure, and one Owner-scoped primary route link.
-assert.equal((route.match(/Submitted \{dateLabel\(item\.submitted_at/g)||[]).length,1);
+assert.equal((route.match(/dateLabel\(item\.submitted_at\)/g)||[]).length,1);
 assert.doesNotMatch(route,/jill-inbox__facts|jill-inbox__open|Open request/);
-assert.match(route,/<summary>ORDER DETAILS/);
+assert.match(route,/className="jill-inbox__detail-button"/);
+assert.match(route,/aria-controls=\{"jill-inbox-details-"/);
+assert.match(route,/onClick=\{toggleDetails\}/);
+assert.match(route,/<div className="jill-inbox__columns"/);
+assert.match(route,/<div className="jill-inbox__row"/);
+assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
+assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/\{compact\s*\? <div className="jill-actions__quick-menu">/);
 assert.match(quickActions,/<details ref=\{quickMenu\} onKeyDown=/);
 assert.match(quickActions,/<summary>[\s\S]*?QUICK ACTIONS/);
