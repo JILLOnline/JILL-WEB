@@ -106,9 +106,9 @@ held('personalization_exceeds_native_limit',{detail:{...detail,items:[
   {...baseItem,attributes:[{id:'a',label:'Options',value:'x'.repeat(200)},
     {id:'b',label:'Options',value:'y'.repeat(200)},
     {id:'c',label:'Options',value:'z'.repeat(200)}]}]}});
-held('variant_or_personalization_requires_review',{detail:{...detail,items:[
+held('per_unit_or_reference_mapping_required',{detail:{...detail,items:[
   {...baseItem,personalization_groups:[{id:'P1',attributes:[]}]}]}});
-held('variant_or_personalization_requires_review',{detail:{...detail,items:[
+held('per_unit_or_reference_mapping_required',{detail:{...detail,items:[
   {...baseItem,reference_ids:['ref:1']}]}});
 held('unmapped_order_instructions',{detail:{...detail,
   request_attributes:[{id:'notes',value:'Gift wrap'}]}});
