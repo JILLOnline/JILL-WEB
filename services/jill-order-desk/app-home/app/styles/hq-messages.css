@@ -1,0 +1,49 @@
+/* WORK HQ Messages: one authenticated request list and selected public timeline.
+   Normal page flow, no Shopify iframe/body scroll manipulation. */
+.jill-messages{width:100%;min-width:0;max-width:100%;color:var(--jill-ink)}
+.jill-messages__intro{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.jill-messages__intro h2{margin:0 0 4px;font-size:20px}
+.jill-messages__intro p,.jill-messages__conversation-head p{margin:0;color:var(--jill-muted)}
+.jill-messages__work{font-size:11px;font-weight:800;color:#795b2e;background:#fcf5e6;
+  border:1px solid #e8dab7;border-radius:999px;padding:4px 9px}
+.jill-messages__notice{padding:12px;background:#fff8e9;border:1px solid #e8d6aa;
+  border-radius:9px;color:#785b28}
+.jill-messages__hint{color:var(--jill-muted);font-size:12px;margin:8px 0 12px}
+.jill-messages__layout{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(0,2fr);
+  align-items:start;gap:12px;min-height:0}
+.jill-messages__threads{display:grid;gap:5px;border:1px solid var(--jill-border);
+  background:#faf7fc;border-radius:10px;padding:8px;min-width:0}
+.jill-messages__thread{display:grid;gap:4px;width:100%;min-width:0;min-height:62px;
+  text-align:left;padding:10px;border:1px solid transparent;border-radius:8px;
+  color:var(--jill-ink);background:#fff;cursor:pointer}
+.jill-messages__thread strong{font-size:13px;overflow-wrap:anywhere}
+.jill-messages__thread span{font-size:12px;color:#704c8e}
+.jill-messages__thread small{font-size:11px;color:var(--jill-muted)}
+.jill-messages__thread:hover,.jill-messages__thread--active{
+  border-color:#ab7bc9;background:#f2e8f9}
+.jill-messages__conversation{border:1px solid var(--jill-border);background:#fff;
+  border-radius:10px;padding:13px;min-width:0;min-height:200px}
+.jill-messages__placeholder{color:var(--jill-muted);padding:15px}
+.jill-messages__conversation-head{display:flex;justify-content:space-between;
+  align-items:start;flex-wrap:wrap;gap:10px;margin-bottom:14px;
+  border-bottom:1px solid var(--jill-border);padding-bottom:11px}
+.jill-messages__conversation-head h3{font-size:15px;margin:0 0 4px}
+.jill-messages__conversation-head a{font-weight:750;color:var(--jill-plum)}
+.jill-messages__timeline{list-style:none;padding:0;display:grid;gap:10px;
+  margin:11px 0 17px}
+.jill-messages__timeline li{max-width:min(100%,620px);padding:11px;
+  border-radius:10px;border:1px solid #e7def0;background:#f8f4fb;overflow-wrap:anywhere}
+.jill-messages__timeline li.jill-messages__customer{background:#f0f6fc;
+  border-color:#d7e7f5;margin-left:auto}
+.jill-messages__timeline strong{font-size:12px;margin-right:10px}
+.jill-messages__timeline time{font-size:11px;color:var(--jill-muted)}
+.jill-messages__timeline p{white-space:pre-wrap;margin:7px 0 0}
+.jill-messages__reply{padding-top:10px;border-top:1px solid var(--jill-border)}
+.jill-messages__reply h3{font-size:14px;margin:0 0 7px}
+@media(max-width:760px){
+  .jill-messages__layout{grid-template-columns:minmax(0,1fr)}
+  .jill-messages__thread{min-height:52px}
+  .jill-messages__conversation{min-height:120px}
+}
+@media(pointer:coarse){.jill-messages__thread{min-height:44px}}
