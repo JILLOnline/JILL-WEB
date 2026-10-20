@@ -35,3 +35,35 @@
 .jill-request .jill-actions{background:transparent;padding:0;border:0}
 @media(max-width:700px){.jill-actions{padding:10px 11px}
   .jill-actions__body{grid-template-columns:1fr}}
+
+/* Inbox-only pill treatment. Workspace actions keep their existing layout. */
+.jill-actions--compact .jill-actions__heading strong{
+  display:inline-flex;align-items:center;border-radius:999px;
+  padding:4px 11px;border:1px solid #e3d9eb;background:#f3edf7;
+  color:var(--jill-plum);font-size:11px;font-weight:790;
+  letter-spacing:.065em;text-transform:uppercase
+}
+.jill-actions--compact .jill-actions__tabs{align-items:center;gap:7px}
+.jill-actions--compact .jill-actions__tabs button,
+.jill-actions--compact .jill-actions__open-link{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  min-height:var(--jill-control-height);padding:6px 12px;
+  border-radius:999px;font-size:12px;line-height:1.2;text-decoration:none
+}
+.jill-actions--compact .jill-actions__open-link{
+  margin-inline-start:auto;border:1px solid var(--jill-plum);
+  background:var(--jill-plum);color:#fff;font-weight:740;white-space:nowrap
+}
+.jill-actions--compact .jill-actions__open-link:hover{
+  background:#4d1f70;text-decoration:none
+}
+.jill-actions--compact .jill-actions__open-link:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+@media(max-width:700px){
+  .jill-actions--compact .jill-actions__tabs button,
+  .jill-actions--compact .jill-actions__open-link{min-height:44px}
+}
+@media(max-width:380px){
+  .jill-actions--compact .jill-actions__open-link{width:100%;margin-inline-start:0}
+}
