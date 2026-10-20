@@ -191,7 +191,7 @@ export default function WorkMerchantInbox() {
   const removedSet=useMemo(()=>new Set(removedIds),[removedIds]);
   const grouped=useMemo(()=>partitionWorkRequests(data.records,{removedIds}),
     [data.records,removedIds]);
-  const stats=useMemo(()=>inboxStats(data.records),[data.records]);
+  const stats=useMemo(()=>inboxStats(grouped.active),[grouped.active]);
   const selected=useMemo(()=>{
     if(view==="active")return grouped.active;
     if(view==="archive")return grouped.archive;
@@ -367,7 +367,7 @@ export default function WorkMerchantInbox() {
                             onArchiveChange={()=>setArchiveRefresh(n=>n+1)}/>)}
                       </div>
                     : <div className="jill-inbox__empty" role="status">
-                        {stats.total===0
+                        {data.records.length===0
                           ? "No requests were returned by the verified source."
                           : view==="archive"&&grouped.archive.length===0
                             ? "No archived requests yet. Cancelled and completed orders will appear here."
