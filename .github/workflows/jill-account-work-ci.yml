@@ -287,12 +287,10 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify centered Quick Actions dropdown and frozen isolated UI overlay (OFFLINE)
-        run: npm run test:work-hq-quick-pill
-      - name: Verify polished Quick Actions disclosure is held for a later release (OFFLINE)
+      - name: Verify WORK request workspace layout and frozen 13-file UI draft (OFFLINE)
         run: |
-          npm run work:hq:quick-pill:polish:check
-          npm run test:work-hq-quick-pill-polish-hold
+          npm run work:hq:workspace-layout:check
+          npm run test:work-hq-workspace-layout-draft
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
@@ -367,8 +365,8 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Verify WORK Order details release boundaries
-        run: npm run test:work-hq-order-details-release
+      - name: Prevent reuse of spent Order details releases after workspace UI changes (OFFLINE)
+        run: npm run test:work-hq-workspace-layout-draft
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
