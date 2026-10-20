@@ -113,7 +113,7 @@ reply=page('inventory',[{id:'gid://shopify/ProductVariant/221',
   inventoryItem:{id:'gid://shopify/InventoryItem/501',tracked:true,
     inventoryLevels:{nodes:[{location:{id:locations[0].id,name:'WORK shop'},
       quantities:[{name:'available',quantity:7}]}],
-      pageInfo:{hasNextPage:false,endCursor:null}}}]);
+      pageInfo:{hasNextPage:false,endCursor:null}}}}]);
 response=await run('?view=inventory');json=await response.json();
 assert.equal(json.records[0].locations[0].available,7);
 assert.equal(json.capacity_state,'not_measured');
