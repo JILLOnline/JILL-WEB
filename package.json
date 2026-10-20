@@ -290,6 +290,8 @@
     "work:hq:quote-units:check": "node scripts/work-hq-quote-units-edition.mjs",
     "work:hq:row-disclosure:check": "node scripts/work-hq-row-disclosure-edition.mjs",
     "test:work-hq-row-disclosure": "node scripts/test-work-hq-row-disclosure.mjs",
+    "test:work-hq-row-disclosure-runtime": "node scripts/test-work-hq-row-disclosure-runtime-build.mjs",
+    "work:hq:row-disclosure:runtime:check": "node scripts/work-hq-row-disclosure-runtime-build.mjs",
     "test:work-gateway-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare",
     "test:work-hq-quote-agreement-local": "npm run test:workerd-quote-agreement-local --prefix services/jill-order-desk/app-home",
     "work:gateway:empty-post:inspect": "node scripts/release-work-gateway-diagnostic-owner.mjs --inspect",
