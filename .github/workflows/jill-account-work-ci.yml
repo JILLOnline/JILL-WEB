@@ -287,10 +287,11 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify WORK request workspace layout and frozen 13-file UI draft (OFFLINE)
+      - name: Verify WORK request workspace layout and fresh one-use WORK release (OFFLINE)
         run: |
           npm run work:hq:workspace-layout:check
           npm run test:work-hq-workspace-layout-draft
+          npm run test:work-hq-workspace-layout-release
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
