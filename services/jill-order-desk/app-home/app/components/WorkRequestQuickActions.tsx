@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from "react";
-import {useFetcher,useRevalidator} from "react-router";
+import {Link,useFetcher,useRevalidator} from "react-router";
 import {
   WORK_INTERNAL_STAGES,WORK_STATUS_TRANSITIONS,
 } from "../../../merchant-command-contract.mjs";
@@ -95,6 +95,10 @@ export function WorkRequestQuickActions({
         aria-expanded={panel==="status"}>Update status</button>
       <button type="button" onClick={()=>setPanel(panel==="message"?null:"message")}
         aria-expanded={panel==="message"}>Message customer</button>
+      {compact&&<Link className="jill-actions__open-link"
+        to={"/app/requests/"+encodeURIComponent(record.submission_id)}>
+        Open request <span aria-hidden="true">→</span>
+      </Link>}
     </div>
     {panel==="status"&&<div className="jill-actions__body">
       <label>Customer status
