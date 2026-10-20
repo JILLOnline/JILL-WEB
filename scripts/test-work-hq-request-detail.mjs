@@ -23,7 +23,16 @@ assert.match(routes,/route\(":submissionId","routes\/app\.requests\.\$submission
 assert.match(routes,/route\("requests\/command","routes\/app\.requests\.command\.tsx"\)/);
 assert.match(inbox,/useRouteLoaderData\("routes\/app\.requests\.layout"\)/);
 assert.match(inbox,/encodeURIComponent\(item\.submission_id\)/);
-assert.match(inbox,/Open request/);
+// The existing "Open request" navigation now belongs to the compact shared
+// Quick Actions component, not an isolated inbox card footer.
+const quickActions=readFileSync(base+'components/WorkRequestQuickActions.tsx','utf8');
+assert.match(inbox,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
+assert.doesNotMatch(inbox,/Open request|jill-inbox__open/);
+assert.match(quickActions,/\{compact&&<Link className="jill-actions__open-link"/);
+assert.match(quickActions,/to=\{"\/app\/requests\/"\+encodeURIComponent\(record\.submission_id\)\}/);
+assert.match(quickActions,/Open request <span aria-hidden="true">→<\/span>/);
+assert.match(quickActions,/import \{Link,useFetcher,useRevalidator\} from "react-router"/);
+assert.match(quickActions,/action:"\/app\/requests\/command"/);
 const source=readFileSync(base+'routes/app.requests-source.server.ts','utf8');
 assert.match(layout,/import \{loadVerifiedMerchantInbox\} from\s*".\/app.requests-source.server"/);
 assert.match(layout,/await loadVerifiedMerchantInbox\(args\)/);
