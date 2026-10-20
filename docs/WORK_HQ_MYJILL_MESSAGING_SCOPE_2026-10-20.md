@@ -13,7 +13,7 @@
 
 ## What is done vs. what is held
 
-**Source work present now:** two inbox screens; the same canonical thread summary; responsive HQ messages UI; existing customer reply composer; navigation on both sides; privacy/identity/legacy tests; no new backends, flags, accounts, or commerce actions.
+**Source work present now:** two inbox screens; the same canonical thread summary; responsive HQ messages UI with a request-ID/status filter and explicit authenticated thread refresh; rejection of misattributed message authors; existing customer reply composer; navigation on both sides; privacy/identity/legacy tests; no new backends, flags, accounts, or commerce actions. The current reviewed, **unreleased** 32-file source edition is guarded by `work:hq:messaging:check`; historical compact-row release files and spent receipts are unchanged.
 
 **Not enabled or proven in running Shopify:** The existing WORK conversation feature flag remains OFF in the current ordinary HQ runtime; Google WORK signed response path and customer reply gate require separate reviewed activation. The new extension UI is not deployed to Shopify. Visual/functional tests need authenticated HQ Owner and Customer A/B accounts; message lost-ack/retry/duplicate tests must pass for both.
 
@@ -28,3 +28,7 @@
 5. Only after WORK authenticated visual QA and fail-closed tests, consider a separately approved LIVE promotion.
 
 **Operating target:** HQ messages inbox ↔ My JILL customer messages ↔ canonical custom-order timeline ↔ quote/approval/invoice event links ↔ Shopify order source. No separate chat silo.
+
+## Additional WORK quote handoff progress (still NOT an invoice)
+
+`work-quote-personalization-map.mjs` now supports exactly reversible, bounded **item-wide** custom attributes (`id`, `label`, typed `value`) serialized under `JILL:v1:` and passed through Shopify's existing single `JILL personalization` custom attribute. Original character spelling, language, booleans, arrays and source order are retained; unknown fields, oversized content, duplicate IDs and control characters cause fail-closed outcomes. `work-quote-commerce-handoff.mjs` refuses to produce a calculation intent for P1/P2 per-unit groups, reference attachments, request-wide instructions, additional fees, manual tax and discounts. Native Shopify totals, delivery address, merchant approval, customer acceptance, invoice and order creation are still separate unapproved actions. The quote adapter is **not connected to an HTTP route**.
