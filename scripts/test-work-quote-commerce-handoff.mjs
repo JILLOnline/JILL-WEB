@@ -6,6 +6,8 @@ import {inspectWorkQuoteCommerceHandoff as inspect}
   from '../services/jill-order-desk/work-quote-commerce-handoff.mjs';
 import {prepareWorkQuoteCalculation}
   from '../services/jill-order-desk/work-quote-calculation.mjs';
+import {mapSimpleWorkItemPersonalization,decodeSimpleWorkItemPersonalization}
+  from '../services/jill-order-desk/work-quote-personalization-map.mjs';
 
 const ID='jill:synthetic-request-00000001';
 const baseItem={item_id:'item:synthetic-1',title:'Synthetic favor kit',
@@ -65,8 +67,45 @@ held('native_line_limit',{detail:{...detail,items:Array.from({length:21},(_,i)=>
 }))}});
 held('variant_or_personalization_requires_review',{detail:{...detail,items:[
   {...baseItem,variant_id:'not-a-Shopify-variant'}]}});
-held('variant_or_personalization_requires_review',{detail:{...detail,items:[
-  {...baseItem,attributes:[{id:'theme',value:'Ocean'}]}]}});
+const itemWide=[{id:'theme',label:'Party theme',value:'Océano y sirenas'},
+  {id:'name',label:'Name',value:'Lucía'},
+  {id:'pull_string',label:'Pull-string?',value:true},
+  {id:'colors',label:'Colors',value:['red','purple']}];
+const originalWithOptions={...baseItem,attributes:itemWide};
+const customization=get({detail:{...detail,items:[originalWithOptions]}});
+assert.equal(customization.state,'ready_for_shopify_calculation');
+const options=customization.calculation_intent.lines[0].options;
+assert.match(options,/^JILL:v1:/);
+assert.deepEqual(decodeSimpleWorkItemPersonalization(options),itemWide);
+const native=prepareWorkQuoteCalculation(customization.calculation_intent);
+assert.deepEqual(native.variables.input.lineItems[0].customAttributes,
+  [{key:'JILL personalization',value:options}]);
+assert.equal(native.variables.input.lineItems[0].priceOverride.amount,'23.50');
+assert.equal(mapSimpleWorkItemPersonalization({
+  ...baseItem,attributes:[]}).options,'');
+const enc=mapSimpleWorkItemPersonalization(originalWithOptions);
+assert.equal(enc.options,options);
+for(const changed of [
+  [{id:'a',label:'',value:'X'},{id:'a',label:'',value:'Y'}],
+  [{id:'a',label:'',value:{untrusted:'x'}}],
+  [{id:'a',label:'',value:'a'.repeat(501)}],
+  [{id:'a',label:'X\\nY',value:'foo'}],
+  [{id:'a',label:'',value:['a',...Array(12).fill('b')]}],
+  [{id:'a',label:'',value:1.5}],
+]){
+  assert.equal(mapSimpleWorkItemPersonalization({
+    ...baseItem,attributes:changed}).state,'held');
+}
+for(const bad of ['JILL:v1:[]','JILL:v1:[["a","",1.2]]',
+  'JILL:v1:[["a","",true],["a","",false]]','JILL:v1:malformed']){
+  assert.throws(()=>decodeSimpleWorkItemPersonalization(bad));
+}
+held('unverified_item_personalization',{detail:{...detail,items:[
+  {...baseItem,attributes:[{id:'a',label:'',value:{opaque:'X'}}]}]}});
+held('personalization_exceeds_native_limit',{detail:{...detail,items:[
+  {...baseItem,attributes:[{id:'a',label:'Options',value:'x'.repeat(200)},
+    {id:'b',label:'Options',value:'y'.repeat(200)},
+    {id:'c',label:'Options',value:'z'.repeat(200)}]}]}});
 held('variant_or_personalization_requires_review',{detail:{...detail,items:[
   {...baseItem,personalization_groups:[{id:'P1',attributes:[]}]}]}});
 held('variant_or_personalization_requires_review',{detail:{...detail,items:[
@@ -100,6 +139,7 @@ for(const forbidden of [/fetch\(/,/graphql\(/,/draftOrderCreate/,/draftOrderInvo
   /db\.prepare/,/console\./,/localStorage/,/sessionStorage/,/process\.env/])
   assert.doesNotMatch(src,forbidden);
 assert.match(src,/hydrateVerifiedWorkQuoteWorksheet/);
+assert.match(src,/mapSimpleWorkItemPersonalization/);
 assert.match(src,/prepareWorkQuoteCalculation/);
 assert.doesNotMatch(src,/customer\.email|return new Response/);
-console.log('PASS WORK quote handoff: verified draft prices to native Shopify calculation, incomplete personalization/fees/address/tax/discount fail closed, no invoice or create, no route or remote mutations.');
+console.log('PASS WORK quote handoff: lossless bounded item-wide customizations to native Shopify customAttribute, verified draft prices; complex P1/P2, references, fees/tax/discount/address held; no invoice/create/network.');
