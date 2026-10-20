@@ -389,6 +389,8 @@ jobs:
         run: |
           npm run work:hq:row-disclosure:check
           npm run test:work-hq-row-disclosure
+          npm run test:work-hq-row-disclosure-runtime
+          npm run work:hq:row-disclosure:runtime:check
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
