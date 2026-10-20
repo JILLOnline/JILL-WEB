@@ -6,6 +6,8 @@ import {hydrateVerifiedWorkQuoteWorksheet}
   from './work-quote-restore-model.mjs';
 import {prepareWorkQuoteCalculation}
   from './work-quote-calculation.mjs';
+import {mapSimpleWorkItemPersonalization}
+  from './work-quote-personalization-map.mjs';
 
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const VARIANT=/^gid:\/\/shopify\/ProductVariant\/[1-9][0-9]*$/;
@@ -23,10 +25,10 @@ function toCents(x){
   const n=Number(a)*100+Number(b);
   return Number.isSafeInteger(n)&&n>=0&&n<=100000000?n:null;
 }
-/** A deliberately narrow bridge: only exact, native single-variant,
- * non-personalized, zero-custom-fee quotes can proceed to an authoritative
- * Shopify calculation. All other cases require an explicit merchant mapping,
- * NOT silently dropped invoice fields.
+/** A deliberately narrow bridge: exact single-variant items with
+ * losslessly mapped *item-wide* attributes and zero extra custom fees can
+ * proceed to an authoritative Shopify calculation. P1/P2, attachments and
+ * request-wide instructions still require a separately reviewed mapping.
  *
  * No component/browser may call this directly with untrusted data. There is
  * intentionally no HTTP consumer until the source/permission gates are wired.
@@ -54,11 +56,13 @@ export function inspectWorkQuoteCommerceHandoff({
   if(!empty(detail.request_attributes)||!empty(detail.reference_ids)||
      !empty(detail.planning.attributes))
     return hold('unmapped_order_instructions');
+  const optionsByItem=[];
   for(const item of detail.items){
-    if(!obj(item)||!VARIANT.test(item.variant_id||'')||
-       !empty(item.attributes)||!empty(item.personalization_groups)||
-       !empty(item.reference_ids))
+    if(!obj(item)||!VARIANT.test(item.variant_id||''))
       return hold('variant_or_personalization_requires_review');
+    const mapped=mapSimpleWorkItemPersonalization(item);
+    if(mapped.state!=='mapped')return hold(mapped.reason);
+    optionsByItem.push(mapped.options);
     const allocations=item.variant_allocations;
     if(!Array.isArray(allocations)||
       !(allocations.length===0||
@@ -90,7 +94,7 @@ export function inspectWorkQuoteCommerceHandoff({
   const lines=detail.items.map((item,i)=>({
     variant_id:item.variant_id,quantity:item.quantity,
     unit_price_cents:toCents(draft.lines[i].unitPrice),
-    options:'',
+    options:optionsByItem[i],
   }));
   if(lines.some(x=>x.unit_price_cents===null))
     return hold('quote_money_unverified');
