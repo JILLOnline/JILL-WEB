@@ -312,7 +312,9 @@
     "test:work-hq-inbox-polish-release": "node scripts/test-work-hq-inbox-polish-release.mjs",
     "work:hq:inbox-polish:inspect": "node scripts/release-work-hq-inbox-polish-owner.mjs --inspect",
     "work:hq:inbox-polish:release-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --release-once",
-    "work:hq:inbox-polish:restore-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --restore-once"
+    "work:hq:inbox-polish:restore-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --restore-once",
+    "work:hq:quick-pill:check": "node scripts/work-hq-quick-pill-package.mjs",
+    "test:work-hq-quick-pill": "node scripts/test-work-hq-quick-pill.mjs"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
