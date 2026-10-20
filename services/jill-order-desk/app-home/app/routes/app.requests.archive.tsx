@@ -7,12 +7,16 @@ import {handleWorkArchiveRead,handleWorkArchiveWrite}
 import {readWorkGoogleQaMerchantList}
   from "../../../work-google-merchant-read.mjs";
 
-function archiveEnabled(env:Record<string,unknown>) {
+function archiveEnabled(env:{
+  JILL_WORK_HOST_STAGE?:string;JILL_WORK_HQ_ARCHIVE_ENABLED?:string;
+}) {
   return env.JILL_WORK_HOST_STAGE==="canary" &&
     env.JILL_WORK_HQ_ARCHIVE_ENABLED==="true";
 }
 export async function loader({request,context}:LoaderFunctionArgs){
-  const env=context.cloudflare.env;
+  const env=context.cloudflare.env as typeof context.cloudflare.env & {
+    JILL_WORK_HQ_ARCHIVE_ENABLED?:string;
+  };
   return handleWorkArchiveRead({
     request,enabled:archiveEnabled(env),
     authenticate:workShopify(env).authenticate,
@@ -20,7 +24,9 @@ export async function loader({request,context}:LoaderFunctionArgs){
   });
 }
 export async function action({request,context}:ActionFunctionArgs){
-  const env=context.cloudflare.env;
+  const env=context.cloudflare.env as typeof context.cloudflare.env & {
+    JILL_WORK_HQ_ARCHIVE_ENABLED?:string;
+  };
   return handleWorkArchiveWrite({
     request,enabled:archiveEnabled(env),
     authenticate:workShopify(env).authenticate,
