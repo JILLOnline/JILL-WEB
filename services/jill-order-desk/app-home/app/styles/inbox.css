@@ -126,7 +126,9 @@
 }
 /* A disclosed card owns an entire grid row, so later cards and the page
    flow below the expanded content instead of leaving hollow short columns. */
-.jill-inbox__card--expanded{
+.jill-inbox__card--expanded,
+.jill-inbox__card:has(.jill-actions__quick-menu details[open]),
+.jill-inbox__card:has(.jill-actions__body){
   grid-column:1/-1;
   height:auto;max-height:none
 }
