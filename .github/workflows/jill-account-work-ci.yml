@@ -296,6 +296,7 @@ jobs:
           npm run test:work-hq-archive-soft-delete
           npm run work:hq:table-rows:runtime:check
           npm run test:work-hq-table-rows
+          npm run test:work-hq-table-rows-release
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
