@@ -307,7 +307,12 @@
     "test:work-hq-order-details-release": "node scripts/test-work-hq-order-details-release.mjs",
     "work:hq:order-details:release-once": "node scripts/release-work-hq-order-details-owner.mjs --release-once",
     "work:hq:order-details:inspect": "node scripts/release-work-hq-order-details-owner.mjs --inspect",
-    "work:hq:order-details:restore-once": "node scripts/release-work-hq-order-details-owner.mjs --restore-once"
+    "work:hq:order-details:restore-once": "node scripts/release-work-hq-order-details-owner.mjs --restore-once",
+    "work:hq:inbox-polish:check": "node scripts/work-hq-inbox-polish-package.mjs",
+    "test:work-hq-inbox-polish-release": "node scripts/test-work-hq-inbox-polish-release.mjs",
+    "work:hq:inbox-polish:inspect": "node scripts/release-work-hq-inbox-polish-owner.mjs --inspect",
+    "work:hq:inbox-polish:release-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --release-once",
+    "work:hq:inbox-polish:restore-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
