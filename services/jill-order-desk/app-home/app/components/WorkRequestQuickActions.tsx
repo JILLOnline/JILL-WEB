@@ -20,6 +20,7 @@ export function WorkRequestQuickActions({
   const fetcher=useFetcher<Result>();
   const revalidator=useRevalidator();
   const lastRefresh=useRef<string|null>(null);
+  const quickMenu=useRef<HTMLDetailsElement|null>(null);
   const [status,setStatus]=useState(record.customer_status);
   const [stage,setStage]=useState(record.internal_status);
   const [publicNote,setPublicNote]=useState("");
@@ -80,26 +81,54 @@ export function WorkRequestQuickActions({
   };
   const choices=[record.customer_status,...(STATUS_OPTIONS[record.customer_status]||[])];
   const onEdit=()=>{operation.current=null;};
+  const openPanel=(next:"status"|"message")=>{
+    setPanel(current=>current===next?null:next);
+    // Collapse the compact menu after choosing an action; show its existing
+    // status/message editor below instead of obscuring it with menu controls.
+    if(quickMenu.current)quickMenu.current.open=false;
+  };
   return <section className={"jill-actions"+(compact?" jill-actions--compact":"")}
     aria-label="Manage request">
-    <div className="jill-actions__heading">
-      <strong>Quick actions</strong>
-      {!enabled&&<span>Pending secure connection</span>}
-    </div>
+    {compact
+      ? <div className="jill-actions__quick-menu">
+          <details ref={quickMenu} onKeyDown={event=>{
+            if(event.key==="Escape" && event.currentTarget.open){
+              event.currentTarget.open=false;
+              event.currentTarget.querySelector("summary")?.focus();
+            }
+          }}>
+            <summary>
+              QUICK ACTIONS
+              <span className="jill-actions__menu-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div className="jill-actions__menu-options" aria-label="Quick actions">
+              <button type="button" onClick={()=>openPanel("status")}
+                aria-expanded={panel==="status"}>Update status</button>
+              <button type="button" onClick={()=>openPanel("message")}
+                aria-expanded={panel==="message"}>Message customer</button>
+              <Link className="jill-actions__open-link"
+                to={"/app/requests/"+encodeURIComponent(record.submission_id)}>
+                Open request <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </details>
+        </div>
+      : <>
+          <div className="jill-actions__heading">
+            <strong>Quick actions</strong>
+            {!enabled&&<span>Pending secure connection</span>}
+          </div>
+          <div className="jill-actions__tabs">
+            <button type="button" onClick={()=>openPanel("status")}
+              aria-expanded={panel==="status"}>Update status</button>
+            <button type="button" onClick={()=>openPanel("message")}
+              aria-expanded={panel==="message"}>Message customer</button>
+          </div>
+        </>}
     {!enabled&&<p className="jill-actions__hint">
       Status updates and customer messages are prepared, but the verified
       WORK-only write connection is not enabled yet.
     </p>}
-    <div className="jill-actions__tabs">
-      <button type="button" onClick={()=>setPanel(panel==="status"?null:"status")}
-        aria-expanded={panel==="status"}>Update status</button>
-      <button type="button" onClick={()=>setPanel(panel==="message"?null:"message")}
-        aria-expanded={panel==="message"}>Message customer</button>
-      {compact&&<Link className="jill-actions__open-link"
-        to={"/app/requests/"+encodeURIComponent(record.submission_id)}>
-        Open request <span aria-hidden="true">→</span>
-      </Link>}
-    </div>
     {panel==="status"&&<div className="jill-actions__body">
       <label>Customer status
         <select value={status} disabled={!enabled||pending||awaitingRefresh}
