@@ -98,8 +98,8 @@ export function WorkRequestQuickActions({
             }
           }}>
             <summary>
-              QUICK ACTIONS
-              <span className="jill-actions__menu-chevron" aria-hidden="true">⌄</span>
+              <span>QUICK ACTIONS</span>
+              <span className="jill-actions__menu-chevron" aria-hidden="true">▾</span>
             </summary>
             <div className="jill-actions__menu-options" aria-label="Quick actions">
               <button type="button" onClick={()=>openPanel("status")}
