@@ -301,3 +301,203 @@
 @media(max-width:380px){
   .jill-inbox__stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* WORK HQ Requests v2: dense rows with a single consistent column track.
+   Keep the Shopify iframe's document scrolling; never add a nested scroller. */
+.jill-inbox__table{
+  --jill-list-cols:
+    minmax(0,1.65fr) minmax(0,.85fr) minmax(0,.95fr)
+    minmax(0,1.1fr) minmax(0,.95fr) minmax(0,.95fr)
+    minmax(225px,1.7fr);
+  min-width:0;border:1px solid var(--jill-border);
+  border-radius:12px;background:#fff;
+  box-shadow:0 3px 12px rgba(44,26,60,.06)
+}
+.jill-inbox__columns{
+  display:grid;grid-template-columns:var(--jill-list-cols);
+  gap:9px;align-items:center;min-height:39px;
+  padding:9px 11px 9px 13px;
+  background:#f6f1f9;border-radius:11px 11px 0 0;
+  border-bottom:1px solid #e8ddee;
+  color:#654d75;font-size:11px;font-weight:800;letter-spacing:.045em;
+  text-transform:uppercase
+}
+.jill-inbox__cards{
+  display:grid;grid-template-columns:minmax(0,1fr);
+  align-items:stretch;gap:0;min-height:0
+}
+.jill-inbox__card{
+  width:100%;box-sizing:border-box;min-width:0;
+  border:0;border-bottom:1px solid #e9e3ef;
+  border-inline-start:4px solid var(--jill-card-accent);
+  border-radius:0;box-shadow:none;
+  background:#fff;overflow:visible;
+  scroll-margin-block-start:18px
+}
+.jill-inbox__card:last-child{border-bottom:0;border-radius:0 0 11px 11px}
+.jill-inbox__card:hover,.jill-inbox__card--expanded,
+.jill-inbox__card:focus-within{box-shadow:inset 0 0 0 1px #e5d8ef}
+.jill-inbox__card:nth-child(even){background:#fcfafd}
+.jill-inbox__card--expanded,
+.jill-inbox__card:has(.jill-actions__quick-menu details[open]),
+.jill-inbox__card:has(.jill-actions__body){grid-column:auto;height:auto;max-height:none}
+.jill-inbox__row{
+  display:grid;grid-template-columns:var(--jill-list-cols);
+  gap:9px;align-items:center;min-height:56px;
+  padding:7px 10px 7px 10px
+}
+.jill-inbox__cell{min-width:0;font-size:12px;line-height:1.3}
+.jill-inbox__cell--customer{font-weight:760}
+.jill-inbox__customer-name{
+  display:block;width:max-content;max-width:100%;
+  padding:4px 7px;margin:0;border-radius:6px;
+  background:var(--jill-card-wash);color:var(--jill-card-ink);
+  font-size:clamp(12px,.88vw,14px);
+  line-height:1.25;font-weight:780;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  word-break:normal;-webkit-line-clamp:unset;line-clamp:unset
+}
+.jill-inbox__customer-unverified{color:#85808b;font-size:12px;font-weight:550}
+.jill-inbox__request-id{
+  display:inline-block;max-width:100%;
+  color:#463350;font-weight:800;font-size:12px;
+  text-decoration:none;white-space:nowrap
+}
+.jill-inbox__request-id:hover{text-decoration:underline;color:#6c3199}
+.jill-inbox__request-id:focus-visible,.jill-inbox__detail-button:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:2px
+}
+.jill-inbox__cell--needed,.jill-inbox__cell--submitted{
+  font-size:11.5px;color:#666174;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.jill-inbox__cell-muted{color:#9a929e}
+.jill-inbox__cell--status,.jill-inbox__cell--stage{
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px
+}
+.jill-inbox__cell--actions{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:6px;min-width:0
+}
+.jill-inbox__detail-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  min-height:36px;flex:none;padding:5px 8px;
+  background:#fff;border:1px solid #e4d6ed;border-radius:7px;
+  color:#65378b;font:inherit;font-size:10px;font-weight:790;
+  letter-spacing:.025em;white-space:nowrap;cursor:pointer
+}
+.jill-inbox__detail-button:hover,
+.jill-inbox__detail-button[aria-expanded="true"]{
+  background:#f4edf8;border-color:#b89ccc
+}
+.jill-inbox__detail-button[aria-expanded="true"] .jill-inbox__chevron{
+  transform:rotate(180deg)
+}
+.jill-inbox__cell--actions .jill-actions--compact{
+  flex:none;width:auto;min-width:0;border:0;
+  padding:0;background:transparent;text-align:left
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu{
+  display:block;width:auto;margin:0
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu details{
+  width:148px;max-width:100%
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu summary{
+  min-height:36px;width:100%;max-width:100%;
+  padding:0 10px;font-size:10px;white-space:nowrap
+}
+.jill-inbox__cell--actions .jill-actions__menu-options{
+  width:100%;margin-top:4px
+}
+.jill-inbox__cell--actions .jill-actions__menu-options button,
+.jill-inbox__cell--actions .jill-actions__menu-options a{
+  padding:8px;font-size:11px;white-space:normal
+}
+.jill-inbox__order-details{
+  border-top:1px solid #e7ddec;background:#faf7fc;
+  padding:14px 17px
+}
+.jill-inbox__archive-stamp{
+  grid-column:auto;justify-self:auto;white-space:nowrap;
+  padding:3px 6px;letter-spacing:0
+}
+.jill-inbox__cell--actions .jill-inbox__archive-control{
+  grid-column:auto;margin:0;display:flex
+}
+.jill-inbox__cell--actions .jill-inbox__archive-control button{
+  min-height:36px;padding:5px 8px;font-size:10px
+}
+/* Status / customer-message editors need a full row, not a 148px column.
+   The normal one-line summary returns when the editor closes. */
+.jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+  grid-column:1/-1;grid-row:2;
+  flex-wrap:wrap;justify-content:flex-start;
+  padding:12px;border-top:1px solid #e9dfef;background:#faf7fc
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions--compact,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions--compact,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions--compact{
+  flex:1 1 100%;width:100%
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions__quick-menu,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions__quick-menu,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions__quick-menu{
+  display:flex;justify-content:flex-start
+}
+@media(max-width:1160px){
+  .jill-inbox__table{
+    --jill-list-cols:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr)
+      minmax(0,1fr) minmax(215px,1.55fr)
+  }
+  .jill-inbox__columns>span:nth-child(5),
+  .jill-inbox__columns>span:nth-child(6),
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{display:none}
+  .jill-inbox__columns>span:nth-child(7){grid-column:5}
+  .jill-inbox__cell--actions{grid-column:5}
+}
+@media(max-width:760px){
+  .jill-inbox__columns{display:none}
+  .jill-inbox__table{border:0;box-shadow:none;background:transparent}
+  .jill-inbox__cards{gap:8px}
+  .jill-inbox__card{
+    border:1px solid #e3dbe9;border-inline-start:4px solid var(--jill-card-accent);
+    border-radius:10px;box-shadow:0 2px 7px rgba(44,26,60,.06)
+  }
+  .jill-inbox__card:last-child{border-bottom:1px solid #e3dbe9;border-radius:10px}
+  .jill-inbox__row{
+    grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+    min-height:0;gap:9px;padding:11px
+  }
+  .jill-inbox__cell--customer{grid-column:1}
+  .jill-inbox__cell--request{grid-column:2;text-align:right}
+  .jill-inbox__cell--status{grid-column:1}
+  .jill-inbox__cell--stage{grid-column:2;justify-content:flex-end}
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{display:block}
+  .jill-inbox__cell--needed{grid-column:1}
+  .jill-inbox__cell--submitted{grid-column:2;text-align:right}
+  .jill-inbox__cell--actions{
+    grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap;
+    padding-top:9px;border-top:1px solid #ebe5ef
+  }
+  .jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+    grid-column:1/-1;grid-row:auto;padding:10px 0
+  }
+  .jill-inbox__cell--needed::before,.jill-inbox__cell--submitted::before{
+    content:attr(data-label) " · ";color:#8b8391;font-weight:700
+  }
+  .jill-inbox__cell--actions .jill-inbox__detail-button,
+  .jill-inbox__cell--actions .jill-actions__quick-menu summary{min-height:44px}
+}
+@media(max-width:420px){
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{font-size:10px}
+  .jill-inbox__customer-name{font-size:12px}
+  .jill-inbox__cell--actions{gap:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__card,.jill-inbox__chevron{transition:none}
+}
