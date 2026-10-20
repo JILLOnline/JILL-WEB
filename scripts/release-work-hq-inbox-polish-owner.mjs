@@ -7,6 +7,11 @@ import {checkWorkHqInboxPolish,prepareInboxPolishBuild} from './work-hq-inbox-po
 
 export const INBOX_POLISH_PROFILE=Object.freeze({
   ...ORDER_DETAILS_PROFILE,
+  // Verified Owner Wrangler read-back, 2026-10-20 03:03Z.
+  // This supersedes the earlier Order details *pre*-activation baseline.
+  base:'e5a26304-841a-472b-a128-4c7c8eacfd78',
+  baseSource:'58a76f09bd442e0d74f1b0a07e93fa1e914690ac',
+  deployment:'9bee2d79-3992-4c7d-8577-7828ad4c1b59',
   activate:'JILL HQ WORK Inbox polish v1 activate ',
   restore:'JILL HQ WORK Inbox polish v1 restore ',
   receiptStem:'work-hq-inbox-polish-v1',
