@@ -285,6 +285,7 @@
     "test:work-hq-shopify-catalog-browser": "node scripts/test-work-hq-shopify-catalog-browser.mjs",
     "test:work-hq-catalog-quote-bridge": "node scripts/test-work-hq-catalog-quote-bridge.mjs",
     "work:hq:catalog:check": "node scripts/work-hq-shopify-catalog-browser-package.mjs",
+    "work:hq:catalog-quote:check": "node scripts/work-hq-catalog-quote-edition.mjs",
     "test:work-gateway-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare",
     "test:work-hq-quote-agreement-local": "npm run test:workerd-quote-agreement-local --prefix services/jill-order-desk/app-home",
     "work:gateway:empty-post:inspect": "node scripts/release-work-gateway-diagnostic-owner.mjs --inspect",
