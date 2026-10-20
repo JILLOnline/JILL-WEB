@@ -113,3 +113,56 @@
   .jill-actions__menu-chevron{transition:none}
   .jill-actions__quick-menu summary:hover{transform:none}
 }
+
+/* WORK Requests inline actions: direct Message + Status buttons, no menu.
+   Other HQ detail/messages consumers keep their original presentation. */
+.jill-actions--direct{
+  border:0;padding:0;margin:0;min-width:0;
+  background:transparent;flex:1 1 auto
+}
+.jill-actions__direct-buttons{
+  display:flex;justify-content:flex-end;align-items:center;
+  gap:6px;min-width:0;flex-wrap:wrap
+}
+.jill-actions__direct-buttons button{
+  display:inline-flex;justify-content:center;align-items:center;
+  box-sizing:border-box;min-height:36px;max-width:100%;
+  padding:6px 10px;border-radius:8px;
+  border:1px solid #d6c1e6;background:#fff;
+  color:#68328e;font:inherit;font-size:10px;
+  font-weight:790;line-height:1.2;
+  white-space:normal;text-align:center;cursor:pointer
+}
+.jill-actions__direct-buttons .jill-actions__direct-status{
+  background:linear-gradient(135deg,#7e42af,#69329b);
+  border-color:#71349d;color:#fff;
+  box-shadow:0 2px 6px rgba(75,34,102,.13)
+}
+.jill-actions__direct-buttons button:hover{
+  background:#f3eafa;border-color:#a976c4
+}
+.jill-actions__direct-buttons .jill-actions__direct-status:hover{
+  background:linear-gradient(135deg,#7537a9,#5e288e);
+  color:#fff
+}
+.jill-actions__direct-buttons button[aria-expanded="true"]{
+  box-shadow:0 0 0 2px #d5b9e8
+}
+.jill-actions--direct .jill-actions__body,
+.jill-actions--direct .jill-actions__feedback,
+.jill-actions--direct .jill-actions__refresh,
+.jill-actions--direct .jill-actions__hint{
+  text-align:left
+}
+.jill-inbox__cell--actions .jill-actions--direct{
+  width:auto;min-width:0;flex:1 1 auto
+}
+@media(max-width:760px){
+  .jill-actions__direct-buttons{
+    justify-content:flex-start
+  }
+  .jill-actions__direct-buttons button{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-actions__direct-buttons button{transition:none}
+}
