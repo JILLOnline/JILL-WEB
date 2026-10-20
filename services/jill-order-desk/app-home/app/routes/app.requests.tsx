@@ -44,9 +44,6 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       <div className="jill-inbox__card-heading">
         <span className="jill-inbox__card-kicker">CUSTOM ORDER</span>
         <h3>Request #{requestShortId(item.submission_id)}</h3>
-        <p className="jill-inbox__submitted">
-          Submitted {dateLabel(item.submitted_at,{includeTime:true})}
-        </p>
       </div>
       <div className="jill-inbox__status-group" aria-label="Request statuses">
         <span className={"jill-inbox__status jill-inbox__status--"+statusTone}>
@@ -59,21 +56,9 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
             </span>
           : null}
       </div>
-    </div>
-    <div className="jill-inbox__facts" aria-label="Request summary">
-      <div>
-        <span className="jill-inbox__fact-label">Needed by</span>
-        <strong>{dateLabel(item.date_needed)}</strong>
-      </div>
-      <div>
-        <span className="jill-inbox__fact-label">Items</span>
-        <strong>{item.item_count}</strong>
-      </div>
-      <div>
-        <span className="jill-inbox__fact-label">Fulfillment</span>
-        <strong>{item.fulfillment==="pickup"?"Pickup":
-          item.fulfillment==="shipping"?"Shipping":"Not supplied"}</strong>
-      </div>
+      <p className="jill-inbox__submitted">
+        Submitted {dateLabel(item.submitted_at,{includeTime:true})}
+      </p>
     </div>
     <details className="jill-inbox__details" onToggle={event=>{
       const open=event.currentTarget.open;
@@ -83,7 +68,7 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       if(open&&orderDetails.state==="idle")
         orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
     }}>
-      <summary>Order details <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
+      <summary>ORDER DETAILS <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
       {detailsOpen?<div className="jill-inbox__order-details">
         {orderDetails.state!=="idle"||!orderDetails.data
           ?<p role="status">Loading order details…</p>
@@ -91,11 +76,6 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       </div>:null}
     </details>
     <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
-    <div className="jill-inbox__open">
-      <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
-        Open request →
-      </Link>
-    </div>
   </article>;
 }
 
