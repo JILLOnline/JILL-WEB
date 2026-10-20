@@ -4,8 +4,9 @@ const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const normalize=s=>String(s??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US');
 export function validateWorkDetailSearch(input){
   if(typeof input!=='string')throw Error('invalid_search');
+  if(/[\x00-\x1f\x7f]/.test(input))throw Error('invalid_search');
   const q=input.trim().replace(/\s+/g,' ');
-  if(q.length<2||q.length>80||/[\x00-\x1f\x7f]/.test(q))
+  if(q.length<2||q.length>80)
     throw Error('invalid_search');
   return q;
 }
