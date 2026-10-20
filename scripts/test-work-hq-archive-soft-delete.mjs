@@ -21,6 +21,7 @@ const source={version:1,operation:'custom_order.merchant.list.result',ok:true,
 const rows=new Map(),ops=new Map(),sqls=[];
 const db={
   prepare(sql){return {bind(...args){return {
+    sql,params:args,
     first:async()=>{
       sqls.push(sql);
       if(sql.includes('jill_merchant_authority'))return authority;
