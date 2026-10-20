@@ -1,0 +1,16 @@
+{
+  "source_baseline": "5fa3b1fb6e7d859d9840fb6329150f7fa44a1aae",
+  "runtime_baseline": "576d6b0bcde43c43fda939f42513eefcb5adefb7",
+  "files": {
+    "services/jill-order-desk/app-home/app/routes/app.index.tsx": "188b8eac1086f84a943c768272f30d24d6f2cf5c6c3a4eb4205a4d590f0cd0e9",
+    "services/jill-order-desk/app-home/app/styles/hq-home.css": "385908e767f991d8e3415e8da6002e5b2092a49b12987873bf584dff950947ae",
+    "services/jill-order-desk/app-home/app/styles/hq-theme.css": "f10e8208951671bf9b9479ba0191245932293a6b8046277358b4561a024cf34b",
+    "services/jill-order-desk/app-home/app/styles/inbox.css": "aeded7b11ab400b405174e8ffc5d13143f955fdd0bf24c76c969abda1cbe4222",
+    "services/jill-order-desk/app-home/app/styles/quote-worksheet.css": "6422ab7424baa11200f4e47ec01abba2036a2cf6c4a6eb1b9f179d8656033dc6",
+    "services/jill-order-desk/app-home/app/styles/request-actions.css": "f1f3ff65a6d503c7baa769ea8bf1de43de8fb59bbc0ec41315713319fe24dc00",
+    "services/jill-order-desk/app-home/app/styles/request-detail.css": "bbfa15833ca52c9d96965f447cd4fe49c5b51f8ef02e8d8bb5da966e23ca59c1",
+    "services/jill-order-desk/app-home/app/routes/app.requests.tsx": "57302a0e76402ba2f603af0369b33de5964ccdfe4ab1f81f386214f1a7d6c601",
+    "services/jill-order-desk/app-home/app/routes/app.requests.$submissionId.tsx": "c4ce02abc20cebb01faffcb8bf2307be487315504a593118a6c6a8d151c9872d",
+    "services/jill-order-desk/app-home/app/components/WorkOriginalRequestDetails.tsx": "17c35af0464a45f840300693db173387dec00a223e053b1608135c7737f562e0"
+  }
+}

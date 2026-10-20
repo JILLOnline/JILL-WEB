@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const section = fs.readFileSync('theme/sections/main-custom-order.liquid', 'utf8');
 const productSection = fs.readFileSync('theme/sections/main-product.liquid', 'utf8');
@@ -259,5 +260,105 @@ assert.match(section, /data-customer-email="\{% if customer %\}\{\{ customer\.em
 assert.match(runtime, /function applyLoggedInCustomerPrefill/, 'Custom Order must own one logged-in customer prefill path');
 assert.match(runtime, /applyLoggedInCustomerPrefill\(root\);[\s\S]*applyCatalogPrefill\(root\);/, 'customer prefill and Catalog prefill must coexist in initialization order');
 assert.doesNotMatch(runtime, /preferred_contact[^\n]*=.*customer/, 'logged-in customer prefill must not silently choose a preferred contact method');
+
+// A verified Shopify storefront session owns an account request regardless
+// of the user-editable contact email. Guest submissions remain unowned and
+// must not imply automatic account claiming.
+const locale=JSON.parse(fs.readFileSync('theme/locales/en.default.json','utf8'));
+const identityCopy=locale.custom_order?.customer||{};
+for(const key of [
+  'account_title','account_identity','account_help',
+  'guest_title','guest_help','guest_sign_in','contact_email_help',
+])assert.ok(typeof identityCopy[key]==='string'&&identityCopy[key].length>12,
+  'Custom Order identity explanation missing: '+key);
+assert.match(section,/data-jill-customer-account-context data-mode="signed-in"/);
+assert.match(section,/data-jill-customer-account-context data-mode="guest"/);
+assert.match(section,/\{% if customer %\}[\s\S]*data-mode="signed-in"/,
+  'Signed-in account status must be server-rendered from Shopify customer');
+assert.match(section,/\{\{ customer\.email \| escape \}\}/,
+  'Shopify account email must be escaped when shown');
+assert.match(section,/href="\{\{ routes\.account_login_url \}\}"/,
+  'Guest must be able to sign in before submission');
+assert.match(section,/name: 'email'[^\n]*value: customer\.email/,
+  'The customer contact email should be prefilled on the server');
+assert.match(runtime,/function applyLoggedInCustomerPrefill/,
+  'Keep the JS prefill fallback for signed-in customers');
+assert.doesNotMatch(section,/<input[^>]*name="(?:owner_gid|customer_id|logged_in_customer_id)"/,
+  'No browser-controlled owner identity fields');
+const gatewaySource=fs.readFileSync('backend/custom-order-gateway.mjs','utf8');
+assert.match(gatewaySource,/auth\.loggedInCustomerId/,
+  'Ownership must be derived from signed Shopify app proxy, not contact email');
+assert.ok(gatewaySource.includes("ownerGid='gid://shopify/Customer/'+numeric"),
+  'Account owner must be bound to the authenticated Shopify customer GID');
+
+// A terminal 409 is NEVER a safe invitation to POST the same request
+// again. Exercise the real browser submission adapter with fake fetch.
+let mockSubmissionCalls=0;
+const browserSandbox={
+  URL,URLSearchParams,Response,
+  location:{origin:'https://jill-work.myshopify.com'},
+  fetch:async()=>{
+    mockSubmissionCalls++;
+    return new Response(JSON.stringify({
+      version:1,operation:'custom_order.submit.result',
+      ok:false,error:{code:'upstream_rejected',retryable:false},
+    }),{status:409,headers:{'content-type':'application/json'}});
+  },
+};
+vm.createContext(browserSandbox);
+vm.runInContext(runtime,browserSandbox);
+const mockRoot={dataset:{
+  submitEndpoint:'https://script.google.com/macros/s/AKfycbQA/exec',
+  verifiedSubmitEndpoint:'/apps/jill-custom-order',
+}};
+const mockRequest={
+  version:1,operation:'custom_order.submit',
+  submission_id:'jill:99999999-aaaa-4bbb-8ccc-555555555555',
+  submitted_at:'2026-10-18T10:00:00.000Z',
+  customer:{name:'WORK QA',email:'another-contact@example.invalid'},
+  planning:{date_needed:'2026-11-20',fulfillment:'pickup'},
+  items:[{quantity:1,title:'QA item'}],
+  request_attributes:[],reference_ids:[],
+  marketing_consent:{granted:false},
+};
+await assert.rejects(
+  browserSandbox.JILLCustomOrder.submitRequest(mockRoot,mockRequest),
+  error=>error?.jillTerminalSubmission===true&&/Do not submit again/.test(error.message)&&error.message.includes(mockRequest.submission_id),
+  'Upstream 409 must be terminal and must never propose resubmission');
+assert.equal(mockSubmissionCalls,1,
+  'One caller attempt must produce exactly one POST, no hidden retry');
+const identityReview=browserSandbox.JILLCustomOrder.reviewAccountContext;
+const signedReview=identityReview({
+  loggedIn:true,
+  accountEmail:'account@example.invalid',
+  contactEmail:'other-contact@example.invalid',
+});
+assert.equal(signedReview.mode,'signed-in');
+assert.equal(signedReview.account,'account@example.invalid');
+assert.equal(signedReview.contact,'other-contact@example.invalid');
+assert.match(signedReview.note,/verified Shopify sign-in/);
+assert.match(signedReview.note,/not the contact email/);
+assert.ok(!Object.hasOwn(signedReview,'ownerGid'));
+const guestReview=identityReview({
+  loggedIn:false,
+  accountEmail:'account@example.invalid',
+  contactEmail:'guest@example.invalid',
+});
+assert.equal(guestReview.mode,'guest');
+assert.equal(guestReview.account,'');
+assert.equal(guestReview.contact,'guest@example.invalid');
+assert.match(guestReview.note,/will not appear/);
+assert.match(runtime,/jill-custom-order__identity-review-note/);
+assert.match(runtime,/Signed-in account email/);
+
+assert.match(runtime,/let terminalRejected = false/);
+assert.match(runtime,/if \(terminalRejected\) \{[\s\S]*?Do not submit again; contact JILL/,
+  'Back-to-edit must not unlock another submit after terminal rejection');
+assert.match(runtime,/terminalRejected = true/,
+  'Upstream 409 must be remembered in this form session');
+assert.match(runtime,/if \(terminalRejected \|\| !request/,
+  'Submit handler must refuse a terminally rejected session');
+assert.match(runtime,/if \(error\?\.jillTerminalSubmission === true\) \{[\s\S]*?requestSubmit\.disabled = true/,
+  'UI must leave Submit disabled after deterministic upstream 409');
 
 console.log('JILL Custom Order LIVE-parity integration tests passed.');

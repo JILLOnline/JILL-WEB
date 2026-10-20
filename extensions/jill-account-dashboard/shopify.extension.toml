@@ -12,6 +12,9 @@ module = "./src/Dashboard.jsx"
 
 [extensions.capabilities]
 api_access = true
+# WORK account timeline requires approved direct authenticated Cloudflare fetch.
+# Not active in the currently released JILL WORK app version.
+network_access = true
 
 # Rewards dashboard reads and writes Customer Account API data.
 # Reward status pills keep the original compact layout and only vary by semantic color/state.

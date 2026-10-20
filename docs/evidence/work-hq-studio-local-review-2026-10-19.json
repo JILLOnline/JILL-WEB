@@ -1,0 +1,45 @@
+{
+  "environment": "WORK",
+  "kind": "local_synthetic_visual_review",
+  "source_baseline": "9a92d0287e69628c63bd7bec9a5e3dace63f1c94",
+  "edition": "visual theme v2",
+  "runtime_inventory": "scripts/work-hq-studio-reviewed.json",
+  "screens": [
+    "home",
+    "inbox",
+    "detail",
+    "catalog",
+    "access",
+    "setup"
+  ],
+  "widths": [
+    1600,
+    1024,
+    390,
+    320
+  ],
+  "browser_cases": 24,
+  "horizontal_overflow": false,
+  "visible_touch_buttons_links_and_disclosures_min_height_px": 44,
+  "actual_route_components": true,
+  "published_polaris_registered": true,
+  "shared_navigation_verified": true,
+  "keyboard_disclosure_verified": true,
+  "filter_verified": true,
+  "quick_status_panel_opened_without_submit": true,
+  "existing_quote_estimate_usd": "80.00",
+  "typecheck": "passed",
+  "fresh_canary_build": "passed",
+  "compiled_workerd_connected_read_test": "passed",
+  "wrangler_upload_dry_run": "passed",
+  "new_product_dependencies": false,
+  "known_local_limitations": [
+    "Existing duplicate React sibling-key warning in request detail; handlers and component keys retained for visual-only scope.",
+    "Local icon CDN responses unavailable; not platform/browser certification."
+  ],
+  "provider_upload_performed": false,
+  "deployment_performed": false,
+  "authenticated_visual_acceptance": false,
+  "authenticated_performance_measured": false,
+  "operational_acceptance": false
+}

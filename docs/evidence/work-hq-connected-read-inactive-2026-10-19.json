@@ -1,0 +1,37 @@
+{
+  "environment": "WORK",
+  "source": "69b709d9c2c6d0a4c075bef073381ec698b39373",
+  "package_sha256": "02aae15f15057c74286dac63400e3883189a3d7f5701ea25f35f99a77655a035",
+  "candidate": {
+    "id": "e866e2f2-0746-44d0-8caa-b37a1c9bcf45",
+    "source": "69b709d9c2c6d0a4c075bef073381ec698b39373",
+    "existing_bindings_preserved": true,
+    "catalog_enabled": true,
+    "quote_drafts_enabled": false,
+    "conversation_enabled": false
+  },
+  "allocation": {
+    "deployment": "d10596df-fb98-4e6d-8b3d-a3bd0e4deaf0",
+    "created_at": "2026-10-17T19:27:35.355412Z",
+    "versions": [
+      {
+        "id": "4973b74d-d479-41da-897c-e36129303279",
+        "percentage": 100
+      },
+      {
+        "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+        "percentage": 0
+      }
+    ]
+  },
+  "ordinary_traffic_unchanged": true,
+  "existing_quote_canary_unchanged": true,
+  "upload_receipt_spent": true,
+  "deployment_performed": false,
+  "secret_changes": false,
+  "customer_data_or_schema_changes": false,
+  "new_billable_services": false,
+  "evidence_source": "Owner Windows runner output supplied in conversation on 2026-10-19",
+  "reviewed_for_activation": true,
+  "operational_acceptance": false
+}

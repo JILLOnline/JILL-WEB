@@ -1,0 +1,12 @@
+# JILL WORK merchant service only. Not the storefront Custom Order gateway.
+# Database provisioned on Cloudflare 2026-10-14; no deployment in this commit.
+name = "jill-order-desk-work"
+main = "worker.mjs"
+compatibility_date = "2026-10-14"
+workers_dev = true
+
+[[d1_databases]]
+binding = "JILL_ORDER_DESK_WORK_DB"
+database_name = "jill-order-desk-work"
+database_id = "3f17c186-c794-4e00-8f20-017191373a19"
+migrations_dir = "migrations"

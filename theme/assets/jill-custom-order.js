@@ -942,6 +942,24 @@
     return pill;
   }
 
+  // Presentation only: Shopify's signed app-proxy customer ID, never a
+  // form email or this Liquid snapshot, decides server-side ownership.
+  function reviewAccountContext({loggedIn,accountEmail,contactEmail} = {}) {
+    const owner = loggedIn === true && typeof accountEmail === 'string' &&
+      accountEmail.trim().length > 0 ? accountEmail.trim() : '';
+    const contact = typeof contactEmail === 'string' ? contactEmail.trim() : '';
+    return {
+      mode: loggedIn === true ? 'signed-in' : 'guest',
+      account: owner,
+      contact,
+      note: loggedIn === true
+        ? 'My JILL tracking uses your verified Shopify sign-in, not the contact email entered here. '
+          + 'Your request is attached only if Shopify authenticates that account at submission.'
+        : 'Guest request: no account is needed to submit, but this request will not appear '
+          + 'in My JILL automatically. Sign in before submitting to enable account tracking.',
+    };
+  }
+
   function renderReview(root, request) {
     const review = root.querySelector('[data-jill-custom-order-review]');
     const content = root.querySelector('[data-jill-custom-order-review-content]');
@@ -955,12 +973,23 @@
     const preferredValue = request.customer.phone && request.customer.preferred_contact === 'phone'
       ? `${preferredContact} · ${request.customer.phone}`
       : preferredContact;
+    const identity = reviewAccountContext({
+      loggedIn: root.dataset.customerLoggedIn === 'true',
+      accountEmail: root.dataset.customerEmail,
+      contactEmail: request.customer.email,
+    });
     appendRows(customerDetails, [
       reviewRow('Name', request.customer.name, 'jill-custom-order-review__summary-item'),
-      reviewRow('Email', request.customer.email, 'jill-custom-order-review__summary-item'),
+      reviewRow('Contact email', identity.contact, 'jill-custom-order-review__summary-item'),
+      identity.account
+        ? reviewRow('Signed-in account email', identity.account, 'jill-custom-order-review__summary-item')
+        : null,
       reviewRow('Preferred contact', preferredValue, 'jill-custom-order-review__summary-item'),
     ]);
     customer.append(customerDetails);
+    const identityNote = node('p', 'jill-custom-order__identity-review-note', identity.note);
+    identityNote.dataset.jillAccountMode = identity.mode;
+    customer.append(identityNote);
     sheet.append(customer);
 
     const itemsSection = node('section', 'jill-custom-order-review__card jill-custom-order-review__items-card jill-card');
@@ -1187,7 +1216,45 @@
     if (!endpoint) fail('submission is temporarily unavailable');
     const body = new URLSearchParams();
     Object.entries(endpointPayload(request)).forEach(([key, value]) => body.set(key, String(value ?? '')));
-    await fetch(endpoint, {method: 'POST', mode: 'no-cors', keepalive: true, body});
+    // A gateway is optional until its Shopify App Proxy, server signature,
+    // Google receipt secret, and backend deployment have passed WORK QA.
+    // Never send an unverified success signal through a configured gateway.
+    const verifiedPath=String(root.dataset.verifiedSubmitEndpoint||'').trim();
+    if (!verifiedPath) {
+      await fetch(endpoint,{method:'POST',mode:'no-cors',keepalive:true,body});
+      return; // Legacy transport; must be retired after gateway launch.
+    }
+    const gateway=new URL(verifiedPath,globalThis.location?.origin);
+    if (gateway.origin!==globalThis.location?.origin ||
+        gateway.pathname!=='/apps/jill-custom-order' ||
+        gateway.search || gateway.hash) {
+      fail('verified submission endpoint is not a same-origin JILL app proxy');
+    }
+    const result=await fetch(gateway.href,{
+      method:'POST',credentials:'same-origin',
+      headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body,
+    });
+    let receipt;
+    try {receipt=await result.json();} catch {
+      fail('your request has not been confirmed by JILL; retry using the same request');
+    }
+    if (result.status === 409) {
+      // A deterministic rejection may indicate an immutable ID/payload
+      // conflict or owner-ledger mismatch. Never invite a second POST.
+      const reference = /^[A-Za-z0-9._:-]{8,128}$/.test(request.submission_id || '')
+        ? request.submission_id : 'unavailable';
+      const error = new Error('JILL could not accept this request (WORK 409). '+
+        'Do not submit again. Contact JILL with reference: '+reference);
+      error.jillTerminalSubmission = true;
+      throw error;
+    }
+    if (!result.ok || receipt?.ok!==true || receipt?.verified!==true ||
+        receipt?.operation!=='custom_order.submit.result' ||
+        receipt?.submission_id!==request.submission_id ||
+        receipt?.status!=='received') {
+      fail('JILL has not confirmed this request yet; please contact JILL before retrying');
+    }
   }
 
   function text(bytes, start, end) {
@@ -1871,6 +1938,8 @@
     root.dataset.jillCustomOrderInitialized = 'true';
     root.dataset.jillOptionsFinished = 'false';
     let request = null;
+    let requestSentOnce = false;
+    let terminalRejected = false;
     let editScroll = 0;
 
     for (const item of root.querySelectorAll('[data-jill-custom-order-item]')) initializeVariantAllocation(item);
@@ -2062,6 +2131,10 @@
     }
 
     function openReview() {
+      if (terminalRejected) {
+        setStatus('This request was rejected. Do not submit again; contact JILL.');
+        return;
+      }
       setStatus('');
       const issue = firstReviewIssue();
       if (issue) {
@@ -2077,6 +2150,7 @@
       if (note) note.hidden = true;
       try {
         request = cleanUndefined(buildRequest(root));
+        requestSentOnce = false;
         editScroll = globalThis.scrollY || 0;
         renderReview(root, request);
         root.dataset.jillCustomOrderRequest = JSON.stringify(request);
@@ -2099,22 +2173,31 @@
       requestSubmit.disabled = true;
       requestSubmit.setAttribute('aria-disabled', 'true');
       request = null;
+      requestSentOnce = false;
       delete root.dataset.jillCustomOrderRequest;
       syncProgression(root);
       setTimeout(() => globalThis.scrollTo?.({top: editScroll, behavior: 'smooth'}), 0);
     }
 
     async function submit() {
-      if (!request || !reviewConfirm.checked || requestSubmit.disabled) return;
+      if (terminalRejected || !request || !reviewConfirm.checked || requestSubmit.disabled) return;
       requestSubmit.disabled = true;
       requestSubmit.setAttribute('aria-disabled', 'true');
       requestSubmit.textContent = root.dataset.sendingLabel || 'Sending request…';
       setStatus('');
       try {
-        const submissionId = request.submission_id;
-        const nextRequest = cleanUndefined(buildRequest(root));
-        nextRequest.submission_id = submissionId;
-        request = nextRequest;
+        // Retries MUST replay the exact first-attempt payload and ID.
+        // Rebuilding timestamp or payload after a network timeout would turn
+        // an accepted request into a dangerous ID/content collision.
+        if (!requestSentOnce) {
+          const submissionId = request.submission_id;
+          const submittedAt = request.submitted_at;
+          const nextRequest = cleanUndefined(buildRequest(root));
+          nextRequest.submission_id = submissionId;
+          nextRequest.submitted_at = submittedAt;
+          request = nextRequest;
+          requestSentOnce = true;
+        }
         await submitRequest(root, request);
         setVisible(review, false);
         setVisible(success, true);
@@ -2122,6 +2205,13 @@
         success.querySelector('[data-jill-success-title]')?.focus({preventScroll: true});
       } catch (error) {
         setStatus(error.message.replace(/^JILL custom order:\s*/, ''));
+        if (error?.jillTerminalSubmission === true) {
+          terminalRejected = true;
+          requestSubmit.disabled = true;
+          requestSubmit.setAttribute('aria-disabled', 'true');
+          requestSubmit.textContent = 'Request blocked — contact JILL';
+          return;
+        }
         requestSubmit.disabled = false;
         requestSubmit.setAttribute('aria-disabled', 'false');
         requestSubmit.textContent = root.dataset.requestLabel || 'Request Custom Order';
@@ -2131,7 +2221,7 @@
     reviewOpen?.addEventListener('click', openReview);
     reviewBack?.addEventListener('click', backToEdit);
     reviewConfirm?.addEventListener('change', () => {
-      const enabled = reviewConfirm.checked && Boolean(request);
+      const enabled = !terminalRejected && reviewConfirm.checked && Boolean(request);
       requestSubmit.disabled = !enabled;
       requestSubmit.setAttribute('aria-disabled', enabled ? 'false' : 'true');
     });
@@ -2163,6 +2253,7 @@
       requestedProductHandle,
       applyCatalogPrefill,
       submitRequest,
+      reviewAccountContext,
     }),
     configurable: false,
     enumerable: false,

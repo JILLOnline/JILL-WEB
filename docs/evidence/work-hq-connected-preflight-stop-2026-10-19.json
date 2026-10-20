@@ -1,0 +1,16 @@
+{
+  "environment": "WORK",
+  "runner": "d02e6b85c2d824491e71eb889217e6deb744447a",
+  "evidence_source": "Owner CLI output supplied in conversation on 2026-10-19",
+  "command": "work:hq:connected:activate-once",
+  "phase": "preflight",
+  "error": "work_hq_connected_cloudflare_read_unverified",
+  "activation_requested_by_this_invocation": false,
+  "activation_receipt_reserved_by_this_invocation": false,
+  "current_remote_allocation": "requires independent read-back",
+  "preexisting_activation_receipt_presence": "requires local read-only inspection",
+  "cloudflare_failure_cause": "unknown; original wrapper omitted safe command/error detail",
+  "next_allowed_operation": "work:hq:connected:release:inspect",
+  "retry_activation_authorized_before_inspection": false,
+  "operational_acceptance": false
+}

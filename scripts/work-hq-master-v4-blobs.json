@@ -1,0 +1,27 @@
+{
+  "edition": "JILL_HQ_MASTER_V4_SOURCE_ONLY",
+  "base_commit": "c47d081a868731e75ba8ab36736c5a15c4a70605",
+  "files": {
+    "extensions/jill-account-dashboard/src/pages/Messages.jsx": "8abc06a65f4dce2729cdab31166ba9793b589516",
+    "services/jill-order-desk/app-home/app/components/WorkOriginalRequestDetails.tsx": "8ae01c08d77b24f6ad4e9fd65b62a3f1cffb70c7",
+    "services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx": "bd5fdfce21de4358cfaf6b36528028bfc347c0af",
+    "services/jill-order-desk/app-home/app/components/WorkRequestQuickActions.tsx": "1005741794c18b34b890bff15dbf0f572eebdd9f",
+    "services/jill-order-desk/app-home/app/routes/app.messages.tsx": "29f58ff53e7e1706662de71b7cc7180a8058a6bc",
+    "services/jill-order-desk/app-home/app/routes/app.requests.tsx": "9a345a062c2f1800181cf5f71e020fe9cf6a4f22",
+    "services/jill-order-desk/app-home/app/styles/inbox.css": "09c4284272654d2aad4cfedf3f170d2fab1eba62",
+    "services/jill-order-desk/app-home/app/styles/quote-worksheet.css": "325cb2e82609cb30dee809cf8764ecf96812df7b",
+    "services/jill-order-desk/app-home/app/styles/request-actions.css": "c1cc9b6ff37f63a263297036408941923eb6351d",
+    "services/jill-order-desk/app-home/app/styles/request-detail.css": "0a54d806827bb8e13dd296a67749c6e9f7d87069",
+    "extensions/jill-account-dashboard/src/pages/OwnedQuotePreview.jsx": "b3dc0c0170b571a672276564711596dea99e94c6",
+    "scripts/test-work-hq-inbox-quote-next-hold.mjs": "e63317d3f20a3722961e6136f4a8008ab0025165",
+    "scripts/test-work-hq-quote-messaging-hold.mjs": "507a236485afe38a638ff4dede21b679b9e06856",
+    "services/jill-order-desk/app-home/app/components/JillChevronDown.tsx": "2738c07c28c606fcd7881d17c63f29ac94e50487",
+    "services/jill-order-desk/app-home/app/styles/jill-chevron.css": "c4e7706f566764b9b189b11d983ba9c07f94240e",
+    "services/jill-order-desk/work-quote-preflight-view.mjs": "b26e82b7b8f758468d781f25b62800d8d8f90de2",
+    "services/jill-order-desk/work-quote-unit-line-plan.mjs": "24342d9bea9b63b16573077f26ba2d9059388f69",
+    "shared/custom-order-conversation-view.mjs": "86fa5dc4ae3eba81e6433aac9156956d9d1e98ec",
+    "shared/work-conversation-inbox-policy.mjs": "2861d468a75740a4031135d76dc9f3e0545ed2cb",
+    "shared/work-merchant-message-receipt.mjs": "c2bd095c446379198ea454fd21ad06c34f511a39",
+    "shared/work-owned-quote-preview.mjs": "fbde32dab34b8a6f6ecb910f2a776aac70906eaa"
+  }
+}

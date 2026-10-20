@@ -45,6 +45,14 @@ This registry answers one question: **where does this behavior belong?**
 | Custom-order API transport contract | `contracts/custom-order-api.schema.json` | Custom Order feature contract and normalized browser state | backend implementation details or rewards data |
 | Custom-order API contract guard | `scripts/check-custom-order-contract.mjs` | Custom Order API schema | theme or rewards validation |
 | Backend execution architecture | `docs/FUNCTIONAL_ARCHITECTURE.md` | feature contracts/platform boundaries | feature-specific business rules |
+| JILL merchant staff identity | `backend/jill-merchant-auth.mjs` | Trusted Shopify `authenticate.admin` online session only, WORK app and shop | customer account JWT, storefront app proxy, browser-supplied identity, OAuth code duplication |
+| JILL merchant operation/role policy | `backend/jill-merchant-policy.mjs` | Verified online staff identity, Shopify online scopes, one JILL grant registry | storefront UI, Google operator email, unverified session claims |
+| Owner online access evidence | Existing `services/jill-order-desk/admin-home.mjs` via `app.access.tsx` | Verified SDK session, existing D1 Owner and merchant policy; no tokens or customer data | Browser identity, app-installation scopes substituted for online staff, grant mutation |
+| Shared HQ visual theme | `services/jill-order-desk/app-home/app/styles/hq-theme.css` via authenticated `app.tsx`; existing screen CSS owns compositions | Shared palette, density, control sizing, focus and documented full-width page layout | Loaders/actions, permissions, request state, new navigation/business features, Shopify shadow-DOM overrides |
+| WORK HQ visual theme release | `scripts/release-work-hq-visual-theme-owner.mjs` with `check-work-hq-visual-only.mjs` | Shared existing manifest/metadata/receipt helpers, exact current WORK baseline, preserved bindings and independent runtime read-back | Behavior/authority changes, spent receipt reuse, secret rotation, schema/billing/LIVE changes |
+| WORK HQ connected-read release | `scripts/stage-work-hq-connected-read-owner.mjs` + `scripts/release-work-hq-connected-read-owner.mjs` | Canonical metadata/manifest checks, exact uploaded candidate and source/package receipt, one-use activation/owned restoration, independent runtime GET | Re-upload, repeated deployment, newer-allocation overwrite, gateway/LIVE operations, secrets rotation, billing, migrations or customer writes |
+| JILL Shopify Admin App Home read gate | `services/jill-order-desk/admin-home.mjs` | Authenticated Shopify SDK online session, sole D1 merchant grant adapter | own OAuth/JWT verification, any public API, customer-account auth, production mutations |
+| JILL merchant D1 registry adapter | `services/jill-order-desk/merchant-access.mjs` + `migrations/0001_staff_authority.sql` | WORK-only bound owner ID, staff grants and append-only audit | Shopify payment/Order truth, Google production events, customer authentication |
 | Backend HTTP routing | one web-app router/entry owner when extracted | command/query/event handlers | business logic for individual domains |
 | Backend boundary validation | one backend validation utility owner when extracted | request schemas/domain rules | browser-only presentation validation |
 | Privileged Shopify API transport | one backend Shopify client owner when extracted | credentials, Shopify Admin API | rewards/custom-order business rules |
@@ -55,14 +63,23 @@ This registry answers one question: **where does this behavior belong?**
 | Backend event/webhook reconciliation | event's canonical domain owner | verified Shopify/source event, authoritative platform data | trusting event delivery as sole correctness layer |
 | Backend operational health | each privileged domain's health contract + shared transport only when generic | version/infrastructure/reconciliation state | secrets or customer private data |
 | Rewards backend deployment/provenance | `.github/workflows/deploy-rewards-backend.yml` + `JILL_REWARDS_BUILD_SHA` runtime marker | canonical Git source, existing Apps Script project/deployment, Rewards guards | manual editor changes as a competing source, creating a second production web-app deployment, unverifiable runtime source |
+| Rewards WORK Customer Account preview target guard | `scripts/verify-rewards-work-target.mjs` + `package.json` WORK commands | Shopify CLI-linked local `shopify.app.work.toml`, verified WORK app Client ID and development store domain | reusing LIVE app credentials, running preview against LIVE, a second Rewards implementation, privileged coupon creation |
 | SEO/meta/structured data | canonical SEO snippets | Shopify objects/settings | page-local duplicated metadata systems |
 | Localization strings | `theme/locales/*` | canonical translation keys | hard-coded duplicated merchant/customer strings |
 | Theme Editor lifecycle integration | feature owner requiring lifecycle support | Shopify section events | global reinitialization observers |
 | Public Storewide promotion mirror | `backend/google-apps-script/JILL_Public_Promotions.gs` | active Shopify code discounts, paginated public-offer discovery, Shop metafield `jill_promotions.active_public_codes`, snapshot freshness, scheduled trigger health | personal Rewards coupons/accounting, subscriber/segment/customer-targeted codes, hard-coded campaign codes in Customer Account UI |
 | Rewards accounting/integrity | backend/rewards authority | Shopify/admin data | storefront presentation files |
 | Rewards customer state derivation | `shared/rewards.mjs` | backend response + `rewards.config.json` parity contract | reward accounting, extension-specific presentation ownership |
+| Customer Account discount-to-cart URL | `shared/rewards.mjs` exported `discountCartUrl` | Shopify native `/discount/{code}?redirect=/cart` route, store origin and percent-encoded code | custom cart databases, assumed session-only expiration, separate Dashboard/Coupons link builders |
 | Rewards Shopify discount adapter | rewards backend adapter/transport owner | privileged Shopify client | UI state ownership |
-| Customer Account shared presentation | `shared/customer-account-ui.jsx` | account extension state | reward accounting/business truth |
+| My JILL full-page hub entrypoint and shell | `extensions/jill-account-dashboard/shopify.extension.toml` + `src/Dashboard.jsx` (thin entrypoint after migration) + `src/hub/AccountHub.jsx` (on introduction) | Shopify new Customer Accounts, navigation modules, normalized data | Rewards financial truth, native orders/profile/checkout, a second independently registered full-page target |
+| My JILL internal navigation | `extensions/jill-account-dashboard/src/hub/routes.mjs` (create on first routed shell) | supported `extension://` and native Shopify account destinations | multiple route registries, hard-coded account page UUIDs, duplicate page targets |
+| Customer Account authenticated API transport | `shared/customer-account-api.mjs` (create on first extraction) | Customer Account GraphQL reads and CAS-protected customer-owned mutations | privileged Shopify Admin data, separate per-screen fetch clients, assuming scopes imply metafield access |
+| Customer Account JILL presentation primitives | `extensions/jill-account-dashboard/src/ui/AccountPrimitives.jsx` (create when used) | Shopify 2026-07 web components and semantic account state | storefront CSS injection, separate visual systems for each account screen |
+| My JILL Rewards and personal Coupons presentation | `extensions/jill-account-dashboard/src/pages/Rewards.jsx` + `src/pages/Coupons.jsx` (create by extracting current owners) | `shared/rewards.mjs`, canonical wallet and sanitized promotion mirror | another points algorithm, coupon creation/repair, separate wallet truth |
+| Native Profile shortcut to My JILL | `extensions/jill-account-home/src/AccountHome.jsx` | Shopify Profile extension target, hub route | recreating the full hub or durable customer settings engine |
+| Customer Custom Orders/celebrations/saved UI | `extensions/jill-account-dashboard/src/pages/{CustomOrders,Celebrations,SavedPreferences,Settings}.jsx` (create after contracts) | authenticated customer data with verified ownership and consent | direct access to another customer's requests, duplicating storefront Custom Order form |
+| Legacy standalone Coupons full-page surface | `extensions/jill-account-coupons/` until parity/menu migration, then retired | existing released page and links | permanent second Coupons owner or silently deleting an installed Shopify account route |
 | Customer durable profile/preferences | one explicit Shopify-metafield or backend persistence owner when introduced | authenticated customer identity | arbitrary browser-supplied customer identity |
 | Migration procedure/status | `docs/MIGRATION_BLUEPRINT.md` | feature contracts/QA evidence | implementation behavior |
 | Certification requirements | `docs/QA_CERTIFICATION.md` | architecture/feature contracts | production business rules |
@@ -70,6 +87,20 @@ This registry answers one question: **where does this behavior belong?**
 | Architecture decision history | `docs/DECISIONS.md` | dated decisions | rewriting current contracts |
 
 ## Registry rule
+
+WORK connected release additions (2026-10-18):
+
+| Domain | Canonical owner | Boundary |
+| --- | --- | --- |
+| Zero-byte HTTP body validation | `backend/empty-http-body.mjs` | Bounded stream validation shared by account reads and gateway diagnostics; no authentication decisions. |
+| Customer reply ingress | `backend/custom-order-conversation.mjs` | Fresh WORK customer session, bounded command, domain-separated HMAC; the existing Google event writer remains the only event commit authority. |
+| Public request thread | Existing Google `CustomOrderEvents` writer and `jillCustomOrderPublicThread_`, with the account projection in `backend/custom-order-account-read.mjs` | Public messages/status only, no internal notes or staff identity. |
+| Fresh runtime inventory | `scripts/collect-work-runtime-readonly.mjs` | Current allocations and metadata, no deployment/receipt reuse or credential mutation. |
+| Minimal WORK diagnostic release | Existing `work-gateway-diagnostic-release-policy.mjs`, with `prepare-work-gateway-diagnostic.mjs` source selection and `release-work-gateway-diagnostic-owner.mjs` execution | Verified current baseline; exact old source plus reviewed diagnostic changes; separate new one-use attempts, no old receipt reuse or secret changes. |
+| WORK catalog read projection | `services/jill-order-desk/work-catalog-read.mjs` | Owner plus per-feed online product/inventory/location scopes; bounded Shopify reads and independent shop/currency verification, native Admin edits, no D1 catalog copy. Untracked inventory is unknown stock, never zero capacity. |
+| Immutable quote agreements and recoverable commerce intent | `services/jill-order-desk/work-quote-agreement.mjs` and `quote-proposals/0009_work_quote_agreements.sql` | Exact private delivery terms and calculation/owner/source fingerprint, canonical-owned customer projection, atomic acceptance/outbox, one resource link; no manual paid state. Remote migration/activation remains gated. |
+| WORK Shopify quote calculation | `services/jill-order-desk/work-quote-calculation.mjs` | Official online SDK Owner + existing D1 policy, same WORK app/shop, server-loaded quote intent, exact Shopify decimals/customer/lines/personalization/discount read-back; missing address holds publication | Public ingress, browser pricing authority, a wallet, draft creation, invoice, payment, implied final tax without an address |
+| Universal Rewards arithmetic and migration planning | `backend/rewards-policy.mjs` | Backend-only versioned policy consumed by the canonical Rewards owner on activation; no independent HQ wallet or active v13 policy change. |
 
 A new domain requires an explicit row here before it receives a new canonical owner. Two rows may not claim the same responsibility.
 
@@ -83,3 +114,48 @@ The current combined Apps Script file remains production code during migration. 
 - `jill-custom-order.js` may orchestrate cross-product Custom Order personalization, but physical eligible-unit identity/count must come from `JILLPersonalization` and canonical product capability profiles. It must not own separate units-per-quantity arithmetic.
 - Product-level required personalization/reference semantics come from the full canonical Shopify capability profile; the generic Custom Order choices may only become stricter from that truth, never weaker.
 - `jill-forms.css` owns Custom Order large-card botanical presentation and consumes the same `--jill-botanical-field` foundation asset. It does not own a second botanical asset or decorate ordinary controls.
+
+HQ visual edition release profiles reuse `scripts/release-work-hq-visual-theme-owner.mjs`; v2 static profile is `scripts/release-work-hq-studio-owner.mjs`, with exact reviewed presentation inventory/logic guard in `scripts/check-work-hq-studio-only.mjs`. They own release commands only, never merchant, quote or wallet truth. See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md`.
+
+## HQ navigation and dashboard ownership
+
+| Domain | Canonical owner | Allowed inputs and responsibility | Prohibited responsibility |
+| --- | --- | --- | --- |
+| WORK SDK authentication fan-out | `services/jill-order-desk/work-admin-auth-once.mjs` | One SDK attempt per incoming request; independent rejected Response bodies per parallel loader | Cross-request sessions, fake auth, repeated exchanges, swallowed redirects |
+| WORK raw-document Admin destination | Existing `services/jill-order-desk/shopify-host/sdk-config.mjs` + Worker HTTP entry | Canonical WORK shop/client, path-only destination for top-level documents | Query/token forwarding, public data access, alternate app or shop |
+| HQ dashboard counts | Existing Home loader and canonical inbox reader/`inboxStats` | Authorized Owner projection, streamed aggregate-only Home stats | Separate counter store, customer records in Home, zero from failed reads |
+
+Navigation repair release profile `scripts/release-work-hq-navigation-owner.mjs` delegates to the existing release driver with a separate reviewed inventory and unused receipt namespace; scope is explicitly not visual-only. See `docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md`.
+
+The compact edition uses `scripts/work-hq-density-package.mjs` to compose the
+existing runtime source plus exactly seven reviewed presentation files, and
+`scripts/release-work-hq-density-owner.mjs` for a distinct one-use profile through
+the shared visual release executor. This packaging owner excludes unreleased
+quote business code; it owns no merchant authority or data. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+Exact original request presentation remains in
+`app-home/app/components/WorkOriginalRequestDetails.tsx`: `WorkOrderDetails`
+and `WorkOrderDetailsContent` own the shared customer/event/instructions
+presentation; `WorkOriginalRequestDetails`
+owns item/variation/personalization rendering. Both consume the same verified
+exact-submission model and shared unavailable/ID guard. The inbox card controller invokes the existing authenticated exact-ID loader
+only on opening. Presentation owns no persisted request state or identity rule.
+
+
+Order details release packaging reuses `prepareReviewedPresentationBuild` in
+`scripts/work-hq-density-package.mjs`; the historical density defaults remain
+frozen. `scripts/work-hq-order-details-package.mjs` supplies the ten-file reviewed
+inventory and isolated build hook, and `release-work-hq-order-details-owner.mjs`
+supplies the exact current baseline/one-use namespace to the canonical visual
+release executor. This owns release boundaries only, not request truth.
+The existing runtime collector owns selecting the corresponding HQ/gateway
+health header; strict release health certification stays in its existing owner.
+
+The inbox polish v1 release extends that same **frozen Order details presentation
+overlay** with `WorkRequestQuickActions.tsx`, using
+`scripts/work-hq-inbox-polish-package.mjs` for exact 11-file Git blob checks
+and isolated baseline composition and `scripts/release-work-hq-inbox-polish-owner.mjs`
+for its OWN new one-use receipts. Neither script owns business commands,
+authorized reads, quote state, payments, customer profiles or LIVE.
+See `docs/WORK_HQ_INBOX_POLISH_RELEASE_2026-10-20.md`.

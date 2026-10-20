@@ -1,5 +1,103 @@
 # JILL Theme Core Architecture Decisions
 
+## 2026-10-19 — real quote calculation before commerce creation
+
+The existing agreement owner consumes exact Shopify calculations through one
+server-only adapter. Reuse online Owner/D1 authority, verify the same WORK
+installation, require effective product/customer/draft scopes, disable extra
+discounts, and reconcile exact integer amounts/personalization/customer before
+freezing. A missing address is explicitly unpublishable; never turn a provisional
+zero tax into a final quote. Calculation creates no draft or invoice, changes
+no wallet, and does not activate an HTTP route or release. Owner's latest
+no-hang direction leaves navigation in place while this work proceeds. See
+`WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md` for actual platform evidence and
+remaining gates. Existing one-create/reconciliation and LIVE boundaries stand.
+
+
+## 2026-10-19 — one compact visual theme for all HQ tabs
+
+Use one authenticated parent CSS foundation with shared palette, density,
+controls and focus. Existing screen CSS owns compositions; use the documented
+Polaris large page width, not shadow-DOM overrides, zoom or duplicate page
+styles. Preserve labels, notices and controls. A source/AST guard prevents
+behavior, policy/copy, backend, theme or extension changes. The new WORK visual
+release preserves the current exact bindings/flags and 0% quote canary, uses
+new one-use receipts, and requires exact provider/runtime read-back. No paid
+resources, new product dependency, schema, wallet, app identity or LIVE work.
+
+
+## 2026-10-19 — exact uploaded HQ activation with owned restoration
+
+Reuse the canonical staging metadata/receipt helpers; never build or upload
+again to activate an already verified candidate. Bind activation to the exact
+Owner-provided candidate, source and package hash. Keep the original quote
+canary at 0% and conversation/quote drafts disabled on ordinary traffic.
+Resolve ambiguous deploy acknowledgements by read-back, not repetition.
+Restore only this runner's uniquely attributed unchanged deployment, once,
+and hold on changed/unreadable state. No secret rotation, schema/resources,
+new billing, app-dev URL changes or LIVE operation. Source checks and health
+cannot substitute for authenticated end-to-end WORK acceptance.
+
+
+## 2026-10-19 — bounded catalog reads and expired-create recovery
+
+Extend the existing catalog projection/screen rather than creating a new
+catalog owner. Keep products/collections under product scope and inventory/
+locations under their explicit Owner/online scope intersection. Verify the
+returned WORK shop and currency; untracked inventory is unknown availability,
+not zero stock or labor capacity. Minimum-scope preparation is explicit and
+local; actual app release, consent and online grants remain separate evidence.
+
+Once Shopify creation has been claimed, quote expiry may prohibit a new create
+but must not prevent read-only reconciliation of a resource already created.
+A failed search remains held; it never establishes absence or permits another
+create. No active agreement/Rewards/commerce service is enabled by this source.
+The corrected gateway diagnostic failure is closed by the Owner's exact signed
+receipt; all deployment receipts are spent and secret rotation is unwarranted.
+
+## 2026-10-19 UTC — current inventory and minimal diagnostic operation
+
+The Owner's fresh metadata and edge clock confirm the existing 0% diagnostic
+can be inspected without reusing its spent deployment receipt. Build its
+replacement from the exact old source, selecting only canonical zero-byte
+handling and a runtime response header. Keep ordinary traffic on the same
+100% candidate, inherit the original five bindings, and reserve distinct new
+upload/deployment receipts atomically. Ambiguous outcomes go to read-only
+inspection, never automatic replay or secret rotation. Full feature builds
+are independently gated. Keep My JILL composer drafts only in composing-screen
+memory across refresh and prune against each fresh verified account response;
+an uncertain send retains its original operation until receipt recovery.
+
+## 2026-10-19 UTC — HTTP emptiness, one conversation and held financial activation
+
+**Decision:** Authenticate the gateway diagnostic challenge first, then
+validate zero bytes through a bounded HTTP stream reader. Never infer a key
+mismatch from a 403 alone. Real workerd HTTP converts the Owner's empty POST
+into a non-null stream with Content-Length 0; the previous null-stream check
+rejects the correct key/time. HMAC and the 60-second window stay unchanged.
+
+**Decision:** Customer replies reuse the existing locked Google event writer
+and immutable owner ledger with a domain-separated signed ingress and receipt
+read. Version-two public history filters internal-only events; HQ and My JILL
+consume that same whitelist. No general chat store, additional extension or
+email-derived ownership. Activation is gated independently in Google/Worker.
+
+**Decision:** Keep agreement publications/acceptance/commerce intent in the
+existing WORK D1 boundary, with additive schema outside active migrations
+until runtime review. Commit acceptance and intent atomically, confirm the
+canonical public accepted event, claim one creation, then reconcile ambiguous
+Shopify results without a second create. Quarantine does not clear itself.
+This local foundation does not implement the missing public quote routes,
+invoice flow, actual Shopify adapter or scheduler.
+
+**Decision:** Universal Rewards arithmetic/migration planning is backend-only
+and prepares the existing owner for a later versioned activation. v13 remains
+the active wallet/discount owner. Issued coupons retain original terms; no
+new customer deduction occurs in HQ. Fresh WORK app scope reads confirm draft
+and product/inventory/location scopes are missing; connector authority does
+not bypass those application/staff gates. Full local and runtime evidence is
+recorded in `WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`.
+
 This log records decisions and rationale so future contributors do not repeatedly reopen settled architecture questions. It does not replace the Constitution or contracts.
 
 ## 2026-09-08 — Theme Core starts clean
@@ -224,3 +322,107 @@ Add a new entry only for a real architectural/product-system decision. Routine i
 **Decision:** The verified `AKfycbxX.../exec` Apps Script deployment is the canonical Custom Order submission endpoint. Custom Order reads the full product capability profile for required personalization/reference semantics while retaining the existing Product Options-only projection for option rendering. Bundled products use physical customization units from `JILLPersonalization`, including 8- and 12-count merchandise. Date Needed exposes a 12-business-day minimum but remains blank until the customer chooses a date. Review validates without mutating Product Options finish state. Large Custom Order step cards may reuse the canonical botanical field at low opacity with deterministic crop variations; controls remain undecorated.
 
 **Consequence:** This scoped final pass supersedes the 2026-09-10 consequence that the Custom Order form owner was untouched. It does not authorize duplicate engines or a new visual authority. Deployment remains DEVELOPMENT-theme-only until explicitly promoted; LIVE is not modified by this decision.
+
+## 2026-10-09 — Customer Account Rewards requires explicit release isolation
+
+**Decision:** Treat WORK as the active feature/PR lane, KEEP as a retained passing Git reference, and LIVE as the separately authorized production Shopify app release. The existing account app is not a Shopify DEVELOPMENT theme and its full-page extension UIDs belong to the installed production app. A future real WORK account preview must run via a distinct development app/store; the Git branches alone do not provide a second Shopify-hosted account site.
+
+**Why:** The former Customer Account workflow published every matching `jill/theme-core` push into the production app. That defeats isolated Rewards experiments and makes a code-only test appear equivalent to end-to-end commerce certification.
+
+**Consequence:** The Customer Account workflow under review is manual-only, requires `jill/theme-core`, an exact source commit SHA and an explicit typed LIVE authorization, and uses a noncanceling deploy concurrency group. The draft PR validates but never deploys; actual coupon/cart certification remains blocked until an isolated development app/store runtime exists. Existing `main` workflow and any out-of-band deployment routes must also be audited before claiming universal LIVE isolation.
+
+## 2026-10-10 — My JILL becomes a hybrid account hub, not another account platform
+
+**Decision:** Maintain Shopify native Customer Accounts for authentication, Orders, Profile, addresses, cart and checkout. Reuse the existing `jill-account-dashboard` full-page extension UID for one modular My JILL hub (Overview, Rewards, Coupons, Custom Orders, Celebrations, Saved Preferences, JILL Settings). Keep the distinct native Profile block as a shortcut. Migrate, certify, and eventually retire the standalone Coupons full-page extension; do not create duplicate installed page targets.
+
+**Why:** The Shopify WORK Rewards engine, permissions and seven customer metafield definitions are verified, but the released My JILL/Coupons pages fail to render. Their independent page shells complicate diagnosis and future integration. A single hub entrypoint plus feature modules allows isolated fallbacks, shared authenticated API transport and one navigation owner without cloning Shopify's commerce.
+
+**Boundaries:** `jill/rewards-work` and `jill-work.myshopify.com` remain the only active execution targets for this redesign. KEEP is a Git baseline only until a separate KEEP Shopify environment is provisioned and independently proven. The backend v13 ledger and existing WORK code generation remain authoritative; no LIVE deployment or points mutation is authorized by architecture work. Any missing `jill` custom-event/preference metafields require a business/storage contract before creation.
+
+**Proof and file map:** `docs/CUSTOMER_ACCOUNT_HYBRID.md` owns the staged roadmap. Contract semantics stay in `FEATURE_CONTRACTS.md`, file/domain ownership stays in `DOMAIN_OWNERSHIP.md`, evidence stays in `QA_CERTIFICATION.md`.
+
+## 2026-10-18 — One points conversion across website and future playground
+
+**Decision:** The merchant selected 1 point = $1, with 0.1 point earned per $1 of eligible paid items and 0.1-point redemption steps. Each $1 discount requires at least $10 of eligible item subtotal. This replaces the earlier proposed 20% purchase limit and unequal future reward tiers, but does not retroactively change the terms of issued v13 coupons. The customer can choose a small amount for a snack or admission; reaching 50 points is not an unlock requirement.
+
+**Why:** A common minimum-purchase formula permits a small on-site purchase and a large web order to use the same wallet and rate, without adding a separate playground Rewards engine. It sets a 10% transaction discount ceiling and keeps the previously selected 50 points = $50 value.
+
+**Consequence:** `docs/JILL_REWARDS_WORK_FLEX_REDEMPTION.md` defines the integer-cents/tenths math and the migration proof. Shopify remains the item, discount, checkout and order authority; the canonical Rewards backend owns balances and reservation/reconciliation, while My JILL and HQ are customer and merchant views. Current v13 has fixed whole-point tiers and remains active until a versioned WORK ledger, coupon integrity migration, eligible-product scope and Shopify checkout/draft tests pass. LIVE and KEEP remain untouched.
+
+
+## JILL visual theme v2 prepared — 2026-10-19
+
+User-authorized presentation-only continuation: bolder purple/cherry/gold/ink
+palette, shared active-tab navigation, button-style actions, shorter task copy
+and native disclosures for technical evidence. Quote/customer/security/error
+boundaries remain visible. Canonical visual owner remains `hq-theme.css` and
+the existing page styles; runtime backend, hooks and command props are unchanged.
+See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md` for reviewed source,
+24 local browser cases, guarded new v2 release/receipt boundaries and remaining
+authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
+is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
+spent; never rerun historical releases or reset receipts. WORK operational
+acceptance and separate customer-facing LIVE review remain incomplete.
+
+## Navigation incident and Home dashboard — 2026-10-19
+
+Owner reports Requests not opening and raw-Worker new-tab `200 OK`; Home had
+three Requests links. Local compiled SDK/data-route reproduction found shared
+thrown Response body consumption across parallel loaders. Repair preserves one
+SDK attempt but clones rejected Responses per loader, restores top-level new-tab
+entry through the existing WORK Admin app, and makes Home a canonical streamed
+counts dashboard with one Requests navigation entry. See
+`docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md` for evidence, source/denial tests,
+new isolated repair receipts and required authenticated checks. This is an
+explicitly authorized navigation/dashboard change, NOT visual-only. It is NOT
+DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
+All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
+wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
+actual authenticated navigation/new-tab proof after a reviewed repair release.
+
+
+## 2026-10-19 — Exact delivery terms belong to the immutable agreement
+
+Extend the canonical agreement owner rather than add an address/quote store.
+Version-2 publications bind the exact private address and shipping label as well
+as their calculation fingerprint. Owned reads first verify canonical ownership;
+errors do not become absence. Accepted terms survive later event revisions with
+unchanged immutable ownership/payload. Actual draft delivery mismatches quarantine
+the commerce intent and never authorize another create. This is inactive source,
+not a remote migration or operational pass. The prior uncertain-intake hold and
+separate LIVE review remain in force. See WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Remove the decorative Home hero and compact the canonical HQ theme, preserving
+readability, 44px touch targets and existing auth/navigation/command behavior.
+Package the current runtime source with exactly seven visual files so unreleased
+quote business changes are excluded. Reuse the visual executor via an optional
+isolated build hook and a new receipt namespace; historical releases remain spent.
+This is not deployed or operational acceptance. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## 2026-10-19 — Request overview belongs in Order details
+
+Move the existing customer/event and special-instructions presentation into the
+request's top Order details dropdown, replacing technical record metadata.
+Omit contact email and canonical order_type there. Reuse the existing verified
+exact-request model and component owner. Inbox cards load the existing exact-ID
+route on opening only; no private preload or duplicate overview.
+Items/per-unit personalization remain distinct. Source/local review only;
+current runtime/compact receipt is needed before another reviewed release.
+
+
+## 2026-10-20 — Current HQ read-back and separate Order details package
+
+Accept Owner f9830ddf.../a67cfa4f... allocation as the current WORK baseline;
+retain quote canary at 0% and all historical spent receipts. Preserve the
+original null health observation while correcting the collector's HQ header.
+Strict unsigned HQ verification confirms exact f9830ddf... independently.
+Compose the existing runtime plus ten frozen UI files through the shared source
+composer, excluding unreleased quote work. A NEW one-use profile includes the
+explicit on-open authenticated read and therefore claims `visual_only: false`.
+Fresh provider metadata, exact baseline and unchanged bindings are required
+before mutation; no deployment or authenticated acceptance is claimed locally.

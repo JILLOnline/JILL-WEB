@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "jill-work-phase19-local-media-only",
+  "main": "./worker.mjs",
+  "compatibility_date": "2026-10-14",
+  "workers_dev": false,
+  "d1_databases": [
+    {
+      "binding": "JILL_PHASE19_SYNTHETIC_D1",
+      "database_name": "jill-work-phase19-local-synthetic",
+      "database_id": "00000000-0000-4000-8000-000000000019",
+      "remote": false
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "JILL_PHASE19_SYNTHETIC_R2",
+      "bucket_name": "jill-phase19-local-synthetic-artwork",
+      "remote": false
+    }
+  ]
+}

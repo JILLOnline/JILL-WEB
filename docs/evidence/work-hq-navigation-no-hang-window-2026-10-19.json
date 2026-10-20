@@ -1,0 +1,736 @@
+{
+  "environment": "WORK",
+  "source": "Owner filtered capture received 2026-10-19",
+  "owner_reported_hang": false,
+  "owner_direction": "Leave current app behavior as is; stop active hang diagnosis; resume master work",
+  "summary": {
+    "routes": {
+      "inbox": 9,
+      "home": 3,
+      "detail": 3
+    },
+    "outcomes": {
+      "ok": 13,
+      "canceled": 2
+    },
+    "exceptions": 0,
+    "inbox_totals_ms": [
+      3211,
+      1541,
+      126,
+      129,
+      125,
+      123,
+      129,
+      131
+    ]
+  },
+  "receipt": {
+    "environment": "WORK",
+    "mode": "read_only",
+    "runner": "a82f268d3203c6dd788cc0662bd4ef1fef47e38e",
+    "expected_runtime": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+    "allocation_unchanged": true,
+    "capture_outcome": "application_events_captured",
+    "log_stream_verified": true,
+    "health_probe": {
+      "exact_runtime_verified": true,
+      "work_health_marker_seen": true,
+      "correlation": "redacted_marker",
+      "unique_request_verified": false,
+      "version_mismatch_seen": false,
+      "attempts": 2
+    },
+    "tail_events_received": 16,
+    "application_events_received": 15,
+    "input_diagnostics": {
+      "json_objects": 19,
+      "invalid_json": 0,
+      "oversized_json": 0,
+      "worker_name_missing": 0,
+      "worker_name_expected": 19,
+      "worker_name_other": 0,
+      "projected": 16,
+      "filtered": 3
+    },
+    "dropped_events": 0,
+    "graceful_stop_requested": true,
+    "forced_child_stop": false,
+    "tail_command_failure": null,
+    "records": [
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 48
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 101
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 3062
+          },
+          {
+            "trace": "0f34a5f1-5a6e-4577-b971-ca4f4a1b0c79",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 3211
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "home",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 109
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 3796
+          },
+          {
+            "trace": "2eb0a20c-37dd-440b-a805-292adfbb2235",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 3905
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "detail",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "canceled",
+        "status": null,
+        "phases": [
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 46
+          },
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 88
+          },
+          {
+            "trace": "55487cab-f22f-4585-8ec0-cd4ef43afa22",
+            "phase": "google_feed",
+            "event": "begin"
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "home",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 88
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 2637
+          },
+          {
+            "trace": "c868d8fa-be54-46cc-9bd1-e43bac712d3b",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 2725
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 43
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 90
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 1408
+          },
+          {
+            "trace": "bcd044af-0335-4005-a312-b0e76fcc77c2",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 1541
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 44
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 82
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "88dd48f3-33c9-43df-940a-bf6c359909a4",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 126
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "home",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 87
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "8c083e39-0db2-4fbe-9933-1ea80b3112dc",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 87
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 42
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 87
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "e5048faa-17c8-47cb-a89c-93774abe1c6e",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 129
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "detail",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "canceled",
+        "status": null,
+        "phases": [],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 40
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 85
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "86d6a99f-6f95-4e61-b850-bcb4d56a14cc",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 125
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 40
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 83
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "9e80280f-d541-45b2-8d82-fe9603c76765",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 123
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 43
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 86
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "5997c133-987a-4baa-9059-5c9b7b5ff85a",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 129
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "inbox",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "inbox",
+            "event": "begin"
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "shopify_auth",
+            "event": "begin"
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "shopify_auth",
+            "event": "end",
+            "duration_ms": 41
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "work_owner",
+            "event": "begin"
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "work_owner",
+            "event": "end",
+            "duration_ms": 90
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "google_feed",
+            "event": "begin"
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "google_feed",
+            "event": "end",
+            "duration_ms": 0
+          },
+          {
+            "trace": "86c219fd-baaf-4cbc-9497-b04541615428",
+            "phase": "inbox",
+            "event": "end",
+            "duration_ms": 131
+          }
+        ],
+        "exceptions": []
+      },
+      {
+        "route": "detail",
+        "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "exact_version_verified": true,
+        "outcome": "ok",
+        "status": 200,
+        "phases": [],
+        "exceptions": []
+      }
+    ],
+    "raw_tail_printed": false,
+    "raw_tail_saved": false,
+    "no_upload_or_deployment": true,
+    "no_signed_post": true,
+    "no_receipt_changes": true,
+    "root_cause_verified": false,
+    "operational_acceptance": false
+  },
+  "historical_intermittent_root_cause_verified": false,
+  "new_tab_acceptance_verified": false,
+  "full_operational_acceptance": false
+}

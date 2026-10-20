@@ -35,7 +35,7 @@ A missing or materially altered unused coupon is revoked and its reserved points
 
 ## Refund/cancellation solvency
 
-Order paid/refund/cancel/edit events recalculate the order's eligible merchandise subtotal from Shopify's 2026-07 `LineItem.priceAfterAllDiscountsBeforeTaxesSet`, which excludes refunded and removed units and tax. The order metafield `jill_rewards.credited_cents` makes reprocessing idempotent.
+Order paid/refund/cancel/edit events recalculate the order's eligible merchandise subtotal from Shopify's supported 2026-07 `LineItem.discountedUnitPriceAfterAllDiscountsSet` multiplied by `currentQuantity`, excluding refunded/removed units and gift cards. The surviving discounted line total is rounded to cents, while taxes and shipping are excluded. (The former `priceAfterAllDiscountsBeforeTaxesSet` field was not accepted by Shopify's 2026-07 Admin GraphQL schema and is retired.) The order metafield `jill_rewards.credited_cents` makes reprocessing idempotent.
 
 If a refund/cancellation reduces earned points below committed points, unused active coupons are revoked **newest first** until the account is solvent or no unused coupons remain. Used and expired rewards are never clawed back; any residual deficit is absorbed by future earning while spendable balance remains floored at zero.
 

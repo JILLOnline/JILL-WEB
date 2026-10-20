@@ -1,13 +1,23 @@
 import '@shopify/ui-extensions/preact';
 import {render} from 'preact';
+import {useEffect, useState} from 'preact/hooks';
 
-const STORE = 'https://jillonlinestore.com';
+import {loadCustomerAccountStorefront} from '../../../shared/rewards.mjs';
+
 
 export default function extension() {
   render(<JillSettingsHeader />, document.body);
 }
 
 function JillSettingsHeader() {
+  const [store, setStore] = useState('');
+  useEffect(() => {
+    let active = true;
+    loadCustomerAccountStorefront()
+      .then((origin) => { if (active) setStore(origin); })
+      .catch((error) => console.warn('JILL Settings storefront unavailable', error));
+    return () => { active = false; };
+  }, []);
   return (
     <s-section>
       <s-stack direction="block" gap="base">
@@ -23,8 +33,8 @@ function JillSettingsHeader() {
 
         <s-stack direction="inline" gap="base">
           <s-button variant="primary" href="extension:jill-account-dashboard/">Dashboard</s-button>
-          <s-button href={STORE}>Back to JILL</s-button>
-          <s-button href={`${STORE}/pages/contact`}>Contact JILL</s-button>
+          {store && <s-button href={store}>Back to JILL</s-button>}
+          {store && <s-button href={`${store}/pages/contact`}>Contact JILL</s-button>}
         </s-stack>
       </s-stack>
     </s-section>

@@ -1,0 +1,103 @@
+{
+  "captured_at": "2026-10-18T23:52:49.864Z",
+  "environment": "WORK",
+  "source": {
+    "branch": "jill/rewards-work",
+    "commit": "ae680c8bef856df7c5470768457f22bde8c021d9",
+    "tracked_clean": false
+  },
+  "app": {
+    "client_id": "f8e1ebdbae84490dc8ea5b133637e6c0",
+    "shop": "jill-work.myshopify.com",
+    "active_version": "unverified",
+    "effective_scopes": "unverified",
+    "plan": "unverified",
+    "staff_permissions": "unverified",
+    "extensions": [
+      {
+        "handle": "jill-account-coupons",
+        "uid": "dfb3e6f0-162d-b114-19a1-d854706d0d45166f43aa",
+        "api_version": "2026-07"
+      },
+      {
+        "handle": "jill-account-dashboard",
+        "uid": "2f093e56-265e-4263-57fc-eb7b7a8a3f49ccd3b19a",
+        "api_version": "2026-07"
+      },
+      {
+        "handle": "jill-account-home",
+        "uid": "923e30e6-dbf9-f48a-57a6-0dbd1ab57763f55ebbde",
+        "api_version": "2026-07"
+      }
+    ]
+  },
+  "gateway": {
+    "unpinned_health": {
+      "status": 200,
+      "healthy": true,
+      "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+      "exact_version_verified": false,
+      "clock": {
+        "rtt_ms": 3442,
+        "offset_min_ms": -316,
+        "offset_max_ms": 4125,
+        "outside_challenge_window": false,
+        "source": "http_date_edge_not_worker_clock"
+      }
+    },
+    "clock_samples": [
+      {
+        "status": 200,
+        "healthy": true,
+        "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+        "exact_version_verified": false,
+        "clock": {
+          "rtt_ms": 2943,
+          "offset_min_ms": -261,
+          "offset_max_ms": 3681,
+          "outside_challenge_window": false,
+          "source": "http_date_edge_not_worker_clock"
+        }
+      },
+      {
+        "status": 200,
+        "healthy": true,
+        "runtime_version": "9322193f-5e87-4479-88c9-39229dddb5f2",
+        "exact_version_verified": false,
+        "clock": {
+          "rtt_ms": 121,
+          "offset_min_ms": -382,
+          "offset_max_ms": 738,
+          "outside_challenge_window": false,
+          "source": "http_date_edge_not_worker_clock"
+        }
+      }
+    ]
+  },
+  "hq": {
+    "public_health": {
+      "status": 200,
+      "healthy": true,
+      "runtime_version": null,
+      "exact_version_verified": false,
+      "clock": {
+        "rtt_ms": 3720,
+        "offset_min_ms": -102,
+        "offset_max_ms": 4617,
+        "outside_challenge_window": false,
+        "source": "http_date_edge_not_worker_clock"
+      }
+    }
+  },
+  "qa": {
+    "published_revision": "unverified"
+  },
+  "budget": {
+    "new_billable_services_enabled": false,
+    "usage": "unverified",
+    "private_media_activation": "held"
+  },
+  "blockers": [
+    "owner_authenticated_runtime_metadata_required"
+  ]
+}

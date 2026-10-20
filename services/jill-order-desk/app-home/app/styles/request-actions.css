@@ -1,0 +1,165 @@
+/* Single scoped owner for shared WORK inbox/detail actions. */
+.jill-actions{border-top:1px solid #eeebe6;padding:10px 13px;background:#fcfbf9}
+.jill-actions__heading{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.jill-actions__heading strong{font-size:12px;font-weight:730}
+.jill-actions__heading span{font-size:11px;color:#815d30}
+.jill-actions__hint{font-size:11px;color:var(--jill-muted);line-height:1.45;margin:6px 0}
+.jill-actions__tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.jill-actions button{font:inherit;font-size:12px;font-weight:690;cursor:pointer}
+.jill-actions__tabs button{border:1px solid var(--jill-control-border);background:white;color:#5b4d3c;
+  border-radius:6px;padding:6px 9px}
+.jill-actions__tabs button[aria-expanded="true"]{background:#f4ebde;border-color:#bca17b}
+.jill-actions__body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;padding-top:8px}
+.jill-actions__body label{font-size:11px;font-weight:680;display:grid;gap:5px;
+  color:#575b61;min-width:0}
+.jill-actions__body label:has(textarea),.jill-actions__body label:has(input),
+.jill-actions__body .jill-actions__hint,.jill-actions__primary{grid-column:1/-1}
+.jill-actions__body select,.jill-actions__body textarea,.jill-actions__body input{
+  font:inherit;font-size:var(--jill-field-size);background:white;color:#292b30;border:1px solid var(--jill-control-border);
+  border-radius:6px;padding:6px;width:100%;resize:vertical}
+.jill-actions__primary{justify-self:start;border:0;border-radius:7px;
+  background:#345b7b;color:white;padding:6px 10px}
+.jill-actions__primary:disabled{background:#e5e5e3;color:#767779;cursor:not-allowed}
+.jill-actions button:focus-visible,.jill-actions input:focus-visible,
+.jill-actions select:focus-visible,.jill-actions textarea:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px}
+.jill-actions__feedback{font-size:12px;background:#fff3e5;color:#775421;
+  border-radius:6px;padding:7px 9px;margin-top:10px}
+.jill-actions__feedback--ok{background:#e9f5ed;color:#2b6f45}
+.jill-actions__refresh{font-size:12px;line-height:1.5;background:#eef3fa;color:#394a5e;
+  padding:8px 10px;border-radius:6px;margin-top:8px}
+.jill-actions__refresh button{display:inline-flex;border:1px solid #c6d4e5;
+  border-radius:6px;color:#325a83;background:white;padding:5px 8px;margin-left:7px}
+.jill-actions__refresh button:disabled{opacity:.65;cursor:not-allowed}
+.jill-request .jill-actions{background:transparent;padding:0;border:0}
+@media(max-width:700px){.jill-actions{padding:10px 11px}
+  .jill-actions__body{grid-template-columns:1fr}}
+
+/* WORK Inbox only. Keep the closed control quiet and the menu tucked below it.
+   The card clips overflowing children, so options expand IN FLOW rather than
+   using an absolute popover that could be cut off at phone/card edges. */
+.jill-actions--compact{
+  padding:8px 12px 10px;
+  background:transparent;
+  text-align:center
+}
+.jill-actions__quick-menu{
+  display:flex;justify-content:center;width:100%;margin-inline:auto
+}
+.jill-actions__quick-menu details{
+  display:block;width:min(100%,230px)
+}
+.jill-actions__quick-menu summary{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-sizing:border-box;width:max-content;max-width:100%;min-height:44px;
+  margin-inline:auto;padding:0 16px;
+  border:1px solid #6e3196;border-radius:999px;
+  background:linear-gradient(135deg,#7e42b0 0%,#672f96 100%);
+  color:#fff;cursor:pointer;list-style:none;user-select:none;
+  font-size:11px;font-weight:780;letter-spacing:.055em;line-height:1.2;
+  box-shadow:0 2px 8px rgba(70,31,104,.16);
+  transition:background .16s ease,box-shadow .16s ease,transform .16s ease
+}
+.jill-actions__quick-menu summary::-webkit-details-marker{display:none}
+.jill-actions__quick-menu summary:hover{
+  background:linear-gradient(135deg,#7635a9 0%,#5c278b 100%);
+  box-shadow:0 4px 12px rgba(70,31,104,.19);
+  transform:translateY(-1px)
+}
+.jill-actions__quick-menu summary:active{transform:translateY(0)}
+.jill-actions__quick-menu summary:focus-visible,
+.jill-actions__menu-options button:focus-visible,
+.jill-actions__menu-options a:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+.jill-actions__menu-chevron{
+  display:inline-flex;align-items:center;justify-content:center;
+  opacity:.92;margin-inline-start:auto
+}
+.jill-actions__menu-options{
+  display:grid;gap:3px;box-sizing:border-box;
+  width:100%;margin:7px auto 0;padding:6px;
+  border:1px solid #e7ddee;border-radius:13px;
+  background:#fff;box-shadow:0 5px 16px rgba(53,30,73,.09);
+  text-align:left
+}
+.jill-actions__menu-options button,
+.jill-actions__menu-options a{
+  box-sizing:border-box;display:flex;align-items:center;
+  justify-content:space-between;width:100%;min-height:44px;
+  padding:9px 12px;border:1px solid transparent;border-radius:8px;
+  background:transparent;color:#52435b;font:inherit;font-size:12px;
+  font-weight:690;line-height:1.25;text-align:left;text-decoration:none
+}
+.jill-actions__menu-options button:hover,
+.jill-actions__menu-options a:hover,
+.jill-actions__menu-options button[aria-expanded="true"]{
+  border-color:#eadff2;background:#f7f2fa;
+  color:#512677;text-decoration:none
+}
+.jill-actions__menu-options .jill-actions__open-link{
+  border-color:#f1e7f6;background:#fbf8fd;color:#71329c
+}
+.jill-actions--compact .jill-actions__body,
+.jill-actions--compact .jill-actions__feedback,
+.jill-actions--compact .jill-actions__refresh,
+.jill-actions--compact .jill-actions__hint{text-align:left}
+@media(prefers-reduced-motion:reduce){
+  .jill-actions__quick-menu summary,
+  .jill-actions__menu-chevron{transition:none}
+  .jill-actions__quick-menu summary:hover{transform:none}
+}
+
+/* WORK Requests inline actions: direct Message + Status buttons, no menu.
+   Other HQ detail/messages consumers keep their original presentation. */
+.jill-actions--direct{
+  border:0;padding:0;margin:0;min-width:0;
+  background:transparent;flex:1 1 auto
+}
+.jill-actions__direct-buttons{
+  display:flex;justify-content:flex-end;align-items:center;
+  gap:6px;min-width:0;flex-wrap:wrap
+}
+.jill-actions__direct-buttons button{
+  display:inline-flex;justify-content:center;align-items:center;
+  box-sizing:border-box;min-height:36px;max-width:100%;
+  padding:6px 10px;border-radius:8px;
+  border:1px solid #d6c1e6;background:#fff;
+  color:#68328e;font:inherit;font-size:10px;
+  font-weight:790;line-height:1.2;
+  white-space:normal;text-align:center;cursor:pointer
+}
+.jill-actions__direct-buttons .jill-actions__direct-status{
+  background:linear-gradient(135deg,#7e42af,#69329b);
+  border-color:#71349d;color:#fff;
+  box-shadow:0 2px 6px rgba(75,34,102,.13)
+}
+.jill-actions__direct-buttons button:hover{
+  background:#f3eafa;border-color:#a976c4
+}
+.jill-actions__direct-buttons .jill-actions__direct-status:hover{
+  background:linear-gradient(135deg,#7537a9,#5e288e);
+  color:#fff
+}
+.jill-actions__direct-buttons button[aria-expanded="true"]{
+  box-shadow:0 0 0 2px #d5b9e8
+}
+.jill-actions--direct .jill-actions__body,
+.jill-actions--direct .jill-actions__feedback,
+.jill-actions--direct .jill-actions__refresh,
+.jill-actions--direct .jill-actions__hint{
+  text-align:left
+}
+.jill-inbox__cell--actions .jill-actions--direct{
+  width:auto;min-width:0;flex:1 1 auto
+}
+@media(max-width:760px){
+  .jill-actions__direct-buttons{
+    justify-content:flex-start
+  }
+  .jill-actions__direct-buttons button{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-actions__direct-buttons button{transition:none}
+}

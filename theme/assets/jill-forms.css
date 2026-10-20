@@ -1449,3 +1449,42 @@
     }
   }
 }
+
+
+/* Custom Order identity disclosure: Shopify's signed session determines
+   ownership; the editable email field is only a contact destination. */
+.jill-custom-order__account-context {
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--jill-color-accent) 18%, var(--jill-color-foreground) 8%);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--jill-color-accent) 3%, var(--jill-color-background));
+  font-size: 0.925rem;
+  line-height: 1.45;
+}
+.jill-custom-order__account-context strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.jill-custom-order__account-context p {
+  margin: 0.3rem 0;
+  overflow-wrap: anywhere;
+}
+.jill-custom-order__account-context a {
+  display: inline-block;
+  margin-top: 0.4rem;
+  text-underline-offset: 0.15em;
+}
+
+/* The final review repeats account-vs-contact identity boundaries where
+   the customer actually authorizes the Custom Order submission. */
+.jill-custom-order__identity-review-note {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--jill-color-accent) 16%, var(--jill-color-foreground) 9%);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--jill-color-accent) 4%, var(--jill-color-background));
+  color: var(--jill-color-foreground);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

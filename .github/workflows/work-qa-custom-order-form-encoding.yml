@@ -1,0 +1,25 @@
+name: WORK QA Custom Order form encoding
+
+on:
+  push:
+    branches:
+      - jill/rewards-work
+    paths:
+      - backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs
+      - scripts/test-custom-order-form-decoding.mjs
+      - .github/workflows/work-qa-custom-order-form-encoding.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-work-qa-form-transport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test Apps Script plus-address and raw JSON form transport
+        run: node scripts/test-custom-order-form-decoding.mjs

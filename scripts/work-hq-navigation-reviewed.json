@@ -1,0 +1,12 @@
+{
+  "baseline": "5815213b29999310ea44049ef99d20b5178948c5",
+  "files": {
+    "services/jill-order-desk/app-home/app/routes/app.index.tsx": "b7475ba134804e83a19ae09abe1e000acfd3fc39f3bf0bb1b0d3998a2f6ce804",
+    "services/jill-order-desk/app-home/app/styles/hq-home.css": "a8cbd2495bbe04e288e06fcab3a212bd0fa982dfa216676d6a9d1813686a169a",
+    "services/jill-order-desk/app-home/package.json": "c80643548e5b1065181ed68ae0c0ac6a93ab4d36d15ecb942fd6d4092976e1ad",
+    "services/jill-order-desk/app-home/scripts/test-workerd-navigation-local.mjs": "6053dc35c296f523daa8c7de7786b8d428dadf4f27e9e15af76a5ac4d6cf9cc4",
+    "services/jill-order-desk/app-home/workers/app.ts": "a94e099c6a3e9d220ca36946322f4b1c98c82d4cf6e33f631c8c063474f29762",
+    "services/jill-order-desk/shopify-host/sdk-config.mjs": "34606be114a37dfde5df3422e07f3c5e316da16f8f632c21084042f6f5598df9",
+    "services/jill-order-desk/work-admin-auth-once.mjs": "a913a20436a36151960a62b0bafc751562a76658160d5ffdd7ea3bb660b11a43"
+  }
+}

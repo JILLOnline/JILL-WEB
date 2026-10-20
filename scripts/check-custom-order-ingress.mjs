@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const read=path=>fs.readFileSync(path,'utf8').replace(/\r\n?/g,'\n');
+const form=read('theme/assets/jill-custom-order.js');
+const liquid=read('theme/sections/main-custom-order.liquid');
+const backend=read('backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs');
+const gateway=read('backend/custom-order-gateway.mjs');
+
+assert.match(form,/requestSentOnce = false/);
+assert.match(form,/if \(!requestSentOnce\) \{/);
+assert.match(form,/nextRequest\.submitted_at = submittedAt/);
+assert.match(form,/nextRequest\.submission_id = submissionId/);
+assert.match(form,/receipt\?\.verified!==true/);
+assert.match(form,/receipt\?\.submission_id!==request\.submission_id/);
+assert.match(form,/gateway\.origin!==globalThis\.location\?\.origin/);
+assert.match(form,/gateway\.pathname!=='\/apps\/jill-custom-order'/);
+assert.match(liquid,/data-verified-submit-endpoint=/);
+assert.match(liquid,/"id": "verified_submission_endpoint"/);
+assert.doesNotMatch(liquid,/"id": "verified_submission_endpoint"[^}]*"default":/);
+assert.match(backend,/submission_conflict/);
+assert.match(backend,/storedRaw!==suppliedRaw/);
+assert.match(backend,/jillCustomOrderGatewaySubmissionAllowed_\(e\)/);
+assert.match(backend,/jillCustomOrderGatewayReceipt_\(e\)/);
+assert.match(backend,/JILL_CUSTOM_ORDER_REQUIRE_GATEWAY/);
+assert.match(backend,/JILL_CUSTOM_ORDER_GATEWAY_SECRET/);
+assert.match(backend,/custom_order\.receipt\.result/);
+assert.match(backend,/jillCustomOrderEventsFor_\(events,id\)/);
+assert.match(gateway,/authenticateProxy/);
+assert.match(gateway,/rateLimit/);
+assert.match(gateway,/allowedOrigins/);
+assert.match(gateway,/receiptSignature/);
+assert.match(gateway,/confirmation\.revision!==1/);
+assert.match(gateway,/result\.submission_id!==id/);
+assert.match(gateway,/cache-control':'no-store'/);
+assert.doesNotMatch(gateway,/myshopify\.com\/admin|X-Shopify-Access-Token/i);
+const getHandler=backend.slice(backend.indexOf('function doGet(e) {'),
+  backend.indexOf('function doPost(e) {'));
+assert.doesNotMatch(getHandler,/jill_order_receipt/,
+  'Signed receipt cannot be exposed through the public GET route.');
+
+const qaBuilder=read('scripts/build-custom-order-work-backend.mjs');
+const qaBootstrap=read('scripts/bootstrap-custom-order-work-backend.mjs');
+assert.match(qaBuilder,/JILL_CUSTOM_ORDER_SANDBOX = true/);
+assert.match(qaBuilder,/JILL_CUSTOM_ORDER_WORK_SHEET_ID/);
+assert.match(qaBuilder,/production sheet is prohibited/);
+assert.match(qaBuilder,/oauthScopes:\[/);
+assert.match(qaBuilder,/https:\/\/www.googleapis.com\/auth\/spreadsheets/);
+assert.match(qaBuilder,/https:\/\/www.googleapis.com\/auth\/userinfo.email/);
+assert.doesNotMatch(qaBuilder,/https:\/\/mail.google.com|https:\/\/www.googleapis.com\/auth\/gmail|https:\/\/www.googleapis.com\/auth\/script.send_mail/);
+
+assert.match(qaBootstrap,/project.sheetId!==sheetId/);
+assert.match(qaBootstrap,/separate Custom Order QA clasp create-script/);
+assert.match(backend,/Rewards setup is forbidden in the Custom Order QA project/);
+assert.match(backend,/Rewards sweeps are forbidden in the Custom Order QA project/);
+assert.match(backend,/Custom Order QA project does not accept Rewards webhooks/);
+const deploy=read('scripts/build-rewards-work-backend.mjs');
+assert.match(deploy,/JILL_REWARDS_RUNTIME = 'WORK'/);
+assert.match(backend,/JILL_REWARDS_RUNTIME==='WORK' && !JILL_CUSTOM_ORDER_SANDBOX/);
+console.log('Custom Order verified gateway cutover guards passed (not deployed).');

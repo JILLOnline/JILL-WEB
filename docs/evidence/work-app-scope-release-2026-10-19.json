@@ -1,0 +1,62 @@
+{
+  "environment": "WORK",
+  "source_commit": "9dd96bac240a23dbc88964846c653940cb48fefd",
+  "observed_at": "2026-10-19T13:26:21Z",
+  "app_id": "gid://shopify/App/433779736577",
+  "installation_id": "gid://shopify/AppInstallation/738058829959",
+  "version_tag": "jill-hq-work-scopes-9dd96ba",
+  "version_id": "gid://shopify/Version/1172776681473",
+  "status": "active",
+  "activation_evidence": "Owner CLI release success plus versions-list read-back",
+  "previous_version": {
+    "tag": "jill-hq-work-7",
+    "id": "gid://shopify/Version/1167552610305",
+    "status": "inactive"
+  },
+  "review_url": "https://dev.shopify.com/dashboard/169351823/apps/433779736577/versions/1172776681473",
+  "bundled_extensions": [
+    "jill-account-coupons",
+    "jill-account-dashboard",
+    "jill-account-home"
+  ],
+  "requested_added_scopes": [
+    "read_products",
+    "read_inventory",
+    "read_locations",
+    "read_draft_orders",
+    "write_draft_orders"
+  ],
+  "independent_installation_read": "authenticated WORK connector after release",
+  "granted_added_scopes": [],
+  "owner_scope_consent": "verified by independent installed-scope read after Owner update; historical ungranted receipt retained above",
+  "online_staff_intersection": "unverified",
+  "hq_worker_activation": false,
+  "google_conversation_activation": false,
+  "full_work_acceptance": false,
+  "notes": [
+    "The version message ends in unreleased because it was assigned during staging; active status is authoritative.",
+    "Staging and release completed. Do not repeat either command.",
+    "The first stage guard stopped before upload due to PowerShell JSON array wrapping; normalized parsing subsequently confirmed the unchanged baseline."
+  ],
+  "post_preview_cleanup": {
+    "owner_report": "Dev preview stopped on jill-work.myshopify.com; active version restored",
+    "independent_read": "All five added scopes now requested; still ungranted before Owner update",
+    "preview_masked_released_configuration": true
+  },
+  "post_owner_consent": {
+    "reported_at": "2026-10-19T13:34:47Z",
+    "owner_report": "ok i updated it",
+    "independent_read": "Authenticated WORK App/installation GraphQL read after Owner consent",
+    "added_scopes_granted": [
+      "read_products",
+      "read_inventory",
+      "read_locations",
+      "read_draft_orders",
+      "write_draft_orders"
+    ],
+    "requested_and_granted_scope_sets_match": true,
+    "app_identity_unchanged": true,
+    "installation_identity_unchanged": true,
+    "online_staff_intersection": "not verified by app-installation read"
+  }
+}

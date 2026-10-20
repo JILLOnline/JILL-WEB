@@ -7,6 +7,10 @@ const JILL = {
   SHOPIFY_API_VERSION: '2026-07'
 };
 
+// False in canonical production and WORK Rewards builds. Only the dedicated
+// isolated Custom Orders QA bundle may change this to true.
+const JILL_CUSTOM_ORDER_SANDBOX = false;
+
 const HEADERS = [
   'submission_id',
   'status',
@@ -38,6 +42,9 @@ const HEADERS = [
 ---------------------------- */
 
 function setupJill() {
+  if (JILL_REWARDS_RUNTIME === 'WORK' && !JILL_CUSTOM_ORDER_SANDBOX) {
+    throw new Error('WORK Rewards worker cannot access the Custom Order sheet.');
+  }
   const ss = SpreadsheetApp.openById(JILL.SHEET_ID);
   let sheet = ss.getSheetByName(JILL.SHEET_NAME);
 
@@ -60,6 +67,10 @@ function setupJill() {
 ---------------------------- */
 
 function doGet(e) {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    return ContentService.createTextOutput('JILL WORK Custom Orders QA online.')
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
   if (e && e.parameter && e.parameter.code) {
     return handleShopifyOAuthCallback_(e);
   }
@@ -96,6 +107,35 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  if (clean_(e && e.parameter && e.parameter.jill_order_customer_reply) === '1') {
+    return jillWorkCustomerReply_(e);
+  }
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_thread) === '1') {
+    return jillWorkMerchantThread_(e);
+  }
+  // Distinct WORK HQ merchant-wide read. Rejected in LIVE and in WORK Rewards;
+  // HMAC uses a separate dedicated read-only secret, not the guest gateway key.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_list) === '1') {
+    return jillWorkHqMerchantList_(e);
+  }
+  // Exact-ID merchant full detail — read-only WORK QA source, signed HMAC.
+  // This never accepts a customer JWT, public URL, email or browser token.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_detail) === '1') {
+    return jillWorkHqMerchantDetail_(e);
+  }
+  // Dedicated merchant command gate. QA only; NEVER an anonymous customer API.
+  if (clean_(e && e.parameter && e.parameter.jill_order_merchant_command) === '1') {
+    return jillWorkHqMerchantCommand_(e);
+  }
+  // Private WORK QA account-list operation. Never a public guest lookup.
+  if (clean_(e && e.parameter && e.parameter.jill_order_customer_list) === '1') {
+    return jillCustomOrderGatewayCustomerList_(e);
+  }
+  // Restricted server-to-server proof of an already-persisted request.
+  // NOT a public customer lookup and NOT a status mutation.
+  if (clean_(e && e.parameter && e.parameter.jill_order_receipt) === '1') {
+    return jillCustomOrderGatewayReceipt_(e);
+  }
   const lock = LockService.getScriptLock();
   const suppliedRewardSecret = clean_(
     e && e.parameter ? e.parameter.jill_rewards_hook : ''
@@ -103,6 +143,19 @@ function doPost(e) {
   const suppliedRewardTopic = clean_(
     e && e.parameter ? e.parameter.jill_rewards_topic : ''
   );
+  // Mark only successfully authenticated Rewards deliveries for retryable
+  // failure handling. An unauthenticated POST must not enter that path.
+  let verifiedRewardHook = false;
+
+  // An isolated WORK Rewards deployment does not accept Custom Order writes.
+  if (JILL_REWARDS_RUNTIME === 'WORK') {
+    if (JILL_CUSTOM_ORDER_SANDBOX && (suppliedRewardSecret || suppliedRewardTopic)) {
+      return json_({ok:false,error:'Custom Order QA project does not accept Rewards webhooks.'});
+    }
+    if (!JILL_CUSTOM_ORDER_SANDBOX && !(suppliedRewardSecret && suppliedRewardTopic)) {
+      return json_({ok:false,error:'WORK Rewards backend accepts Rewards webhooks only.'});
+    }
+  }
 
   try {
     lock.waitLock(10000);
@@ -122,9 +175,20 @@ function doPost(e) {
         return json_({ ok: false, error: 'Invalid rewards webhook' });
       }
 
+      verifiedRewardHook = true;
       return handleJillRewardsWebhook_(e);
     }
 
+    // During migration, legacy direct submissions continue to work only
+    // until JILL_CUSTOM_ORDER_REQUIRE_GATEWAY is explicitly enabled.
+    // Once enabled, any direct browser POST without a valid gateway HMAC
+    // is refused. This toggle must be set only after gateway E2E QA.
+    if (!jillCustomOrderGatewaySubmissionAllowed_(e)) {
+      return customOrderFailure_(
+        'gateway_required',
+        'The Custom Order submission could not be authenticated.', false
+      );
+    }
     const data = parsePayload_(e);
 
     if (clean_(data.source) !== JILL.SOURCE) {
@@ -168,10 +232,52 @@ function doPost(e) {
       currentStatus = clean_(
         sheet.getRange(existingRow, statusColumn).getValue()
       );
+      // Once a submission ID is accepted, its persisted request payload is
+      // immutable. Retrying with different content must never masquerade as
+      // a previously received order. Compare the canonical transported
+      // payload, not mutable Shopify/email integration status fields.
+      const payloadColumn=HEADERS.indexOf('raw_payload')+1;
+      const storedRaw=String(sheet.getRange(existingRow,payloadColumn).getValue()||'');
+      const suppliedRaw=String(data.raw_payload||'');
+      if (!storedRaw || !suppliedRaw || storedRaw!==suppliedRaw) {
+        return customOrderFailure_(
+          'submission_conflict',
+          'This request ID already belongs to a different submitted request.',
+          false
+        );
+      }
     }
 
+    // Verified signed Shopify identity is bound before inserting the source
+    // row; an interrupted write leaves only an unusable orphan owner record
+    // which the EXACT same owner/payload may reconcile on retry. Replaying
+    // a previously guest-owned submission while signed-in cannot claim it.
+    if(JILL_CUSTOM_ORDER_SANDBOX) {
+      try {
+        jillCustomOrderOwnerBind_(submissionId,
+          String(e.parameter.jill_order_owner_gid||''),
+          String(data.raw_payload||''),duplicate);
+      } catch(ownerErr) {
+        return customOrderFailure_('owner_conflict',
+          'This Custom Order cannot be assigned to that account.',false);
+      }
+    } else if(e.parameter.jill_order_owner_gid) {
+      return customOrderFailure_('owner_not_enabled',
+        'Authenticated Custom Order ownership is not enabled.',false);
+    }
     const row = existingRow || saveSubmission_(sheet, data);
+    // A receipt event is written while the existing POST lock is held.
+    // If it fails, retries reconcile by submission_id rather than inventing
+    // a successful delivery or duplicating an event.
+    jillCustomOrderEnsureReceived_(submissionId, data.submitted_at);
     const state = submissionState_(currentStatus);
+
+    // The dedicated QA project proves receipt, deduplication and workflow
+    // history only. It NEVER syncs Shopify customers or sends merchant/
+    // customer emails. The Rewards WORK project keeps this flag false.
+    if (JILL_CUSTOM_ORDER_SANDBOX) {
+      return customOrderSuccess_(submissionId, duplicate);
+    }
 
     if (!existingRow) {
       writeSubmissionStatus_(sheet, row, statusColumn, state);
@@ -285,6 +391,1363 @@ function doPost(e) {
 
 
 /* ---------------------------
+   CUSTOM ORDER WORKFLOW V1 — MERCHANT-AUTHORIZED EVENT LOG
+   Does not accept commands through public doGet/doPost.
+   WORK Rewards deployments reject all workflow writes.
+   The existing Submissions sheet remains the intake source.
+---------------------------- */
+
+const JILL_CUSTOM_WORKFLOW = Object.freeze({
+  EVENTS_SHEET: 'CustomOrderEvents',
+  ADMIN_PROPERTY: 'JILL_CUSTOM_ORDER_ADMINS',
+  HEADERS: [
+    'event_id','submission_id','revision','customer_status','internal_status',
+    'public_note','internal_note','evidence_ref','actor','occurred_at','source'
+  ],
+  STATUSES: [
+    'received','reviewing','awaiting_approval','in_production',
+    'ready_pickup','on_hold','cancelled','completed'
+  ],
+  INTERNAL: [
+    'new','needs_quote','waiting_customer','materials_ordered',
+    'proof_revision','printing','assembly','quality_check','ready','none'
+  ],
+  TRANSITIONS: {
+    received: ['reviewing','on_hold','cancelled'],
+    reviewing: ['awaiting_approval','in_production','on_hold','cancelled'],
+    awaiting_approval: ['reviewing','on_hold','cancelled'],
+    in_production: ['ready_pickup','on_hold','cancelled'],
+    ready_pickup: ['completed','on_hold'],
+    on_hold: ['reviewing','in_production','cancelled'],
+    cancelled: [],
+    completed: []
+  }
+});
+
+function jillCustomOrderAssertLive_() {
+  if (JILL_REWARDS_RUNTIME !== 'LIVE' &&
+      !(JILL_REWARDS_RUNTIME === 'WORK' && JILL_CUSTOM_ORDER_SANDBOX)) {
+    throw new Error('Custom Order workflow is disabled in the isolated WORK Rewards backend.');
+  }
+  if (!JILL.SHEET_ID || !JILL.SHEET_NAME) {
+    throw new Error('Canonical Custom Order spreadsheet is not configured.');
+  }
+}
+
+function jillCustomOrderActor_() {
+  jillCustomOrderAssertLive_();
+  // No caller-provided identity, access by email, or web-app query argument.
+  // Missing Google identity or allowlist fails closed.
+  const props = PropertiesService.getScriptProperties();
+  const allowed = String(props.getProperty(JILL_CUSTOM_WORKFLOW.ADMIN_PROPERTY) || '')
+    .toLowerCase().split(',').map(function(x) { return x.trim(); }).filter(Boolean);
+  const email = String(Session.getActiveUser().getEmail() || '').toLowerCase().trim();
+  if (!email || allowed.indexOf(email) === -1) {
+    throw new Error('Custom Order operator is not authorized.');
+  }
+  return email;
+}
+
+function jillCustomOrderEventsSheet_() {
+  jillCustomOrderAssertLive_();
+  const spreadsheet = SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet = spreadsheet.getSheetByName(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+    sheet.getRange(1,1,1,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+      .setValues([JILL_CUSTOM_WORKFLOW.HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers = sheet.getRange(1,1,1,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+    .getValues()[0];
+  if (JSON.stringify(headers) !== JSON.stringify(JILL_CUSTOM_WORKFLOW.HEADERS)) {
+    throw new Error('Custom Order event ledger headers drifted; refusing writes.');
+  }
+  return sheet;
+}
+
+function jillCustomOrderEventsFor_(sheet, submissionId) {
+  const count = sheet.getLastRow() - 1;
+  if (count <= 0) return [];
+  const values = sheet.getRange(2,1,count,JILL_CUSTOM_WORKFLOW.HEADERS.length)
+    .getValues();
+  const out = [];
+  values.forEach(function(row) {
+    if (String(row[1]) !== submissionId) return;
+    const result = {};
+    JILL_CUSTOM_WORKFLOW.HEADERS.forEach(function(key,index) {
+      result[key] = String(row[index] == null ? '' : row[index]);
+    });
+    const revision = Number(result.revision);
+    if (!Number.isSafeInteger(revision) || revision !== out.length + 1 ||
+        JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(result.customer_status) === -1 ||
+        !result.event_id) {
+      throw new Error('Custom Order event history is inconsistent; refusing updates.');
+    }
+    result.revision = revision;
+    out.push(result);
+  });
+  return out;
+}
+
+function jillCustomOrderAppendEvent_(sheet, event) {
+  const row = JILL_CUSTOM_WORKFLOW.HEADERS.map(function(field) {
+    return String(event[field] == null ? '' : event[field]);
+  });
+  sheet.appendRow(row);
+  SpreadsheetApp.flush();
+  // Canonical event commits invalidate the ephemeral WORK-only Google cache.
+  // This is not a second status authority and is never enabled in LIVE.
+  if(JILL_REWARDS_RUNTIME==='WORK' && JILL_CUSTOM_ORDER_SANDBOX===true)
+    CacheService.getScriptCache().remove(JILL_WORK_HQ_CACHE_KEY);
+}
+
+function jillCustomOrderEnsureReceived_(submissionId, submittedAt) {
+  jillCustomOrderAssertLive_();
+  if (!/^jill:[A-Za-z0-9._:-]{4,125}$/.test(String(submissionId))) {
+    // Historical submissions may use older IDs; still require a strict
+    // opaque identifier and do not attempt to derive customer identity.
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(String(submissionId))) {
+      throw new Error('Invalid Custom Order submission identifier.');
+    }
+  }
+  const sheet = jillCustomOrderEventsSheet_();
+  const existing = jillCustomOrderEventsFor_(sheet,String(submissionId));
+  if (existing.length) return existing[existing.length-1];
+  const received = {
+    event_id:'received:'+submissionId,
+    submission_id:submissionId,revision:1,customer_status:'received',
+    internal_status:'new',public_note:'',internal_note:'',evidence_ref:'',
+    actor:'system:intake',
+    occurred_at:!isNaN(Date.parse(submittedAt)) ?
+      new Date(submittedAt).toISOString() : new Date().toISOString(),
+    source:'intake'
+  };
+  jillCustomOrderAppendEvent_(sheet,received);
+  return received;
+}
+
+// Minimal customer-facing order details. Called ONLY AFTER verifying the
+// original payload hash and immutable, Shopify-signed owner ledger.
+function jillCustomOrderAccountSummary_(rawPayload) {
+  // Historic workflow projections omit the optional summary input.
+  // Private account reads NEVER do: they first verify stored payload hash.
+  if(rawPayload===undefined)return {items:[],date_needed:'',fulfillment:''};
+  const request=JSON.parse(String(rawPayload||''));
+  if(!request||typeof request!=='object'||Array.isArray(request))
+    throw new Error('Invalid private Custom Order payload.');
+  const supplied=Array.isArray(request.items)?request.items:[];
+  if(supplied.length>20)throw new Error('Oversized customer order summary.');
+  const items=supplied.map(function(item) {
+    const title=typeof item.title==='string'?item.title.trim():'';
+    const quantity=Number(item.quantity);
+    if(!title||title.length>120||!Number.isSafeInteger(quantity)||
+       quantity<1||quantity>999)
+      throw new Error('Invalid private Custom Order item.');
+    return {title:title,quantity:quantity};
+  });
+  const planning=request.planning||{};
+  const date=typeof planning.date_needed==='string'?planning.date_needed:'';
+  if(date && !/^\d{4}-\d{2}-\d{2}$/.test(date))
+    throw new Error('Invalid private Custom Order date.');
+  const raw=typeof planning.fulfillment==='string'?
+    planning.fulfillment.toLowerCase():'';
+  const fulfillment=raw==='pickup'||raw==='shipping'?raw:'';
+  return {items:items,date_needed:date,fulfillment:fulfillment};
+}
+function jillCustomOrderCustomerProjection_(submissionId,events,rawPayload) {
+  // Internal-only projection; NEVER expose through public doGet/doPost.
+  // A future authenticated endpoint must first verify the session-token
+  // customer ID and explicit request ownership before calling this.
+  const history=Array.isArray(events)?events:[];
+  if (!history.length)return null;
+  const latest=history[history.length-1];
+  return {
+    submission_id:submissionId,
+    summary:jillCustomOrderAccountSummary_(rawPayload),
+    revision:Number(latest.revision),
+    status:latest.customer_status,
+    updated_at:latest.occurred_at,
+    timeline:history.map(function(event) {
+      return {
+        status:event.customer_status,
+        note:event.public_note||'',
+        occurred_at:event.occurred_at
+      };
+    })
+  };
+}
+
+function jillCustomOrderMerchantRead(submissionId) {
+  jillCustomOrderActor_();
+  const id=String(submissionId || '').trim();
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(id)) throw new Error('Invalid submission ID.');
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const source=getSheet_();
+    const row=findSubmissionRow_(source,id);
+    if (!row) return null;
+    const sheet=jillCustomOrderEventsSheet_();
+    const events=jillCustomOrderEventsFor_(sheet,id);
+    if (!events.length) return {submission_id:id,needs_backfill:true};
+    const current=events[events.length-1];
+    return {
+      submission_id:id,revision:events.length,
+      customer_status:current.customer_status,
+      internal_status:current.internal_status,
+      public_note:current.public_note,
+      last_updated_at:current.occurred_at,
+      history:events.map(function(event) {
+        return {
+          revision:Number(event.revision),customer_status:event.customer_status,
+          internal_status:event.internal_status,public_note:event.public_note,
+          internal_note:event.internal_note,evidence_ref:event.evidence_ref,
+          actor:event.actor,occurred_at:event.occurred_at,source:event.source
+        };
+      })
+    };
+  } finally {lock.releaseLock();}
+}
+
+function jillCustomOrderMerchantUpdate(command) {
+  return jillCustomOrderMerchantUpdateAsActor_(command,jillCustomOrderActor_());
+}
+// One canonical event writer for editor-authorized desk commands and separately
+// HMAC-authorized Shopify WORK Owner requests. Validation, lock, revision CAS,
+// transition rules and idempotency are deliberately not duplicated.
+function jillCustomOrderMerchantUpdateAsActor_(command,actor,customerOwnerGid,receiptOnly) {
+  jillCustomOrderAssertLive_();
+  if(typeof actor!=='string'||actor.length<3||actor.length>150)
+    throw new Error('Invalid merchant actor.');
+  const data=command || {};
+  const id=String(data.submission_id || '').trim();
+  const op=String(data.operation_id || '').trim();
+  let status=String(data.customer_status || '').trim();
+  let internal=String(data.internal_status || '').trim();
+  const note=String(data.public_note || '').trim();
+  const privateNote=String(data.internal_note || '').trim();
+  const evidence=String(data.handoff_reference || '').trim();
+  const expected=Number(data.expected_revision);
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+      !/^[A-Za-z0-9._:-]{8,128}$/.test(op) ||
+      !Number.isSafeInteger(expected) || expected < 1 ||
+      JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(status) === -1 ||
+      (internal && JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(internal) === -1) ||
+      note.length > 500 || privateNote.length > 2000 || evidence.length > 256) {
+    throw new Error('Invalid Custom Order update command.');
+  }
+  if (status==='completed' && !evidence) {
+    throw new Error('Completion requires a recorded merchant handoff reference.');
+  }
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const source=getSheet_();
+    const row=findSubmissionRow_(source,id);
+    if (!row) throw new Error('Custom Order request does not exist.');
+    if(customerOwnerGid) {
+      if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+         !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(customerOwnerGid)||
+         actor!=='shopify:WORK:customer:'+customerOwnerGid.split('/').pop()||
+         privateNote||evidence||!note||
+         !/^jill:customer:reply:[0-9a-f-]{36}$/.test(op))
+        throw new Error('Customer reply forbidden.');
+      const ownerSheet=jillCustomOrderOwnersSheet_(false);
+      if(!ownerSheet||ownerSheet.getLastRow()>5001||source.getLastRow()>5001)
+        throw new Error('Customer reply forbidden.');
+      const owners=jillCustomOrderOwnerRows_(ownerSheet);
+      if(owners.length>5000||new Set(owners.map(function(x){return x.id;})).size!==owners.length)
+        throw new Error('Customer reply forbidden.');
+      const owner=owners.filter(function(x){return x.id===id;});
+      const raw=String(source.getRange(row,HEADERS.indexOf('raw_payload')+1).getValue()||'');
+      if(owner.length!==1||owner[0].gid!==customerOwnerGid||
+         !raw||jillCustomOrderOwnerHash_(raw)!==owner[0].hash)
+        throw new Error('Customer reply forbidden.');
+    }
+    const sheet=jillCustomOrderEventsSheet_();
+    if(customerOwnerGid&&sheet.getLastRow()>501)
+      throw new Error('Customer reply history full.');
+    let events=jillCustomOrderEventsFor_(sheet,id);
+    if (!events.length) {
+      if(customerOwnerGid)throw new Error('Customer reply receipt not found.');
+      const at=source.getRange(row,HEADERS.indexOf('submitted_at')+1).getValue();
+      jillCustomOrderEnsureReceived_(id,String(at||''));
+      events=jillCustomOrderEventsFor_(sheet,id);
+    }
+    const duplicate=events.find(function(item){return item.event_id===op;});
+    if (duplicate) {
+      if(customerOwnerGid) {
+        status=duplicate.customer_status;internal=duplicate.internal_status;
+        if(duplicate.actor!==actor||duplicate.source!=='customer_reply_v1'||
+           Number(duplicate.revision)!==expected+1)
+          throw new Error('Idempotency key was reused for different content.');
+      }
+      if (duplicate.customer_status!==status ||
+          (internal && duplicate.internal_status!==internal) ||
+          duplicate.public_note!==note || duplicate.internal_note!==privateNote ||
+          duplicate.evidence_ref!==evidence) {
+        throw new Error('Idempotency key was reused for different content.');
+      }
+      return {ok:true,duplicate:true,revision:Number(duplicate.revision),
+        customer_status:duplicate.customer_status};
+    }
+    if(customerOwnerGid&&receiptOnly===true)throw new Error('Customer reply receipt not found.');
+    const current=events[events.length-1];
+    if(customerOwnerGid) {
+      // Customer replies may never advance production, set an internal stage,
+      // attach handoff evidence or manufacture an approval/payment event.
+      status=current.customer_status;internal=current.internal_status;
+      if(['cancelled','completed'].indexOf(status)>=0)
+        throw new Error('Customer reply thread closed.');
+      if(events.length>=100)throw new Error('Customer reply history full.');
+    }
+    if (events.length!==expected) {
+      throw new Error('Custom Order was updated elsewhere; reload current revision.');
+    }
+    if (status!==current.customer_status &&
+        (JILL_CUSTOM_WORKFLOW.TRANSITIONS[current.customer_status]||[])
+          .indexOf(status)===-1) {
+      throw new Error('Invalid Custom Order status transition.');
+    }
+    if (status===current.customer_status && !internal && !note && !privateNote) {
+      throw new Error('Empty Custom Order update.');
+    }
+    const event={
+      event_id:op,submission_id:id,revision:expected+1,
+      customer_status:status,internal_status:internal||current.internal_status,
+      public_note:note,internal_note:privateNote,evidence_ref:evidence,
+      actor:actor,occurred_at:new Date().toISOString(),
+      source:customerOwnerGid?'customer_reply_v1':'merchant'
+    };
+    // One canonical append-only event is the commit. No mirrored mutable
+    // status cell exists to get out of sync with this revision.
+    jillCustomOrderAppendEvent_(sheet,event);
+    return {ok:true,duplicate:false,revision:event.revision,
+      customer_status:status};
+  } finally {lock.releaseLock();}
+}
+
+function jillCustomOrderMerchantBackfill(offset,limit) {
+  jillCustomOrderActor_();
+  const start=Number(offset);
+  if (!Number.isSafeInteger(start) || start < 0) {
+    throw new Error('Custom Order backfill requires a nonnegative row offset.');
+  }
+  const maximum=Math.max(1,Math.min(100,Math.floor(Number(limit)||20)));
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet=getSheet_();
+    const count=Math.max(0,sheet.getLastRow()-1);
+    if (start>=count)return {scanned:0,created:0,next_offset:null};
+    const rows=sheet.getRange(start+2,1,Math.min(count-start,maximum),HEADERS.length)
+      .getValues();
+    let created=0;
+    rows.forEach(function(row) {
+      const id=String(row[HEADERS.indexOf('submission_id')]||'').trim();
+      if (!id)return;
+      const eventSheet=jillCustomOrderEventsSheet_();
+      const existing=jillCustomOrderEventsFor_(eventSheet,id);
+      if (!existing.length) {
+        jillCustomOrderEnsureReceived_(
+          id,String(row[HEADERS.indexOf('submitted_at')]||'')
+        );
+        created++;
+      }
+    });
+    return {scanned:rows.length,created:created,
+      next_offset:start+rows.length<count ? start+rows.length : null};
+  } finally {lock.releaseLock();}
+}
+
+
+// Merchant controls: spreadsheet command desk only. No public HTTP handler,
+// account-page mutation, onEdit trigger or polling job processes these rows.
+// Authorized operator runs jillCustomOrderMerchantProcessDesk() explicitly.
+const JILL_CUSTOM_ORDER_DESK = Object.freeze({
+  SHEET: 'CustomOrderDesk',
+  HEADERS:[
+    'operation_id','submission_id','expected_revision','customer_status',
+    'internal_status','public_note','internal_note','handoff_reference',
+    'result','processed_at'
+  ]
+});
+
+function jillCustomOrderMerchantDeskSheet_() {
+  jillCustomOrderActor_();
+  const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet=spreadsheet.getSheetByName(JILL_CUSTOM_ORDER_DESK.SHEET);
+  if (!sheet) {
+    sheet=spreadsheet.insertSheet(JILL_CUSTOM_ORDER_DESK.SHEET);
+    sheet.getRange(1,1,1,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+      .setValues([JILL_CUSTOM_ORDER_DESK.HEADERS]);
+    sheet.setFrozenRows(1);
+    sheet.getRange('D2:D1000').setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(JILL_CUSTOM_WORKFLOW.STATUSES,true)
+        .setAllowInvalid(false).build()
+    );
+    sheet.getRange('E2:E1000').setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(JILL_CUSTOM_WORKFLOW.INTERNAL,true)
+        .setAllowInvalid(false).build()
+    );
+  }
+  const headers=sheet.getRange(1,1,1,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+    .getValues()[0];
+  if (JSON.stringify(headers)!==JSON.stringify(JILL_CUSTOM_ORDER_DESK.HEADERS)) {
+    throw new Error('Merchant command desk headers drifted; refusing edits.');
+  }
+  return sheet;
+}
+
+function jillCustomOrderMerchantSetupDesk() {
+  const actor=jillCustomOrderActor_();
+  const sheet=jillCustomOrderMerchantDeskSheet_();
+  return {ok:true,operator:actor,sheet:sheet.getName(),
+    command_columns:JILL_CUSTOM_ORDER_DESK.HEADERS.slice(0,8)};
+}
+
+function jillCustomOrderMerchantProcessDesk(limit) {
+  jillCustomOrderActor_();
+  const max=Math.max(1,Math.min(25,Math.floor(Number(limit)||10)));
+  const sheet=jillCustomOrderMerchantDeskSheet_();
+  const count=Math.max(0,sheet.getLastRow()-1);
+  if (!count)return {processed:0,succeeded:0,rejected:0};
+  const rows=sheet.getRange(2,1,count,JILL_CUSTOM_ORDER_DESK.HEADERS.length)
+    .getValues();
+  let processed=0,succeeded=0,rejected=0;
+  rows.forEach(function(values,index) {
+    if (processed>=max || !String(values[0]||'').trim() ||
+        String(values[8]||'').trim())return;
+    processed++;
+    try {
+      const result=jillCustomOrderMerchantUpdate({
+        operation_id:String(values[0]||''),
+        submission_id:String(values[1]||''),
+        expected_revision:values[2],
+        customer_status:String(values[3]||''),
+        internal_status:String(values[4]||''),
+        public_note:String(values[5]||''),
+        internal_note:String(values[6]||''),
+        handoff_reference:String(values[7]||'')
+      });
+      // Event append is authoritative. If writing this acknowledgement fails,
+      // a retry with the same operation_id is handled as a duplicate.
+      sheet.getRange(index+2,9,1,2)
+        .setValues([['APPLIED revision '+result.revision,new Date().toISOString()]]);
+      succeeded++;
+    } catch(err) {
+      // Keep the command as the operator entered it. The operator can
+      // correct or retry a rejected row; no status is silently forced.
+      const reason=String(err&&err.message||err).slice(0,240);
+      sheet.getRange(index+2,9,1,2)
+        .setValues([['REJECTED: '+reason,new Date().toISOString()]]);
+      rejected++;
+    }
+  });
+  return {processed:processed,succeeded:succeeded,rejected:rejected};
+}
+
+
+// Gateway authentication is deliberately separate from Rewards webhook
+// authentication. The secret lives ONLY in Script Properties and the
+// server-side Shopify app proxy; never expose it to Liquid or JS.
+function jillCustomOrderGatewaySignature_(action,id,timestamp,rawPayload,secret,ownerGid) {
+  // Backward-compatible guest envelope: four segments. Signed-in identity
+  // uses a fifth mandatory HMAC segment; client-supplied fields cannot
+  // rewrite the owner without the gateway's private signing secret.
+  const parts=[action,id,timestamp,rawPayload||''];
+  if(ownerGid)parts.push(ownerGid);
+  const message=parts.join('\n');
+  const bytes=Utilities.computeHmacSha256Signature(message,secret);
+  return bytes.map(function(value) {
+    return ('0'+((value+256)%256).toString(16)).slice(-2);
+  }).join('');
+}
+
+function jillCustomOrderGatewayVerified_(e,action) {
+  if (JILL_REWARDS_RUNTIME==='WORK' && !JILL_CUSTOM_ORDER_SANDBOX) return false;
+  const values=e&&e.parameter||{};
+  const id=clean_(values.submission_id);
+  const timestamp=clean_(values.jill_order_gateway_ts);
+  const signature=clean_(values.jill_order_gateway_sig).toLowerCase();
+  const secret=PropertiesService.getScriptProperties()
+    .getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'';
+  if (String(secret).length<32 || !/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+      !/^[0-9]{13}$/.test(timestamp) || !/^[a-f0-9]{64}$/.test(signature) ||
+      Math.abs(Date.now()-Number(timestamp))>120000) return false;
+  const owner=String(values.jill_order_owner_gid||'');
+  if(owner && !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(owner))
+    return false;
+  if(action==='customer_list' && (id!=='jill:account-orders' || !owner))
+    return false;
+  const payload=action==='submit' ? String(values.raw_payload||'') :
+    action==='customer_list' ? owner : '';
+  if (action==='submit' && !payload) return false;
+  // Signed submit owner is the additional HMAC segment, not a mutable
+  // customer field in the browser's raw Custom Order JSON.
+  const expected=jillCustomOrderGatewaySignature_(
+    action,id,timestamp,payload,secret,action==='submit'?owner:''
+  );
+  return constantTimeEqual_(signature,expected);
+}
+
+function jillCustomOrderGatewaySubmissionAllowed_(e) {
+  const props=PropertiesService.getScriptProperties();
+  const required=JILL_CUSTOM_ORDER_SANDBOX ||
+    props.getProperty('JILL_CUSTOM_ORDER_REQUIRE_GATEWAY')==='1';
+  const values=e&&e.parameter||{};
+  const signed=Boolean(values.jill_order_gateway_sig ||
+    values.jill_order_gateway_ts);
+  if (signed || required) return jillCustomOrderGatewayVerified_(e,'submit');
+  // Transition period only: retiring the unauthenticated ingress must be
+  // a separate, verified rollout (never an accidental Git deployment).
+  return true;
+}
+
+function jillCustomOrderGatewayReceipt_(e) {
+  if (!jillCustomOrderGatewayVerified_(e,'receipt')) {
+    return json_({version:1,operation:'custom_order.receipt.result',
+      ok:false,error:{code:'unauthorized_receipt',retryable:false}});
+  }
+  const id=String(e.parameter.submission_id);
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    // A verified receipt requires BOTH durable intake row and append-only
+    // workflow receipt event, not an email or a "maybe" HTTP response.
+    const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const sheet=spreadsheet.getSheetByName(JILL.SHEET_NAME);
+    const events=spreadsheet.getSheetByName(JILL_CUSTOM_WORKFLOW.EVENTS_SHEET);
+    if (!sheet || !events || !findSubmissionRow_(sheet,id)) {
+      return json_({version:1,operation:'custom_order.receipt.result',
+        ok:false,error:{code:'receipt_not_found',retryable:true}});
+    }
+    const matches=jillCustomOrderEventsFor_(events,id);
+    if (!matches.length || matches[0].customer_status!=='received') {
+      return json_({version:1,operation:'custom_order.receipt.result',
+        ok:false,error:{code:'receipt_not_ready',retryable:true}});
+    }
+    return json_({version:1,operation:'custom_order.receipt.result',
+      ok:true,submission_id:id,status:'received',revision:1});
+  } finally {lock.releaseLock();}
+}
+
+
+
+/* WORK CUSTOM ORDER OWNERSHIP V1 — QA ONLY, NO LIVE RETROCLAIM */
+const JILL_CUSTOM_OWNER_SHEET='CustomOrderOwners';
+const JILL_CUSTOM_OWNER_HEADERS=[
+  'submission_id','owner_gid','payload_sha256','bound_at'
+];
+function jillCustomOrderOwnerHash_(payload) {
+  const values=Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,String(payload));
+  return values.map(function(v){
+    return ('0'+((v+256)%256).toString(16)).slice(-2);
+  }).join('');
+}
+function jillCustomOrderOwnersSheet_(create) {
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  let sheet=ss.getSheetByName(JILL_CUSTOM_OWNER_SHEET);
+  if(!sheet && !create)return null;
+  if(!sheet) {
+    sheet=ss.insertSheet(JILL_CUSTOM_OWNER_SHEET);
+    sheet.getRange(1,1,1,4).setValues([JILL_CUSTOM_OWNER_HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers=sheet.getRange(1,1,1,4).getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(JILL_CUSTOM_OWNER_HEADERS))
+    throw new Error('Custom Order owner ledger headers drifted.');
+  return sheet;
+}
+function jillCustomOrderOwnerRows_(sheet) {
+  if(!sheet || sheet.getLastRow()<2)return [];
+  const values=sheet.getRange(2,1,sheet.getLastRow()-1,4).getValues();
+  return values.map(function(row){
+    return {id:String(row[0]),gid:String(row[1]),hash:String(row[2])};
+  });
+}
+function jillCustomOrderOwnerBind_(submissionId,ownerGid,rawPayload,duplicate) {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('Owner binding is isolated WORK QA only.');
+  if(!/^[A-Za-z0-9._:-]{8,128}$/.test(submissionId)||!rawPayload)
+    throw new Error('Invalid owner binding payload.');
+  if(ownerGid && !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(ownerGid))
+    throw new Error('Invalid owner identity.');
+  const sheet=jillCustomOrderOwnersSheet_(Boolean(ownerGid));
+  const rows=jillCustomOrderOwnerRows_(sheet)
+    .filter(function(row){return row.id===submissionId;});
+  if(rows.length>1)throw new Error('Duplicate owner records.');
+  const previous=rows[0]||null;
+  const hash=jillCustomOrderOwnerHash_(rawPayload);
+  if(duplicate) {
+    // Immutable previous GUEST intake must never be claimed by a new login.
+    if((previous?.gid||'')!==ownerGid ||
+       (previous && previous.hash!==hash))
+      throw new Error('Existing intake ownership cannot change.');
+    return Boolean(previous);
+  }
+  if(!ownerGid) {
+    if(previous)throw new Error('Orphaned owner collision.');
+    return false;
+  }
+  if(previous) {
+    if(previous.gid!==ownerGid||previous.hash!==hash)
+      throw new Error('Conflicting owner or original payload.');
+    return true;
+  }
+  // Caller holds the same script lock as canonical Submissions intake.
+  sheet.appendRow([submissionId,ownerGid,hash,new Date().toISOString()]);
+  SpreadsheetApp.flush();
+  return true;
+}
+function jillCustomOrderGatewayCustomerList_(e) {
+  // Access requires internal HMAC; the signing gateway MUST first verify
+  // Shopify's account-session JWT (aud,dest,sub,exp,signature).
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true ||
+     !jillCustomOrderGatewayVerified_(e,'customer_list')) {
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:false,error:{code:'unauthorized',retryable:false}});
+  }
+  const gid=String(e.parameter.jill_order_owner_gid);
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const owners=jillCustomOrderOwnersSheet_(false);
+    const allOwners=jillCustomOrderOwnerRows_(owners);
+    // A manually corrupted index must never allow two different customers
+    // to see a single submission. Reject duplicate IDs GLOBALLY.
+    if(allOwners.length>5000 ||
+       new Set(allOwners.map(function(row){return row.id;})).size!==allOwners.length)
+      throw new Error('Conflicting owner index.');
+    const matches=allOwners.filter(function(row){return row.gid===gid;});
+    // Fail closed on owner-ledger corruption or unbounded scan.
+    if(matches.length>20 ||
+       new Set(matches.map(function(row){return row.id;})).size!==matches.length)
+      throw new Error('Invalid customer ownership index.');
+    const source=getSheet_();
+    const events=jillCustomOrderEventsSheet_();
+    const result=matches.map(function(row){
+      const index=findSubmissionRow_(source,row.id);
+      if(!index)throw new Error('Owner refers to missing intake.');
+      const stored=String(source.getRange(index,HEADERS.indexOf('raw_payload')+1)
+        .getValue()||'');
+      if(!stored||jillCustomOrderOwnerHash_(stored)!==row.hash)
+        throw new Error('Owner refers to conflicting payload.');
+      const history=jillCustomOrderEventsFor_(events,row.id);
+      if(!history.length)throw new Error('Missing Custom Order status history.');
+      return PropertiesService.getScriptProperties()
+        .getProperty('JILL_WORK_CONVERSATION_ENABLED')==='true'?
+        jillCustomOrderPublicThread_(row.id,history,stored):
+        jillCustomOrderCustomerProjection_(row.id,history,stored);
+    });
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:true,orders:result});
+  } catch(err) {
+    return json_({version:1,operation:'custom_order.account.list.result',
+      ok:false,error:{code:'private_read_unavailable',retryable:true}});
+  } finally {lock.releaseLock();}
+}
+/* END WORK CUSTOM ORDER OWNERSHIP V1 */
+
+/* WORK CUSTOM ORDER CONVERSATION — same event writer, additive gated ingress */
+function jillCustomOrderPublicThread_(id,history,rawPayload) {
+  if(!history.length||history.length>100)throw new Error('Invalid bounded history.');
+  let previous='';
+  const timeline=[];
+  history.forEach(function(event){
+    const changed=event.customer_status!==previous;
+    previous=event.customer_status;
+    if(!changed&&!event.public_note)return;
+    const customer=event.source==='customer_reply_v1';
+    timeline.push({revision:Number(event.revision),
+      kind:customer?'customer_reply':event.public_note?'merchant_message':'status',
+      author:customer?'customer':event.source==='intake'?'system':'jill',
+      status:event.customer_status,note:event.public_note||'',occurred_at:event.occurred_at});
+  });
+  if(!timeline.length)throw new Error('Missing public history.');
+  return {submission_id:id,summary:jillCustomOrderAccountSummary_(rawPayload),
+    timeline_version:2,revision:history.length,status:previous,
+    updated_at:timeline[timeline.length-1].occurred_at,timeline:timeline};
+}
+function jillWorkCustomerReply_(e) {
+  const failed=function(code){return json_({version:1,
+    operation:'custom_order.account.reply.result',ok:false,error:{code:code}});};
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+     PropertiesService.getScriptProperties().getProperty('JILL_WORK_CONVERSATION_ENABLED')!=='true')
+    return failed('forbidden');
+  const p=e&&e.parameter||{};
+  const fields=['jill_order_customer_reply','shop','jill_order_owner_gid',
+    'submission_id','operation_id','expected_revision','text','mode',
+    'jill_order_gateway_ts','jill_order_reply_nonce','jill_order_gateway_sig'];
+  if(Object.keys(p).length!==fields.length||fields.some(function(k){
+    return !e.parameters||!Array.isArray(e.parameters[k])||e.parameters[k].length!==1;
+  }))return failed('forbidden');
+  const gid=String(p.jill_order_owner_gid||''),ts=String(p.jill_order_gateway_ts||'');
+  const nonce=String(p.jill_order_reply_nonce||''),text=String(p.text||'');
+  const sig=String(p.jill_order_gateway_sig||'');
+  if(p.shop!=='jill-work.myshopify.com'||
+     !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(gid)||
+     !/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>60000||
+     !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(nonce)||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(String(p.submission_id))||
+     !/^jill:customer:reply:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(String(p.operation_id))||
+     !/^[1-9][0-9]?$/.test(String(p.expected_revision))||
+     !['send','receipt'].includes(p.mode)||!text||text.trim()!==text||text.length>500||
+     !/^[a-f0-9]{64}$/.test(sig))return failed('forbidden');
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'');
+  if(secret.length<32)return failed('forbidden');
+  const canonical=['customer_reply_v1','jill-work.myshopify.com',gid,
+    p.submission_id,p.operation_id,String(p.expected_revision),ts,nonce,p.mode,JSON.stringify(text)].join('\n');
+  const expected=Utilities.computeHmacSha256Signature(canonical,secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);}).join('');
+  if(!constantTimeEqual_(sig,expected))return failed('forbidden');
+  try {
+    const result=jillCustomOrderMerchantUpdateAsActor_({
+      submission_id:String(p.submission_id),operation_id:String(p.operation_id),
+      expected_revision:Number(p.expected_revision),customer_status:'received',
+      internal_status:'none',public_note:text,internal_note:'',handoff_reference:''
+    },'shopify:WORK:customer:'+gid.split('/').pop(),gid,p.mode==='receipt');
+    return json_({version:1,operation:'custom_order.account.reply.result',ok:true,
+      submission_id:p.submission_id,operation_id:p.operation_id,
+      revision:result.revision,duplicate:result.duplicate});
+  }catch(error){
+    const message=String(error&&error.message||'');
+    if(message.indexOf('updated elsewhere')>=0)return failed('stale_revision');
+    if(message.indexOf('receipt not found')>=0)return failed('receipt_not_found');
+    if(message.indexOf('thread closed')>=0)return failed('thread_closed');
+    if(message.indexOf('history full')>=0)return failed('history_full');
+    if(message.indexOf('forbidden')>=0)return failed('forbidden');
+    return failed('reply_unconfirmed');
+  }
+}
+function jillWorkMerchantThread_(e) {
+  const failed=function(){return json_({version:1,
+    operation:'custom_order.merchant.thread.result',ok:false,error:{code:'thread_unavailable'}});};
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true||
+     PropertiesService.getScriptProperties().getProperty('JILL_WORK_CONVERSATION_ENABLED')!=='true')return failed();
+  const p=e&&e.parameter||{};
+  const keys=['jill_order_merchant_thread','shop','submission_id',
+    'jill_hq_read_ts','jill_hq_read_nonce','jill_hq_read_sig'];
+  if(Object.keys(p).length!==keys.length||keys.some(function(k){
+    return !e.parameters||!Array.isArray(e.parameters[k])||e.parameters[k].length!==1;
+  }))return failed();
+  const ts=String(p.jill_hq_read_ts||''),nonce=String(p.jill_hq_read_nonce||'');
+  const id=String(p.submission_id||''),sig=String(p.jill_hq_read_sig||'');
+  const secret=String(PropertiesService.getScriptProperties().getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(p.shop!=='jill-work.myshopify.com'||secret.length<32||
+     !/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>60000||
+     !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(nonce)||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(id)||!/^[a-f0-9]{64}$/.test(sig))return failed();
+  const expected=Utilities.computeHmacSha256Signature(
+    ['merchant_thread_v1','jill-work.myshopify.com',id,ts,nonce].join('\n'),secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);}).join('');
+  if(!constantTimeEqual_(sig,expected))return failed();
+  const lock=LockService.getScriptLock();lock.waitLock(10000);
+  try {
+    const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const source=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+    const events=jillWorkHqReadOnlySheet_(ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+    if(source.getLastRow()>51||events.getLastRow()>501)return failed();
+    const row=findSubmissionRow_(source,id);if(!row)return failed();
+    const raw=String(source.getRange(row,HEADERS.indexOf('raw_payload')+1).getValue()||'');
+    const history=jillCustomOrderEventsFor_(events,id);
+    return json_({version:1,operation:'custom_order.merchant.thread.result',ok:true,
+      thread:jillCustomOrderPublicThread_(id,history,raw)});
+  }catch{return failed();}finally{lock.releaseLock();}
+}
+/* END WORK CUSTOM ORDER CONVERSATION */
+
+/* WORK HQ MERCHANT READ V1 — canonical QA only; NO HTTP WRITES
+   This is a separate HMAC from customer account reads and checkout submissions.
+   Only the isolated QA /exec deployment can process it. It requires a distinct
+   JILL_HQ_MERCHANT_READ_SECRET Script Property (32+ chars).
+   No user identity from the form, no cross-shop source, no PII in responses.
+*/
+const JILL_WORK_HQ_CACHE_KEY='jill:work:hq:merchant:summary:v2';
+const JILL_WORK_HQ_CACHE_SECONDS=15;
+
+function jillWorkHqMerchantReadVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  if(String(p.jill_order_merchant_list||'')!=='1' ||
+     String(p.shop||'')!=='jill-work.myshopify.com')return false;
+  const ts=String(p.jill_hq_read_ts||'');
+  const nonce=String(p.jill_hq_read_nonce||'');
+  const sig=String(p.jill_hq_read_sig||'').toLowerCase();
+  if(!/^[0-9]{13}$/.test(ts) || Math.abs(Date.now()-Number(ts))>120000 ||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce) ||
+     !/^[a-f0-9]{64}$/.test(sig))return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(secret.length<32)return false;
+  const message=['merchant_list_v1','jill-work.myshopify.com',ts,nonce].join('\n');
+  const expected=Utilities.computeHmacSha256Signature(message,secret)
+    .map(function(value){
+      return ('0'+((value+256)%256).toString(16)).slice(-2);
+    }).join('');
+  return constantTimeEqual_(sig,expected);
+}
+
+function jillWorkHqReadOnlySheet_(ss,name,expected) {
+  const sheet=ss.getSheetByName(name);
+  if(!sheet)throw new Error('Missing canonical read sheet.');
+  const headers=sheet.getRange(1,1,1,expected.length).getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(expected))
+    throw new Error('Canonical read sheet headers drifted.');
+  return sheet;
+}
+
+function jillWorkHqCanonicalList_() {
+  // NEVER call setupJill(), getSheet_() or jillCustomOrderEventsSheet_()
+  // here: those helpers may create sheets. This handler is strictly read-only.
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('Merchant list is WORK QA only.');
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+  const events=jillWorkHqReadOnlySheet_(
+    ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+  const count=intake.getLastRow()-1;
+  const eventCount=events.getLastRow()-1;
+  if(count<0 || count>50 || eventCount<0 || eventCount>500)
+    throw new Error('Canonical source exceeds bounded list.');
+  const entries=count?intake.getRange(2,1,count,HEADERS.length).getValues():[];
+  const historyRows=eventCount?events.getRange(
+    2,1,eventCount,JILL_CUSTOM_WORKFLOW.HEADERS.length).getValues():[];
+  const histories={};
+  historyRows.forEach(function(row) {
+    const id=String(row[1]||'');
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id))
+      throw new Error('Malformed event source ID.');
+    if(!histories[id])histories[id]=[];
+    const list=histories[id];
+    const revision=Number(row[2]);
+    if(!Number.isSafeInteger(revision)||revision!==list.length+1 ||
+       JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(row[3]))===-1 ||
+       JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(String(row[4]))===-1)
+      throw new Error('Invalid merchant event history.');
+    const updated=new Date(row[9]);
+    if(!Number.isFinite(updated.getTime()))
+      throw new Error('Invalid event time.');
+    list.push({revision:revision,customer_status:String(row[3]),
+      internal_status:String(row[4]),updated_at:updated.toISOString()});
+  });
+  const ids={};
+  const records=entries.map(function(row) {
+    const id=String(row[HEADERS.indexOf('submission_id')]||'').trim();
+    if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+       Object.prototype.hasOwnProperty.call(ids,id))
+      throw new Error('Invalid or repeated intake ID.');
+    ids[id]=true;
+    const raw=String(row[HEADERS.indexOf('raw_payload')]||'');
+    const payload=JSON.parse(raw);
+    if(!payload || payload.version!==1 ||
+       payload.operation!=='custom_order.submit' ||
+       payload.submission_id!==id ||
+       !Array.isArray(payload.items) ||
+       payload.items.length<1 || payload.items.length>500)
+      throw new Error('Invalid immutable Custom Order payload.');
+    const submitted=new Date(row[HEADERS.indexOf('submitted_at')]);
+    const supplied=new Date(payload.submitted_at);
+    if(!Number.isFinite(submitted.getTime()) ||
+       submitted.getTime()!==supplied.getTime())
+      throw new Error('Intake timestamp mismatch.');
+    const history=histories[id]||[];
+    if(!history.length)throw new Error('Missing canonical event log.');
+    const latest=history[history.length-1];
+    const planning=payload.planning||{};
+    const date=planning.date_needed===undefined?'':planning.date_needed;
+    const fulfillment=planning.fulfillment===undefined?'':planning.fulfillment;
+    if(typeof date!=='string' ||
+       (date!=='' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) ||
+       !['','pickup','shipping'].includes(fulfillment))
+      throw new Error('Invalid canonical planning.');
+    return {
+      submission_id:id,revision:latest.revision,
+      customer_status:latest.customer_status,
+      internal_status:latest.internal_status,
+      submitted_at:submitted.toISOString(),updated_at:latest.updated_at,
+      date_needed:date,fulfillment:fulfillment,item_count:payload.items.length
+    };
+  });
+  return {version:1,operation:'custom_order.merchant.list.result',
+    ok:true,shop:'jill-work.myshopify.com',complete:true,records:records};
+}
+
+function jillWorkHqMerchantList_(e) {
+  const failure=function(code){return json_({
+    version:1,operation:'custom_order.merchant.list.result',
+    ok:false,error:{code:code,retryable:false}
+  });};
+  if(!jillWorkHqMerchantReadVerified_(e))
+    return failure('unauthorized');
+  const lock=LockService.getScriptLock();
+  try{
+    lock.waitLock(10000);
+    const cache=CacheService.getScriptCache();
+    const prior=cache.get(JILL_WORK_HQ_CACHE_KEY);
+    if(prior) {
+      try {
+        const saved=JSON.parse(prior);
+        if(saved&&saved.version===1&&
+           saved.operation==='custom_order.merchant.list.result' &&
+           saved.ok===true && saved.complete===true &&
+           saved.shop==='jill-work.myshopify.com' &&
+           Array.isArray(saved.records) && saved.records.length<=50 &&
+           saved.records.every(function(row){
+             return row&&Object.keys(row).sort().join(',')===
+               'customer_status,date_needed,fulfillment,internal_status,item_count,revision,submission_id,submitted_at,updated_at' &&
+               /^[A-Za-z0-9._:-]{8,128}$/.test(row.submission_id) &&
+               Number.isSafeInteger(row.revision)&&row.revision>=1&&row.revision<=100 &&
+               JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(row.customer_status)>=0 &&
+               JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(row.internal_status)>=0 &&
+               Number.isSafeInteger(row.item_count)&&row.item_count>=1&&row.item_count<=500 &&
+               ['','pickup','shipping'].indexOf(row.fulfillment)>=0 &&
+               typeof row.date_needed==='string' &&
+               (row.date_needed===''||/^\d{4}-\d{2}-\d{2}$/.test(row.date_needed)) &&
+               typeof row.submitted_at==='string'&&
+               Number.isFinite(Date.parse(row.submitted_at)) &&
+               typeof row.updated_at==='string'&&
+               Number.isFinite(Date.parse(row.updated_at));
+           }))return json_(saved);
+      } catch(_ignored) {}
+      // Discard corrupt or unexpected cache without exposing its contents.
+      cache.remove(JILL_WORK_HQ_CACHE_KEY);
+    }
+    const fresh=jillWorkHqCanonicalList_();
+    cache.put(JILL_WORK_HQ_CACHE_KEY,JSON.stringify(fresh),
+      JILL_WORK_HQ_CACHE_SECONDS);
+    return json_(fresh);
+  } catch(err) {
+    return failure('private_read_unavailable');
+  } finally {
+    try{lock.releaseLock();}catch(_ignored){}
+  }
+}
+/* END WORK HQ MERCHANT READ V1 */
+
+/* WORK HQ EXACT REQUEST DETAIL V1 — QA-ONLY, READ-ONLY
+   Full original submission is returned to the authenticated WORK Worker,
+   never directly to customer accounts. This endpoint is absent from the
+   pinned deployed QA v7 until separately reviewed/released. It must NOT
+   create sheets, append events, resolve private files or modify raw intake.
+*/
+function jillWorkHqMerchantDetailVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  const multiple=e&&e.parameters||{};
+  const expected=['jill_order_merchant_detail','shop','submission_id',
+    'jill_hq_read_ts','jill_hq_read_nonce','jill_hq_read_sig'];
+  if(Object.keys(p).length!==expected.length ||
+     !expected.every(function(k){
+       return Object.prototype.hasOwnProperty.call(p,k) &&
+         (!multiple[k] || multiple[k].length===1);
+     }) || String(p.jill_order_merchant_detail)!=='1' ||
+     String(p.shop)!=='jill-work.myshopify.com')
+    return false;
+  const id=String(p.submission_id||'');
+  const ts=String(p.jill_hq_read_ts||'');
+  const nonce=String(p.jill_hq_read_nonce||'');
+  const sig=String(p.jill_hq_read_sig||'').toLowerCase();
+  if(!/^[A-Za-z0-9._:-]{8,128}$/.test(id) ||
+     !/^[0-9]{13}$/.test(ts) ||
+     Math.abs(Date.now()-Number(ts))>120000 ||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce) ||
+     !/^[a-f0-9]{64}$/.test(sig))
+    return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  if(secret.length<32)return false;
+  const message=['merchant_detail_v1','jill-work.myshopify.com',
+    id,ts,nonce].join('\n');
+  const expectedSig=Utilities.computeHmacSha256Signature(message,secret)
+    .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);})
+    .join('');
+  return constantTimeEqual_(sig,expectedSig);
+}
+function jillWorkHqCanonicalDetail_(id) {
+  if(JILL_REWARDS_RUNTIME!=='WORK' || JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('wrong_runtime');
+  const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+  const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+  const events=jillWorkHqReadOnlySheet_(ss,
+    JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+  const count=intake.getLastRow()-1;
+  const eventCount=events.getLastRow()-1;
+  if(count<0||count>50||eventCount<0||eventCount>500)
+    throw new Error('source_limit');
+  const idColumn=HEADERS.indexOf('submission_id');
+  const rawColumn=HEADERS.indexOf('raw_payload');
+  const submittedColumn=HEADERS.indexOf('submitted_at');
+  const ids=count?intake.getRange(2,1,count,HEADERS.length).getValues():[];
+  const matches=ids.filter(function(row){
+    return String(row[idColumn]||'')===id;
+  });
+  if(matches.length!==1)return null;
+  const raw=String(matches[0][rawColumn]||'');
+  // Prevent oversized raw payload from crossing the Worker boundary.
+  if(!raw||raw.length>262144)throw new Error('raw_limit');
+  const payload=JSON.parse(raw);
+  if(!payload||payload.version!==1||
+     payload.operation!=='custom_order.submit'||payload.submission_id!==id ||
+     !Array.isArray(payload.items)||payload.items.length<1||
+     payload.items.length>500)
+    throw new Error('bad_raw');
+  const submitted=new Date(matches[0][submittedColumn]);
+  const payloadTime=new Date(payload.submitted_at);
+  if(!Number.isFinite(submitted.getTime())||
+     submitted.getTime()!==payloadTime.getTime())
+    throw new Error('time_conflict');
+  const history=eventCount?events.getRange(2,1,eventCount,
+    JILL_CUSTOM_WORKFLOW.HEADERS.length).getValues():[];
+  let revision=0;
+  history.forEach(function(row){
+    if(String(row[1]||'')!==id)return;
+    const n=Number(row[2]);
+    if(!Number.isSafeInteger(n)||n!==revision+1||n>100||
+       JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(row[3]))===-1||
+       JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(String(row[4]))===-1)
+      throw new Error('bad_event_revision');
+    revision=n;
+  });
+  if(revision<1)throw new Error('missing_event');
+  return {version:1,operation:'custom_order.merchant.detail.source.result',
+    ok:true,shop:'jill-work.myshopify.com',submission_id:id,
+    revision:revision,raw_payload:raw};
+}
+function jillWorkHqMerchantDetail_(e) {
+  const failed=function(code){
+    return json_({version:1,
+      operation:'custom_order.merchant.detail.source.result',
+      ok:false,error:{code:code,retryable:false}});
+  };
+  if(!jillWorkHqMerchantDetailVerified_(e))return failed('unauthorized');
+  try {
+    const detail=jillWorkHqCanonicalDetail_(
+      String(e.parameter.submission_id));
+    return detail?json_(detail):failed('not_found');
+  } catch (_ignored) {
+    // No raw data, source IDs beyond the signed request, email or stack.
+    return failed('private_read_unavailable');
+  }
+}
+/* END WORK HQ EXACT REQUEST DETAIL V1 */
+
+
+
+/* WORK HQ MERCHANT COMMAND V1 — QA ONLY; SEPARATE WRITE SECRET.
+   Production LIVE and Rewards WORK MUST reject every request here.
+   Accepted writes append exactly one canonical CustomOrderEvents event via
+   the SAME existing CAS/domain helper as the authorized spreadsheet desk.
+   Customer-visible public notes already flow to My JILL through the
+   verified, owner-scoped account timeline.
+   Email is only QUEUED here, never sent; QA manifest has no mail scopes.
+*/
+const JILL_WORK_HQ_OUTBOX=Object.freeze({
+  SHEET:'CustomOrderMailOutbox',
+  HEADERS:['operation_id','submission_id','revision','recipient_email',
+    'subject','body','state','created_at','updated_at']
+});
+function jillWorkHqMerchantCommandVerified_(e) {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    return false;
+  const p=e&&e.parameter||{};
+  if(String(p.jill_order_merchant_command||'')!=='1' ||
+     String(p.shop||'')!=='jill-work.myshopify.com')return false;
+  const ts=String(p.jill_hq_write_ts||'');
+  const nonce=String(p.jill_hq_write_nonce||'');
+  const sig=String(p.jill_hq_write_sig||'').toLowerCase();
+  const staff=String(p.jill_hq_write_staff||'');
+  if(!/^[0-9]{13}$/.test(ts)||Math.abs(Date.now()-Number(ts))>120000||
+     !/^[A-Za-z0-9_-]{32}$/.test(nonce)||
+     !/^[a-f0-9]{64}$/.test(sig)||!/^[1-9][0-9]*$/.test(staff))
+    return false;
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_WRITE_SECRET')||'');
+  if(secret.length<32)return false;
+  const fields=[
+    'merchant_command_v1','jill-work.myshopify.com',ts,nonce,
+    String(p.kind||''),String(p.operation_id||''),
+    String(p.submission_id||''),String(p.expected_revision||''),
+    String(p.current_status||''),String(p.customer_status||''),
+    String(p.internal_status||''),String(p.public_note||''),
+    String(p.internal_note||''),String(p.handoff_reference||''),staff
+  ];
+  const expected=Utilities.computeHmacSha256Signature(fields.join('\n'),secret)
+    .map(function(value){
+      return ('0'+((value+256)%256).toString(16)).slice(-2);
+    }).join('');
+  if(!constantTimeEqual_(sig,expected))return false;
+  // Apps Script parameter returns one value when duplicates are submitted.
+  // Refuse ambiguous duplicate signed fields before any mutation.
+  const required=['jill_order_merchant_command','shop','jill_hq_write_ts',
+    'jill_hq_write_nonce','jill_hq_write_sig','jill_hq_write_staff',
+    'kind','operation_id','submission_id','expected_revision',
+    'current_status','customer_status','internal_status','public_note',
+    'internal_note','handoff_reference'];
+  return !required.some(function(key){
+    return !e.parameters||!Array.isArray(e.parameters[key])||
+      e.parameters[key].length!==1;
+  });
+}
+function jillWorkHqMailOutbox_(ss) {
+  let sheet=ss.getSheetByName(JILL_WORK_HQ_OUTBOX.SHEET);
+  if(!sheet) {
+    sheet=ss.insertSheet(JILL_WORK_HQ_OUTBOX.SHEET);
+    sheet.getRange(1,1,1,JILL_WORK_HQ_OUTBOX.HEADERS.length)
+      .setValues([JILL_WORK_HQ_OUTBOX.HEADERS]);
+    sheet.setFrozenRows(1);
+  }
+  const headers=sheet.getRange(1,1,1,JILL_WORK_HQ_OUTBOX.HEADERS.length)
+    .getValues()[0];
+  if(JSON.stringify(headers)!==JSON.stringify(JILL_WORK_HQ_OUTBOX.HEADERS))
+    throw new Error('Email outbox header mismatch.');
+  return sheet;
+}
+function jillWorkHqQueueEmail_(command,revision) {
+  // Outbox is a private WORK QA ledger, not a deliverability guarantee.
+  const lock=LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const ss=SpreadsheetApp.openById(JILL.SHEET_ID);
+    const intake=jillWorkHqReadOnlySheet_(ss,JILL.SHEET_NAME,HEADERS);
+    const events=jillWorkHqReadOnlySheet_(
+      ss,JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,JILL_CUSTOM_WORKFLOW.HEADERS);
+    const count=intake.getLastRow()-1;
+    if(count<1||count>50)throw new Error('No bounded intake.');
+    const rows=intake.getRange(2,1,count,HEADERS.length).getValues();
+    const matches=rows.filter(function(row){
+      return String(row[HEADERS.indexOf('submission_id')])===command.submission_id;
+    });
+    if(matches.length!==1)throw new Error('Email recipient not uniquely verified.');
+    const email=String(matches[0][HEADERS.indexOf('email')]||'')
+      .trim().toLowerCase();
+    const raw=JSON.parse(String(matches[0][HEADERS.indexOf('raw_payload')]||''));
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||
+       String(raw&&raw.customer&&raw.customer.email||'').toLowerCase()!==email)
+      throw new Error('Original recipient integrity check failed.');
+    // Bind pending email to a REAL committed event, never a proposed edit.
+    const history=jillCustomOrderEventsFor_(events,command.submission_id);
+    const found=history.find(function(event){
+      return event.event_id===command.operation_id &&
+        event.revision===revision &&
+        event.public_note===command.public_note;
+    });
+    if(!found)throw new Error('Email not backed by canonical event.');
+    const outbox=jillWorkHqMailOutbox_(ss);
+    const countOut=outbox.getLastRow()-1;
+    if(countOut>1000)throw new Error('Email outbox full.');
+    const rowsOut=countOut?outbox.getRange(
+      2,1,countOut,JILL_WORK_HQ_OUTBOX.HEADERS.length).getValues():[];
+    const previous=rowsOut.filter(function(row){
+      return String(row[0])===command.operation_id;
+    });
+    if(previous.length>1)throw new Error('Duplicate email outbox operations.');
+    if(previous.length===1) {
+      if(String(previous[0][1])!==command.submission_id ||
+         Number(previous[0][2])!==revision ||
+         String(previous[0][3])!==email||
+         String(previous[0][5])!==command.public_note)
+        throw new Error('Email outbox idempotency conflict.');
+      return 'queued';
+    }
+    const at=new Date().toISOString();
+    outbox.appendRow([command.operation_id,command.submission_id,revision,
+      email,'JILL — Custom Order update',command.public_note,'QUEUED',at,at]);
+    SpreadsheetApp.flush();
+    return 'queued';
+  } finally {lock.releaseLock();}
+}
+function jillWorkHqMerchantCommand_(e) {
+  const failed=function(code){return json_({
+    version:1,operation:'custom_order.merchant.command.result',
+    ok:false,error:{code:code,retryable:code==='stale_revision'}
+  });};
+  if(!jillWorkHqMerchantCommandVerified_(e))return failed('unauthorized');
+  const p=e.parameter;
+  const command={
+    operation_id:String(p.operation_id||''),
+    submission_id:String(p.submission_id||''),
+    expected_revision:Number(p.expected_revision),
+    customer_status:String(p.customer_status||''),
+    internal_status:String(p.internal_status||''),
+    public_note:String(p.public_note||''),
+    internal_note:String(p.internal_note||''),
+    handoff_reference:String(p.handoff_reference||'')
+  };
+  const kind=String(p.kind||'');
+  if(!['status','message'].includes(kind) ||
+     !/^jill:hq:(?:status|message):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+       .test(command.operation_id) ||
+     !/^[A-Za-z0-9._:-]{8,128}$/.test(command.submission_id) ||
+     !Number.isSafeInteger(command.expected_revision)||
+     command.expected_revision<1||command.expected_revision>99 ||
+     JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(String(p.current_status||''))<0 ||
+     JILL_CUSTOM_WORKFLOW.STATUSES.indexOf(command.customer_status)<0 ||
+     JILL_CUSTOM_WORKFLOW.INTERNAL.indexOf(command.internal_status)<0 ||
+     command.public_note.length>500||command.internal_note.length>2000 ||
+     command.handoff_reference.length>256)
+    return failed('invalid_command');
+  if(command.operation_id.indexOf('jill:hq:'+kind+':')!==0)
+    return failed('invalid_command');
+  if(kind==='message'&&
+     (command.customer_status!==String(p.current_status)||
+      !command.public_note.trim()||command.internal_note||
+      command.handoff_reference))return failed('invalid_command');
+  // The signed previous status is only a UI hint, not an authority: the
+  // canonical workflow CAS and transition evaluator make the final decision.
+  try {
+    const actor='shopify:WORK:staff:'+String(p.jill_hq_write_staff);
+    const outcome=jillCustomOrderMerchantUpdateAsActor_(command,actor);
+    const emailStatus=kind==='message'?
+      jillWorkHqQueueEmail_(command,outcome.revision):'not_requested';
+    return json_({version:1,operation:'custom_order.merchant.command.result',
+      ok:true,submission_id:command.submission_id,
+      operation_id:command.operation_id,revision:outcome.revision,
+      customer_status:command.customer_status,
+      duplicate:Boolean(outcome.duplicate),email_status:emailStatus});
+  } catch(err) {
+    const msg=String(err&&err.message||'');
+    if(msg.indexOf('updated elsewhere')>=0)return failed('stale_revision');
+    if(msg.indexOf('status transition')>=0)return failed('invalid_transition');
+    return failed('command_unconfirmed');
+  }
+}
+// Editor-only WORK QA commissioning diagnostic. It NEVER installs a key,
+// changes event history, sends email, or prints secret values.
+function jillWorkHqQaWritePreflight() {
+  if(JILL_REWARDS_RUNTIME!=='WORK'||JILL_CUSTOM_ORDER_SANDBOX!==true)
+    throw new Error('WORK_HQ_WRITE_PREFLIGHT: wrong_runtime');
+  const props=PropertiesService.getScriptProperties();
+  const write=String(props.getProperty('JILL_HQ_MERCHANT_WRITE_SECRET')||'');
+  const read=String(props.getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
+  const configured=write.length>=48 && write!==read;
+  // Even an improperly configured key cannot cause mutation by diagnostic.
+  const list=jillWorkHqCanonicalList_();
+  const result={
+    scope:'WORK_CUSTOM_ORDERS_QA',write_key_configured:configured,
+    canonical_requests:list.records.length,mail_delivery_enabled:false,
+  };
+  Logger.log('WORK_HQ_WRITE_PREFLIGHT: '+JSON.stringify(result));
+  if(!configured)throw new Error('WORK_HQ_WRITE_PREFLIGHT: write_key_missing');
+  return result;
+}
+/* END WORK HQ MERCHANT COMMAND V1 */
+
+
+/* WORK HQ QA DIAGNOSTIC V1
+   Visible in the Apps Script editor function dropdown (no trailing "_").
+   WORK QA-only; uses the existing strict canonical read and prints ONLY a
+   bounded record count, configuration-presence boolean and safe error code.
+   It does not call setupJill, append/modify sheet rows or log raw payloads.
+   It is an editor-only diagnostic, not a public doGet/doPost operation.
+*/
+function jillWorkHqQaReadDiagnostic() {
+  if (JILL_REWARDS_RUNTIME !== 'WORK' || JILL_CUSTOM_ORDER_SANDBOX !== true)
+    throw new Error('WORK_HQ_QA_DIAGNOSTIC: wrong_runtime');
+  const hasKey = String(PropertiesService.getScriptProperties()
+    .getProperty('JILL_HQ_MERCHANT_READ_SECRET') || '').length >= 32;
+  Logger.log('WORK_HQ_QA_DIAGNOSTIC: read_key_configured=' + hasKey);
+  try {
+    const result = jillWorkHqCanonicalList_();
+    if (!result || result.ok !== true || result.complete !== true ||
+        !Array.isArray(result.records) || result.records.length > 50)
+      throw new Error('Invalid canonical merchant projection.');
+    Logger.log('WORK_HQ_QA_DIAGNOSTIC: PASS request_count=' +
+      result.records.length);
+    return true;
+  } catch (error) {
+    const message = String(error && error.message || '');
+    let code = 'unknown_read_failure';
+    if (message === 'Missing canonical read sheet.')
+      code = 'missing_canonical_sheet';
+    else if (message === 'Canonical read sheet headers drifted.')
+      code = 'header_mismatch';
+    else if (message === 'Canonical source exceeds bounded list.')
+      code = 'source_over_limit';
+    else if (message === 'Malformed event source ID.')
+      code = 'invalid_event_id';
+    else if (message === 'Invalid merchant event history.')
+      code = 'invalid_event_sequence';
+    else if (message === 'Invalid event time.')
+      code = 'invalid_event_timestamp';
+    else if (message === 'Invalid or repeated intake ID.')
+      code = 'invalid_submission_id';
+    else if (message === 'Invalid immutable Custom Order payload.')
+      code = 'invalid_submission_payload';
+    else if (message === 'Intake timestamp mismatch.')
+      code = 'submission_timestamp_mismatch';
+    else if (message === 'Missing canonical event log.')
+      code = 'missing_event_history';
+    else if (message === 'Invalid canonical planning.')
+      code = 'invalid_order_planning';
+    else if (message === 'Invalid canonical merchant projection.')
+      code = 'invalid_projection';
+    else if (error && error.name === 'SyntaxError')
+      code = 'invalid_payload_json';
+    // Never include exception text or stack here; they can contain PII.
+    Logger.log('WORK_HQ_QA_DIAGNOSTIC: FAIL code=' + code);
+    throw new Error('WORK_HQ_QA_DIAGNOSTIC: ' + code);
+  }
+}
+/* END WORK HQ QA DIAGNOSTIC V1 */
+
+
+
+
+// Run this function in the isolated QA Apps Script editor BEFORE any
+// web-app deployment. It is read-only and never emits secret values.
+function jillCustomOrderQaPreflight() {
+  if (JILL_REWARDS_RUNTIME !== 'WORK' || JILL_CUSTOM_ORDER_SANDBOX !== true) {
+    throw new Error('QA preflight refused: this is not the isolated Custom Order WORK runtime.');
+  }
+  const props=PropertiesService.getScriptProperties();
+  const secret=String(props.getProperty('JILL_CUSTOM_ORDER_GATEWAY_SECRET')||'');
+  if (secret.length < 32) {
+    throw new Error('QA gateway secret is missing or too short.');
+  }
+  const allowed=String(props.getProperty(JILL_CUSTOM_WORKFLOW.ADMIN_PROPERTY)||'')
+    .toLowerCase().split(',').map(function(x){return x.trim();}).filter(Boolean);
+  const operator=String(Session.getActiveUser().getEmail()||'').toLowerCase().trim();
+  if (!operator || allowed.indexOf(operator)===-1) {
+    throw new Error('QA operator identity does not match the authorized Google account.');
+  }
+  if (!JILL.SHEET_ID || !JILL.SHEET_NAME) {
+    throw new Error('QA spreadsheet is not configured.');
+  }
+  const spreadsheet=SpreadsheetApp.openById(JILL.SHEET_ID);
+  [
+    {name:JILL.SHEET_NAME,headers:HEADERS},
+    {name:JILL_CUSTOM_WORKFLOW.EVENTS_SHEET,headers:JILL_CUSTOM_WORKFLOW.HEADERS},
+    {name:JILL_CUSTOM_ORDER_DESK.SHEET,headers:JILL_CUSTOM_ORDER_DESK.HEADERS},
+  ].forEach(function(entry) {
+    const sheet=spreadsheet.getSheetByName(entry.name);
+    if (!sheet) throw new Error('Missing QA sheet: '+entry.name);
+    const actual=sheet.getRange(1,1,1,entry.headers.length).getValues()[0];
+    if (JSON.stringify(actual)!==JSON.stringify(entry.headers)) {
+      throw new Error('QA spreadsheet header mismatch in '+entry.name);
+    }
+  });
+  const result={
+    ok:true,
+    scope:'WORK_CUSTOM_ORDERS_QA',
+    gateway_secret_configured:true,
+    merchant_operator_authorized:true,
+    qa_sheet_headers_verified:true,
+  };
+  Logger.log(JSON.stringify(result));
+  return result;
+}
+
+/* END CUSTOM ORDER WORKFLOW V1 */
+
+/* ---------------------------
    JILL REWARDS
 ---------------------------- */
 
@@ -296,6 +1759,20 @@ const JILL_REWARD_TIERS = {
 };
 
 const JILL_REWARDS_ENGINE_VERSION = '13';
+const JILL_REWARDS_RUNTIME = 'LIVE';
+
+function assertJillRewardsRuntimeTarget_() {
+  // The LIVE build remains unchanged. The WORK build replaces the literal
+  // runtime constant during packaging and fails closed before any Shopify API.
+  if (JILL_REWARDS_RUNTIME !== 'WORK') return;
+  const props = PropertiesService.getScriptProperties();
+  const shop = normalizeShopDomain_(clean_(props.getProperty('SHOPIFY_SHOP')));
+  const app = clean_(props.getProperty('SHOPIFY_CLIENT_ID'));
+  if (shop !== 'jill-work.myshopify.com' || app !== 'f8e1ebdbae84490dc8ea5b133637e6c0') {
+    throw new Error('WORK Rewards target mismatch. Refusing all Shopify credentials and writes.');
+  }
+}
+
 const JILL_REWARDS_BUILD_SHA = '__JILL_REWARDS_BUILD_SHA__';
 const JILL_REWARD_SPEND_CENTS_PER_POINT = 1000;
 const JILL_REWARD_COUPON_DAYS = 30;
@@ -325,6 +1802,10 @@ const JILL_REWARD_SUBSCRIPTIONS = [
 ];
 
 function setupJillRewards() {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    throw new Error('Rewards setup is forbidden in the Custom Order QA project.');
+  }
+  assertJillRewardsRuntimeTarget_();
   const infrastructure = ensureJillRewardsInfrastructure_(true);
   const reconciliation = processPendingJillRewardRequests();
 
@@ -464,6 +1945,9 @@ function ensureJillRewardsSweepTrigger_() {
 // same worker every minute, so a metafield-only redemption request cannot get
 // stranded even if Shopify does not emit CUSTOMERS_UPDATE for that write.
 function runJillRewardsSweep() {
+  if (JILL_CUSTOM_ORDER_SANDBOX) {
+    throw new Error('Rewards sweeps are forbidden in the Custom Order QA project.');
+  }
   return processPendingJillRewardRequests();
 }
 
@@ -1055,7 +2539,8 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
           lineItems(first: 250) {
             nodes {
               isGiftCard
-              priceAfterAllDiscountsBeforeTaxesSet {
+              currentQuantity
+              discountedUnitPriceAfterAllDiscountsSet {
                 shopMoney { amount currencyCode }
               }
             }
@@ -1098,14 +2583,22 @@ function reconcileRewardsOrder_(orderId, allowInitialCredit) {
       if (!line || line.isGiftCard) return;
 
       const money =
-        line.priceAfterAllDiscountsBeforeTaxesSet &&
-        line.priceAfterAllDiscountsBeforeTaxesSet.shopMoney;
+        line.discountedUnitPriceAfterAllDiscountsSet &&
+        line.discountedUnitPriceAfterAllDiscountsSet.shopMoney;
 
       if (!money || money.currencyCode !== 'USD') return;
 
-      // Shopify 2026-07: this is the post-discount, pre-tax line subtotal and
-      // already excludes refunded and removed quantities. Shipping is not a line.
-      eligibleCents += Math.round(Number(money.amount || 0) * 100);
+      // Shopify currentQuantity excludes refunded and removed units.
+      // This per-unit amount accounts for product and order discounts;
+      // multiplying by currentQuantity excludes refunded/removed units.
+      // Shopify describes this per-unit price as approximate, so round
+      // the surviving line total once to cents.
+      const remaining = Math.max(0, Number(line.currentQuantity) || 0);
+      const unitAmount = Number(money.amount);
+      if (!Number.isFinite(unitAmount)) {
+        throw new Error('Invalid discounted Shopify line-item unit amount.');
+      }
+      eligibleCents += Math.round(unitAmount * remaining * 100);
     });
   }
 
@@ -1543,12 +3036,7 @@ function createRewardDiscount_(customer, points, tier) {
       orderDiscounts: JILL_REWARD_ORDER_STACKING,
       productDiscounts: JILL_REWARD_PRODUCT_STACKING,
       shippingDiscounts: JILL_REWARD_SHIPPING_STACKING
-    },
-    tags: [
-      'JILL_REWARDS',
-      'JILL_REWARDS_V' + JILL_REWARDS_ENGINE_VERSION,
-      'JILL_REWARD_' + points + '_POINTS'
-    ]
+    }
   };
 
   const data = shopifyGraphQL_(mutation, { input: input });
@@ -3175,6 +4663,7 @@ function shopifyGraphQL_(query, variables) {
 ---------------------------- */
 
 function getShopifyAuth_(forceRefresh) {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const shop = normalizeShopDomain_(
     props.getProperty('SHOPIFY_SHOP') || 'jill-online-store.myshopify.com'
@@ -3253,6 +4742,7 @@ function exchangeShopifyClientCredentials_(shop, clientId, clientSecret) {
 }
 
 function setupShopifyOAuth() {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const shop = normalizeShopDomain_(
     props.getProperty('SHOPIFY_SHOP') || 'jill-online-store.myshopify.com'
@@ -3278,6 +4768,7 @@ function setupShopifyOAuth() {
 }
 
 function handleShopifyOAuthCallback_(e) {
+  assertJillRewardsRuntimeTarget_();
   const props = PropertiesService.getScriptProperties();
   const error = clean_(e && e.parameter ? e.parameter.error : '');
 
@@ -3302,6 +4793,9 @@ function handleShopifyOAuthCallback_(e) {
 
   if (!code || !shop || !clientId || !clientSecret) {
     throw new Error('Incomplete Shopify OAuth callback.');
+  }
+  if (JILL_REWARDS_RUNTIME === 'WORK' && shop !== 'jill-work.myshopify.com') {
+    throw new Error('WORK Shopify OAuth callback did not target JILL WORK.');
   }
 
   const response = UrlFetchApp.fetch(
@@ -3465,12 +4959,15 @@ function parsePayload_(e) {
     return JSON.parse(raw);
   }
 
-  // Fallback for form-encoded payloads.
+  // application/x-www-form-urlencoded: a raw + encodes SPACE, while
+  // %2B encodes a literal plus (valid in email aliases and personalization).
+  // Convert raw + BEFORE percent-decoding. Converting afterward corrupts
+  // jill+workqa@example.com into an invalid address containing a space.
   const data = {};
   raw.split('&').forEach(function(pair) {
     const parts = pair.split('=');
-    const key = decodeURIComponent(parts.shift() || '');
-    const value = decodeURIComponent(parts.join('=') || '').replace(/\+/g, ' ');
+    const key = decodeURIComponent((parts.shift() || '').replace(/\+/g, ' '));
+    const value = decodeURIComponent((parts.join('=') || '').replace(/\+/g, ' '));
     data[key] = value;
   });
   return data;

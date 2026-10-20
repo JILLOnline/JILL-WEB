@@ -1,0 +1,74 @@
+{
+  "environment": "WORK",
+  "runner": "576d6b0bcde43c43fda939f42513eefcb5adefb7",
+  "package_sha256": "2576094d1cbfdc196c07f6b8a47dbbda0677b7ab8d1903324517958d5e31d5f4",
+  "candidate": {
+    "id": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+    "source": "576d6b0bcde43c43fda939f42513eefcb5adefb7",
+    "existing_bindings_preserved": true,
+    "catalog_enabled": true,
+    "quote_drafts_enabled": false,
+    "conversation_enabled": false,
+    "visual_only": false,
+    "current_flags_and_bindings_preserved": true,
+    "change_scope": "navigation_transport_and_authorized_dashboard"
+  },
+  "allocation": {
+    "deployment": "1ffdde49-e556-43a6-b7bb-e10cd3a71048",
+    "created_at": "2026-10-19T19:53:44.176641Z",
+    "versions": [
+      {
+        "id": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+        "percentage": 100
+      },
+      {
+        "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+        "percentage": 0
+      }
+    ],
+    "message": "JILL HQ WORK navigation recovery activate c071775f-be1f-496a-ac30-58a02e7bf20a"
+  },
+  "health": {
+    "status": 200,
+    "database_ready": true,
+    "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+    "exact_version_verified": true
+  },
+  "command_acknowledged": true,
+  "upload_receipt_spent": true,
+  "activation_receipt_spent": true,
+  "current_flags_and_bindings_preserved": true,
+  "quote_canary_preserved": true,
+  "visual_only": false,
+  "change_scope": "navigation_transport_and_authorized_dashboard",
+  "secret_changes": false,
+  "data_or_schema_changes": false,
+  "new_billable_services": false,
+  "authenticated_visual_acceptance": false,
+  "operational_acceptance": false,
+  "evidence_source": "Owner PowerShell repair release output",
+  "executor_independent_readback": {
+    "health": {
+      "response_date": "2026-10-19T19:55:29Z",
+      "status": 200,
+      "runtime_version": "6473444f-86f8-4a83-a47a-56d1a2e19f05",
+      "exact_version_verified": true,
+      "database_ready": true
+    },
+    "top_level_requests_document": {
+      "response_date": "2026-10-19T19:55:32Z",
+      "status": 302,
+      "location": "https://admin.shopify.com/store/jill-work/apps/f8e1ebdbae84490dc8ea5b133637e6c0/app/requests",
+      "cache_control": "private, no-store, max-age=0"
+    },
+    "anonymous_data_bootstrap": {
+      "response_date": "2026-10-19T19:55:35Z",
+      "status": 200,
+      "content_type": "text/x-script",
+      "bootstrap_present": true,
+      "unexpected_server_error": false
+    },
+    "authenticated": false
+  },
+  "authenticated_incident_resolution": false
+}

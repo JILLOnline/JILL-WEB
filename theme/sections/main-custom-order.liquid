@@ -7,6 +7,7 @@
   assign option_surface_groups = 'product_options' | split: ','
   assign customer_name_label = 'custom_order.customer.name' | t
   assign customer_email_label = 'custom_order.customer.email' | t
+  assign customer_contact_email_help = 'custom_order.customer.contact_email_help' | t
   assign customer_phone_label = 'custom_order.customer.phone' | t
   assign theme_label = 'custom_order.design.theme' | t
   assign colors_label = 'custom_order.design.colors' | t
@@ -24,6 +25,7 @@
   class="jill-custom-order jill-page-width"
   data-jill-custom-order
   data-submit-endpoint="{{ section.settings.submission_endpoint | escape }}"
+  data-verified-submit-endpoint="{{ section.settings.verified_submission_endpoint | escape }}"
   data-cloud-name="{{ section.settings.cloud_name | escape }}"
   data-upload-preset="{{ section.settings.upload_preset | escape }}"
   data-optional-label="{{ optional_label | escape }}"
@@ -57,9 +59,22 @@
           <p>{{ 'custom_order.customer.help' | t }}</p>
         </div>
       </div>
+      {% if customer %}
+        <div class="jill-custom-order__account-context" data-jill-customer-account-context data-mode="signed-in">
+          <strong>{{ 'custom_order.customer.account_title' | t }}</strong>
+          <p>{{ 'custom_order.customer.account_identity' | t }}: {{ customer.email | escape }}</p>
+          <p>{{ 'custom_order.customer.account_help' | t }}</p>
+        </div>
+      {% else %}
+        <div class="jill-custom-order__account-context" data-jill-customer-account-context data-mode="guest">
+          <strong>{{ 'custom_order.customer.guest_title' | t }}</strong>
+          <p>{{ 'custom_order.customer.guest_help' | t }}</p>
+          <a href="{{ routes.account_login_url }}">{{ 'custom_order.customer.guest_sign_in' | t }}</a>
+        </div>
+      {% endif %}
       <div class="jill-custom-order__customer" data-jill-custom-order-customer>
-        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name' %}
-        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email' %}
+        {% render 'ui-field', id: 'JillCustomOrderName', name: 'name', label: customer_name_label, type: 'text', required: true, autocomplete: 'name', value: customer.name %}
+        {% render 'ui-field', id: 'JillCustomOrderEmail', name: 'email', label: customer_email_label, type: 'email', required: true, autocomplete: 'email', value: customer.email, help: customer_contact_email_help %}
         <div class="jill-field jill-phone-field" data-jill-phone-field data-default-country="{{ localization.country.iso_code | default: 'US' | escape }}">
           <label class="jill-field__label" for="JillCustomOrderPhone">
             {{ customer_phone_label }}
@@ -514,6 +529,12 @@
       "id": "submission_endpoint",
       "label": "Submission endpoint",
       "default": "https://script.google.com/macros/s/AKfycbxXruH-shyIEGbxIpyJtd4KrAMaN0J3Ov7icdae_MkMvig8I_Y_fm2OJ9cRJiZ-IzU7jA/exec"
+    },
+    {
+      "type": "text",
+      "id": "verified_submission_endpoint",
+      "label": "Verified Shopify app proxy path",
+      "info": "Leave blank until the signed Shopify app proxy and receipt verifier are WORK-certified. When ready, use /apps/jill-custom-order."
     },
     {
       "type": "text",

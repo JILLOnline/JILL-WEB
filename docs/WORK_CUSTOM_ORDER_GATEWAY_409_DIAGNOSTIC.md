@@ -1,0 +1,256 @@
+# JILL WORK Custom Order — 409 upstream_rejected / gateway_required
+
+## Current handoff — 2026-10-19 UTC
+
+The Owner subsequently ran the new read-only collector successfully. It
+verified the existing diagnostic `1201c7c0-9086-4d4e-89a6-3f2bc0a74c5f`
+at 0%, the same ordinary candidate at 100%, exact pinned health and inherited
+binding names/types. Owner edge-clock evidence is near zero. The separately
+prepared minimal correction and **new** one-use operation are documented in
+[WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md](WORK_GATEWAY_ZERO_BYTE_DIAGNOSTIC_RELEASE.md).
+They have not run remotely. The collector command below records the earlier
+read-only step; do not confuse it with a deployment or full acceptance.
+
+The inactive-upload, Version URL recovery and 0% deployment commands below
+are **historical, spent procedures; do not run them again**. The Owner's last
+0% deployment reached the signed probe, which returned `403 diagnostic_denied`.
+This does not prove a key mismatch. The current continuation and acceptance
+record is [WORK_CONNECTED_ACCEPTANCE_2026-10-19.md](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
+
+Actual local HTTP → workerd reproduction of the Owner's omitted-body POST
+produced `body_stream=true`, `content-length=0`, HTTP 403 with a correct test
+key and clock. The canonical diagnostic incorrectly required a null stream.
+The source now authenticates first, checks that the stream contains zero
+bytes with bounded reads/time, and retains the unchanged HMAC and 60-second
+window. Real local HTTP regression passes for omitted, empty-string and
+empty-byte bodies; nonempty bodies, wrong keys and stale clocks remain denied.
+This correction has **not** been uploaded/deployed. It does not establish the
+Google connectivity or secret values. The later Owner collector established
+the old diagnostic's ID/allocation and inherited binding metadata only.
+
+Fresh public GETs reported gateway version
+`9322193f-5e87-4479-88c9-39229dddb5f2` and healthy gateway/HQ. This session's
+tightest HTTP Date offset interval was −382 to +738 ms. HTTP Date measures
+the edge clock, not the Worker isolate or the Owner PC. Never sign using an
+untrusted remote timestamp or broaden the acceptance window.
+
+The replacement read-only metadata collector is:
+
+```powershell
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:runtime:inventory:owner
+```
+
+Run from the existing Owner checkout. It discovers the diagnostic by marker,
+reads both Worker allocations/binding metadata, checks pinned health and
+rechecks gateway allocation afterward. It never opens, resets or consumes a
+deployment receipt, signs a command, uploads, deploys, rotates a secret,
+changes D1 or retries intake. Shopify plan/scopes, Google revision and quota
+remain explicitly unverified if their authenticated evidence is absent.
+
+## 2026-10-18 update — current rejection is unclassified
+
+The newer single synthetic WORK request returned `409 / upstream_rejected`
+without a verified receipt or the underlying Google error code. The older
+`gateway_required` screenshot is evidence of an earlier attempt, **not proof**
+of the newer request's cause. The candidate gateway was promoted after the
+older diagnosis; its current secret and destination cannot be inferred from
+binding names. Workers Observability was disabled at the time, so there is
+no stored category to retrieve by enabling it now. The synthetic approval
+was consumed. Do not retry or start HQ v35 quote QA.
+
+Source now prepares a narrowly scoped, owner-authenticated diagnostic route
+on the **same WORK gateway**. A 60-second HMAC challenge derived from the
+owner's existing WORK QA key is required before the Worker asks its configured
+Google endpoint for a fresh, deliberately nonexistent receipt. A successful
+result would show that the deployed Worker can sign a Google QA receipt query
+with a key matching the owner's verified key. Invalid challenges make no
+upstream call; the route is subject to the existing gateway quota. It creates
+no Custom Order or receipt. It cannot recover the old rejection category or
+prove Shopify's signed submission path. The one-use
+Owner command `npm.cmd run work:custom-order:gateway:probe-inactive-once`
+first verifies the exact existing 100/0 WORK split, source hashes, QA
+sandbox and key, then uploads an **inactive** version using `--keep-vars`
+with no secret file. It reads the new version and bindings back, extracts
+Cloudflare's version URL and makes one owner-signed, nonexistent-receipt
+probe through that URL. It rechecks the unchanged deployment afterward.
+This Version URL approach proved unavailable for this Worker, because it
+implements a Durable Object rate limiter and Cloudflare does not generate
+Version URLs for Workers that implement Durable Objects. If the command
+stops after attempting upload, its local one-use receipt prevents an
+accidental second version; inspect remote versions read-only before any
+further action. It does not read secret values, enable Observability,
+create an order, change Shopify or touch LIVE/KEEP. A successful probe
+narrows the 409 investigation to the storefront's signed submission
+path or Google business rejection; it cannot identify the historical
+rejection category.
+
+### Inactive upload read-back recovery (2026-10-18)
+
+The Owner ran the one-use command. Exact source, 100/0 deployment,
+latest active candidate, local QA key and dry run passed. The command
+verified a newly uploaded inactive version and its inherited binding
+metadata, then stopped at `work_gateway_diagnostic_version_url_unavailable`
+because the returned URL could not be parsed. The private one-use
+receipt is spent. **Never run the upload command again.** The
+read-only recovery command below verifies the unique version marker
+and bindings, then checks that the derived version URL's `/healthz`
+response reports the exact Cloudflare version ID before sending the
+signed nonexistent-receipt query:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git pull failed.' }
+npm.cmd run work:custom-order:gateway:recover-diagnostic-readonly
+```
+
+The Owner's recovery stopped at `work_gateway_recovery_health_response_unreadable`
+before a signed probe. A Version URL cannot be used for this Worker. Do not
+repeat the recovery command. The uploaded version remains inactive.
+
+### Exact 0% diagnostic deployment
+
+Cloudflare's version override only applies to a version in the current
+deployment. The reviewed one-use command attaches the already uploaded
+diagnostic version at 0%, with the existing candidate at 100%, replacing
+the earlier 0% original in the two-version deployment. It checks the
+current 100/0 allocation, unique uploaded marker and inherited bindings,
+the active runtime, the Owner's local Google QA key and a deployment dry run
+before writing. After deploying, it reads back the exact 100/0 allocation,
+proves the diagnostic version through Cloudflare's runtime metadata header
+with an override, then makes the owner-signed nonexistent-receipt query
+through that exact override. No Custom Order is created. A private one-use
+receipt is written before deployment; if it stops after this point, inspect
+deployments read-only and never retry blindly.
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git pull failed.' }
+npm.cmd run work:custom-order:gateway:deploy-diagnostic-zero-once
+```
+
+This changes the WORK deployment composition, though ordinary requests
+remain on the same candidate at 100%. It does not upload a new Worker,
+change secrets, enable paid features or touch LIVE/KEEP. The previous 0%
+original remains in version history. No second Custom Order submission is
+permitted by this diagnostic.
+
+## Observed failure, 2026-10-17
+
+Owner's WORK Custom Order screenshot shows: `WORK 409 / upstream_rejected /
+gateway_required`, **request not confirmed**. One synthetic request
+was attempted while testing WORK HQ Quote Save+Reload.
+
+**Do not resubmit, regenerate a request ID, or use a real customer
+record while troubleshooting.** The Google QA source rejects before
+the Custom Order row or receipt event if the signed gateway request
+is invalid. `409` from the Cloudflare gateway is its mapping of
+Google's nonretryable rejection; this does NOT prove v35 failed.
+
+Possible origins of `gateway_required` include different gateway HMAC
+keys, a Cloudflare gateway URL pointing at the wrong Google project,
+an incorrect/missing/expired timestamp, altered payload/owner GID,
+or a Google QA runtime that is not the published sandbox.
+Do not switch off `JILL_CUSTOM_ORDER_REQUIRE_GATEWAY`, bypass the
+app proxy, or enable insecure direct POST as a workaround.
+
+## Exact WORK component boundaries
+
+- Shopify WORK storefront: `jill-work.myshopify.com`.
+- Independent Cloudflare gateway Worker: `jill-work-custom-orders-qa`
+  (NOT the JILL HQ v34/v35 Worker).
+- The gateway requires `SHOPIFY_WORK_APP_SECRET` and
+  `JILL_CUSTOM_ORDER_GATEWAY_SECRET` as distinct private bindings.
+- Upstream `JILL_CUSTOM_ORDER_QA_BACKEND_URL` should match the
+  certified isolated Google QA /exec source pinned in
+  `services/jill-order-desk/work-google-merchant-read.mjs`.
+- Isolated Google QA Script Property
+  `JILL_CUSTOM_ORDER_GATEWAY_SECRET` must match the independent
+  Cloudflare Custom Order gateway secret, NOT the Rewards or HQ
+  merchant read/write secrets.
+
+## Safe read-only diagnostic
+
+An isolated receipt query using a NEW, deliberately nonexistent
+`jill:qa-gateway-diagnostic:<UUID>` is sent by a local Owner script
+to the already verified Google QA project. This action is **not an
+intake submit** and cannot create a Custom Order, quote or email.
+The response is strictly interpreted:
+
+- `receipt_not_found`: local WORK secret is accepted by Google QA;
+  this **does not prove** it matches the deployed Cloudflare secret.
+- `unauthorized_receipt`: local WORK secret does not match Google's
+  currently published isolated QA Script Property.
+- Any other response: STOP, do not guess.
+
+The script also reads Cloudflare WORK gateway version metadata
+to verify binding **names** and, if the URL is plaintext, exact
+upstream Google QA identity. It never requests or prints
+Cloudflare secret values. If the upstream URL is stored as a
+secret, it reports unverified rather than inventing a match.
+
+## Vault requirement, no secret display
+
+Use the Owner's existing local file:
+
+```text
+C:\Users\itzen\JILL-PRIVATE\JILL-SECRETS.txt
+```
+
+Only in the existing `[WORK.GOOGLE_CUSTOM_ORDERS_QA]` section,
+store exactly one line:
+
+```text
+JILL_CUSTOM_ORDER_GATEWAY_SECRET=<value verified from the isolated WORK Google QA project>
+```
+
+This must be the exact value from **Script Properties** of the
+isolated project `JILL WORK Custom Orders QA` (not LIVE, KEEP,
+WORK Rewards or JILL HQ). If you cannot verify the project/owner
+and provenance, STOP and do not move a key from any
+`[UNASSIGNED...]` or `[LIVE...]` section. Never paste the
+secret in chat, terminals, GitHub, screenshots or logs.
+
+After confirming the value and saving the private local file:
+
+```powershell
+cd C:\Users\itzen\JILL-WEB
+if ((git branch --show-current).Trim() -ne 'jill/rewards-work') { throw 'STOP: Wrong branch' }
+if (git status --porcelain --untracked-files=no) { throw 'STOP: Tracked files changed' }
+git pull --ff-only origin jill/rewards-work
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Git sync failed' }
+npm.cmd run work:custom-order:gateway:diagnose-readonly
+if ($LASTEXITCODE -ne 0) { throw 'STOP: Do not resubmit. Share only the short STOP code.' }
+```
+
+If Google QA MATCHES the locally verified key and Cloudflare's
+upstream URL is correct but the storefront still returns 409,
+the **deployed Cloudflare gateway secret** or signed envelope
+remains suspect. Wrangler cannot reveal an existing secret value.
+Any change to the Cloudflare gateway's secret must be separately
+reviewed and explicitly approved because it can create an updated
+Worker version and impact request traffic. Do NOT run
+`wrangler secret put`, `deploy`, or edit Google properties as part
+of this diagnostic.
+
+If the local secret DOES NOT MATCH Google QA, correct the local
+provenance check or obtain permission for a carefully scoped
+WORK-only credential synchronization after verifying both sides.
+No secret rotation or remote property modification is approved
+by this read-only source change.
+
+## Future acceptance
+
+Only after gateway identity/signature correctness is verified,
+return to the **single approved synthetic QA request**. Preserve
+the initial request ID if the form retains it. Do not create
+multiple test orders, send real customer emails, select marketing
+consent for a synthetic test, or alter actual customer requests.
+A real QA PASS requires a verified signed Google receipt and
+independent Owner inbox readback before any quote Save+Reload.
+
+**LIVE, KEEP, normal v34/v35 traffic, R2, paid infrastructure,
+Shopify customers and historical requests are outside scope.**

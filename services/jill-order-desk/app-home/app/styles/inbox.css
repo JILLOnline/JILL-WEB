@@ -1,0 +1,760 @@
+/* JILL HQ WORK Custom Orders — single scoped owner for this screen.
+   No global Shopify Admin styles, overrides or forced declarations. */
+.jill-inbox{
+  font-family:inherit;
+  color:var(--jill-ink);
+  line-height:1.45;
+}
+.jill-inbox__nav{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:13px
+}
+.jill-inbox__back:focus-visible,
+.jill-inbox__details summary:focus-visible,
+.jill-inbox input:focus-visible,
+.jill-inbox select:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+.jill-inbox__readonly{
+  font-size:11px;font-weight:700;letter-spacing:.06em;
+  padding:3px 8px;color:#655b45;background:#f8f4e9;
+  border:1px solid #eae0c6;border-radius:799px;line-height:1.2
+}
+.jill-inbox__intro{margin:0 0 11px}
+.jill-inbox__eyebrow{
+  font-size:11px;font-weight:750;letter-spacing:.12em;
+  color:var(--jill-accent);margin:0 0 3px
+}
+.jill-inbox__intro h2{
+  font-size:clamp(19px,1.9vw,22px);font-weight:700;
+  line-height:1.2;letter-spacing:-.025em;margin:0 0 6px
+}
+.jill-inbox__intro>p:last-child{
+  color:var(--jill-muted);font-size:12px;margin:0
+}
+.jill-inbox__source{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  font-size:12px;font-weight:600;color:#426052;
+  margin:10px 0 8px
+}
+.jill-inbox__source-dot{
+  display:inline-block;width:8px;height:8px;background:#39805b;
+  border-radius:50%;flex:none
+}
+.jill-inbox__stats{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;margin:0 0 13px
+}
+.jill-inbox__metric{
+  background:var(--jill-soft);border:1px solid var(--jill-border);
+  border-radius:10px;min-height:60px;padding:10px 11px;
+  display:flex;flex-direction:column;gap:4px
+}
+.jill-inbox__metric>span{
+  font-size:12px;color:var(--jill-muted);font-weight:600
+}
+.jill-inbox__metric>strong{
+  font-size:20px;line-height:1.1;color:#242528;font-weight:750;
+  font-variant-numeric:tabular-nums
+}
+.jill-inbox__metric>small{font-size:11px;color:var(--jill-muted)}
+.jill-inbox__toolbar{
+  display:grid;grid-template-columns:minmax(210px,2fr) minmax(135px,1fr) minmax(135px,1fr);
+  gap:10px;padding:10px;background:var(--jill-surface);
+  border:1px solid var(--jill-border);border-radius:11px
+}
+.jill-inbox__toolbar label{
+  display:flex;flex-direction:column;gap:6px;
+  min-width:0;font-size:12px;font-weight:650;color:#52545b
+}
+.jill-inbox__toolbar input,
+.jill-inbox__toolbar select{
+  font:inherit;font-size:var(--jill-field-size);font-weight:450;
+  border:1px solid var(--jill-control-border);border-radius:7px;
+  color:#303135;background:#fff;width:100%;height:var(--jill-control-height);
+  padding:0 10px;
+}
+.jill-inbox__toolbar input::placeholder{color:var(--jill-muted)}
+.jill-inbox__toolbar input:focus,
+.jill-inbox__toolbar select:focus{border-color:var(--jill-focus)}
+.jill-inbox__results-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:8px;margin:13px 0 8px
+}
+.jill-inbox__results-head h3{
+  font-size:14px;letter-spacing:-.01em;margin:0;font-weight:720
+}
+.jill-inbox__results-head p{font-size:12px;color:var(--jill-muted);margin:0}
+.jill-inbox__cards{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));
+  align-items:start;gap:12px;min-height:0
+}
+.jill-inbox__card{
+  /* Color follows the existing request status, not a guessed customer trait. */
+  --jill-card-accent:#77509c;
+  --jill-card-ink:#633681;
+  --jill-card-wash:#f7f0fc;
+  min-width:0;min-height:0;
+  border:2px solid var(--jill-card-accent);
+  border-inline-start-width:4px;
+  border-radius:12px;
+  background:var(--jill-surface);overflow:hidden;
+  box-shadow:0 3px 11px rgba(47,30,65,.09);
+  scroll-margin-block-start:18px;
+  transition:box-shadow .15s ease,border-color .15s ease
+}
+.jill-inbox__card--received{
+  --jill-card-accent:#427dab;--jill-card-ink:#24577e;--jill-card-wash:#edf5fc
+}
+.jill-inbox__card--reviewing{
+  --jill-card-accent:#b67b2d;--jill-card-ink:#795014;--jill-card-wash:#fff4e3
+}
+.jill-inbox__card--waiting{
+  --jill-card-accent:#b87948;--jill-card-ink:#86512b;--jill-card-wash:#fff2e9
+}
+.jill-inbox__card--working{
+  --jill-card-accent:#8360b7;--jill-card-ink:#623c96;--jill-card-wash:#f4eefc
+}
+.jill-inbox__card--ready{
+  --jill-card-accent:#38886f;--jill-card-ink:#206950;--jill-card-wash:#ecf8f3
+}
+.jill-inbox__card--muted{
+  --jill-card-accent:#8b8795;--jill-card-ink:#585463;--jill-card-wash:#f3f2f5
+}
+.jill-inbox__card:hover,.jill-inbox__card--expanded{
+  box-shadow:0 5px 18px rgba(47,30,65,.14)
+}
+/* A disclosed card owns an entire grid row, so later cards and the page
+   flow below the expanded content instead of leaving hollow short columns. */
+.jill-inbox__card--expanded,
+.jill-inbox__card:has(.jill-actions__quick-menu details[open]),
+.jill-inbox__card:has(.jill-actions__body){
+  grid-column:1/-1;
+  height:auto;max-height:none
+}
+.jill-inbox__card-head{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;column-gap:13px;row-gap:6px;padding:11px 13px 10px
+}
+.jill-inbox__card-heading{min-width:0}
+.jill-inbox__card-kicker{
+  font-size:11px;letter-spacing:.11em;color:var(--jill-muted);font-weight:760
+}
+.jill-inbox__customer-name{
+  display:-webkit-box;-webkit-box-orient:vertical;
+  max-width:100%;min-width:0;width:fit-content;
+  margin:5px 0 3px;padding:3px 8px;
+  border-radius:7px;background:var(--jill-card-wash);
+  color:var(--jill-card-ink);
+  font-size:clamp(13px,1.1vw,15px);
+  line-height:1.3;font-weight:790;letter-spacing:-.01em;
+  overflow-wrap:anywhere;word-break:normal;
+  -webkit-line-clamp:2;line-clamp:2;overflow:hidden
+}
+.jill-inbox__card-heading h3{
+  font-size:14px;line-height:1.3;letter-spacing:-.012em;
+  font-weight:720;margin:4px 0 5px;overflow-wrap:anywhere
+}
+.jill-inbox__submitted{
+  grid-column:1/-1;justify-self:end;max-width:100%;
+  margin:0;text-align:right;color:var(--jill-muted);
+  font-size:12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere
+}
+.jill-inbox__status-group{
+  display:flex;flex-direction:column;align-items:flex-end;
+  gap:6px;flex-shrink:0
+}
+.jill-inbox__status{
+  display:inline-flex;align-items:center;gap:6px;border-radius:799px;
+  padding:3px 8px;font-weight:700;font-size:11px;white-space:nowrap;
+  background:#f1f2f4;color:#42464e;line-height:1.2
+}
+.jill-inbox__status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.jill-inbox__status--received{color:#355a80;background:#edf4fb;line-height:1.2}
+.jill-inbox__status--reviewing{color:#80571f;background:#fff2db;line-height:1.2}
+.jill-inbox__status--working{color:#5a4d86;background:#f1effa;line-height:1.2}
+.jill-inbox__status--ready{color:#246c4d;background:#e7f6ed;line-height:1.2}
+.jill-inbox__status--waiting{color:#9a6029;background:#fff2e6;line-height:1.2}
+.jill-inbox__internal{
+  font-size:11px;color:#815d30;background:#f7f2ea;
+  padding:3px 7px;border-radius:6px;font-weight:650;line-height:1.2
+}
+.jill-inbox__details{border-top:1px solid #efefed;background:var(--jill-soft)}
+.jill-inbox__details summary{
+  cursor:pointer;list-style:none;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;color:var(--jill-plum);
+  font-size:12px;font-weight:790;letter-spacing:.075em;
+  min-height:36px;padding:8px 13px;user-select:none
+}
+.jill-inbox__details summary::-webkit-details-marker{display:none}
+.jill-inbox__details summary:hover{background:#f8f6f2}
+.jill-inbox__details[open] .jill-inbox__chevron{transform:rotate(180deg)}
+.jill-inbox__chevron{font-size:16px;line-height:1;transition:transform .14s ease}
+.jill-inbox__order-details{padding:10px 13px;border-top:1px solid var(--jill-border)}
+.jill-inbox__ref{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.jill-inbox__empty{
+  text-align:center;padding:28px 16px;background:#faf9f7;
+  border:1px dashed #d9d6d0;border-radius:11px;font-size:12px;color:#666
+}
+@media(max-width:700px){
+  .jill-inbox__stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .jill-inbox__metric{min-height:64px;padding:9px 8px}
+  .jill-inbox__metric>strong{font-size:20px}
+  .jill-inbox__metric>small{line-height:1.2}
+  .jill-inbox__toolbar{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}
+  .jill-inbox__search{grid-column:1 / -1}
+  .jill-inbox__card-head{padding:12px 11px 10px;gap:6px}
+  .jill-inbox__status-group{align-items:flex-end;flex-direction:column;gap:5px}
+  .jill-inbox__details summary{min-height:44px;padding:10px 11px}
+}
+@media(max-width:380px){
+  .jill-inbox__stats{grid-template-columns:1fr}
+  .jill-inbox__metric{min-height:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__chevron,.jill-inbox__card{transition:none}
+}
+
+/* The non-destructive WORK Archive is a view of verified canonical requests. */
+.jill-inbox__stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.jill-inbox__views{
+  display:flex;align-items:center;flex-wrap:wrap;gap:7px;
+  margin:3px 0 12px;padding:5px;
+  border:1px solid var(--jill-border);border-radius:12px;
+  background:#faf8fc
+}
+.jill-inbox__views button{
+  display:inline-flex;align-items:center;gap:9px;
+  min-height:40px;padding:8px 12px;
+  border:1px solid transparent;border-radius:8px;
+  background:transparent;color:#5e4a6d;
+  font:inherit;font-size:12px;font-weight:760
+}
+.jill-inbox__views button[aria-pressed="true"]{
+  color:#fff;background:var(--jill-plum);border-color:var(--jill-plum)
+}
+.jill-inbox__views button>span{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:23px;padding:2px 5px;border-radius:799px;
+  background:#e9deef;color:#60317d;font-size:11px
+}
+.jill-inbox__views button[aria-pressed="true"]>span{
+  background:#ffffff2c;color:#fff
+}
+.jill-inbox__archive-note{
+  margin:0 0 10px;padding:10px 12px;
+  border-inline-start:3px solid #9d7db9;
+  border-radius:7px;background:#f9f5fc;
+  color:#665372;font-size:12px;line-height:1.5
+}
+.jill-inbox__search{display:flex;flex-direction:column;gap:6px;min-width:0}
+.jill-inbox__search>label{
+  font-size:12px;font-weight:650;color:#52545b
+}
+.jill-inbox__search-form{display:flex;gap:7px;min-width:0}
+.jill-inbox__search-form input{min-width:0;flex:1}
+.jill-inbox__search-form button{
+  flex:none;min-height:var(--jill-control-height);
+  padding:6px 12px;border:1px solid var(--jill-plum);
+  border-radius:7px;background:var(--jill-plum);
+  color:#fff;font:inherit;font-size:12px;font-weight:730
+}
+.jill-inbox__search-form button:disabled{opacity:.58;cursor:not-allowed}
+.jill-inbox__search-progress{
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+  min-height:36px;margin-top:9px;padding:8px 11px;
+  border:1px solid #e5d8ed;border-radius:9px;
+  color:#5d3e77;background:#faf6fd;font-size:12px
+}
+.jill-inbox__search-progress button{
+  border:1px solid #9676ab;background:#fff;color:#613787;
+  border-radius:7px;min-height:36px;padding:6px 10px;
+  font:inherit;font-weight:750;cursor:pointer
+}
+.jill-inbox__archive-stamp{
+  grid-column:1/-1;justify-self:start;
+  font-size:11px;font-weight:750;letter-spacing:.035em;
+  color:#714871;background:#f5eafa;
+  border-radius:6px;padding:3px 8px
+}
+.jill-inbox__archive-control{
+  grid-column:1/-1;display:flex;align-items:center;
+  flex-wrap:wrap;gap:7px;margin-top:3px
+}
+.jill-inbox__archive-control button{
+  min-height:var(--jill-control-height);
+  padding:5px 10px;border:1px solid #b9a6c8;
+  border-radius:7px;background:#fff;color:#673c7f;
+  font:inherit;font-size:11px;font-weight:730
+}
+.jill-inbox__archive-control button:disabled{opacity:.55}
+.jill-inbox__archive-control p{color:#8a5524;font-size:11px;margin:0}
+@media(max-width:900px){
+  .jill-inbox__stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .jill-inbox__search-form{flex-wrap:wrap}
+  .jill-inbox__search-form button{min-height:44px}
+  .jill-inbox__search-form input{min-width:min(100%,180px)}
+  .jill-inbox__views button{min-height:44px}
+}
+@media(max-width:380px){
+  .jill-inbox__stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* WORK HQ Requests v2: dense rows with a single consistent column track.
+   Keep the Shopify iframe's document scrolling; never add a nested scroller. */
+.jill-inbox__table{
+  --jill-list-cols:
+    minmax(0,1.65fr) minmax(0,.85fr) minmax(0,.95fr)
+    minmax(0,1.1fr) minmax(0,.95fr) minmax(0,.95fr)
+    minmax(225px,1.7fr) 32px;
+  min-width:0;border:1px solid var(--jill-border);
+  border-radius:12px;background:#fff;
+  box-shadow:0 3px 12px rgba(44,26,60,.06)
+}
+.jill-inbox__columns{
+  display:grid;grid-template-columns:var(--jill-list-cols);
+  gap:9px;align-items:center;min-height:39px;
+  padding:9px 11px 9px 13px;
+  background:#f6f1f9;border-radius:11px 11px 0 0;
+  border-bottom:1px solid #e8ddee;
+  color:#654d75;font-size:11px;font-weight:800;letter-spacing:.045em;
+  text-transform:uppercase
+}
+.jill-inbox__cards{
+  display:grid;grid-template-columns:minmax(0,1fr);
+  align-items:stretch;gap:0;min-height:0
+}
+.jill-inbox__card{
+  width:100%;box-sizing:border-box;min-width:0;
+  border:0;border-bottom:1px solid #e9e3ef;
+  border-inline-start:4px solid var(--jill-card-accent);
+  border-radius:0;box-shadow:none;
+  background:#fff;overflow:visible;
+  scroll-margin-block-start:18px
+}
+.jill-inbox__card:last-child{border-bottom:0;border-radius:0 0 11px 11px}
+.jill-inbox__card:hover,.jill-inbox__card--expanded,
+.jill-inbox__card:focus-within{box-shadow:inset 0 0 0 1px #e5d8ef}
+.jill-inbox__card:nth-child(even){background:#fcfafd}
+.jill-inbox__card--expanded,
+.jill-inbox__card:has(.jill-actions__quick-menu details[open]),
+.jill-inbox__card:has(.jill-actions__body){grid-column:auto;height:auto;max-height:none}
+.jill-inbox__row{
+  display:grid;grid-template-columns:var(--jill-list-cols);
+  gap:9px;align-items:center;min-height:56px;
+  padding:7px 10px 7px 10px
+}
+.jill-inbox__cell{min-width:0;font-size:12px;line-height:1.3}
+.jill-inbox__cell--customer{font-weight:760}
+.jill-inbox__customer-name{
+  display:block;width:max-content;max-width:100%;
+  padding:4px 7px;margin:0;border-radius:6px;
+  background:var(--jill-card-wash);color:var(--jill-card-ink);
+  font-size:clamp(12px,.88vw,14px);
+  line-height:1.25;font-weight:780;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  word-break:normal;-webkit-line-clamp:unset;line-clamp:unset
+}
+.jill-inbox__customer-unverified{color:#85808b;font-size:12px;font-weight:550}
+.jill-inbox__request-id{
+  display:inline-block;max-width:100%;
+  color:#463350;font-weight:800;font-size:12px;
+  text-decoration:none;white-space:nowrap
+}
+.jill-inbox__request-id:hover{text-decoration:underline;color:#6c3199}
+.jill-inbox__request-id:focus-visible,.jill-inbox__detail-button:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:2px
+}
+.jill-inbox__cell--needed,.jill-inbox__cell--submitted{
+  font-size:11.5px;color:#666174;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.jill-inbox__cell-muted{color:#9a929e}
+.jill-inbox__cell--status,.jill-inbox__cell--stage{
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px
+}
+.jill-inbox__cell--actions{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:6px;min-width:0
+}
+.jill-inbox__detail-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  min-height:36px;flex:none;padding:5px 8px;
+  background:#fff;border:1px solid #e4d6ed;border-radius:7px;
+  color:#65378b;font:inherit;font-size:10px;font-weight:790;
+  letter-spacing:.025em;white-space:nowrap;cursor:pointer
+}
+.jill-inbox__detail-button:hover,
+.jill-inbox__detail-button[aria-expanded="true"]{
+  background:#f4edf8;border-color:#b89ccc
+}
+.jill-inbox__detail-button[aria-expanded="true"] .jill-inbox__chevron{
+  transform:rotate(180deg)
+}
+.jill-inbox__cell--actions .jill-actions--compact{
+  flex:none;width:auto;min-width:0;border:0;
+  padding:0;background:transparent;text-align:left
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu{
+  display:block;width:auto;margin:0
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu details{
+  width:148px;max-width:100%
+}
+.jill-inbox__cell--actions .jill-actions__quick-menu summary{
+  min-height:36px;width:100%;max-width:100%;
+  padding:0 10px;font-size:10px;white-space:nowrap
+}
+.jill-inbox__cell--actions .jill-actions__menu-options{
+  width:100%;margin-top:4px
+}
+.jill-inbox__cell--actions .jill-actions__menu-options button,
+.jill-inbox__cell--actions .jill-actions__menu-options a{
+  padding:8px;font-size:11px;white-space:normal
+}
+.jill-inbox__order-details{
+  border-top:1px solid #e7ddec;background:#faf7fc;
+  padding:14px 17px
+}
+.jill-inbox__archive-stamp{
+  grid-column:auto;justify-self:auto;white-space:nowrap;
+  padding:3px 6px;letter-spacing:0
+}
+.jill-inbox__cell--actions .jill-inbox__archive-control{
+  grid-column:auto;margin:0;display:flex
+}
+.jill-inbox__cell--actions .jill-inbox__archive-control button{
+  min-height:36px;padding:5px 8px;font-size:10px
+}
+/* Status / customer-message editors need a full row, not a 148px column.
+   The normal one-line summary returns when the editor closes. */
+.jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+  grid-column:1/-1;grid-row:2;
+  flex-wrap:wrap;justify-content:flex-start;
+  padding:12px;border-top:1px solid #e9dfef;background:#faf7fc
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions--compact,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions--compact,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions--compact{
+  flex:1 1 100%;width:100%
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions__quick-menu,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions__quick-menu,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions__quick-menu{
+  display:flex;justify-content:flex-start
+}
+@media(max-width:1160px){
+  .jill-inbox__table{
+    --jill-list-cols:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr)
+      minmax(0,1fr) minmax(215px,1.55fr) 32px
+  }
+  .jill-inbox__columns>span:nth-child(5),
+  .jill-inbox__columns>span:nth-child(6),
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{display:none}
+  .jill-inbox__columns>span:nth-child(7){grid-column:5}
+  .jill-inbox__columns>span:nth-child(8){grid-column:6}
+  .jill-inbox__cell--actions{grid-column:5}
+  .jill-inbox__row-end{grid-column:6}
+}
+@media(max-width:760px){
+  .jill-inbox__columns{display:none}
+  .jill-inbox__table{border:0;box-shadow:none;background:transparent}
+  .jill-inbox__cards{gap:8px}
+  .jill-inbox__card{
+    border:1px solid #e3dbe9;border-inline-start:4px solid var(--jill-card-accent);
+    border-radius:10px;box-shadow:0 2px 7px rgba(44,26,60,.06)
+  }
+  .jill-inbox__card:last-child{border-bottom:1px solid #e3dbe9;border-radius:10px}
+  .jill-inbox__row{
+    position:relative;
+    grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+    min-height:0;gap:9px;padding:11px
+  }
+  .jill-inbox__cell--customer{grid-column:1}
+  .jill-inbox__cell--request{grid-column:2;text-align:right}
+  .jill-inbox__cell--status{grid-column:1}
+  .jill-inbox__cell--stage{grid-column:2;justify-content:flex-end}
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{display:block}
+  .jill-inbox__cell--needed{grid-column:1}
+  .jill-inbox__cell--submitted{grid-column:2;text-align:right}
+  .jill-inbox__cell--actions{
+    grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap;
+    padding-top:9px;border-top:1px solid #ebe5ef
+  }
+  .jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+    grid-column:1/-1;grid-row:auto;padding:10px 0
+  }
+  .jill-inbox__cell--needed::before,.jill-inbox__cell--submitted::before{
+    content:attr(data-label) " · ";color:#8b8391;font-weight:700
+  }
+  .jill-inbox__cell--actions .jill-inbox__detail-button,
+  .jill-inbox__cell--actions .jill-actions__quick-menu summary{min-height:44px}
+}
+@media(max-width:420px){
+  .jill-inbox__cell--needed,.jill-inbox__cell--submitted{font-size:10px}
+  .jill-inbox__customer-name{font-size:12px}
+  .jill-inbox__cell--actions{gap:7px}
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__card,.jill-inbox__chevron{transition:none}
+}
+
+/* WORK Requests: native full-row disclosure; actions are a SEPARATE
+   interactive grid cell. No nested buttons/links or iframe scroll locks. */
+.jill-inbox__row-trigger{
+  grid-column:1 / span 6;grid-row:1;
+  display:grid;grid-template-columns:subgrid;align-items:center;
+  gap:9px;min-width:0;width:100%;min-height:42px;
+  padding:0;border:0;border-radius:6px;
+  background:transparent;color:inherit;text-align:left;
+  font:inherit;cursor:pointer
+}
+.jill-inbox__row-trigger:hover{
+  background:rgba(117,62,150,.045)
+}
+.jill-inbox__row-trigger:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:2px;
+  background:#f6effa
+}
+.jill-inbox__row-trigger .jill-inbox__cell{
+  pointer-events:none
+}
+.jill-inbox__row-trigger[aria-expanded="true"]{
+  color:#503269
+}
+.jill-inbox__order-details[hidden]{display:none}
+.jill-inbox__details-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;
+  padding-bottom:10px;margin-bottom:10px;
+  border-bottom:1px solid #e9ddef;
+  font-size:11px;color:#67398c;letter-spacing:.025em
+}
+.jill-inbox__details-heading a{
+  color:#6a3293;font-size:12px;font-weight:760;
+  text-decoration:none;letter-spacing:0
+}
+.jill-inbox__details-heading a:hover{text-decoration:underline}
+.jill-inbox__details-heading a:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+/* With an active editor the action cell uses the existing full-width second
+   grid row. The information-row toggle remains independent at row one. */
+.jill-inbox__row:has(.jill-actions__body) .jill-actions--direct,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions--direct,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions--direct{
+  width:100%;flex:1 1 100%
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions__direct-buttons,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions__direct-buttons,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions__direct-buttons{
+  justify-content:flex-start
+}
+@media(max-width:1160px){
+  .jill-inbox__row-trigger{grid-column:1 / 5}
+}
+@media(max-width:760px){
+  .jill-inbox__row-trigger{
+    grid-column:1/-1;grid-row:1;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    min-height:0;padding:2px 0 8px
+  }
+  .jill-inbox__row-trigger .jill-inbox__cell--customer,
+  .jill-inbox__row-trigger .jill-inbox__cell--status,
+  .jill-inbox__row-trigger .jill-inbox__cell--needed{grid-column:1}
+  .jill-inbox__row-trigger .jill-inbox__cell--request,
+  .jill-inbox__row-trigger .jill-inbox__cell--stage,
+  .jill-inbox__row-trigger .jill-inbox__cell--submitted{grid-column:2}
+  .jill-inbox__row .jill-inbox__cell--actions{grid-column:1/-1;grid-row:2}
+  .jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+    grid-column:1/-1;grid-row:2
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__row-chevron{transition:none}
+}
+
+/* WORK Requests V3 — chevron is the final column AFTER direct actions. */
+.jill-inbox__row-end{
+  grid-column:8;grid-row:1;justify-self:end;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:38px;padding:0;
+  border:1px solid transparent;border-radius:8px;
+  color:#78469a;background:transparent;cursor:pointer
+}
+.jill-inbox__row-end:hover,.jill-inbox__row-end[aria-expanded="true"]{
+  background:#f3eaf8;border-color:#e6d3f1
+}
+.jill-inbox__row-end:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:2px
+}
+.jill-inbox__intro{margin:0 0 16px;text-align:center}
+.jill-inbox__intro h2{
+  font-size:clamp(23px,2.4vw,30px);font-weight:850;
+  line-height:1.15;letter-spacing:.065em;
+  text-transform:uppercase;text-align:center;margin:0
+}
+.jill-inbox__access-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:28px;padding:5px 11px;border:1px solid #e2d2eb;
+  border-radius:999px;background:#f7f0fa;color:#60357d;
+  font-size:11px;font-weight:800;letter-spacing:.065em;line-height:1.2
+}
+@media(max-width:1160px){
+  .jill-inbox__row-end{grid-column:6}
+}
+@media(max-width:760px){
+  .jill-inbox__row-end{
+    position:absolute;right:10px;bottom:10px;z-index:1;
+    grid-column:auto;grid-row:auto;
+    background:#fff;border-color:#e6d7ef
+  }
+  .jill-inbox__row .jill-inbox__cell--actions{padding-inline-end:41px}
+}
+@media(max-width:420px){
+  .jill-inbox__intro h2{font-size:23px}
+  .jill-inbox__access-badge{font-size:10px;padding:5px 8px}
+}
+
+/* WORK Requests V4 — actions remain in their row while editor occupies a
+   separate full-width grid row. No fixed overlay, iframe scrollbar or hover UI. */
+.jill-inbox__editor-slot{grid-column:1/-1;grid-row:2;min-width:0}
+.jill-inbox__editor-slot:empty{display:none}
+.jill-inbox__editor-panel{
+  padding:10px 12px;border-top:1px solid #e7d9ec;
+  border-radius:0 0 9px 9px;background:#faf7fd;min-width:0
+}
+.jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-inbox__cell--actions{
+  grid-column:7;grid-row:1;padding:0;border-top:0;background:transparent;
+  flex-wrap:wrap;justify-content:flex-end
+}
+.jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-actions--direct{
+  flex:none;width:auto
+}
+.jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-actions__direct-buttons{
+  justify-content:flex-end
+}
+/* Message: label, one-line message field, Send on the SAME row. */
+.jill-inbox__editor-panel .jill-actions__body--message{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;align-items:center;padding:0
+}
+.jill-inbox__editor-panel .jill-actions__body--message>label{
+  display:grid;grid-column:1;grid-template-columns:max-content minmax(0,1fr);
+  gap:10px;align-items:center;min-width:0
+}
+.jill-inbox__editor-panel .jill-actions__body--message textarea{
+  display:block;min-height:40px;height:40px;max-height:40px;resize:none;
+  line-height:1.35;padding:9px 11px
+}
+.jill-inbox__editor-panel .jill-actions__body--message>.jill-actions__primary{
+  grid-column:2;justify-self:end;align-self:center;min-width:72px;
+  min-height:40px;padding:9px 13px
+}
+/* The delivery explanation is available to assistive technologies, rather
+   than consuming an entire second visual row in a compact composer. */
+.jill-inbox__editor-panel .jill-actions__hint--composer{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0
+}
+/* Status: first row contains status, stage and the one-line public note.
+   Second row contains private note and the right-aligned short Save button. */
+.jill-inbox__editor-panel .jill-actions__body--status{
+  display:grid;grid-template-columns:minmax(135px,1fr) minmax(135px,1fr) minmax(230px,2fr);
+  gap:9px;align-items:end;padding:0
+}
+.jill-inbox__editor-panel .jill-actions__body--status>label{
+  grid-column:auto;min-width:0
+}
+.jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--public{
+  grid-column:3
+}
+.jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--private{
+  grid-column:1 / span 2
+}
+.jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--handoff{
+  grid-column:1 / span 2
+}
+.jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__save{
+  grid-column:3;justify-self:end;align-self:end;
+  min-width:80px;min-height:40px;padding:8px 14px
+}
+.jill-inbox__editor-panel .jill-actions__body--status textarea{
+  min-height:40px;height:40px;max-height:40px;resize:none;
+  line-height:1.35;padding:9px 11px
+}
+.jill-inbox__editor-panel .jill-actions__body--status select,
+.jill-inbox__editor-panel .jill-actions__body--status input{
+  min-height:40px
+}
+/* Keep long notes inspectable on focus rather than permanently hiding
+   line two and beyond in a locked 40px-high textarea. At rest they remain
+   visually one line, as requested. This is CSS only; input is not truncated. */
+.jill-inbox__editor-panel .jill-actions__body--message textarea:focus-visible,
+.jill-inbox__editor-panel .jill-actions__body--status textarea:focus-visible{
+  height:auto;min-height:80px;max-height:180px;resize:vertical
+}
+/* Inline confirmed/uncertain operation feedback remains visible below editor
+   and never silently changes a saved source revision. */
+.jill-inbox__editor-panel .jill-actions__feedback,
+.jill-inbox__editor-panel .jill-actions__refresh{margin-top:9px}
+@media(max-width:1160px){
+  .jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-inbox__cell--actions{
+    grid-column:5;grid-row:1
+  }
+}
+@media(max-width:900px){
+  .jill-inbox__editor-panel .jill-actions__body--status{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--public,
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--private{
+    grid-column:1/-1
+  }
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__save{
+    grid-column:2
+  }
+}
+@media(max-width:760px){
+  .jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-inbox__cell--actions{
+    grid-column:1/-1;grid-row:2;padding:9px 40px 0 0;
+    justify-content:flex-start;border-top:1px solid #ebe5ef
+  }
+  .jill-inbox__editor-slot{grid-column:1/-1;grid-row:3}
+  /* V3's bottom-anchored absolute chevron must not drop to the bottom of
+     the newly expanded editor on a narrow screen. Keep it in action row. */
+  .jill-inbox__row:has(.jill-inbox__editor-slot:not(:empty)) .jill-inbox__row-end{
+    position:relative;right:auto;bottom:auto;
+    grid-column:2;grid-row:2;justify-self:end
+  }
+}
+@media(max-width:600px){
+  .jill-inbox__editor-panel .jill-actions__body--message{grid-template-columns:1fr}
+  .jill-inbox__editor-panel .jill-actions__body--message>label{
+    grid-column:1;grid-template-columns:1fr;gap:4px
+  }
+  .jill-inbox__editor-panel .jill-actions__body--message>.jill-actions__primary{
+    grid-column:1
+  }
+  .jill-inbox__editor-panel .jill-actions__body--status{
+    grid-template-columns:1fr
+  }
+  .jill-inbox__editor-panel .jill-actions__body--status>label,
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--public,
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--private,
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__field--handoff,
+  .jill-inbox__editor-panel .jill-actions__body--status>.jill-actions__save{
+    grid-column:1
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__editor-panel{scroll-behavior:auto}
+}

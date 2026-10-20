@@ -1,0 +1,56 @@
+{
+  "environment": "WORK",
+  "evidence_source": "Owner PowerShell release output",
+  "runner": "9a92d0287e69628c63bd7bec9a5e3dace63f1c94",
+  "package_sha256": "f936ee373297bd042c63a1e024bf6f988cd5a576ebca832298916a890b7b3e81",
+  "candidate": {
+    "id": "80b47610-4d8a-4186-a4c8-fe4f05daf964",
+    "source": "9a92d0287e69628c63bd7bec9a5e3dace63f1c94",
+    "existing_bindings_preserved": true,
+    "catalog_enabled": true,
+    "quote_drafts_enabled": false,
+    "conversation_enabled": false,
+    "visual_only": true,
+    "current_flags_and_bindings_preserved": true
+  },
+  "allocation": {
+    "deployment": "dc3350e2-c394-4a5f-9d48-325ed23a1394",
+    "created_at": "2026-10-19T18:26:12.333084Z",
+    "versions": [
+      {
+        "id": "80b47610-4d8a-4186-a4c8-fe4f05daf964",
+        "percentage": 100
+      },
+      {
+        "id": "dbc6341f-de7f-41de-8e97-6bf971201eeb",
+        "percentage": 0
+      }
+    ],
+    "message": "JILL HQ WORK visual theme v1 activate 31baa975-6a17-438f-96cc-a3ee11abc721"
+  },
+  "health": {
+    "status": 200,
+    "database_ready": true,
+    "runtime_version": "80b47610-4d8a-4186-a4c8-fe4f05daf964",
+    "exact_version_verified": true
+  },
+  "command_acknowledged": true,
+  "upload_receipt_spent": true,
+  "activation_receipt_spent": true,
+  "current_flags_and_bindings_preserved": true,
+  "quote_canary_preserved": true,
+  "visual_only": true,
+  "secret_changes": false,
+  "data_or_schema_changes": false,
+  "new_billable_services": false,
+  "authenticated_visual_acceptance": false,
+  "operational_acceptance": false,
+  "executor_independent_public_readback": {
+    "response_date": "2026-10-19T18:27:29Z",
+    "status": 200,
+    "runtime_version": "80b47610-4d8a-4186-a4c8-fe4f05daf964",
+    "exact_version_verified": true,
+    "database_ready": true,
+    "authenticated": false
+  }
+}

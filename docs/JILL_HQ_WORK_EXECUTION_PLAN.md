@@ -1,0 +1,352 @@
+# JILL HQ WORK — integrated execution plan
+
+## Visual-only steering — shared compact HQ theme prepared
+
+The Owner requested a wider, more compact, consistent design across all HQ
+tabs. `JILL_HQ_VISUAL_SYSTEM.md` defines the shared theme/template and the NEW
+one-use WORK visual release. Six actual route components passed 24 local
+Chromium/Polaris viewport cases with synthetic data, no horizontal overflow
+and 44px phone controls. The AST/file guard proves handlers, hooks, behavior
+attributes, controls and customer/policy copy unchanged. No visual deployment
+has been performed yet; Owner Cloudflare credentials remain necessary.
+Current operational baseline/receipts below are retained, all spent receipts
+remain spent. Existing quote/conversation/media/commerce/Rewards activation
+and acceptance gates are unchanged. Full WORK NOT PASSED; LIVE separate.
+
+
+## Superseding successful WORK HQ activation — 2026-10-19 14:08 UTC
+
+Owner runner `5bacc072da880df28b27a21ec5074cb1885a9a35` completed the exact
+reviewed activation. Deployment `d5d1f522-fcc0-4fbb-9052-dc9d951e6029` serves
+`e866e2f2-0746-44d0-8caa-b37a1c9bcf45` at 100%, retaining existing quote
+canary `dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0%. Unpinned health returned
+HTTP 200, healthy D1 and that exact candidate runtime UUID. Catalog is ON;
+ordinary quote drafts and conversation are OFF. Existing bindings were
+preserved. No re-upload, secret, schema/data or billing change occurred.
+
+Upload and activation receipts are SPENT. Do not repeat either command or
+reset receipts. The successful read-only inspection before activation proved
+all five metadata reads and the unchanged original allocation, with no
+activation/restore receipt present. The earlier Cloudflare read failure was
+not reproduced; its underlying cause remains unknown. Structured receipt:
+`evidence/work-hq-connected-activation-2026-10-19.json`.
+
+**This supersedes the earlier pending/not-activated status below.** Actual
+online Owner scope intersections and catalog UI/source read-back are still
+OPEN. Next use the authenticated existing WORK app: Owner access diagnostics,
+then catalog products/collections/inventory/locations. Expected runtime UUID
+is `e866e2f2-0746-44d0-8caa-b37a1c9bcf45`. Preserve screenshot/resource proof;
+never infer stock/capacity from the 60 untracked variants. No further release
+or generic app-dev command is needed for this UI check.
+
+Quote canary Save → leave → Reload, original uncertain intake reconciliation,
+Google/conversation A/B activation, exact commerce, canonical Rewards, staff
+revocation, guest/media and authenticated performance remain OPEN. Full WORK
+operational acceptance: NOT PASSED. Customer-facing LIVE: separate review.
+
+
+## Exact inactive HQ candidate receipt — 2026-10-19
+
+Owner runner `69b709d9c2c6d0a4c075bef073381ec698b39373` uploaded and
+independently inspected candidate `e866e2f2-0746-44d0-8caa-b37a1c9bcf45`.
+Package SHA-256: `02aae15f15057c74286dac63400e3883189a3d7f5701ea25f35f99a77655a035`.
+Existing bindings/runtime were preserved; catalog ON, quote drafts and
+conversation OFF. Original HQ deployment `d10596df-fb98-4e6d-8b3d-a3bd0e4deaf0`
+remains old version 100% / existing quote canary 0%. No deployment, secret,
+data/schema or billing change occurred. Upload receipt is SPENT; never stage
+again. Structured evidence: `evidence/work-hq-connected-read-inactive-2026-10-19.json`.
+All three triggered CI runs for that source succeeded; this is not operational
+acceptance. The prior candidate-not-uploaded paragraphs are historical.
+
+Exact WORK activation and read-only recovery are prepared in
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md`. Activation still requires the
+Owner's existing Cloudflare credentials. Authenticated catalog/staff proof,
+quote Save/leave/Reload, conversation A/B, commerce, Rewards, guest/media and
+performance acceptance remain OPEN. Full WORK NOT PASSED; LIVE separate.
+
+
+## 2026-10-19: scope consent complete, HQ catalog candidate prepared
+
+Owner inventory at 13:36 UTC confirms the existing HQ 100/0 allocation and
+quote flag on the 0% version only. The Shopify scope release and independent
+granted-scope read are complete; online staff evidence remains open.
+`WORK_HQ_CONNECTED_READ_RELEASE_2026-10-19.md` defines the NEW inactive HQ
+catalog/access upload and its immutable one-use receipt. No provider upload,
+HQ traffic change, conversation/media activation or operational acceptance
+is claimed. Preserve the existing quote canary and all spent receipts.
+
+
+## Current continuation — authenticated reads and independent source
+
+See `WORK_OPERATIONAL_HANDOFF_2026-10-19.md` for the exact completed source,
+read-back evidence, missing failed-operation correlation and Owner credential/
+consent gates. Fresh authenticated Google QA reads verify existing rows,
+received events and immutable owner hashes; they do not yet identify the
+original uncertain operation. Current Shopify grants still have the five
+reviewed gaps. Catalog collections/inventory/locations now have bounded
+Owner/scope-gated source and UI; not activated in HQ. Agreement recovery now
+survives expiry without repeating a create. Full WORK acceptance remains open.
+
+## Superseding Owner receipt — 2026-10-19
+
+The Owner completed the corrected diagnostic from runner `432f2bc4923bc6f794c2a8b65351574d60a76ecc`.
+Source package SHA-256: `eb8561c1f1b5a4e229db7800cc75e67aed1619e7aac15ac7bb044dea62604de3`.
+Gateway deployment `4fad4b6f-3596-4797-83a3-05edb7f89097` retains ordinary candidate
+`9322193f-5e87-4479-88c9-39229dddb5f2` at 100% and corrected diagnostic
+`b6237ad9-3343-4c8b-8b65-7a0194ddc50e` at 0%. The signed response identified
+that exact corrected version and verified the Google signature. No customer
+order was created or Shopify submission tested; ordinary traffic, old receipts
+and secrets were unchanged. Owner-to-edge interval: −458..+687 ms, RTT 146 ms.
+The isolated Google QA audit/key preflight passed; the numeric revision was
+not in the final receipt and remains to be retrieved read-only when needed.
+
+**The diagnostic failure is closed. The original uncertain intake / earlier
+409 remains unreconciled. Full WORK acceptance remains NOT PASSED.** This is
+Owner-supplied runtime evidence, not a new signed probe by this executor.
+Structured receipt: `docs/evidence/work-gateway-zero-byte-owner-success-2026-10-19.json`.
+
+**All old and new upload/deployment receipts are spent. Never rerun
+`work:gateway:empty-post:release-once`, reset receipts or replay historical
+upload/recovery/deployment commands.** Only `work:gateway:empty-post:inspect`
+may be used for necessary read-only deployment read-back; it sends no signed
+POST. Do not restart secret-mismatch diagnosis or rotate keys.
+
+
+Current execution evidence and exact remaining work:
+[`WORK_CONNECTED_ACCEPTANCE_2026-10-19.md`](WORK_CONNECTED_ACCEPTANCE_2026-10-19.md).
+The old diagnostic upload/recovery/0% deployment receipts are spent. No command
+in a historical stage supersedes the read-only current-deployment collector.
+Independent conversation/catalog/quote-recovery/Rewards source and local tests
+have advanced; full WORK acceptance remains blocked and must not be claimed.
+
+Updated 2026-10-18. Scope is the existing WORK app/store, My JILL, Shopify commerce, isolated Custom Orders QA and WORK D1. No physical machines, paid infrastructure, LIVE or KEEP release. This plan follows `JILL_HQ_WORK_SYSTEM_MAP.md`, `JILL_HQ_MY_JILL_CUSTOMER_HANDOFF.md` and `JILL_REWARDS_WORK_FLEX_REDEMPTION.md`.
+
+## One identity and one record per business fact
+
+| Fact | Authority | HQ / My JILL responsibility |
+| --- | --- | --- |
+| Product, variant, collection, price, stock | Shopify | HQ gives native Admin links now; later a scoped read projection and reviewed writes. My JILL uses native Shopify storefront/cart. |
+| Customer identity, order, payment, discount | Shopify | HQ uses verified online staff and WORK D1 grant. My JILL uses the verified customer session. Both join on Shopify GIDs, never typed contact details. |
+| Original Custom Order, messages and production events | Isolated Google QA source, verified owner ledger | HQ merchant thread and My JILL owner thread use the same submission ID and append-only event writer. |
+| Quote acceptance and cross-system handoff | Versioned quote plus WORK D1 operation receipts | HQ freezes terms, rewards code and Shopify calculation. My JILL accepts the exact version. One idempotent draft/invoice/order link is reconciled by Shopify reads. |
+| Rewards earn, wallet and coupon | One versioned canonical Rewards backend; Shopify paid order and discount truth | My JILL chooses the exact amount, HQ can display/attach that coupon, both see the same wallet. No independent playground wallet. |
+| Private artwork and files | WORK R2 quarantine/registry only after certified limits | HQ and verified customer see authorized short-lived media; no public artwork URL or duplicate upload archive. |
+
+## Build and activation order
+
+| Stage | Work | Acceptance before next stage |
+| --- | --- | --- |
+| 1. HQ home and request workspace | Keep existing online staff/D1 gate; replace static home with a clear WORK launchpad and native Shopify links. Preserve Owner-only request workspace and its source states. | Authenticated Owner opens inbox; denied staff see no request link/data; Products, Collections, Customers and Orders links stay pinned to WORK. No fabricated metrics. **Source built in this change.** |
+| 2. Source health and speed | Read existing allocations/bindings/flags using `work:runtime:inventory:owner`; do not rerun the spent deployment. The old diagnostic rejects a zero-byte HTTP stream before Google; its source correction passes real local workerd HTTP tests. Pin metadata/rollback before reviewing a NEW exact-version gate. Reconcile the original uncertain request by its actual receipt/ID. Keep indexed-read authorization and overflow denial. | Existing traffic unchanged; exact-version signed read-only connection and original intake reconciliation still required. Measure authenticated 20-run performance separately from public health RTT. |
+| 3. Catalog and customer reads | Audit current WORK scopes/version and real products, collections, variants, customer permissions. Add `read_products`/inventory only through a reviewed WORK app version; expose bounded Shopify GID projections with server-side staff policy. | Product/collection counts and price/stock agree with fresh Shopify reads; customer A/B privacy and staff revocation pass. Native Admin remains edit authority until a reviewed command exists. |
+| 4. One conversation | Version public request events; authenticated customer reply verifies Customer GID and owner ledger. HQ writes through existing merchant command boundary, with internal notes separate from customer messages. Guest claim requires independent proof. | Merchant→My JILL→merchant round trip, duplicate/timeout recovery, denial for another customer, and no message sent to a contact-only email account. |
+| 5. Quote and Shopify order | Exact product variant/quantity/price/address/shipping/tax calculation; customer accepts immutable quote version; one linked Draft Order is created, HQ explicitly invoices, Shopify checkout creates Order. | Changed totals invalidate acceptance; duplicate clicks create one draft; uncertain writes reconcile by operation ID and read-back; paid/refund/fulfillment observations match Shopify. |
+| 6. Universal Rewards | Migrate v13 whole-point ledger to tenths and preserve issued coupons. Earn 0.1 point per eligible paid $1; 1 point = $1 off with $10 eligible subtotal per $1, no 50-point unlock. Scope discounts to eligible products, once/order, non-stacking. | WORK website cart and HQ draft honor identical amounts, refunds and unused-code expiry reconcile, multi-line baskets do not clip reward, no second deduction in HQ. |
+| 7. Playground catalog | Create real Shopify admission/party/snack/drink/merchandise SKUs with reviewed margins and eligibility. Sell through Shopify, join verified purchasing adult to the same Rewards wallet and HQ order view. | Small snack, admission, party, guest and cancellation cases pass without collecting child identity for Rewards. No parallel cash/order system. |
+| 8. Roles and observability | Grant least-privilege staff views/actions one domain at a time; expose source freshness, operation receipts and unresolved exceptions from real records. | Owner can audit every quote, invoice and reward transition; revocation works; no analytics number is shown without a verified source/time range. |
+
+## WORK release discipline
+
+- Build and test source first. Read current Shopify app scopes/version and Cloudflare Worker deployment before any release; a Shopify app version includes the three My JILL extensions and proxy, so review their diff together.
+- Customer messages, coupons, invoices, drafts and orders are external writes. Use a disposable verified WORK customer, exact operation receipts and read-back for each gate. Never retry a 409 or ambiguous write blindly.
+- Keep the active v13 coupon terms for already issued codes. A new policy needs a versioned migration and customer-facing explanation before any customer balance changes.
+- Each new screen distinguishes **connected**, **source unavailable**, and **planned**. HQ does not invent customer records, revenue, counts or readiness from a heading.
+
+## Visual theme activated on WORK — 2026-10-19 18:26 UTC
+
+Owner release receipt supersedes earlier not-uploaded/not-deployed visual status.
+Runner `9a92d0287e69628c63bd7bec9a5e3dace63f1c94` uploaded and activated
+`80b47610-4d8a-4186-a4c8-fe4f05daf964` at 100%, retaining existing quote canary
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` at 0%. Deployment:
+`dc3350e2-c394-4a5f-9d48-325ed23a1394`. Package SHA-256:
+`f936ee373297bd042c63a1e024bf6f988cd5a576ebca832298916a890b7b3e81`.
+Independent provider allocation and unpinned exact runtime health were verified
+by the Owner runner (HTTP 200, database ready). Canonical evidence:
+`docs/evidence/work-hq-visual-activation-2026-10-19.json`.
+
+Current flags/bindings and quote canary preserved; catalog ON, quote drafts and
+conversation OFF on ordinary traffic. No secret, data/schema or paid-service
+change. Visual upload and activation receipts are SPENT: never rerun the
+release or reset receipts. Read-back uses `work:hq:visuals:inspect` only.
+Prior catalog/access version `e866e2f2-0746-44d0-8caa-b37a1c9bcf45` is the
+visual release's guarded restoration baseline, not the ordinary active runtime.
+
+Authenticated Owner browser verification remains pending: refresh the existing
+WORK app; inspect Home, Requests, request detail, Catalog and Access at desktop
+and narrow widths; verify navigation, readable focus and no horizontal overflow.
+Do not invoke commissioning or create new requests/quotes for visual review.
+Record screenshots and authenticated performance evidence. This receipt proves
+deployment, not authenticated visual or full WORK operational acceptance.
+Customer-facing LIVE promotion remains a separate reviewed release.
+
+## JILL visual theme v2 prepared — 2026-10-19
+
+User-authorized presentation-only continuation: bolder purple/cherry/gold/ink
+palette, shared active-tab navigation, button-style actions, shorter task copy
+and native disclosures for technical evidence. Quote/customer/security/error
+boundaries remain visible. Canonical visual owner remains `hq-theme.css` and
+the existing page styles; runtime backend, hooks and command props are unchanged.
+See `docs/WORK_HQ_STUDIO_VISUAL_RELEASE_2026-10-19.md` for reviewed source,
+24 local browser cases, guarded new v2 release/receipt boundaries and remaining
+authenticated checks. Current visual v1 `80b47610-4d8a-4186-a4c8-fe4f05daf964`
+is still active. v2 is source-prepared, not uploaded/deployed. v1 receipts remain
+spent; never rerun historical releases or reset receipts. WORK operational
+acceptance and separate customer-facing LIVE review remain incomplete.
+
+## Visual theme v2 activated — 2026-10-19 19:00 UTC
+
+Successful Owner receipt supersedes all preceding v2 prepared/not-deployed
+status. Runner `5815213b29999310ea44049ef99d20b5178948c5`; package SHA-256
+`c6652c586a6db71625764869306e816c19e1eebb0325e7c331119c613fd60719`.
+Current HQ ordinary runtime: `d301efb4-b015-40d4-87ad-159a9fff82eb` at 100%.
+Existing quote canary `dbc6341f-de7f-41de-8e97-6bf971201eeb` stays at 0%.
+Deployment `3fbc20ff-1f9e-4e70-8f14-3e941638347c`, created
+`2026-10-19T19:00:42.066909Z`. Provider allocation and unpinned exact runtime
+health verified by the Owner runner; HTTP 200, database ready.
+Canonical receipt: `docs/evidence/work-hq-studio-activation-2026-10-19.json`.
+
+Visual v2 upload/activation receipts are SPENT. Never repeat
+`work:hq:studio:release-once`, reset receipts or repeat historical releases.
+Read-only inspection uses `work:hq:studio:inspect`. Visual v1
+`80b47610-4d8a-4186-a4c8-fe4f05daf964` is now the guarded restoration baseline,
+not ordinary active traffic. Current bindings and flags preserved: catalog ON,
+quote drafts/conversation OFF, commissioning OFF. No secret, data/schema or
+new billable service change. Existing quote testing limits remain unchanged.
+
+Next visual check: refresh the existing authenticated JILL HQ — WORK app and
+review Home, Requests, detail, Catalog and Access; verify shared navigation,
+button affordances, technical disclosures, focus and narrow-width rendering.
+Do not create requests/quotes or submit commands for a visual review.
+Authenticated visual acceptance and full WORK operational acceptance remain
+open. Customer-facing LIVE promotion remains a separate reviewed release.
+
+## Navigation incident and Home dashboard — 2026-10-19
+
+Owner reports Requests not opening and raw-Worker new-tab `200 OK`; Home had
+three Requests links. Local compiled SDK/data-route reproduction found shared
+thrown Response body consumption across parallel loaders. Repair preserves one
+SDK attempt but clones rejected Responses per loader, restores top-level new-tab
+entry through the existing WORK Admin app, and makes Home a canonical streamed
+counts dashboard with one Requests navigation entry. See
+`docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md` for evidence, source/denial tests,
+new isolated repair receipts and required authenticated checks. This is an
+explicitly authorized navigation/dashboard change, NOT visual-only. It is NOT
+DEPLOYED yet; `d301efb4-b015-40d4-87ad-159a9fff82eb` remains ordinary traffic.
+All old release receipts remain spent. Flags, secrets, app URLs, canonical data,
+wallet and LIVE stay unchanged. Incident/WORK acceptance remains open pending
+actual authenticated navigation/new-tab proof after a reviewed repair release.
+
+## Navigation repair activated — 2026-10-19 19:53 UTC
+
+Owner receipt supersedes preceding repair-not-deployed status. Runner/source
+`576d6b0bcde43c43fda939f42513eefcb5adefb7`; package SHA-256
+`2576094d1cbfdc196c07f6b8a47dbbda0677b7ab8d1903324517958d5e31d5f4`.
+Runtime `6473444f-86f8-4a83-a47a-56d1a2e19f05` is at 100%; quote canary
+`dbc6341f-de7f-41de-8e97-6bf971201eeb` remains at 0%. Deployment
+`1ffdde49-e556-43a6-b7bb-e10cd3a71048`, created
+`2026-10-19T19:53:44.176641Z`. Exact runtime health and allocation verified by
+Owner; upload and activation acknowledged and both receipts SPENT. Never repeat
+`work:hq:navigation:repair:release-once` or reset receipts. Read-only inspection
+uses `work:hq:navigation:repair:inspect`. Prior studio runtime `d301efb4-b015-40d4-87ad-159a9fff82eb`
+is the guarded restoration baseline, not ordinary active traffic.
+
+Independent executor GETs verified the exact active version and database-ready
+health at 19:55:29 UTC; top-level `/app/requests` now returns 302 to the existing
+WORK Shopify Admin app/Requests path with no-store; anonymous `.data` bootstrap
+retains App Bridge and no longer contains the reproduced Unexpected Server
+Error. These reads send no signed POST, grant no access and do not certify a
+signed-in browser session. Canonical evidence:
+`docs/evidence/work-hq-navigation-activation-2026-10-19.json`.
+
+Change scope is explicitly navigation transport and authorized dashboard,
+`visual_only: false`. All current bindings/flags preserved: catalog ON, quote
+and conversation OFF, quote canary unchanged. No secret, schema/data command,
+new billable service, gateway, app release, extension, wallet or LIVE change.
+
+Next gate: refresh the existing authenticated WORK app; verify the single
+Requests entry, Home counts against inbox, repeated Home → Requests → detail →
+back navigation and a new-tab request entering Shopify Admin successfully.
+Capture actual UI/screenshots and timings without tokens or private customer
+records. No write/status/message/quote submission is required for this check.
+The authenticated navigation incident remains OPEN until this Owner UI proof
+passes. Full WORK operational acceptance and separate LIVE review remain open.
+
+
+## Owner leaves navigation in place; native quote calculation advanced — 2026-10-19
+
+Owner reports no hang again and explicitly stops active diagnosis. The complete
+75-second capture at runner a82f268 contains 15 app events: 9 inbox, 3 Home,
+3 detail; 13 ok/HTTP 200, 2 canceled, zero reported exceptions. Completed inbox
+server phases range 123–3,211 ms. Cancellations' causes are unverified; these
+are not browser TTFB/performance measurements or proof of the historical root
+cause. Preserve current runtime 6473444f... at 100% and quote canary at 0%.
+No more diagnostic runs or navigation changes requested. Structured evidence:
+`evidence/work-hq-navigation-no-hang-window-2026-10-19.json`.
+
+The next source slice is the canonical Shopify quote calculation adapter,
+with existing online Owner/D1 policy and same-app WORK checks. A real two-line
+WORK calculation reconciled $182.98 through its projection without creating
+a draft, invoice, order, reservation or wallet entry. The QA customer has no
+address, so the result correctly holds publication as address_required. Source
+operations validate against Admin API 2026-07; connector execution version is
+not exposed. No HQ calculation route or release is activated. Scope/limits and
+next gates: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`, evidence
+`evidence/work-quote-native-calculation-2026-10-19.json`. Full WORK remains OPEN.
+
+
+## Exact delivery terms and owned quote reads — 2026-10-19
+
+Completed source slice: version-2 exact delivery terms, owned customer projection,
+stored-term integrity and draft delivery mismatch quarantine, with actual LOCAL
+D1 tests. No remote activation. Next operational gate remains exact original 409
+ID/payload/history → canonical reconciliation → approved Owner canary proof.
+Then finish consuming quote routes/UI, accepted event, real Shopify adapters and
+explicit invoice/test checkout. Requests stays as-is; spent receipts stay spent.
+Contracts/evidence limits: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Visual steering: compact edition source and 48 local browser cases complete;
+new isolated visual-only release is prepared, not deployed. Next visual gate:
+Owner-credentialed one-use release then authenticated desktop/phone review.
+Business acceptance holds and spent historical receipts remain unchanged.
+Scope/rollback: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## Order details UI steering — 2026-10-19
+
+Prepared shared inbox/workspace Order details, loading a selected inbox card
+through the existing authenticated route on opening and omitting email/order_type
+and removing the duplicated overview from Items & personalization. Local
+render/build checks pass. Next deployment gate is current Owner HQ allocation/
+compact receipt read-back; no historical release retry or guard widening.
+Operational intake, quote and separate LIVE gates remain open.
+
+
+## Current Owner baseline and separate Order details release — 2026-10-20
+
+Owner read-only inventory at 00:30:57Z reports clean a3b0c82 source and HQ
+`f9830ddf-4ff7-4e24-896e-3618ee5686d7` at 100%, deployment
+`a67cfa4f-cea0-4590-b0b7-10f6f17acebc`; quote canary stays at 0%.
+This supersedes the prior missing-current-inventory gate. Historical compact
+receipts stay spent; final command acknowledgement/package digest were not
+supplied. The ordinary source annotation remains a fresh metadata preflight
+requirement, not an inference certified by this inventory.
+
+HQ's null inventory version came from selecting the gateway header. The
+read-only collector now uses the HQ header; existing strict unsigned HQ health
+independently verifies exact f9830ddf... and database readiness. No secret or
+runtime changes are indicated. Original observation is preserved in
+`evidence/work-hq-current-owner-inventory-2026-10-20.json`.
+
+NEW Order details package uses runtime base 576d6b0 plus ten frozen reviewed UI
+files from 5fa3b1f, excluding inactive quote business work. It reuses the source
+composer/release executor with distinct `work-hq-order-details-v1` receipts.
+Scope includes explicit authenticated read-on-open, so it is not strictly
+visual-only. Local isolated build, compiled denial/navigation and upload DRY
+RUN pass; no remote upload/deployment performed. Owner credentials are needed
+only for NEW `work:hq:order-details:release-once`, with inspect-only on uncertain
+outcome. Do not repeat any historical release. See
+`WORK_HQ_ORDER_DETAILS_RELEASE_2026-10-20.md` for baseline, safeguards and UI review.
+Authenticated visual acceptance and all broader WORK/LIVE gates remain open.
