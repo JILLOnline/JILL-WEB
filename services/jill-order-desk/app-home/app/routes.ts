@@ -7,6 +7,7 @@ export default [
     index("routes/app.index.tsx"),
     route("access","routes/app.access.tsx"),
     route("catalog","routes/app.catalog.tsx"),
+    route("messages","routes/app.messages.tsx"),
     route("requests","routes/app.requests.layout.tsx",[
       index("routes/app.requests.tsx"),
       route(":submissionId","routes/app.requests.$submissionId.tsx"),
