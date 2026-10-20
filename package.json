@@ -282,6 +282,7 @@
     "test:work-connected-source": "node scripts/test-work-conversation.mjs && node scripts/test-work-catalog-and-inventory.mjs && node scripts/test-rewards-universal-policy.mjs && node scripts/test-work-quote-calculation.mjs",
     "test:work-quote-calculation": "node scripts/test-work-quote-calculation.mjs",
     "test:work-quote-commerce-handoff": "node scripts/test-work-quote-commerce-handoff.mjs",
+    "test:work-hq-shopify-catalog-browser": "node scripts/test-work-hq-shopify-catalog-browser.mjs",
     "test:work-gateway-http": "npm run test:diagnostic-http --prefix services/custom-order-cloudflare",
     "test:work-hq-quote-agreement-local": "npm run test:workerd-quote-agreement-local --prefix services/jill-order-desk/app-home",
     "work:gateway:empty-post:inspect": "node scripts/release-work-gateway-diagnostic-owner.mjs --inspect",
