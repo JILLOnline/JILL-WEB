@@ -50,6 +50,14 @@ assert.throws(()=>projectCustomerMessageInbox([{...safe,
 assert.throws(()=>projectCustomerMessageInbox([{...safe,
   timeline:[{...safe.timeline[0],revision:0}]}]),
   /unverified_message_thread/);
+assert.throws(()=>projectCustomerMessageInbox([{...safe,
+  timeline:safe.timeline.map(event=>
+    event.kind==='merchant_message'?{...event,author:'system'}:event)}]),
+  /unverified_message_thread/);
+assert.throws(()=>projectCustomerMessageInbox([{...safe,
+  timeline:safe.timeline.map(event=>
+    event.kind==='customer_reply'?{...event,author:'jill'}:event)}]),
+  /unverified_message_thread/);
 const legacy={submission_id:second,revision:1,status,updated_at:at,
   summary:{items:[],date_needed:'',fulfillment:''},
   timeline:[{status,note:'Request received',occurred_at:at}]};
@@ -72,6 +80,12 @@ const reply=readFileSync('extensions/jill-account-dashboard/src/pages/RequestCon
 assert.match(routes,/route\("messages","routes\/app\.messages\.tsx"\)/);
 assert.match(nav,/<NavLink to="\/app\/messages">Messages<\/NavLink>/);
 assert.match(hq,/loadVerifiedMerchantInbox\(args\)/);
+assert.match(hq,/const \[query,setQuery\]=useState\(""/);
+assert.match(hq,/const \[status,setStatus\]=useState\("all"/);
+assert.match(hq,/item\.submission_id\.toLocaleLowerCase\(\)\.includes\(q\)/);
+assert.match(hq,/filtered\.length\} of \{records\.length\} verified request threads/);
+assert.match(hq,/Refresh conversation/);
+assert.match(hq,/threadRead\.load\("\/app\/requests\/thread\?"/);
 assert.match(hq,/JILL_WORK_CONVERSATION_ENABLED==="true"/);
 assert.match(hq,/summarizeMerchantPublicThread/);
 assert.match(hq,/WorkRequestQuickActions/);
@@ -89,9 +103,11 @@ assert.match(customer,/RequestConversation order=\{order\}/);
 assert.match(customer,/Unread counts are not available/);
 assert.match(reply,/sendWorkCustomerReply/);
 assert.match(hqCss,/@media\(max-width:760px\)/);
+assert.match(hqCss,/\.jill-messages__filters/);
+assert.match(hqCss,/\.jill-messages__conversation-tools/);
 assert.doesNotMatch(hqCss,/height:\s*100vh|overflow-y:\s*(auto|scroll)|!important|@import|url\(/);
 for(const code of [hq,customer,hub]){
   assert.doesNotMatch(code,/localStorage|sessionStorage|shopify\.customer\.id|customer\.email|owner_gid|document\.cookie|new WebSocket/);
   assert.doesNotMatch(code,/draftOrderCreate|draftOrderInvoiceSend|fetch\(/);
 }
-console.log('PASS WORK dual inbox: one public Google thread, verified HQ Owner / My JILL session readers, private-note exclusion, no fake unread/delivery, legacy states, safe existing send/receipt ownership, no deployment.');
+console.log('PASS WORK dual inbox: public verified thread, HQ search/status/refetch, rejection of forged actor, Owner and My JILL isolation, no fake unread/delivery, legacy/receipt recovery, no deployment.');
