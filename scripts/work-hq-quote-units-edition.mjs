@@ -30,7 +30,7 @@ export function checkWorkHqQuoteUnitsEdition(){
   assert(branch==='jill/rewards-work'||ci,'Wrong WORK branch');
   assert.equal(Object.keys(CATALOG_QUOTE_BLOBS).length,36);
   assert.equal(Object.keys(newFiles).length,3);
-  assert.equal(Object.keys(QUOTE_UNITS_BLOBS).length,39);
+  assert.equal(Object.keys(QUOTE_UNITS_BLOBS).length,37);
   for(const [file,sha] of Object.entries(QUOTE_UNITS_BLOBS)){
     assert.equal(gitBlob(source(file)),sha,'Reviewed WORK source drift: '+file);
     if(file.endsWith('.css'))
@@ -45,7 +45,7 @@ export function checkWorkHqQuoteUnitsEdition(){
   assert.match(ui,/inspectWorkQuoteUnitReview/);
   assert.doesNotMatch(code,/draftOrderCreate|draftOrderInvoiceSend|fetch\(|db\.prepare/);
   return {environment:'WORK',status:'SOURCE_ONLY_HOLD',
-    reviewed_files:39,new_merchant_unit_review_files:3,
+    reviewed_files:37,new_or_changed_unit_review_files:3,
     earlier_catalog_messaging_quote_files_preserved:true,
     shopify_variant_alias_resolution_held:true,
     draft_order_and_invoice_unapproved:true,live_untouched:true};
