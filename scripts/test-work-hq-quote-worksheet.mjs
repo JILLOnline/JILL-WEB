@@ -88,10 +88,18 @@ for(const marker of ['model?.state==="ready"',
   'customerStatus==="cancelled"||customerStatus==="completed"',
   'NOT SAVED · NOT SENT','estimatedTotalCents',
   'items.map','unitPrice:prices','NOT SAVED',
-  'remain','Internal estimate only']){
+  'remain','<details className="jill-request__panel',
+  'aria-label="Quote worksheet"','<summary className="jill-request__fold-head"',
+  'NOT SENT']){
   if(marker==='NOT SAVED'||marker==='remain')continue;
   assert.ok(ui.includes(marker),marker);cases++;
 }
+assert.doesNotMatch(ui,/Private USD estimate\. Quantities match the original request/);
+assert.doesNotMatch(ui,/Internal estimate only\. No customer message/);
+assert.match(ui,/<details className="jill-request__panel/);
+assert.match(ui,/<summary className="jill-request__fold-head"/);
+assert.match(ui,/<span className="jill-quote__tag">/);
+assert.match(ui,/<\/details>/);
 pass(route.includes('WorkQuoteWorksheet')&&
   route.includes('key={record.submission_id}')&&
   route.includes('model={original}'), 'verified route wires worksheet');
