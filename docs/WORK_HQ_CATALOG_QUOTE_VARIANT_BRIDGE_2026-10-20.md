@@ -25,3 +25,11 @@ The current **36-file** reviewed edition layers the new module over the earlier 
 2. Add a merchant-visible **Shopify current price vs entered quote price** comparison with explicit decision to revise the draft; no silent auto-reprice.
 3. Losslessly model P1/P2 personalization across exact physical line quantities, including reference images and custom charges. One immutable agreement fingerprint per accepted quote.
 4. Connect customer-visible quote publication/approval, then separate idempotent invoice and Shopify order stages, all after operational WORK acceptance. LIVE remains separately held.
+
+## P1/P2 review increment — merchant-only, also unreleased
+
+The quote worksheet now contains a native collapsible "Unit & P1/P2 review" under verified items that have variant allocations or personalization groups. `work-quote-unit-review.mjs` strictly validates the already Owner-verified original item's units and preserves the *exact* source `unit_id`, original variant reference, P1/P2 group ID, attribute values and reference **counts**. It rejects duplicates, unknown unit IDs, inconsistent allocation quantities, invalid group data and excessive inputs. Incompletely assigned units are explicitly flagged; no units are silently dropped or reassigned.
+
+These original references may be legacy IDs such as `shopify-variant:456` and an allocation-specific `456`, **not** certified Shopify ProductVariant GIDs. The review NEVER tries to equate them to Shopify products or prices. The independently authenticated Catalog bridge requires exact validated Shopify GIDs; a future Owner-authorized resolver must prove the mapping using Shopify source, never merchant-entered IDs or title guesses.
+
+The disclosure shows the actual per-unit assignments for merchant review only. It does **not** add a price per unit, alter saved draft lines, approve customer terms or make an invoice possible. The additional unmodified security and review tests are `npm.cmd run test:work-hq-quote-unit-review`; the **39-file** WORK review package is guarded by `npm.cmd run work:hq:quote-units:check`. Prior reviewed 36/35/32-file editions remain immutable and still do not authorize a release.
