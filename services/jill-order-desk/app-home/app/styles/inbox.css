@@ -501,3 +501,90 @@
 @media(prefers-reduced-motion:reduce){
   .jill-inbox__card,.jill-inbox__chevron{transition:none}
 }
+
+/* WORK Requests: native full-row disclosure; actions are a SEPARATE
+   interactive grid cell. No nested buttons/links or iframe scroll locks. */
+.jill-inbox__row-trigger{
+  grid-column:1 / span 6;grid-row:1;
+  display:grid;grid-template-columns:subgrid;align-items:center;
+  gap:9px;min-width:0;width:100%;min-height:42px;
+  padding:0;border:0;border-radius:6px;
+  background:transparent;color:inherit;text-align:left;
+  font:inherit;cursor:pointer
+}
+.jill-inbox__row-trigger:hover{
+  background:rgba(117,62,150,.045)
+}
+.jill-inbox__row-trigger:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:2px;
+  background:#f6effa
+}
+.jill-inbox__row-trigger .jill-inbox__cell{
+  pointer-events:none
+}
+.jill-inbox__row-trigger .jill-inbox__request-id{
+  display:inline-flex;align-items:center;gap:5px
+}
+.jill-inbox__row-chevron{
+  display:inline-block;color:#834fa2;font-size:15px;
+  font-weight:800;line-height:1;transition:transform .16s ease
+}
+.jill-inbox__row-trigger[aria-expanded="true"] .jill-inbox__row-chevron{
+  transform:rotate(180deg)
+}
+.jill-inbox__row-trigger[aria-expanded="true"]{
+  color:#503269
+}
+.jill-inbox__order-details[hidden]{display:none}
+.jill-inbox__details-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;
+  padding-bottom:10px;margin-bottom:10px;
+  border-bottom:1px solid #e9ddef;
+  font-size:11px;color:#67398c;letter-spacing:.025em
+}
+.jill-inbox__details-heading a{
+  color:#6a3293;font-size:12px;font-weight:760;
+  text-decoration:none;letter-spacing:0
+}
+.jill-inbox__details-heading a:hover{text-decoration:underline}
+.jill-inbox__details-heading a:focus-visible{
+  outline:3px solid var(--jill-focus);outline-offset:3px
+}
+/* With an active editor the action cell uses the existing full-width second
+   grid row. The information-row toggle remains independent at row one. */
+.jill-inbox__row:has(.jill-actions__body) .jill-actions--direct,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions--direct,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions--direct{
+  width:100%;flex:1 1 100%
+}
+.jill-inbox__row:has(.jill-actions__body) .jill-actions__direct-buttons,
+.jill-inbox__row:has(.jill-actions__feedback) .jill-actions__direct-buttons,
+.jill-inbox__row:has(.jill-actions__refresh) .jill-actions__direct-buttons{
+  justify-content:flex-start
+}
+@media(max-width:1160px){
+  .jill-inbox__row-trigger{grid-column:1 / 5}
+}
+@media(max-width:760px){
+  .jill-inbox__row-trigger{
+    grid-column:1/-1;grid-row:1;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    min-height:0;padding:2px 0 8px
+  }
+  .jill-inbox__row-trigger .jill-inbox__cell--customer,
+  .jill-inbox__row-trigger .jill-inbox__cell--status,
+  .jill-inbox__row-trigger .jill-inbox__cell--needed{grid-column:1}
+  .jill-inbox__row-trigger .jill-inbox__cell--request,
+  .jill-inbox__row-trigger .jill-inbox__cell--stage,
+  .jill-inbox__row-trigger .jill-inbox__cell--submitted{grid-column:2}
+  .jill-inbox__row .jill-inbox__cell--actions{grid-column:1/-1;grid-row:2}
+  .jill-inbox__row:has(.jill-actions__body) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__feedback) .jill-inbox__cell--actions,
+  .jill-inbox__row:has(.jill-actions__refresh) .jill-inbox__cell--actions{
+    grid-column:1/-1;grid-row:2
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-inbox__row-chevron{transition:none}
+}
