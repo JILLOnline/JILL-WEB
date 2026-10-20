@@ -1,5 +1,7 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {Link,useFetcher,useRouteLoaderData} from "react-router";
+import {archiveReason,filterArchivedRequests,partitionWorkRequests,WORK_ARCHIVE_FILTERS}
+  from "../../../work-request-archive-model.mjs";
 import {
   customerStatusLabel,internalStatusLabel,requestShortId,dateLabel,
   selectInboxRecords,inboxStats,INBOX_FILTERS,
@@ -21,6 +23,11 @@ type InboxRecord={
   fulfillment:string;
   item_count:number;
 };
+type ArchiveModel={ok:boolean;code:string;enabled?:boolean;removed_ids?:string[]};
+type SearchModel={ok:boolean;code:string;tag?:string;matches?:string[];
+  scanned?:number;total?:number;next_cursor?:number|null;snapshot?:string};
+type SearchProgress={tag:string;query:string;matches:string[];scanned:number;
+  total:number;next_cursor:number|null;snapshot:string;error:string};
 type InboxModel={
   state:"ready"|"source_not_connected"|"source_unavailable"|"access_denied";
   requestsConnected:boolean;
@@ -34,7 +41,41 @@ const STATUS_TONE:Record<string,string>={
   in_production:"working",ready_pickup:"ready",on_hold:"waiting",
   cancelled:"muted",completed:"ready",
 };
-function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:boolean}) {
+function ArchiveControl({item,removed,enabled,onSaved}:{
+  item:InboxRecord;removed:boolean;enabled:boolean;onSaved:()=>void;
+}) {
+  const fetcher=useFetcher<{ok:boolean;code:string}>();
+  const op=useRef<string|null>(null);
+  const done=useRef(false);
+  useEffect(()=>{
+    if(fetcher.state!=="idle"||!fetcher.data||done.current)return;
+    done.current=true;
+    if(fetcher.data.ok===true){onSaved();}
+  },[fetcher.state,fetcher.data,onSaved]);
+  if(!enabled)return null;
+  const pending=fetcher.state!=="idle";
+  return <div className="jill-inbox__archive-control">
+    <button type="button" disabled={pending||Boolean(fetcher.data&&!fetcher.data.ok)}
+      onClick={()=>{
+        const action=removed?"restore":"remove";
+        if(!removed&&!window.confirm(
+          "Move this request to Archive? The original order will NOT be deleted."))return;
+        const id="jill:work:archive:"+action+":"+crypto.randomUUID();
+        op.current=id;done.current=false;
+        fetcher.submit({submission_id:item.submission_id,
+          source_revision:String(item.revision),operation_id:id,action},
+          {method:"post",action:"/app/requests/archive"});
+      }}>
+      {pending?"Updating…":removed?"Restore request":"Move to Archive"}
+    </button>
+    {fetcher.data&&!fetcher.data.ok?
+      <p role="alert">Archive change not confirmed. Refresh the request status before trying again.</p>:null}
+  </div>;
+}
+function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChange}:{
+  item:InboxRecord;controlsEnabled:boolean;archiveEnabled:boolean;
+  removed:boolean;onArchiveChange:()=>void;
+}) {
   const statusTone=STATUS_TONE[item.customer_status]??"muted";
   type OrderModel=NonNullable<Parameters<typeof WorkOrderDetailsContent>[0]["model"]>;
   const orderDetails=useFetcher<OrderModel>();
@@ -90,6 +131,9 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       <p className="jill-inbox__submitted">
         Submitted {dateLabel(item.submitted_at,{includeTime:true})}
       </p>
+      {removed?<span className="jill-inbox__archive-stamp">Removed · kept in Archive</span>:null}
+      <ArchiveControl item={item} removed={removed}
+        enabled={archiveEnabled} onSaved={onArchiveChange}/>
     </div>
     <details className="jill-inbox__details" onToggle={event=>{
       const open=event.currentTarget.open;
@@ -127,12 +171,77 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
 export default function WorkMerchantInbox() {
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const [query,setQuery]=useState("");
+  const [view,setView]=useState<"active"|"archive"|"all">("active");
   const [status,setStatus]=useState("all");
   const [sort,setSort]=useState("recent");
+  const archiveFetch=useFetcher<ArchiveModel>();
+  const detailSearch=useFetcher<SearchModel>();
+  const [search,setSearch]=useState<SearchProgress|null>(null);
+  const [archiveRefresh,setArchiveRefresh]=useState(0);
+  // Soft-removal overlay is a separate, gated Owner+D1 read. If the feature
+  // is off, status-based archives still work; no removed orders are guessed.
+  useEffect(()=>{archiveFetch.load("/app/requests/archive");},
+    [archiveRefresh]);
+  const archiveReady=archiveFetch.data?.ok===true &&
+    archiveFetch.data.enabled===true;
+  const removedIds=useMemo(()=>archiveReady &&
+    Array.isArray(archiveFetch.data?.removed_ids)
+      ?archiveFetch.data.removed_ids:[],
+    [archiveReady,archiveFetch.data]);
+  const removedSet=useMemo(()=>new Set(removedIds),[removedIds]);
+  const grouped=useMemo(()=>partitionWorkRequests(data.records,{removedIds}),
+    [data.records,removedIds]);
   const stats=useMemo(()=>inboxStats(data.records),[data.records]);
-  const visible=useMemo(()=>selectInboxRecords(data.records,{query,status,sort}),
-    [data.records,query,status,sort]);
-
+  const selected=useMemo(()=>{
+    if(view==="active")return grouped.active;
+    if(view==="archive")return grouped.archive;
+    return data.records;
+  },[view,grouped,data.records]);
+  const visible=useMemo(()=>{
+    const pool=view==="archive"
+      ?filterArchivedRequests(selected,status,removedIds):selected;
+    const allowed=view==="archive"?"all":status;
+    const matching=selectInboxRecords(pool,{query:"",status:allowed,sort});
+    const textQuery=query.trim().toLowerCase();
+    if(!textQuery)return matching;
+    const local=selectInboxRecords(pool,{query,status:allowed,sort});
+    const matched=new Set(local.map(r=>r.submission_id));
+    if(search?.query===query.trim())
+      for(const id of search.matches)matched.add(id);
+    return matching.filter(row=>matched.has(row.submission_id));
+  },[selected,view,status,sort,query,search,removedIds]);
+  const startFullSearch=()=>{
+    const term=query.trim();
+    if(term.length<2)return;
+    const tag=crypto.randomUUID();
+    setView("all");setStatus("all");
+    setSearch({tag,query:term,matches:[],scanned:0,total:data.records.length,
+      next_cursor:0,snapshot:"",error:""});
+    detailSearch.submit({q:term,cursor:"0",snapshot:"",tag},
+      {method:"post",action:"/app/requests/search"});
+  };
+  const loadMore=()=>{
+    if(!search||search.next_cursor===null||detailSearch.state!=="idle")return;
+    detailSearch.submit({q:search.query,cursor:String(search.next_cursor),
+      snapshot:search.snapshot,tag:search.tag},
+      {method:"post",action:"/app/requests/search"});
+  };
+  useEffect(()=>{
+    const result=detailSearch.data;
+    if(!result)return;
+    setSearch(current=>{
+      if(!current||result.tag!==current.tag)return current;
+      if(!result.ok)return {...current,error:
+        "Search could not be verified. Refresh before searching again.",
+        next_cursor:null};
+      return {...current,error:"",scanned:current.scanned+(result.scanned??0),
+        total:result.total??current.total,
+        matches:[...new Set([...current.matches,...(result.matches??[])])],
+        next_cursor:result.next_cursor??null,
+        snapshot:result.snapshot??current.snapshot};
+    });
+  },[detailSearch.data]);
+  const searching=detailSearch.state!=="idle";
   return <s-page heading="JILL HQ — WORK / Custom Orders" inlineSize="large">
     <s-section>
       <main className="jill-inbox" aria-label="JILL HQ Custom Orders">
