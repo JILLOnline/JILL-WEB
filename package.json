@@ -359,7 +359,11 @@
     "test:work-hq-quick-pill-release": "node scripts/test-work-hq-quick-pill-release.mjs",
     "work:hq:quick-pill:inspect": "node scripts/release-work-hq-quick-pill-owner.mjs --inspect",
     "work:hq:quick-pill:release-once": "node scripts/release-work-hq-quick-pill-owner.mjs --release-once",
-    "work:hq:quick-pill:restore-once": "node scripts/release-work-hq-quick-pill-owner.mjs --restore-once"
+    "work:hq:quick-pill:restore-once": "node scripts/release-work-hq-quick-pill-owner.mjs --restore-once",
+    "test:work-hq-row-disclosure-release": "node scripts/test-work-hq-row-disclosure-release.mjs",
+    "work:hq:row-disclosure:inspect": "node scripts/release-work-hq-row-disclosure-owner.mjs --inspect",
+    "work:hq:row-disclosure:release-once": "node scripts/release-work-hq-row-disclosure-owner.mjs --release-once",
+    "work:hq:row-disclosure:restore-once": "node scripts/release-work-hq-row-disclosure-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",
