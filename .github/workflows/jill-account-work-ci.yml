@@ -289,8 +289,10 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify centered Quick Actions dropdown and frozen isolated UI overlay (OFFLINE)
         run: npm run test:work-hq-quick-pill
-      - name: Verify fresh WORK HQ Quick pill one-use release and baseline guards (OFFLINE)
-        run: npm run test:work-hq-quick-pill-release
+      - name: Verify polished Quick Actions disclosure is held for a later release (OFFLINE)
+        run: |
+          npm run work:hq:quick-pill:polish:check
+          npm run test:work-hq-quick-pill-polish-hold
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
