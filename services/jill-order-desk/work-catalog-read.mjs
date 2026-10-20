@@ -2,13 +2,13 @@ import {readWorkMerchantPermission} from './merchant-access.mjs';
 
 const SHOP='jill-work.myshopify.com';
 const SHOP_QUERY='shop { myshopifyDomain currencyCode }';
-export const WORK_CATALOG_QUERY=`query JillWorkCatalog($after: String) {
+export const WORK_CATALOG_QUERY=`query JillWorkCatalog($after: String, $search: String) {
   ${SHOP_QUERY}
-  products(first: 20, after: $after, sortKey: ID) {
+  products(first: 20, after: $after, query: $search, sortKey: ID) {
     nodes {
-      id title status
+      id title status handle vendor productType totalInventory
       variants(first: 10) {
-        nodes { id title price inventoryPolicy }
+        nodes { id title price sku inventoryPolicy }
         pageInfo { hasNextPage endCursor }
       }
     }
@@ -60,16 +60,32 @@ function connection(value,max){
   return value;
 }
 function unique(records){requireValue(new Set(records.map(x=>x.id)).size===records.length);return records;}
+// Only product title searching is supported, using Shopify's own query
+// syntax. Restrict the literal to ordinary letters/numbers and separators
+// before inserting it: no raw parser operators, field names, wildcards,
+// parentheses, quotes or escaped constructs can cross this boundary.
+export function workCatalogProductSearch(value){
+  if(typeof value!=='string')throw Error('catalog_search_invalid');
+  const input=value.trim().normalize('NFC').replace(/\s+/g,' ');
+  if(input.length<2||input.length>64||
+     !/^[\p{L}\p{N}][\p{L}\p{N} .,'&-]*$/u.test(input))
+    throw Error('catalog_search_invalid');
+  return 'title:"'+input+'"';
+}
 const adminUrl=(kind,id)=>'https://admin.shopify.com/store/jill-work/'+kind+'/'+id.split('/').pop();
 function productRecord(p){
   gid(p.id,'Product');label(p.title);
   requireValue(['ACTIVE','DRAFT','ARCHIVED','UNLISTED'].includes(p.status));
   const variants=connection(p.variants,10);
   return {id:p.id,title:p.title,status:p.status,admin_url:adminUrl('products',p.id),
+    handle:label(p.handle),vendor:typeof p.vendor==='string'&&p.vendor.length<=255?p.vendor:'',
+    product_type:typeof p.productType==='string'&&p.productType.length<=255?p.productType:'',
+    total_inventory:Number.isSafeInteger(p.totalInventory)?p.totalInventory:null,
     variants:unique(variants.nodes.map(v=>{
       gid(v.id,'ProductVariant');label(v.title);
       requireValue(/^\d{1,9}\.\d{1,2}$/.test(v.price)&&['DENY','CONTINUE'].includes(v.inventoryPolicy));
-      return {id:v.id,title:v.title,price:v.price,inventory_policy:v.inventoryPolicy};
+      requireValue(v.sku===null||typeof v.sku==='string'&&v.sku.length<=255);
+      return {id:v.id,title:v.title,price:v.price,sku:v.sku||'',inventory_policy:v.inventoryPolicy};
     })),variants_truncated:variants.pageInfo.hasNextPage};
 }
 function inventoryRecord(v){
@@ -96,16 +112,24 @@ export async function handleWorkCatalogRead({request,authenticate,db,enabled=fal
   const {session,admin}=await authenticate.admin(request);
   const params=new URL(request.url).searchParams;
   const view=params.get('view')||'products',cursor=params.get('after');
-  if(!Object.hasOwn(views,view)||[...params.keys()].some(k=>!['after','view'].includes(k))||
+  const search=params.get('q');
+  if(!Object.hasOwn(views,view)||[...params.keys()].some(k=>!['after','view','q'].includes(k))||
     params.getAll('view').length>1||params.getAll('after').length>1||
+    params.getAll('q').length>1||(search!==null&&view!=='products')||
     (cursor!==null&&(!cursor||cursor.length>512||/[\s\x00-\x1f]/.test(cursor))))
     return response(400,{state:'invalid_request'});
+  let productSearch=null;
+  try{
+    if(search!==null)productSearch=workCatalogProductSearch(search);
+  }catch{return response(400,{state:'invalid_request'});}
   const spec=views[view];
   const permission=await readWorkMerchantPermission({db,session,action:spec.action});
   if(!permission.allowed||permission.role!=='owner')return response(403,{state:'access_denied',view});
   if(!enabled)return response(200,{state:'not_connected',view});
   try{
-    const result=await admin.graphql(spec.query,{variables:{after:cursor},signal:AbortSignal.timeout(10000)});
+    const result=await admin.graphql(spec.query,{variables:{after:cursor,
+      ...(view==='products'?{search:productSearch}:{})},
+      tries:1,signal:AbortSignal.timeout(10000)});
     const value=await result.json();
     requireValue(result.ok&&!value.errors?.length&&value.data?.shop?.myshopifyDomain===SHOP&&
       /^[A-Z]{3}$/.test(value.data.shop.currencyCode));
@@ -119,7 +143,7 @@ export async function handleWorkCatalogRead({request,authenticate,db,enabled=fal
       return {id:gid(p.id,'Location'),title:label(p.name),active:p.isActive,
         admin_url:adminUrl('settings/locations',p.id)};
     }));
-    return response(200,{state:'ready',view,as_of:new Date(now()).toISOString(),records,
+    return response(200,{state:'ready',view,search:search||'',as_of:new Date(now()).toISOString(),records,
       currency:value.data.shop.currencyCode,
       next_cursor:page.pageInfo.hasNextPage?page.pageInfo.endCursor:null,
       stock_state:view==='inventory'?'per_item':'not_requested',capacity_state:'not_measured'});
