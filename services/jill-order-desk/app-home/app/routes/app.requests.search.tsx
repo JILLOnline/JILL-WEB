@@ -13,7 +13,9 @@ export async function loader(){
   return new Response(null,{status:405,headers:{"cache-control":"no-store"}});
 }
 export async function action({request,context}:ActionFunctionArgs){
-  const env=context.cloudflare.env;
+  const env=context.cloudflare.env as typeof context.cloudflare.env & {
+    JILL_WORK_HQ_DETAIL_ENABLED?:string;
+  };
   return handleWorkRequestDetailSearch({
     request,
     enabled:env.JILL_WORK_HOST_STAGE==="canary" &&
