@@ -315,6 +315,8 @@
     "work:hq:inbox-polish:restore-once": "node scripts/release-work-hq-inbox-polish-owner.mjs --restore-once",
     "work:hq:quick-pill:check": "node scripts/work-hq-quick-pill-package.mjs",
     "test:work-hq-quick-pill": "node scripts/test-work-hq-quick-pill.mjs",
+    "work:hq:quick-pill:polish:check": "node scripts/work-hq-quick-pill-polish-package.mjs",
+    "test:work-hq-quick-pill-polish-hold": "node scripts/test-work-hq-quick-pill-polish-hold.mjs",
     "test:work-hq-quick-pill-release": "node scripts/test-work-hq-quick-pill-release.mjs",
     "work:hq:quick-pill:inspect": "node scripts/release-work-hq-quick-pill-owner.mjs --inspect",
     "work:hq:quick-pill:release-once": "node scripts/release-work-hq-quick-pill-owner.mjs --release-once",
