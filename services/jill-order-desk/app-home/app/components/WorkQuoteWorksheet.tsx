@@ -10,9 +10,18 @@ import {hydrateVerifiedWorkQuoteWorksheet}
   from "../../../work-quote-restore-model.mjs";
 import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
   from "../../../work-quote-ui-payload.mjs";
+import {inspectWorkQuoteUnitReview}
+  from "../../../work-quote-unit-review.mjs";
 import "../styles/quote-worksheet.css";
 
-type QuoteItem={item_id:string;title:string;quantity:number};
+type QuoteValue=string|number|boolean|Array<string|number|boolean>;
+type QuoteAttribute={id:string;label?:string;value:QuoteValue};
+type QuoteItem={item_id:string;title:string;quantity:number;
+  variant_allocations?:Array<{variant_id:string;title:string;quantity:number;
+    unit_ids:string[]}>;
+  personalization_groups?:Array<{id:string;
+    allocations:Array<{unit_id:string}>;attributes:QuoteAttribute[]}>;
+  reference_ids?:string[];};
 type VerifiedModel={
   state:string;
   detail?:{
@@ -45,6 +54,47 @@ type VerifiedSavedDraft={
   lines:Array<{id:string;quantity:number;unitPrice:string}>;
   fees:Fees;
 };
+function WorkQuoteUnitReview({item}:{item:QuoteItem}){
+  if(!item.variant_allocations?.length&&!item.personalization_groups?.length)
+    return null;
+  const review=inspectWorkQuoteUnitReview(item);
+  const showValue=(v:QuoteValue)=>Array.isArray(v)?v.map(String).join(", "):
+    typeof v==="boolean"?(v?"Yes":"No"):String(v);
+  return <details className="jill-quote__unit-review">
+    <summary>Unit &amp; P1/P2 review · Qty {item.quantity}</summary>
+    {review.state==="held"
+      ?<p role="status">Unit allocations need verification ({review.reason}).
+        No per-unit pricing or Shopify invoice is authorized.</p>
+      :<div className="jill-quote__unit-body">
+        {review.variants.map(variant=><p key={variant.variant_id}>
+          <strong>{variant.title||"Selected variation"}</strong>
+          {" · "}{variant.quantity} unit(s):
+          {" "}{variant.unit_ids.join(", ")}
+        </p>)}
+        {review.groups.length===0?<p>
+          No different per-unit personalization was supplied.
+        </p>:review.groups.map(group=><section key={group.id}>
+          <strong>{group.id}</strong>
+          <small>Unit(s): {group.unit_ids.join(", ")}</small>
+          {group.attributes.map(a=><p key={a.id}>
+            {a.label||a.id}: {showValue(a.value)}
+          </p>)}
+        </section>)}
+        {review.unassigned_unit_ids.length>0&&<p role="status">
+          Unassigned unit(s): {review.unassigned_unit_ids.join(", ")}.
+          Review before quoting.
+        </p>}
+        {review.reference_count>0&&<p>
+          {review.reference_count} original reference(s) require private-media
+          verification; no file preview or download is assumed.
+        </p>}
+        <p className="jill-quote__unit-warning">
+          Review only. Per-unit pricing, variant matching, customer
+          acceptance and invoicing are not enabled here.
+        </p>
+      </div>}
+  </details>;
+}
 export function WorkQuoteWorksheet({
   model,submissionId,customerStatus,sourceRevision,
   savedDraft=null,saveDraftEnabled=false,
@@ -231,6 +281,7 @@ export function WorkQuoteWorksheet({
                 <div>
                   <strong>{item.title||"Custom item"}</strong>
                   <small>Item {index+1}</small>
+                  <WorkQuoteUnitReview item={item}/>
                 </div>
                 <span className="jill-quote__qty">{item.quantity}</span>
                 <label>
