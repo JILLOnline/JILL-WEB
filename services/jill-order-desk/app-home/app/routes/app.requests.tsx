@@ -304,12 +304,12 @@ export default function WorkMerchantInbox() {
                         :" Recoverable removal is held until the secure WORK archive is enabled."}
                     </p>:null}
                   <div className="jill-inbox__toolbar" aria-label="Filter requests">
-                    <label className="jill-inbox__search">
-                      Search requests
+                    <div className="jill-inbox__search">
+                      <label htmlFor="jill-request-search">Search requests</label>
                       <form className="jill-inbox__search-form" onSubmit={event=>{
                         event.preventDefault();startFullSearch();
                       }}>
-                        <input type="search" value={query}
+                        <input id="jill-request-search" type="search" value={query}
                           onChange={event=>{setQuery(event.target.value);setSearch(null);}}
                           placeholder="Customer, item, theme, date, ID, personalization…"
                           maxLength={80} autoComplete="off"
@@ -318,7 +318,7 @@ export default function WorkMerchantInbox() {
                           {searching?"Searching…":"Search details"}
                         </button>
                       </form>
-                    </label>
+                    </div>
                     <label>
                       Status
                       <select value={status} onChange={event=>setStatus(event.target.value)}>
