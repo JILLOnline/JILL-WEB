@@ -274,30 +274,59 @@ export default function WorkMerchantInbox() {
                   </div>
                   <div className="jill-inbox__stats" aria-label="Inbox overview">
                     <div className="jill-inbox__metric">
-                      <span>All requests</span><strong>{stats.total}</strong>
-
+                      <span>Active requests</span><strong>{grouped.active.length}</strong>
+                    </div>
+                    <div className="jill-inbox__metric">
+                      <span>Archived</span><strong>{grouped.archive.length}</strong>
                     </div>
                     <div className="jill-inbox__metric">
                       <span>In review</span><strong>{stats.reviewing}</strong>
-
                     </div>
                     <div className="jill-inbox__metric">
                       <span>Needs a quote</span><strong>{stats.needsQuote}</strong>
-
                     </div>
                   </div>
+                  <nav className="jill-inbox__views" aria-label="Request folders">
+                    {(["active","archive","all"] as const).map(folder=>
+                      <button type="button" key={folder}
+                        aria-pressed={view===folder}
+                        onClick={()=>{setView(folder);setStatus("all");}}>
+                        {folder==="active"?"Active":folder==="archive"?"Archive":"All requests"}
+                        <span>{folder==="active"?grouped.active.length:
+                          folder==="archive"?grouped.archive.length:data.records.length}</span>
+                      </button>)}
+                  </nav>
+                  {view==="archive"?
+                    <p className="jill-inbox__archive-note">
+                      Cancelled and completed requests stay here automatically.
+                      {archiveReady
+                        ?" Removed requests are recoverable and are never erased from the original source."
+                        :" Recoverable removal is held until the secure WORK archive is enabled."}
+                    </p>:null}
                   <div className="jill-inbox__toolbar" aria-label="Filter requests">
                     <label className="jill-inbox__search">
                       Search requests
-                      <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
-                        placeholder="Request ID, date or stage" maxLength={128}
-                        autoComplete="off"/>
+                      <form className="jill-inbox__search-form" onSubmit={event=>{
+                        event.preventDefault();startFullSearch();
+                      }}>
+                        <input type="search" value={query}
+                          onChange={event=>{setQuery(event.target.value);setSearch(null);}}
+                          placeholder="Customer, item, theme, date, ID, personalization…"
+                          maxLength={80} autoComplete="off"
+                          aria-label="Search requests and order details"/>
+                        <button type="submit" disabled={query.trim().length<2||searching}>
+                          {searching?"Searching…":"Search details"}
+                        </button>
+                      </form>
                     </label>
                     <label>
                       Status
                       <select value={status} onChange={event=>setStatus(event.target.value)}>
-                        {INBOX_FILTERS.map(([value,label])=>
-                          <option key={value} value={value}>{label}</option>)}
+                        {(view==="archive"?WORK_ARCHIVE_FILTERS:INBOX_FILTERS)
+                          .filter(([value])=>view==="archive"||
+                            view==="all"||!["cancelled","completed"].includes(value))
+                          .map(([value,label])=>
+                            <option key={value} value={value}>{label}</option>)}
                       </select>
                     </label>
                     <label>
@@ -309,22 +338,40 @@ export default function WorkMerchantInbox() {
                       </select>
                     </label>
                   </div>
+                  {search&&search.query===query.trim()?
+                    <div className="jill-inbox__search-progress" role="status" aria-live="polite">
+                      {search.error?<span>{search.error}</span>:
+                        <span>Full-detail search: examined {search.scanned} of {search.total}
+                          {" "}verified requests · {search.matches.length} detail matches.
+                          Only verified results are shown.</span>}
+                      {!search.error&&search.next_cursor!==null&&
+                        detailSearch.state==="idle"?
+                        <button type="button" onClick={loadMore}>Search next 6 requests</button>:null}
+                      {searching?<span>Checking signed request details…</span>:null}
+                    </div>:null}
                   <div className="jill-inbox__results-head">
-                    <h3>Requests</h3>
+                    <h3>{view==="archive"?"Archive":view==="active"?"Active requests":"All requests"}</h3>
                     <p role="status" aria-live="polite">
-                      Showing {visible.length} of {stats.total}
+                      Showing {visible.length} of {selected.length}
                     </p>
                   </div>
                   {visible.length
                     ? <div className="jill-inbox__cards">
                         {visible.map((item:InboxRecord)=>
                           <RequestCard key={item.submission_id} item={item}
-                            controlsEnabled={data.controlsEnabled===true}/>)}
+                            controlsEnabled={data.controlsEnabled===true}
+                            archiveEnabled={archiveReady}
+                            removed={removedSet.has(item.submission_id)}
+                            onArchiveChange={()=>setArchiveRefresh(n=>n+1)}/>)}
                       </div>
                     : <div className="jill-inbox__empty" role="status">
                         {stats.total===0
                           ? "No requests were returned by the verified source."
-                          : "No requests match these filters. Try a different search or status."}
+                          : view==="archive"&&grouped.archive.length===0
+                            ? "No archived requests yet. Cancelled and completed orders will appear here."
+                            : query&&search?.next_cursor!==null
+                              ? "No matches in the scanned requests yet. Search the next batch to continue."
+                              : "No requests match these filters. Try a different search or status."}
                       </div>}
                 </>}
 
