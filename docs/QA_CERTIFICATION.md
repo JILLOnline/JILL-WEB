@@ -794,3 +794,16 @@ presentation guard preserves handlers/hooks/commands/links. Actual isolated
 runtime typecheck/build and compiled connected-read/navigation tests pass; newer
 quote policy/calculation excluded. No remote visual or operational acceptance.
 Evidence/limits: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## Request Order details — 2026-10-19
+
+PASS LOCAL/SOURCE: shared exact-request overview in inbox and request workspace,
+email/order_type omitted, no duplicate item-section overview. Sixteen browser
+cases at four widths verify read-on-open only (no inbox preload), no read on
+close, fresh reopen/outage/no stale values, wrong-ID non-disclosure and expanded
+forms; no overflow, 44px phone controls, 16px fields. Actual React rendering and
+existing inbox/detail/projection/navigation checks plus typecheck/build pass.
+Only the existing authenticated exact-ID route is used; no new backend endpoint
+or writer. Not deployed or authenticated acceptance; Owner compact receipt/current
+allocation needed. See WORK_OPERATIONAL_HANDOFF_2026-10-19.md and the local evidence.

@@ -133,3 +133,11 @@ existing runtime source plus exactly seven reviewed presentation files, and
 the shared visual release executor. This packaging owner excludes unreleased
 quote business code; it owns no merchant authority or data. See
 `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+Exact original request presentation remains in
+`app-home/app/components/WorkOriginalRequestDetails.tsx`: `WorkOrderDetails`
+and `WorkOrderDetailsContent` own the shared customer/event/instructions
+presentation; `WorkOriginalRequestDetails`
+owns item/variation/personalization rendering. Both consume the same verified
+exact-submission model and shared unavailable/ID guard. The inbox card controller invokes the existing authenticated exact-ID loader
+only on opening. Presentation owns no persisted request state or identity rule.

@@ -577,3 +577,40 @@ isolated to the existing navigation baseline; unreleased quote work is excluded.
 No upload/deployment or authenticated UI acceptance yet. New reviewed release
 and Owner credential gate: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
 Full WORK NOT PASSED; LIVE remains separate.
+
+
+## Request Order details presentation — 2026-10-19
+
+
+SOURCE BUILT / LOCALLY REVIEWED, not deployed. Inbox cards now say Order details
+and replace technical metadata with the original customer/event/instructions
+fields. The existing authenticated exact-ID detail route is read only when a
+card opens, never for every inbox record during initial loading. Reopening an
+idle card rechecks the source; loading/errors do not retain old customer values.
+No bulk detail fetch, additional backend endpoint, independent data store,
+loader/action, auth/cache change or command is introduced.
+
+The request workspace's top dropdown uses the same content renderer and is also
+named Order details. Customer name/phone, preferred contact, needed-by date,
+fulfillment/destination, planning attributes and special instructions come from
+the verified original request. Email address is omitted and order_type filtered
+by canonical attribute ID. No persisted source field is deleted. The overview
+is moved out of Items & personalization; item/variation/per-unit content remains.
+One shared ready-state/exact-ID guard and unavailable presentation serve both
+surfaces. No Shopify/Google writer, quote, ownership or financial policy change.
+
+HQ typecheck/build and existing inbox/detail/projection/navigation contracts
+pass. Actual React rendering checks source values, email/order-type exclusion,
+no duplicate overview, unavailable/denied and wrong-submission non-disclosure.
+Sixteen browser cases at 1600/1024/390/320 cover inbox read-on-open, close without
+read, reopen refresh/outage/no-stale-data, wrong-ID denial, and expanded request
+forms. No overflow; phone targets remain 44px and fields 16px. All fixtures are
+synthetic local data; no authenticated Owner acceptance or remote write claimed.
+Evidence: evidence/work-hq-order-details-local-review-2026-10-19.json.
+
+The compact release a3b0c82 was previously prepared; its Owner result has not
+been supplied. Do not assume whether it ran or reuse/reset its receipts. This
+change is outside that frozen inventory: do not rerun or widen the compact
+profile. Obtain current Owner HQ allocation and prior compact receipt (or final
+receipt) before composing a separately reviewed release. Existing data/testing
+holds and full WORK/LIVE acceptance remain open.

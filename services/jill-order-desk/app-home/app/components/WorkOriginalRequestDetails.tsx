@@ -54,33 +54,29 @@ function OpaqueReferences({ids,label}:{ids:string[];label:string}){
     <p className="jill-request__muted">Secure previews and downloads are unavailable. File references do not verify ownership.</p>
   </div>;
 }
-export function WorkOriginalRequestDetails({model,submissionId}:{
-  model:Model|undefined;submissionId:string;
-}){
-  const details=model?.state==="ready" && model.detail?.submission_id===submissionId
+function verifiedDetails(model:Model|undefined,submissionId:string){
+  return model?.state==="ready" && model.detail?.submission_id===submissionId
     ?model.detail:null;
-  return <section className="jill-request__panel jill-request__full" aria-labelledby="original-request-detail">
-    <div className="jill-request__panel-head">
-      <h3 id="original-request-detail">Items & personalization</h3>
-      {details?<span className="jill-request__source-tag">Verified revision {details.revision}</span>:null}
-    </div>
-    {!details?
-      <p className="jill-request__muted" role="status">
-        {model?.state==="not_connected"
-          ?"Full request details are awaiting the signed WORK QA detail connection. The original submission is preserved."
-          :model?.state==="access_denied"
-            ?"Owner authorization is required to view original customer details."
-            :model?.state==="not_found"
-              ?"Original request not found."
-              :"Full request details are temporarily unavailable. No unverified information is shown."}
-      </p>:
-    <>
-      <div className="jill-request__full-overview">
+}
+function RequestDetailsUnavailable({model}:{model:Model|undefined}){
+  return <p className="jill-request__muted" role="status">
+    {model?.state==="not_connected"
+      ?"Full request details are awaiting the signed WORK QA detail connection. The original submission is preserved."
+      :model?.state==="access_denied"
+        ?"Owner authorization is required to view original customer details."
+        :model?.state==="not_found"
+          ?"Original request not found."
+          :"Full request details are temporarily unavailable. No unverified information is shown."}
+  </p>;
+}
+export function WorkOrderDetailsContent({model,submissionId,stacked=false}:{model:Model|undefined;submissionId:string;stacked?:boolean}){
+  const details=verifiedDetails(model,submissionId);
+  return !details?<RequestDetailsUnavailable model={model}/>:<>
+      <div className={"jill-request__full-overview"+(stacked?" jill-request__full-overview--stacked":"")}>
         <div>
           <h4>Customer & event</h4>
           <dl className="jill-request__data">
             <div><dt>Customer</dt><dd>{details.customer.name}</dd></div>
-            <div><dt>Email</dt><dd>{details.customer.email}</dd></div>
             {details.customer.phone?<div><dt>Phone</dt><dd>{details.customer.phone}</dd></div>:null}
             <div><dt>Preferred contact</dt><dd>{details.customer.preferred_contact}</dd></div>
             <div><dt>Needed by</dt><dd>{details.planning.date_needed||"Not provided"}</dd></div>
@@ -96,9 +92,29 @@ export function WorkOriginalRequestDetails({model,submissionId}:{
         <div>
           <h4>Special instructions</h4>
           <Attributes values={[...details.planning.attributes,
-            ...details.request_attributes]}/>
+            ...details.request_attributes].filter(attribute=>attribute.id!=="order_type")}/>
         </div>
       </div>
+    </>;
+}
+export function WorkOrderDetails({model,submissionId}:{model:Model|undefined;submissionId:string}){
+  return <details className="jill-request__panel jill-workspace__disclosure">
+    <summary>Order details</summary>
+    <WorkOrderDetailsContent model={model} submissionId={submissionId}/>
+  </details>;
+}
+export function WorkOriginalRequestDetails({model,submissionId}:{
+  model:Model|undefined;submissionId:string;
+}){
+  const details=verifiedDetails(model,submissionId);
+  return <section className="jill-request__panel jill-request__full" aria-labelledby="original-request-detail">
+    <div className="jill-request__panel-head">
+      <h3 id="original-request-detail">Items & personalization</h3>
+      {details?<span className="jill-request__source-tag">Verified revision {details.revision}</span>:null}
+    </div>
+    {!details?
+      <RequestDetailsUnavailable model={model}/>:
+    <>
       <div className="jill-request__original-items">
         {details.items.map((item,i)=><article key={item.item_id} className="jill-request__original-item">
           <div className="jill-request__item-header">

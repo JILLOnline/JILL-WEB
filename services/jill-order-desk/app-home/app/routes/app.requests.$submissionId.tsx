@@ -5,7 +5,7 @@ import {
 import "../styles/inbox.css";
 import "../styles/request-detail.css";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
-import {WorkOriginalRequestDetails} from "../components/WorkOriginalRequestDetails";
+import {WorkOriginalRequestDetails,WorkOrderDetails} from "../components/WorkOriginalRequestDetails";
 import {WorkQuoteWorksheet} from "../components/WorkQuoteWorksheet";
 import {WorkRequestConversation} from "../components/WorkRequestConversation";
 import {loadAuthorizedWorkRequestDetail} from "./app.requests-detail-source.server";
@@ -87,17 +87,7 @@ export default function WorkRequestDetail(){
                 <div><span>Internal stage</span><strong>{internalStatusLabel(record.internal_status)}</strong></div>
               </div>
               <div className="jill-request__grid">
-                <details className="jill-request__panel jill-workspace__disclosure">
-                  <summary>Record details</summary>
-                  <dl className="jill-request__data">
-                    <div><dt>Full request reference</dt><dd className="jill-inbox__ref">{record.submission_id}</dd></div>
-                    <div><dt>Customer-facing status</dt><dd>{customerStatusLabel(record.customer_status)}</dd></div>
-                    <div><dt>Internal workflow status</dt><dd>{internalStatusLabel(record.internal_status)}</dd></div>
-                    <div><dt>Submitted</dt><dd>{dateLabel(record.submitted_at,{includeTime:true})}</dd></div>
-                    <div><dt>Last updated</dt><dd>{dateLabel(record.updated_at,{includeTime:true})}</dd></div>
-                    <div><dt>Source revision</dt><dd>{record.revision}</dd></div>
-                  </dl>
-                </details>
+                <WorkOrderDetails model={original} submissionId={record.submission_id}/>
                 <div className="jill-request__side">
                   <section className="jill-request__panel" aria-labelledby="request-activity">
                     <h3 id="request-activity">Source activity</h3>

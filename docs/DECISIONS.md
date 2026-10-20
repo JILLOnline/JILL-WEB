@@ -402,3 +402,14 @@ quote business changes are excluded. Reuse the visual executor via an optional
 isolated build hook and a new receipt namespace; historical releases remain spent.
 This is not deployed or operational acceptance. See
 `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## 2026-10-19 — Request overview belongs in Order details
+
+Move the existing customer/event and special-instructions presentation into the
+request's top Order details dropdown, replacing technical record metadata.
+Omit contact email and canonical order_type there. Reuse the existing verified
+exact-request model and component owner. Inbox cards load the existing exact-ID
+route on opening only; no private preload or duplicate overview.
+Items/per-unit personalization remain distinct. Source/local review only;
+current runtime/compact receipt is needed before another reviewed release.

@@ -76,7 +76,7 @@ for(const expected of [
 for(const expected of [
   'readOnly:boolean',
   'inboxStats','selectInboxRecords','useMemo','type="search"',
-  'aria-live="polite"','Record details','<details',
+  'aria-live="polite"','Order details','<details',
 ])assert.ok(route.includes(expected),expected);
 assert.match(route,/data\.state==="source_unavailable"/);
 assert.doesNotMatch(route,/loadWorkMerchantInbox|workShopify\(|readWorkGoogleQaMerchantList|export async function loader/);
@@ -90,7 +90,9 @@ assert.match(style,/prefers-reduced-motion/);
 assert.ok(style.includes('.jill-inbox__card'));
 assert.doesNotMatch(landing,/to="\/app\/requests"/);
 assert.doesNotMatch(style,/!important|@import|url\(/i);
-assert.doesNotMatch(route,/onClick=\{[^}]*fetch|useFetcher|fetch\(|useSubmit|action\s*\(|<form|<button\s+type="submit"|window\.location/i);
+assert.doesNotMatch(route,/onClick=\{[^}]*fetch|fetch\(|useSubmit|action\s*\(|<form|<button\s+type="submit"|window\.location/i);
+assert.match(route,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\(item\.submission_id\)\)/);
+assert.doesNotMatch(route,/orderDetails\.submit|fetcher\.submit/);
 assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.cookie|window\.|https?:\/\//i);
 assert.doesNotMatch(route,/SHOPIFY_ACCESS_TOKEN|JILL_CUSTOM_ORDER_GATEWAY_SECRET|JILL_SHEET_ID|shopify_customer_id|customer\.email/);
 console.log('PASS JILL HQ WORK inbox UI: real read-only records, correct counters, accessible responsive cards, local filtering/sorting, no cross-store reads or mutations.');

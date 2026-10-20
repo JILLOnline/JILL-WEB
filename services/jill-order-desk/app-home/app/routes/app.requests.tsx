@@ -1,10 +1,12 @@
 import {useMemo,useState} from "react";
-import {Link,useRouteLoaderData} from "react-router";
+import {Link,useFetcher,useRouteLoaderData} from "react-router";
 import {
   customerStatusLabel,internalStatusLabel,requestShortId,dateLabel,
   selectInboxRecords,inboxStats,INBOX_FILTERS,
 } from "../../../inbox-display.mjs";
 import "../styles/inbox.css";
+import "../styles/request-detail.css";
+import {WorkOrderDetailsContent} from "../components/WorkOriginalRequestDetails";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
 import "../styles/request-actions.css";
 
@@ -34,6 +36,9 @@ const STATUS_TONE:Record<string,string>={
 };
 function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:boolean}) {
   const statusTone=STATUS_TONE[item.customer_status]??"muted";
+  type OrderModel=NonNullable<Parameters<typeof WorkOrderDetailsContent>[0]["model"]>;
+  const orderDetails=useFetcher<OrderModel>();
+  const [detailsOpen,setDetailsOpen]=useState(false);
   return <article className="jill-inbox__card">
     <div className="jill-inbox__card-head">
       <div className="jill-inbox__card-heading">
@@ -70,15 +75,20 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
           item.fulfillment==="shipping"?"Shipping":"Not supplied"}</strong>
       </div>
     </div>
-    <details className="jill-inbox__details">
-      <summary>Record details <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
-      <dl>
-        <div><dt>Full request ID</dt><dd className="jill-inbox__ref">{item.submission_id}</dd></div>
-        <div><dt>Customer status</dt><dd>{customerStatusLabel(item.customer_status)}</dd></div>
-        <div><dt>Internal stage</dt><dd>{internalStatusLabel(item.internal_status)}</dd></div>
-        <div><dt>Last updated</dt><dd>{dateLabel(item.updated_at,{includeTime:true})}</dd></div>
-        <div><dt>Source revision</dt><dd>{item.revision}</dd></div>
-      </dl>
+    <details className="jill-inbox__details" onToggle={event=>{
+      const open=event.currentTarget.open;
+      setDetailsOpen(open);
+      // Explicit per-card read only. Every reopened disclosure reauthenticates
+      // through the existing exact-ID route; never preload private inbox data.
+      if(open&&orderDetails.state==="idle")
+        orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+    }}>
+      <summary>Order details <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
+      {detailsOpen?<div className="jill-inbox__order-details">
+        {orderDetails.state!=="idle"||!orderDetails.data
+          ?<p role="status">Loading order details…</p>
+          :<WorkOrderDetailsContent model={orderDetails.data} submissionId={item.submission_id} stacked/>}
+      </div>:null}
     </details>
     <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
     <div className="jill-inbox__open">

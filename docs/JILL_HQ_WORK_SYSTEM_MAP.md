@@ -364,3 +364,13 @@ reviewed presentation files through the canonical visual release executor.
 Unreleased quote policy/calculation stays excluded. Catalog ON and ordinary
 quote/conversation OFF; no remote change yet. See
 `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## Request order overview presentation — 2026-10-19
+
+Inbox Order details invokes the existing authenticated exact-ID route only on
+opening; no private inbox preload. Inbox/workspace share the original-request
+content renderer, with email/order_type omitted. The overview no longer repeats
+under items. No new endpoint/store/auth/command. Sixteen local browser cases pass;
+not deployed. Current compact receipt/allocation is required before a new release;
+existing profile inventories/receipts stay frozen.

@@ -46,7 +46,7 @@
 /* Exact original WORK intake — one canonical request workspace style owner. */
 .jill-request__full{margin-top:13px}
 .jill-request__full-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:11px}
-.jill-request__full h4{font-size:12px;font-weight:730;margin:0 0 10px}
+.jill-request__full h4,.jill-request__full-overview h4{font-size:12px;font-weight:730;margin:0 0 10px}
 .jill-request__full h5{font-size:12px;font-weight:730;margin:0 0 8px}
 .jill-request__original-items{display:grid;gap:11px;margin-bottom:14px}
 .jill-request__original-item{border:1px solid var(--jill-border);background:var(--jill-soft);border-radius:8px;padding:10px;min-width:0}
@@ -78,3 +78,5 @@
 .jill-request__references{font-size:12px;color:var(--jill-muted);margin:6px 0}
 .jill-request__references summary{cursor:pointer;min-height:var(--jill-control-height);align-content:center;color:var(--jill-plum);font-weight:650}
 .jill-request__references p{overflow-wrap:anywhere;margin:4px 0}
+
+.jill-request__full-overview--stacked{grid-template-columns:1fr;margin-bottom:0}

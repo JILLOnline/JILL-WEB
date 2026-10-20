@@ -312,3 +312,13 @@ new isolated visual-only release is prepared, not deployed. Next visual gate:
 Owner-credentialed one-use release then authenticated desktop/phone review.
 Business acceptance holds and spent historical receipts remain unchanged.
 Scope/rollback: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+
+
+## Order details UI steering — 2026-10-19
+
+Prepared shared inbox/workspace Order details, loading a selected inbox card
+through the existing authenticated route on opening and omitting email/order_type
+and removing the duplicated overview from Items & personalization. Local
+render/build checks pass. Next deployment gate is current Owner HQ allocation/
+compact receipt read-back; no historical release retry or guard widening.
+Operational intake, quote and separate LIVE gates remain open.

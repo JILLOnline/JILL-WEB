@@ -1,0 +1,43 @@
+{
+  "environment": "LOCAL_SYNTHETIC_ONLY",
+  "source_baseline": "a3b0c82e26030c7df6ae5ec9bf7af0c96e5da48d",
+  "runtime_files_changed": 5,
+  "data_source": "existing authenticated exact-ID detail route; inbox read only on opening, workspace reuses its child loader",
+  "render_checks": [
+    "exact customer/planning/instructions values",
+    "email address omitted",
+    "canonical order_type omitted",
+    "overview not duplicated under items",
+    "unavailable/denied states do not expose fields",
+    "different submission ID does not expose fields"
+  ],
+  "request_browser_cases": 16,
+  "viewports": [
+    1600,
+    1024,
+    390,
+    320
+  ],
+  "no_horizontal_overflow": true,
+  "phone_target_min_px": 44,
+  "phone_field_font_min_px": 16,
+  "checks": {
+    "hq_typecheck_build": "pass",
+    "existing_detail_projection_navigation": "pass",
+    "react_component_review": "pass"
+  },
+  "deployment": false,
+  "authenticated_visual_acceptance": false,
+  "data_or_schema_writes": false,
+  "owner_compact_release_receipt": "not supplied",
+  "release_boundary": "Historical compact inventory remains frozen; current Owner allocation/receipt required before new reviewed release.",
+  "new_backend_endpoints": 0,
+  "inbox_private_preload_reads": 0,
+  "inbox_read_checks": [
+    "opening one card loads only its request",
+    "closing sends no read",
+    "reopening refreshes through the same loader",
+    "failed refresh removes prior customer values",
+    "wrong-ID response never renders customer values"
+  ]
+}

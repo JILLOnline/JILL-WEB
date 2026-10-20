@@ -59,7 +59,7 @@ assert.match(route,/Quotes below are internal drafts/);
 assert.match(route,/Customer approval and Shopify payments are not enabled here/);
 assert.match(route,/WorkQuoteWorksheet key=\{record\.submission_id\}/);
 assert.match(route,/WorkRequestQuickActions/);
-assert.match(route,/Source revision/);
+assert.match(route,/WorkOrderDetails model=\{original\} submissionId=\{record\.submission_id\}/);
 assert.match(route,/Last recorded update/);
 assert.match(route,/← Requests/);
 assert.match(app,/export function shouldRevalidate/);

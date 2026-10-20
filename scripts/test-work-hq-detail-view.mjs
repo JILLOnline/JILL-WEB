@@ -28,7 +28,7 @@ assert.match(loader,/if\(typeof id!=="string"\|\|!ID\.test\(id\)\)/);
 assert.match(loader,/status,headers/);
 assert.match(loader,/private, no-store, max-age=0/);
 assert.doesNotMatch(loader,/SHOPIFY_ACCESS_TOKEN|JILL_SHEET_ID|shopify_customer_id|localStorage|sessionStorage/);
-assert.doesNotMatch(index,/readWorkGoogleQaMerchantDetail|WorkOriginalRequestDetails/);
+assert.doesNotMatch(index,/readWorkGoogleQaMerchantDetail|<WorkOriginalRequestDetails\b/);
 assert.match(route,/export async function loader\(args:LoaderFunctionArgs\)/);
 assert.match(route,/loadAuthorizedWorkRequestDetail\(args\)/);
 assert.match(route,/useLoaderData<typeof loader>\(\)/);
