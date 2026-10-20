@@ -131,59 +131,66 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
     className={"jill-inbox__card jill-inbox__card--"+statusTone+
       (detailsOpen?" jill-inbox__card--expanded":"")}>
     <div className="jill-inbox__row">
-      <div className="jill-inbox__cell jill-inbox__cell--customer" data-label="Customer">
+      <button type="button" className="jill-inbox__row-trigger"
+        aria-expanded={detailsOpen}
+        aria-controls={"jill-inbox-details-"+requestShortId(item.submission_id)}
+        aria-label={(detailsOpen?"Hide":"Show")+" order details for request #"+
+          requestShortId(item.submission_id)}
+        onClick={toggleDetails}>
+      <span className="jill-inbox__cell jill-inbox__cell--customer" data-label="Customer">
         {customerName
           ?<span className="jill-inbox__customer-name" title={customerName}>{customerName}</span>
           :<span className="jill-inbox__customer-unverified">Name unavailable</span>}
-      </div>
-      <div className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
-        <Link className="jill-inbox__request-id"
-          to={"/app/requests/"+encodeURIComponent(item.submission_id)}
-          aria-label={"Open custom order request #"+requestShortId(item.submission_id)}>
+      </span>
+      <span className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
+        <span className="jill-inbox__request-id">
           #{requestShortId(item.submission_id)}
-        </Link>
-      </div>
-      <div className="jill-inbox__cell jill-inbox__cell--status" data-label="Status">
+        </span>
+      </span>
+      <span className="jill-inbox__cell jill-inbox__cell--status" data-label="Status">
         <span className={"jill-inbox__status jill-inbox__status--"+statusTone}>
           <span className="jill-inbox__status-dot" aria-hidden="true"/>
           {customerStatusLabel(item.customer_status)}
         </span>
         {removed?<span className="jill-inbox__archive-stamp">Removed</span>:null}
-      </div>
-      <div className="jill-inbox__cell jill-inbox__cell--stage" data-label="Stage">
+      </span>
+      <span className="jill-inbox__cell jill-inbox__cell--stage" data-label="Stage">
         {item.internal_status!=="none"
           ?<span className="jill-inbox__internal">{internalStatusLabel(item.internal_status)}</span>
           :<span className="jill-inbox__cell-muted">—</span>}
-      </div>
-      <div className="jill-inbox__cell jill-inbox__cell--needed" data-label="Needed by">
+      </span>
+      <span className="jill-inbox__cell jill-inbox__cell--needed" data-label="Needed by">
         <span title={item.date_needed||"Not supplied"}>{dateLabel(item.date_needed)}</span>
-      </div>
-      <div className="jill-inbox__cell jill-inbox__cell--submitted" data-label="Submitted">
+      </span>
+      <span className="jill-inbox__cell jill-inbox__cell--submitted" data-label="Submitted">
         <time dateTime={item.submitted_at} title={fullSubmitted}>
           {dateLabel(item.submitted_at)}
         </time>
-      </div>
+      </span>
+      </button>
       <div className="jill-inbox__cell jill-inbox__cell--actions" data-label="Actions">
-        <button type="button" className="jill-inbox__detail-button"
-          aria-expanded={detailsOpen}
-          aria-controls={"jill-inbox-details-"+requestShortId(item.submission_id)}
-          onClick={toggleDetails}>
-          ORDER DETAILS
-          <span className="jill-inbox__chevron" aria-hidden="true">⌄</span>
-        </button>
-        <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
+        <WorkRequestQuickActions record={item} enabled={controlsEnabled} direct/>
         <ArchiveControl item={item} removed={removed}
           enabled={archiveEnabled} onSaved={onArchiveChange}/>
       </div>
     </div>
-    {detailsOpen?<section className="jill-inbox__order-details"
+    <section className="jill-inbox__order-details"
       id={"jill-inbox-details-"+requestShortId(item.submission_id)}
+      hidden={!detailsOpen}
       aria-label={"Order details for request #"+requestShortId(item.submission_id)}>
-      {orderDetails.state!=="idle"||!orderDetails.data
-        ?<p role="status">Loading order details…</p>
-        :<WorkOrderDetailsContent model={orderDetails.data}
-          submissionId={item.submission_id} stacked/>}
-    </section>:null}
+      {detailsOpen?<>
+        <div className="jill-inbox__details-heading">
+          <strong>ORDER DETAILS · #{requestShortId(item.submission_id)}</strong>
+          <Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+            Open full request <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        {orderDetails.state!=="idle"||!orderDetails.data
+          ?<p role="status">Loading order details…</p>
+          :<WorkOrderDetailsContent model={orderDetails.data}
+            submissionId={item.submission_id} stacked/>}
+      </>:null}
+    </section>
   </article>;
 }
 
