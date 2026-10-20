@@ -33,6 +33,13 @@ export function summarizePublicOrderThread(order){
        typeof e.author!=='string')
       throw Error('unverified_message_thread');
     prior=e.revision;
+    // Public projection validation may allow "system" actors for status
+    // events; a message must still have an exact accountable sender.
+    if((e.kind==='merchant_message'&&e.author!=='jill')||
+       (e.kind==='customer_reply'&&e.author!=='customer')||
+       !['status','merchant_message','customer_reply'].includes(e.kind)||
+       !['system','jill','customer'].includes(e.author))
+      throw Error('unverified_message_thread');
     if(KINDS.has(e.kind)&&ACTORS.has(e.author)&&
        (e.kind==='merchant_message')===(e.author==='jill')&&e.note.trim()){
       last={author:e.author,occurred_at:e.occurred_at,
