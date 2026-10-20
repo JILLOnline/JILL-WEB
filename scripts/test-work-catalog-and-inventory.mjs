@@ -12,7 +12,10 @@ const authenticate={admin:async()=>({session,admin:{graphql:async(_query,{variab
   reads++;assert.equal(variables.after,null);
   return Response.json(fail?{errors:[{message:'private Shopify error'}]}:{data:{shop:{myshopifyDomain:SHOP,currencyCode:"USD"},products:{
     nodes:[{id:'gid://shopify/Product/111',title:'Synthetic tote',status:'ACTIVE',
-      variants:{nodes:[{id:'gid://shopify/ProductVariant/222',title:'Blue',price:'10.00',inventoryPolicy:'DENY'}],pageInfo:{hasNextPage:false}}}],
+      handle:'synthetic-tote',vendor:'JILL',productType:'Party gifts',totalInventory:0,
+      variants:{nodes:[{id:'gid://shopify/ProductVariant/222',title:'Blue',
+        price:'10.00',sku:'TOTE-BLUE',inventoryPolicy:'DENY'}],
+        pageInfo:{hasNextPage:false}}}],
     pageInfo:{hasNextPage:false,endCursor:null}}}});
 }}})};
 const request=new Request('https://local/app/catalog');
@@ -20,6 +23,7 @@ const run=async(enabled=true)=>handleWorkCatalogRead({request,authenticate,db,en
 assert.equal((await run(false)).status,200);assert.equal(reads,0);
 const valid=await run();assert.equal(valid.status,200);
 assert.equal((await valid.json()).records[0].admin_url,'https://admin.shopify.com/store/jill-work/products/111');
+assert.equal((await (async()=>{const json=await run();return json.json()})()).records[0].variants[0].sku,'TOTE-BLUE');
 fail=true;const unavailable=await run();assert.equal(unavailable.status,503);
 assert(!JSON.stringify(await unavailable.json()).includes('private Shopify error'));
 session={...session,onlineAccessInfo:{...session.onlineAccessInfo,associated_user_scope:'read_orders'}};
