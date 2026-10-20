@@ -149,10 +149,8 @@ jobs:
       - name: Verify public offers and legacy Coupons compatibility
         run: npm run test:public-promotions && npm run test:account-coupons
 
-      - name: Verify Shopify Admin-backed WORK Catalog and frozen 35-file source edition (OFFLINE)
-        run: |
-          npm run test:work-hq-shopify-catalog-browser
-          npm run work:hq:catalog:check
+      - name: Verify Shopify Admin-backed WORK Catalog title search, Owner authority and SKU/stock projection (OFFLINE)
+        run: npm run test:work-hq-shopify-catalog-browser
 
       - name: Verify canonical conversation, scoped catalog and universal policy planning
         run: npm run test:work-connected-source
@@ -301,9 +299,10 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify WORK Requests, Archive and reviewed HQ/My JILL Messages source (OFFLINE)
+      - name: Verify WORK Requests, Archive, Messaging and Shopify Catalog source (OFFLINE)
         run: |
           npm run work:hq:messaging:check
+          npm run work:hq:catalog:check
           npm run test:work-hq-customer-name
           npm run test:work-hq-inbox-ui
           npm run test:work-hq-archive-search
