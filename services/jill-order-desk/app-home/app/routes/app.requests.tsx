@@ -145,6 +145,7 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       <span className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
         <span className="jill-inbox__request-id">
           #{requestShortId(item.submission_id)}
+          <span className="jill-inbox__row-chevron" aria-hidden="true">⌄</span>
         </span>
       </span>
       <span className="jill-inbox__cell jill-inbox__cell--status" data-label="Status">
