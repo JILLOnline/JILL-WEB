@@ -289,13 +289,13 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify WORK Archive, soft-remove gate and bounded Owner-only full-detail search (OFFLINE)
         run: |
-          npm run work:hq:archive-search:check
+          npm run work:hq:table-rows:check
           npm run test:work-hq-customer-name
           npm run test:work-hq-inbox-ui
           npm run test:work-hq-archive-search
           npm run test:work-hq-archive-soft-delete
-          npm run work:hq:archive-search:runtime:check
-          npm run test:work-hq-archive-search-release
+          npm run work:hq:table-rows:runtime:check
+          npm run test:work-hq-table-rows
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
@@ -370,8 +370,8 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Prevent reuse of stale 13-file visual release for backend Archive/Search (OFFLINE)
-        run: npm run work:hq:archive-search:check
+      - name: Preserve verified Archive/Search backend and refuse stale table overlay sources (OFFLINE)
+        run: npm run test:work-hq-table-rows
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
