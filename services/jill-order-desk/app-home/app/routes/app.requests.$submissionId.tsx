@@ -91,9 +91,6 @@ export default function WorkRequestDetail(){
                 <div className="jill-request__side">
                   <section className="jill-request__panel" aria-labelledby="request-activity">
                     <h3 id="request-activity">Source activity</h3>
-                    <p className="jill-request__muted">
-                      Latest verified snapshot — not a complete status history.
-                    </p>
                     <div className="jill-request__activity">
                       <div><span className="jill-request__activity-marker"/>
                         <div><strong>Request submitted</strong>
@@ -110,9 +107,6 @@ export default function WorkRequestDetail(){
                   <section className="jill-request__panel" aria-labelledby="request-next">
                     <h3 id="request-next">Request management</h3>
                     <WorkRequestQuickActions record={record} enabled={controlsEnabled}/>
-                    <p className="jill-request__muted">
-                      Changes are confirmed before they appear.
-                    </p>
                     <div className="jill-request__locked">
                       <span aria-hidden="true">◇</span>
                       Quotes below are internal drafts. Customer approval and Shopify payments are not enabled here.
