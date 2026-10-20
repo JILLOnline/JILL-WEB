@@ -98,19 +98,19 @@ const actionStyle=readFileSync(
   'services/jill-order-desk/app-home/app/styles/request-actions.css','utf8');
 // Compact card: one submitted timestamp, no duplicate three-field overview,
 // one prominent uppercase disclosure, and one Owner-scoped primary route link.
-assert.equal((route.match(/Submitted \\{dateLabel\\(item\\.submitted_at/g)||[]).length,1);
+assert.equal((route.match(/Submitted \{dateLabel\(item\.submitted_at/g)||[]).length,1);
 assert.doesNotMatch(route,/jill-inbox__facts|jill-inbox__open|Open request/);
 assert.match(route,/<summary>ORDER DETAILS/);
-assert.match(quickActions,/\\{compact&&<Link className="jill-actions__open-link"/);
-assert.match(quickActions,/to=\\{"\\/app\\/requests\\/"\\+encodeURIComponent\\(record\\.submission_id\\)\\}/);
-assert.match(quickActions,/Open request <span aria-hidden="true">→<\\/span>/);
-assert.match(quickActions,/aria-expanded=\\{panel==="status"\\}/);
-assert.match(quickActions,/aria-expanded=\\{panel==="message"\\}/);
-assert.match(quickActions,/action:"\\/app\\/requests\\/command"/);
-assert.match(actionStyle,/\\.jill-actions--compact \\.jill-actions__heading strong/);
-assert.match(actionStyle,/\\.jill-actions--compact \\.jill-actions__open-link/);
+assert.match(quickActions,/\{compact&&<Link className="jill-actions__open-link"/);
+assert.match(quickActions,/to=\{"\/app\/requests\/"\+encodeURIComponent\(record\.submission_id\)\}/);
+assert.match(quickActions,/Open request <span aria-hidden="true">→<\/span>/);
+assert.match(quickActions,/aria-expanded=\{panel==="status"\}/);
+assert.match(quickActions,/aria-expanded=\{panel==="message"\}/);
+assert.match(quickActions,/action:"\/app\/requests\/command"/);
+assert.match(actionStyle,/\.jill-actions--compact \.jill-actions__heading strong/);
+assert.match(actionStyle,/\.jill-actions--compact \.jill-actions__open-link/);
 assert.match(actionStyle,/min-height:44px/);
-assert.doesNotMatch(actionStyle,/!important|@import|url\\(/i);
+assert.doesNotMatch(actionStyle,/!important|@import|url\(/i);
 assert.doesNotMatch(route,/orderDetails\.submit|fetcher\.submit/);
 assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.cookie|window\.|https?:\/\//i);
 assert.doesNotMatch(route,/SHOPIFY_ACCESS_TOKEN|JILL_CUSTOM_ORDER_GATEWAY_SECRET|JILL_SHEET_ID|shopify_customer_id|customer\.email/);
