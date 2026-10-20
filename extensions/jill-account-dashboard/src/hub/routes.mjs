@@ -4,6 +4,7 @@ export const HUB_ROUTES = Object.freeze([
   {id:'rewards',label:'Rewards',path:'rewards'},
   {id:'coupons',label:'Coupons',path:'coupons'},
   {id:'custom-orders',label:'Custom Orders',path:'custom-orders'},
+  {id:'messages',label:'Messages',path:'messages'},
   {id:'celebrations',label:'Celebrations',path:'celebrations'},
   {id:'saved',label:'Saved for You',path:'saved'},
   {id:'settings',label:'JILL Settings',path:'settings'},
