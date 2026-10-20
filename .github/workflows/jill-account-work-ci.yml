@@ -151,6 +151,8 @@ jobs:
 
       - name: Verify Shopify Admin-backed WORK Catalog title search, Owner authority and SKU/stock projection (OFFLINE)
         run: npm run test:work-hq-shopify-catalog-browser
+      - name: Verify Owner-only Shopify variant price reconciliation against saved WORK quotes (OFFLINE)
+        run: npm run test:work-hq-catalog-quote-bridge
 
       - name: Verify canonical conversation, scoped catalog and universal policy planning
         run: npm run test:work-connected-source
