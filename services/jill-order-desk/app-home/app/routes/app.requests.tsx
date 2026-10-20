@@ -1,4 +1,4 @@
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {Link,useFetcher,useRouteLoaderData} from "react-router";
 import {
   customerStatusLabel,internalStatusLabel,requestShortId,dateLabel,
@@ -39,10 +39,39 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
   type OrderModel=NonNullable<Parameters<typeof WorkOrderDetailsContent>[0]["model"]>;
   const orderDetails=useFetcher<OrderModel>();
   const [detailsOpen,setDetailsOpen]=useState(false);
-  return <article className="jill-inbox__card">
+  const cardNode=useRef<HTMLElement|null>(null);
+  const requestedId=useRef<string|null>(null);
+  // The nine-field canonical list intentionally contains no customer PII.
+  // Read the verified name only from the existing signed exact-ID Owner route,
+  // and only for cards near the viewport. Never cache names or guess from email.
+  useEffect(()=>{
+    const node=cardNode.current;
+    if(!node)return;
+    const loadName=()=>{
+      if(requestedId.current===item.submission_id)return;
+      requestedId.current=item.submission_id;
+      orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+    };
+    if(typeof IntersectionObserver==="undefined"){loadName();return;}
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting)){
+        observer.disconnect();
+        loadName();
+      }
+    },{rootMargin:"120px 0px"});
+    observer.observe(node);
+    return ()=>observer.disconnect();
+  },[item.submission_id,orderDetails.load]);
+  const original=orderDetails.data;
+  const customerName=original?.state==="ready"&&
+    original.detail?.submission_id===item.submission_id&&
+    typeof original.detail.customer?.name==="string"
+      ?original.detail.customer.name.trim():null;
+  return <article ref={cardNode} className="jill-inbox__card">
     <div className="jill-inbox__card-head">
       <div className="jill-inbox__card-heading">
         <span className="jill-inbox__card-kicker">CUSTOM ORDER</span>
+        {customerName?<p className="jill-inbox__customer-name">{customerName}</p>:null}
         <h3>Request #{requestShortId(item.submission_id)}</h3>
       </div>
       <div className="jill-inbox__status-group" aria-label="Request statuses">
@@ -65,8 +94,10 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       setDetailsOpen(open);
       // Explicit per-card read only. Every reopened disclosure reauthenticates
       // through the existing exact-ID route; never preload private inbox data.
-      if(open&&orderDetails.state==="idle")
+      if(open&&requestedId.current!==item.submission_id){
+        requestedId.current=item.submission_id;
         orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+      }
     }}>
       <summary>ORDER DETAILS <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
       {detailsOpen?<div className="jill-inbox__order-details">
