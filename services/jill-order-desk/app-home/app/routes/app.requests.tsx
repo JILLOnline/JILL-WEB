@@ -67,7 +67,9 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
     original.detail?.submission_id===item.submission_id&&
     typeof original.detail.customer?.name==="string"
       ?original.detail.customer.name.trim():null;
-  return <article ref={cardNode} className="jill-inbox__card">
+  return <article ref={cardNode}
+    className={"jill-inbox__card jill-inbox__card--"+statusTone+
+      (detailsOpen?" jill-inbox__card--expanded":"")}>
     <div className="jill-inbox__card-head">
       <div className="jill-inbox__card-heading">
         <span className="jill-inbox__card-kicker">CUSTOM ORDER</span>
@@ -94,9 +96,21 @@ function RequestCard({item,controlsEnabled}:{item:InboxRecord;controlsEnabled:bo
       setDetailsOpen(open);
       // Explicit per-card read only. Every reopened disclosure reauthenticates
       // through the existing exact-ID route; never preload private inbox data.
-      if(open&&requestedId.current!==item.submission_id){
-        requestedId.current=item.submission_id;
-        orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+      if(open){
+        if(requestedId.current!==item.submission_id){
+          requestedId.current=item.submission_id;
+          orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+        }
+        // An open card occupies its own grid row. Once React applies the new
+        // layout, keep the card visible inside the actual scroll container
+        // (including the embedded Shopify Admin frame). Never lock body scroll.
+        requestAnimationFrame(()=>{
+          const node=cardNode.current;
+          if(!node)return;
+          const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+          node.scrollIntoView({block:"start",inline:"nearest",
+            behavior:reduced?"instant":"smooth"});
+        });
       }
     }}>
       <summary>ORDER DETAILS <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
