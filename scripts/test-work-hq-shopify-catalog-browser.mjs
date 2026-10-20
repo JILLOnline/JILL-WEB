@@ -108,13 +108,14 @@ assert.equal(Object.hasOwn(lastVariables,'search'),false);
 reply=page('collections',[{id:'gid://shopify/Collection/401',title:'Party Favors'}]);
 response=await run('?view=collections');
 json=await response.json();assert.equal(json.records[0].title,'Party Favors');
-reply=page('inventory',[{id:'gid://shopify/ProductVariant/221',
+reply=page('productVariants',[{id:'gid://shopify/ProductVariant/221',
   title:'8x8',product:{id:prod.id,title:prod.title},
   inventoryItem:{id:'gid://shopify/InventoryItem/501',tracked:true,
     inventoryLevels:{nodes:[{location:{id:locations[0].id,name:'WORK shop'},
       quantities:[{name:'available',quantity:7}]}],
       pageInfo:{hasNextPage:false,endCursor:null}}}}]);
 response=await run('?view=inventory');json=await response.json();
+assert.equal(response.status,200);
 assert.equal(json.records[0].locations[0].available,7);
 assert.equal(json.capacity_state,'not_measured');
 const before=reads;
