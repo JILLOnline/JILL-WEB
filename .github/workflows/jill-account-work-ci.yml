@@ -70,6 +70,10 @@ jobs:
 
       - name: Verify Owner-only custom quote worksheet pricing and no-write boundaries (OFFLINE)
         run: npm run test:work-hq-quote-worksheet
+      - name: Verify canonical native Shopify quote handoff rejects unmapped fees, personalization and addresses (OFFLINE)
+        run: |
+          npm run test:work-quote-calculation
+          npm run test:work-quote-commerce-handoff
 
       - name: Verify verified Owner quote Save/Reload UI and privacy (OFFLINE, release flag absent)
         run: npm run test:work-hq-quote-ui-wiring
