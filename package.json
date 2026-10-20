@@ -297,7 +297,12 @@
     "work:hq:navigation:repair:inspect": "node scripts/release-work-hq-navigation-owner.mjs --inspect",
     "work:hq:navigation:repair:restore-once": "node scripts/release-work-hq-navigation-owner.mjs --restore-once",
     "work:hq:navigation:diagnose": "node scripts/collect-work-hq-navigation-tail-owner.mjs",
-    "test:work-hq-navigation-tail": "node scripts/test-work-hq-navigation-tail.mjs"
+    "test:work-hq-navigation-tail": "node scripts/test-work-hq-navigation-tail.mjs",
+    "work:hq:compact:check": "node scripts/work-hq-density-package.mjs",
+    "test:work-hq-compact": "node scripts/test-work-hq-compact.mjs",
+    "work:hq:compact:release-once": "node scripts/release-work-hq-density-owner.mjs --release-once",
+    "work:hq:compact:inspect": "node scripts/release-work-hq-density-owner.mjs --inspect",
+    "work:hq:compact:restore-once": "node scripts/release-work-hq-density-owner.mjs --restore-once"
   },
   "devDependencies": {
     "@shopify/cli": "^4.7.1",

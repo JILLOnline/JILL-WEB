@@ -527,3 +527,18 @@ before Owner Save → leave → Reload. Requests remains as-is; all spent releas
 receipts stay spent. Public quote/UI, canonical accepted event, Shopify create/
 read, invoice review and test checkout remain open. Full WORK NOT PASSED.
 Details: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Compact visual edition source/review is complete: remove the Home banner and
+apply shared density throughout Catalog, Access, Requests and all request forms,
+conversation and quote sections. 48 local browser cases pass without overflow;
+phone targets stay 44px. A new isolated package retains the current runtime's
+business/auth/navigation source and excludes unreleased quote calculation/policy.
+Isolated typecheck/build and compiled connected-read/navigation tests pass.
+No upload/deployment has run. Owner Cloudflare credentials are required for the
+NEW `work:hq:compact:release-once`; inspect-only on uncertainty, never repeat it.
+Exact baseline, scope, new receipts and rollback are in
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`. Existing intake/quote QA holds,
+all spent receipts and separate LIVE review remain unchanged.

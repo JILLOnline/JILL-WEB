@@ -126,3 +126,10 @@ HQ visual edition release profiles reuse `scripts/release-work-hq-visual-theme-o
 | HQ dashboard counts | Existing Home loader and canonical inbox reader/`inboxStats` | Authorized Owner projection, streamed aggregate-only Home stats | Separate counter store, customer records in Home, zero from failed reads |
 
 Navigation repair release profile `scripts/release-work-hq-navigation-owner.mjs` delegates to the existing release driver with a separate reviewed inventory and unused receipt namespace; scope is explicitly not visual-only. See `docs/WORK_HQ_NAVIGATION_RECOVERY_2026-10-19.md`.
+
+The compact edition uses `scripts/work-hq-density-package.mjs` to compose the
+existing runtime source plus exactly seven reviewed presentation files, and
+`scripts/release-work-hq-density-owner.mjs` for a distinct one-use profile through
+the shared visual release executor. This packaging owner excludes unreleased
+quote business code; it owns no merchant authority or data. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.

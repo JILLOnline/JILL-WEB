@@ -100,20 +100,23 @@ export async function executeVisualRelease(mode,profile){
     phase='local_source_checks';
     runNpm(profile?.checkCommand||'work:hq:visuals:check',ROOT);runNpm('test:work-hq-visual-release',ROOT);
     if(profile?.testCommand)runNpm(profile.testCommand,ROOT);
-    runNpm('typecheck',APP);
-    const dist=path.join(APP,'dist');
+    // Optional isolated source composition for a NEW reviewed profile. Older
+    // profiles retain their original build directory and spent receipts.
+    const buildApp=profile?.prepareBuild?profile.prepareBuild({runner}):APP;
+    runNpm('typecheck',buildApp);
+    const dist=path.join(buildApp,'dist');
     if(fs.existsSync(dist)){
       check(!fs.lstatSync(dist).isSymbolicLink(),'symlinked_build_directory');
       fs.renameSync(dist,path.join(tmpdir(),'jill-hq-visual-previous-'+randomUUID()));
     }
-    runNpm('build',APP,{canary:true});runNpm('test:workerd-connected-read-local',APP);
-    for(const test of profile?.compiledTests||[])runNpm(test,APP);
-    const target=path.join(APP,'dist/server/wrangler.hq-visual-theme.json');
-    fs.writeFileSync(target,JSON.stringify(prepareConnectedManifest(JSON.parse(fs.readFileSync(path.join(APP,'dist/server/wrangler.json'),'utf8'))),null,2)+'\n',{mode:0o600});
+    runNpm('build',buildApp,{canary:true});runNpm('test:workerd-connected-read-local',buildApp);
+    for(const test of profile?.compiledTests||[])runNpm(test,buildApp);
+    const target=path.join(buildApp,'dist/server/wrangler.hq-visual-theme.json');
+    fs.writeFileSync(target,JSON.stringify(prepareConnectedManifest(JSON.parse(fs.readFileSync(path.join(buildApp,'dist/server/wrangler.json'),'utf8'))),null,2)+'\n',{mode:0o600});
     const args=['versions','upload','--config',target,'--keep-vars','--message',HQ_MARKER+runner];
     cloud([...args,'--dry-run']);check(sourceGuard()===runner,'source_changed');guard();
     metadata(undefined,undefined,profile);check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_before_upload');
-    const digest=bundleDigest(path.join(APP,'dist'));phase='inactive_upload';
+    const digest=bundleDigest(dist);phase='inactive_upload';
     reserveConnectedAttempt(uploadFile,{operation:profile?.uploadOperation||'HQ_VISUAL_V1_INACTIVE_UPLOAD',source:runner,package_sha256:digest,baseline:before});uploadReserved=true;
     cloud(args);check(isDeepStrictEqual(before,readConnectedDeployment()),'changed_after_upload');
     const id=findVersion(read(['versions','list']),runner);check(id!==null,'upload_unverified');

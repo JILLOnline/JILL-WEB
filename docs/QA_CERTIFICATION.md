@@ -783,3 +783,14 @@ postinstall guards, connected source tests and HQ typecheck/build pass. GraphQL
 operations are unchanged. No remote/customer UI acceptance or deployment is
 claimed; original intake and Owner canary gates remain held. Details:
 `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`. Full WORK NOT PASSED; LIVE separate.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+PASS LOCAL/SOURCE: 48 actual-component Chromium cases (1600/1024/390/320),
+all Catalog views, expanded request references, forms, conversation and quote
+estimate; no horizontal overflow, 44px phone targets, 16px phone fields. Seven-file
+presentation guard preserves handlers/hooks/commands/links. Actual isolated
+runtime typecheck/build and compiled connected-read/navigation tests pass; newer
+quote policy/calculation excluded. No remote visual or operational acceptance.
+Evidence/limits: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.

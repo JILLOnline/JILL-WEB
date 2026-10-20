@@ -1,5 +1,11 @@
 # JILL HQ shared visual theme
 
+Latest source edition: **compact visuals**, not deployed. Home's large banner is
+removed; common controls/spacing are tighter across every HQ surface. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md` for 48 local browser cases and the
+NEW isolated visual package that excludes unreleased functional work. All older
+release instructions below are historical; spent receipts stay spent.
+
 Presentation only. This is the common template for existing and future HQ
 tabs; canonical requests, authorizations, quotes, wallet and Shopify truth
 remain with their existing owners.
@@ -16,7 +22,7 @@ new UI dependency in the deployed application.
 All six existing pages use the documented `s-page inlineSize="large"` property.
 It exposes available width inside native Shopify Admin chrome. The outer
 workspace has a generous 1680px reading cap for very large monitors. Home
-uses four cards above 1120px, two at intermediate widths and one on phones.
+uses three shortcut cards above 1120px, two at intermediate widths and one on phones.
 Inbox and catalog use adaptive grids; the wide request summary uses its main
 record plus two side panels, and original item cards share the row.
 
@@ -36,15 +42,15 @@ record plus two side panels, and original item cards share the row.
 
 | Shared choice | Value / behavior |
 | --- | --- |
-| Ink / muted | `#29232c` / `#68616b` |
-| Accent / plum | `#765040` / `#4a2841` |
-| Surface / soft | white / `#faf7f8` |
-| Panel / control borders | `#e7dfe4` / `#918697` |
-| Spacing | 4, 8, 12, 16px; composition-specific larger space only when useful |
-| Panel radius | 12px; hero 16px |
-| Native controls | 36px desktop, minimum 44px on coarse pointers and phone widths |
-| Body | System font stack; compact 13px foundation, 14px on phones |
-| Focus | Visible 3px blue outline with 3px offset |
+| Ink / muted | `#211525` / `#66586d` |
+| Accent / plum | `#774099` / `#652a91`; gold active navigation |
+| Surface / soft | white / `#faf6fd` |
+| Panel / control borders | `#e8deed` / `#96869f` |
+| Spacing | 3, 6, 10, 13px; composition-specific larger space only when useful |
+| Panel radius | 10px; decorative Home hero removed |
+| Native controls | 30px desktop, minimum 44px on coarse pointers and phone widths |
+| Body | System font stack; compact 12px foundation, 14px on phones; phone fields 16px |
+| Focus | Visible 3px purple outline with 3px offset |
 | Motion | No new animation; existing reduced-motion rules retained |
 
 Keep labels, help, errors, loading/disabled states, source freshness, notices,

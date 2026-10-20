@@ -1,0 +1,76 @@
+{
+  "environment": "LOCAL_SYNTHETIC_ONLY",
+  "presentation_source_baseline": "a6f650cf8bdf17781c30190d5b7017230aab6445",
+  "isolated_runtime_baseline": "576d6b0bcde43c43fda939f42513eefcb5adefb7",
+  "reviewed_runtime_files": 7,
+  "banner_removed": true,
+  "local_browser_cases": 48,
+  "viewports": [
+    1600,
+    1024,
+    390,
+    320
+  ],
+  "screens": [
+    "home",
+    "requests inbox",
+    "request detail",
+    "catalog products",
+    "catalog collections",
+    "catalog inventory",
+    "catalog locations",
+    "access",
+    "setup",
+    "expanded record/product references",
+    "status form",
+    "message form",
+    "public conversation bubbles",
+    "quote fields and total"
+  ],
+  "layout": {
+    "all_without_horizontal_overflow": true,
+    "phone_targets_at_least_44px": true,
+    "phone_fields_at_least_16px": true
+  },
+  "comparable_desktop_metrics": {
+    "navigation_height_px": {
+      "before": 60,
+      "after": 50
+    },
+    "standard_button_height_px": {
+      "before": 36,
+      "after": 30.1875
+    },
+    "body_font_px": {
+      "before": 13,
+      "after": 12
+    }
+  },
+  "source_boundary": {
+    "server_handlers_hooks_command_props_links_unchanged": true,
+    "navigation_runtime_behavior_unchanged": true,
+    "business_copy_and_warning_boundaries_retained": true,
+    "unreleased_quote_calculation_and_policy_excluded_from_isolated_bundle": true
+  },
+  "checks": {
+    "head_typecheck_build": "pass",
+    "isolated_typecheck_build": "pass",
+    "isolated_compiled_connected_read": "pass",
+    "isolated_compiled_navigation": "pass",
+    "existing_visual_and_studio_release_tests": "pass",
+    "inbox_detail_and_quote_ui_contracts": "pass",
+    "isolated_wrangler_versions_upload_dry_run": "pass",
+    "repository_postinstall_guards": "pass"
+  },
+  "provider_upload": false,
+  "deployment": false,
+  "secret_changes": false,
+  "schema_or_customer_writes": false,
+  "authenticated_visual_acceptance": false,
+  "operational_acceptance": false,
+  "limits": [
+    "Polaris web components rendered in local Chromium with synthetic loaders; no Shopify Owner session or remote write.",
+    "Historical synthetic-detail duplicate React key warning also occurs on the baseline; this visual change does not alter component keys or diagnose Requests.",
+    "These are CSS layout measurements, not authenticated navigation performance or platform acceptance."
+  ]
+}

@@ -391,3 +391,14 @@ unchanged immutable ownership/payload. Actual draft delivery mismatches quaranti
 the commerce intent and never authorize another create. This is inactive source,
 not a remote migration or operational pass. The prior uncertain-intake hold and
 separate LIVE review remain in force. See WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Remove the decorative Home hero and compact the canonical HQ theme, preserving
+readability, 44px touch targets and existing auth/navigation/command behavior.
+Package the current runtime source with exactly seven visual files so unreleased
+quote business changes are excluded. Reuse the visual executor via an optional
+isolated build hook and a new receipt namespace; historical releases remain spent.
+This is not deployed or operational acceptance. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.

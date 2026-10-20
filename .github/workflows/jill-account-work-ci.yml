@@ -359,6 +359,8 @@ jobs:
         run: node scripts/test-work-hq-tail-transport-local.mjs
       - name: Verify HQ studio presentation and distinct release profile
         run: npm run test:work-hq-studio
+      - name: Verify WORK compact presentation and isolated release boundaries
+        run: npm run test:work-hq-compact
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build

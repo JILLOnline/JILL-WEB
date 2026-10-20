@@ -355,3 +355,12 @@ projection. Shopify calculation reuses that address normalizer. No second store,
 HTTP route, quote UI or remote activation is introduced. Actual draft delivery
 fields must match accepted terms or commerce quarantines. Details/limits:
 `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`. Full WORK remains NOT PASSED.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+The compact visual release composes runtime source 576d6b0... plus seven
+reviewed presentation files through the canonical visual release executor.
+Unreleased quote policy/calculation stays excluded. Catalog ON and ordinary
+quote/conversation OFF; no remote change yet. See
+`WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.

@@ -46,19 +46,9 @@ export default function JillHQ() {
 
   return <s-page heading="JILL HQ — WORK" inlineSize="large">
     <div className="jill-hq" role="region" aria-label="JILL HQ WORK merchant home">
-      <header className="jill-hq__hero">
-        <div className="jill-hq__hero-copy">
-          <p className="jill-hq__eyebrow">JILL HQ <span aria-hidden="true">/</span> WORK</p>
-          <h1>Your day, at a glance.</h1>
-          <p className="jill-hq__lead">A little clarity. A lot of possibility.</p>
-          {data.state==="merchant_setup_required"
-            ? <Link to="/app/setup-owner" className="jill-hq__primary">Set up Owner access <span aria-hidden="true">→</span></Link>
-            : null}
-        </div>
-        <div className="jill-hq__hero-mark" aria-hidden="true">
-          <span>JILL</span><span>HQ</span><small>WORKSPACE</small>
-        </div>
-      </header>
+      {data.state==="merchant_setup_required"
+        ? <Link to="/app/setup-owner" className="jill-button">Set up Owner access <span aria-hidden="true">→</span></Link>
+        : null}
 
       <div className="jill-hq__status" role="status">
         <span className={`jill-hq__status-dot ${verified?"is-ready":""}`} aria-hidden="true"/>

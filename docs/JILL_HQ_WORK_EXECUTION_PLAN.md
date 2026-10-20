@@ -303,3 +303,12 @@ ID/payload/history → canonical reconciliation → approved Owner canary proof.
 Then finish consuming quote routes/UI, accepted event, real Shopify adapters and
 explicit invoice/test checkout. Requests stays as-is; spent receipts stay spent.
 Contracts/evidence limits: `WORK_QUOTE_SHOPIFY_CALCULATION_2026-10-19.md`.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Visual steering: compact edition source and 48 local browser cases complete;
+new isolated visual-only release is prepared, not deployed. Next visual gate:
+Owner-credentialed one-use release then authenticated desktop/phone review.
+Business acceptance holds and spent historical receipts remain unchanged.
+Scope/rollback: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.

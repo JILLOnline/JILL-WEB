@@ -566,3 +566,14 @@ Original uncertain 409 ID/payload remains unestablished after history recovery;
 synthetic QA HOLD is unchanged. Exact original request evidence is needed before
 canonical reconciliation and the approved Owner Save/Reload gate. All spent
 release receipts remain spent. Full WORK NOT PASSED; LIVE remains separate.
+
+
+## Compact visual edition prepared — 2026-10-19
+
+Source-only compact visual edition reviewed in 48 local browser cases: Home
+banner removed, shared density across all tabs and request subsections, no
+overflow, 44px phone controls and 16px phone inputs. Runtime business source is
+isolated to the existing navigation baseline; unreleased quote work is excluded.
+No upload/deployment or authenticated UI acceptance yet. New reviewed release
+and Owner credential gate: `WORK_HQ_COMPACT_VISUAL_RELEASE_2026-10-19.md`.
+Full WORK NOT PASSED; LIVE remains separate.
