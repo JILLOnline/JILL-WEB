@@ -68,7 +68,9 @@ export async function handleWorkRequestDetailSearch({
   try{
     const signed=projectWorkMerchantInbox(await readFreshList());
     const records=signed.records;
-    const cursor=validateWorkDetailSearchCursor(input.cursor,records.length);
+    let cursor;
+    try {cursor=validateWorkDetailSearchCursor(input.cursor,records.length);}
+    catch{return respond(400,'invalid_search_cursor',{tag:input.tag});}
     const current=fingerprint(records);
     if(cursor>0&&input.snapshot!==current)
       return respond(409,'source_changed',{tag:input.tag});
