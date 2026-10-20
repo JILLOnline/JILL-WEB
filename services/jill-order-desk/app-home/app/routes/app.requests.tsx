@@ -108,63 +108,82 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
     original.detail?.submission_id===item.submission_id&&
     typeof original.detail.customer?.name==="string"
       ?original.detail.customer.name.trim():null;
+  const toggleDetails=()=>{
+    const next=!detailsOpen;
+    setDetailsOpen(next);
+    if(!next)return;
+    if(requestedId.current!==item.submission_id){
+      requestedId.current=item.submission_id;
+      orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+    }
+    // Expanded details occupy a normal full-width row beneath the summary.
+    // Scroll within the Shopify frame without locking or moving its parent.
+    requestAnimationFrame(()=>{
+      const node=cardNode.current;
+      if(!node)return;
+      const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      node.scrollIntoView({block:"nearest",inline:"nearest",
+        behavior:reduced?"auto":"smooth"});
+    });
+  };
+  const fullSubmitted=dateLabel(item.submitted_at,{includeTime:true});
   return <article ref={cardNode}
     className={"jill-inbox__card jill-inbox__card--"+statusTone+
       (detailsOpen?" jill-inbox__card--expanded":"")}>
-    <div className="jill-inbox__card-head">
-      <div className="jill-inbox__card-heading">
-        <span className="jill-inbox__card-kicker">CUSTOM ORDER</span>
-        {customerName?<p className="jill-inbox__customer-name">{customerName}</p>:null}
-        <h3>Request #{requestShortId(item.submission_id)}</h3>
+    <div className="jill-inbox__row">
+      <div className="jill-inbox__cell jill-inbox__cell--customer" data-label="Customer">
+        {customerName
+          ?<span className="jill-inbox__customer-name" title={customerName}>{customerName}</span>
+          :<span className="jill-inbox__customer-unverified">Name unavailable</span>}
       </div>
-      <div className="jill-inbox__status-group" aria-label="Request statuses">
+      <div className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
+        <Link className="jill-inbox__request-id"
+          to={"/app/requests/"+encodeURIComponent(item.submission_id)}
+          aria-label={"Open custom order request #"+requestShortId(item.submission_id)}>
+          #{requestShortId(item.submission_id)}
+        </Link>
+      </div>
+      <div className="jill-inbox__cell jill-inbox__cell--status" data-label="Status">
         <span className={"jill-inbox__status jill-inbox__status--"+statusTone}>
           <span className="jill-inbox__status-dot" aria-hidden="true"/>
           {customerStatusLabel(item.customer_status)}
         </span>
-        {item.internal_status!=="none"
-          ? <span className="jill-inbox__internal">
-              {internalStatusLabel(item.internal_status)}
-            </span>
-          : null}
+        {removed?<span className="jill-inbox__archive-stamp">Removed</span>:null}
       </div>
-      <p className="jill-inbox__submitted">
-        Submitted {dateLabel(item.submitted_at,{includeTime:true})}
-      </p>
-      {removed?<span className="jill-inbox__archive-stamp">Removed · kept in Archive</span>:null}
-      <ArchiveControl item={item} removed={removed}
-        enabled={archiveEnabled} onSaved={onArchiveChange}/>
+      <div className="jill-inbox__cell jill-inbox__cell--stage" data-label="Stage">
+        {item.internal_status!=="none"
+          ?<span className="jill-inbox__internal">{internalStatusLabel(item.internal_status)}</span>
+          :<span className="jill-inbox__cell-muted">—</span>}
+      </div>
+      <div className="jill-inbox__cell jill-inbox__cell--needed" data-label="Needed by">
+        <span title={item.date_needed||"Not supplied"}>{dateLabel(item.date_needed)}</span>
+      </div>
+      <div className="jill-inbox__cell jill-inbox__cell--submitted" data-label="Submitted">
+        <time dateTime={item.submitted_at} title={fullSubmitted}>
+          {dateLabel(item.submitted_at)}
+        </time>
+      </div>
+      <div className="jill-inbox__cell jill-inbox__cell--actions" data-label="Actions">
+        <button type="button" className="jill-inbox__detail-button"
+          aria-expanded={detailsOpen}
+          aria-controls={"jill-inbox-details-"+requestShortId(item.submission_id)}
+          onClick={toggleDetails}>
+          ORDER DETAILS
+          <span className="jill-inbox__chevron" aria-hidden="true">⌄</span>
+        </button>
+        <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
+        <ArchiveControl item={item} removed={removed}
+          enabled={archiveEnabled} onSaved={onArchiveChange}/>
+      </div>
     </div>
-    <details className="jill-inbox__details" onToggle={event=>{
-      const open=event.currentTarget.open;
-      setDetailsOpen(open);
-      // Explicit per-card read only. Every reopened disclosure reauthenticates
-      // through the existing exact-ID route; never preload private inbox data.
-      if(open){
-        if(requestedId.current!==item.submission_id){
-          requestedId.current=item.submission_id;
-          orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
-        }
-        // An open card occupies its own grid row. Once React applies the new
-        // layout, keep the card visible inside the actual scroll container
-        // (including the embedded Shopify Admin frame). Never lock body scroll.
-        requestAnimationFrame(()=>{
-          const node=cardNode.current;
-          if(!node)return;
-          const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-          node.scrollIntoView({block:"start",inline:"nearest",
-            behavior:reduced?"auto":"smooth"});
-        });
-      }
-    }}>
-      <summary>ORDER DETAILS <span className="jill-inbox__chevron" aria-hidden="true">⌄</span></summary>
-      {detailsOpen?<div className="jill-inbox__order-details">
-        {orderDetails.state!=="idle"||!orderDetails.data
-          ?<p role="status">Loading order details…</p>
-          :<WorkOrderDetailsContent model={orderDetails.data} submissionId={item.submission_id} stacked/>}
-      </div>:null}
-    </details>
-    <WorkRequestQuickActions record={item} enabled={controlsEnabled} compact/>
+    {detailsOpen?<section className="jill-inbox__order-details"
+      id={"jill-inbox-details-"+requestShortId(item.submission_id)}
+      aria-label={"Order details for request #"+requestShortId(item.submission_id)}>
+      {orderDetails.state!=="idle"||!orderDetails.data
+        ?<p role="status">Loading order details…</p>
+        :<WorkOrderDetailsContent model={orderDetails.data}
+          submissionId={item.submission_id} stacked/>}
+    </section>:null}
   </article>;
 }
 
@@ -358,13 +377,21 @@ export default function WorkMerchantInbox() {
                     </p>
                   </div>
                   {visible.length
-                    ? <div className="jill-inbox__cards">
-                        {visible.map((item:InboxRecord)=>
-                          <RequestCard key={item.submission_id} item={item}
-                            controlsEnabled={data.controlsEnabled===true}
-                            archiveEnabled={archiveReady}
-                            removed={removedSet.has(item.submission_id)}
-                            onArchiveChange={()=>setArchiveRefresh(n=>n+1)}/>)}
+                    ? <div className="jill-inbox__table" aria-label="Request rows">
+                        <div className="jill-inbox__columns" aria-hidden="true">
+                          <span>Customer</span><span>Request</span>
+                          <span>Status</span><span>Stage</span>
+                          <span>Needed by</span><span>Submitted</span>
+                          <span>Actions</span>
+                        </div>
+                        <div className="jill-inbox__cards">
+                          {visible.map((item:InboxRecord)=>
+                            <RequestCard key={item.submission_id} item={item}
+                              controlsEnabled={data.controlsEnabled===true}
+                              archiveEnabled={archiveReady}
+                              removed={removedSet.has(item.submission_id)}
+                              onArchiveChange={()=>setArchiveRefresh(n=>n+1)}/>)}
+                        </div>
                       </div>
                     : <div className="jill-inbox__empty" role="status">
                         {data.records.length===0
