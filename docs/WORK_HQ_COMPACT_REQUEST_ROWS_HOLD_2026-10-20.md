@@ -18,7 +18,7 @@ The desktop Requests listing is a **single full-width row per request**, replaci
 
 The last successful WORK Archive/Search deployment was version `ecf3bfd8-091a-4ef4-ae84-ad58c61ee92a` at 100% under deployment `5eaa3555-b7b5-4011-a180-fa430b247427`; 0% quote canary `dbc6341f-de7f-41de-8e97-6bf971201eeb`. This is historical evidence, **not a pinned new release baseline**.
 
-The prior reviewed 21-file Archive/Search source is immutable and was successfully released. The new overlay `scripts/work-hq-table-rows-package.mjs` is a 21-file manifest differing in exactly the Requests route and its CSS. `scripts/work-hq-table-rows-build.mjs` creates an isolated 20-file runtime over certified source baseline `576d6b0bcde43c43fda939f42513eefcb5adefb7`; the proposed manual archive SQL remains excluded. No fresh one-use activation/restore profile is yet issued.
+The prior reviewed 21-file Archive/Search source is immutable and was successfully released. The new overlay `scripts/work-hq-table-rows-package.mjs` is a 21-file manifest differing in exactly the Requests route and its CSS. `scripts/work-hq-table-rows-build.mjs` creates an isolated 20-file runtime over certified source baseline `576d6b0bcde43c43fda939f42513eefcb5adefb7`; the proposed manual archive SQL remains excluded. The new **unique one-use WORK-only activation/restore profile** is `scripts/release-work-hq-table-rows-owner.mjs`, pinned to the last authenticated Owner readback (deployment `5eaa3555-b7b5-4011-a180-fa430b247427`, base version `ecf3bfd8-091a-4ef4-ae84-ad58c61ee92a`, base source `1adbdeb6e469cfd74f4d47a2aef29a5fbfe36b87`). Its receipt stem `work-hq-compact-rows-v1` does not reuse the spent Archive/Search release. A fresh read-only Cloudflare check is still mandatory before activating.
 
 Offline checks:
 - `npm.cmd run work:hq:table-rows:check`
@@ -31,3 +31,5 @@ Offline checks:
 WAIT until GitHub CI passes the actual App Home build. Prior to releasing, Owner must collect fresh read-only WORK runtime inventory, verify active version, annotation, exact 14 binding identities, health, no spent receipt reuse and 0% quote canary. Then prepare a **new, single-use WORK-only** release profile; old release commands MUST NOT be retried.
 
 Authenticated Shopify Admin visual acceptance: verify real row alignment on wide desktop, columns in 1160px/760px breakpoints, long names, archive and all view results, quick menu/editors and detail expansion, keyboard/scroll. The release is not accepted until this browser review succeeds.
+
+Offline new release certification: `npm.cmd run test:work-hq-table-rows-release`. Owner modes: `npm.cmd run work:hq:table-rows:inspect` (read-only), `npm.cmd run work:hq:table-rows:release-once` (single guarded WORK activation) and `npm.cmd run work:hq:table-rows:restore-once` (owned recovery only). Do not retry a failed or unverified release; inspect existing receipts first.
