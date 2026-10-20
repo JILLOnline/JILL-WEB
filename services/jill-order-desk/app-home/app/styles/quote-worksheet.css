@@ -73,3 +73,25 @@
   .jill-quote__draft-buttons{flex-direction:column}
   .jill-quote__draft-buttons button{width:100%}
 }
+
+/* Per-unit preview is explicitly merchant review, NOT a quote line or
+   accepted invoice term. Native disclosure keeps worksheet input mounted. */
+.jill-quote__unit-review{margin-top:7px;font-size:11px;
+  border:1px solid #ded2e6;border-radius:7px;background:#fcf9fd;
+  max-width:100%}
+.jill-quote__unit-review>summary{cursor:pointer;padding:6px 8px;
+  color:#673b83;font-weight:760;line-height:1.4;overflow-wrap:anywhere}
+.jill-quote__unit-review>summary:focus-visible{outline:3px solid var(--jill-focus);
+  outline-offset:2px}
+.jill-quote__unit-body{padding:9px;border-top:1px solid #e9deed;
+  display:grid;gap:8px}
+.jill-quote__unit-body p{font-size:11px;margin:0;line-height:1.45;
+  white-space:pre-wrap;overflow-wrap:anywhere}
+.jill-quote__unit-body section{padding:7px;border:1px solid #e9dfed;
+  border-radius:6px;background:white;min-width:0}
+.jill-quote__unit-body section strong,
+.jill-quote__unit-body section small{display:block;line-height:1.4;
+  overflow-wrap:anywhere}
+.jill-quote__unit-body section p{margin-top:5px}
+.jill-quote__unit-body .jill-quote__unit-warning{
+  color:#876029;background:#fff7e8;padding:8px;border-radius:5px}
