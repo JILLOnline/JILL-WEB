@@ -481,6 +481,9 @@ jobs:
           cd "$RUNNER_TEMP/jill-hq-frozen-v3"
           git switch -C jill/rewards-work "$FROZEN_HQ_COMMIT"
           test "$(git rev-parse HEAD)" = "$FROZEN_HQ_COMMIT"
+          # This isolated historical checkout has no app dependencies.
+          # Install its local TypeScript tooling without changing any receipt.
+          npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
           node scripts/work-hq-row-disclosure-edition.mjs
           node scripts/test-work-hq-inbox-ui.mjs
           node scripts/test-work-hq-row-disclosure.mjs

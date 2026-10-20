@@ -10,6 +10,13 @@ import {fileURLToPath} from 'node:url';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const PINS=JSON.parse(fs.readFileSync(new URL('./work-hq-master-v4-blobs.json',import.meta.url),'utf8'));
 const BASE='c47d081a868731e75ba8ab36736c5a15c4a70605';
+// Pin the exact V4 source-only commit: PR merge checks must not certify
+// unrelated base-branch history as part of this reviewed 26-file edition.
+const CERTIFIED='6a825827abb10b1cfcb6bfde2ac423845de65285';
+const GENERATED=new Set([
+  'package-lock.json',
+  'services/jill-order-desk/app-home/package-lock.json',
+]);
 const SHA=/^[0-9a-f]{40}$/;
 const ORIGINAL_COUNT=21;
 const SUPPORT=new Set([
@@ -43,7 +50,7 @@ function statusPaths(){
   return paths;
 }
 function diffNames(){
-  const out=git('diff','--name-only',BASE,'HEAD');
+  const out=git('diff','--name-only',BASE,CERTIFIED);
   return out.split('\n').filter(Boolean);
 }
 export function certifyJillMasterHqV4({checkChangeScope=true}={}){
@@ -56,7 +63,8 @@ export function certifyJillMasterHqV4({checkChangeScope=true}={}){
     (process.env.GITHUB_REF==='refs/heads/jill/rewards-work'||
      process.env.GITHUB_HEAD_REF==='jill/rewards-work');
   assert(branch==='jill/rewards-work'||isCI,'STOP wrong source branch');
-  execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD'],{cwd:ROOT,timeout:20000});
+  execFileSync('git',['merge-base','--is-ancestor',BASE,CERTIFIED],{cwd:ROOT,timeout:20000});
+  execFileSync('git',['merge-base','--is-ancestor',CERTIFIED,'HEAD'],{cwd:ROOT,timeout:20000});
   const installed=[];
   for(const [file,expected] of Object.entries(PINS.files)){
     assert(SHA.test(expected),'Invalid approved blob hash: '+file);
@@ -81,11 +89,23 @@ export function certifyJillMasterHqV4({checkChangeScope=true}={}){
     const permitted=new Set([...installed,...SUPPORT]);
     const committed=diffNames();
     const local=statusPaths();
-    for(const file of [...committed,...local])assert(permitted.has(file),
-      'STOP unexpected WORK change outside Master V4 edition: '+file);
-    const all=new Set([...committed,...local]);
-    for(const file of installed)assert(all.has(file),'Candidate not in Git change set: '+file);
-    for(const file of SUPPORT)assert(all.has(file),'Certification support missing from change set: '+file);
+    // This change-scope proof inspects only the immutable certified commit,
+    // not the host PR branch's unrelated merged history.
+    assert.equal(committed.length,permitted.size,'STOP V4 certified commit file count drift');
+    for(const file of committed)assert(permitted.has(file),
+      'STOP unapproved path in certified V4 commit: '+file);
+    for(const file of permitted)assert(committed.includes(file),
+      'STOP certified V4 file missing: '+file);
+    // npm install may produce these two UNTRACKED lockfiles. All staged,
+    // modified, renamed or other untracked files still stop certification.
+    for(const file of local)assert(GENERATED.has(file),
+      'STOP unexpected local file during V4 certification: '+file);
+    for(const file of [
+      'package.json','scripts/work-hq-master-v4-blobs.json',
+      'scripts/test-work-hq-master-v4.mjs',
+    ])assert.equal(git('rev-parse','HEAD:'+file).trim(),
+      git('rev-parse',CERTIFIED+':'+file).trim(),
+      'STOP V4 certification support changed after certified commit: '+file);
   }
   const src=read('services/jill-order-desk/app-home/app/components/WorkRequestQuickActions.tsx');
   const request=read('services/jill-order-desk/app-home/app/routes/app.requests.tsx');
