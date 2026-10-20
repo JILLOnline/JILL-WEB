@@ -18,7 +18,7 @@ export const ARCHIVE_SEARCH_CHANGED_BLOBS=Object.freeze({
   "services/jill-order-desk/work-request-archive-model.mjs": "c32d9b1e8e611b7460b207c1c87e40951b176172",
   "services/jill-order-desk/work-request-archive-store.mjs": "e17c7f6ea146e588fcff24ff925db1541bed30eb",
   "services/jill-order-desk/work-request-detail-search.mjs": "adc423df9e7f34118677fdde0a7c5c912fd6721b",
-  "services/jill-order-desk/work-request-detail-search-action.mjs": "b5a82bab9af1360b9c1ea49f8ae1b9ddd309cde8",
+  "services/jill-order-desk/work-request-detail-search-action.mjs": "e3dcd63757e90675fb5502a31eb83cc7fd78ca38",
   "services/jill-order-desk/archive-proposals/0010_work_request_soft_archive.sql": "e6f8b2f8b23680919c82acc1c732ed9815b5e163"
 });
 export const ARCHIVE_SEARCH_BLOBS=Object.freeze({
