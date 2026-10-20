@@ -5,20 +5,22 @@ import {HUB_ROUTES, canonicalRoute, routeFromEntry, extensionRoute}
 
 const read = (p) => fs.readFileSync(p,'utf8');
 const root = 'extensions/jill-account-dashboard/src/';
-const pages = ['Overview','Rewards','Coupons','CustomOrders','Celebrations',
-  'SavedPreferences','Settings'];
+const pages = ['Overview','Rewards','Coupons','CustomOrders','Messages',
+  'Celebrations','SavedPreferences','Settings'];
 assert.deepEqual(HUB_ROUTES.map((r)=>r.id),[
-  'overview','rewards','coupons','custom-orders','celebrations','saved','settings',
+  'overview','rewards','coupons','custom-orders','messages','celebrations','saved','settings',
 ]);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,7);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,7);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,8);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,8);
 assert.equal(extensionRoute('overview'),'extension://');
 assert.equal(extensionRoute('coupons'),'extension://coupons');
+assert.equal(extensionRoute('messages'),'extension://messages');
 assert.equal(extensionRoute('unknown'),'extension://');
 assert.equal(routeFromEntry({url:'https://account.example.test/account/pages/123/rewards'}),'rewards');
 assert.equal(routeFromEntry({url:'invalid-url'}),'overview');
 assert.equal(routeFromEntry({url:'extension://rewards'}),'rewards');
 assert.equal(routeFromEntry({url:'extension://coupons'}),'coupons');
+assert.equal(routeFromEntry({url:'extension://messages'}),'messages');
 assert.equal(routeFromEntry({url:'extension://settings'}),'settings');
 assert.equal(canonicalRoute('__proto__'),'overview');
 const hub=read(root+'hub/AccountHub.jsx');
@@ -70,11 +72,16 @@ assert.match(preparer,/custom-order-presentation\.mjs/);
 assert.match(preparer,/mode === 'read' \|\| mode === 'template'/);
 assert.match(preparer,/\'rewards\.mjs\',\'customer-account-api\.mjs\',\'customer-coupons\.mjs\'/);
 for (const file of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-  'Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+  'Messages.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
   assert.ok(preparer.includes("'"+file+"'"),'Canary does not copy '+file);
 }
 const expected='node scripts/prepare-account-hub-canary.mjs --template && '+
   'shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com';
 const scripts=JSON.parse(read('package.json')).scripts;
 assert.equal(scripts['rewards:work:hub:template'],expected);
-console.log('Seven-screen My JILL template with JWT-authenticated, read-only WORK Custom Order history and isolated preview contract verified.');
+const messages=read(root+'pages/Messages.jsx');
+assert.match(messages,/loadWorkCustomerCustomOrders/);
+assert.match(messages,/projectCustomerMessageInbox/);
+assert.match(messages,/RequestConversation/);
+assert.ok(preparer.includes("'custom-order-message-inbox.mjs'"));
+console.log('Eight-screen My JILL template with verified customer-owned Messages and JWT-authenticated WORK Custom Order history; isolated preview contract verified.');
