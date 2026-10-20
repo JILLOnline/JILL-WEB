@@ -151,3 +151,11 @@ supplies the exact current baseline/one-use namespace to the canonical visual
 release executor. This owns release boundaries only, not request truth.
 The existing runtime collector owns selecting the corresponding HQ/gateway
 health header; strict release health certification stays in its existing owner.
+
+The inbox polish v1 release extends that same **frozen Order details presentation
+overlay** with `WorkRequestQuickActions.tsx`, using
+`scripts/work-hq-inbox-polish-package.mjs` for exact 11-file Git blob checks
+and isolated baseline composition and `scripts/release-work-hq-inbox-polish-owner.mjs`
+for its OWN new one-use receipts. Neither script owns business commands,
+authorized reads, quote state, payments, customer profiles or LIVE.
+See `docs/WORK_HQ_INBOX_POLISH_RELEASE_2026-10-20.md`.
