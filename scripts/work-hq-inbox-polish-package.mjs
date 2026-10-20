@@ -33,7 +33,15 @@ const gitBlob=s=>{
 const sourceFile=file=>fs.readFileSync(path.join(ROOT,file),'utf8');
 export function checkWorkHqInboxPolish(){
   const branch=execFileSync('git',['-C',ROOT,'branch','--show-current'],{encoding:'utf8'}).trim();
-  assert.equal(branch,'jill/rewards-work');
+  // Pull-request CI checks out a detached merge SHA, not a local branch.
+  // This exception applies to OFFLINE review only. The release executor's
+  // independent Owner sourceGuard still requires Windows + exact clean branch
+  // + origin-sync before any Cloudflare mutation.
+  const trustedCI=branch==='' && process.env.CI==='true' &&
+    process.env.GITHUB_REPOSITORY==='JILLOnline/JILL-WEB' &&
+    process.env.GITHUB_HEAD_REF==='jill/rewards-work' &&
+    process.env.GITHUB_EVENT_NAME==='pull_request';
+  assert(branch==='jill/rewards-work'||trustedCI,'WORK source branch not verified');
   assert.deepEqual(Object.keys(INBOX_POLISH_BLOBS).sort(),[...INBOX_POLISH_FILES].sort());
   for(const [file,sha] of Object.entries(INBOX_POLISH_BLOBS)){
     const source=sourceFile(file);
