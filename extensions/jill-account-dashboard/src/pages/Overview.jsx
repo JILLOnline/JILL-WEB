@@ -43,6 +43,7 @@ export default function Overview({accountState,onNavigate}) {
               </s-stack>
             </s-box>
           </s-grid>
+          <s-button variant="secondary" onClick={()=>onNavigate('messages')}>Your Messages</s-button>
           <s-button variant="secondary" onClick={()=>onNavigate('saved')}>Saved for You</s-button>
         </s-stack>
       </s-section>
