@@ -39,6 +39,8 @@ export function inspectWorkQuoteCommerceHandoff({
      !obj(draft)||draft.submission_id!==submissionId||
      !Number.isSafeInteger(detail.revision)||detail.revision<1)
     return hold('canonical_source_unverified');
+  if(!Array.isArray(detail.items)||detail.items.length>20)
+    return hold('native_line_limit');
   const restored=hydrateVerifiedWorkQuoteWorksheet({
     draft,detail,submissionId,
   });
@@ -47,8 +49,6 @@ export function inspectWorkQuoteCommerceHandoff({
     return hold('shopify_customer_unverified');
   if(!['pickup','shipping'].includes(detail.planning?.fulfillment))
     return hold('fulfillment_unverified');
-  if(!Array.isArray(detail.items)||detail.items.length>20)
-    return hold('native_line_limit');
   // Original notes and reference media are business terms. No "best effort"
   // mapping into Shopify is allowed if the mapping would lose those terms.
   if(!empty(detail.request_attributes)||!empty(detail.reference_ids)||
