@@ -75,6 +75,7 @@
     "custom-orders:work:account:remote:audit": "node scripts/audit-work-custom-order-account-runtime.mjs",
     "test:work-account-runtime-audit": "node scripts/test-work-custom-order-account-runtime-audit.mjs",
     "test:my-jill-presentation": "node scripts/test-my-jill-presentation.mjs",
+    "test:work-message-inboxes": "node scripts/test-work-message-inboxes.mjs",
     "test:jill-merchant-auth": "node scripts/test-jill-merchant-auth.mjs",
     "test:jill-order-desk-home": "node scripts/test-jill-order-desk-home.mjs",
     "test:jill-order-desk-work-config": "node scripts/test-jill-order-desk-work-config.mjs",
