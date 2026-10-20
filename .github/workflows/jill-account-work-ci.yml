@@ -294,6 +294,8 @@ jobs:
           npm run test:work-hq-inbox-ui
           npm run test:work-hq-archive-search
           npm run test:work-hq-archive-soft-delete
+          npm run work:hq:archive-search:runtime:check
+          npm run test:work-hq-archive-search-release
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
