@@ -230,7 +230,9 @@ export default function WorkMerchantInbox() {
     const result=detailSearch.data;
     if(!result)return;
     setSearch(current=>{
-      if(!current||result.tag!==current.tag)return current;
+      if(!current||(result.tag&&result.tag!==current.tag))return current;
+      // Pre-auth errors deliberately have no request tag; still show a clear
+      // failure rather than leaving the Owner with an endless search spinner.
       if(!result.ok)return {...current,error:
         "Search could not be verified. Refresh before searching again.",
         next_cursor:null};
