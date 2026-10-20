@@ -385,8 +385,8 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Preserve spent request table release and verify new dual-inbox source pins (OFFLINE)
-        run: npm run work:hq:messaging:check
+      - name: Preserve earlier release receipts and certify current P1/P2 Catalog edition (OFFLINE)
+        run: npm run work:hq:quote-units:check
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
