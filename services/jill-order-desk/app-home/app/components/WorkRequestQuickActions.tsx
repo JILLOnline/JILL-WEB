@@ -15,8 +15,8 @@ const STATUS_OPTIONS=WORK_STATUS_TRANSITIONS as Record<string,string[]>;
 const INTERNAL=WORK_INTERNAL_STAGES as string[];
 
 export function WorkRequestQuickActions({
-  record,enabled,compact=false,
-}:{record:RequestRecord;enabled:boolean;compact?:boolean}){
+  record,enabled,compact=false,direct=false,
+}:{record:RequestRecord;enabled:boolean;compact?:boolean;direct?:boolean}){
   const fetcher=useFetcher<Result>();
   const revalidator=useRevalidator();
   const lastRefresh=useRef<string|null>(null);
@@ -87,9 +87,21 @@ export function WorkRequestQuickActions({
     // status/message editor below instead of obscuring it with menu controls.
     if(quickMenu.current)quickMenu.current.open=false;
   };
-  return <section className={"jill-actions"+(compact?" jill-actions--compact":"")}
+  return <section className={"jill-actions"+(compact?" jill-actions--compact":"")+
+    (direct?" jill-actions--direct":"")}
     aria-label="Manage request">
-    {compact
+    {direct
+      ? <div className="jill-actions__direct-buttons" aria-label="Direct request actions">
+          <button type="button" className="jill-actions__direct-message"
+            onClick={()=>openPanel("message")} aria-expanded={panel==="message"}>
+            Message customer
+          </button>
+          <button type="button" className="jill-actions__direct-status"
+            onClick={()=>openPanel("status")} aria-expanded={panel==="status"}>
+            Update status
+          </button>
+        </div>
+      : compact
       ? <div className="jill-actions__quick-menu">
           <details ref={quickMenu} onKeyDown={event=>{
             if(event.key==="Escape" && event.currentTarget.open){
