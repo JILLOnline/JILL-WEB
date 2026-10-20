@@ -287,11 +287,12 @@ jobs:
       - name: Install isolated App Home dependencies
         working-directory: services/jill-order-desk/app-home
         run: npm install --no-audit --no-fund
-      - name: Verify WORK colorful request cards, names and native scroll flow (OFFLINE)
+      - name: Verify WORK Archive, soft-remove gate and bounded Owner-only full-detail search (OFFLINE)
         run: |
-          npm run work:hq:request-card-flow:check
+          npm run work:hq:archive-search:check
           npm run test:work-hq-customer-name
-          npm run test:work-hq-request-card-flow
+          npm run test:work-hq-inbox-ui
+          npm run test:work-hq-archive-search
       - name: Install standalone free WASM codecs and synthetic image fixtures
         run: |
           npm install --prefix tools/work-media-edge --ignore-scripts --no-audit --no-fund
@@ -366,8 +367,8 @@ jobs:
         run: npm run test:work-hq-studio
       - name: Verify WORK compact presentation and isolated release boundaries
         run: npm run test:work-hq-compact
-      - name: Preserve historical 13-file release boundary (OFFLINE)
-        run: npm run test:work-hq-request-card-flow
+      - name: Prevent reuse of stale 13-file visual release for backend Archive/Search (OFFLINE)
+        run: npm run work:hq:archive-search:check
       - name: Build real React Router Cloudflare App Home (no deployment)
         working-directory: services/jill-order-desk/app-home
         run: npm run build
