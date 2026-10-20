@@ -39,19 +39,19 @@ export function checkWorkHqInboxPolish(){
     const source=sourceFile(file);
     assert.equal(gitBlob(source),sha,'Frozen inbox polish source changed: '+file);
     if(file.endsWith('.css'))
-      assert(!/!important|\\bzoom\\s*:|scale\\(|\\.Polaris|::part\\(/i.test(source),'Forbidden visual override: '+file);
+      assert(!/!important|\bzoom\s*:|scale\(|\.Polaris|::part\(/i.test(source),'Forbidden visual override: '+file);
   }
   const route=sourceFile('services/jill-order-desk/app-home/app/routes/app.requests.tsx');
   const actions=sourceFile(EXTRA);
   assert.match(route,/<summary>ORDER DETAILS/);
   assert.doesNotMatch(route,/jill-inbox__facts|jill-inbox__open|Open request/);
-  assert.match(route,/orderDetails\\.load\\("\\/app\\/requests\\/"\\+encodeURIComponent\\(item\\.submission_id\\)\\)/);
-  assert.match(actions,/\\{compact&&<Link className="jill-actions__open-link"/);
-  assert.match(actions,/to=\\{"\\/app\\/requests\\/"\\+encodeURIComponent\\(record\\.submission_id\\)\\}/);
-  assert.match(actions,/fetcher\\.submit\\(payload/);
-  assert.match(actions,/action:"\\/app\\/requests\\/command"/);
+  assert.match(route,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\(item\.submission_id\)\)/);
+  assert.match(actions,/\{compact&&<Link className="jill-actions__open-link"/);
+  assert.match(actions,/to=\{"\/app\/requests\/"\+encodeURIComponent\(record\.submission_id\)\}/);
+  assert.match(actions,/fetcher\.submit\(payload/);
+  assert.match(actions,/action:"\/app\/requests\/command"/);
   const styles=sourceFile('services/jill-order-desk/app-home/app/styles/request-actions.css');
-  assert.match(styles,/\\.jill-actions--compact \\.jill-actions__heading strong/);
+  assert.match(styles,/\.jill-actions--compact \.jill-actions__heading strong/);
   assert.match(styles,/min-height:44px/);
   return {environment:'WORK',scope:'frozen_request_presentation_plus_existing_on_open_read',
     reviewed_files:INBOX_POLISH_FILES.length,source_locked:true,
