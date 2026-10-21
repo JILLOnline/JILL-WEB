@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {planWorkM1M2LocalDryRun as plan}
  from '../scripts/plan-work-hq-m1-m2-inactive-dry-run.mjs';
@@ -81,3 +82,18 @@ deny('active',{...active,resources:{...active.resources,
 deny('active',{...active,resources:{...active.resources,bindings:bindings.map(x=>
  x.name==='JILL_WORK_CONVERSATION_ENABLED'?plain(x.name,'true'):x)}},'required_live_stage_flag_changed');
 console.log('PASS M1/M2 inactive LOCAL-only manifest: exact active allocation/binding parity, D1/secrets/OFF flags, R2/unknown rejection; no upload/deploy.');
+if(process.argv.includes('--compiled-canary')){
+  assert.equal(process.argv.length,3,'Unknown test arguments');
+  const file=new URL('../services/jill-order-desk/app-home/dist/server/wrangler.json',import.meta.url);
+  const fromBuild=JSON.parse(readFileSync(file,'utf8'));
+  const observed=plan({...data,compiled:fromBuild});
+  assert.equal(observed.state,'LOCAL_DRY_RUN_MANIFEST_PREPARED',
+    'Actual compiled WORK canary manifest held: '+observed.reason);
+  assert.equal(observed.manifest.name,'jill-order-desk-canary-work');
+  assert.equal(observed.manifest.vars.JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED,'false');
+  assert.equal(observed.manifest.vars.JILL_WORK_CONVERSATION_ENABLED,'false');
+  assert.equal(observed.manifest.keep_vars,true);
+  assert.equal(observed.deploy_authorized,false);
+  assert.equal(observed.upload_authorized,false);
+  console.log('PASS ACTUAL canary compiled manifest against synthetic verified WORK bindings; manifest-only, no remote Cloudflare operation.');
+}

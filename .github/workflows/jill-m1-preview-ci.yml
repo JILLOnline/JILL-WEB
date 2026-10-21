@@ -108,4 +108,10 @@ jobs:
       - name: Verify compiled M1/M2 WORK Worker itself, local D1, disabled finance and OAuth (NO DEPLOY)
         working-directory: services/jill-order-desk/app-home
         run: node scripts/test-workerd-m1m2-compiled-local.mjs
+      - name: Build actual isolated canary Worker package (offline, no upload)
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Reject unsafe configuration in real compiled canary bundle (offline)
+        run: node scripts/test-work-hq-m1-m2-inactive-dry-run.mjs --compiled-canary
 
