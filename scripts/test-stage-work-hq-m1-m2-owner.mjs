@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {BASELINE,assertBaseline,selectStageCandidate,assertCandidate}
+import {BASELINE,assertBaseline,selectStageCandidate,assertCandidate,
+ explainWorkM1M2Plan}
  from './stage-work-hq-m1-m2-owner.mjs';
 const plain=(name,text)=>({name,type:'plain_text',text});
 const bindings=[
@@ -59,3 +60,18 @@ assert.throws(()=>selectStageCandidate({versions:[candidate,candidate]},marker),
  /ambiguous_candidate_identity/);
 assert.throws(()=>selectStageCandidate(null,marker),/versions_list_unavailable/);
 console.log('PASS M1/M2 one-use Owner stage: exact WORK baseline, candidate identity, immutable bindings, runtime and fail-closed denials. NO provider call.');
+
+const safeReason=explainWorkM1M2Plan({
+ baseline,active,quote,compiled:{
+  name:'jill-order-desk-canary-work'},});
+assert.equal(safeReason.status,'HOLD');
+assert.equal(safeReason.reason,'correct_canary_compiled_manifest_required');
+assert.equal(safeReason.upload_requested,false);
+assert.equal(safeReason.shape.active_handlers_array,true);
+assert.equal(safeReason.shape.quote_handlers_array,true);
+const missingHandlers=explainWorkM1M2Plan({baseline,active,quote:{
+ ...quote,resources:{...quote.resources,script:{}}}});
+assert.equal(missingHandlers.reason,'version_source_unverified');
+assert.equal(missingHandlers.shape.quote_handlers_array,false);
+assert.equal(Object.hasOwn(missingHandlers,'bindings'),false);
+console.log('PASS safe M1/M2 read-only manifest diagnostics; never disclose provider bindings.');

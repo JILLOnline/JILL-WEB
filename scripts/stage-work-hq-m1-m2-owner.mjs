@@ -172,6 +172,51 @@ async function inventory(){
  const active=view(BASELINE.active),quote=view(BASELINE.quote);
  return {baseline,active,quote};
 }
+// Read-only diagnostic surface: finite classification and shape booleans
+// ONLY. Never serialize provider bindings, Shopify/customer data, config,
+ // secret text, or upload receipts. It cannot authorize a release.
+export function explainWorkM1M2Plan({compiled,active,quote,baseline}={}){
+ const planned=planWorkM1M2LocalDryRun({
+  compiled,active,quote,allocation:baseline});
+ const code=planned.state==='LOCAL_DRY_RUN_MANIFEST_PREPARED'?
+  'local_manifest_prepared':planned.reason;
+ const safe=new Set([
+  'local_manifest_prepared','live_allocation_changed',
+  'version_source_unverified','ambiguous_live_bindings',
+  'quote_canary_bindings_unverified','quote_canary_identity_changed',
+  'correct_canary_compiled_manifest_required',
+  'unapproved_compiled_resource','existing_d1_changed',
+  'live_secret_presence_unverified','version_identity_binding_missing',
+  'unsafe_live_binding_name','unsafe_plaintext_binding',
+  'unreviewed_secret_binding','unreviewed_d1_binding',
+  'unreviewed_runtime_binding','unreviewed_active_resource_type',
+  'required_live_stage_flag_changed','unsafe_optional_feature_enabled',
+  'secret_as_plaintext'
+ ]);
+ return Object.freeze({
+  status:planned.state==='LOCAL_DRY_RUN_MANIFEST_PREPARED'?
+   'READ_ONLY_LOCAL_MANIFEST_PREPARED':'HOLD',
+  reason:safe.has(code)?code:'unverified_manifest_policy',
+  source:'authenticated_WORK_metadata_and_local_build',
+  shape:{
+   active_id_matches:active?.id===BASELINE.active,
+   quote_id_matches:quote?.id===BASELINE.quote,
+   active_handlers_array:Array.isArray(active?.resources?.script?.handlers),
+   quote_handlers_array:Array.isArray(quote?.resources?.script?.handlers),
+   active_bindings_array:Array.isArray(active?.resources?.bindings),
+   quote_bindings_array:Array.isArray(quote?.resources?.bindings),
+   active_version_metadata_present:
+    active?.resources?.bindings?.some(x=>x.name==='CF_VERSION_METADATA'&&
+      x.type==='version_metadata')===true,
+   active_binding_count:Array.isArray(active?.resources?.bindings)?
+      active.resources.bindings.length:null,
+   quote_binding_count:Array.isArray(quote?.resources?.bindings)?
+      quote.resources.bindings.length:null,
+  },
+  upload_requested:false,traffic_changed:false,
+  deployment_requested:false,new_paid_resources:false,
+ });
+}
 function compileManifest(inputs){
  const dist=path.join(APP,'dist');
  gate(fs.existsSync(dist)&&!fs.lstatSync(dist).isSymbolicLink(),
@@ -181,6 +226,11 @@ function compileManifest(inputs){
   'compiled_canary_manifest_missing');
  const compiled=JSON.parse(fs.readFileSync(location,'utf8'));
  const planned=planWorkM1M2LocalDryRun({...inputs,compiled});
+ if(planned.state!=='LOCAL_DRY_RUN_MANIFEST_PREPARED'){
+  console.error('HOLD LOCAL_MANIFEST_REASON '+
+    explainWorkM1M2Plan({...inputs,compiled,
+      baseline:inputs.baseline}).reason);
+ }
  gate(planned.state==='LOCAL_DRY_RUN_MANIFEST_PREPARED',
   'compiled_release_manifest_denied');
  // keep-vars is an explicit Wrangler CLI switch; remove from uploaded JSON.
@@ -204,6 +254,22 @@ export async function runOwnerStage(mode){
   if(mode==='--stage-once')gate(prior===null,'one_use_receipt_already_spent');
   phase='provider_preflight';
   const before=await inventory();
+  if(mode==='--diagnose'){
+   gate(prior===null,'diagnosis_requires_no_upload_receipt');
+   // Existing local canary build is read-only and was just typechecked/built
+   // by the prior failed staging attempt. No new compilation or cloud writes.
+   const file=path.join(APP,'dist/server/wrangler.json');
+   gate(fs.existsSync(file)&&!fs.lstatSync(file).isSymbolicLink(),
+    'compiled_canary_manifest_missing');
+   const compiled=JSON.parse(fs.readFileSync(file,'utf8'));
+   const diagnosis=explainWorkM1M2Plan({...before,compiled});
+   gate(equal(before.baseline,allocation()),
+    'allocation_changed_during_diagnosis');
+   console.log(JSON.stringify({environment:'WORK',source,
+    ...diagnosis,receipt_present:false},null,2));
+   if(diagnosis.status==='HOLD')process.exitCode=1;
+   return;
+  }
   if(mode==='--inspect'){
    const marker=prior?MESSAGE+source+' '+prior.nonce:null;
    const candidateId=marker?
@@ -310,7 +376,8 @@ export async function runOwnerStage(mode){
 }
 if(process.argv[1]&&
  pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
- if(process.argv.length!==3||!['--stage-once','--inspect'].includes(process.argv[2])){
-  console.error('STOP explicit --stage-once or --inspect required');process.exitCode=1;
+ if(process.argv.length!==3||
+   !['--stage-once','--inspect','--diagnose'].includes(process.argv[2])){
+  console.error('STOP explicit --stage-once, --inspect or --diagnose required');process.exitCode=1;
  }else await runOwnerStage(process.argv[2]);
 }
