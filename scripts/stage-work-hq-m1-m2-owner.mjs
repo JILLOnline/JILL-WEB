@@ -175,9 +175,15 @@ async function inventory(){
 // Read-only diagnostic surface: finite classification and shape booleans
 // ONLY. Never serialize provider bindings, Shopify/customer data, config,
  // secret text, or upload receipts. It cannot authorize a release.
-export function explainWorkM1M2Plan({compiled,active,quote,baseline}={}){
- const planned=planWorkM1M2LocalDryRun({
+// The provider inventory intentionally calls the allocation "baseline".
+ // Adapt it ONCE here for BOTH the diagnostic and real stage path, so they
+ // can never disagree about the same validated snapshot.
+export function planM1M2StageManifest({baseline,active,quote}={},compiled){
+ return planWorkM1M2LocalDryRun({
   compiled,active,quote,allocation:baseline});
+}
+export function explainWorkM1M2Plan({compiled,active,quote,baseline}={}){
+ const planned=planM1M2StageManifest({baseline,active,quote},compiled);
  const code=planned.state==='LOCAL_DRY_RUN_MANIFEST_PREPARED'?
   'local_manifest_prepared':planned.reason;
  const safe=new Set([
@@ -225,7 +231,7 @@ function compileManifest(inputs){
  gate(fs.existsSync(location)&&!fs.lstatSync(location).isSymbolicLink(),
   'compiled_canary_manifest_missing');
  const compiled=JSON.parse(fs.readFileSync(location,'utf8'));
- const planned=planWorkM1M2LocalDryRun({...inputs,compiled});
+ const planned=planM1M2StageManifest(inputs,compiled);
  if(planned.state!=='LOCAL_DRY_RUN_MANIFEST_PREPARED'){
   console.error('HOLD LOCAL_MANIFEST_REASON '+
     explainWorkM1M2Plan({...inputs,compiled,
