@@ -20,6 +20,7 @@ import {inspectWorkQuoteUnitLinePlan}
 import {projectWorkQuoteUnitPriceReview}
   from "../../../work-quote-unit-price-review.mjs";
 import {WorkQuoteCatalogComparison} from "./WorkQuoteCatalogComparison";
+import {WorkQuoteArtworkAudit} from "./WorkQuoteArtworkAudit";
 import "../styles/quote-worksheet.css";
 
 type QuoteValue=string|number|boolean|Array<string|number|boolean>;
@@ -399,6 +400,8 @@ export function WorkQuoteWorksheet({
           <WorkQuoteCatalogComparison
             submissionId={submissionId} sourceRevision={sourceRevision}
             review={priceReview} enabled={catalogReviewEnabled}/>
+          <WorkQuoteArtworkAudit detail={detail}
+            submissionId={submissionId} sourceRevision={sourceRevision}/>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
               <button type="button" disabled={!canSaveDraft||!ready}
