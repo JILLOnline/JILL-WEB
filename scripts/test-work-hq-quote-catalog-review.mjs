@@ -94,4 +94,13 @@ const stale=await handleWorkQuoteCatalogReview({...params,
 assert.equal(stale.status,409);
 assert.equal(detailReads,beforeDetailReads+1);
 
+// Source guard: the embedded Worker refuses an OFF catalog-review route
+// before normal D1/Shopify processing. No feature switch is enabled here.
+const {readFileSync}=await import('node:fs');
+const workerSource=readFileSync('services/jill-order-desk/app-home/workers/app.ts','utf8');
+const routeGuard=workerSource.indexOf('if(url.pathname==="/app/requests/quote-catalog"');
+const authGuard=workerSource.indexOf('if(env.JILL_WORK_OAUTH_ENABLED');
+assert.ok(routeGuard>0&&authGuard>routeGuard);
+assert.match(workerSource,/return unavailable\("quote_catalog_not_enabled"\)/);
+assert.match(workerSource,/!workQuoteCatalogReviewReady\(env\)/);
 console.log('PASS M2 signed-source variant mapping, 2-unit P1/P2 dedup and OFF/no-lookup boundaries');

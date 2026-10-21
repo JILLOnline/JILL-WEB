@@ -2,6 +2,8 @@ import {createRequestHandler} from "react-router";
 import {workAppHomeOrigin,workAdminAppDestination} from "../../shopify-host/sdk-config.mjs";
 import {workQuoteDraftFeatureReady,workQuoteDraftSchemaReady}
   from "../../work-quote-release-readiness.mjs";
+import {workQuoteCatalogReviewReady}
+  from "../../work-quote-catalog-review.mjs";
 
 declare module "react-router" {
   interface AppLoadContext {
@@ -71,6 +73,12 @@ export default {
     // SOURCE-ONLY candidate requires an entirely NEW, absent-by-default
     // WORK-only explicit switch AND the two owner-migrated D1 tables.
     // No release command or manifest flag is changed in this PR.
+    // M2 read-only catalog price checks are opt-in. Refuse disabled routes
+    // BEFORE generic database schema, Shopify OAuth, or request source work.
+    // No quote publishing, product mutation, or customer contact is enabled.
+    if(url.pathname==="/app/requests/quote-catalog" &&
+       !workQuoteCatalogReviewReady(env))
+      return unavailable("quote_catalog_not_enabled");
     if(url.pathname==="/app/requests/quote-draft"){
       if(!workQuoteDraftFeatureReady(env))
         return unavailable("quote_drafts_not_enabled");
