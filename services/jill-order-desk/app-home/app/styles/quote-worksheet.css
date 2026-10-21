@@ -129,3 +129,10 @@
 .jill-quote__unit-plan li small{overflow-wrap:anywhere;color:#786a84}
 @media(max-width:520px){.jill-quote__unit-plan li{grid-template-columns:1fr 1fr}
  .jill-quote__unit-plan li small{grid-column:1/-1}}
+
+/* M2 · bounded P1/P2 unit-price review, scoped to canonical quote worksheet */
+.jill-quote__unit-scroll{max-width:100%;overflow-x:auto}
+.jill-quote__unit-table{width:100%;border-collapse:collapse;min-width:490px;font-size:12px}
+.jill-quote__unit-table th,.jill-quote__unit-table td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid #e8ddeb}
+.jill-quote__unit-table th{font-weight:700}
+.jill-quote__unit-table code{font-size:11px;overflow-wrap:anywhere;white-space:normal}

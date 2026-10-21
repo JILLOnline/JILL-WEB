@@ -27,6 +27,8 @@ jobs:
           node-version: '22'
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
+      - name: Verify M2 per-unit price review and source boundaries
+        run: node scripts/test-work-hq-quote-unit-price-preview.mjs
       - name: Install isolated WORK App Home (no deploy)
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck actual embedded app

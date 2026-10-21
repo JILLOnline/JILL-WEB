@@ -17,6 +17,8 @@ import {inspectWorkQuotePreflight}
   from "../../../work-quote-preflight-view.mjs";
 import {inspectWorkQuoteUnitLinePlan}
   from "../../../work-quote-unit-line-plan.mjs";
+import {projectWorkQuoteUnitPriceReview}
+  from "../../../work-quote-unit-price-review.mjs";
 import "../styles/quote-worksheet.css";
 
 type QuoteValue=string|number|boolean|Array<string|number|boolean>;
@@ -230,6 +232,9 @@ export function WorkQuoteWorksheet({
     quote as {state:"ready";itemsSubtotalCents:number;
       discountCents:number;manualTaxCents:number;
       estimatedTotalCents:number;feesCents:Record<FeeKey,number>}:null;
+  const priceReview=projectWorkQuoteUnitPriceReview({
+    plan:unitPlan,itemSubtotalCents:readyQuote?.itemsSubtotalCents??null,
+  });
   const ready=detail!==null&&!locked&&readyQuote!==null;
   const canUseDraft=saveDraftEnabled===true&&verifiedSource&&
     detail!==null&&!locked&&!blocked&&!busy;
@@ -359,21 +364,30 @@ export function WorkQuoteWorksheet({
             </ol>
           </section>
           <section className="jill-quote__unit-plan"
-            aria-label="Personalization unit mapping review">
-            <h4>P1/P2 + variants · review only</h4>
-            {unitPlan.state!=="review_only"?
-              <p role="status">Unit mapping held ({unitPlan.reason}).
-                Review original variant IDs, P1/P2 allocations and references.</p>:<>
-              <p>{unitPlan.unit_count} mapped units across
-                {" "}{unitPlan.variant_count} variant(s). Every personalized
-                unit stays separate. Shopify calculation is NOT authorized.</p>
-              <ul>{unitPlan.units.map(unit=><li
-                key={unit.source_item_id+":"+unit.unit_id}>
-                <strong>{unit.unit_id}</strong>
-                <span>{unit.group_id??"Item-wide"}</span>
-                <small>{unit.variant_id}</small>
-              </li>)}</ul>
+            aria-label="Personalization unit mapping and price review">
+            <h4>P1/P2 + variants · unit price review</h4>
+            {priceReview.state!=="review_only"?
+              <p role="status">Unit price review held ({priceReview.reason}).
+                Confirm all item prices, original P1/P2 allocations and exact variants.</p>:<>
+              <p>{priceReview.count} individually priced units across
+                {" "}{priceReview.variant_count} variant(s).
+                Verified worksheet items subtotal: {formatWorkUsd(priceReview.quoted_items_cents!)}.</p>
+              <div className="jill-quote__unit-scroll">
+                <table className="jill-quote__unit-table">
+                  <thead><tr><th scope="col">Unit</th><th scope="col">Personalization group</th>
+                    <th scope="col">Shopify variant ID</th><th scope="col">Quoted unit price</th></tr></thead>
+                  <tbody>{priceReview.units.map((unit:{source_item_id:string;
+                    unit_id:string;group_id:string|null;variant_id:string;
+                    quoted_unit_cents:number})=><tr key={unit.source_item_id+":"+unit.unit_id}>
+                    <td>{unit.unit_id}</td><td>{unit.group_id??"Item-wide"}</td>
+                    <td><code>{unit.variant_id}</code></td>
+                    <td>{formatWorkUsd(unit.quoted_unit_cents)}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
             </>}
+            <p>For internal review only. No Shopify catalog prices, tax, customer
+              approval, invoice or order creation have been verified.</p>
           </section>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
