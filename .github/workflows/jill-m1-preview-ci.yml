@@ -27,6 +27,9 @@ on:
       - 'scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs'
       - 'scripts/test-work-hq-m1-m2-predeploy-guard.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
+      - 'scripts/certify-work-hq-m1-m2-source-edition.mjs'
+      - 'scripts/test-work-hq-m1-m2-source-edition.mjs'
+      - 'scripts/work-hq-m1-m2-source-edition.json'
 
 permissions:
   contents: read
@@ -41,6 +44,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify new M1/M2 source-edition certificate and protected V4 baseline (no deploy)
+        run: node scripts/test-work-hq-m1-m2-source-edition.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
