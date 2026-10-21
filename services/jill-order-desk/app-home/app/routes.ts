@@ -18,6 +18,7 @@ export default [
     route("requests/search","routes/app.requests.search.tsx"),
     route("requests/thread","routes/app.requests.thread.tsx"),
     route("requests/quote-draft","routes/app.requests.quote-draft.tsx"),
+    route("requests/quote-catalog","routes/app.requests.quote-catalog.tsx"),
     route("requests/media/inspect","routes/app.requests.media.inspect.tsx"),
     route("setup-owner","routes/app.setup-owner.tsx"),
   ]),

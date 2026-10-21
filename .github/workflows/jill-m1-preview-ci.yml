@@ -13,6 +13,10 @@ on:
       - 'services/jill-order-desk/work-quote-unit-price-review.mjs'
       - 'scripts/test-work-hq-quote-unit-price-preview.mjs'
       - 'services/jill-order-desk/work-quote-unit-line-plan.mjs'
+      - 'services/jill-order-desk/work-quote-catalog-review.mjs'
+      - 'services/jill-order-desk/work-quote-catalog-comparison.mjs'
+      - 'scripts/test-work-hq-quote-catalog-review.mjs'
+      - 'scripts/test-work-hq-quote-catalog-comparison.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
 
 permissions:
@@ -32,6 +36,10 @@ jobs:
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
         run: node scripts/test-work-hq-quote-unit-price-preview.mjs
+      - name: Verify M2 signed-source catalog read and OFF gates
+        run: node scripts/test-work-hq-quote-catalog-review.mjs
+      - name: Verify M2 price comparison, private terms and stale snapshots
+        run: node scripts/test-work-hq-quote-catalog-comparison.mjs
       - name: Install isolated WORK App Home (no deploy)
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck actual embedded app

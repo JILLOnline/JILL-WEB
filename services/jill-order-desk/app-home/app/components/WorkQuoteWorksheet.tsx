@@ -19,6 +19,7 @@ import {inspectWorkQuoteUnitLinePlan}
   from "../../../work-quote-unit-line-plan.mjs";
 import {projectWorkQuoteUnitPriceReview}
   from "../../../work-quote-unit-price-review.mjs";
+import {WorkQuoteCatalogComparison} from "./WorkQuoteCatalogComparison";
 import "../styles/quote-worksheet.css";
 
 type QuoteValue=string|number|boolean|Array<string|number|boolean>;
@@ -104,12 +105,12 @@ function WorkQuoteUnitReview({item}:{item:QuoteItem}){
 }
 export function WorkQuoteWorksheet({
   model,submissionId,customerStatus,sourceRevision,
-  savedDraft=null,saveDraftEnabled=false,
+  savedDraft=null,saveDraftEnabled=false,catalogReviewEnabled=false,
 }:{
   model:VerifiedModel|undefined;submissionId:string;customerStatus:string;
   sourceRevision?:number;
   savedDraft?:VerifiedSavedDraft|null;
-  saveDraftEnabled?:boolean;
+  saveDraftEnabled?:boolean;catalogReviewEnabled?:boolean;
 }){
   // Hydration only accepts the server's verified projection matched to the
   // exact canonical item snapshot. This parent is keyed by submission ID.
@@ -389,6 +390,9 @@ export function WorkQuoteWorksheet({
             <p>For internal review only. No Shopify catalog prices, tax, customer
               approval, invoice or order creation have been verified.</p>
           </section>
+          <WorkQuoteCatalogComparison
+            submissionId={submissionId} sourceRevision={sourceRevision}
+            review={priceReview} enabled={catalogReviewEnabled}/>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
               <button type="button" disabled={!canUseDraft||!ready}
