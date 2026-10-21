@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {planWorkHqFocusQueue,filterWorkHqFocusQueue,workStoreCalendarDate} from '../shared/work-hq-focus-queue.mjs';
+const row={submission_id:'jill:11111111-2222-4333-8444-111111111111',revision:1,customer_status:'received',internal_status:'needs_quote',submitted_at:'2026-10-20T10:00:00Z',updated_at:'2026-10-20T11:00:00Z',date_needed:'2026-10-22',fulfillment:'shipping',item_count:2};
+const source={state:'ready',readOnly:true,requestsConnected:true,records:[row]};
+const view=planWorkHqFocusQueue(source,{asOfDate:'2026-10-21'});
+assert.equal(view.state,'ready');assert.equal(view.summary.active,1);
+assert.equal(view.records[0].group,'quote');assert.equal(view.summary.requested_within_7_days,1);
+assert.equal(filterWorkHqFocusQueue(view,{group:'quote',urgency:'next_week'}).shown,1);
+assert.equal(filterWorkHqFocusQueue(view,{group:'closed'}).shown,0);
+assert.equal(planWorkHqFocusQueue({...source,records:[row,row]},{asOfDate:'2026-10-21'}).state,'invalid_source');
+assert.equal(planWorkHqFocusQueue({...source,requestsConnected:false},{asOfDate:'2026-10-21'}).state,'source_unverified');
+assert.equal(planWorkHqFocusQueue({...source,records:[{...row,customer_status:'bogus'}]},{asOfDate:'2026-10-21'}).state,'invalid_source');
+assert.equal(filterWorkHqFocusQueue({...view,records:[{...view.records[0],email:'private@example.com'}]},{group:'quote'}).state,'held');
+assert.equal(workStoreCalendarDate(new Date('2026-10-21T04:01:00Z')),'2026-10-21');
+console.log('PASS M1 source preview queue integrity');

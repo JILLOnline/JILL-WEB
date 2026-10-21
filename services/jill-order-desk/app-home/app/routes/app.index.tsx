@@ -61,7 +61,7 @@ export default function JillHQ() {
 
 
       {owner?<section className="jill-hq__section" aria-labelledby="hq-overview-heading">
-        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2></div>
+        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2><Link to="/app/queue" className="jill-hq__card-link">Open work queue →</Link></div>
         <Suspense fallback={<p className="jill-hq__summary-state" role="status">Loading request counts…</p>}>
           <Await resolve={data.requestSummary} errorElement={<p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>}>
             {summary=><RequestOverview summary={summary}/>}
