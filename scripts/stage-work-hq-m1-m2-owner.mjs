@@ -218,10 +218,30 @@ export async function runOwnerStage(mode){
     gate(b.size===c.size&&[...b].every(([k,v])=>
       equal(v,c.get(k))),'candidate_binding_changed');
     gate(candidate?.annotations?.['workers/message']===marker&&
-      candidate.resources?.script?.etag!==before.active.resources?.script?.etag,
+      candidate.resources?.script?.etag&&
+      before.active.resources?.script?.etag&&
+      candidate.resources.script.etag!==before.active.resources.script.etag,
       'candidate_code_or_identity_unverified');
+    const previous=before.active.resources,uploaded=candidate.resources;
+    gate(equal(previous.script?.handlers,uploaded.script?.handlers),
+      'candidate_handlers_changed');
+    const noAssets=value=>{
+      gate(value&&typeof value==='object','candidate_runtime_metadata_missing');
+      const copy={...value};delete copy.assets;return copy;
+    };
+    gate(equal(noAssets(previous.script_runtime),
+      noAssets(uploaded.script_runtime)),'candidate_runtime_changed');
+    const priorAssets=previous.script_runtime.assets;
+    const candidateAssets=uploaded.script_runtime.assets;
+    gate(Boolean(priorAssets)===Boolean(candidateAssets),
+      'candidate_asset_routing_changed');
+    if(priorAssets)for(const [key,defaultValue] of [
+      ['html_handling','auto-trailing-slash'],
+      ['not_found_handling','none'],['run_worker_first',undefined]])
+      gate(equal(priorAssets[key]??defaultValue,
+        candidateAssets[key]??defaultValue),'candidate_asset_routing_changed');
     check={candidate_id:candidateId,bindings_preserved:true,
-      code_changed:true};
+      code_changed:true,runtime_preserved:true,asset_routing_preserved:true};
    }
    const after=allocation();
    gate(equal(before.baseline,after),'inspection_allocation_changed');
