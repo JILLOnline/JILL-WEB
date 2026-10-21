@@ -10,6 +10,9 @@ on:
       - 'shared/work-hq-focus-queue.mjs'
       - 'services/jill-order-desk/app-home/**'
       - 'scripts/test-work-hq-focus-queue-preview.mjs'
+      - 'services/jill-order-desk/work-quote-unit-price-review.mjs'
+      - 'scripts/test-work-hq-quote-unit-price-preview.mjs'
+      - 'services/jill-order-desk/work-quote-unit-line-plan.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
 
 permissions:
