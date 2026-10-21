@@ -66,6 +66,9 @@ export function workQuoteCatalogReviewReady(env){
    env.JILL_HQ_MERCHANT_READ_SECRET.length>=32&&
    typeof env?.JILL_ORDER_DESK_WORK_DB?.prepare==='function';
 }
+/** @param {{request?:Request,enabled?:boolean,authenticate?:any,db?:any,
+ * readFreshList?:(()=>Promise<any>),readExactDetail?:any,
+ * readCatalog?:(input:any)=>Promise<any>}} [options] */
 export async function handleWorkQuoteCatalogReview({
  request,enabled=false,authenticate,db,readFreshList,readExactDetail,
  readCatalog=readAuthorizedWorkQuoteCatalog,

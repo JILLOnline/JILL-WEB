@@ -8,6 +8,8 @@ const cents=n=>Number.isSafeInteger(n)&&n>=0&&n<=100000000;
 const held=reason=>Object.freeze({state:'held',reason,rows:Object.freeze([]),
   difference_count:null,inactive_count:null,can_publish:false,
   can_invoice:false,can_create_order:false});
+/** @param {{review?:any,snapshot?:any,submissionId?:string,
+ * sourceRevision?:number,nowMs?:number}} [options] */
 export function compareWorkQuoteUnitCatalogPrices({
   review,snapshot,submissionId,sourceRevision,nowMs=Date.now(),
 }={}){

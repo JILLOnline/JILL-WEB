@@ -6,7 +6,7 @@ import {compareWorkQuoteUnitCatalogPrices}
  from "../../../work-quote-catalog-comparison.mjs";
 type Unit={source_item_id:string;unit_id:string;group_id:string|null;
  variant_id:string;quoted_unit_cents:number};
-type PriceReview={state:string;units:Unit[]};
+type PriceReview={state:string;units:readonly Unit[]};
 type ShopifySnapshot={state:string;review_only?:boolean;can_publish?:boolean;
  submission_id?:string;source_revision?:number;currency?:string;
  verified_at_ms?:number;variants?:Array<{variant_id:string;
