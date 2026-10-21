@@ -28,7 +28,7 @@ bad(x=>x.manifest={...m,pinned_blobs:{...m.pinned_blobs,
  ['../../../secret.env']:'0'.repeat(40)}},'source_pins_invalid');
 const real=certifyM1M2SourceEdition();
 assert.equal(real.ok,true);
-assert.equal(real.verified_source_files,32);
-assert.equal(real.verified_change_paths,36);
+assert.equal(real.verified_source_files,34);
+assert.equal(real.verified_change_paths,38);
 assert.equal(real.historical_guards_preserved,7);
-console.log('PASS M1/M2 pinned 32 blob source, 36 allowed delta paths, 7 legacy guard proofs; extras/drift/tamper denied.');
+console.log('PASS M1/M2 pinned 34 source blobs, 38 changed paths, 7 protected legacy proofs; extras/drift/tamper denied.');

@@ -30,6 +30,8 @@ on:
       - 'scripts/certify-work-hq-m1-m2-source-edition.mjs'
       - 'scripts/test-work-hq-m1-m2-source-edition.mjs'
       - 'scripts/work-hq-m1-m2-source-edition.json'
+      - 'scripts/inspect-work-hq-m1-m2-owner.mjs'
+      - 'scripts/test-work-hq-m1-m2-owner-inspect.mjs'
 
 permissions:
   contents: read
@@ -48,6 +50,8 @@ jobs:
           node-version: '22'
       - name: Verify new M1/M2 source-edition certificate and protected V4 baseline (no deploy)
         run: node scripts/test-work-hq-m1-m2-source-edition.mjs
+      - name: Verify READ-ONLY Owner Cloudflare allocation preflight and fail-closed denials (synthetic)
+        run: node scripts/test-work-hq-m1-m2-owner-inspect.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
