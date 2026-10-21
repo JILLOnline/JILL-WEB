@@ -96,6 +96,28 @@ if(process.argv.includes('--compiled-canary')){
     // stage flags. Never print full Worker bindings, tokens or config.
     console.error('CANARY_BUILD_SCHEMA_REVIEW',JSON.stringify({
       reason:observed.reason,
+      // Generated fields ONLY. List material resource keys without values,
+      // secrets, customer data, or serialized connection objects.
+      possibly_material_resource_keys:Object.entries(fromBuild)
+        .filter(([key])=>[
+          'agent_memory','ai_search','ai_search_namespaces','analytics_engine_datasets',
+          'artifacts','cloudchamber','connect','dispatch_namespaces','durable_objects',
+          'exports','flagship','hyperdrive','k2','kv_namespaces','logfwdr',
+          'migrations','mtls_certificates','pipelines','python_modules','queues',
+          'r2_buckets','ratelimits','secrets_store_secrets','send_email','services',
+          'triggers','unsafe_hello_world','vectorize','vpc_networks','vpc_services',
+          'worker_loaders','workflows'
+        ].includes(key))
+        .filter(([,value])=>{
+          const empty=x=>x===undefined||x===null||x===false||
+            Array.isArray(x)&&x.every(empty)||
+            x&&typeof x==='object'&&!Array.isArray(x)&&
+              Object.values(x).every(empty);
+          return !empty(value);
+        }).map(([key,value])=>({key,kind:Array.isArray(value)?'array':typeof value,
+          keys:value&&typeof value==='object'&&!Array.isArray(value)?
+            Object.keys(value).sort():[],
+          item_count:Array.isArray(value)?value.length:undefined})),
       top_level_keys:Object.keys(fromBuild).sort(),
       main:fromBuild.main,
       compatibility_date:fromBuild.compatibility_date,
