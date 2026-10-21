@@ -81,11 +81,7 @@ jobs:
         run: npm run typecheck --prefix services/jill-order-desk/app-home
       - name: Build actual embedded WORK app (no deploy)
         run: npm run build --prefix services/jill-order-desk/app-home
-      - name: Test compiled WORK Worker with synthetic D1 and no real secrets
+      - name: Verify compiled M1/M2 WORK Worker itself, local D1, disabled finance and OAuth (NO DEPLOY)
         working-directory: services/jill-order-desk/app-home
-        run: |
-          npm run test:workerd-connected-read-local
-          npm run test:workerd-navigation-local
-          npm run test:workerd-quote-save-owner-local
-          npm run test:workerd-quote-read-restore-local
+        run: node scripts/test-workerd-m1m2-compiled-local.mjs
 
