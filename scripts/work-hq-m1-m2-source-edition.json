@@ -47,7 +47,7 @@
     "services/jill-order-desk/work-quote-unit-price-review.mjs": "a62f2cef3f5ec4cb87161ba66d0247b94e4e277b",
     "shared/work-hq-focus-queue.mjs": "f908bbbfa75ac03c23b2b2c8a028f1735ca9808d",
     "scripts/inspect-work-hq-m1-m2-owner.mjs": "cb7ff664e9008d37979429d2f32809eaffcef61a",
-    "scripts/test-work-hq-m1-m2-owner-inspect.mjs": "fa092d69f674c2cdb00efb678ad5f35fc2c17f42",
+    "scripts/test-work-hq-m1-m2-owner-inspect.mjs": "4b96a7872228183e556e0b6bde549f9bbbd738b2",
     "scripts/run-work-hq-m1-m2-owner-preflight.ps1": "848e44d40695af2fe4a3a946526c3b5276a204e4"
   }
 }
