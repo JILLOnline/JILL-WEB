@@ -15,6 +15,14 @@ const SHA=/^[0-9a-f]{40}$/;
 const rel=p=>typeof p==='string'&&!p.startsWith('/')&&
  !p.split('/').some(x=>x===''||x==='..'||x==='.')&&!p.includes('\\');
 const same=(a,b)=>a.length===b.length&&a.every((x,i)=>x===b[i]);
+// Windows git checkouts may use CRLF. Git blobs are LF; preserve content
+// while rejecting lone carriage returns and all actual source drift.
+export function normalizedSourceBytes(input){
+ const raw=(Buffer.isBuffer(input)?input:Buffer.from(input)).toString('utf8');
+ if(raw.replace(/\r\n/g,'').includes('\r'))
+  throw Error('STOP invalid lone carriage return in source');
+ return Buffer.from(raw.replace(/\r\n/g,'\n'),'utf8');
+}
 const hash=data=>{
  const bytes=Buffer.isBuffer(data)?data:Buffer.from(data);
  return createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
@@ -67,7 +75,7 @@ export function certifyM1M2SourceEdition(){
  const observedBlobs={};
  for(const file of Object.keys(manifest.pinned_blobs)){
   if(!rel(file))throw Error('STOP unsafe source path');
-  observedBlobs[file]=hash(readFileSync(path.join(ROOT,file)));
+  observedBlobs[file]=hash(normalizedSourceBytes(readFileSync(path.join(ROOT,file))));
  }
  const historicalMatches={};
  for(const file of manifest.protected_historical){

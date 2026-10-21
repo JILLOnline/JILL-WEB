@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {assessM1M2SourceEdition,certifyM1M2SourceEdition}
+import {assessM1M2SourceEdition,certifyM1M2SourceEdition,normalizedSourceBytes}
  from './certify-work-hq-m1-m2-source-edition.mjs';
 const m=JSON.parse(readFileSync('scripts/work-hq-m1-m2-source-edition.json','utf8'));
 const scope=[...Object.keys(m.pinned_blobs),
@@ -12,6 +12,9 @@ const history=Object.fromEntries(m.protected_historical.map(x=>[x,true]));
 const safe=()=>({manifest:m,observedPaths:[...scope],
  observedBlobs:{...m.pinned_blobs},historicalMatches:{...history}});
 assert.equal(assessM1M2SourceEdition(safe()).ok,true);
+assert.equal(normalizedSourceBytes(Buffer.from('one\r\ntwo\r\n')).toString(),
+ 'one\ntwo\n');
+assert.throws(()=>normalizedSourceBytes(Buffer.from('one\rtwo')),/lone carriage return/);
 const bad=(mutate,code)=>{
  const v=safe();mutate(v);
  const r=assessM1M2SourceEdition(v);
