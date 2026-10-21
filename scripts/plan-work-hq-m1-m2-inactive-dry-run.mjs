@@ -69,7 +69,7 @@ function resourceUnused(key,value){
   return valid(value)&&Object.keys(value).length===1&&
     Array.isArray(value.exclude)&&value.exclude.length<=32&&
     value.exclude.every(p=>typeof p==='string'&&p.length>0&&
-      p.length<=256&&!/[\\r\\n\\0]/.test(p));
+      p.length<=256&&![...p].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127));
  }
  return emptyDefault(value);
 }
