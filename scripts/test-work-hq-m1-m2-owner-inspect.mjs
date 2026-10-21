@@ -51,6 +51,9 @@ assert.equal(result.status,'READ_ONLY_RUNTIME_VERIFIED',result.reason);
 assert.equal(result.active_version,ACTIVE);
 assert.equal(result.quote_percentage,0);
 assert.equal(result.read_count,5);
+assert.equal(result.version_list_role,'advisory_paginated');
+assert.equal(result.direct_active_version_verified,true);
+assert.equal(result.direct_quote_version_verified,true);
 assert.equal(result.authorization_to_activate,false);
 assert.deepEqual(m.calls.slice(0,5),[
  'deployments list','versions list','versions view '+ACTIVE,
@@ -68,7 +71,24 @@ const hold=async(changes,reason)=>{
 await hold({before:{deployments:[]}},'metadata_read_incomplete');
 await hold({after:{deployments:[{...allocation.deployments[0],
  id:'f6f6f6f6-3333-4333-8333-555555555555'}]}},'allocation_changed_during_read');
-await hold({versions:{versions:[{id:ACTIVE}]}},'version_inventory_incomplete');
+// Wrangler lists recent versions with pagination; the preserved 0% canary
+// and even the active version can be missing from its CURRENT PAGE.
+for(const page of [
+ {versions:[{id:ACTIVE}]},
+ {versions:[{id:'11111111-2222-4333-8444-555555555555'}]},
+ {result:{versions:[],cursor:'next-page'}},
+ {versions:[]},
+ Array.from({length:250},(_,i)=>({id:String(i)})),
+]){
+ const observed=await inspect(mock({versions:page}));
+ assert.equal(observed.status,'READ_ONLY_RUNTIME_VERIFIED',observed.reason);
+ assert.equal(observed.version_list_role,'advisory_paginated');
+ assert.equal(observed.direct_active_version_verified,true);
+ assert.equal(observed.direct_quote_version_verified,true);
+ assert.equal(observed.authorization_to_activate,false);
+}
+await hold({versions:null},'version_list_response_invalid');
+await hold({versions:{}},'version_list_response_invalid');
 await hold({active:config(ACTIVE,bindings.map(x=>x.name==='JILL_WORK_CONVERSATION_ENABLED'?
  plain(x.name,'true'):x))},'sensitive_feature_flags_not_off');
 await hold({active:config(ACTIVE,bindings.map(x=>x.name==='JILL_ORDER_DESK_WORK_DB'?

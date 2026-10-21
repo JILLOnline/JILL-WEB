@@ -46,8 +46,8 @@
     "services/jill-order-desk/work-quote-per-unit-calculation-preview.mjs": "8e283e3547916a024be3badd46364f03637c41b4",
     "services/jill-order-desk/work-quote-unit-price-review.mjs": "a62f2cef3f5ec4cb87161ba66d0247b94e4e277b",
     "shared/work-hq-focus-queue.mjs": "f908bbbfa75ac03c23b2b2c8a028f1735ca9808d",
-    "scripts/inspect-work-hq-m1-m2-owner.mjs": "cb7ff664e9008d37979429d2f32809eaffcef61a",
-    "scripts/test-work-hq-m1-m2-owner-inspect.mjs": "4b96a7872228183e556e0b6bde549f9bbbd738b2",
+    "scripts/inspect-work-hq-m1-m2-owner.mjs": "d579520ac3b39b7915a3aa8cfa7abe70d8397f8a",
+    "scripts/test-work-hq-m1-m2-owner-inspect.mjs": "71707b599ea0df21d49b1c0f07020d0b7fe20a17",
     "scripts/run-work-hq-m1-m2-owner-preflight.ps1": "848e44d40695af2fe4a3a946526c3b5276a204e4"
   }
 }

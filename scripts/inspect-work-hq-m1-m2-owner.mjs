@@ -29,10 +29,10 @@ const HOLD=(reason,proof={})=>Object.freeze({
  authorization_to_activate:false,...proof});
 const validView=(x,id)=>x?.id===id&&Array.isArray(x.resources?.bindings)&&
  x.resources.bindings.length>=8&&x.resources.bindings.length<=40;
-const parseList=x=>Array.isArray(x)?x:
- Array.isArray(x?.versions)?x.versions:
- Array.isArray(x?.result?.versions)?x.result.versions:
- Array.isArray(x?.result)?x.result:null;
+// Wrangler versions list is a PAGINATED INVENTORY, not the authority for
+// deployed version identity. Its most recent page may omit the live active
+// version and the preserved 0% canary. Current deployment allocation plus
+// exact versions view metadata for BOTH IDs are the authoritative proofs.
 function verifyReadOnlyBindings(active){
  if(!validView(active,active.id))return 'active_bindings_unavailable';
  const b=new Map();
@@ -103,11 +103,13 @@ export async function inspectM1M2WorkRuntime({
     !baseline.versions.some(v=>v.id===QUOTE&&v.percentage===0)||
     !baseline.versions.some(v=>v.id===activeId&&v.percentage===100))
    return HOLD('unexpected_active_or_quote_allocation',safe);
- const versions=parseList(values.versions);
- if(!versions||versions.length>100||
-    !versions.some(x=>x?.id===activeId)||
-    !versions.some(x=>x?.id===QUOTE))
-   return HOLD('version_inventory_incomplete',safe);
+ // Require a successful and structured version-list read, but never mistake
+ // pagination/retention for proof that an explicitly viewed version is absent.
+ // Direct authenticated versions view + stable deployment allocation bind IDs.
+ if(!values.versions||typeof values.versions!=='object'||
+    !Array.isArray(values.versions)&&
+    !Object.keys(values.versions).length)
+   return HOLD('version_list_response_invalid',safe);
  if(!validView(values.active_version,activeId)||
     !validView(values.quote_canary,QUOTE))
    return HOLD('version_metadata_unverified',safe);
@@ -131,6 +133,8 @@ export async function inspectM1M2WorkRuntime({
   active_version:activeId,quote_canary:QUOTE,
   quote_percentage:0,active_percentage:100,
   read_count:reads.length,reads,
+  version_list_role:'advisory_paginated',
+  direct_active_version_verified:true,direct_quote_version_verified:true,
   bindings_verified:true,health_verified:true,
   traffic_changed:false,deployment_requested:false,
   upload_requested:false,migration_requested:false,
