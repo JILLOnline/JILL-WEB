@@ -1,0 +1,35 @@
+name: JILL M1 source-only preview checks
+
+# Isolated PR compile verification. Never deploy, publish, mutate a store,
+# read secrets, or bypass WORK release gates.
+on:
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'shared/work-hq-focus-queue.mjs'
+      - 'services/jill-order-desk/app-home/**'
+      - 'scripts/test-work-hq-focus-queue-preview.mjs'
+      - '.github/workflows/jill-m1-preview-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-preview:
+    name: Validate read-only Operations Queue and compile embedded WORK app
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate pure source and negative tests
+        run: node scripts/test-work-hq-focus-queue-preview.mjs
+      - name: Install isolated WORK App Home (no deploy)
+        run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+      - name: Typecheck actual embedded app
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Build actual embedded WORK app (no deploy)
+        run: npm run build --prefix services/jill-order-desk/app-home
