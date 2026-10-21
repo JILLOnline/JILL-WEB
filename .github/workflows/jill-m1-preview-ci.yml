@@ -23,6 +23,8 @@ on:
       - 'services/jill-order-desk/work-quote-artwork-audit.mjs'
       - 'services/jill-order-desk/work-quote-per-unit-calculation-preview.mjs'
       - 'scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs'
+      - 'services/jill-order-desk/work-quote-per-unit-authorized-preview.mjs'
+      - 'scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
 
 permissions:
@@ -61,6 +63,8 @@ jobs:
         run: node scripts/test-work-hq-quote-artwork-audit.mjs
       - name: Verify repeated ProductVariant P1/P2 calculation and fail-closed results (synthetic only)
         run: node scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs
+      - name: Verify M2 Owner-only Shopify SDK calculation boundary (synthetic backend)
+        run: node scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs
       - name: Install isolated WORK App Home (no deploy)
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck actual embedded app
