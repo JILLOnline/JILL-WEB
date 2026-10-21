@@ -18,6 +18,7 @@ on:
       - 'scripts/test-work-hq-quote-catalog-review.mjs'
       - 'scripts/test-work-hq-quote-catalog-comparison.mjs'
       - 'scripts/test-work-hq-quote-draft-roundtrip-preview.mjs'
+      - 'scripts/test-work-hq-quote-http-lifecycle-preview.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
 
 permissions:
@@ -50,6 +51,8 @@ jobs:
           npm run test:work-hq-quote-ui-wiring
       - name: Verify M2 draft write-plan, hash, restored projection, no-PII and OFF endpoints
         run: node scripts/test-work-hq-quote-draft-roundtrip-preview.mjs
+      - name: Verify M2 Owner HTTP Save/Reload, idempotency and tamper recovery (synthetic D1 only)
+        run: node scripts/test-work-hq-quote-http-lifecycle-preview.mjs
       - name: Install isolated WORK App Home (no deploy)
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck actual embedded app
