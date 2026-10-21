@@ -53,6 +53,14 @@ jobs:
         run: node scripts/test-work-hq-m1-m2-source-edition.mjs
       - name: Verify READ-ONLY Owner Cloudflare allocation preflight and fail-closed denials (synthetic)
         run: node scripts/test-work-hq-m1-m2-owner-inspect.mjs
+      - name: Parse Windows PowerShell handoff WITHOUT running it
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          $path = Join-Path $pwd 'scripts/run-work-hq-m1-m2-owner-preflight.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -ne 0) { throw 'Owner PowerShell handoff has invalid syntax.' }
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
