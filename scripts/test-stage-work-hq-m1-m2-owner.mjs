@@ -65,7 +65,7 @@ const safeReason=explainWorkM1M2Plan({
  baseline,active,quote,compiled:{
   name:'jill-order-desk-canary-work'},});
 assert.equal(safeReason.status,'HOLD');
-assert.equal(safeReason.reason,'correct_canary_compiled_manifest_required');
+assert.equal(safeReason.reason,'ambiguous_live_bindings');
 assert.equal(safeReason.upload_requested,false);
 assert.equal(safeReason.shape.active_handlers_array,true);
 assert.equal(safeReason.shape.quote_handlers_array,true);
