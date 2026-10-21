@@ -89,4 +89,13 @@ for(const forbidden of [
  'migrations apply','d1 execute','r2 bucket create']){
  assert.equal(original.includes(forbidden),false,forbidden);
 }
-console.log('PASS M1/M2 5-read Cloudflare owner inspection, stable allocation, D1/secret/flag/health, 11 fail-closed cases and no mutations');
+const handoff=readFileSync('scripts/run-work-hq-m1-m2-owner-preflight.ps1','utf8');
+assert.match(handoff,/param\(\[switch\]\$ReadOnly\)/);
+assert.match(handoff,/jill\/m1-work-queue-preview-20261021/);
+assert.match(handoff,/scripts\/test-work-hq-m1-m2-source-edition\.mjs/);
+assert.match(handoff,/scripts\/test-work-hq-m1-m2-owner-inspect\.mjs/);
+assert.match(handoff,/scripts\/inspect-work-hq-m1-m2-owner\.mjs --owner/);
+assert.match(handoff,/scripts\/test-workerd-m1m2-compiled-local\.mjs/);
+assert.match(handoff,/M1_M2_SOURCE_AND_WORK_RUNTIME_PREFLIGHT_PASSED/);
+assert.doesNotMatch(handoff,/\&\s*(?:git[^\n]*\bpush\b|wrangler[^\n]*\bdeploy\b|npm\.cmd[^\n]*\bpublish\b)/i);
+console.log('PASS M1/M2 Owner PowerShell handoff safety + 5-read Cloudflare inspection and fail-closed denials');

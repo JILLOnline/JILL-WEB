@@ -32,6 +32,7 @@ on:
       - 'scripts/work-hq-m1-m2-source-edition.json'
       - 'scripts/inspect-work-hq-m1-m2-owner.mjs'
       - 'scripts/test-work-hq-m1-m2-owner-inspect.mjs'
+      - 'scripts/run-work-hq-m1-m2-owner-preflight.ps1'
 
 permissions:
   contents: read
