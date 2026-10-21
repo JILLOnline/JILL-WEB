@@ -87,6 +87,33 @@ if(process.argv.includes('--compiled-canary')){
   const file=new URL('../services/jill-order-desk/app-home/dist/server/wrangler.json',import.meta.url);
   const fromBuild=JSON.parse(readFileSync(file,'utf8'));
   const observed=plan({...data,compiled:fromBuild});
+  if(observed.state!=='LOCAL_DRY_RUN_MANIFEST_PREPARED'){
+    // Diagnostic is limited to public *schema* and three non-secret build
+    // stage flags. Never print full Worker bindings, tokens or config.
+    console.error('CANARY_BUILD_SCHEMA_REVIEW',JSON.stringify({
+      reason:observed.reason,
+      top_level_keys:Object.keys(fromBuild).sort(),
+      main:fromBuild.main,
+      compatibility_date:fromBuild.compatibility_date,
+      compatibility_flags:fromBuild.compatibility_flags,
+      workers_dev:fromBuild.workers_dev,
+      assets:{keys:Object.keys(fromBuild.assets||{}).sort(),
+        directory:fromBuild.assets?.directory,
+        binding:fromBuild.assets?.binding,
+        run_worker_first:fromBuild.assets?.run_worker_first},
+      d1:(fromBuild.d1_databases||[]).map(db=>({
+        keys:Object.keys(db).sort(),
+        binding:db.binding,
+        name_matches:db.database_name==='jill-order-desk-work',
+        id_matches:db.database_id==='3f17c186-c794-4e00-8f20-017191373a19',
+        migrations_dir:db.migrations_dir})),
+      stage_flags:{
+        JILL_WORK_HOST_STAGE:fromBuild.vars?.JILL_WORK_HOST_STAGE,
+        JILL_WORK_OWNER_BOOTSTRAP_ENABLED:fromBuild.vars?.JILL_WORK_OWNER_BOOTSTRAP_ENABLED,
+        JILL_WORK_OAUTH_ENABLED:fromBuild.vars?.JILL_WORK_OAUTH_ENABLED
+      }
+    }));
+  }
   assert.equal(observed.state,'LOCAL_DRY_RUN_MANIFEST_PREPARED',
     'Actual compiled WORK canary manifest held: '+observed.reason);
   assert.equal(observed.manifest.name,'jill-order-desk-canary-work');
