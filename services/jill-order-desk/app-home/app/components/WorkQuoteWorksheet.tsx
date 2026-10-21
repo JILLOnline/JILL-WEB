@@ -160,8 +160,11 @@ export function WorkQuoteWorksheet({
       const rev=saveFetcher.data.revision!;
       setDraftRevision(rev);
       operation.current=null;
+      // A server acknowledgment is not an independently verified readback.
+      // Keep the next Save blocked until a fresh Owner-backed Reload succeeds.
+      setBlocked(true);
       setFeedback("Draft revision "+rev+
-        " was acknowledged. Reload to check independently.");
+        " was acknowledged. Reload the saved draft to verify before saving again.");
     }else{
       setBlocked(true);
       setFeedback("Save not confirmed ("+saveFetcher.data.code+
@@ -237,10 +240,13 @@ export function WorkQuoteWorksheet({
     plan:unitPlan,itemSubtotalCents:readyQuote?.itemsSubtotalCents??null,
   });
   const ready=detail!==null&&!locked&&readyQuote!==null;
-  const canUseDraft=saveDraftEnabled===true&&verifiedSource&&
-    detail!==null&&!locked&&!blocked&&!busy;
+  // An uncertain or just-acknowledged commit must STOP further writes,
+  // but must NOT disable the independent Owner/D1 Reload recovery path.
+  const canReloadDraft=saveDraftEnabled===true&&verifiedSource&&
+    detail!==null&&!locked&&!busy;
+  const canSaveDraft=canReloadDraft&&!blocked;
   const onSaveDraft=()=>{
-    if(!canUseDraft||!readyQuote)return;
+    if(!canSaveDraft||!readyQuote)return;
     const op=operation.current??"jill:hq:quote:"+crypto.randomUUID();
     const intent=prepareWorkQuoteUiSavePayload({
       submissionId,detail,sourceRevision,customerStatus,
@@ -258,7 +264,7 @@ export function WorkQuoteWorksheet({
     });
   };
   const onReloadDraft=()=>{
-    if(!canUseDraft)return;
+    if(!canReloadDraft)return;
     // Explicit user action may replace unsaved form inputs. The
     // initial automatic read cannot.
     merchantExplicitReload.current=true;
@@ -395,11 +401,11 @@ export function WorkQuoteWorksheet({
             review={priceReview} enabled={catalogReviewEnabled}/>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
-              <button type="button" disabled={!canUseDraft||!ready}
+              <button type="button" disabled={!canSaveDraft||!ready}
                 onClick={onSaveDraft}>
                 {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
               </button>
-              <button type="button" disabled={!canUseDraft}
+              <button type="button" disabled={!canReloadDraft}
                 onClick={onReloadDraft}>
                 {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
               </button>
