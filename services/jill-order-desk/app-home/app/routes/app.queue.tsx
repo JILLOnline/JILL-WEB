@@ -31,7 +31,7 @@ export default function WorkFocusQueue(){
  <button type="button" onClick={()=>{setWhen("all");setSearch("");}}>Reset</button></div>
  <p role="status" className="jill-queue__hint">Showing {filtered.shown} of {filtered.in_group} verified requests</p>
  <div className="jill-queue__table"><div className="jill-queue__head"><span>Requested</span><span>Request</span><span>Next step</span><span>Customer status</span><span>Items</span><span>Open</span></div>
- {filtered.records.length===0?<p className="jill-queue__notice">No matching requests.</p>:filtered.records.map(row=><article className="jill-queue__row" key={row.submission_id}>
+ {filtered.records.length===0?<p className="jill-queue__notice">No matching requests.</p>:filtered.records.map((row:QueueRecord)=><article className="jill-queue__row" key={row.submission_id}>
  <div data-label="Requested"><strong>{row.date_needed||"Not supplied"}</strong><small>{URGENCY[row.urgency]||"Review"}</small></div>
  <div data-label="Request"><strong>#{requestShortId(row.submission_id)}</strong><small>Revision {row.revision}</small></div>
  <div data-label="Next step"><strong>{LABEL[row.group]||"Review"}</strong><small>{internalStatusLabel(row.internal_status)}</small></div>
