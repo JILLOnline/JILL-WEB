@@ -68,6 +68,6 @@ try{
  assert.equal(forged.status,403);
  console.log('PASS compiled M1/M2 LOCAL Worker health and D1, Queue/Requests deny OAuth, quote/catalog OFF, origin CSRF, wrong host. No remote calls/deploy.');
 }finally{
- if(harness)await harness.dispose();
+ if(harness)await harness.close();
  try{unlinkSync(temp)}catch{}
 }
