@@ -25,6 +25,7 @@ on:
       - 'scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs'
       - 'services/jill-order-desk/work-quote-per-unit-authorized-preview.mjs'
       - 'scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs'
+      - 'scripts/test-work-hq-m1-m2-predeploy-guard.mjs'
       - '.github/workflows/jill-m1-preview-ci.yml'
 
 permissions:
@@ -65,6 +66,15 @@ jobs:
         run: node scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs
       - name: Verify M2 Owner-only Shopify SDK calculation boundary (synthetic backend)
         run: node scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs
+      - name: Verify My JILL customer ownership, public messaging and account continuity (source-only)
+        run: |
+          npm run test:custom-order-ownership
+          npm run test:custom-order-account-read
+          npm run test:customer-custom-orders
+          npm run test:work-message-inboxes
+          npm run test:account-hub-canary
+      - name: Verify M1 + M2 WORK predeploy feature and route safety
+        run: node scripts/test-work-hq-m1-m2-predeploy-guard.mjs
       - name: Install isolated WORK App Home (no deploy)
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck actual embedded app
