@@ -35,6 +35,8 @@ on:
       - 'scripts/run-work-hq-m1-m2-owner-preflight.ps1'
       - 'scripts/plan-work-hq-m1-m2-inactive-dry-run.mjs'
       - 'scripts/test-work-hq-m1-m2-inactive-dry-run.mjs'
+      - 'scripts/stage-work-hq-m1-m2-owner.mjs'
+      - 'scripts/test-stage-work-hq-m1-m2-owner.mjs'
 
 permissions:
   contents: read
@@ -65,6 +67,8 @@ jobs:
           if ($parseErrors.Count -ne 0) { throw 'Owner PowerShell handoff has invalid syntax.' }
       - name: Verify M1/M2 inactive-version manifest preservation and no new resources (source-only)
         run: node scripts/test-work-hq-m1-m2-inactive-dry-run.mjs
+      - name: Verify one-use M1/M2 stage runner policy (synthetic, NO CLOUD)
+        run: node scripts/test-stage-work-hq-m1-m2-owner.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
