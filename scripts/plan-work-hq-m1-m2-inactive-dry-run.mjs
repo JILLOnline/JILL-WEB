@@ -27,12 +27,12 @@ const SECRETS=new Set([
  'SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64',
  'JILL_HQ_MERCHANT_READ_SECRET','JILL_HQ_MERCHANT_WRITE_SECRET',
 ]);
+// Inactive means no new schedules, routes, resource classes, migrations,
+// placement, tails, uploads or paid limits. Fail closed on unreviewed config.
 const ALLOWED_KEYS=new Set([
  'name','main','compatibility_date','compatibility_flags','workers_dev',
  'assets','d1_databases','vars','version_metadata','keep_vars',
- 'secrets','send_metrics','observability','triggers','placement',
- 'limits','tail_consumers','upload_source_maps','migrations',
- '$schema',
+ 'send_metrics','$schema',
 ]);
 const stop=reason=>Object.freeze({
  state:'held',reason,manifest:null,
@@ -77,19 +77,39 @@ export function planWorkM1M2LocalDryRun({
  if(q.size<8||q.size>35)return stop('quote_canary_bindings_unverified');
  if(!valid(compiled)||compiled.name!=='jill-order-desk-canary-work'||
     compiled.workers_dev!==true||
+    compiled.compatibility_date!=='2026-10-14'||
     !Array.isArray(compiled.compatibility_flags)||
-    !compiled.compatibility_flags.includes('nodejs_compat')||
+    !equal(compiled.compatibility_flags,['nodejs_compat'])||
+    !['index.js','./index.js'].includes(compiled.main)||
     !Array.isArray(compiled.d1_databases)||
     compiled.d1_databases.length!==1||
+    !valid(compiled.d1_databases[0])||
     compiled.d1_databases[0].binding!=='JILL_ORDER_DESK_WORK_DB'||
+    compiled.d1_databases[0].database_name!=='jill-order-desk-work'||
     compiled.d1_databases[0].database_id!==D1||
-    !valid(compiled.assets)||!compiled.assets.directory||
-    !valid(compiled.vars))
+    Object.keys(compiled.d1_databases[0]).some(k=>
+      !['binding','database_name','database_id','migrations_dir'].includes(k))||
+    (compiled.d1_databases[0].migrations_dir!==undefined&&
+      compiled.d1_databases[0].migrations_dir!=='../migrations')||
+    !valid(compiled.assets)||
+    compiled.assets.directory!=='../client'||
+    Object.keys(compiled.assets).some(k=>k!=='directory')||
+    !valid(compiled.vars)||
+    compiled.vars.JILL_WORK_HOST_STAGE!=='canary'||
+    compiled.vars.JILL_WORK_OWNER_BOOTSTRAP_ENABLED!=='false'||
+    compiled.vars.JILL_WORK_OAUTH_ENABLED!=='false'||
+    Object.entries(compiled.vars).some(([k,v])=>
+      !/^[A-Z][A-Z0-9_]*$/.test(k)||typeof v!=='string'))
   return stop('correct_canary_compiled_manifest_required');
  if(Object.keys(compiled).some(k=>!ALLOWED_KEYS.has(k))||
-    compiled.kv_namespaces?.length||compiled.r2_buckets?.length||
-    compiled.queues?.producers?.length||compiled.queues?.consumers?.length||
-    compiled.durable_objects?.bindings?.length)
+    Object.hasOwn(compiled,'secrets')||
+    Object.hasOwn(compiled,'triggers')||
+    Object.hasOwn(compiled,'migrations')||
+    Object.hasOwn(compiled,'routes')||
+    Object.hasOwn(compiled,'r2_buckets')||
+    Object.hasOwn(compiled,'kv_namespaces')||
+    Object.hasOwn(compiled,'queues')||
+    Object.hasOwn(compiled,'durable_objects'))
   return stop('unapproved_compiled_resource');
  const db=b.get('JILL_ORDER_DESK_WORK_DB');
  if(db?.type!=='d1'||(db.id??db.database_id)!==D1)
@@ -100,6 +120,8 @@ export function planWorkM1M2LocalDryRun({
   return stop('version_identity_binding_missing');
  const vars={};
  for(const [k,v] of b){
+  if(!/^[A-Z][A-Z0-9_]*$/.test(k))
+   return stop('unsafe_live_binding_name');
   if(v.type==='plain_text'){
    if(typeof v.text!=='string'||v.text.length>150||
       /[\x00-\x1f\x7f]/.test(v.text))return stop('unsafe_plaintext_binding');

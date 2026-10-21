@@ -30,7 +30,8 @@ const allocation={deployment:'750af09e-720f-4e17-bae5-57eb190d252d',
 const compiled={name:'jill-order-desk-canary-work',workers_dev:true,
  compatibility_date:'2026-10-14',compatibility_flags:['nodejs_compat'],
  assets:{directory:'../client'},main:'index.js',
- vars:{JILL_WORK_HOST_STAGE:'canary',JILL_WORK_OAUTH_ENABLED:'false'},
+ vars:{JILL_WORK_HOST_STAGE:'canary',
+  JILL_WORK_OWNER_BOOTSTRAP_ENABLED:'false',JILL_WORK_OAUTH_ENABLED:'false'},
  d1_databases:[{binding:'JILL_ORDER_DESK_WORK_DB',
  database_name:'jill-order-desk-work',
  database_id:'3f17c186-c794-4e00-8f20-017191373a19'}]};
@@ -62,6 +63,19 @@ deny('quote',{...quote,resources:{...quote.resources,
  plain(x.name,'false'):x)}},'quote_canary_identity_changed');
 deny('compiled',{...compiled,name:'jill-order-desk-work'},'correct_canary_compiled_manifest_required');
 deny('compiled',{...compiled,r2_buckets:[{binding:'NEW',bucket_name:'new-bucket'}]},'unapproved_compiled_resource');
+deny('compiled',{...compiled,r2_buckets:[]},'unapproved_compiled_resource');
+deny('compiled',{...compiled,triggers:{crons:['* * * * *']}},'unapproved_compiled_resource');
+deny('compiled',{...compiled,migrations:[]},'unapproved_compiled_resource');
+deny('compiled',{...compiled,routes:[]},'unapproved_compiled_resource');
+deny('compiled',{...compiled,observability:{enabled:true}},'unapproved_compiled_resource');
+deny('compiled',{...compiled,main:'../unreviewed.js'},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,assets:{directory:'../../outside'}},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,assets:{directory:'../client',run_worker_first:true}},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,compatibility_flags:['nodejs_compat','unreviewed_feature']},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,compatibility_date:'2027-01-01'},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,d1_databases:[{...compiled.d1_databases[0],remote:true}]},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,vars:{...compiled.vars,JILL_WORK_HOST_STAGE:'live'}},'correct_canary_compiled_manifest_required');
+deny('compiled',{...compiled,vars:{...compiled.vars,JILL_WORK_OWNER_BOOTSTRAP_ENABLED:'true'}},'correct_canary_compiled_manifest_required');
 deny('active',{...active,resources:{...active.resources,
  bindings:bindings.filter(x=>x.name!=='SHOPIFY_API_SECRET')}},'live_secret_presence_unverified');
 deny('active',{...active,resources:{...active.resources,bindings:bindings.map(x=>
