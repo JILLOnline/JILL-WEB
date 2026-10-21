@@ -64,9 +64,13 @@ deny('quote',{...quote,resources:{...quote.resources,
  plain(x.name,'false'):x)}},'quote_canary_identity_changed');
 deny('compiled',{...compiled,name:'jill-order-desk-work'},'correct_canary_compiled_manifest_required');
 deny('compiled',{...compiled,r2_buckets:[{binding:'NEW',bucket_name:'new-bucket'}]},'unapproved_compiled_resource');
-deny('compiled',{...compiled,r2_buckets:[]},'unapproved_compiled_resource');
+const emptyResource=plan({...data,compiled:{...compiled,r2_buckets:[],queues:{producers:[],consumers:[]},triggers:{crons:[]},migrations:[]}});
+assert.equal(emptyResource.state,'LOCAL_DRY_RUN_MANIFEST_PREPARED',emptyResource.reason);
+for(const key of ['r2_buckets','queues','triggers','migrations'])
+ assert.equal(Object.hasOwn(emptyResource.manifest,key),false);
+deny('compiled',{...compiled,r2_buckets:[{binding:'NEW'}]},'unapproved_compiled_resource');
 deny('compiled',{...compiled,triggers:{crons:['* * * * *']}},'unapproved_compiled_resource');
-deny('compiled',{...compiled,migrations:[]},'unapproved_compiled_resource');
+deny('compiled',{...compiled,migrations:[{tag:'unapproved'}]},'unapproved_compiled_resource');
 deny('compiled',{...compiled,routes:[]},'unapproved_compiled_resource');
 deny('compiled',{...compiled,observability:{enabled:true}},'unapproved_compiled_resource');
 deny('compiled',{...compiled,main:'../unreviewed.js'},'correct_canary_compiled_manifest_required');

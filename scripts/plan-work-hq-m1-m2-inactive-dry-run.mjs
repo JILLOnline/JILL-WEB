@@ -27,13 +27,40 @@ const SECRETS=new Set([
  'SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64',
  'JILL_HQ_MERCHANT_READ_SECRET','JILL_HQ_MERCHANT_WRITE_SECRET',
 ]);
-// Inactive means no new schedules, routes, resource classes, migrations,
-// placement, tails, uploads or paid limits. Fail closed on unreviewed config.
-const ALLOWED_KEYS=new Set([
- 'name','main','compatibility_date','compatibility_flags','workers_dev',
- 'assets','d1_databases','vars','version_metadata','keep_vars',
- 'send_metrics','$schema',
+// The Vite/Cloudflare compiler EXPANDS configuration with many empty default
+// fields and local build metadata. They must not be passed to Wrangler as
+// implicit deployment capabilities. Pin this exact reviewed resolved schema,
+// reject any material resources, then PROJECT only approved upload fields.
+const GENERATED_KEYS=new Set([
+ 'agent_memory','ai_search','ai_search_namespaces','analytics_engine_datasets',
+ 'artifacts','assets','cloudchamber','compatibility_date',
+ 'compatibility_flags','configPath','connect','d1_databases',
+ 'definedEnvironments','dev','dispatch_namespaces','durable_objects',
+ 'exports','flagship','hyperdrive','jsx_factory','jsx_fragment','k2',
+ 'kv_namespaces','logfwdr','main','migrations','mtls_certificates','name',
+ 'no_bundle','pipelines','python_modules','queues','r2_buckets','ratelimits',
+ 'rules','secrets_store_secrets','send_email','services','topLevelName',
+ 'triggers','unsafe_hello_world','upload_source_maps','userConfigPath',
+ 'vars','vectorize','vpc_networks','vpc_services','worker_loaders',
+ 'workers_dev','workflows','version_metadata','keep_vars','send_metrics',
+ '$schema',
 ]);
+const RESOURCE_KEYS=new Set([
+ 'agent_memory','ai_search','ai_search_namespaces','analytics_engine_datasets',
+ 'artifacts','cloudchamber','connect','dispatch_namespaces','durable_objects',
+ 'exports','flagship','hyperdrive','k2','kv_namespaces','logfwdr',
+ 'migrations','mtls_certificates','pipelines','python_modules','queues',
+ 'r2_buckets','ratelimits','secrets_store_secrets','send_email','services',
+ 'triggers','unsafe_hello_world','vectorize','vpc_networks','vpc_services',
+ 'worker_loaders','workflows',
+]);
+function emptyDefault(value){
+ if(value===undefined||value===null||value===false)return true;
+ if(Array.isArray(value))return value.every(emptyDefault);
+ if(value&&typeof value==='object')
+   return Object.values(value).every(emptyDefault);
+ return false;
+}
 const stop=reason=>Object.freeze({
  state:'held',reason,manifest:null,
  upload_authorized:false,deploy_authorized:false,
@@ -90,7 +117,8 @@ export function planWorkM1M2LocalDryRun({
     Object.keys(compiled.d1_databases[0]).some(k=>
       !['binding','database_name','database_id','migrations_dir'].includes(k))||
     (compiled.d1_databases[0].migrations_dir!==undefined&&
-      compiled.d1_databases[0].migrations_dir!=='../migrations')||
+      !['../migrations','../../../migrations'].includes(
+        compiled.d1_databases[0].migrations_dir))||
     !valid(compiled.assets)||
     compiled.assets.directory!=='../client'||
     Object.keys(compiled.assets).some(k=>k!=='directory')||
@@ -101,15 +129,9 @@ export function planWorkM1M2LocalDryRun({
     Object.entries(compiled.vars).some(([k,v])=>
       !/^[A-Z][A-Z0-9_]*$/.test(k)||typeof v!=='string'))
   return stop('correct_canary_compiled_manifest_required');
- if(Object.keys(compiled).some(k=>!ALLOWED_KEYS.has(k))||
-    Object.hasOwn(compiled,'secrets')||
-    Object.hasOwn(compiled,'triggers')||
-    Object.hasOwn(compiled,'migrations')||
-    Object.hasOwn(compiled,'routes')||
-    Object.hasOwn(compiled,'r2_buckets')||
-    Object.hasOwn(compiled,'kv_namespaces')||
-    Object.hasOwn(compiled,'queues')||
-    Object.hasOwn(compiled,'durable_objects'))
+ if(Object.keys(compiled).some(k=>!GENERATED_KEYS.has(k))||
+    [...RESOURCE_KEYS].some(k=>!emptyDefault(compiled[k]))||
+    (compiled.topLevelName!==undefined&&compiled.topLevelName!==compiled.name))
   return stop('unapproved_compiled_resource');
  const db=b.get('JILL_ORDER_DESK_WORK_DB');
  if(db?.type!=='d1'||(db.id??db.database_id)!==D1)
@@ -143,11 +165,21 @@ export function planWorkM1M2LocalDryRun({
   return stop('secret_as_plaintext');
  // Preserve all *observed* active plaintext variables exactly. Unobserved
  // customer feature vars stay omitted; never silently switch them on.
- const manifest=structuredClone(compiled);
- manifest.vars=vars;
- manifest.version_metadata={binding:'CF_VERSION_METADATA'};
- manifest.keep_vars=true;
- manifest.send_metrics=false;
+ // Deliberately discard every compiler default/metadata field and migration
+ // path. They are not approved upload resources. The only D1 is EXISTING.
+ const manifest={
+   name:compiled.name,main:compiled.main,
+   compatibility_date:compiled.compatibility_date,
+   compatibility_flags:[...compiled.compatibility_flags],
+   workers_dev:true,
+   assets:{directory:compiled.assets.directory},
+   d1_databases:[{
+     binding:'JILL_ORDER_DESK_WORK_DB',
+     database_name:'jill-order-desk-work',database_id:D1,
+   }],
+   vars,version_metadata:{binding:'CF_VERSION_METADATA'},
+   keep_vars:true,send_metrics:false,
+ };
  // Source edition pins guarantee the CODE. This policy validates only
  // local packaging options; a future uploaded version must be separately
  // compared against exact active binding/runtime metadata before deploy.

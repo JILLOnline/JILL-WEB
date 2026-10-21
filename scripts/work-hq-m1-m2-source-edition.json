@@ -49,7 +49,7 @@
     "scripts/inspect-work-hq-m1-m2-owner.mjs": "d579520ac3b39b7915a3aa8cfa7abe70d8397f8a",
     "scripts/test-work-hq-m1-m2-owner-inspect.mjs": "71707b599ea0df21d49b1c0f07020d0b7fe20a17",
     "scripts/run-work-hq-m1-m2-owner-preflight.ps1": "848e44d40695af2fe4a3a946526c3b5276a204e4",
-    "scripts/plan-work-hq-m1-m2-inactive-dry-run.mjs": "29f1bc757da4fc3986fac8abe980970843d193fd",
-    "scripts/test-work-hq-m1-m2-inactive-dry-run.mjs": "d8ed33e6bc8720e7feade0802474e093a17a1cc8"
+    "scripts/plan-work-hq-m1-m2-inactive-dry-run.mjs": "74c82333d128057501791b2034e6a8b2f0930b35",
+    "scripts/test-work-hq-m1-m2-inactive-dry-run.mjs": "7b9586d39204f579f84cfd0eac5bb6ea489d3126"
   }
 }
