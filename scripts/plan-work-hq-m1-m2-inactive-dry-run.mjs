@@ -61,6 +61,18 @@ function emptyDefault(value){
    return Object.values(value).every(emptyDefault);
  return false;
 }
+// Wrangler's RESOLVED build configuration carries Python-module exclusion
+// globs by default, even for a JavaScript-only Worker. Exclusion-only is
+// packaging metadata, NOT a Python resource. Never forward it to upload.
+function resourceUnused(key,value){
+ if(key==='python_modules'&&!emptyDefault(value)){
+  return valid(value)&&Object.keys(value).length===1&&
+    Array.isArray(value.exclude)&&value.exclude.length<=32&&
+    value.exclude.every(p=>typeof p==='string'&&p.length>0&&
+      p.length<=256&&!/[\\r\\n\\0]/.test(p));
+ }
+ return emptyDefault(value);
+}
 const stop=reason=>Object.freeze({
  state:'held',reason,manifest:null,
  upload_authorized:false,deploy_authorized:false,
@@ -130,7 +142,7 @@ export function planWorkM1M2LocalDryRun({
       !/^[A-Z][A-Z0-9_]*$/.test(k)||typeof v!=='string'))
   return stop('correct_canary_compiled_manifest_required');
  if(Object.keys(compiled).some(k=>!GENERATED_KEYS.has(k))||
-    [...RESOURCE_KEYS].some(k=>!emptyDefault(compiled[k]))||
+    [...RESOURCE_KEYS].some(k=>!resourceUnused(k,compiled[k]))||
     (compiled.topLevelName!==undefined&&compiled.topLevelName!==compiled.name))
   return stop('unapproved_compiled_resource');
  const db=b.get('JILL_ORDER_DESK_WORK_DB');

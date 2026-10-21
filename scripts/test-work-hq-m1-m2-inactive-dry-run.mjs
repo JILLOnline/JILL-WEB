@@ -68,6 +68,11 @@ const emptyResource=plan({...data,compiled:{...compiled,r2_buckets:[],queues:{pr
 assert.equal(emptyResource.state,'LOCAL_DRY_RUN_MANIFEST_PREPARED',emptyResource.reason);
 for(const key of ['r2_buckets','queues','triggers','migrations'])
  assert.equal(Object.hasOwn(emptyResource.manifest,key),false);
+const inertPython=plan({...data,compiled:{...compiled,
+ python_modules:{exclude:['**/*.py']}}});
+assert.equal(inertPython.state,'LOCAL_DRY_RUN_MANIFEST_PREPARED',inertPython.reason);
+assert.equal(Object.hasOwn(inertPython.manifest,'python_modules'),false);
+deny('compiled',{...compiled,python_modules:{include:['generated.py']}},'unapproved_compiled_resource');
 deny('compiled',{...compiled,r2_buckets:[{binding:'NEW'}]},'unapproved_compiled_resource');
 deny('compiled',{...compiled,triggers:{crons:['* * * * *']}},'unapproved_compiled_resource');
 deny('compiled',{...compiled,migrations:[{tag:'unapproved'}]},'unapproved_compiled_resource');
