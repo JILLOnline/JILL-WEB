@@ -41,3 +41,14 @@ October 22, 2026. Independent account-component preview branch
 
 Do not replay spent Cloudflare upload or activation receipts or use LIVE customer
 accounts for exploratory writes.
+
+## Customer-account source release gate
+- `node scripts/audit-work-myjill-message-extension-source.mjs` validates the
+  Shopify extension target, `api_access=true`, `network_access=true`,
+  exact WORK Cloudflare host, same-host reply endpoint, signed customer
+  account reads, and the default OFF conversation writer.
+- Negative tests reject LIVE host references, changed extension capability,
+  foreign reply endpoints, unconditional writer activation, and unsigned
+  request selection. No network calls or provider mutations occur.
+- A passing source contract is **not** evidence the declared permissions
+  have been published or approved in the currently running Shopify extension.

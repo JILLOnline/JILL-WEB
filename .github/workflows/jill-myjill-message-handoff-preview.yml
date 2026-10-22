@@ -16,6 +16,8 @@ on:
       - 'shared/customer-message-selection.mjs'
       - 'scripts/test-work-customer-message-navigation.mjs'
       - 'scripts/test-work-message-inboxes.mjs'
+      - 'scripts/audit-work-myjill-message-extension-source.mjs'
+      - 'scripts/test-audit-work-myjill-message-extension-source.mjs'
       - '.github/workflows/jill-myjill-message-handoff-preview.yml'
 
 permissions:
@@ -33,6 +35,8 @@ jobs:
           node-version: '22'
       - name: Verify owned request selection and single in-memory reply operation
         run: node scripts/test-work-customer-message-navigation.mjs
+      - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
+        run: node scripts/test-audit-work-myjill-message-extension-source.mjs
       - name: Regress existing two-sided public projection and account ownership
         run: |
           node scripts/test-work-message-inboxes.mjs
