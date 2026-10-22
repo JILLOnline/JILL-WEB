@@ -94,7 +94,7 @@ export default function JillHQ() {
             <article className="jill-hq__card">
               <div className="jill-hq__card-top"><span className="jill-hq__card-number">03</span><span className="jill-hq__pill">Owner governed</span></div>
               <h3>Settings</h3>
-              <p>Review Owner access and permissions.</p>
+              <p>Access &amp; permissions for your verified Shopify Owner session.</p>
               {owner?<Link to="/app/access" className="jill-hq__card-link">Open settings →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}
             </article>
           </div>
