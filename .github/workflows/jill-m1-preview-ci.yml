@@ -59,6 +59,10 @@ on:
       - 'scripts/test-inspect-work-hq-connected-content-owner.mjs'
       - 'scripts/stage-work-hq-connected-content-owner.mjs'
       - 'scripts/test-stage-work-hq-connected-content-owner.mjs'
+      - 'scripts/inspect-work-hq-connected-content-uploaded-owner.mjs'
+      - 'scripts/test-inspect-work-hq-connected-content-uploaded-owner.mjs'
+      - 'scripts/release-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-release-work-hq-connected-content-owner.mjs'
 
 permissions:
   contents: read
@@ -114,6 +118,10 @@ jobs:
           node scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs
           node scripts/test-inspect-work-hq-connected-content-owner.mjs
           node scripts/test-stage-work-hq-connected-content-owner.mjs
+      - name: Verify exact uploaded connected-content candidate and one-use WORK activation / rollback (offline)
+        run: |
+          node scripts/test-inspect-work-hq-connected-content-uploaded-owner.mjs
+          node scripts/test-release-work-hq-connected-content-owner.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries

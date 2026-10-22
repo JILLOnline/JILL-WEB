@@ -77,6 +77,10 @@
     "scripts/inspect-work-hq-connected-content-owner.mjs": "383f6a298aaa67742027a72109b86990c30beb7f",
     "scripts/test-inspect-work-hq-connected-content-owner.mjs": "ea2c1f8f6d1efaec29cfc9c3c28aed697029f99f",
     "scripts/stage-work-hq-connected-content-owner.mjs": "08249e33d77b21ed93110ca24acd8828c81263b4",
-    "scripts/test-stage-work-hq-connected-content-owner.mjs": "a3e28c0828133641f81d41bc7724dabf801791f0"
+    "scripts/test-stage-work-hq-connected-content-owner.mjs": "a3e28c0828133641f81d41bc7724dabf801791f0",
+    "scripts/inspect-work-hq-connected-content-uploaded-owner.mjs": "b15ae2dcfedce9ba5dcdec1f85c1484f1ae3530d",
+    "scripts/test-inspect-work-hq-connected-content-uploaded-owner.mjs": "b03584113a5a846d8257755a9e2d8439da47915f",
+    "scripts/release-work-hq-connected-content-owner.mjs": "817ea8ed68435cd3527dc20e8cecd33f05827d64",
+    "scripts/test-release-work-hq-connected-content-owner.mjs": "40423659cec57f83dcade042882cdf4fcff45e1f"
   }
 }
