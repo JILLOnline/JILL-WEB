@@ -56,6 +56,8 @@
     "scripts/probe-work-hq-m1-m2-version-url-owner.mjs": "e5d46a4aefba2e882e1d6160e142737aeafb276d",
     "scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs": "162cc0a04494a360f92c29303c8f4a98bfb85869",
     "services/jill-order-desk/app-home/app/routes/app.access.tsx": "d44c50d1e69d1532de8704eb5b6e18d453820b67",
-    "scripts/test-work-hq-five-tab-navigation.mjs": "9310fc207d5983389b14ebd5cfa3418611627a85"
+    "scripts/test-work-hq-five-tab-navigation.mjs": "9310fc207d5983389b14ebd5cfa3418611627a85",
+    "scripts/inspect-work-hq-five-tab-owner.mjs": "76ea064e6e4ea5c900e8744bd733178426503896",
+    "scripts/test-inspect-work-hq-five-tab-owner.mjs": "44d78b673f91ddb089da1ac57c875f6cd2f257b3"
   }
 }
