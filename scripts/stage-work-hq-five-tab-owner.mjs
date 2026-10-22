@@ -223,7 +223,16 @@ export function explainWorkM1M2Plan({compiled,active,quote,baseline}={}){
   deployment_requested:false,new_paid_resources:false,
  });
 }
-function compileManifest(inputs){
+export function fiveTabCompiledConfigPaths(source){
+ gate(typeof source==='string'&&/^[a-f0-9]{40}$/.test(source),
+  'unverified_compiled_config_source');
+ const name='wrangler.hq-five-tab-inactive.'+source.slice(0,12)+'.json';
+ const file=path.join(APP,'dist','server',name);
+ const config='./dist/server/'+name;
+ gate(path.resolve(APP,config)===file,'compiled_config_path_mismatch');
+ return Object.freeze({file,config});
+}
+function compileManifest(inputs,source){
  const dist=path.join(APP,'dist');
  gate(fs.existsSync(dist)&&!fs.lstatSync(dist).isSymbolicLink(),
   'safe_compiled_directory_missing');
@@ -242,15 +251,21 @@ function compileManifest(inputs){
  // keep-vars is an explicit Wrangler CLI switch; remove from uploaded JSON.
  const upload=structuredClone(planned.manifest);
  delete upload.keep_vars;
- const target=path.join(dist,'server','wrangler.hq-five-tab-inactive.json');
- fs.writeFileSync(target,JSON.stringify(upload,null,2)+'\n',{
+ const location=fiveTabCompiledConfigPaths(source);
+ fs.writeFileSync(location.file,JSON.stringify(upload,null,2)+'\n',{
   encoding:'utf8',flag:'wx',mode:0o600});
+ gate(fs.existsSync(location.file)&&
+  path.resolve(APP,location.config)===location.file,
+  'compiled_config_path_mismatch');
  return {planned,package_sha256:bundleDigest(dist),
-  config:'./dist/server/wrangler.hq-m1m2-inactive.json'};
+  config:location.config};
 }
-function uploadArgs(config,marker){
+export function fiveTabUploadArgs(config,marker,{dryRun=false}={}){
+ gate(/^\.\/dist\/server\/wrangler\.hq-five-tab-inactive\.[a-f0-9]{12}\.json$/.test(config)&&
+  /^JILL HQ WORK FIVE-TAB source-locked INACTIVE [a-f0-9]{40} [0-9a-f-]{36}$/.test(marker),
+  'unverified_five_tab_upload_arguments');
  return ['versions','upload','--config',config,
-  '--keep-vars','--message',marker];
+  '--keep-vars','--message',marker,...(dryRun?['--dry-run']:[])];
 }
 export async function runOwnerStage(mode){
  let phase='source',reserved=false;
@@ -336,10 +351,10 @@ export async function runOwnerStage(mode){
   runNpm('build',true);
   runNode(['scripts/test-work-hq-m1-m2-inactive-dry-run.mjs',
    '--compiled-canary']);
-  const packet=compileManifest(before),nonce=randomUUID();
+  const packet=compileManifest(before,source),nonce=randomUUID();
   const marker=MESSAGE+source+' '+nonce;
   phase='wrangler_dry_run';
-  cloud([...uploadArgs(packet.config,marker),'--dry-run']);
+  cloud(fiveTabUploadArgs(packet.config,marker,{dryRun:true}));
   gate(sourceGuard()===source,'source_changed_before_stage');
   const fresh=await inventory();
   gate(equal(before.baseline,fresh.baseline)&&
@@ -354,7 +369,7 @@ export async function runOwnerStage(mode){
    reserved_at:new Date().toISOString()});
   reserved=true;
   phase='inactive_upload';
-  cloud(uploadArgs(packet.config,marker)); // NEVER versions deploy.
+  cloud(fiveTabUploadArgs(packet.config,marker)); // NEVER versions deploy.
   phase='candidate_readback';
   const after=allocation();gate(equal(before.baseline,after),
    'traffic_changed_after_upload');
@@ -374,8 +389,24 @@ export async function runOwnerStage(mode){
    activation_authorized:false,rollback_authorized:false},null,2));
  }catch(error){
   const code=/^five_tab_stage_[a-z_]+$/.test(error?.message||'')?
-   error.message:'m1m2_stage_unverified';
+   error.message:'five_tab_stage_unverified';
   console.error('HOLD '+code+' at '+phase+'.');
+  // Wrangler helper exposes ONLY a finite safe failure classification.
+  // Never reveal provider stderr, private paths, customer data or secrets.
+  const diag=error?.safeCliDiagnostic;
+  const classes=new Set(['cloudflare_command_failed','command_timeout',
+   'command_start_failed','rate_limited','authentication_or_permission',
+   'resource_not_found','provider_server_error','network_or_tls',
+   'argument_or_config']);
+  if(diag&&classes.has(diag.classification)){
+   console.error('HOLD SAFE_WRANGLER_DIAGNOSTIC '+JSON.stringify({
+    classification:diag.classification,
+    exit_code:Number.isInteger(diag.exit_code)?diag.exit_code:null,
+    http_status:Number.isInteger(diag.http_status)?diag.http_status:null,
+    spawn_code:['ENOENT','EACCES','ETIMEDOUT','E2BIG'].includes(diag.spawn_code)?
+     diag.spawn_code:null,
+   }));
+  }
   console.error(reserved?
    'One-use upload attempt SPENT. Candidate may exist. NEVER retry; run --inspect.':
    'No upload requested. Review the HOLD before proceeding.');

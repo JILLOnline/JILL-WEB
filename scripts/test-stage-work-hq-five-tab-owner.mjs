@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {BASELINE,assertBaseline,selectStageCandidate,assertCandidate,
- explainWorkM1M2Plan,planM1M2StageManifest}
+ explainWorkM1M2Plan,planM1M2StageManifest,
+ fiveTabCompiledConfigPaths,fiveTabUploadArgs}
  from './stage-work-hq-five-tab-owner.mjs';
 const plain=(name,text)=>({name,type:'plain_text',text});
 const bindings=[
@@ -142,3 +143,30 @@ assert.equal(planM1M2StageManifest(snapshot,{
  ...knownCompiled,r2_buckets:[{binding:'NEW',bucket_name:'billable'}]
 }).reason,'unapproved_compiled_resource');
 console.log('PASS Owner successor regression: real stage and diagnostic share exact validated WORK allocation mapping; wrong baselines and billable resources still HOLD.');
+
+ // Regression: 2026-10-21 owner local dry-run previously wrote
+ // wrangler.hq-five-tab-inactive.json but passed old M1/M2 filename to CLI.
+ // Use an edition-unique filename and require path parity for ALL commands.
+const stageSource='b2a1a561ece1c3073b42536fbaec4d5d4e9a1037';
+const paths=fiveTabCompiledConfigPaths(stageSource);
+assert.match(paths.config,
+ /^\.\/dist\/server\/wrangler\.hq-five-tab-inactive\.[a-f0-9]{12}\.json$/);
+assert.equal(paths.config.endsWith(stageSource.slice(0,12)+'.json'),true);
+assert.equal(paths.file.endsWith(
+ 'wrangler.hq-five-tab-inactive.'+stageSource.slice(0,12)+'.json'),true);
+assert.equal(paths.config.includes('m1m2'),false);
+const marker='JILL HQ WORK FIVE-TAB source-locked INACTIVE '+
+ stageSource+' 22df975f-0475-45f5-ab3c-f1976eb1dbb9';
+const expected=['versions','upload','--config',paths.config,
+ '--keep-vars','--message',marker];
+assert.deepEqual(fiveTabUploadArgs(paths.config,marker),expected);
+assert.deepEqual(fiveTabUploadArgs(paths.config,marker,{dryRun:true}),
+ [...expected,'--dry-run']);
+assert.throws(()=>fiveTabCompiledConfigPaths('not-a-sha'),
+ /unverified_compiled_config_source/);
+assert.throws(()=>fiveTabUploadArgs(
+ './dist/server/wrangler.hq-m1m2-inactive.json',marker),
+ /unverified_five_tab_upload_arguments/);
+assert.throws(()=>fiveTabUploadArgs(paths.config,'untrusted message'),
+ /unverified_five_tab_upload_arguments/);
+console.log('PASS five-tab exact compiled config file = Wrangler dry-run/upload target; legacy M1/M2 path rejected, source-scoped filename, upload not invoked.');
