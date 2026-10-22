@@ -83,6 +83,8 @@
     "scripts/release-work-hq-connected-content-owner.mjs": "817ea8ed68435cd3527dc20e8cecd33f05827d64",
     "scripts/test-release-work-hq-connected-content-owner.mjs": "40423659cec57f83dcade042882cdf4fcff45e1f",
     "scripts/test-work-message-inboxes.mjs": "883b0e9e02048773090344f1286d4f87e8d1878b",
-    "docs/WORK_HQ_MYJILL_MESSAGE_SCREEN_QA_20261021.md": "0a670f9858bb380f6f7e641b289db6786bc8c797"
+    "docs/WORK_HQ_MYJILL_MESSAGE_SCREEN_QA_20261021.md": "0a670f9858bb380f6f7e641b289db6786bc8c797",
+    "scripts/audit-work-messaging-gateway-readonly.mjs": "777c2ac1bf815e70decb9bd12322b8c3a6c7c684",
+    "scripts/test-audit-work-messaging-gateway-readonly.mjs": "cabcd0a4c757771df92ad04059d3d6c06b3df98a"
   }
 }
