@@ -1,0 +1,41 @@
+name: JILL HQ quote + catalog preflight preview
+
+# New independent source-only CI. No release certificate changes; no
+# Cloudflare Worker upload, Shopify Draft Order, Google, D1 or R2 writes.
+on:
+  push:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'services/jill-order-desk/work-quote-catalog-preflight.mjs'
+      - 'scripts/test-work-quote-catalog-preflight.mjs'
+      - 'docs/WORK_HQ_QUOTE_CATALOG_PREFLIGHT_20261022.md'
+      - '.github/workflows/jill-hq-quote-catalog-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quote-preflight-offline:
+    name: Verify original request, saved D1 draft model and Shopify Catalog source handoff (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify pure quote-stage orchestration and refusal cases
+        run: node scripts/test-work-quote-catalog-preflight.mjs
+      - name: Regress original saved-quote handoff and exact variant read security
+        run: |
+          node scripts/test-work-quote-commerce-handoff.mjs
+          node scripts/test-work-hq-catalog-quote-bridge.mjs
+          node scripts/test-work-quote-calculation.mjs
+      - name: No deploy/production script, only compiled pure Node source
+        run: |
+          node --check services/jill-order-desk/work-quote-catalog-preflight.mjs
+          node --check scripts/test-work-quote-catalog-preflight.mjs
