@@ -46,6 +46,8 @@ on:
       - 'scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs'
       - 'scripts/stage-work-hq-five-tab-owner.mjs'
       - 'scripts/test-stage-work-hq-five-tab-owner.mjs'
+      - 'scripts/inspect-work-hq-five-tab-uploaded-owner.mjs'
+      - 'scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs'
 
 permissions:
   contents: read
@@ -88,6 +90,8 @@ jobs:
         run: node scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs
       - name: Verify successor five-tab one-use staging and readback denials (synthetic, NO CLOUD)
         run: node scripts/test-stage-work-hq-five-tab-owner.mjs
+      - name: Verify exact uploaded five-tab recovery without versions-list or provider writes (offline)
+        run: node scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
