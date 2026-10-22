@@ -76,7 +76,7 @@
     "scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs": "a2295b7dd689fb1d0b15a894e83f626e47bbbe84",
     "scripts/inspect-work-hq-connected-content-owner.mjs": "383f6a298aaa67742027a72109b86990c30beb7f",
     "scripts/test-inspect-work-hq-connected-content-owner.mjs": "ea2c1f8f6d1efaec29cfc9c3c28aed697029f99f",
-    "scripts/stage-work-hq-connected-content-owner.mjs": "6d99318514d81fdf6da793da4444d0984c524b8b",
-    "scripts/test-stage-work-hq-connected-content-owner.mjs": "402c7bb689b7186ac35983962428a050a557b053"
+    "scripts/stage-work-hq-connected-content-owner.mjs": "08249e33d77b21ed93110ca24acd8828c81263b4",
+    "scripts/test-stage-work-hq-connected-content-owner.mjs": "a3e28c0828133641f81d41bc7724dabf801791f0"
   }
 }

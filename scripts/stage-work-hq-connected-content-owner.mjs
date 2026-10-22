@@ -257,9 +257,9 @@ function compileManifest(inputs,source){
   config:uploadLocation.config};
 }
 export function connectedContentUploadArgs(config,marker,{dryRun=false}={}){
- gate(/^\.\/dist\/server\/wrangler\.hq-five-tab-inactive\.[a-f0-9]{12}\.json$/.test(config)&&
+ gate(/^\.\/dist\/server\/wrangler\.hq-connected-content-inactive\.[a-f0-9]{12}\.json$/.test(config)&&
   /^JILL HQ WORK CONNECTED-CONTENT source-locked INACTIVE [a-f0-9]{40} [0-9a-f-]{36}$/.test(marker),
-  'unverified_five_tab_upload_arguments');
+  'unverified_connected_content_upload_arguments');
  return ['versions','upload','--config',config,
   '--keep-vars','--message',marker,...(dryRun?['--dry-run']:[])];
 }

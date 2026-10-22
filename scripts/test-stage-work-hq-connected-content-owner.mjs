@@ -166,7 +166,7 @@ assert.throws(()=>connectedContentCompiledConfigPaths('not-a-sha'),
  /unverified_compiled_config_source/);
 assert.throws(()=>connectedContentUploadArgs(
  './dist/server/wrangler.hq-m1m2-inactive.json',uploadMarker),
- /unverified_five_tab_upload_arguments/);
+ /unverified_connected_content_upload_arguments/);
 assert.throws(()=>connectedContentUploadArgs(paths.config,'untrusted message'),
- /unverified_five_tab_upload_arguments/);
+ /unverified_connected_content_upload_arguments/);
 console.log('PASS connected-content exact compiled config file = Wrangler dry-run/upload target; legacy M1/M2 path rejected, source-scoped filename, upload not invoked.');
