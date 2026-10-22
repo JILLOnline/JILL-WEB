@@ -83,6 +83,6 @@ deny(v=>v.compiled.r2_buckets=[{binding:'R2',bucket_name:'paid'}],
  'unapproved_compiled_resource');
 deny(v=>v.compiled.d1_databases.push({binding:'EXTRA',database_id:'x'}),
  'correct_canary_compiled_manifest_required');
-deny(v=>v.quote.resources.bindings[6].text='false',
+deny(v=>v.quote.resources.bindings[5].text='false',
  'quote_canary_identity_changed');
 console.log('PASS five-tab successor manifest: active WORK baseline, 100/0 quote, 14 bindings, four secrets, exact D1, no R2/additional paid resources or enabled quote/conversation; OFFLINE.');
