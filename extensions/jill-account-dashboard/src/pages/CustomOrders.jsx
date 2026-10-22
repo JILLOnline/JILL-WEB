@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'preact/hooks';
-import {loadWorkCustomerCustomOrders} from '../../../../shared/customer-custom-orders.mjs';
+import {loadWorkCustomerConversationState} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
 import {retainOwnedMessageDrafts} from '../../../../shared/customer-message-selection.mjs';
 import {
@@ -11,28 +11,28 @@ import {
 // token through the existing canonical reader. Never select orders by email.
 export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
   const [attempt,setAttempt]=useState(0);
-  const [state,setState]=useState({status:'loading',orders:[]});
+  const [state,setState]=useState({status:'loading',orders:[],replyEnabled:false});
   const [refreshing,setRefreshing]=useState(false);
 
   useEffect(()=>{
     let active=true;
-    setState({status:'loading',orders:[]});
+    setState({status:'loading',orders:[],replyEnabled:false});
     setRefreshing(true);
     const sessionToken=typeof shopify!=='undefined'
       ? shopify.sessionToken : null;
-    loadWorkCustomerCustomOrders({sessionToken})
-      .then(orders=>{
+    loadWorkCustomerConversationState({sessionToken})
+      .then(({orders,replyEnabled})=>{
         if(active){
           // Keep text and the SAME uncertain operation only for requests in
           // the newly verified account response. Other accounts' drafts go.
           onDraftsChange(previous=>retainOwnedMessageDrafts(previous,orders));
-          setState({status:'ready',orders});setRefreshing(false);
+          setState({status:'ready',orders,replyEnabled});setRefreshing(false);
         }
       })
       .catch(()=>{
         if(active){
           onDraftsChange({}); // Account could have changed; clear uncertain replies.
-          setState({status:'error',orders:[]});setRefreshing(false);
+          setState({status:'error',orders:[],replyEnabled:false});setRefreshing(false);
         }
       });
     return ()=>{active=false;};
@@ -155,7 +155,8 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
                       </s-grid>
                     ))}
                   </s-stack>
-                  <RequestConversation order={order} draft={drafts[order.submission_id]||{}}
+                  <RequestConversation order={order} replyEnabled={state.replyEnabled}
+                    draft={drafts[order.submission_id]||{}}
                     onDraftChange={change=>onDraftsChange(previous=>Object.hasOwn(previous,order.submission_id)?
                       {...previous,[order.submission_id]:{...previous[order.submission_id],...change}}:previous)}
                     onRefresh={()=>setAttempt(value=>value+1)}/>

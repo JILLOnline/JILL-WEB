@@ -52,3 +52,24 @@ accounts for exploratory writes.
   request selection. No network calls or provider mutations occur.
 - A passing source contract is **not** evidence the declared permissions
   have been published or approved in the currently running Shopify extension.
+
+## Customer reply availability: independent authenticated WORK capability
+
+- Timeline-v2 status alone never authorizes a send. A signed customer-account
+  response must now include Worker-derived `reply_enabled: true` before
+  the My JILL composer enables a **new** message. Missing/legacy flags default
+  to **OFF** so the already deployed gateway still reads requests normally.
+- The WORK Worker calculates `reply_enabled` from its own
+  `JILL_WORK_CONVERSATION_ENABLED==='true'` flag only **after** Shopify JWT
+  authorization and Google public projection checks. The Google backend
+  cannot grant this capability by inserting fields into its reply.
+- The existing `loadWorkCustomerCustomOrders` array interface remains
+  compatible; a new signed `loadWorkCustomerConversationState` returns
+  `{orders,replyEnabled}` for My JILL messaging screens.
+- Receipt verification of an already-submitted stable operation remains
+  available even if new sends are currently disabled, to avoid abandoning
+  an unconfirmed message.
+- Independent releases are still REQUIRED: merging/publishing a customer
+  extension does not automatically change the running WORK Cloudflare
+  Worker, Google QA source, or any flags. This source change authorizes
+  none of those mutations.

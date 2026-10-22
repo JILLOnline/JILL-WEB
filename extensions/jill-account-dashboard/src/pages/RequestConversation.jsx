@@ -17,7 +17,7 @@ const COPY={
     refresh:'Actualizar conversación',closed:'Esta conversación está cerrada.',
     unavailable:'Podrás responder aquí cuando la conexión segura esté lista.'},
 };
-export default function RequestConversation({order,onRefresh,draft,onDraftChange}){
+export default function RequestConversation({order,onRefresh,draft,onDraftChange,replyEnabled=false}){
   const [language,setLanguage]=useState('en');
   // The composing screen owns this in-memory draft across history reloads.
   // No local storage, contact matching or second durable conversation.
@@ -26,7 +26,7 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
   const copy=COPY[language];
   const pending=['unconfirmed','missing'].includes(state)||busy&&operation!==null;
   const closed=['completed','cancelled'].includes(order.status);
-  const enabled=order.timeline_version===2&&!closed&&order.revision<100;
+  const enabled=replyEnabled===true&&order.timeline_version===2&&!closed&&order.revision<100;
   const recoverable=order.timeline_version===2&&operation!==null;
   useEffect(()=>{
     if(state==='stale'&&staleRevision!==null&&order.revision>staleRevision)

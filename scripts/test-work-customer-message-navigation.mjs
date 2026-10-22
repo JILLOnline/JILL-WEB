@@ -62,7 +62,8 @@ const messages=readFileSync('extensions/jill-account-dashboard/src/pages/Message
 assert.match(hub,/setMessageRequestTarget\(id==='messages'/);
 assert.match(hub,/messages: <Messages requestedSubmissionId=\{messageRequestTarget\}/);
 assert.match(hub,/drafts=\{conversationDrafts\} onDraftsChange=\{setConversationDrafts\}/);
-assert.match(orders,/loadWorkCustomerCustomOrders\(\{sessionToken\}\)/);
+assert.match(orders,/loadWorkCustomerConversationState\(\{sessionToken\}\)/);
+assert.match(orders,/replyEnabled=\{state\.replyEnabled\}/);
 assert.match(orders,/onNavigate\('messages',\{submissionId:order\.submission_id\}\)/);
 assert.match(orders,/retainOwnedMessageDrafts\(previous,orders\)/);
 assert.match(orders,/onDraftsChange\(\{\}\)/);

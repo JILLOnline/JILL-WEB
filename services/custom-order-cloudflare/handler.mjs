@@ -119,6 +119,7 @@ export async function handleCloudflareCustomOrderWork(request,env) {
         shopifyAppSecret:settings.shopifyAppSecret,
         googleGatewaySecret:settings.googleGatewaySecret,
         googleQaEndpoint:settings.googleQaEndpoint,
+        conversationEnabled:env.JILL_WORK_CONVERSATION_ENABLED==='true',
         rateLimit:async({shop})=>limiter.allow({
           shop,client:clientId(request),minute:Math.floor(Date.now()/60000),
         }),

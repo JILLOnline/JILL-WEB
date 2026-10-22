@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'preact/hooks';
-import {loadWorkCustomerCustomOrders}
+import {loadWorkCustomerConversationState}
   from '../../../../shared/customer-custom-orders.mjs';
 import {projectCustomerMessageInbox}
   from '../../../../shared/custom-order-message-inbox.mjs';
@@ -15,13 +15,13 @@ import RequestConversation from './RequestConversation.jsx';
 // per owned Custom Order. NOT a new account identifier or message store.
 export default function Messages({requestedSubmissionId=null,drafts,onDraftsChange}){
   const [attempt,setAttempt]=useState(0);
-  const [state,setState]=useState({status:'loading',orders:[]});
+  const [state,setState]=useState({status:'loading',orders:[],replyEnabled:false});
   const [selected,setSelected]=useState(null);
   useEffect(()=>{
     let active=true;
-    setState({status:'loading',orders:[]});
+    setState({status:'loading',orders:[],replyEnabled:false});
     const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
-    loadWorkCustomerCustomOrders({sessionToken}).then(orders=>{
+    loadWorkCustomerConversationState({sessionToken}).then(({orders,replyEnabled})=>{
       const list=projectCustomerMessageInbox(orders);
       if(!active)return;
       // A new authenticated response reauthorizes EVERY displayed ID.
@@ -30,12 +30,12 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
       setSelected(previous=>selectOwnedMessageRequest(list,{
         requestedId:requestedSubmissionId,previousId:previous,
       }));
-      setState({status:'ready',orders});
+      setState({status:'ready',orders,replyEnabled});
     }).catch(()=>{
       if(!active)return;
       // Never show stale messages from another signed-in account.
       onDraftsChange({});setSelected(null);
-      setState({status:'error',orders:[]});
+      setState({status:'error',orders:[],replyEnabled:false});
     });
     return ()=>{active=false};
   },[attempt,requestedSubmissionId]);
@@ -145,7 +145,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                   </s-box>
                 )}
                 <s-divider/>
-                <RequestConversation order={order}
+                <RequestConversation order={order} replyEnabled={state.replyEnabled}
                   draft={drafts[order.submission_id]||{}}
                   onDraftChange={change=>onDraftsChange(previous=>
                     Object.hasOwn(previous,order.submission_id)

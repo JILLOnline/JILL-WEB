@@ -50,7 +50,7 @@ export function readAccountOrderSummary(value) {
   };
 }
 
-export async function loadWorkCustomerCustomOrders({
+export async function loadWorkCustomerConversationState({
   sessionToken,request=fetch,endpoint=WORK_CUSTOM_ORDER_ACCOUNT_URL,
 }={}) {
   if(!sessionToken||typeof sessionToken.get!=='function')
@@ -81,7 +81,7 @@ export async function loadWorkCustomerCustomOrders({
     throw new Error('Invalid Custom Orders response.');
   // Gateway already returns a strict public-only projection and validates
   // the JWT; use a tiny second check for corrupted data during rendering.
-  return data.orders.map(item=>{
+  const orders=data.orders.map(item=>{
     const thread=item.timeline_version===2;
     if(typeof item.submission_id!=='string'||item.submission_id.length>128||
        !Number.isSafeInteger(item.revision)||item.revision<1||
@@ -105,4 +105,13 @@ export async function loadWorkCustomerCustomOrders({
       })),
     };
   });
+  if(data.reply_enabled!==undefined&&typeof data.reply_enabled!=='boolean')
+    throw new Error('Invalid reply capability.');
+  return Object.freeze({orders,replyEnabled:data.reply_enabled===true});
+}
+// Historical callers still get exactly an array of orders. Only messaging
+// screens consume the authenticated WORK reply capability.
+export async function loadWorkCustomerCustomOrders(options={}){
+ const state=await loadWorkCustomerConversationState(options);
+ return state.orders;
 }
