@@ -60,6 +60,8 @@
     "scripts/inspect-work-hq-five-tab-owner.mjs": "76ea064e6e4ea5c900e8744bd733178426503896",
     "scripts/test-inspect-work-hq-five-tab-owner.mjs": "44d78b673f91ddb089da1ac57c875f6cd2f257b3",
     "scripts/plan-work-hq-five-tab-inactive-dry-run.mjs": "33430211c72cc102cbeb228adc22d31ba423922d",
-    "scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs": "7804019044a019eba1b0ad56aa6b24b5aa88a780"
+    "scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs": "7804019044a019eba1b0ad56aa6b24b5aa88a780",
+    "scripts/stage-work-hq-five-tab-owner.mjs": "276feb560d61a50b91e9b5a1d8b9a636b9635629",
+    "scripts/test-stage-work-hq-five-tab-owner.mjs": "2337d98200a43ff7fac23dcfb6504f5b088f6302"
   }
 }
