@@ -91,3 +91,24 @@ Real customer quote publication, native calculation, invoice and checkout
 remain #155's later gates.
 
 Owner handler offline regression: `node scripts/test-work-hq-quote-owner-preflight.mjs`. It exercises fail-closed feature flags (zero provider reads), GET-only input, Owner denial, signed source/source-version checks, hashed D1 saved draft validation, catalog authorization/price mismatch and missing trusted customer/fulfillment context. No external calls.
+
+## Owner request workspace UI (source-only)
+
+The signed exact request detail loader now projects a
+`quotePreflightEnabled` **false-by-default** boolean only after the
+existing Shopify SDK Owner + D1 read and signed Google detail have succeeded.
+The existing HQ quote worksheet mounts a "Saved quote → Shopify readiness"
+panel **only** if the Owner data enabled the new flag and the request's
+management controls are available. In current WORK this flag is absent,
+so no additional panel is shown or fetched.
+
+The Owner must explicitly press **Verify saved quote**; it uses React
+Router's same-origin GET loader and renders only its PII-free HOLD or
+calculation-eligibility summary. It never automatically reprices, changes
+a saved draft, opens checkout, charges, emails or publishes an invoice.
+Even a successful source review explicitly explains that Shopify
+calculation, customer acceptance and commerce authorization are separate.
+
+Test `node scripts/test-work-hq-quote-owner-ui.mjs`, plus the existing
+dedicated source tests and full embedded-app typecheck and build. No
+Shopify extension, Cloudflare Worker, Google QA or D1 deployment happened.

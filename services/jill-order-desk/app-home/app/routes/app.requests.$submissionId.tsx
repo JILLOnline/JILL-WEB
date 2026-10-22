@@ -45,7 +45,8 @@ export default function WorkRequestDetail(){
   // the verified detail model; never cast arbitrary browser input as it.
   type OriginalModel=NonNullable<
     Parameters<typeof WorkOriginalRequestDetails>[0]["model"]
-  > & {quoteDraftEnabled?:boolean;quoteCatalogReviewEnabled?:boolean};
+  > & {quoteDraftEnabled?:boolean;quoteCatalogReviewEnabled?:boolean;
+    quotePreflightEnabled?:boolean};
   const original=useLoaderData<typeof loader>() as unknown as OriginalModel;
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const {submissionId}=useParams();
@@ -128,7 +129,9 @@ export default function WorkRequestDetail(){
                 sourceRevision={record.revision}
                 saveDraftEnabled={original?.quoteDraftEnabled===true &&
                   controlsEnabled}
-                catalogReviewEnabled={original?.quoteCatalogReviewEnabled===true}/>
+                catalogReviewEnabled={original?.quoteCatalogReviewEnabled===true}
+                quotePreflightEnabled={original?.quotePreflightEnabled===true &&
+                  controlsEnabled}/>
             </>}
 
       </main>
