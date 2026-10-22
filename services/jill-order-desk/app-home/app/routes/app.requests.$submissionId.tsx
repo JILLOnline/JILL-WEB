@@ -80,6 +80,12 @@ export default function WorkRequestDetail(){
                   <span className="jill-request__status">{customerStatusLabel(record.customer_status)}</span>
                 </div>
               </header>
+              <p>
+                <Link to={"/app/messages?"+new URLSearchParams({submission_id:record.submission_id})}
+                  className="jill-request__inline-link">Open request conversation →</Link>
+                {" · "}
+                <Link to="/app/catalog" className="jill-request__inline-link">Check Shopify Catalog →</Link>
+              </p>
               <div className="jill-request__highlights">
                 <div><span>Needed by</span><strong>{dateLabel(record.date_needed)}</strong></div>
                 <div><span>Items</span><strong>{record.item_count}</strong></div>

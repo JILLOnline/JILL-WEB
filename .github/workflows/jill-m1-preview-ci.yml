@@ -50,6 +50,9 @@ on:
       - 'scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs'
       - 'scripts/release-work-hq-five-tab-owner.mjs'
       - 'scripts/test-release-work-hq-five-tab-owner.mjs'
+      - 'services/jill-order-desk/work-hq-home-priorities.mjs'
+      - 'scripts/test-work-hq-home-priorities.mjs'
+      - 'scripts/test-hq-five-tab-connected-content.mjs'
 
 permissions:
   contents: read
@@ -96,6 +99,10 @@ jobs:
         run: node scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs
       - name: Verify WORK five-tab one-use release, ownership and rollback (offline)
         run: node scripts/test-release-work-hq-five-tab-owner.mjs
+      - name: Verify connected HQ content and Owner protection (offline)
+        run: |
+          node scripts/test-work-hq-home-priorities.mjs
+          node scripts/test-hq-five-tab-connected-content.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries

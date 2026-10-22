@@ -29,10 +29,10 @@
     "services/jill-order-desk/app-home/app/components/WorkQuoteCatalogComparison.tsx": "6eb2c868adfdd5b57a6c3d8b1ada9fddcd920275",
     "services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx": "b3e393ede17cd16d8c2685e0d9b965d88813e414",
     "services/jill-order-desk/app-home/app/routes.ts": "cf38e102b2605020a13bc3508aca894d169e2d60",
-    "services/jill-order-desk/app-home/app/routes/app.index.tsx": "a89080c11ddb1b5925b18c0dc993807559dc8020",
+    "services/jill-order-desk/app-home/app/routes/app.index.tsx": "eb9acc809acb8f5fbbb0cd29173c987ffe71fc21",
     "services/jill-order-desk/app-home/app/routes/app.queue.tsx": "af8fcab6053a12e97649a27b08220c10996864e5",
     "services/jill-order-desk/app-home/app/routes/app.requests-detail-source.server.ts": "efa09a1d099cc2be00a0f94475cc1daef1820968",
-    "services/jill-order-desk/app-home/app/routes/app.requests.$submissionId.tsx": "c39a7d7fb1316451464c38411b2bfb2e7d6034ff",
+    "services/jill-order-desk/app-home/app/routes/app.requests.$submissionId.tsx": "3d24bd51d78f9b7192358c6f61fc5a04148fe1f4",
     "services/jill-order-desk/app-home/app/routes/app.requests.quote-catalog.tsx": "6f1a99d06578608e4e50253c83a1d86f125eb57a",
     "services/jill-order-desk/app-home/app/routes/app.tsx": "e7a3bea968d4df25a71dbe4516279def54767b82",
     "services/jill-order-desk/app-home/app/styles/hq-queue.css": "2b72c13141bd3d1aa1674269b7cc1b9787cf7d0f",
@@ -55,7 +55,7 @@
     "scripts/test-stage-work-hq-m1-m2-owner.mjs": "e28288dba3c207a1ba4a017d88a7ecaa30b154b7",
     "scripts/probe-work-hq-m1-m2-version-url-owner.mjs": "e5d46a4aefba2e882e1d6160e142737aeafb276d",
     "scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs": "162cc0a04494a360f92c29303c8f4a98bfb85869",
-    "services/jill-order-desk/app-home/app/routes/app.access.tsx": "d44c50d1e69d1532de8704eb5b6e18d453820b67",
+    "services/jill-order-desk/app-home/app/routes/app.access.tsx": "d0f1336f4514ac841c6b58c7615de6c5f3f80c5c",
     "scripts/test-work-hq-five-tab-navigation.mjs": "9310fc207d5983389b14ebd5cfa3418611627a85",
     "scripts/inspect-work-hq-five-tab-owner.mjs": "76ea064e6e4ea5c900e8744bd733178426503896",
     "scripts/test-inspect-work-hq-five-tab-owner.mjs": "44d78b673f91ddb089da1ac57c875f6cd2f257b3",
@@ -66,6 +66,11 @@
     "scripts/inspect-work-hq-five-tab-uploaded-owner.mjs": "4dbbbb70260731ddc56d635ff4191b3c37f79fbf",
     "scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs": "3b9b90b451b72d7c9bfbd98a040c82548acb76c9",
     "scripts/release-work-hq-five-tab-owner.mjs": "ee5e090c128a076ab540367104e5a825e5647911",
-    "scripts/test-release-work-hq-five-tab-owner.mjs": "4effe0067fb6eaf4369bd25c6363e67c9c9133dd"
+    "scripts/test-release-work-hq-five-tab-owner.mjs": "4effe0067fb6eaf4369bd25c6363e67c9c9133dd",
+    "services/jill-order-desk/work-hq-home-priorities.mjs": "a58fefea8ca9ad25989f53bd3ff685d3af3b00ea",
+    "scripts/test-work-hq-home-priorities.mjs": "e712d57d11f2381008c222551b7e5a826239472c",
+    "services/jill-order-desk/app-home/app/routes/app.messages.tsx": "e1d61c52cfdfdf5a72cdc53871ae867a2a0e65d6",
+    "services/jill-order-desk/app-home/app/styles/hq-home.css": "f95b2f8df9a9798df0c482a0ee18c3b4806abd36",
+    "scripts/test-hq-five-tab-connected-content.mjs": "fbd40c70aca79ace38e56cb7a95eb02eb604b0da"
   }
 }

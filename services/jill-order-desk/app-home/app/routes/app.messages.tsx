@@ -1,5 +1,5 @@
-import {useMemo,useState} from "react";
-import {Link,useFetcher,useLoaderData,type LoaderFunctionArgs}
+import {useEffect,useMemo,useState} from "react";
+import {Link,useFetcher,useLoaderData,useSearchParams,type LoaderFunctionArgs}
   from "react-router";
 import {loadVerifiedMerchantInbox} from "./app.requests-source.server";
 import {dateLabel,requestShortId,customerStatusLabel}
@@ -39,7 +39,7 @@ export async function loader(args:LoaderFunctionArgs){
 export default function WorkMessages(){
   const data=useLoaderData<typeof loader>() as Data;
   const threadRead=useFetcher<ThreadResult>();
-  const [selected,setSelected]=useState<string|null>(null);
+  const [searchParams,setSearchParams]=useSearchParams();
   const [query,setQuery]=useState("");
   const [status,setStatus]=useState("all");
   const records=useMemo(()=>data.state==="ready"?[...data.records].sort(
@@ -55,6 +55,9 @@ export default function WorkMessages(){
        requestShortId(item.submission_id).toLocaleLowerCase().includes(q)||
        customerStatusLabel(item.customer_status).toLocaleLowerCase().includes(q)));
   },[records,query,status]);
+  // Only a request in the authenticated Owner list can become selected.
+  const requestedId=searchParams.get("submission_id");
+  const selected=records.some(x=>x.submission_id===requestedId)?requestedId:null;
   const record=records.find(x=>x.submission_id===selected)||null;
   const thread=record&&threadRead.data?.ok===true&&
     threadRead.data.thread?.submission_id===record.submission_id
@@ -71,11 +74,13 @@ export default function WorkMessages(){
       visibleMessages=threadSync.conversation!.messages;
     }catch{last=null;visibleMessages=[];}
   }
+  useEffect(()=>{
+    if(canRead&&selected)threadRead.load("/app/requests/thread?"+
+      new URLSearchParams({submission_id:selected}));
+  },[selected,canRead,threadRead.load]);
   const open=(id:string)=>{
     if(!records.some(item=>item.submission_id===id))return;
-    setSelected(id);
-    if(canRead)threadRead.load("/app/requests/thread?"+
-      new URLSearchParams({submission_id:id}));
+    setSearchParams({submission_id:id});
   };
   return <s-page heading="JILL HQ — WORK / Messages" inlineSize="large">
     <s-section>
