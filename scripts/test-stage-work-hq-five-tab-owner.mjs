@@ -155,17 +155,17 @@ assert.equal(paths.config.endsWith(stageSource.slice(0,12)+'.json'),true);
 assert.equal(paths.file.endsWith(
  'wrangler.hq-five-tab-inactive.'+stageSource.slice(0,12)+'.json'),true);
 assert.equal(paths.config.includes('m1m2'),false);
-const marker='JILL HQ WORK FIVE-TAB source-locked INACTIVE '+
+const uploadMarker='JILL HQ WORK FIVE-TAB source-locked INACTIVE '+
  stageSource+' 22df975f-0475-45f5-ab3c-f1976eb1dbb9';
 const expected=['versions','upload','--config',paths.config,
- '--keep-vars','--message',marker];
-assert.deepEqual(fiveTabUploadArgs(paths.config,marker),expected);
-assert.deepEqual(fiveTabUploadArgs(paths.config,marker,{dryRun:true}),
+ '--keep-vars','--message',uploadMarker];
+assert.deepEqual(fiveTabUploadArgs(paths.config,uploadMarker),expected);
+assert.deepEqual(fiveTabUploadArgs(paths.config,uploadMarker,{dryRun:true}),
  [...expected,'--dry-run']);
 assert.throws(()=>fiveTabCompiledConfigPaths('not-a-sha'),
  /unverified_compiled_config_source/);
 assert.throws(()=>fiveTabUploadArgs(
- './dist/server/wrangler.hq-m1m2-inactive.json',marker),
+ './dist/server/wrangler.hq-m1m2-inactive.json',uploadMarker),
  /unverified_five_tab_upload_arguments/);
 assert.throws(()=>fiveTabUploadArgs(paths.config,'untrusted message'),
  /unverified_five_tab_upload_arguments/);
