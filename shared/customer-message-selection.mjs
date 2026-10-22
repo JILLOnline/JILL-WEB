@@ -106,6 +106,8 @@ export function updateOwnedMessageDraft(previous,id,change,meta={}){
  if(['busy','unconfirmed','missing'].includes(nextState)&&!object(nextOperation))
   return previous;
  if(currentOp!==null&&Object.hasOwn(change,'text')&&
+   // A confirmed send may clear its OWN text and command atomically.
+   !(change.operation===null&&change.state==='sent'&&change.text==='')&&
    change.text.trim()!==existing.operation.text)return previous;
  const updated={...existing,...change};
  return {...previous,[id]:updated};
