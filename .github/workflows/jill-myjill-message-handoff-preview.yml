@@ -15,6 +15,7 @@ on:
       - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
       - 'shared/customer-message-selection.mjs'
       - 'scripts/test-work-customer-message-navigation.mjs'
+      - 'scripts/test-work-customer-message-operation-races.mjs'
       - 'scripts/test-work-message-inboxes.mjs'
       - 'scripts/audit-work-myjill-message-extension-source.mjs'
       - 'scripts/test-audit-work-myjill-message-extension-source.mjs'
@@ -39,7 +40,9 @@ jobs:
         with:
           node-version: '22'
       - name: Verify owned request selection and single in-memory reply operation
-        run: node scripts/test-work-customer-message-navigation.mjs
+        run: |
+          node scripts/test-work-customer-message-navigation.mjs
+          node scripts/test-work-customer-message-operation-races.mjs
       - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
         run: node scripts/test-audit-work-myjill-message-extension-source.mjs
       - name: Verify signed reply-capability source and reject forged upstream enablement
@@ -57,3 +60,4 @@ jobs:
         run: |
           node --check shared/customer-message-selection.mjs
           node --check scripts/test-work-customer-message-navigation.mjs
+          node --check scripts/test-work-customer-message-operation-races.mjs

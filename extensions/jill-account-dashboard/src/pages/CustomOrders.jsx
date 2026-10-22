@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadWorkCustomerConversationState} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
-import {retainOwnedMessageDrafts} from '../../../../shared/customer-message-selection.mjs';
+import {retainOwnedMessageDrafts,updateOwnedMessageDraft} from '../../../../shared/customer-message-selection.mjs';
 import {
   customOrderStatus,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
@@ -157,8 +157,8 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
                   </s-stack>
                   <RequestConversation order={order} replyEnabled={state.replyEnabled}
                     draft={drafts[order.submission_id]||{}}
-                    onDraftChange={change=>onDraftsChange(previous=>Object.hasOwn(previous,order.submission_id)?
-                      {...previous,[order.submission_id]:{...previous[order.submission_id],...change}}:previous)}
+                    onDraftChange={(change,meta)=>onDraftsChange(previous=>
+                      updateOwnedMessageDraft(previous,order.submission_id,change,meta))}
                     onRefresh={()=>setAttempt(value=>value+1)}/>
                   <s-button variant="secondary"
                     onClick={()=>onNavigate('messages',{submissionId:order.submission_id})}>

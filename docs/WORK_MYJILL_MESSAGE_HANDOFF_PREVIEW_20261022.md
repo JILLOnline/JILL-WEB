@@ -75,3 +75,24 @@ accounts for exploratory writes.
   none of those mutations.
 
 - In the account UI, a verified v2 timeline with a disabled reply capability now displays a **read-only history** banner rather than offering Send. Explicit verified replies become available only with the signed WORK enablement flag.\n
+## Shared reply ledger concurrency gate — stale callback protection
+
+- Every customer-draft update now carries the `expectedOperationId` observed
+  by the composing screen. A null expectation may start a new reply only when
+  there is no active command; a non-null expectation must exactly match the
+  current immutable operation ID.
+- The mounted My JILL hub applies updates ONLY to request IDs still in its
+  freshly authenticated account-owned ledger. A late response after logout
+  or customer-account change cannot recreate a removed request.
+- Late success/error/finally callbacks from a prior screen can no longer
+  overwrite a different or already-resolved reply command. Every actual
+  completion clears `busy` atomically with that same command's outcome;
+  unmounted screens are safe to ignore.
+- Existing lost-ack delivery checks and retries continue using the original
+  operation ID. No duplicate send, new provider or persisted browser storage.
+- Synthetic tests simulate concurrent sends, a pending operation surviving
+  a navigation, a later acknowledgement after return, and stale callbacks
+  after confirmed delivery, logout, or creation of a newer operation.
+
+**This is source-only.** CI acceptance does not authorize customer messaging
+or any LIVE/KEEP, Google, Cloudflare or Shopify release.

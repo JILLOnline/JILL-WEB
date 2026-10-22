@@ -5,7 +5,7 @@ import {projectCustomerMessageInbox}
   from '../../../../shared/custom-order-message-inbox.mjs';
 import {projectVerifiedConversation}
   from '../../../../shared/custom-order-conversation-view.mjs';
-import {selectOwnedMessageRequest,retainOwnedMessageDrafts}
+import {selectOwnedMessageRequest,retainOwnedMessageDrafts,updateOwnedMessageDraft}
   from '../../../../shared/customer-message-selection.mjs';
 import {customOrderShortId,customOrderDateTime,customOrderTitle}
   from './custom-order-presentation.mjs';
@@ -153,10 +153,8 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                 <s-divider/>
                 <RequestConversation order={order} replyEnabled={state.replyEnabled}
                   draft={drafts[order.submission_id]||{}}
-                  onDraftChange={change=>onDraftsChange(previous=>
-                    Object.hasOwn(previous,order.submission_id)
-                      ?{...previous,[order.submission_id]:{
-                        ...previous[order.submission_id],...change}}:previous)}
+                  onDraftChange={(change,meta)=>onDraftsChange(previous=>
+                    updateOwnedMessageDraft(previous,order.submission_id,change,meta))}
                   onRefresh={()=>setAttempt(x=>x+1)}/>
               </s-stack>:<s-text color="subdued">
                 Choose a verified request to view its conversation.

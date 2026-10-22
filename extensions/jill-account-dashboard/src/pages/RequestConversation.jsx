@@ -30,7 +30,7 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
   const recoverable=order.timeline_version===2&&operation!==null;
   useEffect(()=>{
     if(state==='stale'&&staleRevision!==null&&order.revision>staleRevision)
-      onDraftChange({state:'idle',staleRevision:null});
+      onDraftChange({state:'idle',staleRevision:null},{expectedOperationId:operation?.operation_id??null});
   },[order.revision,state,staleRevision]);
   const submit=async(mode)=>{
     if(busyRef.current||busy||mode==='send'&&state==='stale'||
@@ -42,16 +42,22 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
         operation_id:'jill:customer:reply:'+crypto.randomUUID(),
         expected_revision:order.revision,text:text.trim()};
     }
-    busyRef.current=true;onDraftChange({operation:command,busy:true,state:'busy'});
+    busyRef.current=true;
+    onDraftChange({operation:command,busy:true,state:'busy'},
+      {expectedOperationId:operation?.operation_id??null});
     try{
       await sendWorkCustomerReply({sessionToken:shopify.sessionToken,
         command:{...command,mode}});
-      onDraftChange({operation:null,text:'',state:'sent',staleRevision:null});onRefresh();
+      onDraftChange({operation:null,text:'',state:'sent',staleRevision:null,busy:false},
+        {expectedOperationId:command.operation_id});
+      onRefresh();
     }catch(error){
       if(error.message==='stale_revision'){
-        onDraftChange({operation:null,state:'stale',staleRevision:command.expected_revision});
-      }else onDraftChange({state:error.message==='receipt_not_found'?'missing':'unconfirmed'});
-    }finally{busyRef.current=false;onDraftChange({busy:false});}
+        onDraftChange({operation:null,state:'stale',staleRevision:command.expected_revision,busy:false},
+          {expectedOperationId:command.operation_id});
+      }else onDraftChange({state:error.message==='receipt_not_found'?'missing':'unconfirmed',busy:false},
+        {expectedOperationId:command.operation_id});
+    }finally{busyRef.current=false;}
   };
   return <s-stack direction="block" gap="base">
     <s-heading>{copy.title}</s-heading>
@@ -64,7 +70,8 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
       <s-text-area label={copy.message} value={text} maxLength={500} rows={4}
         disabled={busy||pending}
         onInput={event=>onDraftChange({text:event.currentTarget.value,
-          state:state==='stale'?'stale':'idle'})}/>
+          state:state==='stale'?'stale':'idle'},
+          {expectedOperationId:operation?.operation_id??null})}/>
       {state==='sent'&&<s-banner tone="success">{copy.sent}</s-banner>}
       {['unconfirmed','missing','stale'].includes(state)&&
         <s-banner tone="warning">{state==='stale'?copy.stale:state==='missing'?copy.missing:copy.pending}</s-banner>}

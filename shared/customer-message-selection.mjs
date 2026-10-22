@@ -62,3 +62,41 @@ export function retainOwnedMessageDrafts(previous,verifiedOrders){
  }
  return next;
 }
+
+
+// The shared hub ledger is the ONLY permitted draft writer. Every UI update
+// carries the operation ID it observed (null if starting a new reply).
+// A late response from an unmounted screen cannot replace a newer command,
+// revive a removed customer request, or clear another operation's busy flag.
+export function updateOwnedMessageDraft(previous,id,change,meta={}){
+ if(!object(previous)||!ID.test(id)||!Object.hasOwn(previous,id)||
+   !object(change)||!object(meta)||
+   !Object.hasOwn(meta,'expectedOperationId'))return previous;
+ const existing=object(previous[id])?previous[id]:{};
+ const currentOp=object(existing.operation)&&typeof existing.operation.operation_id==='string'
+   ?existing.operation.operation_id:null;
+ const expected=meta.expectedOperationId;
+ if((expected!==null&&typeof expected!=='string')||expected!==currentOp)
+   return previous;
+ const allowed=['text','state','operation','busy','staleRevision'];
+ if(Object.keys(change).some(key=>!allowed.includes(key)))return previous;
+ if(Object.hasOwn(change,'text')&&
+  (typeof change.text!=='string'||change.text.length>500))return previous;
+ if(Object.hasOwn(change,'operation')){
+  const next=change.operation;
+  if(next!==null){
+   const shown=Object.hasOwn(change,'text')?change.text:existing.text??'';
+   if(!validOperation(next,id,shown))return previous;
+   if(currentOp!==null&&(next.operation_id!==currentOp||
+     next.submission_id!==existing.operation.submission_id||
+     next.expected_revision!==existing.operation.expected_revision||
+     next.text!==existing.operation.text))return previous;
+  }
+ }
+ if(Object.hasOwn(change,'state')&&
+   !['idle','busy','unconfirmed','missing','stale','sent'].includes(change.state))
+   return previous;
+ if(Object.hasOwn(change,'busy')&&typeof change.busy!=='boolean')return previous;
+ const updated={...existing,...change};
+ return {...previous,[id]:updated};
+}
