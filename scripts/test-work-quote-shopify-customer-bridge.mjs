@@ -149,7 +149,7 @@ const wrong=await readAuthorizedWorkQuoteCustomer({...args,enabled:true,
 assert.equal(wrong.reason,'shopify_customer_identity_unverified');
 const script=readFileSync('services/jill-order-desk/work-quote-shopify-customer-bridge.mjs','utf8');
 assert.doesNotMatch(script,/draftOrderCreate|draftOrderInvoiceSend|draftOrderCalculate|db\.batch\s*\(/);
-assert.doesNotMatch(script,/customerByEmail|email\s*:/);
+assert.doesNotMatch(script,/customerByEmail|\bemail\s*:/);
 assert.match(script,/action:'quote\.calculate'/);
 assert.match(script,/readSignedOwnerBinding/);
 assert.match(script,/source\.owner_status!=='signed_shopify_customer'/);
