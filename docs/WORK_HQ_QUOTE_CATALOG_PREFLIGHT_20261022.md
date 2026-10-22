@@ -160,3 +160,25 @@ WORK QA owner-binding endpoint, canonical payload hash verification,
 Shopify read scope/installation inventory, and explicit customer
 address/shipping consent process are independently implemented and
 verified. No historical receipt replay, no billable service.
+
+## One-time signed Owner binding challenge (not deployed)
+
+The unconnected WORK owner-binding reader now also demands a **response
+HMAC**, calculated using the private WORK merchant-read secret over
+`work_quote_owner_binding_v1`, exact WORK shop, submission ID, source
+revision, immutable owner GID, raw-payload SHA-256, timestamp and a **fresh
+32-character server challenge nonce**. The signed response must echo that
+nonce, be at most 120 seconds old, and match via constant-time SHA-256
+verification. A merely well-shaped JSON payload or a replayed/altered owner
+GID cannot trigger the Shopify Customer query. No customer email lookup.
+
+Only the future **separately published and authenticated** Google QA
+owner-binding endpoint can produce this proof. Its response signing and
+canonical ledger/source-hash cross-check are not yet implemented in
+published Google QA; therefore the registered WORK HQ route still supplies
+NO owner-binding reader and remains disabled. Nothing here constitutes
+current customer authentication or authorization.
+
+New regression covers matching HMAC, changed GID, invalid secret,
+expired receipt, foreign nonce, guest, wrong source revision,
+wrong Shopify customer and absent Owner scopes.

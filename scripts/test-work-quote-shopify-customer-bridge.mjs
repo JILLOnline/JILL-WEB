@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHmac} from 'node:crypto';
 import {JILL_WORK_MERCHANT_CLIENT_ID as APP}
  from '../backend/jill-merchant-auth.mjs';
 import {
  WORK_QUOTE_CUSTOMER_QUERY,projectWorkQuoteOwnerBinding,
+ verifyWorkQuoteOwnerBindingReceipt,
  projectExactWorkShopifyCustomer,readAuthorizedWorkQuoteCustomer,
 } from '../services/jill-order-desk/work-quote-shopify-customer-bridge.mjs';
 
@@ -11,6 +13,15 @@ const SHOP='jill-work.myshopify.com';
 const ID='jill:11111111-2222-4333-8444-555555555555';
 const GID='gid://shopify/Customer/111';
 const NOW=1792497600000;
+const SECRET='work-quote-owner-binding-hmac-secret-test-only-of-adequate-length';
+const NONCE='0123456789abcdefghijklmnopqrstuv';
+const sign=(source,nonce)=>createHmac('sha256',SECRET).update([
+ 'work_quote_owner_binding_v1',SHOP,source.submission_id,
+ String(source.source_revision),source.owner_customer_gid,
+ source.raw_payload_sha256,String(source.verified_at_ms),nonce,
+].join('\n'),'utf8').digest('hex');
+const receipt=(source,nonce)=>({...source,nonce,
+ signature:sign(source,nonce)});
 const signed={
  version:1,operation:'custom_order.merchant.owner_binding.result',
  ok:true,shop:SHOP,submission_id:ID,source_revision:3,
@@ -24,6 +35,26 @@ const valid=projectWorkQuoteOwnerBinding({
 assert.equal(valid.state,'owner_binding_projected');
 assert.equal(valid.backend_signature_verified,false,
  'JSON schema MUST NEVER count as an authenticated Google read');
+const verifiedReceipt=verifyWorkQuoteOwnerBindingReceipt({
+ source:receipt(signed,NONCE),submissionId:ID,sourceRevision:3,
+ nonce:NONCE,secret:SECRET,nowMs:NOW,
+});
+assert.equal(verifiedReceipt.state,'owner_binding_verified');
+assert.equal(verifiedReceipt.backend_signature_verified,true);
+for(const source of [
+ signed,{...receipt(signed,NONCE),signature:'f'.repeat(64)},
+ {...receipt(signed,NONCE),nonce:'v'.repeat(32)},
+ {...receipt(signed,NONCE),owner_customer_gid:'gid://shopify/Customer/222'},
+]){
+ assert.equal(verifyWorkQuoteOwnerBindingReceipt({
+  source,submissionId:ID,sourceRevision:3,
+  nonce:NONCE,secret:SECRET,nowMs:NOW,
+ }).state,'held','Missing, replayed or tampered HMAC must fail');
+}
+assert.equal(verifyWorkQuoteOwnerBindingReceipt({
+ source:receipt(signed,NONCE),submissionId:ID,sourceRevision:3,
+ nonce:NONCE,secret:SECRET,nowMs:NOW+120001,
+}).state,'held','Expired challenge must fail');
 for(const part of [
  {shop:'jill-live.myshopify.com'},
  {submission_id:'jill:foreign-request-111'},
@@ -103,14 +134,16 @@ const db={prepare:(sql)=>{
   throw Error('Unexpected D1 read');
  }}}};
 }};
-const readSignedOwnerBinding=async({submissionId,sourceRevision})=>{
+const readSignedOwnerBinding=async({submissionId,sourceRevision,nonce})=>{
  state.ownership++;
  assert.equal(submissionId,ID);
  assert.equal(sourceRevision,3);
- return signed;
+ assert.equal(nonce,NONCE);
+ return receipt(signed,nonce);
 };
 const args={request:new Request('https://jill-work.example/app/requests/quote-preflight'),
- authenticate,db,readSignedOwnerBinding,submissionId:ID,sourceRevision:3,
+ authenticate,db,readSignedOwnerBinding,ownerBindingSecret:SECRET,
+ makeNonce:()=>NONCE,submissionId:ID,sourceRevision:3,
  now:()=>NOW};
 const none=await readAuthorizedWorkQuoteCustomer({...args,enabled:false});
 assert.equal(none.state,'held');
@@ -140,14 +173,24 @@ assert.equal(state.ownership,1);assert.equal(state.graphql,1);
 assert.equal(JSON.stringify(good).includes('must-never'),false);
 assert.equal(JSON.stringify(good).includes('PRIVATE'),false);
 const guest=await readAuthorizedWorkQuoteCustomer({...args,enabled:true,
- readSignedOwnerBinding:async()=>({...signed,
-  owner_status:'guest',owner_customer_gid:null})});
+ readSignedOwnerBinding:async({nonce})=>receipt({...signed,
+  owner_status:'guest',owner_customer_gid:null},nonce)});
 assert.equal(guest.reason,'signed_owner_binding_missing_or_stale');
 assert.equal(state.graphql,1,'Guest never triggers Shopify Customer Admin lookup');
 const wrong=await readAuthorizedWorkQuoteCustomer({...args,enabled:true,
- readSignedOwnerBinding:async()=>({...signed,owner_customer_gid:'gid://shopify/Customer/222'})});
+ readSignedOwnerBinding:async({nonce})=>receipt({...signed,owner_customer_gid:'gid://shopify/Customer/222'},nonce)});
 assert.equal(wrong.reason,'shopify_customer_identity_unverified');
+const forged=await readAuthorizedWorkQuoteCustomer({...args,enabled:true,
+ readSignedOwnerBinding:async({nonce})=>({
+  ...receipt(signed,nonce),signature:'a'.repeat(64),
+ })});
+assert.equal(forged.reason,'signed_owner_binding_authentication_failed');
+const unproven=await readAuthorizedWorkQuoteCustomer({...args,enabled:true,
+ ownerBindingSecret:undefined});
+assert.equal(unproven.reason,'owner_customer_source_unavailable');
+
 const script=readFileSync('services/jill-order-desk/work-quote-shopify-customer-bridge.mjs','utf8');
+assert.match(script,/verifyWorkQuoteOwnerBindingReceipt/);
 assert.doesNotMatch(script,/draftOrderCreate|draftOrderInvoiceSend|draftOrderCalculate|db\.batch\s*\(/);
 assert.doesNotMatch(script,/customerByEmail|\bemail\s*:/);
 assert.match(script,/action:'quote\.calculate'/);

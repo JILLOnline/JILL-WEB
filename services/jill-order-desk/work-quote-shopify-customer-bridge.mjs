@@ -1,12 +1,14 @@
 // JILL HQ WORK — exact Shopify Customer read, SOURCE ONLY.
 // No route, writes, invoices, or shipping calculation. The canonical signed
 // Owner binding reader is NOT deployed. Email/name/postal code are never IDs.
+import {createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
 import {readWorkMerchantPermission} from './merchant-access.mjs';
 import {JILL_WORK_MERCHANT_CLIENT_ID as APP,
  JILL_WORK_MERCHANT_SHOP as SHOP} from '../../backend/jill-merchant-auth.mjs';
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const GID=/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/;
 const HASH=/^[a-f0-9]{64}$/;
+const NONCE=/^[A-Za-z0-9_-]{32}$/;
 const MAX_AGE=300000;
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const halt=reason=>Object.freeze({
@@ -53,6 +55,36 @@ export function projectWorkQuoteOwnerBinding({
   can_publish:false,can_invoice:false,can_create_order:false,
  });
 }
+// Verify a future private Google QA ledger response, including a Worker
+// one-time challenge. The server must HMAC these exact fields using the
+// isolated WORK merchant read secret. No unsigned/source-shaped JSON suffices.
+export function verifyWorkQuoteOwnerBindingReceipt({
+ source,submissionId,sourceRevision,nonce,secret,nowMs=Date.now(),
+}={}){
+ const projected=projectWorkQuoteOwnerBinding({
+  source,submissionId,sourceRevision,nowMs,
+ });
+ if(projected.state!=='owner_binding_projected')return projected;
+ if(typeof secret!=='string'||secret.length<32||
+    !NONCE.test(nonce||'')||source.nonce!==nonce||
+    !HASH.test(source.signature||'')||
+    nowMs-source.verified_at_ms>120000)
+  return halt('signed_owner_binding_authentication_failed');
+ const message=[
+  'work_quote_owner_binding_v1',SHOP,submissionId,
+  String(sourceRevision),source.owner_customer_gid,
+  source.raw_payload_sha256,String(source.verified_at_ms),nonce,
+ ].join('\n');
+ const digest=createHmac('sha256',secret).update(message,'utf8').digest();
+ const signature=Buffer.from(source.signature,'hex');
+ if(signature.length!==digest.length||
+    !timingSafeEqual(signature,digest))
+  return halt('signed_owner_binding_authentication_failed');
+ return Object.freeze({...projected,
+  state:'owner_binding_verified',backend_signature_verified:true,
+ });
+}
+
 export function projectExactWorkShopifyCustomer({
  result,expectedGid,nowMs=Date.now(),
 }={}){
@@ -78,7 +110,8 @@ export function projectExactWorkShopifyCustomer({
 }
 export async function readAuthorizedWorkQuoteCustomer({
  request,authenticate,db,enabled=false,submissionId,sourceRevision,
- readSignedOwnerBinding,now=Date.now,
+ readSignedOwnerBinding,ownerBindingSecret,
+ makeNonce=()=>randomBytes(24).toString('base64url'),now=Date.now,
 }={}){
  if(enabled!==true)return halt('owner_customer_lookup_disabled');
  if(!ID.test(submissionId||'')||
@@ -87,7 +120,8 @@ export async function readAuthorizedWorkQuoteCustomer({
     typeof authenticate?.admin!=='function'||
     typeof db?.prepare!=='function'||
     typeof readSignedOwnerBinding!=='function'||
-    typeof now!=='function')
+    typeof ownerBindingSecret!=='string'||ownerBindingSecret.length<32||
+    typeof makeNonce!=='function'||typeof now!=='function')
    return halt('owner_customer_source_unavailable');
  const sdk=await authenticate.admin(request);
  let allowed;
@@ -96,14 +130,20 @@ export async function readAuthorizedWorkQuoteCustomer({
  });}catch{return halt('owner_customer_authority_unavailable');}
  if(allowed.allowed!==true||allowed.role!=='owner')
   return halt('owner_customer_access_denied');
- let bindingSource;
- try{bindingSource=await readSignedOwnerBinding({
-  submissionId,sourceRevision,
- });}catch{return halt('signed_owner_binding_unavailable');}
- const binding=projectWorkQuoteOwnerBinding({
-  source:bindingSource,submissionId,sourceRevision,nowMs:now(),
+ let nonce,bindingSource;
+ try{
+  nonce=makeNonce();
+  if(!NONCE.test(nonce||''))
+   return halt('signed_owner_binding_authentication_failed');
+  bindingSource=await readSignedOwnerBinding({
+   submissionId,sourceRevision,nonce,
+  });
+ }catch{return halt('signed_owner_binding_unavailable');}
+ const binding=verifyWorkQuoteOwnerBindingReceipt({
+  source:bindingSource,submissionId,sourceRevision,nonce,
+  secret:ownerBindingSecret,nowMs:now(),
  });
- if(binding.state!=='owner_binding_projected')return halt(binding.reason);
+ if(binding.state!=='owner_binding_verified')return halt(binding.reason);
  const admin=sdk.admin;
  if(typeof admin?.graphql!=='function')
   return halt('shopify_customer_reader_unavailable');
