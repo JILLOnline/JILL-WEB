@@ -43,6 +43,15 @@ export function workQuoteOwnerPreflightReady(env){
   workQuoteDraftFeatureReady(env)&&workQuoteCatalogReviewReady(env);
 }
 // Read-only source check; never infer ownership from a submitted email or GID.
+/** @param {{
+ * request?:Request, enabled?:boolean,
+ * authenticate?:{admin:(request:Request)=>Promise<any>},
+ * db?:any, readFreshList?:(()=>Promise<any>),
+ * readExactDetail?:(params:{submissionId:string})=>Promise<any>,
+ * readCatalog?:any,
+ * resolveTrustedCustomerContext?:any,
+ * now?:(()=>number)
+ * }} [options] */
 export async function handleWorkQuoteOwnerPreflight({
  request,enabled=false,authenticate,db,readFreshList,readExactDetail,
  readCatalog=readAuthorizedWorkQuoteCatalog,
