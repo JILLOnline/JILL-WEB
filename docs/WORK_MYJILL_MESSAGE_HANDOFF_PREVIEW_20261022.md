@@ -10,6 +10,9 @@ October 22, 2026. Independent account-component preview branch
   adds an email, customer GID, request ID or JWT to a URL or backend lookup.
 - The destination loads a **fresh signed Shopify session account list**, then
   selects the hinted request **only** if that owned request ID is returned.
+- Resuming an in-flight draft after switching screens now **requires a receipt
+  check** with the same operation ID. A stale busy flag cannot leave the reply
+  composer locked, and a malformed/mismatched command cannot be retried.
 - Custom Orders and Messages share **one in-memory reply draft/operation ledger**,
   preventing loss of the original idempotent operation ID after an uncertain
   send when navigating between tabs. The backend receipt-checking contract
