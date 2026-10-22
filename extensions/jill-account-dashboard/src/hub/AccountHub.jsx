@@ -17,6 +17,11 @@ export default function AccountHub({accountState = null}) {
     return routeFromEntry(navigation.currentEntry);
   });
 
+  // Shared in-memory reply ledger: uncertain delivery op IDs survive screen
+  // navigation, but are never stored in a URL, cookie or second database.
+  const [conversationDrafts,setConversationDrafts]=useState({});
+  const [messageRequestTarget,setMessageRequestTarget]=useState(null);
+
   useEffect(() => {
     if (typeof navigation === 'undefined' || !navigation.addEventListener) return;
     const onChange = () => setRoute(routeFromEntry(navigation.currentEntry));
@@ -24,8 +29,11 @@ export default function AccountHub({accountState = null}) {
     return () => navigation.removeEventListener('currententrychange', onChange);
   }, []);
 
-  const onNavigate = (nextRoute) => {
+  const onNavigate = (nextRoute,{submissionId}={}) => {
     const id = canonicalRoute(nextRoute);
+    // Selection hint only; Messages independently verifies account ownership.
+    setMessageRequestTarget(id==='messages'&&typeof submissionId==='string'
+      ?submissionId:null);
     setRoute(id);
     if (typeof navigation !== 'undefined' && navigation.navigate) {
       try {
@@ -41,8 +49,10 @@ export default function AccountHub({accountState = null}) {
     overview: <Overview accountState={accountState} onNavigate={onNavigate} />,
     rewards: <Rewards accountState={accountState} onNavigate={onNavigate} />,
     coupons: <Coupons onNavigate={onNavigate} />,
-    'custom-orders': <CustomOrders />,
-    messages: <Messages />,
+    'custom-orders': <CustomOrders onNavigate={onNavigate}
+      drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
+    messages: <Messages requestedSubmissionId={messageRequestTarget}
+      drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     celebrations: <Celebrations />,
     saved: <SavedPreferences />,
     settings: <Settings onNavigate={onNavigate} />,

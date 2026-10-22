@@ -65,6 +65,12 @@ on:
       - 'scripts/test-release-work-hq-connected-content-owner.mjs'
       - 'scripts/audit-work-messaging-gateway-readonly.mjs'
       - 'scripts/test-audit-work-messaging-gateway-readonly.mjs'
+      - 'shared/customer-message-selection.mjs'
+      - 'scripts/test-work-customer-message-navigation.mjs'
+      - 'scripts/test-work-message-inboxes.mjs'
+      - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
 
 permissions:
   contents: read
@@ -151,6 +157,8 @@ jobs:
         run: node scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs
       - name: Verify unsigned WORK messaging gateway probe rejects unauthorized messages (mocked)
         run: node scripts/test-audit-work-messaging-gateway-readonly.mjs
+      - name: Verify owned request-to-Messages navigation and one shared uncertain-reply ledger (offline)
+        run: node scripts/test-work-customer-message-navigation.mjs
       - name: Verify My JILL customer ownership, public messaging and account continuity (source-only)
         run: |
           npm run test:custom-order-ownership
