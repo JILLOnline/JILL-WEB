@@ -1,7 +1,6 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadWorkCustomerCustomOrders} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
-import {retainOwnedMessageDrafts} from '../../../../shared/customer-message-selection.mjs';
 import {
   customOrderStatus,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
@@ -9,10 +8,11 @@ import {
 
 // UI-only WORK account screen. Every read obtains a fresh Shopify session
 // token through the existing canonical reader. Never select orders by email.
-export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
+export default function CustomOrders() {
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[]});
   const [refreshing,setRefreshing]=useState(false);
+  const [drafts,setDrafts]=useState({});
 
   useEffect(()=>{
     let active=true;
@@ -25,15 +25,14 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
         if(active){
           // Keep text and the SAME uncertain operation only for requests in
           // the newly verified account response. Other accounts' drafts go.
-          onDraftsChange(previous=>retainOwnedMessageDrafts(previous,orders));
+          setDrafts(previous=>Object.fromEntries(orders.map(order=>[
+            order.submission_id,previous[order.submission_id]||{},
+          ])));
           setState({status:'ready',orders});setRefreshing(false);
         }
       })
       .catch(()=>{
-        if(active){
-          onDraftsChange({}); // Account could have changed; clear uncertain replies.
-          setState({status:'error',orders:[]});setRefreshing(false);
-        }
+        if(active){setState({status:'error',orders:[]});setRefreshing(false);}
       });
     return ()=>{active=false;};
   },[attempt]);
@@ -156,13 +155,9 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
                     ))}
                   </s-stack>
                   <RequestConversation order={order} draft={drafts[order.submission_id]||{}}
-                    onDraftChange={change=>onDraftsChange(previous=>Object.hasOwn(previous,order.submission_id)?
+                    onDraftChange={change=>setDrafts(previous=>Object.hasOwn(previous,order.submission_id)?
                       {...previous,[order.submission_id]:{...previous[order.submission_id],...change}}:previous)}
                     onRefresh={()=>setAttempt(value=>value+1)}/>
-                  <s-button variant="secondary"
-                    onClick={()=>onNavigate('messages',{submissionId:order.submission_id})}>
-                    View in Messages
-                  </s-button>
                   <s-divider/>
                   <s-stack direction="block" gap="small-100">
                     <s-text color="subdued">Your request reference</s-text>
