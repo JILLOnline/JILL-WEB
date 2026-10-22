@@ -41,6 +41,12 @@ jobs:
           node scripts/test-work-quote-commerce-handoff.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node scripts/test-work-quote-calculation.mjs
+      - name: Install embedded WORK app dependencies for compile checks only
+        run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+      - name: Typecheck real WORK embedded-app routes
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Build real WORK embedded app without deployment
+        run: npm run build --prefix services/jill-order-desk/app-home
       - name: No deploy/production script, only compiled pure Node source
         run: |
           node --check services/jill-order-desk/work-quote-catalog-preflight.mjs
