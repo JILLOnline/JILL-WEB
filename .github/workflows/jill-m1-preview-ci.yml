@@ -153,6 +153,7 @@ jobs:
           npm run test:custom-order-account-read
           npm run test:customer-custom-orders
           npm run test:work-message-inboxes
+          node scripts/test-work-conversation.mjs
           npm run test:account-hub-canary
       - name: Verify M1 + M2 WORK predeploy feature and route safety
         run: node scripts/test-work-hq-m1-m2-predeploy-guard.mjs
