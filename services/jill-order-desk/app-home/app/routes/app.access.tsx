@@ -11,7 +11,7 @@ export async function loader({request,context}:LoaderFunctionArgs){
   });
   // Do not expose any environment capability before verified Owner + D1.
   if(response.status!==200)return response;
-  const evidence=await response.json();
+  const evidence=await response.json() as Evidence;
   return Response.json({...evidence,capabilities:{
     requestsConfigured:env.JILL_WORK_HOST_STAGE==="canary"&&
       Boolean(env.JILL_HQ_MERCHANT_READ_SECRET),
