@@ -182,3 +182,33 @@ current customer authentication or authorization.
 New regression covers matching HMAC, changed GID, invalid secret,
 expired receipt, foreign nonce, guest, wrong source revision,
 wrong Shopify customer and absent Owner scopes.
+
+## Future Google WORK Owner binding read (no provider deployment)
+
+`services/jill-order-desk/work-google-owner-binding.mjs` prepares a bounded
+server-to-server **future** Google WORK QA read. The module is **OFF by default
+and has no HTTP route, registered consumer or active endpoint**. It explicitly
+rejects the immutable, already released Google merchant detail @9 URL;
+that endpoint must never be repurposed.
+
+A distinct new Google QA version must eventually support:
+`jill_order_merchant_owner_binding=1` with an exact WORK shop, request ID,
+source revision, timestamp, 32-character single-use nonce, and
+`merchant_owner_binding_request_v1` HMAC signed using the existing
+server-only WORK merchant read secret. The new internal response must be
+limited to exactly 12 whitelisted fields and 2048 bytes, must HMAC
+`work_quote_owner_binding_v1` over immutable ledger/customer GID and
+canonical intake raw payload hash, timestamp and nonce, and must never
+include customer email/name/address or raw payload.
+
+The reader checks the response HMAC, nonce, freshness, exact source revision
+and Customer GID before any future Owner handoff. The Google backend
+implementation and independent server-side canonical hash/owner-ledger
+correlation are **still pending** and must be tested/published separately.
+The currently running WORK gateway and quote route remain unchanged/OFF.
+
+Offline regression:
+`node scripts/test-work-google-owner-binding.mjs`. No real Google request
+is performed; only a synthetic backend adapter is invoked. It verifies a
+domain-separated HMAC, fixed request fields, bounded response, stale/foreign/
+altered owner denial, old @9 denial and zero network while OFF.
