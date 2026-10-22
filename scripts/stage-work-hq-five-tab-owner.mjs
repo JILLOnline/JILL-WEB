@@ -251,14 +251,14 @@ function compileManifest(inputs,source){
  // keep-vars is an explicit Wrangler CLI switch; remove from uploaded JSON.
  const upload=structuredClone(planned.manifest);
  delete upload.keep_vars;
- const location=fiveTabCompiledConfigPaths(source);
- fs.writeFileSync(location.file,JSON.stringify(upload,null,2)+'\n',{
+ const uploadLocation=fiveTabCompiledConfigPaths(source);
+ fs.writeFileSync(uploadLocation.file,JSON.stringify(upload,null,2)+'\n',{
   encoding:'utf8',flag:'wx',mode:0o600});
- gate(fs.existsSync(location.file)&&
-  path.resolve(APP,location.config)===location.file,
+ gate(fs.existsSync(uploadLocation.file)&&
+  path.resolve(APP,uploadLocation.config)===uploadLocation.file,
   'compiled_config_path_mismatch');
  return {planned,package_sha256:bundleDigest(dist),
-  config:location.config};
+  config:uploadLocation.config};
 }
 export function fiveTabUploadArgs(config,marker,{dryRun=false}={}){
  gate(/^\.\/dist\/server\/wrangler\.hq-five-tab-inactive\.[a-f0-9]{12}\.json$/.test(config)&&

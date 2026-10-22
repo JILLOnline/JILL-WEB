@@ -61,7 +61,7 @@
     "scripts/test-inspect-work-hq-five-tab-owner.mjs": "44d78b673f91ddb089da1ac57c875f6cd2f257b3",
     "scripts/plan-work-hq-five-tab-inactive-dry-run.mjs": "33430211c72cc102cbeb228adc22d31ba423922d",
     "scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs": "7804019044a019eba1b0ad56aa6b24b5aa88a780",
-    "scripts/stage-work-hq-five-tab-owner.mjs": "7f5c243771009442953e48f4a40a108a77fb585c",
+    "scripts/stage-work-hq-five-tab-owner.mjs": "9574ef5e6697875c39ec2863951b6ed1b2b6a1ab",
     "scripts/test-stage-work-hq-five-tab-owner.mjs": "909588e05735d97554c96026926bc0f619b603c4"
   }
 }
