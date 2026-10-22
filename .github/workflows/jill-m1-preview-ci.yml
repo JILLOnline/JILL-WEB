@@ -53,6 +53,12 @@ on:
       - 'services/jill-order-desk/work-hq-home-priorities.mjs'
       - 'scripts/test-work-hq-home-priorities.mjs'
       - 'scripts/test-hq-five-tab-connected-content.mjs'
+      - 'scripts/plan-work-hq-connected-content-inactive-dry-run.mjs'
+      - 'scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs'
+      - 'scripts/inspect-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-inspect-work-hq-connected-content-owner.mjs'
+      - 'scripts/stage-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-stage-work-hq-connected-content-owner.mjs'
 
 permissions:
   contents: read
@@ -103,6 +109,11 @@ jobs:
         run: |
           node scripts/test-work-hq-home-priorities.mjs
           node scripts/test-hq-five-tab-connected-content.mjs
+      - name: Verify connected-content successor WORK baseline, no extra resources and one-use stage (offline)
+        run: |
+          node scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs
+          node scripts/test-inspect-work-hq-connected-content-owner.mjs
+          node scripts/test-stage-work-hq-connected-content-owner.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries

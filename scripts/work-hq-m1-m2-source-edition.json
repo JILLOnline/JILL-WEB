@@ -71,6 +71,12 @@
     "scripts/test-work-hq-home-priorities.mjs": "e712d57d11f2381008c222551b7e5a826239472c",
     "services/jill-order-desk/app-home/app/routes/app.messages.tsx": "e1d61c52cfdfdf5a72cdc53871ae867a2a0e65d6",
     "services/jill-order-desk/app-home/app/styles/hq-home.css": "f95b2f8df9a9798df0c482a0ee18c3b4806abd36",
-    "scripts/test-hq-five-tab-connected-content.mjs": "fbd40c70aca79ace38e56cb7a95eb02eb604b0da"
+    "scripts/test-hq-five-tab-connected-content.mjs": "fbd40c70aca79ace38e56cb7a95eb02eb604b0da",
+    "scripts/plan-work-hq-connected-content-inactive-dry-run.mjs": "a3be17c24771d274044cfee7496a4645cab9c6a5",
+    "scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs": "a2295b7dd689fb1d0b15a894e83f626e47bbbe84",
+    "scripts/inspect-work-hq-connected-content-owner.mjs": "383f6a298aaa67742027a72109b86990c30beb7f",
+    "scripts/test-inspect-work-hq-connected-content-owner.mjs": "ea2c1f8f6d1efaec29cfc9c3c28aed697029f99f",
+    "scripts/stage-work-hq-connected-content-owner.mjs": "6d99318514d81fdf6da793da4444d0984c524b8b",
+    "scripts/test-stage-work-hq-connected-content-owner.mjs": "402c7bb689b7186ac35983962428a050a557b053"
   }
 }
