@@ -21,6 +21,8 @@ on:
       - 'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx'
       - 'services/jill-order-desk/app-home/app/components/WorkQuoteOwnerPreflightPanel.tsx'
       - 'scripts/test-work-hq-quote-owner-ui.mjs'
+      - 'services/jill-order-desk/work-quote-shopify-customer-bridge.mjs'
+      - 'scripts/test-work-quote-shopify-customer-bridge.mjs'
       - 'docs/WORK_HQ_QUOTE_CATALOG_PREFLIGHT_20261022.md'
       - '.github/workflows/jill-hq-quote-catalog-preflight.yml'
 
@@ -42,6 +44,7 @@ jobs:
           node scripts/test-work-quote-catalog-preflight.mjs
           node scripts/test-work-hq-quote-owner-preflight.mjs
           node scripts/test-work-hq-quote-owner-ui.mjs
+          node scripts/test-work-quote-shopify-customer-bridge.mjs
       - name: Regress original saved-quote handoff and exact variant read security
         run: |
           node scripts/test-work-quote-commerce-handoff.mjs
@@ -60,3 +63,5 @@ jobs:
           node --check services/jill-order-desk/work-quote-owner-preflight.mjs
           node --check scripts/test-work-hq-quote-owner-preflight.mjs
           node --check scripts/test-work-hq-quote-owner-ui.mjs
+          node --check services/jill-order-desk/work-quote-shopify-customer-bridge.mjs
+          node --check scripts/test-work-quote-shopify-customer-bridge.mjs

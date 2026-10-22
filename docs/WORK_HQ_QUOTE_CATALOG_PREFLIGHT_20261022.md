@@ -112,3 +112,51 @@ calculation, customer acceptance and commerce authorization are separate.
 Test `node scripts/test-work-hq-quote-owner-ui.mjs`, plus the existing
 dedicated source tests and full embedded-app typecheck and build. No
 Shopify extension, Cloudflare Worker, Google QA or D1 deployment happened.
+
+## Exact Shopify customer identity bridge (source-only; NOT yet connected)
+
+`services/jill-order-desk/work-quote-shopify-customer-bridge.mjs`
+introduces the next independently guarded read step:
+
+1. **Canonical signed owner binding REQUIRED:** a future **privately
+   signed/verified** WORK Google QA owner-ledger read for this exact
+   `submission_id` and source revision. Its proposed response schema is
+   `custom_order.merchant.owner_binding.result` with an immutable
+   `gid://shopify/Customer/...`, source SHA-256 and fresh timestamp.
+   This is **NOT currently implemented/published** by Google QA. JSON
+   schema validation is explicitly **not** an HMAC authentication proof.
+   The module currently has **no registered HTTP caller**.
+2. **Second Shopify Owner/D1 capability REQUIRED:** independently obtain
+   online Owner and `quote.calculate` policy scope (including
+   `read_customers`, `read_products`, `read_draft_orders` and
+   `write_draft_orders`). Only then may the same exact private owner
+   binding supply a Customer GID for the *read-only* Admin GraphQL
+   `node(id)` lookup. Verify returned WORK myshopifyDomain, USD,
+   expected app API key and the exact Customer GID, not email/name.
+3. **Delivery still HOLD:** a successful Customer GID match proves
+   identity only. It must **not** silently use Shopify defaultAddress or
+   the Custom Order's city/ZIP as a confirmed full shipping destination,
+   nor assume a shipping title, carrier rate or customer approval.
+   `full_delivery_address_verified=false` and
+   `shipping_terms_verified=false` remain hard defaults.
+4. **No inferred guest ownership:** guests without a signed immutable
+   `CustomOrderOwners` binding cannot proceed; email equality is never
+   customer-ownership evidence. No automatic guest claim or transfer.
+5. **No shipping, payment, invoice or order mutation.** No provider call
+   occurs while OFF or without a trusted ownership reader; the only
+   simulated positive case is in a fully isolated unit test.
+   No live Google/Shopify data were queried by this step.
+
+The synthetic suite
+`node scripts/test-work-quote-shopify-customer-bridge.mjs` denies
+guest/email-based identities, a stale or foreign owner binding, tampered
+source revision, wrong Shopify store/app/currency/customer GID,
+Owner/D1 and scope failures, and unverified shipping/address completion.
+It also asserts zero calls with the gate OFF and no private contact or
+shipping-address leakage.
+
+**Do not wire into the Owner preflight route until** a separate signed
+WORK QA owner-binding endpoint, canonical payload hash verification,
+Shopify read scope/installation inventory, and explicit customer
+address/shipping consent process are independently implemented and
+verified. No historical receipt replay, no billable service.
