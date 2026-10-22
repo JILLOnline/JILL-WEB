@@ -93,7 +93,7 @@ assert.match(hq,/\/app\/requests\/thread\?/);
 assert.match(hq,/threadRead\.data\.thread\?\.submission_id===record\.submission_id/);
 assert.match(thread,/handleWorkRequestThread/);
 assert.match(thread,/enabled:env\.JILL_WORK_CONVERSATION_ENABLED==="true"/);
-assert.match(hub,/messages: <Messages \/>/);
+assert.match(hub,/messages: <Messages requestedSubmissionId=\{messageRequestTarget\}/);
 assert.match(registry,/id:'messages',label:'Messages',path:'messages'/);
 assert.match(shortcut,/onNavigate\('messages'\)/);
 assert.match(customer,/loadWorkCustomerCustomOrders\(\{sessionToken\}\)/);

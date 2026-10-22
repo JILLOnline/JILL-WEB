@@ -1,0 +1,46 @@
+name: JILL My JILL message handoff preview
+
+# Source-only checks. No store deployment, tokens, credentials, billing, or
+# bypass of the independent M1/M2 protected-history release certificate.
+on:
+  push:
+    branches:
+      - jill/myjill-message-handoff-preview-20261022
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
+      - 'shared/customer-message-selection.mjs'
+      - 'scripts/test-work-customer-message-navigation.mjs'
+      - 'scripts/test-work-message-inboxes.mjs'
+      - '.github/workflows/jill-myjill-message-handoff-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  customer-handoff-offline:
+    name: Check signed-customer selection and preserved reply receipts without deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify owned request selection and single in-memory reply operation
+        run: node scripts/test-work-customer-message-navigation.mjs
+      - name: Regress existing two-sided public projection and account ownership
+        run: |
+          node scripts/test-work-message-inboxes.mjs
+          node scripts/test-customer-custom-orders.mjs
+          node scripts/test-my-jill-presentation.mjs
+          node scripts/test-account-hub-canary.mjs
+          node scripts/test-work-conversation.mjs
+      - name: Assert source-only scope, never a Cloudflare/Shopify/Google deployment
+        run: |
+          node --check shared/customer-message-selection.mjs
+          node --check scripts/test-work-customer-message-navigation.mjs
