@@ -39,8 +39,8 @@ export function inspectWorkMyJillMessagingSource({
   'signed_read_capability');
  assert(safe(reply,/if\(enabled!==true\)return failure\(503,'conversation_not_connected'\)/),'writer_fail_closed');
  assert(safe(reply,/verifyWorkCustomerAccountSession/),'writer_customer_signature');
- assert(safe(orders,/loadWorkCustomerConversationState\(\{sessionToken\}\)/),'orders_signed_reader');
- assert(safe(messages,/loadWorkCustomerConversationState\(\{sessionToken\}\)/),'messages_signed_reader');
+ assert(safe(orders,/loadWorkCustomerConversationState\(\{sessionToken,signal:controller\.signal\}\)/),'orders_signed_reader');
+ assert(safe(messages,/loadWorkCustomerConversationState\(\{sessionToken,signal:controller\.signal\}\)/),'messages_signed_reader');
  assert(safe(hub,/messages: <Messages requestedSubmissionId=\{messageRequestTarget\}/),'internal_handoff');
  assert(safe(messages,/selectOwnedMessageRequest\(list/),'customer_owned_selection');
  assert(safe(messages,/retainOwnedMessageDrafts\(previous,orders\)/),'customer_owned_drafts');

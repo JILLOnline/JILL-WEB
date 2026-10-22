@@ -16,11 +16,12 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
 
   useEffect(()=>{
     let active=true;
+    const controller=new AbortController();
     setState({status:'loading',orders:[],replyEnabled:false});
     setRefreshing(true);
     const sessionToken=typeof shopify!=='undefined'
       ? shopify.sessionToken : null;
-    loadWorkCustomerConversationState({sessionToken})
+    loadWorkCustomerConversationState({sessionToken,signal:controller.signal})
       .then(({orders,replyEnabled})=>{
         if(active){
           // Keep text and the SAME uncertain operation only for requests in
@@ -35,7 +36,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
           setState({status:'error',orders:[],replyEnabled:false});setRefreshing(false);
         }
       });
-    return ()=>{active=false;};
+    return ()=>{active=false;controller.abort();};
   },[attempt]);
 
   const loading=state.status==='loading';

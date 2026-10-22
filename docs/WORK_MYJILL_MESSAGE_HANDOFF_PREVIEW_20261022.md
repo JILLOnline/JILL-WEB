@@ -106,3 +106,22 @@ or any LIVE/KEEP, Google, Cloudflare or Shopify release.
 - The ledger forbids `sent`, `unconfirmed`, `missing` or `busy` state
   claims without the matching immutable operation. Pending operation text
   cannot be changed while the receipt is outstanding.
+
+## Customer-account read cancellation (source-only)
+
+- **Custom Orders** and **Messages** now each use an `AbortController`
+  per signed WORK account read. On navigation away or a new request attempt,
+  cleanup invalidates the screen and aborts its in-flight fetch.
+- The canonical customer reader combines the cancellation signal with the
+  existing 20-second timeout. It rejects cancellation before token retrieval,
+  after a delayed session-token read, and after parsing a delayed response.
+- Both screens already check an active render generation before writing
+  display state. Aborting additionally terminates the old network read,
+  rather than letting it race into the next screen. Every successful data
+  response still requires the Shopify-authenticated account list and
+  server-derived reply capability.
+- This does **not** prove that a customer sign-out/sign-in within a still
+  mounted Shopify page is independently detected. The actual browser/account
+  lifecycle remains an explicit WORK Customer A/B acceptance gate.
+- Offline regression: `node scripts/test-work-customer-read-cancellation.mjs`.
+  No remote endpoint, fake customer record, storage or release mutation.

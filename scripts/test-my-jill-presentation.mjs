@@ -54,7 +54,7 @@ const screen=readFileSync(root+'pages/CustomOrders.jsx','utf8');
 const hub=readFileSync(root+'hub/AccountHub.jsx','utf8');
 const overview=readFileSync(root+'pages/Overview.jsx','utf8');
 for (const expected of [
-  'loadWorkCustomerConversationState({sessionToken})','customOrderStatus(order.status)',
+  'loadWorkCustomerConversationState({sessionToken,signal:controller.signal})','customOrderStatus(order.status)',
   'order.timeline.map','order.summary','Refresh updates','Tracking history',
   'No requests to show yet','signed-in account','Try again',
 ]) assert.ok(screen.includes(expected),'Missing visual/identity contract: '+expected);

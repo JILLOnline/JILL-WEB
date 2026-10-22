@@ -19,9 +19,10 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
   const [selected,setSelected]=useState(null);
   useEffect(()=>{
     let active=true;
+    const controller=new AbortController();
     setState({status:'loading',orders:[],replyEnabled:false});
     const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
-    loadWorkCustomerConversationState({sessionToken}).then(({orders,replyEnabled})=>{
+    loadWorkCustomerConversationState({sessionToken,signal:controller.signal}).then(({orders,replyEnabled})=>{
       const list=projectCustomerMessageInbox(orders);
       if(!active)return;
       // A new authenticated response reauthorizes EVERY displayed ID.
@@ -37,7 +38,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
       onDraftsChange({});setSelected(null);
       setState({status:'error',orders:[],replyEnabled:false});
     });
-    return ()=>{active=false};
+    return ()=>{active=false;controller.abort();};
   },[attempt,requestedSubmissionId]);
   const inbox=useMemo(()=>state.status==='ready'
     ?projectCustomerMessageInbox(state.orders):[],[state]);

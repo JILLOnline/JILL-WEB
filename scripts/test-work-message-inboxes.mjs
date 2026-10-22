@@ -96,7 +96,7 @@ assert.match(thread,/enabled:env\.JILL_WORK_CONVERSATION_ENABLED==="true"/);
 assert.match(hub,/messages: <Messages requestedSubmissionId=\{messageRequestTarget\}/);
 assert.match(registry,/id:'messages',label:'Messages',path:'messages'/);
 assert.match(shortcut,/onNavigate\('messages'\)/);
-assert.match(customer,/loadWorkCustomerConversationState\(\{sessionToken\}\)/);
+assert.match(customer,/loadWorkCustomerConversationState\(\{sessionToken,signal:controller\.signal\}\)/);
 assert.match(customer,/replyEnabled=\{state\.replyEnabled\}/);
 assert.match(customer,/projectCustomerMessageInbox\(orders\)/);
 assert.match(customer,/onDraftsChange\(\{\}\);setSelected\(null\)/);

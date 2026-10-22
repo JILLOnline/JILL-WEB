@@ -15,6 +15,7 @@ export async function sendWorkCustomerReply({sessionToken,command,request=fetch}
     headers:{'Content-Type':'application/json',Authorization:'Bearer '+jwt},
     body:JSON.stringify(command),signal:AbortSignal.timeout(25000)});
   const data=await response.json();
+  signal?.throwIfAborted?.();
   if(data?.version!==1||data.operation!=='custom_order.account.reply.result')
     throw Error('reply_unconfirmed');
   if(!response.ok||!data.ok){
@@ -52,17 +53,25 @@ export function readAccountOrderSummary(value) {
 
 export async function loadWorkCustomerConversationState({
   sessionToken,request=fetch,endpoint=WORK_CUSTOM_ORDER_ACCOUNT_URL,
+  signal,
 }={}) {
   if(!sessionToken||typeof sessionToken.get!=='function')
     throw new Error('Authenticated Shopify customer session is unavailable.');
   if(endpoint!==WORK_CUSTOM_ORDER_ACCOUNT_URL)
     throw new Error('Refusing an unverified Custom Order account endpoint.');
+  if(signal!==undefined&&!(typeof signal?.aborted==='boolean'&&
+    typeof signal?.addEventListener==='function'))
+    throw new Error('Invalid account verification cancellation signal.');
+  // An old signed read must not be rendered after its screen/attempt leaves.
+  signal?.throwIfAborted?.();
   const jwt=await sessionToken.get();
   if(typeof jwt!=='string'||jwt.length<32||jwt.length>8192)
     throw new Error('Shopify could not verify your current session.');
+  signal?.throwIfAborted?.();
   const response=await request(endpoint,{
     method:'POST',
-    signal:AbortSignal.timeout(20000),
+    signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)])
+      :AbortSignal.timeout(20000),
     headers:{
       'Content-Type':'application/json',
       Authorization:'Bearer '+jwt,

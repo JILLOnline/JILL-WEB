@@ -16,6 +16,7 @@ on:
       - 'shared/customer-message-selection.mjs'
       - 'scripts/test-work-customer-message-navigation.mjs'
       - 'scripts/test-work-customer-message-operation-races.mjs'
+      - 'scripts/test-work-customer-read-cancellation.mjs'
       - 'scripts/test-work-message-inboxes.mjs'
       - 'scripts/audit-work-myjill-message-extension-source.mjs'
       - 'scripts/test-audit-work-myjill-message-extension-source.mjs'
@@ -43,6 +44,7 @@ jobs:
         run: |
           node scripts/test-work-customer-message-navigation.mjs
           node scripts/test-work-customer-message-operation-races.mjs
+          node scripts/test-work-customer-read-cancellation.mjs
       - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
         run: node scripts/test-audit-work-myjill-message-extension-source.mjs
       - name: Verify signed reply-capability source and reject forged upstream enablement
@@ -61,3 +63,4 @@ jobs:
           node --check shared/customer-message-selection.mjs
           node --check scripts/test-work-customer-message-navigation.mjs
           node --check scripts/test-work-customer-message-operation-races.mjs
+          node --check scripts/test-work-customer-read-cancellation.mjs
