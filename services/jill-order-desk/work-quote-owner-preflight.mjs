@@ -123,6 +123,18 @@ export async function handleWorkQuoteOwnerPreflight({
  // For a price comparison, original items must be one exact variant each.
  // Multi-variant P1/P2 requires a separate lossless per-unit mapping.
  const items=detail.items;
+ // Even a single allocated variant cannot represent distinct P1/P2 unit
+ // instructions, artwork references or request-wide personalization. Make
+ // this blocker explicit before asking the merchant for customer identity.
+ if(items.some(v=>!Array.isArray(v.personalization_groups)||
+   v.personalization_groups.length>0||
+   !Array.isArray(v.reference_ids)||v.reference_ids.length>0)||
+   !Array.isArray(detail.request_attributes)||
+   detail.request_attributes.length>0||
+   !Array.isArray(detail.reference_ids)||detail.reference_ids.length>0||
+   !Array.isArray(detail.planning?.attributes)||
+   detail.planning.attributes.length>0)
+  return respond(200,'held','personalization_requires_review');
  if(items.some((v,i)=>!GID.test(v?.variant_id||'')||
    !Array.isArray(v.variant_allocations)||
    v.variant_allocations.length>1||
