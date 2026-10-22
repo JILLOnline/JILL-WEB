@@ -96,3 +96,13 @@ accounts for exploratory writes.
 
 **This is source-only.** CI acceptance does not authorize customer messaging
 or any LIVE/KEEP, Google, Cloudflare or Shopify release.
+
+## Honest offline composer
+
+- If the signed WORK Worker has replies OFF and an eligible user has typed
+  but not sent a message, My JILL shows a read-only copy of the draft marked
+  **not delivered** in English or Spanish. It is held in mounted session
+  memory only, not persisted and not sent.
+- The ledger forbids `sent`, `unconfirmed`, `missing` or `busy` state
+  claims without the matching immutable operation. Pending operation text
+  cannot be changed while the receipt is outstanding.

@@ -97,6 +97,16 @@ export function updateOwnedMessageDraft(previous,id,change,meta={}){
    !['idle','busy','unconfirmed','missing','stale','sent'].includes(change.state))
    return previous;
  if(Object.hasOwn(change,'busy')&&typeof change.busy!=='boolean')return previous;
+ // A UI callback is never proof that delivery occurred. In this shared
+ // ledger a sent/stale completion MUST be tied to the command that existed
+ // before the callback. Pending states MUST retain that immutable command.
+ const nextState=Object.hasOwn(change,'state')?change.state:existing.state??'idle';
+ const nextOperation=Object.hasOwn(change,'operation')?change.operation:existing.operation??null;
+ if(['sent','stale'].includes(nextState)&&currentOp===null)return previous;
+ if(['busy','unconfirmed','missing'].includes(nextState)&&!object(nextOperation))
+  return previous;
+ if(currentOp!==null&&Object.hasOwn(change,'text')&&
+   change.text.trim()!==existing.operation.text)return previous;
  const updated={...existing,...change};
  return {...previous,[id]:updated};
 }

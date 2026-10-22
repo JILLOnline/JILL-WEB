@@ -8,14 +8,16 @@ const COPY={
     missing:'No delivery receipt found. You can retry this same message.',retry:'Retry same message',
     stale:'New updates are available. Refresh the conversation; your message will stay here.',
     refresh:'Refresh conversation',closed:'This conversation is closed.',
-    unavailable:'Replies will be available here when the secure connection is ready.'},
+    unavailable:'Replies will be available here when the secure connection is ready.',
+    saved:'Unsent draft in this open My JILL session. It has not been delivered.'},
   es:{title:'Conversación con JILL',you:'Tú',message:'Tu mensaje',send:'Enviar mensaje',
     check:'Verificar entrega',busy:'Verificando…',sent:'JILL recibió tu mensaje.',
     pending:'La entrega no está confirmada. Conservamos tu mensaje aquí; verifica la entrega antes de enviarlo de nuevo.',
     missing:'No encontramos confirmación. Puedes volver a enviar este mismo mensaje.',retry:'Reintentar el mismo mensaje',
     stale:'Hay novedades. Actualiza la conversación; tu mensaje se conservará aquí.',
     refresh:'Actualizar conversación',closed:'Esta conversación está cerrada.',
-    unavailable:'Podrás responder aquí cuando la conexión segura esté lista.'},
+    unavailable:'Podrás responder aquí cuando la conexión segura esté lista.',
+    saved:'Borrador sin enviar en esta sesión abierta de My JILL. No se ha entregado.'},
 };
 export default function RequestConversation({order,onRefresh,draft,onDraftChange,replyEnabled=false}){
   const [language,setLanguage]=useState('en');
@@ -66,6 +68,13 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
       <s-option value="en">English</s-option><s-option value="es">Español</s-option>
     </s-select>
     {!enabled&&<s-text color="subdued">{closed?copy.closed:copy.unavailable}</s-text>}
+    {!enabled&&!recoverable&&Boolean(text.trim())&&
+      <s-box padding="base" background="subdued" borderRadius="large">
+        <s-stack direction="block" gap="small-100">
+          <s-text color="subdued">{copy.saved}</s-text>
+          <s-text>{text}</s-text>
+        </s-stack>
+      </s-box>}
     {(enabled||recoverable)&&<>
       <s-text-area label={copy.message} value={text} maxLength={500} rows={4}
         disabled={busy||pending}

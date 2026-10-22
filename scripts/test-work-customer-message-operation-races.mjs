@@ -65,6 +65,18 @@ const sameCommand=updateOwnedMessageDraft(start,id,{
  operation:op1,busy:true,state:'busy'
 },{expectedOperationId:op1.operation_id});
 assert.equal(sameCommand[id].operation.operation_id,op1.operation_id);
+assert.equal(updateOwnedMessageDraft(initial,id,{state:'sent'},
+ {expectedOperationId:null}),initial,
+ 'No callback can claim delivery without a matching operation');
+assert.equal(updateOwnedMessageDraft(initial,id,{state:'unconfirmed'},
+ {expectedOperationId:null}),initial,
+ 'No pending receipt can exist without an operation');
+assert.equal(updateOwnedMessageDraft(initial,id,{state:'busy',busy:true},
+ {expectedOperationId:null}),initial,
+ 'No in-flight state can exist without an operation');
+assert.equal(updateOwnedMessageDraft(start,id,{text:'A different message'},
+ {expectedOperationId:op1.operation_id}),start,
+ 'Do not edit displayed text while original receipt is pending');
 const text=readFileSync('extensions/jill-account-dashboard/src/pages/RequestConversation.jsx','utf8');
 const orders=readFileSync('extensions/jill-account-dashboard/src/pages/CustomOrders.jsx','utf8');
 const messages=readFileSync('extensions/jill-account-dashboard/src/pages/Messages.jsx','utf8');
@@ -74,4 +86,6 @@ assert.match(text,/onDraftChange\(\{operation:command,busy:true,state:'busy'\},/
 assert.match(text,/expectedOperationId:command\.operation_id/g);
 assert.match(text,/onDraftChange\(\{operation:null,text:'',state:'sent',staleRevision:null,busy:false\},/);
 assert.doesNotMatch(text,/finally\{busyRef\.current=false;onDraftChange/);
+assert.match(text,/!enabled&&!recoverable&&Boolean\(text\.trim\(\)\)/);
+assert.match(text,/It has not been delivered/);
 console.log('PASS My JILL operation-scoped draft mutations: stale async response denied, logout-safe, no lost ACK overwrite, no foreign request, valid same-ID receipt recovery.');
