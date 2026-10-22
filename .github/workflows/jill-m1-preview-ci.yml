@@ -39,6 +39,7 @@ on:
       - 'scripts/test-stage-work-hq-m1-m2-owner.mjs'
       - 'scripts/probe-work-hq-m1-m2-version-url-owner.mjs'
       - 'scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs'
+      - 'scripts/test-work-hq-five-tab-navigation.mjs'
 
 permissions:
   contents: read
@@ -73,6 +74,8 @@ jobs:
         run: node scripts/test-stage-work-hq-m1-m2-owner.mjs
       - name: Verify exact staged Version URL inspector and no unsafe hosts (offline)
         run: node scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs
+      - name: Verify consolidated 5-tab HQ navigation, hidden duplicate queue and Settings (offline)
+        run: node scripts/test-work-hq-five-tab-navigation.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries

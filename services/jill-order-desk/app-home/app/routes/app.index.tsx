@@ -61,7 +61,7 @@ export default function JillHQ() {
 
 
       {owner?<section className="jill-hq__section" aria-labelledby="hq-overview-heading">
-        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2><Link to="/app/queue" className="jill-hq__card-link">Open work queue →</Link></div>
+        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2><Link to="/app/requests" className="jill-hq__card-link">View requests →</Link></div>
         <Suspense fallback={<p className="jill-hq__summary-state" role="status">Loading request counts…</p>}>
           <Await resolve={data.requestSummary} errorElement={<p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>}>
             {summary=><RequestOverview summary={summary}/>}
@@ -93,9 +93,9 @@ export default function JillHQ() {
             </article>
             <article className="jill-hq__card">
               <div className="jill-hq__card-top"><span className="jill-hq__card-number">03</span><span className="jill-hq__pill">Owner governed</span></div>
-              <h3>Access &amp; permissions</h3>
-              <p>Check your verified Shopify permissions.</p>
-              {owner?<Link to="/app/access" className="jill-hq__card-link">View access →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}
+              <h3>Settings</h3>
+              <p>Review Owner access and permissions.</p>
+              {owner?<Link to="/app/access" className="jill-hq__card-link">Open settings →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}
             </article>
           </div>
         </section>
