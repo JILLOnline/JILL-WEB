@@ -15,7 +15,6 @@ export async function sendWorkCustomerReply({sessionToken,command,request=fetch}
     headers:{'Content-Type':'application/json',Authorization:'Bearer '+jwt},
     body:JSON.stringify(command),signal:AbortSignal.timeout(25000)});
   const data=await response.json();
-  signal?.throwIfAborted?.();
   if(data?.version!==1||data.operation!=='custom_order.account.reply.result')
     throw Error('reply_unconfirmed');
   if(!response.ok||!data.ok){
@@ -84,6 +83,7 @@ export async function loadWorkCustomerConversationState({
       : 'Your Custom Orders could not be verified. Please try again.',
   );
   const data=await response.json();
+  signal?.throwIfAborted?.();
   if(data?.version!==1||
      data?.operation!=='custom_order.account.list.result'||
      data?.ok!==true||!Array.isArray(data.orders)||data.orders.length>20)
