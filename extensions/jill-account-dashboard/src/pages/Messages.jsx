@@ -51,7 +51,9 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
         <s-heading>Messages</s-heading>
         <s-text color="subdued">
           Your verified Custom Orders and messages with JILL.
-          Replies become available when the secure conversation is connected.
+          {state.status==='ready'&&state.replyEnabled
+            ?' Secure replies are available for eligible conversations.'
+            :' Replies are not yet connected to this WORK account.'}
         </s-text>
         {state.status==='loading'&&<s-stack direction="inline"
           gap="small-200" alignItems="center">
@@ -81,6 +83,10 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
           {availableThreads===0&&<s-banner tone="info">
             Secure conversations are not yet available for these requests.
             Tracking history remains available in Custom Orders.
+          </s-banner>}
+          {availableThreads>0&&!state.replyEnabled&&<s-banner tone="info">
+            Verified conversation history is available to read.
+            New customer replies remain disabled until the WORK connection is enabled.
           </s-banner>}
           <s-stack direction="inline" justifyContent="space-between"
             alignItems="center">

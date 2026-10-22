@@ -73,3 +73,5 @@ accounts for exploratory writes.
   extension does not automatically change the running WORK Cloudflare
   Worker, Google QA source, or any flags. This source change authorizes
   none of those mutations.
+
+- In the account UI, a verified v2 timeline with a disabled reply capability now displays a **read-only history** banner rather than offering Send. Explicit verified replies become available only with the signed WORK enablement flag.\n
