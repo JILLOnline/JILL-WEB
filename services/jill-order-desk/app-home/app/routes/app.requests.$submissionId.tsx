@@ -45,7 +45,7 @@ export default function WorkRequestDetail(){
   // the verified detail model; never cast arbitrary browser input as it.
   type OriginalModel=NonNullable<
     Parameters<typeof WorkOriginalRequestDetails>[0]["model"]
-  > & {quoteDraftEnabled?:boolean};
+  > & {quoteDraftEnabled?:boolean;quoteCatalogReviewEnabled?:boolean};
   const original=useLoaderData<typeof loader>() as unknown as OriginalModel;
   const data=useRouteLoaderData("routes/app.requests.layout") as InboxModel;
   const {submissionId}=useParams();
@@ -80,6 +80,12 @@ export default function WorkRequestDetail(){
                   <span className="jill-request__status">{customerStatusLabel(record.customer_status)}</span>
                 </div>
               </header>
+              <p>
+                <Link to={"/app/messages?"+new URLSearchParams({submission_id:record.submission_id})}
+                  className="jill-request__inline-link">Open request conversation →</Link>
+                {" · "}
+                <Link to="/app/catalog" className="jill-request__inline-link">Check Shopify Catalog →</Link>
+              </p>
               <div className="jill-request__highlights">
                 <div><span>Needed by</span><strong>{dateLabel(record.date_needed)}</strong></div>
                 <div><span>Items</span><strong>{record.item_count}</strong></div>
@@ -121,7 +127,8 @@ export default function WorkRequestDetail(){
                 customerStatus={record.customer_status}
                 sourceRevision={record.revision}
                 saveDraftEnabled={original?.quoteDraftEnabled===true &&
-                  controlsEnabled}/>
+                  controlsEnabled}
+                catalogReviewEnabled={original?.quoteCatalogReviewEnabled===true}/>
             </>}
 
       </main>

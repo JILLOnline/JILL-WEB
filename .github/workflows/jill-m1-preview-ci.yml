@@ -1,0 +1,179 @@
+name: JILL M1 source-only preview checks
+
+# Isolated PR compile verification. Never deploy, publish, mutate a store,
+# read secrets, or bypass WORK release gates.
+on:
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'shared/work-hq-focus-queue.mjs'
+      - 'services/jill-order-desk/app-home/**'
+      - 'scripts/test-work-hq-focus-queue-preview.mjs'
+      - 'services/jill-order-desk/work-quote-unit-price-review.mjs'
+      - 'scripts/test-work-hq-quote-unit-price-preview.mjs'
+      - 'services/jill-order-desk/work-quote-unit-line-plan.mjs'
+      - 'services/jill-order-desk/work-quote-catalog-review.mjs'
+      - 'services/jill-order-desk/work-quote-catalog-comparison.mjs'
+      - 'scripts/test-work-hq-quote-catalog-review.mjs'
+      - 'scripts/test-work-hq-quote-catalog-comparison.mjs'
+      - 'scripts/test-work-hq-quote-draft-roundtrip-preview.mjs'
+      - 'scripts/test-work-hq-quote-http-lifecycle-preview.mjs'
+      - 'scripts/test-work-hq-quote-artwork-audit.mjs'
+      - 'services/jill-order-desk/work-quote-artwork-audit.mjs'
+      - 'services/jill-order-desk/work-quote-per-unit-calculation-preview.mjs'
+      - 'scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs'
+      - 'services/jill-order-desk/work-quote-per-unit-authorized-preview.mjs'
+      - 'scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs'
+      - 'scripts/test-work-hq-m1-m2-predeploy-guard.mjs'
+      - '.github/workflows/jill-m1-preview-ci.yml'
+      - 'scripts/certify-work-hq-m1-m2-source-edition.mjs'
+      - 'scripts/test-work-hq-m1-m2-source-edition.mjs'
+      - 'scripts/work-hq-m1-m2-source-edition.json'
+      - 'scripts/inspect-work-hq-m1-m2-owner.mjs'
+      - 'scripts/test-work-hq-m1-m2-owner-inspect.mjs'
+      - 'scripts/run-work-hq-m1-m2-owner-preflight.ps1'
+      - 'scripts/plan-work-hq-m1-m2-inactive-dry-run.mjs'
+      - 'scripts/test-work-hq-m1-m2-inactive-dry-run.mjs'
+      - 'scripts/stage-work-hq-m1-m2-owner.mjs'
+      - 'scripts/test-stage-work-hq-m1-m2-owner.mjs'
+      - 'scripts/probe-work-hq-m1-m2-version-url-owner.mjs'
+      - 'scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs'
+      - 'scripts/test-work-hq-five-tab-navigation.mjs'
+      - 'scripts/inspect-work-hq-five-tab-owner.mjs'
+      - 'scripts/test-inspect-work-hq-five-tab-owner.mjs'
+      - 'scripts/plan-work-hq-five-tab-inactive-dry-run.mjs'
+      - 'scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs'
+      - 'scripts/stage-work-hq-five-tab-owner.mjs'
+      - 'scripts/test-stage-work-hq-five-tab-owner.mjs'
+      - 'scripts/inspect-work-hq-five-tab-uploaded-owner.mjs'
+      - 'scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs'
+      - 'scripts/release-work-hq-five-tab-owner.mjs'
+      - 'scripts/test-release-work-hq-five-tab-owner.mjs'
+      - 'services/jill-order-desk/work-hq-home-priorities.mjs'
+      - 'scripts/test-work-hq-home-priorities.mjs'
+      - 'scripts/test-hq-five-tab-connected-content.mjs'
+      - 'scripts/plan-work-hq-connected-content-inactive-dry-run.mjs'
+      - 'scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs'
+      - 'scripts/inspect-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-inspect-work-hq-connected-content-owner.mjs'
+      - 'scripts/stage-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-stage-work-hq-connected-content-owner.mjs'
+      - 'scripts/inspect-work-hq-connected-content-uploaded-owner.mjs'
+      - 'scripts/test-inspect-work-hq-connected-content-uploaded-owner.mjs'
+      - 'scripts/release-work-hq-connected-content-owner.mjs'
+      - 'scripts/test-release-work-hq-connected-content-owner.mjs'
+      - 'scripts/audit-work-messaging-gateway-readonly.mjs'
+      - 'scripts/test-audit-work-messaging-gateway-readonly.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  source-preview:
+    name: Validate read-only Operations Queue and compile embedded WORK app
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Source lock requires the exact immutable WORK ancestor
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify new M1/M2 source-edition certificate and protected V4 baseline (no deploy)
+        run: node scripts/test-work-hq-m1-m2-source-edition.mjs
+      - name: Verify READ-ONLY Owner Cloudflare allocation preflight and fail-closed denials (synthetic)
+        run: node scripts/test-work-hq-m1-m2-owner-inspect.mjs
+      - name: Parse Windows PowerShell handoff WITHOUT running it
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          $path = Join-Path $pwd 'scripts/run-work-hq-m1-m2-owner-preflight.ps1'
+          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -ne 0) { throw 'Owner PowerShell handoff has invalid syntax.' }
+      - name: Verify M1/M2 inactive-version manifest preservation and no new resources (source-only)
+        run: node scripts/test-work-hq-m1-m2-inactive-dry-run.mjs
+      - name: Verify one-use M1/M2 stage runner policy (synthetic, NO CLOUD)
+        run: node scripts/test-stage-work-hq-m1-m2-owner.mjs
+      - name: Verify exact staged Version URL inspector and no unsafe hosts (offline)
+        run: node scripts/test-probe-work-hq-m1-m2-version-url-owner.mjs
+      - name: Verify consolidated 5-tab HQ navigation, hidden duplicate queue and Settings (offline)
+        run: node scripts/test-work-hq-five-tab-navigation.mjs
+      - name: Verify successor 5-tab WORK release snapshot remains read-only (offline)
+        run: node scripts/test-inspect-work-hq-five-tab-owner.mjs
+      - name: Verify successor five-tab inactive release manifest refuses resource/traffic changes (offline)
+        run: node scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs
+      - name: Verify successor five-tab one-use staging and readback denials (synthetic, NO CLOUD)
+        run: node scripts/test-stage-work-hq-five-tab-owner.mjs
+      - name: Verify exact uploaded five-tab recovery without versions-list or provider writes (offline)
+        run: node scripts/test-inspect-work-hq-five-tab-uploaded-owner.mjs
+      - name: Verify WORK five-tab one-use release, ownership and rollback (offline)
+        run: node scripts/test-release-work-hq-five-tab-owner.mjs
+      - name: Verify connected HQ content and Owner protection (offline)
+        run: |
+          node scripts/test-work-hq-home-priorities.mjs
+          node scripts/test-hq-five-tab-connected-content.mjs
+      - name: Verify connected-content successor WORK baseline, no extra resources and one-use stage (offline)
+        run: |
+          node scripts/test-plan-work-hq-connected-content-inactive-dry-run.mjs
+          node scripts/test-inspect-work-hq-connected-content-owner.mjs
+          node scripts/test-stage-work-hq-connected-content-owner.mjs
+      - name: Verify exact uploaded connected-content candidate and one-use WORK activation / rollback (offline)
+        run: |
+          node scripts/test-inspect-work-hq-connected-content-uploaded-owner.mjs
+          node scripts/test-release-work-hq-connected-content-owner.mjs
+      - name: Validate pure source and negative tests
+        run: node scripts/test-work-hq-focus-queue-preview.mjs
+      - name: Verify M2 per-unit price review and source boundaries
+        run: node scripts/test-work-hq-quote-unit-price-preview.mjs
+      - name: Verify M2 signed-source catalog read and OFF gates
+        run: node scripts/test-work-hq-quote-catalog-review.mjs
+      - name: Verify M2 price comparison, private terms and stale snapshots
+        run: node scripts/test-work-hq-quote-catalog-comparison.mjs
+      - name: Regress existing Quote Worksheet, P1/P2, Catalog bridge and native handoff (no writes)
+        run: |
+          npm run test:work-hq-quote-worksheet
+          npm run test:work-hq-quote-unit-review
+          npm run test:work-hq-catalog-quote-bridge
+          npm run test:work-quote-commerce-handoff
+          npm run test:work-hq-quote-ui-wiring
+      - name: Verify M2 draft write-plan, hash, restored projection, no-PII and OFF endpoints
+        run: node scripts/test-work-hq-quote-draft-roundtrip-preview.mjs
+      - name: Verify M2 Owner HTTP Save/Reload, idempotency and tamper recovery (synthetic D1 only)
+        run: node scripts/test-work-hq-quote-http-lifecycle-preview.mjs
+      - name: Verify M2 artwork source counts, privacy, and no provider access
+        run: node scripts/test-work-hq-quote-artwork-audit.mjs
+      - name: Verify repeated ProductVariant P1/P2 calculation and fail-closed results (synthetic only)
+        run: node scripts/test-work-hq-per-unit-shopify-calculation-preview.mjs
+      - name: Verify M2 Owner-only Shopify SDK calculation boundary (synthetic backend)
+        run: node scripts/test-work-hq-per-unit-shopify-authorized-preview.mjs
+      - name: Verify unsigned WORK messaging gateway probe rejects unauthorized messages (mocked)
+        run: node scripts/test-audit-work-messaging-gateway-readonly.mjs
+      - name: Verify My JILL customer ownership, public messaging and account continuity (source-only)
+        run: |
+          npm run test:custom-order-ownership
+          npm run test:custom-order-account-read
+          npm run test:customer-custom-orders
+          npm run test:work-message-inboxes
+          node scripts/test-work-conversation.mjs
+          npm run test:account-hub-canary
+      - name: Verify M1 + M2 WORK predeploy feature and route safety
+        run: node scripts/test-work-hq-m1-m2-predeploy-guard.mjs
+      - name: Install isolated WORK App Home (no deploy)
+        run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+      - name: Typecheck actual embedded app
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Build actual embedded WORK app (no deploy)
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Verify compiled M1/M2 WORK Worker itself, local D1, disabled finance and OAuth (NO DEPLOY)
+        working-directory: services/jill-order-desk/app-home
+        run: node scripts/test-workerd-m1m2-compiled-local.mjs
+      - name: Build actual isolated canary Worker package (offline, no upload)
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Reject unsafe configuration in real compiled canary bundle (offline)
+        run: node scripts/test-work-hq-m1-m2-inactive-dry-run.mjs --compiled-canary
+

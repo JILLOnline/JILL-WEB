@@ -38,7 +38,7 @@ export default function App(){
           <NavLink to="/app/requests">Requests</NavLink>
           <NavLink to="/app/messages">Messages</NavLink>
           <NavLink to="/app/catalog">Catalog</NavLink>
-          <NavLink to="/app/access">Access</NavLink>
+          <NavLink to="/app/access">Settings</NavLink>
         </div>
         <span className="jill-workspace__work">WORK</span>
       </nav>

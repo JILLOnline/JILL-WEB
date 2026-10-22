@@ -17,6 +17,10 @@ import {inspectWorkQuotePreflight}
   from "../../../work-quote-preflight-view.mjs";
 import {inspectWorkQuoteUnitLinePlan}
   from "../../../work-quote-unit-line-plan.mjs";
+import {projectWorkQuoteUnitPriceReview}
+  from "../../../work-quote-unit-price-review.mjs";
+import {WorkQuoteCatalogComparison} from "./WorkQuoteCatalogComparison";
+import {WorkQuoteArtworkAudit} from "./WorkQuoteArtworkAudit";
 import "../styles/quote-worksheet.css";
 
 type QuoteValue=string|number|boolean|Array<string|number|boolean>;
@@ -102,12 +106,12 @@ function WorkQuoteUnitReview({item}:{item:QuoteItem}){
 }
 export function WorkQuoteWorksheet({
   model,submissionId,customerStatus,sourceRevision,
-  savedDraft=null,saveDraftEnabled=false,
+  savedDraft=null,saveDraftEnabled=false,catalogReviewEnabled=false,
 }:{
   model:VerifiedModel|undefined;submissionId:string;customerStatus:string;
   sourceRevision?:number;
   savedDraft?:VerifiedSavedDraft|null;
-  saveDraftEnabled?:boolean;
+  saveDraftEnabled?:boolean;catalogReviewEnabled?:boolean;
 }){
   // Hydration only accepts the server's verified projection matched to the
   // exact canonical item snapshot. This parent is keyed by submission ID.
@@ -157,8 +161,11 @@ export function WorkQuoteWorksheet({
       const rev=saveFetcher.data.revision!;
       setDraftRevision(rev);
       operation.current=null;
+      // A server acknowledgment is not an independently verified readback.
+      // Keep the next Save blocked until a fresh Owner-backed Reload succeeds.
+      setBlocked(true);
       setFeedback("Draft revision "+rev+
-        " was acknowledged. Reload to check independently.");
+        " was acknowledged. Reload the saved draft to verify before saving again.");
     }else{
       setBlocked(true);
       setFeedback("Save not confirmed ("+saveFetcher.data.code+
@@ -230,11 +237,17 @@ export function WorkQuoteWorksheet({
     quote as {state:"ready";itemsSubtotalCents:number;
       discountCents:number;manualTaxCents:number;
       estimatedTotalCents:number;feesCents:Record<FeeKey,number>}:null;
+  const priceReview=projectWorkQuoteUnitPriceReview({
+    plan:unitPlan,itemSubtotalCents:readyQuote?.itemsSubtotalCents??null,
+  });
   const ready=detail!==null&&!locked&&readyQuote!==null;
-  const canUseDraft=saveDraftEnabled===true&&verifiedSource&&
-    detail!==null&&!locked&&!blocked&&!busy;
+  // An uncertain or just-acknowledged commit must STOP further writes,
+  // but must NOT disable the independent Owner/D1 Reload recovery path.
+  const canReloadDraft=saveDraftEnabled===true&&verifiedSource&&
+    detail!==null&&!locked&&!busy;
+  const canSaveDraft=canReloadDraft&&!blocked;
   const onSaveDraft=()=>{
-    if(!canUseDraft||!readyQuote)return;
+    if(!canSaveDraft||!readyQuote)return;
     const op=operation.current??"jill:hq:quote:"+crypto.randomUUID();
     const intent=prepareWorkQuoteUiSavePayload({
       submissionId,detail,sourceRevision,customerStatus,
@@ -252,7 +265,7 @@ export function WorkQuoteWorksheet({
     });
   };
   const onReloadDraft=()=>{
-    if(!canUseDraft)return;
+    if(!canReloadDraft)return;
     // Explicit user action may replace unsaved form inputs. The
     // initial automatic read cannot.
     merchantExplicitReload.current=true;
@@ -359,29 +372,43 @@ export function WorkQuoteWorksheet({
             </ol>
           </section>
           <section className="jill-quote__unit-plan"
-            aria-label="Personalization unit mapping review">
-            <h4>P1/P2 + variants · review only</h4>
-            {unitPlan.state!=="review_only"?
-              <p role="status">Unit mapping held ({unitPlan.reason}).
-                Review original variant IDs, P1/P2 allocations and references.</p>:<>
-              <p>{unitPlan.unit_count} mapped units across
-                {" "}{unitPlan.variant_count} variant(s). Every personalized
-                unit stays separate. Shopify calculation is NOT authorized.</p>
-              <ul>{unitPlan.units.map(unit=><li
-                key={unit.source_item_id+":"+unit.unit_id}>
-                <strong>{unit.unit_id}</strong>
-                <span>{unit.group_id??"Item-wide"}</span>
-                <small>{unit.variant_id}</small>
-              </li>)}</ul>
+            aria-label="Personalization unit mapping and price review">
+            <h4>P1/P2 + variants · unit price review</h4>
+            {priceReview.state!=="review_only"?
+              <p role="status">Unit price review held ({priceReview.reason}).
+                Confirm all item prices, original P1/P2 allocations and exact variants.</p>:<>
+              <p>{priceReview.count} individually priced units across
+                {" "}{priceReview.variant_count} variant(s).
+                Verified worksheet items subtotal: {formatWorkUsd(priceReview.quoted_items_cents!)}.</p>
+              <div className="jill-quote__unit-scroll">
+                <table className="jill-quote__unit-table">
+                  <thead><tr><th scope="col">Unit</th><th scope="col">Personalization group</th>
+                    <th scope="col">Shopify variant ID</th><th scope="col">Quoted unit price</th></tr></thead>
+                  <tbody>{priceReview.units.map((unit:{source_item_id:string;
+                    unit_id:string;group_id:string|null;variant_id:string;
+                    quoted_unit_cents:number})=><tr key={unit.source_item_id+":"+unit.unit_id}>
+                    <td>{unit.unit_id}</td><td>{unit.group_id??"Item-wide"}</td>
+                    <td><code>{unit.variant_id}</code></td>
+                    <td>{formatWorkUsd(unit.quoted_unit_cents)}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
             </>}
+            <p>For internal review only. No Shopify catalog prices, tax, customer
+              approval, invoice or order creation have been verified.</p>
           </section>
+          <WorkQuoteCatalogComparison
+            submissionId={submissionId} sourceRevision={sourceRevision}
+            review={priceReview} enabled={catalogReviewEnabled}/>
+          <WorkQuoteArtworkAudit detail={detail}
+            submissionId={submissionId} sourceRevision={sourceRevision}/>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
             <div className="jill-quote__draft-buttons">
-              <button type="button" disabled={!canUseDraft||!ready}
+              <button type="button" disabled={!canSaveDraft||!ready}
                 onClick={onSaveDraft}>
                 {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
               </button>
-              <button type="button" disabled={!canUseDraft}
+              <button type="button" disabled={!canReloadDraft}
                 onClick={onReloadDraft}>
                 {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
               </button>

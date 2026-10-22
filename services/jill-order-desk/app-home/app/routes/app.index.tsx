@@ -4,12 +4,14 @@ import {workShopify} from "../shopify.server";
 import {loadWorkShopifyAdminRoute} from "../../../shopify-host/app-home-route.mjs";
 import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {loadVerifiedMerchantInbox} from "./app.requests-source.server";
-import {inboxStats} from "../../../inbox-display.mjs";
+import {inboxStats,requestShortId,customerStatusLabel,dateLabel} from "../../../inbox-display.mjs";
+import {selectWorkHomePriorities} from "../../../work-hq-home-priorities.mjs";
 import "../styles/hq-home.css";
 
 const WORK_ADMIN="https://admin.shopify.com/store/jill-work";
 
-type RequestSummary={state:string;stats?:{total:number;reviewing:number;needsQuote:number}};
+type Priority={submission_id:string;customer_status:string;date_needed:string|null;attention:string};
+type RequestSummary={state:string;stats?:{total:number;reviewing:number;needsQuote:number};priorities?:Priority[]};
 type HomeModel={state:string;description:string;role?:string;requestSummary:Promise<RequestSummary|null>};
 export async function loader(args:LoaderFunctionArgs) {
   const {request,context}=args,env=context.cloudflare.env;
@@ -25,7 +27,8 @@ export async function loader(args:LoaderFunctionArgs) {
     ? (async()=>{
         const result=await loadVerifiedMerchantInbox(args);
         const model=await result.json() as {state:string;records:unknown[]};
-        return model.state==="ready"?{state:model.state,stats:inboxStats(model.records)}:{state:model.state};
+        return model.state==="ready"?{state:model.state,stats:inboxStats(model.records),
+          priorities:selectWorkHomePriorities(model.records)}:{state:model.state};
       })()
     : Promise.resolve(null);
   return routeData({...home,requestSummary},{status:response.status,headers:response.headers});
@@ -39,6 +42,23 @@ function RequestOverview({summary}:{summary:RequestSummary|null}){
   </div>;
 }
 
+function OwnerPriorities({summary}:{summary:RequestSummary|null}){
+ if(summary?.state!=="ready"||!summary.stats)return null;
+ const items=summary.priorities??[];
+ return <section className="jill-hq__priority" aria-labelledby="jill-hq-priority-heading">
+  <div className="jill-hq__section-heading"><h3 id="jill-hq-priority-heading">Needs attention</h3>
+    <Link to="/app/requests">All requests →</Link></div>
+  {items.length===0?<p className="jill-hq__summary-state">No requests match priority rules. See Requests for the full list.</p>:
+   <ul className="jill-hq__priority-list">{items.map(item=>
+     <li key={item.submission_id}><Link to={"/app/requests/"+encodeURIComponent(item.submission_id)}>
+       <strong>#{requestShortId(item.submission_id)}</strong>
+       <span>{item.attention}</span>
+       <small>{customerStatusLabel(item.customer_status)} · Needed {dateLabel(item.date_needed)}</small>
+       <span aria-hidden="true">→</span>
+     </Link></li>)}</ul>}
+  <p className="jill-hq__source-note">Verified WORK requests · Requested event dates are not guaranteed shipping dates.</p>
+ </section>;
+}
 export default function JillHQ() {
   const data=useLoaderData() as HomeModel;
   const verified=data.state==="staff_verified";
@@ -61,10 +81,10 @@ export default function JillHQ() {
 
 
       {owner?<section className="jill-hq__section" aria-labelledby="hq-overview-heading">
-        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2></div>
+        <div className="jill-hq__section-heading"><h2 id="hq-overview-heading">Request overview</h2><Link to="/app/requests" className="jill-hq__card-link">View requests →</Link></div>
         <Suspense fallback={<p className="jill-hq__summary-state" role="status">Loading request counts…</p>}>
           <Await resolve={data.requestSummary} errorElement={<p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>}>
-            {summary=><RequestOverview summary={summary}/>}
+            {summary=><><RequestOverview summary={summary}/><OwnerPriorities summary={summary}/></>}
           </Await>
         </Suspense>
       </section>:null}
@@ -93,9 +113,9 @@ export default function JillHQ() {
             </article>
             <article className="jill-hq__card">
               <div className="jill-hq__card-top"><span className="jill-hq__card-number">03</span><span className="jill-hq__pill">Owner governed</span></div>
-              <h3>Access &amp; permissions</h3>
-              <p>Check your verified Shopify permissions.</p>
-              {owner?<Link to="/app/access" className="jill-hq__card-link">View access →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}
+              <h3>Settings</h3>
+              <p>Access &amp; permissions for your verified Shopify Owner session.</p>
+              {owner?<Link to="/app/access" className="jill-hq__card-link">Open settings →</Link>:<span className="jill-hq__card-note">Managed by your Owner.</span>}
             </article>
           </div>
         </section>
