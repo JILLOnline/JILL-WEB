@@ -42,6 +42,8 @@ on:
       - 'scripts/test-work-hq-five-tab-navigation.mjs'
       - 'scripts/inspect-work-hq-five-tab-owner.mjs'
       - 'scripts/test-inspect-work-hq-five-tab-owner.mjs'
+      - 'scripts/plan-work-hq-five-tab-inactive-dry-run.mjs'
+      - 'scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs'
 
 permissions:
   contents: read
@@ -80,6 +82,8 @@ jobs:
         run: node scripts/test-work-hq-five-tab-navigation.mjs
       - name: Verify successor 5-tab WORK release snapshot remains read-only (offline)
         run: node scripts/test-inspect-work-hq-five-tab-owner.mjs
+      - name: Verify successor five-tab inactive release manifest refuses resource/traffic changes (offline)
+        run: node scripts/test-plan-work-hq-five-tab-inactive-dry-run.mjs
       - name: Validate pure source and negative tests
         run: node scripts/test-work-hq-focus-queue-preview.mjs
       - name: Verify M2 per-unit price review and source boundaries
