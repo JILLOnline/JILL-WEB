@@ -40,7 +40,7 @@ export function assessM1M2SourceEdition({manifest,observedPaths,observedBlobs,hi
   manifest.protected_historical.length!==7)
   return fail('manifest_unverified');
  const pins=Object.keys(manifest.pinned_blobs);
- if(pins.length!==39||new Set(pins).size!==pins.length||
+ if(pins.length!==41||new Set(pins).size!==pins.length||
    pins.some(p=>!rel(p)||!SHA.test(manifest.pinned_blobs[p])||
      [META,CI,CERT,TEST].includes(p)))
   return fail('source_pins_invalid');
