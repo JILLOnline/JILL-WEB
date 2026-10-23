@@ -72,7 +72,7 @@ export async function handleWorkContactStatusChange({
    typeof now!=='function')return response(503,'source_unavailable');
  try{
   const origin=request.headers.get('origin');
-  if(origin&&origin!==new URL(request.url).origin)
+  if(origin!==new URL(request.url).origin)
    return response(400,'invalid_request');
  }catch{return response(400,'invalid_request');}
  let access;
