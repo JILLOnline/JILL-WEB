@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - jill/rewards-work
+      - jill/m1-work-queue-preview-20261021
     paths:
       - 'services/jill-order-desk/work-quote-catalog-preflight.mjs'
       - 'scripts/test-work-quote-catalog-preflight.mjs'
