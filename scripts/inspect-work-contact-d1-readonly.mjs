@@ -49,6 +49,7 @@ export function inspectSourceConfiguration({hq,gateway,migration}={}){
   'JILL_WORK_CONTACT_CLAIM_ENABLED',
   'JILL_WORK_CONTACT_THREAD_ENABLED',
   'JILL_WORK_CONTACT_MESSAGES_ENABLED',
+  'JILL_WORK_CONTACT_INBOX_ENABLED',
   'JILL_WORK_CONTACT_STATUS_ENABLED'];
  return Object.freeze({hq_binding_source:true,
   gateway_has_no_contact_d1_binding:true,
