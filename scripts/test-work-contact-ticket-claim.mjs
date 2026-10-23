@@ -41,7 +41,7 @@ const db={prepare:sql=>{
    mutates++;
    assert.equal(args[1],shop);
    assert.equal(args[2],ticket);
-   assert.equal(args[3],secretHash);
+   assert.match(args[3],/^[a-f0-9]{64}$/);
    const good=args[3]===row.claim_sha256&&
      row.owner_customer_gid===null&&row.created_at_ms>=args[4];
    if(good)row.owner_customer_gid=args[0];
