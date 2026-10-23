@@ -1,6 +1,8 @@
-import {useEffect,useState} from 'preact/hooks';
+import {useEffect,useRef,useState} from 'preact/hooks';
 import {loadWorkCustomerContactTickets}
  from '../../../../shared/customer-contact-tickets.mjs';
+import {claimWorkCustomerContactTicket}
+ from '../../../../shared/customer-contact-claim.mjs';
 
 // Source-only My JILL Contact Requests screen. Future certified WORK
 // gateway must validate the Shopify Customer session + exact ticket owner.
@@ -18,6 +20,10 @@ const statusLabel={
 export default function ContactRequests({enabled=false,onNavigate}){
  const [state,setState]=useState({status:'not_connected',tickets:[]});
  const [attempt,setAttempt]=useState(0);
+ const [claimId,setClaimId]=useState('');
+ const [claimCode,setClaimCode]=useState('');
+ const [claimState,setClaimState]=useState('idle');
+ const claiming=useRef(false);
  useEffect(()=>{
   let active=true;
   const controller=new AbortController();
@@ -35,6 +41,24 @@ export default function ContactRequests({enabled=false,onNavigate}){
   });
   return ()=>{active=false;controller.abort();};
  },[enabled,attempt]);
+ const linkClaim=async()=>{
+  if(enabled!==true||state.status!=='ready'||claiming.current)return;
+  claiming.current=true;
+  setClaimState('checking');
+  try{
+   await claimWorkCustomerContactTicket({
+    enabled:true,sessionToken:shopify.sessionToken,
+    ticketId:claimId.trim(),claimCode:claimCode.trim(),
+   });
+   // Once verified, remove the private proof from the UI memory.
+   setClaimCode('');setClaimId('');
+   setClaimState('claimed');
+   setAttempt(n=>n+1);
+  }catch(error){
+   setClaimState(error.message==='contact_claim_unverified'
+    ?'unverified':'unconfirmed');
+  }finally{claiming.current=false;}
+ };
  return <s-stack direction="block" gap="large">
   <s-section>
    <s-stack direction="block" gap="base">
@@ -62,6 +86,37 @@ export default function ContactRequests({enabled=false,onNavigate}){
        Try again
       </s-button>
     </s-stack>}
+    {state.status==='ready'&&enabled===true&&
+     <s-box padding="base" background="subdued" borderRadius="large">
+      <s-stack direction="block" gap="small-200">
+       <s-heading>Link a Contact Us ticket to My JILL</s-heading>
+       <s-text color="subdued">
+        Enter the ticket ID and private claim code you saved from the
+        website form. Your Shopify sign-in verifies who will own it.
+        Email or phone details alone cannot link tickets.
+       </s-text>
+       <s-text-field label="Contact ticket ID" value={claimId}
+         disabled={claimState==='checking'}
+         onInput={event=>setClaimId(event.currentTarget.value)} />
+       <s-text-field label="Private claim code" type="password"
+         value={claimCode} disabled={claimState==='checking'}
+         onInput={event=>setClaimCode(event.currentTarget.value)} />
+       {claimState==='claimed'&&<s-banner tone="success">
+         Ticket linked to your verified account. Refreshing your history.
+       </s-banner>}
+       {['unconfirmed','unverified'].includes(claimState)&&
+        <s-banner tone="warning">
+         {claimState==='unverified'
+           ?"This ticket could not be linked with that code. No account history was changed."
+           :"We couldn't confirm the claim. Retry with the same ticket and code; do not create another request."}
+        </s-banner>}
+       <s-button variant="primary"
+         disabled={claimState==='checking'||!claimId.trim()||!claimCode.trim()}
+         onClick={linkClaim}>
+         {claimState==='checking'?'Verifying…':'Link verified ticket'}
+       </s-button>
+      </s-stack>
+     </s-box>}
     {state.status==='ready'&&<>
       {state.tickets.length===0&&<s-banner tone="info">
         No verified Contact Us inquiries are linked to this account.
