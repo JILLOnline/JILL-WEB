@@ -121,5 +121,5 @@ const foreign=await handleWorkContactTicketIntake({
  ...opts,request:request(body,{shopName:'foreign.myshopify.com'})});
 assert.equal(foreign.status,401);
 assert.equal(saved.size,2);
-assert.equal(reads,4);
+assert.equal(reads,5,'changed claim token must produce one extra integrity read');
 console.log('PASS WORK Contact Us signed source: default OFF, app-proxy HMAC, quota, bounded input, idempotent D1, no Customer autoclaim, no private receipt.');
