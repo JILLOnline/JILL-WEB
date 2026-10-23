@@ -22,6 +22,8 @@ const rows={
   Intake:()=>[[ID,raw]],
   Events:()=>Array.from({length:revisionValue},(_,i)=>['e'+i,ID,i+1,'received','new'])
 };
+const replayState={};
+let challengeCount=0;
 const ctx={
  JILL_REWARDS_RUNTIME:'WORK',JILL_CUSTOM_ORDER_SANDBOX:true,
  JILL:{SHEET_ID:'synthetic',SHEET_NAME:'Intake'},HEADERS:intakeHeader,
@@ -31,7 +33,10 @@ const ctx={
    STATUSES:['received'],INTERNAL:['new']},
  Date:{now:()=>now},
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>k==='JILL_WORK_OWNER_BINDING_QA_ENABLED'?'true':
-    k==='JILL_HQ_MERCHANT_READ_SECRET'?SECRET:null})},
+    k==='JILL_HQ_MERCHANT_READ_SECRET'?SECRET:null,
+ getProperties:()=>({...replayState}),
+ setProperty:(key,value)=>{replayState[key]=value;},
+ deleteProperty:key=>{delete replayState[key];}})},
  SpreadsheetApp:{openById:()=>({})},
  LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock(){}})},
  Utilities:{computeHmacSha256Signature:(msg,secret)=>Array.from(createHmac('sha256',secret).update(msg).digest()).map(v=>v>127?v-256:v)},
@@ -44,9 +49,18 @@ const ctx={
  json_:x=>x,
 };
 vm.createContext(ctx);vm.runInContext(code,ctx);
-const read=(p=params)=>ctx.jillWorkHqOwnerBindingProof_({
- parameter:p,parameters:Object.fromEntries(Object.entries(p).map(([k,v])=>[k,[v]]))
-});
+const read=(provided)=>{
+ const p=provided||(()=>{
+  const nonce=challengeCount++===0?NONCE:String(challengeCount).padStart(32,'0');
+  const fresh={...params,jill_hq_read_nonce:nonce};
+  fresh.jill_hq_read_sig=hmac(['merchant_owner_binding_request_v1',
+   SHOP,ID,'3',String(now),nonce]);
+  return fresh;
+ })();
+ return ctx.jillWorkHqOwnerBindingProof_({
+  parameter:p,parameters:Object.fromEntries(Object.entries(p).map(([k,v])=>[k,[v]]))
+ });
+};
 const good=read();assert.equal(good.ok,true);assert.equal(good.owner_customer_gid,GID);
 assert.equal(good.raw_payload_sha256,hash);
 assert.equal(good.signature,hmac(['work_quote_owner_binding_v1',SHOP,ID,'3',GID,hash,String(now),NONCE]));
@@ -62,6 +76,7 @@ denial(()=>storedHash='b'.repeat(64),()=>storedHash=hash);
 denial(()=>revisionValue=2,()=>revisionValue=3);
 assert.equal(read({...params,jill_hq_read_sig:'a'.repeat(64)}).ok,false);
 assert.equal(read({...params,shop:'other.myshopify.com'}).ok,false);
+assert.equal(read(params).ok,false,'first nonce cannot be replayed');
 const count=reads;ctx.JILL_REWARDS_RUNTIME='LIVE';
 assert.equal(read().ok,false);assert.equal(reads,count);
 console.log('PASS isolated WORK Google owner-ledger proof: canonical hash/revision, signed response, tamper denial, LIVE no reads.');
