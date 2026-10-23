@@ -59,6 +59,72 @@ async function boundedRequest(request) {
   headers.set('content-length',String(size));
   return new Request(request.url,{method:'POST',headers,body});
 }
+
+// Contact Us never binds the public gateway to HQ D1. The only future
+// provider connection is an explicit WORK-only named-entrypoint binding;
+// until it is reviewed, installed and BOTH Workers' flags are enabled,
+// these routes refuse without touching a customer record.
+const CONTACT_MAX_BYTES=8192;
+async function forwardContactToPrivateHq(request,env){
+ const service=env?.JILL_WORK_HQ_CONTACT_PRIVATE;
+ if(typeof service?.fetch!=='function'||
+    typeof env?.RATE_LIMITER?.getByName!=='function')
+  return reply(503,{ok:false,error:'contact_unavailable'});
+ // For account OPTIONS, let HQ's exact handler decide the CORS contract.
+ if(request.method==='POST'){
+  let permitted;
+  try{
+   permitted=await env.RATE_LIMITER
+    .getByName('jill-work-custom-orders-global').allow({
+     shop:'jill-work.myshopify.com',client:clientId(request),
+     minute:Math.floor(Date.now()/60000),
+    });
+  }catch{return reply(503,{ok:false,error:'contact_unavailable'});}
+  if(permitted!==true)return reply(429,{ok:false,error:'rate_limited'});
+ }
+ let forwarded;
+ try{
+  // Never pass caller-supplied IP, cookies or arbitrary forwarding headers
+  // to the privileged private HQ runtime.
+  const headers=new Headers();
+  for(const key of ['authorization','content-type','origin']){
+   const val=request.headers.get(key);
+   if(val!==null)headers.set(key,val);
+  }
+  let body;
+  if(request.method==='POST'){
+   const declared=request.headers.get('content-length');
+   if(declared!==null&&(!/^(0|[1-9][0-9]*)$/.test(declared)||
+     Number(declared)>CONTACT_MAX_BYTES))
+    return reply(413,{ok:false,error:'contact_payload_too_large'});
+   const reader=request.body?.getReader();
+   if(!reader)return reply(400,{ok:false,error:'contact_invalid_body'});
+   const chunks=[];let n=0;
+   try{
+    while(true){
+     const {value,done}=await reader.read();if(done)break;
+     n+=value.byteLength;
+     if(n>CONTACT_MAX_BYTES)
+      return reply(413,{ok:false,error:'contact_payload_too_large'});
+     chunks.push(value);
+    }
+   }finally{reader.releaseLock();}
+   body=new Uint8Array(n);
+   let pos=0;for(const chunk of chunks){body.set(chunk,pos);pos+=chunk.length;}
+  }
+  forwarded=new Request(request.url,{
+   method:request.method,headers,
+   ...(request.method==='POST'?{body}:{}),
+  });
+ }catch{return reply(400,{ok:false,error:'contact_invalid_body'});}
+ try{
+  const result=await service.fetch(forwarded);
+  if(!(result instanceof Response))
+   return reply(503,{ok:false,error:'contact_unavailable'});
+  return result;
+ }catch{return reply(503,{ok:false,error:'contact_unavailable'});}
+}
+
 function clientId(request) {
   // CF-Connecting-IP is Cloudflare-managed on incoming HTTP requests.
   // Its value only subdivides the global shop quota, never grants access.
@@ -110,22 +176,12 @@ export async function handleCloudflareCustomOrderWork(request,env) {
       result.headers.set(VERSION_HEADER,version);
     return result;
   }
-  // Account claim cannot be inferred from a storefront email.
-  // Disabled until same WORK D1 binding, 0004 schema, anti-abuse controls
-  // and Customer A/B/guest acceptance are released independently.
+  // Account claims never use email; the private HQ service owns the D1
+  // and remains independently hard-OFF until Customer A/B/guest acceptance.
   if(pathname==='/jill-contact-claim'){
     if(env?.JILL_WORK_CONTACT_CLAIM_ENABLED!=='true')
       return handleWorkContactTicketClaim({request,enabled:false});
-    return handleWorkContactTicketClaim({
-      request,enabled:true,
-      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
-      db:env?.JILL_ORDER_DESK_WORK_DB,
-      rateLimit:async({shop})=>env?.RATE_LIMITER
-        .getByName('jill-work-custom-orders-global').allow({
-          shop,client:clientId(request),
-          minute:Math.floor(Date.now()/60000),
-        }),
-    });
+    return forwardContactToPrivateHq(request,env);
   }
   // Exact signed customer account + claimed contact owner is REQUIRED.
   // This route is separate from Shopify public app-proxy submissions and
@@ -133,34 +189,14 @@ export async function handleCloudflareCustomOrderWork(request,env) {
   if(pathname==='/jill-contact-thread'){
     if(env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
       return readWorkCustomerContactThread({request,enabled:false});
-    return readWorkCustomerContactThread({
-      request,enabled:true,
-      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
-      db:env?.JILL_ORDER_DESK_WORK_DB,
-      rateLimit:async({shop})=>env?.RATE_LIMITER
-        .getByName('jill-work-custom-orders-global').allow({
-          shop,client:clientId(request),
-          minute:Math.floor(Date.now()/60000),
-        }),
-    });
+    return forwardContactToPrivateHq(request,env);
   }
   // A separate signed Shopify Customer Account JWT is the ONLY owner
-  // authority for My JILL Contact Requests. The private contact D1 binding,
-  // source migration and exact signed claim pathway do not exist in the
-  // published WORK Worker, so this is hard OFF by default.
+  // authority for My JILL Contact Requests. No D1 binding exists here.
   if(pathname==='/jill-contact-account'){
     if(env?.JILL_WORK_CONTACT_ACCOUNT_ENABLED!=='true')
       return handleWorkContactAccountRead({request,enabled:false});
-    return handleWorkContactAccountRead({
-      request,enabled:true,
-      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
-      db:env?.JILL_ORDER_DESK_WORK_DB,
-      rateLimit:async({shop})=>env?.RATE_LIMITER
-        .getByName('jill-work-custom-orders-global').allow({
-          shop,client:clientId(request),
-          minute:Math.floor(Date.now()/60000),
-        }),
-    });
+    return forwardContactToPrivateHq(request,env);
   }
   // Account reads are a distinct, bearer-JWT-authenticated endpoint.
   // Unlike Shopify app-proxy submissions, extension fetches do NOT pass
@@ -194,30 +230,13 @@ export async function handleCloudflareCustomOrderWork(request,env) {
           shop,client:clientId(request),minute:Math.floor(Date.now()/60000)}),
     });
   }
-  // WORK Contact Us candidate: a DISTINCT signed child of the existing
-  // Shopify app-proxy destination. HARD OFF until the D1 binding, migration,
-  // storefront adapter, spam/rate limits and release are independently
-  // certified. The existing Shopify-native contact form is unchanged.
+  // WORK Contact Us candidate: a distinct signed Shopify app-proxy child.
+  // HARD OFF until the private HQ binding, dual flags, quotas and signed
+  // Customer Account acceptance are certified. Native Contact Us unchanged.
   if(pathname===CONTACT_ROUTE && request.method==='POST') {
     if(env?.JILL_WORK_CONTACT_INTAKE_ENABLED!=='true')
       return handleWorkContactTicketIntake({request,enabled:false});
-    if(typeof env?.SHOPIFY_WORK_APP_SECRET!=='string'||
-       typeof env?.JILL_ORDER_DESK_WORK_DB?.prepare!=='function'||
-       typeof env?.RATE_LIMITER?.getByName!=='function')
-      return reply(503,{ok:false,error:'contact_unavailable'});
-    let bounded;
-    try{bounded=await boundedRequest(request);}
-    catch{return reply(413,{ok:false,error:'payload_too_large'});}
-    return handleWorkContactTicketIntake({
-      request:bounded,enabled:true,
-      shopifyAppSecret:env.SHOPIFY_WORK_APP_SECRET,
-      db:env.JILL_ORDER_DESK_WORK_DB,
-      rateLimit:async({shop})=>env.RATE_LIMITER
-        .getByName('jill-work-custom-orders-global').allow({
-          shop,client:clientId(request),
-          minute:Math.floor(Date.now()/60000),
-        }),
-    });
+    return forwardContactToPrivateHq(request,env);
   }
   // Shopify may append "/" to the app-proxy destination when the
   // storefront requests /apps/jill-custom-order. Treat only these two
