@@ -3,9 +3,11 @@ import {createCustomOrderWorkProxyRoute} from '../../backend/custom-order-work-p
 import {handleCustomOrderGatewayDiagnostic} from '../../backend/custom-order-gateway.mjs';
 import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-account-read.mjs';
 import {handleWorkCustomerReply} from '../../backend/custom-order-conversation.mjs';
+import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-intake.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
+const CONTACT_ROUTE=ROUTE+'/contact';
 // This is a non-sensitive deployment identifier, read from Cloudflare itself.
 // NEVER derive attribution from the caller's version override header.
 const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
@@ -135,6 +137,31 @@ export async function handleCloudflareCustomOrderWork(request,env) {
       rateLimit:async({shop})=>env.RATE_LIMITER
         .getByName('jill-work-custom-orders-global').allow({
           shop,client:clientId(request),minute:Math.floor(Date.now()/60000)}),
+    });
+  }
+  // WORK Contact Us candidate: a DISTINCT signed child of the existing
+  // Shopify app-proxy destination. HARD OFF until the D1 binding, migration,
+  // storefront adapter, spam/rate limits and release are independently
+  // certified. The existing Shopify-native contact form is unchanged.
+  if(pathname===CONTACT_ROUTE && request.method==='POST') {
+    if(env?.JILL_WORK_CONTACT_INTAKE_ENABLED!=='true')
+      return handleWorkContactTicketIntake({request,enabled:false});
+    if(typeof env?.SHOPIFY_WORK_APP_SECRET!=='string'||
+       typeof env?.JILL_ORDER_DESK_WORK_DB?.prepare!=='function'||
+       typeof env?.RATE_LIMITER?.getByName!=='function')
+      return reply(503,{ok:false,error:'contact_unavailable'});
+    let bounded;
+    try{bounded=await boundedRequest(request);}
+    catch{return reply(413,{ok:false,error:'payload_too_large'});}
+    return handleWorkContactTicketIntake({
+      request:bounded,enabled:true,
+      shopifyAppSecret:env.SHOPIFY_WORK_APP_SECRET,
+      db:env.JILL_ORDER_DESK_WORK_DB,
+      rateLimit:async({shop})=>env.RATE_LIMITER
+        .getByName('jill-work-custom-orders-global').allow({
+          shop,client:clientId(request),
+          minute:Math.floor(Date.now()/60000),
+        }),
     });
   }
   // Shopify may append "/" to the app-proxy destination when the
