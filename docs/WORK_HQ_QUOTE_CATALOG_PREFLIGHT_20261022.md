@@ -246,3 +246,12 @@ If Script Properties are unavailable or capacity is exceeded, no proof is
 issued. Source regression simulates the replay state and duplicate denial.
 A fresh passing GitHub Actions run and a separate QA security review remain
 mandatory before enabling or publishing this handler.
+
+## Original intake timestamp correlation (October 23, source only)
+
+The Google WORK owner proof now checks the persisted canonical
+`submitted_at` against the exact timestamp in the immutable raw
+`custom_order.submit` payload, following the existing merchant-detail
+source invariant. A digest match with a drifted intake timestamp must HOLD.
+The synthetic fixture and negative case cover matching and mismatched
+timestamps. This changes no published script version or live customer data.
