@@ -42,6 +42,9 @@ on:
       - 'theme/layout/theme.liquid'
       - 'theme/sections/main-contact.liquid'
       - 'services/custom-order-cloudflare/handler.mjs'
+      - 'services/custom-order-cloudflare/wrangler.contact-bridge.candidate.toml'
+      - 'services/jill-order-desk/work-contact-private-bridge.mjs'
+      - 'services/jill-order-desk/app-home/workers/app.ts'
       - 'scripts/test-work-contact-storefront-adapter.mjs'
       - 'scripts/test-work-contact-worker-routing.mjs'
       - 'backend/work-contact-account-read.mjs'
@@ -146,6 +149,7 @@ jobs:
           node --check theme/assets/jill-contact-work-contract.js
           node --check theme/assets/jill-contact.js
           node --check services/custom-order-cloudflare/handler.mjs
+          node --check services/jill-order-desk/work-contact-private-bridge.mjs
           node --check scripts/test-work-contact-storefront-adapter.mjs
           node --check scripts/test-work-contact-worker-routing.mjs
           node --check backend/work-contact-account-read.mjs
