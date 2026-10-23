@@ -78,6 +78,11 @@ denial(()=>revisionValue=2,()=>revisionValue=3);
 assert.equal(read({...params,jill_hq_read_sig:'a'.repeat(64)}).ok,false);
 assert.equal(read({...params,shop:'other.myshopify.com'}).ok,false);
 assert.equal(read(params).ok,false,'first nonce cannot be replayed');
+const tamperedDuplicate={...params,jill_hq_read_nonce:'x'.repeat(32)};
+tamperedDuplicate.jill_hq_read_sig=hmac(['merchant_owner_binding_request_v1',SHOP,ID,'3',String(now),tamperedDuplicate.jill_hq_read_nonce]);
+const ambiguous=ctx.jillWorkHqOwnerBindingProof_({parameter:tamperedDuplicate,
+ parameters:{...Object.fromEntries(Object.entries(tamperedDuplicate).map(([key,value])=>[key,[value]])),shop:[SHOP,SHOP]}});
+assert.equal(ambiguous.ok,false,'duplicate shop parameter rejected');
 const beforeDisabled=reads;
 proofEnabled=false;
 assert.equal(read().ok,false);
