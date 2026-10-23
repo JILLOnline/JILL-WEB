@@ -104,3 +104,60 @@ claim; signed read projection from WORK D1 through an independently
 certified account gateway; real end-to-end Customer A/B/guest smoke tests.
 Only afterwards can the WORK flags be safely enabled. No LIVE/KEEP or
 paid resource authorization is implied.
+
+## U2→U4 source candidate: Contact Us app-proxy routing and proof-of-possession
+
+As of 2026-10-23 the **draft-only**, unmerged HQ tree now has:
+- `theme/assets/jill-contact-work-contract.js`: strict field/conditional
+  mapping for existing Shopify contact form; `main-contact.liquid` carries
+  immutable `data-jill-work-contact-mode="off"`. The existing Shopify
+  native form still submits normally by default. `jill-contact.js`
+  intercepts submission **only** in a separately approved QA mode,
+  only for `jill-work.myshopify.com` and a fixed same-origin
+  `/apps/jill-custom-order/contact` endpoint, with NO dual send/fallback.
+  Ambiguous delivery retries reuse the exact ticket ID **and claim code**.
+- Existing WORK Custom Order Cloudflare Worker now has a distinct exact
+  signed app-proxy child route `/jill-custom-order-proxy/contact`, hard
+  OFF unless `JILL_WORK_CONTACT_INTAKE_ENABLED==='true'`. Its D1 binding
+  is intentionally ABSENT in the published manifest. The 0004 schema
+  remains SOURCE ONLY. Existing custom-order routing remains separate.
+- The contact intake accepts a newly generated random 256-bit
+  `claim_token`, stores only domain-separated `claim_sha256`,
+  never persists/returns the plaintext token, and returns the ticket ID
+  after an exact DB idempotency/digest check. A confirmed QA receipt
+  displays the private code to the customer to save; storing it in browser
+  URLs, cookies, localStorage or logs is prohibited.
+- `/jill-contact-claim` is a separate hard-OFF Customer Account Worker
+  endpoint (`JILL_WORK_CONTACT_CLAIM_ENABLED`), requiring a valid signed
+  Shopify Customer JWT AND the possession code. It uses one atomic D1
+  conditional update, exact ticket ID, matching code digest and a
+  90-day claim window, preventing Customer B from hijacking Customer A's
+  ticket. Duplicate confirmation by the same verified customer recovers
+  safely. Email/phone/order reference cannot authorize claims.
+- `/jill-contact-account` is another hard-OFF JWT-only read:
+  `JILL_WORK_CONTACT_ACCOUNT_ENABLED`. It filters D1 **by verified
+  Shopify Customer GID** and returns a strictly whitelisted status list.
+  No message body, private customer information, read receipts, payment
+  status or Shopify order linkage is presented.
+- HQ /app/contacts and per-ticket detail are gated by
+  `JILL_WORK_CONTACT_INBOX_ENABLED` and merchant Owner/D1 auth. A ticket
+  legitimately claimed into My JILL stays available to the merchant,
+  with its customer ownership shown only as a verified Boolean.
+- My JILL PR #156 has a future Contact Requests list, a claim-code
+  client and an opt-in-only claim UI, all mounted with `enabled={false}`.
+
+### Release prerequisites not satisfied
+1. Explicit review of Shopify app-proxy subpath forwarding to the Worker.
+2. Independent WORK D1 binding/migration 0004 audit; apply on WORK only
+   after approval. The current Worker has no contact D1 binding.
+3. Spam/rate-limit equivalence to Shopify's native Contact Us protection,
+   security review of URL/secret exposure and 90-day claim semantics.
+4. Real signed Shopify JWT Customer A/B/guest tests, repeated and
+   uncertain submissions, takeover/cross-account denial, mobile and ES/EN.
+5. Resolve My JILL historical release certification and reconcile PR #156
+   and #157 against their distinct protected base branches.
+6. Explicit release decision for *each* flag; do not silently enable a
+   browser interception or decommission Shopify native Contact Us.
+
+There has been **no deployment, Shopify form replacement, D1 migration,
+customer claim, message send, invoice, order creation or LIVE/KEEP change**.
