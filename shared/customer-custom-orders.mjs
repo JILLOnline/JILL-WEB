@@ -108,12 +108,19 @@ export async function loadWorkCustomerConversationState({
       status:item.status,
       revision:item.revision,
       updated_at:String(item.updated_at||''),
-      timeline:item.timeline.map(event=>({
-        ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
-        status:String(event.status||''),
-        note:String(event.note||'').slice(0,500),
-        occurred_at:String(event.occurred_at||''),
-      })),
+      timeline:item.timeline.map(event=>{
+        // Do not make malformed server data appear trustworthy through
+        // string coercion or silent message truncation.
+        if(!event||typeof event!=='object'||Array.isArray(event)||
+           typeof event.status!=='string'||
+           typeof event.note!=='string'||event.note.length>500||
+           typeof event.occurred_at!=='string'||event.occurred_at.length>40)
+          throw new Error('Invalid Custom Order history.');
+        return {
+          ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
+          status:event.status,note:event.note,occurred_at:event.occurred_at,
+        };
+      }),
     };
   });
   // Require the same bounded, unique, chronological public contract for
