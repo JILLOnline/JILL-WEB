@@ -240,3 +240,21 @@ Source-only test `test-work-myjill-contact-claim.mjs` checks disabled
 network, exact ID/receipt and no secret disclosure. The HQ side adds
 Customer A/B/takeover and D1 conditional-write tests; their fresh CI
 conclusion is checked independently.
+
+## Contact Requests status filtering and cross-system tracking
+
+The planned Contact Requests customer page now filters **All / Active /
+Resolved** purely on the bounded verified customer-account ticket list.
+It shows the current status and source revision from the exact Shopify
+Customer GID D1 read. No client cache, email matching, payment status,
+fake unread indicator, shipment status, reply option or guessed timeline
+was added.
+
+The HQ draft PR #157 simultaneously adds Owner-only Contact Us status
+commands and atomic SQLite audit triggers; its passed source-only CI run
+`39996666381` demonstrates that one D1 row projects the same customer
+status/revision to both HQ and My JILL without leaking staff or contact
+secrets. **This is not a deployed, working conversation system**:
+Customer A/B acceptance, signed ticket claims, Google Custom Order bridge,
+contact source migration, full two-way message readback and explicit WORK
+extension approval are still required.
