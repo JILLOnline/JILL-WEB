@@ -23,6 +23,9 @@ const noActions=Object.freeze({
 });
 const held=reason=>Object.freeze({state:'held',reason,...noActions});
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+// Scope positive decisions to receipt objects minted by THIS verifier;
+// caller-supplied lookalikes may not authorize even a display projection.
+const verifiedReceipts=new WeakSet();
 const valid=x=>typeof x==='string'&&x.length>0;
 const canonical=r=>[
  'jill_unified_intake_receipt_v1',r.shop,r.kind,r.source,
@@ -59,18 +62,20 @@ export function verifyWorkUnifiedInquiryReceipt({
   return held('signed_intake_receipt_unverified');
  // A signed CONTACT receipt requires a future server-side canonical
  // intake bridge. Shopify's native email-only contact form cannot issue it.
- return Object.freeze({
+ const proof=Object.freeze({
   state:'verified_source_receipt',kind:source.kind,
   submission_id:source.submission_id,source_revision:source.source_revision,
   record_sha256:source.record_sha256,
   owner_customer_gid:source.owner_customer_gid,
   ...noActions,
  });
+ verifiedReceipts.add(proof);
+ return proof;
 }
 export function planWorkInquiryVisibility({
  verified,merchantAuthenticated=false,customerAuthenticatedGid=null,
 }={}){
- if(verified?.state!=='verified_source_receipt')
+ if(!plain(verified)||!verifiedReceipts.has(verified))
   return held('canonical_intake_unverified');
  // Authenticated flags/context MUST come from an independently authorized
  // Shopify Owner/D1 read or signed customer-account JWT, not a browser POST.
