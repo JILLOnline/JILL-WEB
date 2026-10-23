@@ -48,6 +48,7 @@ on:
       - 'scripts/check-work-contact-hq-bundle.mjs'
       - 'scripts/test-work-contact-storefront-adapter.mjs'
       - 'scripts/test-work-contact-worker-routing.mjs'
+      - 'scripts/test-work-contact-private-e2e.mjs'
       - 'backend/work-contact-account-read.mjs'
       - 'scripts/test-work-contact-account-read.mjs'
       - 'backend/work-contact-ticket-claim.mjs'
@@ -102,6 +103,7 @@ jobs:
           node scripts/test-work-contact-ticket-detail.mjs
           node scripts/test-work-contact-storefront-adapter.mjs
           node scripts/test-work-contact-worker-routing.mjs
+          node scripts/test-work-contact-private-e2e.mjs
           node scripts/test-work-contact-account-read.mjs
           node scripts/test-work-contact-ticket-claim.mjs
           node scripts/test-work-contact-status-change.mjs
@@ -162,6 +164,7 @@ jobs:
           node --check scripts/check-work-contact-hq-bundle.mjs
           node --check scripts/test-work-contact-storefront-adapter.mjs
           node --check scripts/test-work-contact-worker-routing.mjs
+          node --check scripts/test-work-contact-private-e2e.mjs
           node --check backend/work-contact-account-read.mjs
           node --check scripts/test-work-contact-account-read.mjs
           node --check backend/work-contact-ticket-claim.mjs
