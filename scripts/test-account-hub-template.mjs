@@ -56,7 +56,7 @@ assert.match(coupons,/loadCustomerAccountStorefront\(\)/);
 assert.doesNotMatch(coupons,/metafieldsSet|discountCodeBasicCreate/);
 assert.match(read(root+'pages/Celebrations.jsx'),/Reminders will be optional and off/);
 const customOrders=read(root+'pages/CustomOrders.jsx');
-assert.match(customOrders,/loadWorkCustomerCustomOrders/);
+assert.match(customOrders,/loadWorkCustomerConversationState/);
 assert.match(customOrders,/signed-in account/);
 assert.match(customOrders,/Try again/);
 assert.match(customOrders,/customOrderStatus/);
