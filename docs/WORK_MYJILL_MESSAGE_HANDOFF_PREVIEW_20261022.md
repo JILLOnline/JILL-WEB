@@ -258,3 +258,27 @@ secrets. **This is not a deployed, working conversation system**:
 Customer A/B acceptance, signed ticket claims, Google Custom Order bridge,
 contact source migration, full two-way message readback and explicit WORK
 extension approval are still required.
+
+## My JILL readback: claimed Contact Us public conversation (source-only)
+
+Contact Requests now includes a **View verified conversation** panel, with
+`shared/customer-contact-thread.mjs` requesting the separate
+`/jill-contact-thread` WORK endpoint using a fresh Shopify Customer Account
+session. The server confirms the ticket belongs to the **exact** signed
+Customer GID and projects at most 50 ordered, bounded merchant messages.
+The UI deliberately hides private form content, staff IDs and secrets, and
+does not offer customer replies, fake unread indicators or read receipts.
+
+The panel has a separate `threadEnabled=false` gate in addition to the
+Contact Requests `enabled=false` gate. Both remain OFF in the mounted
+AccountHub. The isolated WORK Shopify canary now copies
+`ContactThread.jsx` and `customer-contact-thread.mjs`. The dedicated
+My JILL preview CI checks hard OFF, bogus thread IDs/authors, duplicate
+sequence, oversized text, cancellation and private-metadata stripping.
+The companion HQ PR #157 owns the private D1 message ledger and authorized
+merchant public-message writer, also disabled by default.
+
+This is source implementation, **not** a customer-delivered message,
+Shopify Inbox send, quote invoice, order or deployed synchronization.
+A real end-to-end Customer A/B readback and independently approved WORK
+release must precede activation.
