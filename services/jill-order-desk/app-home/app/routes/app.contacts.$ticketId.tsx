@@ -1,5 +1,5 @@
 // WORK HQ — private Contact Us detail. SOURCE ONLY, flag defaults OFF.
-import {useRef} from "react";
+import {useEffect,useRef,useState} from "react";
 import {useFetcher,useLoaderData,type LoaderFunctionArgs,type ActionFunctionArgs,Link} from "react-router";
 import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce}
@@ -11,7 +11,9 @@ import {handleWorkContactStatusChange}
 type Detail={ticket_id:string;name:string;email:string;phone:string;
  reason:string;message:string;preferred_contact:string;status:string;
  revision:number;details:Record<string,string>};
-type Data={ok:boolean;code:string;detail?:Detail;can_change_status?:boolean};
+type PublicMessage={sequence:number;author:string;message:string;created_at:string};
+type Data={ok:boolean;code:string;detail?:Detail;can_change_status?:boolean;
+ can_post_message?:boolean;messages?:PublicMessage[]};
 type UpdateData={ok:boolean;code:string;revision?:number;status?:string};
 type StatusOp={ticket_id:string;operation_id:string;expected_revision:number;
  expected_status:string;next_status:string};
@@ -22,6 +24,7 @@ export async function loader({request,params,context}:LoaderFunctionArgs){
   request,ticketId:params.ticketId,
   enabled:env.JILL_WORK_CONTACT_INBOX_ENABLED==="true",
   statusControlsEnabled:env.JILL_WORK_CONTACT_STATUS_ENABLED==="true",
+  messageControlsEnabled:env.JILL_WORK_CONTACT_MESSAGES_ENABLED==="true",
   db:env.JILL_ORDER_DESK_WORK_DB,
   authenticate:{admin:()=>authenticateWorkAdminOnce({
    scope:context.cloudflare,
@@ -55,6 +58,16 @@ export default function ContactTicketDetail(){
  const data=useLoaderData<typeof loader>() as Data;
  const ticket=data.ok===true&&data.code==="ready"?data.detail:null;
  const fetcher=useFetcher<UpdateData>();
+ const messageFetcher=useFetcher<UpdateData>();
+ const [messageDraft,setMessageDraft]=useState("");
+ const messageOp=useRef<{operation_id:string;message:string}|null>(null);
+ useEffect(()=>{
+  if(messageFetcher.state!=="idle"||messageFetcher.data?.ok!==true)return;
+  if(messageOp.current){
+   messageOp.current=null;
+   setMessageDraft("");
+  }
+ },[messageFetcher.state,messageFetcher.data]);
  const pending=useRef<StatusOp|null>(null);
  const busy=fetcher.state!=="idle";
  const sendStatus=(next:string)=>{
@@ -71,6 +84,23 @@ export default function ContactTicketDetail(){
   };
   pending.current=op;
   fetcher.submit(op,{method:"post",encType:"application/json"});
+ };
+ const sendMessage=()=>{
+  if(!ticket||data.can_post_message!==true||
+    messageFetcher.state!=="idle")return;
+  const message=messageDraft.trim();
+  if(!message||message.length>1000)return;
+  // An uncertain delivery is retried with the SAME payload and receipt ID.
+  if(messageOp.current&&messageOp.current.message!==message)return;
+  const op=messageOp.current||{
+   operation_id:"jill:work:contact:msg:"+crypto.randomUUID(),message,
+  };
+  messageOp.current=op;
+  messageFetcher.submit({
+   ticket_id:ticket.ticket_id,operation_id:op.operation_id,
+   message:op.message,
+  },{method:"post",encType:"application/json",
+   action:"/app/contacts/"+encodeURIComponent(ticket.ticket_id)+"/message"});
  };
  if(ticket&&pending.current&&ticket.revision>pending.current.expected_revision)
   pending.current=null;
@@ -100,6 +130,35 @@ export default function ContactTicketDetail(){
          <p role="alert">The update is unconfirmed or stale. Retry the same
           status action or refresh; no customer message was sent.</p>}
        </section>}
+      <section aria-label="Contact Us customer conversation">
+       <h3>Messages visible in My JILL</h3>
+       {!data.can_post_message&&<p>Messages are not available until
+        this ticket is securely linked to a Shopify customer account
+        and the WORK messaging feature is approved.</p>}
+       {data.can_post_message===true&&<>
+        {(data.messages||[]).length===0?<p>No verified customer-visible
+         messages have been recorded.</p>:<ol>
+         {(data.messages||[]).map(item=><li key={item.sequence}>
+          <strong>JILL</strong> — {item.message}
+          <small> {new Date(item.created_at).toLocaleString()}</small>
+         </li>)}
+        </ol>}
+        <label htmlFor="work-contact-public-message">Message for customer</label>
+        <textarea id="work-contact-public-message" value={messageDraft}
+          maxLength={1000} rows={4} disabled={messageFetcher.state!=="idle"}
+          onChange={event=>setMessageDraft(event.currentTarget.value)}/>
+        <button type="button" disabled={messageFetcher.state!=="idle"||
+         !messageDraft.trim()||Boolean(messageOp.current&&
+         messageOp.current.message!==messageDraft.trim())}
+         onClick={sendMessage}>Save message to My JILL thread</button>
+        {messageFetcher.data?.ok===true&&
+         <p role="status">Message saved for the verified customer account.
+          This is not an email, push notification, or read receipt.</p>}
+        {messageFetcher.data&&messageFetcher.data.ok!==true&&
+         <p role="alert">Message save unconfirmed. Retry the same text;
+          no customer notification is confirmed.</p>}
+       </>}
+      </section>
       <h3>Contact</h3>
       <p>{ticket.name}</p>
       <p>Email: {ticket.email}</p>
