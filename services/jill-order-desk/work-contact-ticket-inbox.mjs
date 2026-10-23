@@ -43,6 +43,14 @@ export function projectVerifiedWorkContactInbox(rows){
   has_more:rows.length>50,
  });
 }
+/** @param {{
+ * request?:Request,
+ * enabled?:boolean,
+ * authenticate?:{admin:(request:Request)=>Promise<any>},
+ * db?:any,
+ * authorize?:typeof readWorkMerchantPermission,
+ * }} [options]
+ */
 export async function readWorkContactTicketInbox({
  request,enabled=false,authenticate,db,
  authorize=readWorkMerchantPermission,
