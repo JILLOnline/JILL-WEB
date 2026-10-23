@@ -35,4 +35,15 @@ assert.ok(detail.includes('encType:"application/json"'));
 assert.match(detail,/No contact details are displayed/);
 assert.match(detail,/Customer identity and reply availability are not yet verified/);
 assert.doesNotMatch(detail,/draftOrderCreate|fetch\(|localStorage|orderCreate/);
+const messageRoute=readFileSync(
+ 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.message.tsx','utf8');
+assert.ok(routes.includes('route("contacts/:ticketId/message","routes/app.contacts.$ticketId.message.tsx")'));
+assert.ok(messageRoute.includes('persistWorkContactMerchantMessage'));
+assert.ok(messageRoute.includes('expectedTicketId:params.ticketId'));
+assert.ok(messageRoute.includes('JILL_WORK_CONTACT_MESSAGES_ENABLED==="true"'));
+assert.ok(detail.includes('can_post_message'));
+assert.ok(detail.includes('Save message to My JILL thread'));
+assert.ok(detail.includes('messageOp.current'));
+assert.ok(detail.includes('encType:"application/json"'));
+assert.doesNotMatch(messageRoute,/draftOrderCreate|orderCreate|localStorage|JSON\.parse\(request/);
 console.log('PASS HQ WORK Contact Us route and navigation remain gated, authenticated and metadata-only.');
