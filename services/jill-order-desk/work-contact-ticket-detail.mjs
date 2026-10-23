@@ -70,12 +70,13 @@ export function projectVerifiedWorkContactDetail({row,ticketId}={}){
 /** @param {{
  * request?:Request,ticketId?:string,enabled?:boolean,
  * authenticate?:{admin:(request:Request)=>Promise<any>},
- * db?:any,authorize?:typeof readWorkMerchantPermission
+ * db?:any,authorize?:typeof readWorkMerchantPermission,
+ * statusControlsEnabled?:boolean
  * }} [options]
  */
 export async function readWorkContactTicketDetail({
  request,ticketId,enabled=false,authenticate,db,
- authorize=readWorkMerchantPermission,
+ statusControlsEnabled=false,authorize=readWorkMerchantPermission,
 }={}){
  if(enabled!==true)return result(503,'not_connected');
  if(request?.method!=='GET')return result(405,'method_not_allowed');
@@ -97,6 +98,6 @@ export async function readWorkContactTicketDetail({
   ).bind(SHOP,ticketId).first();
   if(row===null)return result(404,'not_found');
   const detail=projectVerifiedWorkContactDetail({row,ticketId});
-  return result(200,'ready',{detail});
+  return result(200,'ready',{detail,can_change_status:statusControlsEnabled===true});
  }catch{return result(503,'source_unavailable');}
 }
