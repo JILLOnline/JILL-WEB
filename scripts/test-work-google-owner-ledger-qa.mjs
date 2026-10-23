@@ -54,8 +54,10 @@ assert.equal(Object.keys(good).length,12);
 assert.doesNotMatch(JSON.stringify(good),/email|address|raw_payload":/);
 function denial(setup,cleanup){setup();try{assert.equal(read().ok,false);}finally{cleanup();}}
 denial(()=>ledgerGid='',()=>ledgerGid=GID);
-denial(()=>ledgerGid='gid://shopify/Customer/222',()=>ledgerGid=GID);
-// A different canonical gid remains valid ownership evidence but is never inferred from email.
+// Identity comes exclusively from the immutable ledger, not a caller-supplied GID.
+ledgerGid='gid://shopify/Customer/222';
+assert.equal(read().owner_customer_gid,ledgerGid);
+ledgerGid=GID;
 denial(()=>storedHash='b'.repeat(64),()=>storedHash=hash);
 denial(()=>revisionValue=2,()=>revisionValue=3);
 assert.equal(read({...params,jill_hq_read_sig:'a'.repeat(64)}).ok,false);
