@@ -13,7 +13,7 @@ import RequestConversation from './RequestConversation.jsx';
 
 // My JILL customer inbox: one signed-in account, one canonical conversation
 // per owned Custom Order. NOT a new account identifier or message store.
-export default function Messages({requestedSubmissionId=null,drafts,onDraftsChange}){
+export default function Messages({requestedSubmissionId=null,drafts,onDraftsChange,onNavigate}){
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[],replyEnabled:false});
   const [selected,setSelected]=useState(null);
@@ -78,6 +78,9 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
               <s-text color="subdued">
                 Guest requests aren't attached to your account by email alone.
               </s-text>
+              <s-button variant="secondary" onClick={()=>onNavigate?.('custom-orders')}>
+                View Custom Orders
+              </s-button>
             </s-stack>
           </s-box>}
         {state.status==='ready'&&inbox.length>0&&<>
@@ -130,10 +133,15 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                 </s-text>
                 <s-divider/>
                 <s-heading>Conversation</s-heading>
-                {order.timeline_version!==2?<s-banner tone="info">
-                  This older request has status history only.
-                  A verified conversation is not available here yet.
-                </s-banner>:visibleConversation?.messages.length===0?
+                {order.timeline_version!==2?<s-stack direction="block" gap="small-200">
+                  <s-banner tone="info">
+                    This older request has status history only.
+                    A verified conversation is not available here yet.
+                  </s-banner>
+                  <s-button variant="secondary" onClick={()=>onNavigate?.('custom-orders')}>
+                    View tracking in Custom Orders
+                  </s-button>
+                </s-stack>:visibleConversation?.messages.length===0?
                   <s-text color="subdued">
                     No messages yet. Request status updates remain in Custom Orders.
                   </s-text>:null}
