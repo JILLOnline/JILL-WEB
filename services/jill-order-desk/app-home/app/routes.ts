@@ -11,6 +11,7 @@ export default [
     route("messages","routes/app.messages.tsx"),
     route("contacts","routes/app.contacts.tsx"),
     route("contacts/:ticketId","routes/app.contacts.$ticketId.tsx"),
+    route("contacts/:ticketId/message","routes/app.contacts.$ticketId.message.tsx"),
     route("requests","routes/app.requests.layout.tsx",[
       index("routes/app.requests.tsx"),
       route(":submissionId","routes/app.requests.$submissionId.tsx"),
