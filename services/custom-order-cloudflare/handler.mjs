@@ -4,6 +4,7 @@ import {handleCustomOrderGatewayDiagnostic} from '../../backend/custom-order-gat
 import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-account-read.mjs';
 import {handleWorkCustomerReply} from '../../backend/custom-order-conversation.mjs';
 import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-intake.mjs';
+import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -106,6 +107,24 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     if(typeof version==='string'&&UUID.test(version))
       result.headers.set(VERSION_HEADER,version);
     return result;
+  }
+  // A separate signed Shopify Customer Account JWT is the ONLY owner
+  // authority for My JILL Contact Requests. The private contact D1 binding,
+  // source migration and exact signed claim pathway do not exist in the
+  // published WORK Worker, so this is hard OFF by default.
+  if(pathname==='/jill-contact-account'){
+    if(env?.JILL_WORK_CONTACT_ACCOUNT_ENABLED!=='true')
+      return handleWorkContactAccountRead({request,enabled:false});
+    return handleWorkContactAccountRead({
+      request,enabled:true,
+      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
+      db:env?.JILL_ORDER_DESK_WORK_DB,
+      rateLimit:async({shop})=>env?.RATE_LIMITER
+        .getByName('jill-work-custom-orders-global').allow({
+          shop,client:clientId(request),
+          minute:Math.floor(Date.now()/60000),
+        }),
+    });
   }
   // Account reads are a distinct, bearer-JWT-authenticated endpoint.
   // Unlike Shopify app-proxy submissions, extension fetches do NOT pass
