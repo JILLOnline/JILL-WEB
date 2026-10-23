@@ -233,3 +233,16 @@ Apps Script source composition, request replay protection (a one-use nonce
 store or equivalent), exact receipt provenance, Script Properties isolation,
 and a new independently approved Google QA version. Do not modify the
 immutable merchant detail @9 endpoint or stage/activate WORK using old receipts.
+
+## One-use challenge replay state (source-only)
+
+The candidate Google proof now reserves a **hashed challenge nonce** in WORK
+Apps Script Script Properties while holding the existing script lock, before
+emitting a signed receipt. A duplicate challenge fails closed, interrupted
+requests remain consumed, expired entries are pruned, and 128 simultaneously
+active entries cap free-tier storage exposure. This changes **only short-lived
+anti-replay Script Properties**, not customer ledger, orders, or events.
+If Script Properties are unavailable or capacity is exceeded, no proof is
+issued. Source regression simulates the replay state and duplicate denial.
+A fresh passing GitHub Actions run and a separate QA security review remain
+mandatory before enabling or publishing this handler.
