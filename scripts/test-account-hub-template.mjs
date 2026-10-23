@@ -80,7 +80,7 @@ const expected='node scripts/prepare-account-hub-canary.mjs --template && '+
 const scripts=JSON.parse(read('package.json')).scripts;
 assert.equal(scripts['rewards:work:hub:template'],expected);
 const messages=read(root+'pages/Messages.jsx');
-assert.match(messages,/loadWorkCustomerCustomOrders/);
+assert.match(messages,/loadWorkCustomerConversationState/);
 assert.match(messages,/projectCustomerMessageInbox/);
 assert.match(messages,/RequestConversation/);
 assert.ok(preparer.includes("'custom-order-message-inbox.mjs'"));
