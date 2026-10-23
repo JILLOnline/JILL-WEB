@@ -7,7 +7,8 @@ assert.doesNotMatch(code,/function doPost|\.appendRow\(|\.setValues\(|draftOrder
 const SHOP='jill-work.myshopify.com', ID='jill:11111111-2222-4333-8444-555555555555';
 const GID='gid://shopify/Customer/111', NONCE='0123456789abcdefghijklmnopqrstuv';
 const SECRET='merchant-work-owner-binding-test-hmac-secret-never-production';
-const raw=JSON.stringify({version:1,operation:'custom_order.submit',submission_id:ID,items:[{quantity:1}]});
+const submittedAt='2026-10-20T12:00:00.000Z';
+const raw=JSON.stringify({version:1,operation:'custom_order.submit',submission_id:ID,submitted_at:submittedAt,items:[{quantity:1}]});
 const hash=createHash('sha256').update(raw).digest('hex');
 const hmac=parts=>createHmac('sha256',SECRET).update(parts.join('\n')).digest('hex');
 const now=1792497600000, revision=3;
@@ -15,11 +16,11 @@ const params={jill_order_merchant_owner_binding:'1',shop:SHOP,submission_id:ID,
   source_revision:'3',jill_hq_read_ts:String(now),jill_hq_read_nonce:NONCE};
 params.jill_hq_read_sig=hmac(['merchant_owner_binding_request_v1',SHOP,ID,'3',String(now),NONCE]);
 const eventHeader=['event_id','submission_id','revision','customer_status','internal_status'];
-const intakeHeader=['submission_id','raw_payload'];
+const intakeHeader=['submission_id','raw_payload','submitted_at'];
 let reads=0, ledgerGid=GID, storedHash=hash, revisionValue=revision;
 const rows={
   CustomOrderOwners:()=>[[ID,ledgerGid,storedHash,'date']],
-  Intake:()=>[[ID,raw]],
+  Intake:()=>[[ID,raw,submittedAt]],
   Events:()=>Array.from({length:revisionValue},(_,i)=>['e'+i,ID,i+1,'received','new'])
 };
 const replayState={};
@@ -32,7 +33,7 @@ const ctx={
  JILL_CUSTOM_OWNER_HEADERS:['submission_id','owner_gid','payload_sha256','bound_at'],
  JILL_CUSTOM_WORKFLOW:{EVENTS_SHEET:'Events',HEADERS:eventHeader,
    STATUSES:['received'],INTERNAL:['new']},
- Date:{now:()=>now},
+ Date:class extends Date {static now(){return now;}},
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>k==='JILL_WORK_OWNER_BINDING_QA_ENABLED'?(proofEnabled?'true':'false'):
     k==='JILL_HQ_MERCHANT_READ_SECRET'?SECRET:null,
  getProperties:()=>({...replayState}),
