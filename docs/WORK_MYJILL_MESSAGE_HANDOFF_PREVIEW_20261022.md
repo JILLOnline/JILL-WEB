@@ -190,3 +190,25 @@ server intake, persistent source receipts, Owner-only HQ tickets, exact
 Shopify Customer session/GID linkage, My JILL customer A/B/guest acceptance,
 shared conversation events, and then explicit reviewed WORK extension release.
 Do not bypass historical branch-lock certification.
+
+## My JILL Contact Requests customer screen — source-only (2026-10-23)
+
+The same My JILL extension now includes a **Contact Requests** navigation item
+and `ContactRequests.jsx`, reachable from Overview. It is mounted with
+`enabled={false}` and displays a truthful not-connected state. It never
+shows Shopify native Contact Us email as an owned account ticket.
+If a future signed owner-only WORK contact-account endpoint passes both
+Customer A/B, the page is prepared to render strictly whitelisted private
+ticket metadata. The first WORK release would require a distinct app/gateway
+deployment certification and cannot simply turn on the prop in production.
+
+The HQ parallel PR #157 now contains a **draft** WORK-only Contact Us ticket
+table `0004_work_contact_tickets_source_only.sql` and a bounded authenticated
+Shopify app-proxy intake handler; neither is applied/routed/published. The
+current Shopify `form 'contact'` remains unchanged. Future storefront routing
+must be validated to preserve anti-spam protection and avoid duplicate sends.
+
+Preview tests `test-work-myjill-contact-page.mjs` and
+`test-work-myjill-contact-ticket-contract.mjs` enforce no JWT/network while
+OFF, correct navigation, no owner guessing, no fake delivery and restricted
+per-account metadata.
