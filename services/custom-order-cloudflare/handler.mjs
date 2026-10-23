@@ -6,6 +6,7 @@ import {handleWorkCustomerReply} from '../../backend/custom-order-conversation.m
 import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-intake.mjs';
 import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
 import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-claim.mjs';
+import {readWorkCustomerContactThread} from '../../backend/work-contact-thread-read.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -116,6 +117,23 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     if(env?.JILL_WORK_CONTACT_CLAIM_ENABLED!=='true')
       return handleWorkContactTicketClaim({request,enabled:false});
     return handleWorkContactTicketClaim({
+      request,enabled:true,
+      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
+      db:env?.JILL_ORDER_DESK_WORK_DB,
+      rateLimit:async({shop})=>env?.RATE_LIMITER
+        .getByName('jill-work-custom-orders-global').allow({
+          shop,client:clientId(request),
+          minute:Math.floor(Date.now()/60000),
+        }),
+    });
+  }
+  // Exact signed customer account + claimed contact owner is REQUIRED.
+  // This route is separate from Shopify public app-proxy submissions and
+  // remains hard OFF until D1 and customer A/B integration are certified.
+  if(pathname==='/jill-contact-thread'){
+    if(env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
+      return readWorkCustomerContactThread({request,enabled:false});
+    return readWorkCustomerContactThread({
       request,enabled:true,
       shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
       db:env?.JILL_ORDER_DESK_WORK_DB,
