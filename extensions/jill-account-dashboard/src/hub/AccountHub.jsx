@@ -5,6 +5,7 @@ import Rewards from '../pages/Rewards.jsx';
 import Coupons from '../pages/Coupons.jsx';
 import CustomOrders from '../pages/CustomOrders.jsx';
 import Messages from '../pages/Messages.jsx';
+import ContactRequests from '../pages/ContactRequests.jsx';
 import Celebrations from '../pages/Celebrations.jsx';
 import SavedPreferences from '../pages/SavedPreferences.jsx';
 import Settings from '../pages/Settings.jsx';
@@ -51,6 +52,7 @@ export default function AccountHub({accountState = null}) {
     coupons: <Coupons onNavigate={onNavigate} />,
     'custom-orders': <CustomOrders onNavigate={onNavigate}
       drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
+    'contact-requests': <ContactRequests enabled={false} onNavigate={onNavigate} />,
     messages: <Messages requestedSubmissionId={messageRequestTarget}
       onNavigate={onNavigate} drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     celebrations: <Celebrations />,
