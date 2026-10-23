@@ -13,6 +13,7 @@ const REASONS=new Set(['existing','shipping','product','custom','pickup',
  'business','website','other']);
 const PREFS=new Set(['Email','Phone']);
 const MAX=8192;
+const CLAIM=/^[A-Za-z0-9_-]{43}$/;
 const DETAIL_KEYS=['order_number','product_name','business_name',
  'business_link','website_area','device','reference_images'];
 const HEADERS={'content-type':'application/json; charset=utf-8',
@@ -25,7 +26,7 @@ const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 function validatedBody(x){
  if(!object(x))return null;
  const keys=['ticket_id','name','email','phone','reason','message',
-   'preferred_contact','reviewed'];
+   'preferred_contact','reviewed','claim_token'];
  if(keys.some(k=>!Object.hasOwn(x,k))||
     Object.keys(x).some(k=>!keys.includes(k)&&k!=='details')||
     !ID.test(x.ticket_id||'')||typeof x.name!=='string'||
@@ -37,7 +38,10 @@ function validatedBody(x){
     x.message.trim()!==x.message||x.message.length<1||
     x.message.length>3000||!PREFS.has(x.preferred_contact)||
     (x.preferred_contact==='Phone'&&x.phone.trim().length<3)||
-    x.reviewed!==true)return null;
+    x.reviewed!==true||!CLAIM.test(x.claim_token||'')||
+    Buffer.from(x.claim_token,'base64url').length!==32||
+    Buffer.from(x.claim_token,'base64url').toString('base64url')!==x.claim_token)
+    return null;
  const supplied=x.details===undefined?{}:x.details;
  if(!object(supplied)||Object.keys(supplied).some(k=>!DETAIL_KEYS.includes(k)))
   return null;
@@ -55,7 +59,8 @@ function validatedBody(x){
  if(!['','Yes','No'].includes(details.reference_images))return null;
  return {ticket_id:x.ticket_id,name:x.name,email:x.email,
   phone:x.phone,reason:x.reason,message:x.message,
-  preferred_contact:x.preferred_contact,reviewed:true,details};
+  preferred_contact:x.preferred_contact,reviewed:true,details,
+  claim_token:x.claim_token};
 }
 async function boundedJson(request){
  const declared=request.headers.get('content-length');
@@ -113,23 +118,27 @@ export async function handleWorkContactTicketIntake({
  if(!Number.isSafeInteger(time)||time<=0)return respond(503,'invalid_clock');
  // The server deliberately DOES NOT use Shopify's signed but unverified
  // logged_in_customer_id to bind this ticket to a Customer Account.
- const json=JSON.stringify(record);
+ const {claim_token,...storedRecord}=record;
+ const json=JSON.stringify(storedRecord);
+ if(Buffer.byteLength(json,'utf8')>MAX)return respond(400,'invalid_request');
  const digest=createHash('sha256').update(
   'jill_work_contact_ticket_v1\n'+json,'utf8').digest('hex');
+ const claimHash=createHash('sha256').update(
+  'jill_work_contact_claim_v1\n'+claim_token,'utf8').digest('hex');
  try{
   const result=await db.prepare(
    'INSERT OR IGNORE INTO jill_work_contact_tickets '+
-   '(shop,ticket_id,source,body_sha256,contact_json,state,revision,'+
+   '(shop,ticket_id,source,body_sha256,claim_sha256,contact_json,state,revision,'+
    'created_at_ms,updated_at_ms,owner_customer_gid) '+
-   "VALUES (?,?,'shopify_contact_bridge',?,?,'received',1,?,?,NULL)"
-  ).bind(SHOP,record.ticket_id,digest,json,time,time).run();
+   "VALUES (?,?,'shopify_contact_bridge',?,?,?,'received',1,?,?,NULL)"
+  ).bind(SHOP,record.ticket_id,digest,claimHash,json,time,time).run();
   if(result?.success!==true)return respond(503,'source_unavailable');
   const stored=await db.prepare(
-   'SELECT source,body_sha256,owner_customer_gid,state '+
+   'SELECT source,body_sha256,claim_sha256,owner_customer_gid,state '+
    'FROM jill_work_contact_tickets WHERE shop=? AND ticket_id=?'
   ).bind(SHOP,record.ticket_id).first();
   if(!stored||stored.source!=='shopify_contact_bridge'||
-     stored.body_sha256!==digest||stored.owner_customer_gid!==null)
+     stored.body_sha256!==digest||stored.claim_sha256!==claimHash)
    return respond(409,'ticket_conflict');
   return respond(result?.meta?.changes===1?201:200,
     result?.meta?.changes===1?'received':'already_received',
