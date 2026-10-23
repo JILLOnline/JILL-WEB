@@ -37,6 +37,13 @@ on:
       - 'scripts/test-work-contact-ticket-inbox.mjs'
       - 'services/jill-order-desk/work-contact-ticket-detail.mjs'
       - 'scripts/test-work-contact-ticket-detail.mjs'
+      - 'theme/assets/jill-contact-work-contract.js'
+      - 'theme/assets/jill-contact.js'
+      - 'theme/layout/theme.liquid'
+      - 'theme/sections/main-contact.liquid'
+      - 'services/custom-order-cloudflare/handler.mjs'
+      - 'scripts/test-work-contact-storefront-adapter.mjs'
+      - 'scripts/test-work-contact-worker-routing.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.contacts.tsx'
       - 'scripts/test-work-hq-contact-route.mjs'
@@ -71,6 +78,8 @@ jobs:
           node scripts/test-work-contact-ticket-intake.mjs
           node scripts/test-work-contact-ticket-inbox.mjs
           node scripts/test-work-contact-ticket-detail.mjs
+          node scripts/test-work-contact-storefront-adapter.mjs
+          node scripts/test-work-contact-worker-routing.mjs
           node scripts/test-work-hq-contact-route.mjs
       - name: Regress original saved-quote handoff and exact variant read security
         run: |
@@ -104,4 +113,9 @@ jobs:
           node --check scripts/test-work-contact-ticket-inbox.mjs
           node --check services/jill-order-desk/work-contact-ticket-detail.mjs
           node --check scripts/test-work-contact-ticket-detail.mjs
+          node --check theme/assets/jill-contact-work-contract.js
+          node --check theme/assets/jill-contact.js
+          node --check services/custom-order-cloudflare/handler.mjs
+          node --check scripts/test-work-contact-storefront-adapter.mjs
+          node --check scripts/test-work-contact-worker-routing.mjs
           node --check scripts/test-work-hq-contact-route.mjs
