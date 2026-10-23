@@ -63,11 +63,13 @@ export default {
     // A matching Origin is ONLY a browser CSRF precondition, never merchant
     // authorization: the downstream action still verifies Shopify Owner,
     // the WORK D1 grant, write flag, and the Google QA HMAC signature.
+    // Match the whole Contact detail subtree: React Router percent-encodes
+    // ticket colons, so a literal-ID regexp would miss valid write paths.
     if(request.method==="POST" &&
        (url.pathname==="/app/requests/command" ||
         url.pathname==="/app/requests/media/inspect" ||
         url.pathname==="/app/requests/quote-draft" ||
-        /^\/app\/contacts\/jill:contact:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}(?:\/message)?$/.test(url.pathname)) &&
+        url.pathname.startsWith("/app/contacts/")) &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
     // The current v34 Worker continues to deny quote routes. This
