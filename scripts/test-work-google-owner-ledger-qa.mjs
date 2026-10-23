@@ -24,6 +24,7 @@ const rows={
 };
 const replayState={};
 let challengeCount=0;
+let proofEnabled=true;
 const ctx={
  JILL_REWARDS_RUNTIME:'WORK',JILL_CUSTOM_ORDER_SANDBOX:true,
  JILL:{SHEET_ID:'synthetic',SHEET_NAME:'Intake'},HEADERS:intakeHeader,
@@ -32,7 +33,7 @@ const ctx={
  JILL_CUSTOM_WORKFLOW:{EVENTS_SHEET:'Events',HEADERS:eventHeader,
    STATUSES:['received'],INTERNAL:['new']},
  Date:{now:()=>now},
- PropertiesService:{getScriptProperties:()=>({getProperty:k=>k==='JILL_WORK_OWNER_BINDING_QA_ENABLED'?'true':
+ PropertiesService:{getScriptProperties:()=>({getProperty:k=>k==='JILL_WORK_OWNER_BINDING_QA_ENABLED'?(proofEnabled?'true':'false'):
     k==='JILL_HQ_MERCHANT_READ_SECRET'?SECRET:null,
  getProperties:()=>({...replayState}),
  setProperty:(key,value)=>{replayState[key]=value;},
@@ -77,6 +78,11 @@ denial(()=>revisionValue=2,()=>revisionValue=3);
 assert.equal(read({...params,jill_hq_read_sig:'a'.repeat(64)}).ok,false);
 assert.equal(read({...params,shop:'other.myshopify.com'}).ok,false);
 assert.equal(read(params).ok,false,'first nonce cannot be replayed');
+const beforeDisabled=reads;
+proofEnabled=false;
+assert.equal(read().ok,false);
+assert.equal(reads,beforeDisabled);
+proofEnabled=true;
 const count=reads;ctx.JILL_REWARDS_RUNTIME='LIVE';
 assert.equal(read().ok,false);assert.equal(reads,count);
 console.log('PASS isolated WORK Google owner-ledger proof: canonical hash/revision, signed response, tamper denial, LIVE no reads.');
