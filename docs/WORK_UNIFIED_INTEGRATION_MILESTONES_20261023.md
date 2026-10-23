@@ -241,3 +241,39 @@ browser smoke tests, customer replies and genuine two-way readback,
 staff assignments, attachment policy, and shipping/quote/order lifecycle.
 Shopify native Contact Us stays unchanged. No live message, invoice,
 order or paid infrastructure is created by these source files.
+
+## Cross-PR integration certification — October 23, 2026
+
+A new bidirectional, READ-ONLY GitHub workflow pairs the independent
+HQ and My JILL draft source trees. HQ CI uses
+`.github/workflows/jill-hq-myjill-integration-preview.yml`;
+My JILL CI uses
+`.github/workflows/jill-cross-pr-contact-integration-preview.yml`.
+Both run `scripts/test-work-cross-pr-contact-integration.mjs` from the
+My JILL branch against the actual HQ handler modules, rather than
+claiming two independently passing unit suites prove interoperability.
+
+The synthetic signed Shopify Customer A/B acceptance exercise covers:
+the default-OFF zero-token/no-request boundary; unclaimed guest
+invisibility; wrong claim-code refusal; atomic Customer A claim and
+idempotent retry; Customer B takeover denial; identical secure My JILL
+account-list response; authenticated merchant public-message persistence;
+lost-ack operation retry without duplicate messages; changed text with
+same operation ID refusal; exact customer-owned message thread readback;
+and private staff/contact data stripping. The two branch commit hashes
+are printed in each test run. No LIVE records, D1, Google, Shopify or
+Cloudflare credentials, provider calls, migrations, or deployments are
+used by this exercise.
+
+- My JILL cross-PR CI run `40000391748`: **success** with expanded
+  merchant write → customer readback scenario.
+- Dedicated My JILL preview `40000391658`: **success**.
+- HQ mirrored cross-PR run on a subsequent HQ commit independently
+  rechecks compatibility with the latest My JILL branch.
+
+**Not release evidence:** both PRs remain draft/unmerged with their own
+protected historical release gates. The source test does not assert that
+the WORK app proxy, D1 bindings, real Shopify account JWTs, admin owner
+sessions, native Contact Us delivery, customer reply service, or real
+messages are enabled. Real end-to-end Customer A/B/guest WORK acceptance
+and explicit activation approval remain mandatory.
