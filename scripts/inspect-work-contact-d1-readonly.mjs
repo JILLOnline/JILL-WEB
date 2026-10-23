@@ -106,9 +106,12 @@ function main(){
   remote_schema:'unverified',
   active_worker_binding:'unverified',
   shopify_account_jwt_smoke:'unverified',
-  customer_messages_enabled:false,
-  migration_performed:false,deployment_performed:false,
-  approved_paid_services:false,
+  // Runtime flags cannot be established by a metadata-only D1 SELECT.
+  // These fields describe THIS inspection, not past migrations.
+  customer_messages_runtime_enabled:'unverified',
+  inspection_performed_migration:false,
+  inspection_performed_deployment:false,
+  inspection_provisioned_paid_services:false,
  };
  if(process.argv.includes('--owner-readonly'))
   report.remote_schema=readCloudflareSchema();
