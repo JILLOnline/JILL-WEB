@@ -79,6 +79,13 @@ function jillWorkHqOwnerBindingProof_(e) {
        payload.submission_id!==p.submission_id||
        !Array.isArray(payload.items)||payload.items.length<1||
        payload.items.length>500)return deny();
+    // Match the canonical merchant-detail intake timestamp invariant.
+    // A valid owner hash alone cannot authorize a drifted intake row.
+    const submitted=new Date(originals[0][HEADERS.indexOf('submitted_at')]);
+    const payloadTime=new Date(payload.submitted_at);
+    if(!Number.isFinite(submitted.getTime())||
+       !Number.isFinite(payloadTime.getTime())||
+       submitted.getTime()!==payloadTime.getTime())return deny();
     const evs=events.getRange(2,1,eventCount,
       JILL_CUSTOM_WORKFLOW.HEADERS.length).getValues();
     let revision=0;
