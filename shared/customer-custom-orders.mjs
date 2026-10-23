@@ -1,3 +1,5 @@
+import {projectCustomerMessageInbox} from './custom-order-message-inbox.mjs';
+
 // WORK-only My JILL Custom Orders account reader.
 // Source of customer identity is Shopify's signed session token ONLY.
 // Never send a user-supplied email, customer ID or order ID to the endpoint.
@@ -114,6 +116,11 @@ export async function loadWorkCustomerConversationState({
       })),
     };
   });
+  // Require the same bounded, unique, chronological public contract for
+  // BOTH My JILL screens. Reject a malformed/duplicated order before the
+  // Custom Orders page can render it (Messages already checks this).
+  projectCustomerMessageInbox(orders);
+  signal?.throwIfAborted?.();
   if(data.reply_enabled!==undefined&&typeof data.reply_enabled!=='boolean')
     throw new Error('Invalid reply capability.');
   return Object.freeze({orders,replyEnabled:data.reply_enabled===true});
