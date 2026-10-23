@@ -6,6 +6,7 @@
   const ENDPOINT='/apps/jill-custom-order/contact';
   const SHOP='jill-work.myshopify.com';
   const UUID=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+  const CLAIM=/^[A-Za-z0-9_-]{43}$/;
   const INPUTS=Object.freeze({
     name:'contact[name]',email:'contact[email]',
     phone:'contact[Phone]',reason:'contact[Reason]',
@@ -30,8 +31,10 @@
       throw Error('contact_field_ambiguous');
     return values[0]||'';
   }
-  function normalizedForm(entries,uuid){
+  function normalizedForm(entries,uuid,claimToken){
     if(typeof uuid!=='string'||!UUID.test(uuid))throw Error('contact_id_invalid');
+    if(typeof claimToken!=='string'||!CLAIM.test(claimToken))
+      throw Error('contact_claim_invalid');
     const map=new Map();
     for(const [key,value] of entries){
       if(typeof key!=='string'||typeof value!=='string')
@@ -39,7 +42,8 @@
       if(!map.has(key))map.set(key,[]);
       map.get(key).push(value);
     }
-    const record={ticket_id:'jill:contact:'+uuid.toLowerCase()};
+    const record={ticket_id:'jill:contact:'+uuid.toLowerCase(),
+      claim_token:claimToken};
     for(const [key,field] of Object.entries(INPUTS))
       record[key]=single(map,field,key==='phone').trim();
     record.reviewed=record.reviewed==='Yes';
