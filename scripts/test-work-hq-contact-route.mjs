@@ -46,4 +46,13 @@ assert.ok(detail.includes('Save message to My JILL thread'));
 assert.ok(detail.includes('messageOp.current'));
 assert.ok(detail.includes('encType:"application/json"'));
 assert.doesNotMatch(messageRoute,/draftOrderCreate|orderCreate|localStorage|JSON\.parse\(request/);
+const worker=readFileSync(
+ 'services/jill-order-desk/app-home/workers/app.ts','utf8');
+assert.ok(worker.includes('url.pathname.startsWith("/app/contacts/")'));
+assert.ok(worker.includes('request.headers.get("origin")!==expected'));
+const encodedTicket='/app/contacts/'+encodeURIComponent(
+ 'jill:contact:11111111-2222-4333-8444-555555555555');
+assert.ok(encodedTicket.includes('%3A'));
+assert.ok(encodedTicket.startsWith('/app/contacts/'));
+assert.ok((encodedTicket+'/message').startsWith('/app/contacts/'));
 console.log('PASS HQ WORK Contact Us route and navigation remain gated, authenticated and metadata-only.');
