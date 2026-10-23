@@ -5,6 +5,7 @@ import {handleWorkCustomOrderAccountRead} from '../../backend/custom-order-accou
 import {handleWorkCustomerReply} from '../../backend/custom-order-conversation.mjs';
 import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-intake.mjs';
 import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
+import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-claim.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -107,6 +108,23 @@ export async function handleCloudflareCustomOrderWork(request,env) {
     if(typeof version==='string'&&UUID.test(version))
       result.headers.set(VERSION_HEADER,version);
     return result;
+  }
+  // Account claim cannot be inferred from a storefront email.
+  // Disabled until same WORK D1 binding, 0004 schema, anti-abuse controls
+  // and Customer A/B/guest acceptance are released independently.
+  if(pathname==='/jill-contact-claim'){
+    if(env?.JILL_WORK_CONTACT_CLAIM_ENABLED!=='true')
+      return handleWorkContactTicketClaim({request,enabled:false});
+    return handleWorkContactTicketClaim({
+      request,enabled:true,
+      shopifyAppSecret:env?.SHOPIFY_WORK_APP_SECRET,
+      db:env?.JILL_ORDER_DESK_WORK_DB,
+      rateLimit:async({shop})=>env?.RATE_LIMITER
+        .getByName('jill-work-custom-orders-global').allow({
+          shop,client:clientId(request),
+          minute:Math.floor(Date.now()/60000),
+        }),
+    });
   }
   // A separate signed Shopify Customer Account JWT is the ONLY owner
   // authority for My JILL Contact Requests. The private contact D1 binding,
