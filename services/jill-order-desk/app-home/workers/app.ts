@@ -66,7 +66,8 @@ export default {
     if(request.method==="POST" &&
        (url.pathname==="/app/requests/command" ||
         url.pathname==="/app/requests/media/inspect" ||
-        url.pathname==="/app/requests/quote-draft") &&
+        url.pathname==="/app/requests/quote-draft" ||
+        /^\\/app\\/contacts\\/jill:contact:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}(?:\\/message)?$/.test(url.pathname)) &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
     // The current v34 Worker continues to deny quote routes. This
