@@ -13,6 +13,8 @@ const REASONS=new Set(['existing','shipping','product','custom','pickup',
  'business','website','other']);
 const PREFS=new Set(['Email','Phone']);
 const MAX=8192;
+const DETAIL_KEYS=['order_number','product_name','business_name',
+ 'business_link','website_area','device','reference_images'];
 const HEADERS={'content-type':'application/json; charset=utf-8',
  'cache-control':'no-store','x-content-type-options':'nosniff'};
 const respond=(status,code,extra={})=>new Response(JSON.stringify({
@@ -24,7 +26,8 @@ function validatedBody(x){
  if(!object(x))return null;
  const keys=['ticket_id','name','email','phone','reason','message',
    'preferred_contact','reviewed'];
- if(Object.keys(x).length!==keys.length||keys.some(k=>!Object.hasOwn(x,k))||
+ if(keys.some(k=>!Object.hasOwn(x,k))||
+    Object.keys(x).some(k=>!keys.includes(k)&&k!=='details')||
     !ID.test(x.ticket_id||'')||typeof x.name!=='string'||
     x.name.trim()!==x.name||x.name.length<1||x.name.length>120||
     typeof x.email!=='string'||x.email.length>254||
@@ -35,9 +38,24 @@ function validatedBody(x){
     x.message.length>3000||!PREFS.has(x.preferred_contact)||
     (x.preferred_contact==='Phone'&&x.phone.trim().length<3)||
     x.reviewed!==true)return null;
+ const supplied=x.details===undefined?{}:x.details;
+ if(!object(supplied)||Object.keys(supplied).some(k=>!DETAIL_KEYS.includes(k)))
+  return null;
+ const details={};
+ for(const key of DETAIL_KEYS){
+  const value=Object.hasOwn(supplied,key)?supplied[key]:'';
+  if(typeof value!=='string'||value.length>200||
+     value.trim()!==value)return null;
+  details[key]=value;
+ }
+ // The existing Shopify form requires an order reference for existing
+ // order / shipping inquiries. The reference is NOT owner authority.
+ if(['existing','shipping'].includes(x.reason)&&
+    details.order_number.length===0)return null;
+ if(!['','Yes','No'].includes(details.reference_images))return null;
  return {ticket_id:x.ticket_id,name:x.name,email:x.email,
   phone:x.phone,reason:x.reason,message:x.message,
-  preferred_contact:x.preferred_contact,reviewed:true};
+  preferred_contact:x.preferred_contact,reviewed:true,details};
 }
 async function boundedJson(request){
  const declared=request.headers.get('content-length');
