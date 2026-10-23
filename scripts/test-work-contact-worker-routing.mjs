@@ -15,7 +15,8 @@ function signedUrl(path='/jill-custom-order-proxy/contact'){
 }
 const payload={ticket_id:id,name:'QA',email:'qa@example.invalid',
  phone:'',reason:'product',message:'Interested in tote kits',
- preferred_contact:'Email',reviewed:true,details:{product_name:'Paint Tote'}};
+ preferred_contact:'Email',reviewed:true,details:{product_name:'Paint Tote'},
+ claim_token:Buffer.alloc(32,7).toString('base64url')};
 const request=path=>new Request(signedUrl(path),{
  method:'POST',headers:{'content-type':'application/json',
  origin:'https://jill-work.myshopify.com'},
@@ -30,7 +31,7 @@ const db={prepare:sql=>({bind:(...args)=>({
   const key=args[1];
   const exists=store.has(key);
   if(!exists)store.set(key,{source:'shopify_contact_bridge',
-   body_sha256:args[2],owner_customer_gid:null});
+   body_sha256:args[2],claim_sha256:args[3],owner_customer_gid:null});
   return {success:true,meta:{changes:exists?0:1}};
  },
  async first(){
