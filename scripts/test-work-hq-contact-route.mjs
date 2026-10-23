@@ -30,7 +30,7 @@ assert.match(detail,/authenticateWorkAdminOnce\(\{/);
 assert.match(detail,/JILL_WORK_CONTACT_STATUS_ENABLED==="true"/);
 assert.match(detail,/handleWorkContactStatusChange/);
 assert.match(detail,/expected_revision:ticket.revision/);
-assert.match(detail,/crypto.randomUUID\\(\\)/);
+assert.ok(detail.includes('crypto.randomUUID()'));
 assert.ok(detail.includes('encType:"application/json"'));
 assert.match(detail,/No contact details are displayed/);
 assert.match(detail,/Customer identity and reply availability are not yet verified/);
