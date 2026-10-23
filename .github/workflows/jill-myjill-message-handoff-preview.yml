@@ -24,6 +24,8 @@ on:
       - 'backend/custom-order-account-read.mjs'
       - 'services/custom-order-cloudflare/handler.mjs'
       - 'shared/customer-custom-orders.mjs'
+      - 'shared/customer-contact-tickets.mjs'
+      - 'scripts/test-work-myjill-contact-ticket-contract.mjs'
       - 'extensions/jill-account-dashboard/src/pages/RequestConversation.jsx'
       - 'scripts/test-work-myjill-reply-capability.mjs'
       - '.github/workflows/jill-myjill-message-handoff-preview.yml'
@@ -47,6 +49,7 @@ jobs:
           node scripts/test-work-customer-message-operation-races.mjs
           node scripts/test-work-customer-read-cancellation.mjs
           node scripts/test-work-myjill-account-response-integrity.mjs
+          node scripts/test-work-myjill-contact-ticket-contract.mjs
       - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
         run: node scripts/test-audit-work-myjill-message-extension-source.mjs
       - name: Verify signed reply-capability source and reject forged upstream enablement
@@ -67,3 +70,5 @@ jobs:
           node --check scripts/test-work-customer-message-operation-races.mjs
           node --check scripts/test-work-customer-read-cancellation.mjs
           node --check scripts/test-work-myjill-account-response-integrity.mjs
+          node --check shared/customer-contact-tickets.mjs
+          node --check scripts/test-work-myjill-contact-ticket-contract.mjs
