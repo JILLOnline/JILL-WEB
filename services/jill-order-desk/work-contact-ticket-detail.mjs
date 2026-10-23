@@ -6,6 +6,7 @@ import {readWorkMerchantPermission} from './merchant-access.mjs';
 
 const SHOP='jill-work.myshopify.com';
 const ID=/^jill:contact:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
+const GID=/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/;
 const REASON=new Set(['existing','shipping','product','custom',
  'pickup','business','website','other']);
 const STATUS=new Set(['received','reviewing','waiting_customer','resolved']);
@@ -29,7 +30,7 @@ export function projectVerifiedWorkContactDetail({row,ticketId}={}){
     !Number.isSafeInteger(row.created_at_ms)||row.created_at_ms<=0||
     !Number.isSafeInteger(row.updated_at_ms)||
     row.updated_at_ms<row.created_at_ms||
-    row.owner_customer_gid!==null||
+    !(row.owner_customer_gid===null||GID.test(row.owner_customer_gid||''))||
     hash(row.contact_json)!==row.body_sha256)fail();
  let contact;
  try{contact=JSON.parse(row.contact_json);}catch{fail();}
@@ -61,7 +62,8 @@ export function projectVerifiedWorkContactDetail({row,ticketId}={}){
   name:contact.name,email:contact.email,phone:contact.phone,
   preferred_contact:contact.preferred_contact,message:contact.message,
   details:Object.freeze(details),
-  owner_customer_verified:false,customer_reply_enabled:false,
+  owner_customer_verified:GID.test(row.owner_customer_gid||''),
+  customer_reply_enabled:false,
   can_invoice:false,can_create_order:false,
  });
 }
