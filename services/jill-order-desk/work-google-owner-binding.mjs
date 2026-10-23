@@ -32,8 +32,10 @@ export function signWorkGoogleOwnerBindingRequest({
 }
 async function readBoundedJson(response){
  if(!response?.ok)fail('unavailable');
- const declared=Number(response.headers?.get('content-length')||'0');
- if(!Number.isFinite(declared)||declared>2048)fail('oversized');
+ const lengthHeader=response.headers?.get('content-length');
+ if(lengthHeader!==null&&lengthHeader!==undefined&&
+    (!/^(0|[1-9][0-9]*)$/.test(lengthHeader)||
+     Number(lengthHeader)>2048))fail('oversized');
  const reader=response.body?.getReader();
  if(!reader)fail('missing_body');
  const chunks=[];let used=0;
@@ -49,7 +51,7 @@ async function readBoundedJson(response){
  const out=new Uint8Array(used);let offset=0;
  for(const part of chunks){out.set(part,offset);offset+=part.byteLength;}
  try{
-  const source=JSON.parse(new TextDecoder().decode(out));
+  const source=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(out));
   if(!source||typeof source!=='object'||Array.isArray(source)||
      Object.keys(source).length!==FIELDS.length||
      !FIELDS.every(key=>Object.hasOwn(source,key)))
@@ -69,7 +71,10 @@ export async function readWorkGoogleQaOwnerBinding({
     approvedEndpoint===DENY_DETAIL||
     typeof backendFetch!=='function'||typeof now!=='function'||
     !NONCE.test(nonce||''))fail('unapproved_endpoint');
- const timestamp=String(now());
+ const requestTime=now();
+ if(!Number.isSafeInteger(requestTime)||requestTime<=0)
+  fail('invalid_clock');
+ const timestamp=String(requestTime);
  const sig=signWorkGoogleOwnerBindingRequest({
   secret,submissionId,sourceRevision,timestamp,nonce,
  });
@@ -88,8 +93,11 @@ export async function readWorkGoogleQaOwnerBinding({
   body,signal:AbortSignal.timeout(15000),
  });
  const source=await readBoundedJson(response);
+ const receiptTime=now();
+ if(!Number.isSafeInteger(receiptTime)||receiptTime<requestTime||
+    receiptTime-requestTime>120000)fail('request_expired');
  const proof=verifyWorkQuoteOwnerBindingReceipt({
-  source,submissionId,sourceRevision,nonce,secret,nowMs:now(),
+  source,submissionId,sourceRevision,nonce,secret,nowMs:receiptTime,
  });
  if(proof.state!=='owner_binding_verified')fail('invalid_signed_receipt');
  // Only the original immutable proof fields are returned internally.
