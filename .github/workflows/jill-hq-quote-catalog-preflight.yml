@@ -28,6 +28,9 @@ on:
       - 'backend/google-apps-script/JILL_WORK_HQ_OWNER_BINDING_QA_SOURCE.gs'
       - 'scripts/test-work-google-owner-ledger-qa.mjs'
       - 'scripts/test-work-owner-proof-contract.mjs'
+      - 'services/jill-order-desk/work-unified-inquiry-bridge.mjs'
+      - 'scripts/test-work-unified-inquiry-bridge.mjs'
+      - 'docs/WORK_UNIFIED_INTEGRATION_MILESTONES_20261023.md'
       - 'docs/WORK_HQ_QUOTE_CATALOG_PREFLIGHT_20261022.md'
       - '.github/workflows/jill-hq-quote-catalog-preflight.yml'
 
@@ -53,6 +56,7 @@ jobs:
           node scripts/test-work-google-owner-binding.mjs
           node scripts/test-work-google-owner-ledger-qa.mjs
           node scripts/test-work-owner-proof-contract.mjs
+          node scripts/test-work-unified-inquiry-bridge.mjs
       - name: Regress original saved-quote handoff and exact variant read security
         run: |
           node scripts/test-work-quote-commerce-handoff.mjs
@@ -77,3 +81,5 @@ jobs:
           node --check scripts/test-work-google-owner-binding.mjs
           node --check scripts/test-work-google-owner-ledger-qa.mjs
           node --check scripts/test-work-owner-proof-contract.mjs
+          node --check services/jill-order-desk/work-unified-inquiry-bridge.mjs
+          node --check scripts/test-work-unified-inquiry-bridge.mjs
