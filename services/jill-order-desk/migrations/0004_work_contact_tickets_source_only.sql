@@ -95,3 +95,28 @@ BEGIN
  VALUES (NEW.shop,NEW.ticket_id,NEW.revision,OLD.state,NEW.state,
  NEW.status_actor_staff_id,NEW.last_status_operation_id,NEW.updated_at_ms);
 END;
+
+-- Contact conversation v1. Internal Owner-authenticated merchant posts only;
+-- delivery means persisted to an exact claimed My JILL account, NOT email,
+-- browser notification, Shopify Inbox, or customer read receipt.
+CREATE TABLE IF NOT EXISTS jill_work_contact_messages (
+ shop TEXT NOT NULL CHECK(shop='jill-work.myshopify.com'),
+ ticket_id TEXT NOT NULL,
+ sequence INTEGER NOT NULL CHECK(sequence BETWEEN 1 AND 50),
+ operation_id TEXT NOT NULL CHECK(
+   length(operation_id)=57 AND
+   operation_id LIKE 'jill:work:contact:msg:%'),
+ actor_staff_id TEXT NOT NULL CHECK(
+   length(actor_staff_id) BETWEEN 1 AND 20 AND
+   substr(actor_staff_id,1,1) GLOB '[1-9]' AND
+   actor_staff_id NOT GLOB '*[^0-9]*'),
+ body_text TEXT NOT NULL CHECK(length(body_text) BETWEEN 1 AND 1000),
+ body_sha256 TEXT NOT NULL CHECK(length(body_sha256)=64
+   AND body_sha256 NOT GLOB '*[^0-9a-f]*'),
+ created_at_ms INTEGER NOT NULL CHECK(created_at_ms>0),
+ PRIMARY KEY(shop,ticket_id,sequence),
+ UNIQUE(shop,operation_id),
+ FOREIGN KEY(shop,ticket_id) REFERENCES jill_work_contact_tickets(shop,ticket_id)
+);
+CREATE INDEX IF NOT EXISTS jill_work_contact_messages_by_ticket
+ ON jill_work_contact_messages(shop,ticket_id,sequence);
