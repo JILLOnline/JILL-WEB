@@ -132,3 +132,49 @@ traffic, or protected-account release certificate.
 **No Shopify/Cloudflare Worker deployed, no My JILL extension published,
 no LIVE/KEEP changes, and no paid infrastructure enabled** as part of
 the authorized D1 schema migration.
+
+## Post-0004 WORK current deployment inspection — source-only addition
+
+After the owner-confirmed remote `0004` migration, the next task is
+**active Worker inventory**, not another schema migration. The reviewed,
+hard-OFF inspector is
+`scripts/inspect-work-contact-runtime-readonly.mjs`.
+
+- `node scripts/inspect-work-contact-runtime-readonly.mjs` — OFFLINE
+  source-only check. No Cloudflare connection.
+- `node scripts/inspect-work-contact-runtime-readonly.mjs --owner-readonly`
+  — owner-authenticated **fixed Wrangler metadata reads only**. Requires
+  Wrangler installed in the isolated HQ WORK checkout. Reads
+  `deployments list --json`, `versions view <active-id> --json`, then
+  `deployments list --json` again for **both** named WORK Workers.
+  It refuses split or changing traffic allocations and views only the
+  currently deployed **100%** version, never "newest uploaded."
+  The script contains no `deploy`, migration, secret write or provider
+  POST command.
+
+A passing readback must establish:
+
+1. Active HQ Worker `jill-order-desk-canary-work` has the existing
+   exact WORK D1 ID, correct canary host stage, and Shopify OAuth
+   enabled for the already-operational Owner application.
+2. Active public WORK Custom Order gateway
+   `jill-work-custom-orders-qa` has the expected rate limiter and
+   required **secret names**, and has **no private D1 binding**.
+3. Contact Us inbox/status/message flags in HQ and
+   intake/claim/list/thread flags in the gateway are absent or
+   explicitly `false`. Any `true` or ambiguous flag is a STOP, not
+   permission to turn it off automatically.
+4. The before/after active deployment allocations are identical.
+
+The report omits secret values, private ticket rows, raw JWTs and
+Customer IDs. It always reports `HOLD`, because binding inventory does
+**not** prove published source commit, authenticated Customer A/B
+behavior, app-proxy route acceptance, or approval to activate.
+
+**Security regression:** HQ Contact Us status and public-message
+commands now require an explicit same-origin browser `Origin` before
+Shopify Owner authorization. The top-level Worker denies cross-origin
+POSTs for all `/app/contacts/` descendants, including URL-encoded
+ticket IDs. Exact Owner/staff D1 authorization, idempotency and
+per-ticket ownership checks remain required. No Contact flags were
+enabled by this source change.
