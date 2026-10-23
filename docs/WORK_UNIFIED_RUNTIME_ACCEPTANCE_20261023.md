@@ -178,3 +178,60 @@ POSTs for all `/app/contacts/` descendants, including URL-encoded
 ticket IDs. Exact Owner/staff D1 authorization, idempotency and
 per-ticket ownership checks remain required. No Contact flags were
 enabled by this source change.
+
+## Owner-attested active Cloudflare WORK versions (October 23, 2026)
+
+Using the isolated HQ draft at Git commit
+`16d9ebbc25a5e74c31c1e4656177c622fbde76b1`, the owner ran
+`node scripts/inspect-work-contact-runtime-readonly.mjs --owner-readonly`.
+The script completed successfully and returned the following **active
+100%-traffic** metadata (not the newest uploaded version):
+
+| WORK target | Active version | Deployment |
+| --- | --- | --- |
+| HQ `jill-order-desk-canary-work` | `44ad4a81-55ad-4f49-9965-61260cc2294d` | `f80335de-98ea-4831-b00e-87cd1a397596` |
+| Gateway `jill-work-custom-orders-qa` | `9322193f-5e87-4479-88c9-39229dddb5f2` | `4fad4b6f-3596-4797-83a3-05edb7f89097` |
+
+For both Workers, `correct_work_bindings_observed:true`,
+`contact_flags_present:[]`, `contact_flags_enabled:false`.
+HQ retained the exact WORK D1 binding; the gateway continued **without**
+private D1. Both deployment allocations remained stable across reads.
+`secret_values_read:false`; no secret or customer data was accessed.
+
+The runtime inventory **did not establish source commit provenance**,
+Shopify proxy destination, the running customer's JWT, or that draft
+source changes were deployed. `status:"HOLD"` remains correct.
+
+### Post-migration D1 independent verification
+
+`scripts/verify-work-contact-d1-postflight.mjs` (new source-only tool)
+checks the remote WORK `d1_migrations` row for 0004, all **3 tables,
+3 named indexes, 3 audit triggers**, and all **7 original HQ merchant,
+session, quote and request-index tables**. It uses only bounded
+`SELECT` queries against `sqlite_master` and `d1_migrations`.
+Without `--owner-readonly`, it is offline and reports unverified.
+Its standalone tests run in GitHub CI. Remote postflight remains
+unverified until the owner explicitly runs the read-only mode.
+
+### Critical routing decision before any activation
+
+The draft Cloudflare gateway Contact handlers currently expect an
+`env.JILL_ORDER_DESK_WORK_DB` binding. The **running gateway is correctly
+not bound to private HQ D1**. Simply flipping
+`JILL_WORK_CONTACT_INTAKE_ENABLED` or adding this D1 binding to the
+public gateway is **not an acceptable release**.
+
+The next source design must provide a narrowly scoped,
+authenticated **server-to-server WORK-only handoff** (prefer reviewing
+a Cloudflare Worker service binding to the existing HQ Worker, with a
+private endpoint, explicit same-store authentication, bounded body,
+replay resistance, quotas and no customer ownership by email).
+The HQ side alone should own privileged D1 access; incoming Shopify
+app-proxy requests authenticate the WORK store, while Customer Account
+JWT + possession claim authenticates an individual customer. All
+customer-/merchant-facing flags remain absent/OFF until that separation
+is implemented and certified.
+
+No Worker service binding, secret, route, migration, activation or paid
+service was provisioned by this source-only decision. The Shopify
+native Contact Us form remains authoritative; do not dual-submit.
