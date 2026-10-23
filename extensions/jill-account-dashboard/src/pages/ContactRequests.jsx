@@ -23,6 +23,7 @@ export default function ContactRequests({enabled=false,onNavigate}){
  const [claimId,setClaimId]=useState('');
  const [claimCode,setClaimCode]=useState('');
  const [claimState,setClaimState]=useState('idle');
+ const [ticketFilter,setTicketFilter]=useState('all');
  const claiming=useRef(false);
  useEffect(()=>{
   let active=true;
@@ -41,6 +42,9 @@ export default function ContactRequests({enabled=false,onNavigate}){
   });
   return ()=>{active=false;controller.abort();};
  },[enabled,attempt]);
+ const filteredTickets=state.tickets.filter(ticket=>
+  ticketFilter==='all'||(ticketFilter==='open'
+    ?ticket.status!=='resolved':ticket.status==='resolved'));
  const linkClaim=async()=>{
   if(enabled!==true||state.status!=='ready'||claiming.current)return;
   claiming.current=true;
@@ -118,16 +122,27 @@ export default function ContactRequests({enabled=false,onNavigate}){
       </s-stack>
      </s-box>}
     {state.status==='ready'&&<>
+      {state.tickets.length>0&&
+       <s-select label="Filter verified Contact Requests"
+         value={ticketFilter}
+         onChange={event=>setTicketFilter(event.currentTarget.value)}>
+         <s-option value="all">All requests ({state.tickets.length})</s-option>
+         <s-option value="open">Active ({state.tickets.filter(t=>t.status!=='resolved').length})</s-option>
+         <s-option value="resolved">Resolved ({state.tickets.filter(t=>t.status==='resolved').length})</s-option>
+       </s-select>}
       {state.tickets.length===0&&<s-banner tone="info">
         No verified Contact Us inquiries are linked to this account.
         Guest inquiries stay private to JILL until ownership is verified.
       </s-banner>}
-      {state.tickets.map(ticket=><s-box key={ticket.ticket_id}
+      {state.tickets.length>0&&filteredTickets.length===0&&
+       <s-text color="subdued">No verified tickets match this filter.</s-text>}
+      {filteredTickets.map(ticket=><s-box key={ticket.ticket_id}
        background="base" padding="base" borderRadius="large"
        border="base base solid">
        <s-stack direction="block" gap="small-200">
         <s-heading>{reasonLabel[ticket.reason]}</s-heading>
-        <s-text>{statusLabel[ticket.status]}</s-text>
+        <s-badge>{statusLabel[ticket.status]}</s-badge>
+        <s-text color="subdued">Tracking revision {ticket.revision}</s-text>
         <s-text color="subdued">{ticket.ticket_id}</s-text>
         <s-text color="subdued">
           Last verified update: {ticket.updated_at}
