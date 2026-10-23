@@ -212,3 +212,24 @@ Offline regression:
 is performed; only a synthetic backend adapter is invoked. It verifies a
 domain-separated HMAC, fixed request fields, bounded response, stale/foreign/
 altered owner denial, old @9 denial and zero network while OFF.
+
+## Canonical Google QA owner ledger proof source (October 23; unpublished)
+
+The separate `backend/google-apps-script/JILL_WORK_HQ_OWNER_BINDING_QA_SOURCE.gs`
+now provides an isolated `jillWorkHqOwnerBindingProof_` handler. It is
+**not dispatched by doPost**, published, or wired into the running HQ route.
+It requires exact signed WORK parameters plus an independent absent-by-default
+script property `JILL_WORK_OWNER_BINDING_QA_ENABLED=true`, verifies the
+existing immutable `CustomOrderOwners` record against the exact original
+raw intake payload SHA-256 and matching contiguous status-event revision,
+then issues the response HMAC expected by the previously prepared Worker
+reader. No email/address projection, ledger mutation, or guest claiming.
+
+The offline `scripts/test-work-google-owner-ledger-qa.mjs` sandbox and the
+dedicated source-only GitHub workflow exercise the handler and denial cases.
+**Do not equate a committed test with a CI pass**; the latest CI conclusion
+must be inspected separately. Before any deployment, certify the real
+Apps Script source composition, request replay protection (a one-use nonce
+store or equivalent), exact receipt provenance, Script Properties isolation,
+and a new independently approved Google QA version. Do not modify the
+immutable merchant detail @9 endpoint or stage/activate WORK using old receipts.
