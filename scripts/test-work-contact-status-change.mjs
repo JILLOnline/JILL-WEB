@@ -46,6 +46,14 @@ assert.equal(off.status,503);assert.equal(auths,0);assert.equal(reads,0);assert.
 const noAuth=await handleWorkContactStatusChange({...opts,enabled:true,
  request:req(),authorize:async()=>({allowed:false,role:'owner',staffId:staff})});
 assert.equal(noAuth.status,403);assert.equal(writes,0);assert.equal(reads,0);
+const missingOrigin=new Request('https://hq.qa.example.invalid/app/contacts/'+ticket,{
+ method:'POST',headers:{'content-type':'application/json'},
+ body:JSON.stringify(command),
+});
+const missingOriginResponse=await handleWorkContactStatusChange({...opts,
+ enabled:true,request:missingOrigin});
+assert.equal(missingOriginResponse.status,400);
+assert.equal(writes,0);
 const badStatus=await handleWorkContactStatusChange({...opts,enabled:true,
  request:req({...command,next_status:'paid'})});
 assert.equal(badStatus.status,400);assert.equal(writes,0);
