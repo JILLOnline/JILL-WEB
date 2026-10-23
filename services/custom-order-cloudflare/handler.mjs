@@ -93,28 +93,37 @@ async function forwardContactToPrivateHq(request,env){
   }
   let body;
   if(request.method==='POST'){
+   // Account list POST legitimately has no payload; others must have JSON.
+   const emptyList=new URL(request.url).pathname==='/jill-contact-account';
    const declared=request.headers.get('content-length');
    if(declared!==null&&(!/^(0|[1-9][0-9]*)$/.test(declared)||
      Number(declared)>CONTACT_MAX_BYTES))
     return reply(413,{ok:false,error:'contact_payload_too_large'});
    const reader=request.body?.getReader();
-   if(!reader)return reply(400,{ok:false,error:'contact_invalid_body'});
+   if(!reader&&!emptyList)return reply(400,{ok:false,error:'contact_invalid_body'});
    const chunks=[];let n=0;
-   try{
-    while(true){
-     const {value,done}=await reader.read();if(done)break;
-     n+=value.byteLength;
-     if(n>CONTACT_MAX_BYTES)
-      return reply(413,{ok:false,error:'contact_payload_too_large'});
-     chunks.push(value);
-    }
-   }finally{reader.releaseLock();}
-   body=new Uint8Array(n);
-   let pos=0;for(const chunk of chunks){body.set(chunk,pos);pos+=chunk.length;}
+   if(reader){
+    try{
+     while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      n+=value.byteLength;
+      if(n>CONTACT_MAX_BYTES)
+       return reply(413,{ok:false,error:'contact_payload_too_large'});
+      chunks.push(value);
+     }
+    }finally{reader.releaseLock();}
+   }
+   if(n===0&&!emptyList)return reply(400,{ok:false,error:'contact_invalid_body'});
+   if(n>0){
+    body=new Uint8Array(n);
+    let pos=0;
+    for(const chunk of chunks){body.set(chunk,pos);pos+=chunk.length;}
+   }
   }
   forwarded=new Request(request.url,{
    method:request.method,headers,
-   ...(request.method==='POST'?{body}:{}),
+   ...(body?{body}:{}),
   });
  }catch{return reply(400,{ok:false,error:'contact_invalid_body'});}
  try{
