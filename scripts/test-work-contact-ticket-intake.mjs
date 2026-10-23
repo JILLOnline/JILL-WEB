@@ -69,6 +69,11 @@ assert.equal(JSON.stringify(firstJson).includes('qa@example.invalid'),false);
 assert.equal(saved.get(shop+':'+id).owner_customer_gid,null,
  'Shopify app proxy logged-in hint is NOT verified Customer Account ownership');
 assert.match(saved.get(shop+':'+id).private_body,/qa@example.invalid/);
+const storedFirst=JSON.parse(saved.get(shop+':'+id).private_body);
+assert.deepEqual(Object.keys(storedFirst.details),[
+ 'order_number','product_name','business_name',
+ 'business_link','website_area','device','reference_images',
+],'all optional Contact Us source fields have a deterministic shape');
 const repeat=await handleWorkContactTicketIntake({...opts,request:request()});
 assert.equal(repeat.status,200);
 assert.equal((await repeat.json()).code,'already_received');
@@ -88,14 +93,25 @@ for(const altered of [
  const result=await handleWorkContactTicketIntake({...opts,request:request(altered)});
  assert.equal(result.status,400);
 }
+const existing={...body,reason:'existing',ticket_id:
+ 'jill:contact:33333333-2222-4333-8444-555555555555'};
+assert.equal((await handleWorkContactTicketIntake({
+ ...opts,request:request(existing)})).status,400,
+ 'existing order inquiries require an order reference');
+const withDetails={...existing,details:{order_number:'JILL-123',
+ reference_images:'Yes'}};
+assert.equal((await handleWorkContactTicketIntake({
+ ...opts,request:request(withDetails)})).status,201);
+assert.equal(JSON.parse(saved.get(shop+':'+existing.ticket_id).private_body)
+ .details.order_number,'JILL-123');
 const denied=await handleWorkContactTicketIntake({
  ...opts,rateLimit:async()=>false,request:request({...body,ticket_id:
  'jill:contact:22222222-2222-4333-8444-555555555555'})});
 assert.equal(denied.status,429);
-assert.equal(saved.size,1);
+assert.equal(saved.size,2);
 const foreign=await handleWorkContactTicketIntake({
  ...opts,request:request(body,{shopName:'foreign.myshopify.com'})});
 assert.equal(foreign.status,401);
-assert.equal(saved.size,1);
-assert.equal(reads,3);
+assert.equal(saved.size,2);
+assert.equal(reads,4);
 console.log('PASS WORK Contact Us signed source: default OFF, app-proxy HMAC, quota, bounded input, idempotent D1, no Customer autoclaim, no private receipt.');
