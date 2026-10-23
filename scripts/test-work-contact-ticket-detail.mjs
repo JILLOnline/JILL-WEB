@@ -23,9 +23,11 @@ assert.equal(projected.message,contact.message);
 assert.equal(projected.details.order_number,'JILL-123');
 assert.equal(projected.customer_reply_enabled,false);
 assert.equal(projected.can_invoice,false);
+assert.equal(projectVerifiedWorkContactDetail({row:{...row,owner_customer_gid:
+ 'gid://shopify/Customer/111'},ticketId:id}).owner_customer_verified,true);
 for(const altered of [
  {...row,body_sha256:'b'.repeat(64)},
- {...row,owner_customer_gid:'gid://shopify/Customer/1'},
+ {...row,owner_customer_gid:'gid://shopify/Customer/not-a-number'},
  {...row,contact_json:JSON.stringify({...contact,email:'bad'})},
  {...row,state:'paid'},
  {...row,revision:101},
