@@ -26,7 +26,7 @@ jobs:
   merge-rehearsal:
     name: Rehearse My JILL + HQ source merge without committing
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout HQ draft full history
         uses: actions/checkout@v4
@@ -36,6 +36,10 @@ jobs:
       - name: Fetch only My JILL draft refs
         run: |
           git fetch --no-tags origin refs/heads/jill/myjill-message-handoff-preview-20261022:refs/remotes/origin/jill/myjill-message-handoff-preview-20261022
+      - name: Node.js for merged source build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Inspect branch common ancestor and test merge in ephemeral worktree
         shell: bash
         run: |
@@ -61,5 +65,19 @@ jobs:
           echo 'SOURCE_COMMIT_CREATED=false'
           echo 'DEPLOYMENT_PERFORMED=false'
           git status --short | head -70
+          echo 'MERGED_SOURCE_INTEGRATION_TESTS_BEGIN=true'
+          node scripts/test-work-contact-message-bridge.mjs
+          node scripts/test-work-contact-account-read.mjs
+          node scripts/test-work-contact-ticket-claim.mjs
+          node scripts/test-work-myjill-contact-page.mjs
+          node scripts/test-work-myjill-contact-claim.mjs
+          node scripts/test-work-myjill-contact-thread.mjs
+          node scripts/test-work-customer-message-navigation.mjs
+          node scripts/test-work-myjill-account-response-integrity.mjs
+          python3 scripts/test-work-contact-db-schema.py
+          npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+          npm run typecheck --prefix services/jill-order-desk/app-home
+          npm run build --prefix services/jill-order-desk/app-home
+          echo 'MERGED_SOURCE_INTEGRATION_BUILD=passed'
           git merge --abort
           echo 'NO_MERGE_PROMOTED=true'
