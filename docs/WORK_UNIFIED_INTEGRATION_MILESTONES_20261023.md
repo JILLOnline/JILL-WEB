@@ -197,3 +197,47 @@ WORK D1 migration and Workers binding, released Shopify contact adapter,
 enabled signed-account gateway and Customer A/B/guest browser acceptance.
 The historical My JILL release branch lock remains intact. No deployment,
 paid resource, LIVE/KEEP edit or user notification was made.
+
+## U4 source bridge: claimed Contact Us merchant-to-customer messages
+
+This draft adds `jill_work_contact_messages` to the **unapplied WORK
+0004 migration** with per-ticket sequence, globally unique merchant
+operation ID, server-verified staff ID, bounded message text, digest,
+timestamp and private foreign key. HQ `work-contact-message-write.mjs`
+requires authenticated Shopify online Owner plus D1 `requests.write`,
+a newly claimed Contact ticket's immutable Shopify Customer GID and
+a separate OFF-by-default `JILL_WORK_CONTACT_MESSAGES_ENABLED` flag.
+One SQL insert persists one public message; identical authenticated
+retries recover the same receipt and a mismatched message/operation cannot
+claim delivery. Guests and unclaimed tickets receive NO My JILL message.
+
+A separate app action `/app/contacts/:ticketId/message` checks the exact
+ticket ID in the bounded authorized service, and the HQ detail composer
+shows saved public messages only for claimed tickets and while the
+merchant message gate is enabled. The composer says **save for account**,
+not email, sent, delivered, opened or paid.
+
+A separate signed JWT customer Worker endpoint `/jill-contact-thread`
+requires `JILL_WORK_CONTACT_THREAD_ENABLED` (absent/OFF), validates
+exact Customer GID from Shopify's session, checks ownership in the D1
+query and returns a whitelisted, ordered, bounded message projection.
+No staff ID, contact email, phone, address, claim secret, private raw
+form, payment record or customer reply affordance is transmitted.
+Both the HQ and customer screens derive the conversation from this ONE
+canonical WORK D1 table. The My JILL claim and Contact Requests reader
+remain independently disabled until Customer A/B/guest acceptance.
+
+Source tests `test-work-contact-message-bridge.mjs` and
+`test-work-myjill-contact-thread.mjs` cover Owner-only writes,
+repeat/colliding message IDs, exact ticket binding, unauthorized guest
+and Customer B denial, malformed public message streams and no JWT/network
+while disabled. The in-memory SQLite migration test also enforces
+message uniqueness and content size. Tests and a passing CI build (when
+confirmed) do NOT indicate a deployed customer conversation.
+
+**Remaining:** an independently authorized WORK D1 binding/migration,
+Shopify subpath verification, approved feature flags, real Customer A/B
+browser smoke tests, customer replies and genuine two-way readback,
+staff assignments, attachment policy, and shipping/quote/order lifecycle.
+Shopify native Contact Us stays unchanged. No live message, invoice,
+order or paid infrastructure is created by these source files.
