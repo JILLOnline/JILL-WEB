@@ -44,6 +44,8 @@ on:
       - 'services/custom-order-cloudflare/handler.mjs'
       - 'scripts/test-work-contact-storefront-adapter.mjs'
       - 'scripts/test-work-contact-worker-routing.mjs'
+      - 'backend/work-contact-account-read.mjs'
+      - 'scripts/test-work-contact-account-read.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.contacts.tsx'
       - 'scripts/test-work-hq-contact-route.mjs'
@@ -80,6 +82,7 @@ jobs:
           node scripts/test-work-contact-ticket-detail.mjs
           node scripts/test-work-contact-storefront-adapter.mjs
           node scripts/test-work-contact-worker-routing.mjs
+          node scripts/test-work-contact-account-read.mjs
           node scripts/test-work-hq-contact-route.mjs
       - name: Regress original saved-quote handoff and exact variant read security
         run: |
@@ -118,4 +121,6 @@ jobs:
           node --check services/custom-order-cloudflare/handler.mjs
           node --check scripts/test-work-contact-storefront-adapter.mjs
           node --check scripts/test-work-contact-worker-routing.mjs
+          node --check backend/work-contact-account-read.mjs
+          node --check scripts/test-work-contact-account-read.mjs
           node --check scripts/test-work-hq-contact-route.mjs
