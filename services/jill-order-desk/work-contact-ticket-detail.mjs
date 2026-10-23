@@ -112,7 +112,7 @@ export async function readWorkContactTicketDetail({
    if(!Array.isArray(collection?.results)||collection.results.length>50)
     return result(503,'message_source_unverified');
    messages=projectVerifiedContactThread({
-    ticket,row,messages:collection.results,expectedId:ticketId,
+    ticket:row,messages:collection.results,expectedId:ticketId,
     customerGid:row.owner_customer_gid,
    }).messages;
   }
