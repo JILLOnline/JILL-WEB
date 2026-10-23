@@ -29,12 +29,6 @@ const canonical=r=>[
  r.submission_id,String(r.source_revision),r.record_sha256,
  r.owner_customer_gid??'',String(r.recorded_at_ms),r.nonce,
 ].join('\n');
-export function signSyntheticWorkInquiryReceipt(record,secret){
- // Test helper only: never expose this function to browsers or use it to
- // accept unsigned Shopify Contact form input. A future trusted server signs.
- if(!valid(secret)||secret.length<32)throw Error('invalid_signing_secret');
- return createHmac('sha256',secret).update(canonical(record),'utf8').digest('hex');
-}
 export function verifyWorkUnifiedInquiryReceipt({
  source,secret,nonce,nowMs=Date.now(),expectedKind,expectedId,
 }={}){
