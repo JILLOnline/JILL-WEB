@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS jill_work_contact_messages (
  ticket_id TEXT NOT NULL,
  sequence INTEGER NOT NULL CHECK(sequence BETWEEN 1 AND 50),
  operation_id TEXT NOT NULL CHECK(
-   length(operation_id)=57 AND
+   length(operation_id)=58 AND
    operation_id LIKE 'jill:work:contact:msg:%'),
  actor_staff_id TEXT NOT NULL CHECK(
    length(actor_staff_id) BETWEEN 1 AND 20 AND
