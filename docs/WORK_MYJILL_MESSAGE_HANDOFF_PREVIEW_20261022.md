@@ -140,3 +140,23 @@ included in the dedicated My JILL preview workflow. This is defense in
 depth after the server-side Shopify JWT/Google ownership verification;
 it does not replace or relax either authority. No real customer data,
 extension publication, Worker release, or message delivery occurred.
+
+## Verified customer navigation and strict timeline shape (October 23)
+
+The Messages screen now gives status-only customers an explicit **View
+tracking in Custom Orders** action. Customers with no verified requests can
+also open their Custom Orders page without being directed to a nonexistent
+conversation. This is client-only My JILL navigation; it does not send a
+message, request a new backend identity, or change any customer record.
+
+The shared customer account reader now **rejects** malformed public timeline
+fields, oversized notes, non-string notes, and invalid public thread metadata
+instead of silently coercing or clipping them. The offline integrity tests
+include these denial cases alongside valid legacy and v2 histories.
+
+The independent My JILL message-handoff preview CI passed on commit
+`3749693` (run
+https://github.com/JILLOnline/JILL-WEB/actions/runs/39983510932).
+This is **not** the older branch-locked My JILL WORK account release
+certificate. Publishing the Shopify extension and enabling replies remain
+separate approval gates; no remote customer A/B acceptance was performed.
