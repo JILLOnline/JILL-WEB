@@ -48,13 +48,13 @@ async function command(request){
  return data;
 }
 /** @param {{
- * request?:Request,enabled?:boolean,db?:any,
+ * request?:Request,enabled?:boolean,expectedTicketId?:string,db?:any,
  * authenticate?:{admin:(request:Request)=>Promise<any>},
  * authorize?:typeof readWorkMerchantPermission,now?:()=>number
  * }} [options]
  */
 export async function persistWorkContactMerchantMessage({
- request,enabled=false,db,authenticate,
+ request,enabled=false,expectedTicketId,db,authenticate,
  authorize=readWorkMerchantPermission,now=Date.now,
 }={}){
  if(enabled!==true)return reply(503,'not_connected');
@@ -77,6 +77,8 @@ export async function persistWorkContactMerchantMessage({
  let data;
  try{data=await command(request);}
  catch{return reply(400,'invalid_request');}
+ if(expectedTicketId!==undefined&&data.ticket_id!==expectedTicketId)
+  return reply(400,'invalid_ticket');
  const at=now();
  if(!Number.isSafeInteger(at)||at<1600000000000)
   return reply(503,'source_unavailable');
