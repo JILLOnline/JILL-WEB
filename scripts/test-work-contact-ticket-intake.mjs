@@ -8,7 +8,8 @@ const time=1792760400000,shop='jill-work.myshopify.com';
 const id='jill:contact:11111111-2222-4333-8444-555555555555';
 const body={ticket_id:id,name:'Customer QA',email:'qa@example.invalid',
  phone:'',reason:'custom',message:'Please contact me about a quote',
- preferred_contact:'Email',reviewed:true};
+ preferred_contact:'Email',reviewed:true,
+ claim_token:Buffer.alloc(32,7).toString('base64url')};
 const signedUrl=({shopName=shop,loggedIn='',badSignature=false}={})=>{
  const p=new URLSearchParams({
   shop:shopName,timestamp:String(Math.floor(time/1000)),
@@ -39,8 +40,8 @@ const db={prepare:sql=>({bind:(...args)=>({
   const key=args[0]+':'+args[1];
   const before=saved.has(key);
   if(!before)saved.set(key,{source:'shopify_contact_bridge',
-   body_sha256:args[2],owner_customer_gid:null,state:'received',
-   private_body:args[3]});
+   body_sha256:args[2],claim_sha256:args[3],
+   owner_customer_gid:null,state:'received',private_body:args[4]});
   return {success:true,meta:{changes:before?0:1}};
  },
  async first(){
@@ -69,6 +70,8 @@ assert.equal(JSON.stringify(firstJson).includes('qa@example.invalid'),false);
 assert.equal(saved.get(shop+':'+id).owner_customer_gid,null,
  'Shopify app proxy logged-in hint is NOT verified Customer Account ownership');
 assert.match(saved.get(shop+':'+id).private_body,/qa@example.invalid/);
+assert.equal(saved.get(shop+':'+id).private_body.includes(body.claim_token),false);
+assert.match(saved.get(shop+':'+id).claim_sha256,/^[a-f0-9]{64}$/);
 const storedFirst=JSON.parse(saved.get(shop+':'+id).private_body);
 assert.deepEqual(Object.keys(storedFirst.details),[
  'order_number','product_name','business_name',
@@ -78,6 +81,10 @@ const repeat=await handleWorkContactTicketIntake({...opts,request:request()});
 assert.equal(repeat.status,200);
 assert.equal((await repeat.json()).code,'already_received');
 assert.equal(saved.size,1);
+const wrongClaim=await handleWorkContactTicketIntake({
+ ...opts,request:request({...body,
+   claim_token:Buffer.alloc(32,8).toString('base64url')})});
+assert.equal(wrongClaim.status,409,'a replaced claim proof must not replay a ticket');
 const conflict=await handleWorkContactTicketIntake({
  ...opts,request:request({...body,message:'A changed message'})});
 assert.equal(conflict.status,409);
@@ -89,6 +96,7 @@ for(const altered of [
  {...body,message:'x'.repeat(3001)},
  {...body,preferred_contact:'Phone',phone:''},
  {...body,owner_customer_gid:'gid://shopify/Customer/123'},
+ {...body,claim_token:'weak'},
 ]){
  const result=await handleWorkContactTicketIntake({...opts,request:request(altered)});
  assert.equal(result.status,400);
