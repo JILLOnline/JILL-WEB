@@ -26,7 +26,7 @@ claim_first = db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gi
            "AND claim_sha256=? AND created_at_ms>=?",
            ("gid://shopify/Customer/111",shop,ticket,"b"*64,1791700000000))
 assert claim_first.rowcount == 1
-"claim_second = db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
+claim_second = db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
            "WHERE shop=? AND ticket_id=? AND owner_customer_gid IS NULL "
            "AND claim_sha256=? AND created_at_ms>=?",
            ("gid://shopify/Customer/222",shop,ticket,"b"*64,1791700000000))
