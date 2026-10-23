@@ -19,6 +19,19 @@ CREATE TABLE IF NOT EXISTS jill_work_contact_tickets (
  state TEXT NOT NULL DEFAULT 'received' CHECK(
    state IN ('received','reviewing','waiting_customer','resolved')),
  revision INTEGER NOT NULL DEFAULT 1 CHECK(revision BETWEEN 1 AND 100),
+ -- Merchant status edits are concurrency-checked and auditable. These are
+ -- server-verified Shopify online staff IDs, never browser-supplied actors.
+ status_actor_staff_id TEXT NOT NULL DEFAULT '' CHECK(
+  status_actor_staff_id='' OR (
+    length(status_actor_staff_id) BETWEEN 1 AND 20 AND
+    substr(status_actor_staff_id,1,1) GLOB '[1-9]' AND
+    status_actor_staff_id NOT GLOB '*[^0-9]*'
+  )),
+ last_status_operation_id TEXT DEFAULT NULL CHECK(
+  last_status_operation_id IS NULL OR (
+    length(last_status_operation_id) BETWEEN 40 AND 110 AND
+    last_status_operation_id LIKE 'jill:work:contact:status:%'
+  )),
  created_at_ms INTEGER NOT NULL CHECK(created_at_ms>0),
  updated_at_ms INTEGER NOT NULL CHECK(updated_at_ms>=created_at_ms),
  owner_customer_gid TEXT DEFAULT NULL CHECK(
@@ -37,3 +50,48 @@ CREATE INDEX IF NOT EXISTS jill_work_contact_tickets_updated
 -- Lookup is always scoped to the independently signed account JWT's GID.
 CREATE INDEX IF NOT EXISTS jill_work_contact_tickets_account
  ON jill_work_contact_tickets(shop,owner_customer_gid,updated_at_ms DESC);
+
+-- Immutable public-status audit. An initial "received" event and every
+-- later status change are recorded by the DATABASE (not a best-effort
+-- separate Node write). Never expose the staff ID or operation IDs to My JILL.
+CREATE TABLE IF NOT EXISTS jill_work_contact_status_events (
+ shop TEXT NOT NULL CHECK(shop='jill-work.myshopify.com'),
+ ticket_id TEXT NOT NULL,
+ revision INTEGER NOT NULL CHECK(revision BETWEEN 1 AND 100),
+ from_state TEXT DEFAULT NULL,
+ to_state TEXT NOT NULL CHECK(to_state IN (
+   'received','reviewing','waiting_customer','resolved')),
+ actor_staff_id TEXT NOT NULL DEFAULT '',
+ operation_id TEXT DEFAULT NULL,
+ happened_at_ms INTEGER NOT NULL CHECK(happened_at_ms>0),
+ PRIMARY KEY(shop,ticket_id,revision),
+ FOREIGN KEY(shop,ticket_id) REFERENCES jill_work_contact_tickets(shop,ticket_id)
+);
+CREATE TRIGGER IF NOT EXISTS jill_contact_initial_event
+AFTER INSERT ON jill_work_contact_tickets
+BEGIN
+ INSERT INTO jill_work_contact_status_events
+ (shop,ticket_id,revision,from_state,to_state,actor_staff_id,operation_id,happened_at_ms)
+ VALUES (NEW.shop,NEW.ticket_id,NEW.revision,NULL,NEW.state,'',NULL,NEW.created_at_ms);
+END;
+CREATE TRIGGER IF NOT EXISTS jill_contact_status_revision_guard
+BEFORE UPDATE ON jill_work_contact_tickets
+WHEN (
+ (NEW.state<>OLD.state AND (
+   NEW.revision<>OLD.revision+1 OR
+   NEW.updated_at_ms<=OLD.updated_at_ms OR
+   NEW.status_actor_staff_id='' OR
+   NEW.last_status_operation_id IS NULL
+ )) OR
+ (NEW.state=OLD.state AND NEW.revision<>OLD.revision)
+)
+BEGIN SELECT RAISE(ABORT,'invalid_work_contact_status_revision'); END;
+CREATE TRIGGER IF NOT EXISTS jill_contact_status_event
+AFTER UPDATE OF state ON jill_work_contact_tickets
+WHEN NEW.state<>OLD.state
+BEGIN
+ INSERT INTO jill_work_contact_status_events
+ (shop,ticket_id,revision,from_state,to_state,actor_staff_id,operation_id,happened_at_ms)
+ VALUES (NEW.shop,NEW.ticket_id,NEW.revision,OLD.state,NEW.state,
+ NEW.status_actor_staff_id,NEW.last_status_operation_id,NEW.updated_at_ms);
+END;
