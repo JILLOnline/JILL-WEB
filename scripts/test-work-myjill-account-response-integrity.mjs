@@ -32,7 +32,7 @@ const legacy={...order,timeline_version:undefined,
 assert.equal((await read([legacy])).orders.length,1);
 const bad=[
  [[order,order],/duplicate_request/],
- [[{...order,submission_id:'untrusted'}],/unverified_message_thread/],
+ [[{...order,submission_id:'bad'}],/unverified_message_thread/],
  [[{...order,updated_at:'invalid'}],/unverified_message_thread/],
  [[{...order,timeline:order.timeline.map((ev,i)=>i===1?{...ev,author:'customer'}:ev)}],
    /unverified_message_thread/],
