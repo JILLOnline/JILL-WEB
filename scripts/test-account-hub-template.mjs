@@ -5,13 +5,13 @@ import {HUB_ROUTES, canonicalRoute, routeFromEntry, extensionRoute}
 
 const read = (p) => fs.readFileSync(p,'utf8');
 const root = 'extensions/jill-account-dashboard/src/';
-const pages = ['Overview','Rewards','Coupons','CustomOrders','Messages',
+const pages = ['Overview','Rewards','Coupons','CustomOrders','Messages','ContactRequests',
   'Celebrations','SavedPreferences','Settings'];
 assert.deepEqual(HUB_ROUTES.map((r)=>r.id),[
-  'overview','rewards','coupons','custom-orders','messages','celebrations','saved','settings',
+  'overview','rewards','coupons','custom-orders','contact-requests','messages','celebrations','saved','settings',
 ]);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,8);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,8);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,9);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,9);
 assert.equal(extensionRoute('overview'),'extension://');
 assert.equal(extensionRoute('coupons'),'extension://coupons');
 assert.equal(extensionRoute('messages'),'extension://messages');
@@ -72,7 +72,7 @@ assert.match(preparer,/custom-order-presentation\.mjs/);
 assert.match(preparer,/mode === 'read' \|\| mode === 'template'/);
 assert.match(preparer,/\'rewards\.mjs\',\'customer-account-api\.mjs\',\'customer-coupons\.mjs\'/);
 for (const file of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-  'Messages.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+  'Messages.jsx','ContactRequests.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
   assert.ok(preparer.includes("'"+file+"'"),'Canary does not copy '+file);
 }
 const expected='node scripts/prepare-account-hub-canary.mjs --template && '+
@@ -84,4 +84,4 @@ assert.match(messages,/loadWorkCustomerCustomOrders/);
 assert.match(messages,/projectCustomerMessageInbox/);
 assert.match(messages,/RequestConversation/);
 assert.ok(preparer.includes("'custom-order-message-inbox.mjs'"));
-console.log('Eight-screen My JILL template with verified customer-owned Messages and JWT-authenticated WORK Custom Order history; isolated preview contract verified.');
+console.log('Nine-screen My JILL template with verified customer-owned Messages and JWT-authenticated WORK Custom Order history; isolated preview contract verified.');
