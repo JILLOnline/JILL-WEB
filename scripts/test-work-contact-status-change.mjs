@@ -40,11 +40,11 @@ const authorize=async({session,action})=>{
  assert.ok(session.verified);assert.equal(action,'requests.write');
  return {allowed:true,role:'owner',staffId:staff};
 };
-const opts={request:req(),authenticate,authorize,db,now:()=>clock};
+const opts={authenticate,authorize,db,now:()=>clock};
 const off=await handleWorkContactStatusChange(opts);
 assert.equal(off.status,503);assert.equal(auths,0);assert.equal(reads,0);assert.equal(writes,0);
 const noAuth=await handleWorkContactStatusChange({...opts,enabled:true,
- authorize:async()=>({allowed:false,role:'owner',staffId:staff})});
+ request:req(),authorize:async()=>({allowed:false,role:'owner',staffId:staff})});
 assert.equal(noAuth.status,403);assert.equal(writes,0);assert.equal(reads,0);
 const badStatus=await handleWorkContactStatusChange({...opts,enabled:true,
  request:req({...command,next_status:'paid'})});
@@ -52,11 +52,11 @@ assert.equal(badStatus.status,400);assert.equal(writes,0);
 const spoof=await handleWorkContactStatusChange({...opts,enabled:true,
  request:req({...command,actor_staff_id:'999'})});
 assert.equal(spoof.status,400);assert.equal(writes,0);
-const ok=await handleWorkContactStatusChange({...opts,enabled:true});
+const ok=await handleWorkContactStatusChange({...opts,enabled:true,request:req()});
 assert.equal(ok.status,200);assert.equal((await ok.json()).code,'updated');
 assert.equal(record.state,'reviewing');assert.equal(record.revision,2);
 assert.equal(record.status_actor_staff_id,staff);assert.equal(writes,1);
-const again=await handleWorkContactStatusChange({...opts,enabled:true});
+const again=await handleWorkContactStatusChange({...opts,enabled:true,request:req()});
 assert.equal(again.status,200);
 assert.equal((await again.json()).code,'already_updated');
 assert.equal(record.revision,2,'same operation retry does not double update');
@@ -69,7 +69,7 @@ const next={...command,operation_id:
  'jill:work:contact:status:33333333-2222-4333-8444-555555555555',
  expected_revision:2,expected_status:'reviewing',next_status:'waiting_customer'};
 assert.equal((await handleWorkContactStatusChange({...opts,enabled:true,
- request:req(next)})).status,200);
+ now:()=>clock+1,request:req(next)})).status,200);
 assert.equal(record.revision,3);
 assert.equal(record.state,'waiting_customer');
 assert.equal((await handleWorkContactStatusChange({...opts,enabled:true,
