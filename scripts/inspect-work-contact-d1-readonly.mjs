@@ -38,15 +38,12 @@ export function inspectSourceConfiguration({hq,gateway,migration}={}){
  if(typeof gateway!=='string'||gateway.includes('[[d1_databases]]')||
     gateway.includes('JILL_ORDER_DESK_WORK_DB'))
   fail('gateway_private_d1_exposure');
+ // Claim CAS lives in the signed backend handler. The migration needs
+ // the claim hash, customer field, audit history and message constraints.
  if(typeof migration!=='string'||!CONTACT_SCHEMA_NAMES.every(x=>
    migration.includes(x))||!migration.includes('claim_sha256')||
-   !migration.includes('owner_customer_gid IS NULL'))
-  // Claim CAS belongs to handler, so migration only needs claim digest,
-  // owner field, status events and customer message schema.
-  if(typeof migration!=='string'||!CONTACT_SCHEMA_NAMES.every(x=>
-    migration.includes(x))||!migration.includes('claim_sha256')||
-    !migration.includes('owner_customer_gid'))
-   fail('source_migration_mismatch');
+   !migration.includes('owner_customer_gid'))
+  fail('source_migration_mismatch');
  const contactVars=['JILL_WORK_CONTACT_INTAKE_ENABLED',
   'JILL_WORK_CONTACT_ACCOUNT_ENABLED',
   'JILL_WORK_CONTACT_CLAIM_ENABLED',
