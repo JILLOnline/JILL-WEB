@@ -53,6 +53,8 @@ on:
       - 'scripts/test-work-contact-d1-readonly.mjs'
       - 'scripts/inspect-work-contact-runtime-readonly.mjs'
       - 'scripts/test-work-contact-runtime-readonly.mjs'
+      - 'scripts/verify-work-contact-d1-postflight.mjs'
+      - 'scripts/test-work-contact-d1-postflight.mjs'
       - 'services/jill-order-desk/work-contact-status-change.mjs'
       - 'scripts/test-work-contact-status-change.mjs'
       - 'scripts/test-work-contact-status-handoff.mjs'
@@ -104,6 +106,8 @@ jobs:
           python3 scripts/test-work-contact-db-schema.py
           node scripts/test-work-contact-d1-readonly.mjs
           node scripts/test-work-contact-runtime-readonly.mjs
+          node scripts/test-work-contact-d1-postflight.mjs
+          node scripts/verify-work-contact-d1-postflight.mjs
           node scripts/inspect-work-contact-runtime-readonly.mjs
           node scripts/inspect-work-contact-d1-readonly.mjs
           node scripts/test-work-hq-contact-route.mjs
@@ -151,6 +155,8 @@ jobs:
           node --check scripts/test-work-contact-d1-readonly.mjs
           node --check scripts/inspect-work-contact-runtime-readonly.mjs
           node --check scripts/test-work-contact-runtime-readonly.mjs
+          node --check scripts/verify-work-contact-d1-postflight.mjs
+          node --check scripts/test-work-contact-d1-postflight.mjs
           node --check scripts/test-work-contact-ticket-claim.mjs
           node --check services/jill-order-desk/work-contact-status-change.mjs
           node --check scripts/test-work-contact-status-change.mjs
