@@ -212,3 +212,31 @@ Preview tests `test-work-myjill-contact-page.mjs` and
 `test-work-myjill-contact-ticket-contract.mjs` enforce no JWT/network while
 OFF, correct navigation, no owner guessing, no fake delivery and restricted
 per-account metadata.
+
+## Private proof-of-possession Contact Us linking (source-only; 2026-10-23)
+
+My JILL's new `shared/customer-contact-claim.mjs` validates a fixed WORK
+claim endpoint and a `jill:contact:<uuid>` ticket ID plus a private 256-bit
+code. It acquires a fresh Shopify customer session JWT only after the
+feature gate is enabled, sends no email or caller-selected Shopify Customer
+GID, bounds responses, and requires a receipt for the exact ticket before
+showing success. Interrupted requests are retried with the original claim.
+`ContactRequests.jsx` now contains the corresponding opt-in claim input
+and retry status, but **AccountHub mounts it with `enabled={false}`**.
+No JWT, account D1 read, mutation or customer request is made by the
+currently disabled page.
+
+The HQ parallel PR #157 contains the matching signed Worker handlers:
+`/jill-contact-claim` and `/jill-contact-account`, a WORK-only D1
+`claim_sha256` schema and form-side random code generation. All are
+OFF/unpublished. The native Shopify Contact Us form remains active. After
+approval of new WORK routing, stored ticket integrity, anti-abuse and
+independent JWT/ownership, a successfully claimed ticket may appear as
+status-only history in My JILL. It is **not** evidence that public
+Contact Us messages, two-sided conversation, delivery, paid orders or
+tracking are already connected.
+
+Source-only test `test-work-myjill-contact-claim.mjs` checks disabled
+network, exact ID/receipt and no secret disclosure. The HQ side adds
+Customer A/B/takeover and D1 conditional-write tests; their fresh CI
+conclusion is checked independently.
