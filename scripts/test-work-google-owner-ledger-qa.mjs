@@ -18,9 +18,10 @@ params.jill_hq_read_sig=hmac(['merchant_owner_binding_request_v1',SHOP,ID,'3',St
 const eventHeader=['event_id','submission_id','revision','customer_status','internal_status'];
 const intakeHeader=['submission_id','raw_payload','submitted_at'];
 let reads=0, ledgerGid=GID, storedHash=hash, revisionValue=revision;
+let storedSubmittedAt=submittedAt;
 const rows={
   CustomOrderOwners:()=>[[ID,ledgerGid,storedHash,'date']],
-  Intake:()=>[[ID,raw,submittedAt]],
+  Intake:()=>[[ID,raw,storedSubmittedAt]],
   Events:()=>Array.from({length:revisionValue},(_,i)=>['e'+i,ID,i+1,'received','new'])
 };
 const replayState={};
@@ -76,6 +77,8 @@ assert.equal(read().owner_customer_gid,ledgerGid);
 ledgerGid=GID;
 denial(()=>storedHash='b'.repeat(64),()=>storedHash=hash);
 denial(()=>revisionValue=2,()=>revisionValue=3);
+denial(()=>storedSubmittedAt='2026-10-21T12:00:00.000Z',
+ ()=>storedSubmittedAt=submittedAt);
 assert.equal(read({...params,jill_hq_read_sig:'a'.repeat(64)}).ok,false);
 assert.equal(read({...params,shop:'other.myshopify.com'}).ok,false);
 assert.equal(read(params).ok,false,'first nonce cannot be replayed');
