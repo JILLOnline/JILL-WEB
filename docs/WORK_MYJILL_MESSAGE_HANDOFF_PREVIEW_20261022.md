@@ -282,3 +282,31 @@ This is source implementation, **not** a customer-delivered message,
 Shopify Inbox send, quote invoice, order or deployed synchronization.
 A real end-to-end Customer A/B readback and independently approved WORK
 release must precede activation.
+
+## Paired HQ + My JILL Contact Us contract integration (October 23)
+
+The independent source-only workflow
+`.github/workflows/jill-cross-pr-contact-integration-preview.yml`
+checks out the HQ draft under `hq-work-source` and executes
+`scripts/test-work-cross-pr-contact-integration.mjs`. Unlike isolated
+screen/backend tests, this test imports the ACTUAL source handlers from
+HQ PR #157 and the ACTUAL My JILL list, claim and thread clients from
+PR #156, using fake signed Shopify Customer A/B JWTs and an in-memory
+D1-shaped store. It also calls HQ's authenticated Owner public-message
+writer, verifies that a single saved message reaches only Customer A's
+My JILL thread, and checks replay refusal and stripped private fields.
+Both source commit IDs are recorded in CI logs; there is no provider call.
+
+**Passing source evidence:** cross-PR run `40000391748` and My JILL
+preview run `40000391658`. This does NOT supersede the protected
+WORK account release workflow, which has separate branch/source and
+gateway-release checks. All Contact Requests, merchant message,
+claim, and signed customer-thread flags remain OFF and both PRs stay
+draft. No customer message, paid plan, LIVE/KEEP change, or Shopify
+extension/Worker release occurred.
+
+Before activation, require WORK D1 binding + 0004 migration inspection,
+true Shopify signing/proxy/online Owner acceptance, verified customer
+A/B/guest sessions, no duplicate native Contact Us submits, and real
+two-way readback. Do not merge either branch to resolve a failed source
+lock automatically.
