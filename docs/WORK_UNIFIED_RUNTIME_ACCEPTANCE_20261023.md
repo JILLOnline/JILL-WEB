@@ -287,3 +287,44 @@ secrets correspond, or that actual customer requests pass.
 No customer information was read, no D1 change was performed, no
 Worker uploaded/deployed, no live merchant/Shopify/Google traffic was
 sent and no paid resource was enabled by these source edits.
+
+## Paired RPC bundle and full-path synthetic certification (2026-10-23)
+
+The draft private Contact bridge now passes **real compiler checks** in
+the JILL HQ quote+catalog preview workflow:
+
+1. `JILL_BUILD_TARGET=canary npm run build --prefix
+   services/jill-order-desk/app-home` emits both the existing default
+   HQ Worker fetch and its named `JillContactPrivate` entrypoint, as
+   independently checked in `scripts/check-work-contact-hq-bundle.mjs`.
+2. `wrangler deploy --dry-run --config
+   wrangler.contact-bridge.candidate.toml --outdir ...` compiles the
+   distinct, **unshipped** gateway candidate. Wrangler 4.152.0
+   reports `JILL_WORK_HQ_CONTACT_PRIVATE` bound to
+   `jill-order-desk-canary-work#JillContactPrivate` and exits at
+   `--dry-run` without uploading or deploying.
+3. `scripts/test-work-contact-private-e2e.mjs` exercises the REAL
+   gateway forwarding code and REAL HQ private controller with a
+   synthetic in-memory D1 and synthetic Shopify signature/JWTs:
+   storefront signed intake → private HQ D1 record → Customer A
+   proof-of-possession claim → authenticated merchant public message
+   → Customer A's My JILL thread; Customer B and guests denied;
+   idempotent retry, no private PII response and quota-before-RPC.
+   All customer data, tokens and account IDs in this test are synthetic.
+4. The full-path test found and fixed an actual gateway boundary bug:
+   `/jill-contact-account` is a signed Customer Account **empty-body
+   POST**. The previous private forwarder returned 400 when
+   `request.body` was absent. The source-only fix forwards this
+   route's empty request correctly; intake, claim and thread POSTs
+   still require a bounded body.
+
+Tests passing in GitHub are **not** proof of deployed Worker revision,
+same-secret binding across actual HQ/gateway, Shopify app-proxy child
+routing, real Customer A/B session behavior or live messaging delivery.
+The installed original `wrangler.toml` and the active Workers remain
+unchanged; no private Service Binding is provisioned, no customer
+features enabled, no release certificate bypass, no paid resources.
+For a later WORK commissioning phase, verify the actual deployed
+JillContactPrivate export and exact private binding before any
+feature flag activation. Preserve the Shopify-native Contact Us form
+as the only live intake until its switch-over is independently approved.
