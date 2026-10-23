@@ -3,6 +3,7 @@ import {loadWorkCustomerContactTickets}
  from '../../../../shared/customer-contact-tickets.mjs';
 import {claimWorkCustomerContactTicket}
  from '../../../../shared/customer-contact-claim.mjs';
+import ContactThread from './ContactThread.jsx';
 
 // Source-only My JILL Contact Requests screen. Future certified WORK
 // gateway must validate the Shopify Customer session + exact ticket owner.
@@ -17,7 +18,7 @@ const statusLabel={
  received:'Received',reviewing:'Under review',
  waiting_customer:'Waiting on you',resolved:'Resolved',
 };
-export default function ContactRequests({enabled=false,onNavigate}){
+export default function ContactRequests({enabled=false,threadEnabled=false,onNavigate}){
  const [state,setState]=useState({status:'not_connected',tickets:[]});
  const [attempt,setAttempt]=useState(0);
  const [claimId,setClaimId]=useState('');
@@ -147,9 +148,10 @@ export default function ContactRequests({enabled=false,onNavigate}){
         <s-text color="subdued">
           Last verified update: {ticket.updated_at}
         </s-text>
-        <s-text color="subdued">
-         Conversation replies are not connected for Contact Requests.
-        </s-text>
+        <ContactThread ticketId={ticket.ticket_id}
+         enabled={enabled===true&&threadEnabled===true}/>
+        <s-text color="subdued">Customer replies to Contact Us messages
+         remain disabled pending a separate authorization review.</s-text>
        </s-stack>
       </s-box>)}
       <s-button variant="secondary" onClick={()=>setAttempt(n=>n+1)}>
