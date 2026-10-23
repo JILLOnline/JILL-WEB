@@ -160,3 +160,33 @@ https://github.com/JILLOnline/JILL-WEB/actions/runs/39983510932).
 This is **not** the older branch-locked My JILL WORK account release
 certificate. Publishing the Shopify extension and enabling replies remain
 separate approval gates; no remote customer A/B acceptance was performed.
+
+## Unified Contact Us and Custom Orders customer account track (2026-10-23)
+HQ and My JILL must present one customer-visible lifecycle with Shopify,
+not two independent inboxes. The integrated U0–U11 master plan lives in
+draft HQ PR #157:
+`docs/WORK_UNIFIED_INTEGRATION_MILESTONES_20261023.md`.
+
+**Contact Us reality:** `theme/sections/main-contact.liquid` currently uses
+Shopify's native `form 'contact'`. It creates a Shopify contact notification
+but NOT a canonical signed JILL ticket, HQ message thread or My JILL item.
+No customer ownership may be inferred from a contact form's email/phone or a
+typed Shopify order number.
+
+**Source-only preparation:** `shared/customer-contact-tickets.mjs` models a
+future strictly bounded signed-account read of CONTACT tickets at a distinct,
+not-yet-deployed WORK-only Cloudflare path. It is NOT referenced by an
+extension page, is disabled by default BEFORE any JWT or network operation,
+and whitelists only status metadata after exact verified customer ownership
+has been enforced by a future authenticated Worker + canonical ticket source.
+Guest contacts stay HQ-only unless explicitly verified/claimed. No message
+composer, read receipt, body, customer GID, email, payment or order is shown.
+`test-work-myjill-contact-ticket-contract.mjs` covers these denial and
+privacy gates in dedicated preview CI. The pinned endpoint is a **planned
+contract**; DO NOT enable this reader or represent it as currently working.
+
+**Required next:** independently authenticated and idempotent Contact Us
+server intake, persistent source receipts, Owner-only HQ tickets, exact
+Shopify Customer session/GID linkage, My JILL customer A/B/guest acceptance,
+shared conversation events, and then explicit reviewed WORK extension release.
+Do not bypass historical branch-lock certification.
