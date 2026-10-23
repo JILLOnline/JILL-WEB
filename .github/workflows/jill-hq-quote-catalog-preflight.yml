@@ -45,6 +45,7 @@ on:
       - 'services/custom-order-cloudflare/wrangler.contact-bridge.candidate.toml'
       - 'services/jill-order-desk/work-contact-private-bridge.mjs'
       - 'services/jill-order-desk/app-home/workers/app.ts'
+      - 'scripts/check-work-contact-hq-bundle.mjs'
       - 'scripts/test-work-contact-storefront-adapter.mjs'
       - 'scripts/test-work-contact-worker-routing.mjs'
       - 'backend/work-contact-account-read.mjs'
@@ -125,6 +126,14 @@ jobs:
         run: npm run typecheck --prefix services/jill-order-desk/app-home
       - name: Build real WORK embedded app without deployment
         run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Inspect generated HQ Worker entrypoint exports
+        run: node scripts/check-work-contact-hq-bundle.mjs
+      - name: Install isolated WORK gateway compiler dependencies
+        run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund --package-lock=false
+      - name: Compile unshipped WORK gateway service binding candidate (dry-run only)
+        working-directory: services/custom-order-cloudflare
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./wrangler.contact-bridge.candidate.toml --outdir "$RUNNER_TEMP/jill-contact-gateway-candidate"
       - name: No deploy/production script, only compiled pure Node source
         run: |
           node --check services/jill-order-desk/work-quote-catalog-preflight.mjs
@@ -150,6 +159,7 @@ jobs:
           node --check theme/assets/jill-contact.js
           node --check services/custom-order-cloudflare/handler.mjs
           node --check services/jill-order-desk/work-contact-private-bridge.mjs
+          node --check scripts/check-work-contact-hq-bundle.mjs
           node --check scripts/test-work-contact-storefront-adapter.mjs
           node --check scripts/test-work-contact-worker-routing.mjs
           node --check backend/work-contact-account-read.mjs
