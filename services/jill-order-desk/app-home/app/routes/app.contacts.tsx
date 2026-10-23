@@ -1,7 +1,7 @@
 // JILL HQ WORK — isolated Contact Us inbox candidate. SOURCE ONLY.
 // The WORK feature flag is OFF in all currently released manifests; no D1
 // migration, Shopify-native form rerouting or My JILL contact read is live.
-import {useLoaderData,type LoaderFunctionArgs} from "react-router";
+import {Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce}
  from "../../../work-admin-auth-once.mjs";
@@ -55,7 +55,7 @@ export default function WorkContactRequests(){
           <th scope="col">Last update</th>
          </tr></thead>
          <tbody>{rows.map(item=><tr key={item.ticket_id}>
-          <td>{item.ticket_id}</td>
+          <td><Link to={"/app/contacts/"+encodeURIComponent(item.ticket_id)}>{item.ticket_id}</Link></td>
           <td>{item.reason}</td>
           <td>{item.status}</td>
           <td>{new Date(item.updated_at_ms).toLocaleString()}</td>
