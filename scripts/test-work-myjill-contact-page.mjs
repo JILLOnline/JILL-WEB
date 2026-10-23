@@ -22,6 +22,12 @@ assert.match(page,/Contact Us history is not connected to My JILL yet/);
 assert.match(page,/enabled:enabled===true,sessionToken,signal:controller\.signal/);
 assert.match(page,/active=false;controller\.abort\(\)/);
 assert.match(page,/No other account's/);
+assert.match(page,/Filter verified Contact Requests/);
+assert.match(page,/ticketFilter==='open'/);
+assert.match(page,/ticket.status!=='resolved'/);
+assert.match(page,/filteredTickets.map/);
+assert.match(page,/Tracking revision \\{ticket.revision\\}/);
+assert.match(page,/No verified tickets match this filter/);
 assert.doesNotMatch(page+hub,/draftOrderCreate|fetch\(|customer\.email|localStorage|sessionStorage/);
 let reads=0;
 const state=await loadWorkCustomerContactTickets({
