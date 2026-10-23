@@ -109,6 +109,26 @@ const other=await handleWorkContactPrivateBridge({
  request:request('/private/unknown'),env:hq,
 });
 assert.equal(other.status,404);
+// Signed account routes must remain denied to anonymous/guest traffic
+// even after the private gateway-to-HQ RPC plumbing is present.
+for(const [endpoint,flag,method,body] of [
+ ['/jill-contact-claim','JILL_WORK_CONTACT_CLAIM_ENABLED','POST','{}'],
+ ['/jill-contact-account','JILL_WORK_CONTACT_ACCOUNT_ENABLED','POST',''],
+ ['/jill-contact-thread','JILL_WORK_CONTACT_THREAD_ENABLED','POST','{}'],
+]){
+ const guestRequest=new Request('https://qa.workers.dev'+endpoint,{
+  method,headers:{'content-type':'application/json'},body,
+ });
+ const protectedHq={...hq,[flag]:'true'};
+ const guestGate={...base,[flag]:'true',
+  JILL_WORK_HQ_CONTACT_PRIVATE:{fetch:r=>
+   handleWorkContactPrivateBridge({request:r,env:protectedHq})},
+ };
+ const denied=await handleCloudflareCustomOrderWork(guestRequest,guestGate);
+ assert.equal(denied.status,401,endpoint+' must reject unsigned guests');
+}
+assert.equal(store.size,1,'unsigned guests cannot create or claim tickets');
+
 // Never add a private database binding to the gateway. Only HQ may own it.
 const publicManifest=readFileSync(
  'services/custom-order-cloudflare/wrangler.toml','utf8');
