@@ -49,6 +49,8 @@ on:
       - 'backend/work-contact-ticket-claim.mjs'
       - 'scripts/test-work-contact-ticket-claim.mjs'
       - 'scripts/test-work-contact-db-schema.py'
+      - 'scripts/inspect-work-contact-d1-readonly.mjs'
+      - 'scripts/test-work-contact-d1-readonly.mjs'
       - 'services/jill-order-desk/work-contact-status-change.mjs'
       - 'scripts/test-work-contact-status-change.mjs'
       - 'scripts/test-work-contact-status-handoff.mjs'
@@ -98,6 +100,8 @@ jobs:
           node scripts/test-work-contact-status-handoff.mjs
           node scripts/test-work-contact-message-bridge.mjs
           python3 scripts/test-work-contact-db-schema.py
+          node scripts/test-work-contact-d1-readonly.mjs
+          node scripts/inspect-work-contact-d1-readonly.mjs
           node scripts/test-work-hq-contact-route.mjs
       - name: Regress original saved-quote handoff and exact variant read security
         run: |
@@ -139,6 +143,8 @@ jobs:
           node --check backend/work-contact-account-read.mjs
           node --check scripts/test-work-contact-account-read.mjs
           node --check backend/work-contact-ticket-claim.mjs
+          node --check scripts/inspect-work-contact-d1-readonly.mjs
+          node --check scripts/test-work-contact-d1-readonly.mjs
           node --check scripts/test-work-contact-ticket-claim.mjs
           node --check services/jill-order-desk/work-contact-status-change.mjs
           node --check scripts/test-work-contact-status-change.mjs
