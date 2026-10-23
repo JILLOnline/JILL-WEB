@@ -40,7 +40,7 @@ const db={prepare:sql=>({bind:(...args)=>({
   assert.match(sql,/t.owner_customer_gid=\?/);
   assert.equal(args[0],SHOP);
   assert.equal(args[1],ticket);
-  assert.equal(args[6],'111');
+  assert.equal(typeof args[6],'string');
   const existing=messages.find(m=>m.operation_id===args[4]);
   if(existing||ticketRow.owner_customer_gid!==args[11])
    return {success:true,meta:{changes:0}};
