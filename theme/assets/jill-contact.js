@@ -104,12 +104,17 @@
       // A changed form is a separate ticket, never an overwritten receipt.
       const entries = [...new FormData(form).entries()];
       const next = contract.normalizedForm(entries,
-        '00000000-0000-4000-8000-000000000000');
-      snapshot = JSON.stringify({...next, ticket_id:''});
-      const uuid = existing?.snapshot === snapshot
+        '00000000-0000-4000-8000-000000000000', 'A'.repeat(43));
+      snapshot = JSON.stringify({...next, ticket_id:'',claim_token:''});
+      const reuse = existing?.snapshot === snapshot;
+      const uuid = reuse
         ? existing.record.ticket_id.slice('jill:contact:'.length)
         : globalThis.crypto.randomUUID();
-      record = contract.normalizedForm(entries, uuid);
+      const claimToken = reuse ? existing.record.claim_token
+        : btoa(String.fromCharCode(...globalThis.crypto.getRandomValues(
+          new Uint8Array(32))))
+          .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      record = contract.normalizedForm(entries, uuid, claimToken);
     } catch {
       contactWorkNotice(root,
         'Please review the Contact Us fields before sending.', true);
@@ -138,7 +143,8 @@
       state.confirmed = true;
       contactWorkNotice(root,
         'Your Contact Us request was recorded as ' + record.ticket_id +
-        '. JILL will review it.');
+        '. Save this private My JILL claim code: ' + record.claim_token +
+        '. JILL will review your message.');
     } catch {
       contactWorkNotice(root,
         'We could not confirm your ticket. Use Send message again to retry ' +
