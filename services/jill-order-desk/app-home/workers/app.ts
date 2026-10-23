@@ -1,4 +1,8 @@
 import {createRequestHandler} from "react-router";
+import {WorkerEntrypoint} from "cloudflare:workers";
+import {handleWorkContactPrivateBridge}
+  from "../../work-contact-private-bridge.mjs";
+
 import {workAppHomeOrigin,workAdminAppDestination} from "../../shopify-host/sdk-config.mjs";
 import {workQuoteDraftFeatureReady,workQuoteDraftSchemaReady}
   from "../../work-quote-release-readiness.mjs";
@@ -124,3 +128,14 @@ export default {
     return handler(request,{cloudflare:{env,ctx}});
   },
 } satisfies ExportedHandler<Env>;
+
+/** A named, private Service Binding RPC endpoint — never an HTTP URL.
+ *  The default fetch handler above remains unchanged.
+ *  A separate HQ hard-OFF flag is required even with this binding. */
+export class JillContactPrivate extends WorkerEntrypoint {
+  async fetch(request:Request):Promise<Response>{
+    return handleWorkContactPrivateBridge({
+      request,env:this.env as Env,
+    });
+  }
+}
