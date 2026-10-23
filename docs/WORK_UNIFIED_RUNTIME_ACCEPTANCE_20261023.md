@@ -235,3 +235,55 @@ is implemented and certified.
 No Worker service binding, secret, route, migration, activation or paid
 service was provisioned by this source-only decision. The Shopify
 native Contact Us form remains authoritative; do not dual-submit.
+
+## Private gateway → HQ Contact Us RPC bridge (source-only)
+
+**New scope after authenticated D1 0004 postflight:** The owner verified
+`applied_history_verified`, all **3 tables / 3 indexes / 3 triggers**, and
+all seven preserved HQ merchant/quote/session tables. No further schema
+migration is needed for Contact Us v1.
+
+Source candidate now includes:
+
+- `services/jill-order-desk/work-contact-private-bridge.mjs`: the
+  **HQ-only** internal dispatcher, requiring
+  `JILL_WORK_CONTACT_PRIVATE_BRIDGE_ENABLED=true` **and** the
+  operation-specific HQ flag. Every call still validates the original
+  Shopify app-proxy signature or Customer Account JWT/claim token in
+  the existing WORK handlers before touching or returning private data.
+- `services/jill-order-desk/app-home/workers/app.ts`: exports the
+  named `JillContactPrivate` Cloudflare `WorkerEntrypoint` with
+  `fetch(request)` for a Service Binding. This is **not mounted as a
+  public HTTP route**; the original HQ default HTTP fetch stays intact.
+- `services/custom-order-cloudflare/handler.mjs`: Contact intake,
+  ticket claim, account listing and private thread reads use
+  `env.JILL_WORK_HQ_CONTACT_PRIVATE.fetch()` instead of an HQ D1
+  binding. If the private binding is missing, disabled or fails,
+  Contact Us responds unavailable. The gateway enforces WORK
+  Durable Object global/client quota **before** calling the private
+  entrypoint and forwards only the relevant authentication,
+  content-type and Origin headers plus a bounded request body.
+- `services/custom-order-cloudflare/wrangler.contact-bridge.candidate.toml`
+  is a **separate, unshipped** WORK gateway manifest selecting the
+  `JillContactPrivate` named entrypoint on
+  `jill-order-desk-canary-work`. The currently published/default
+  `wrangler.toml` intentionally has **no** service or private D1
+  binding, and this draft does not switch the deployment configuration.
+
+**Commissioning blockers:** Keep `JILL_WORK_CONTACT_PRIVATE_BRIDGE_ENABLED`
+absent/OFF at HQ, all operation-specific Contact Us flags OFF in both
+Workers, storefront mode OFF, and My JILL Contact feature OFF.
+Do not upload or deploy the candidate manifest before a full paired
+review of authentic Worker RPC bindings and registered entrypoint,
+deployed Worker build/version provenance, quota and anti-abuse safety,
+Shopify app-proxy forwarding, Customer A/B/guest proof, real Owner
+authorization, native form fallback, and free-tier impact.
+
+The existing Cloudflare service binding is **not yet provisioned**.
+Passing synthetic tests proves behavior only; it is not evidence that
+`JillContactPrivate` is currently published, that Shopify and HQ
+secrets correspond, or that actual customer requests pass.
+
+No customer information was read, no D1 change was performed, no
+Worker uploaded/deployed, no live merchant/Shopify/Google traffic was
+sent and no paid resource was enabled by these source edits.
