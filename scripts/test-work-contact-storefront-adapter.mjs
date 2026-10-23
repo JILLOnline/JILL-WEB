@@ -19,6 +19,7 @@ assert.equal(contract.mayUseWorkAdapter({mode:'qa-enabled',host:'jill-work.mysho
 assert.equal(contract.mayUseWorkAdapter({mode:'qa-enabled',host:'jill-work.myshopify.com',
  endpoint:'https://unknown.example.invalid/contact'}),false);
 const uuid='11111111-2222-4333-8444-555555555555';
+const token='A'.repeat(43);
 const entries=[
  ['contact[name]','JILL QA'],['contact[email]','qa@example.invalid'],
  ['contact[Phone]',''],['contact[Reason]','shipping'],
@@ -29,7 +30,8 @@ const entries=[
  ['contact[Has reference images]','No'],
  ['contact[Form]','Contact Us'],
 ];
-const payload=contract.normalizedForm(entries,uuid);
+const payload=contract.normalizedForm(entries,uuid,token);
+assert.equal(payload.claim_token,token);
 assert.equal(payload.ticket_id,'jill:contact:'+uuid);
 assert.equal(payload.reason,'shipping');
 assert.equal(payload.details.order_number,'JILL-123');
@@ -40,7 +42,7 @@ assert.equal(payload.details.website_area,'');
 assert.equal(payload.details.device,'');
 assert.equal(payload.email,'qa@example.invalid');
 assert.equal(Object.keys(payload.details).length,7);
-assert.equal(contract.normalizedForm([...entries].reverse(),uuid).ticket_id,payload.ticket_id);
+assert.equal(contract.normalizedForm([...entries].reverse(),uuid,token).ticket_id,payload.ticket_id);
 for(const invalid of [
  [...entries,['contact[email]','another@example.invalid']],
  entries.filter(([key])=>key!=='contact[Reviewed details]'),
@@ -48,9 +50,10 @@ for(const invalid of [
  entries.map(([key,value])=>[key,key==='contact[Reason]'?'hack':value]),
  entries.map(([key,value])=>[key,key==='contact[body]'?'x'.repeat(3001):value]),
 ]){
- assert.throws(()=>contract.normalizedForm(invalid,uuid));
+ assert.throws(()=>contract.normalizedForm(invalid,uuid,token));
 }
-assert.throws(()=>contract.normalizedForm(entries,'not-a-uuid'));
+assert.throws(()=>contract.normalizedForm(entries,'not-a-uuid',token));
+assert.throws(()=>contract.normalizedForm(entries,uuid,'not-a-claim-code'));
 assert.match(liquid,/data-jill-work-contact-mode="off"/);
 assert.match(liquid,/data-jill-work-contact-endpoint="\/apps\/jill-custom-order\/contact"/);
 assert.match(liquid,/{% form 'contact'/);
@@ -60,7 +63,9 @@ assert.ok(layout.indexOf('jill-contact-work-contract.js')<
 assert.match(dom,/if \(root\.dataset\.jillWorkContactMode !== 'qa-enabled'\) return/);
 assert.match(dom,/event\.preventDefault\(\)/);
 assert.match(dom,/pendingWorkTickets\.get\(form\)/);
-assert.match(dom,/existing\?\.snapshot === snapshot/);
+assert.match(dom,/const reuse = existing\?\.snapshot === snapshot/);
+assert.match(dom,/private My JILL claim code/);
+assert.match(dom,/getRandomValues/);
 assert.match(dom,/data\.ticket_id !== record\.ticket_id/);
 assert.match(dom,/redirect:'error'/);
 assert.doesNotMatch(dom,/localStorage|sessionStorage|logged_in_customer_id/);
