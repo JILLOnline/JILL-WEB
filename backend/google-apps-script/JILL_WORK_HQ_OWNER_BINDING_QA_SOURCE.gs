@@ -35,7 +35,7 @@ function jillWorkHqOwnerBindingProof_(e) {
   const secret=String(props.getProperty('JILL_HQ_MERCHANT_READ_SECRET')||'');
   if(secret.length<32)return deny();
   const hmac=function(parts){
-    return Utilities.computeHmacSha256Signature(parts.join('\\n'),secret)
+    return Utilities.computeHmacSha256Signature(parts.join('\n'),secret)
       .map(function(v){return ('0'+((v+256)%256).toString(16)).slice(-2);})
       .join('');
   };
