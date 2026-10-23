@@ -32,6 +32,9 @@ on:
       - 'scripts/test-work-myjill-contact-page.mjs'
       - 'shared/customer-contact-claim.mjs'
       - 'scripts/test-work-myjill-contact-claim.mjs'
+      - 'shared/customer-contact-thread.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/ContactThread.jsx'
+      - 'scripts/test-work-myjill-contact-thread.mjs'
       - 'extensions/jill-account-dashboard/src/pages/RequestConversation.jsx'
       - 'scripts/test-work-myjill-reply-capability.mjs'
       - '.github/workflows/jill-myjill-message-handoff-preview.yml'
@@ -58,6 +61,7 @@ jobs:
           node scripts/test-work-myjill-contact-ticket-contract.mjs
           node scripts/test-work-myjill-contact-page.mjs
           node scripts/test-work-myjill-contact-claim.mjs
+          node scripts/test-work-myjill-contact-thread.mjs
       - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
         run: node scripts/test-audit-work-myjill-message-extension-source.mjs
       - name: Verify signed reply-capability source and reject forged upstream enablement
@@ -83,3 +87,5 @@ jobs:
           node --check scripts/test-work-myjill-contact-page.mjs
           node --check shared/customer-contact-claim.mjs
           node --check scripts/test-work-myjill-contact-claim.mjs
+          node --check shared/customer-contact-thread.mjs
+          node --check scripts/test-work-myjill-contact-thread.mjs
