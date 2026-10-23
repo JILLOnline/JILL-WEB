@@ -92,6 +92,25 @@ function jillWorkHqOwnerBindingProof_(e) {
       revision=next;
     });
     if(revision!==Number(p.source_revision))return deny();
+    // Consume each challenge once under the script lock. Script Properties
+    // contain short-lived nonce hashes only, never customer data.
+    const replayPrefix='JILL_WORK_OWNER_PROOF_NONCE_V1_';
+    const replayKey=replayPrefix+hmac(['owner_binding_nonce_key_v1',
+      p.shop,p.jill_hq_read_nonce]);
+    const saved=props.getProperties();
+    const stale=[],active=[];
+    Object.keys(saved).forEach(function(key){
+      if(key.indexOf(replayPrefix)!==0)return;
+      const time=Number(saved[key]);
+      if(!Number.isSafeInteger(time)||time<1||now-time>300000)
+        stale.push(key);
+      else active.push(key);
+    });
+    if(Object.prototype.hasOwnProperty.call(saved,replayKey)||
+       active.length>=128)return deny();
+    stale.forEach(function(key){props.deleteProperty(key);});
+    // Reserve BEFORE signing. Interrupted requests stay consumed.
+    props.setProperty(replayKey,String(now));
     const proofTime=Date.now();
     const proof={version:1,operation:'custom_order.merchant.owner_binding.result',
       ok:true,shop:'jill-work.myshopify.com',
