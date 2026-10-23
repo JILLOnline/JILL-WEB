@@ -18,6 +18,9 @@ query = f"INSERT INTO jill_work_contact_tickets ({columns}) VALUES ({','.join('?
 db.execute(query, values)
 db.commit()
 assert db.execute("SELECT COUNT(*) FROM jill_work_contact_tickets").fetchone()[0] == 1
+assert db.execute("SELECT revision,from_state,to_state,actor_staff_id FROM "
+                  "jill_work_contact_status_events").fetchone() == (1,None,"received","")
+
 db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
            "WHERE shop=? AND ticket_id=? AND owner_customer_gid IS NULL "
            "AND claim_sha256=? AND created_at_ms>=?",
@@ -55,7 +58,30 @@ rejected((shop,"jill:contact:55555555-2222-4333-8444-555555555555",
           "shopify_contact_bridge","a"*64,"b"*64,"not-json",
           "received",1,1791800000000,1791800000000,None))
 assert db.execute("SELECT COUNT(*) FROM jill_work_contact_tickets").fetchone()[0] == 1
+assert db.execute("SELECT COUNT(*) FROM jill_work_contact_status_events").fetchone()[0] == 1
+# Audit is inserted atomically by a database trigger on every valid status
+# change, never as an optional separate application write.
+op = "jill:work:contact:status:11111111-2222-4333-8444-555555555555"
+db.execute("UPDATE jill_work_contact_tickets SET state=?,revision=revision+1,"
+           "updated_at_ms=?,status_actor_staff_id=?,last_status_operation_id=? "
+           "WHERE shop=? AND ticket_id=? AND revision=? AND state=?",
+           ("reviewing",1791800000001,"111",op,shop,ticket,1,"received"))
+assert db.execute("SELECT revision,from_state,to_state,actor_staff_id,operation_id "
+                  "FROM jill_work_contact_status_events WHERE revision=2").fetchone() == (
+                    2,"received","reviewing","111",op)
+assert db.execute("SELECT COUNT(*) FROM jill_work_contact_status_events").fetchone()[0] == 2
+try:
+    db.execute("UPDATE jill_work_contact_tickets SET state=?,updated_at_ms=? "
+               "WHERE shop=? AND ticket_id=?",
+               ("resolved",1791800000002,shop,ticket))
+except sqlite3.IntegrityError:
+    pass
+else:
+    raise AssertionError("status must not change without a revision and actor")
+assert db.execute("SELECT state,revision FROM jill_work_contact_tickets").fetchone() == ("reviewing",2)
+# Guest->customer ownership association cannot create fake status history.
+assert db.execute("SELECT COUNT(*) FROM jill_work_contact_status_events").fetchone()[0] == 2
 assert db.execute("SELECT name FROM sqlite_master WHERE type='index' "
                   "AND name='jill_work_contact_tickets_account'").fetchone()
 db.close()
-print("PASS WORK Contact D1 migration in memory: hashed claim, exact single owner, bounded JSON, guest default, invalid rows rejected.")
+print("PASS WORK Contact D1 migration in memory: hashed claim, exact owner, atomic audited status timeline, bounded JSON, invalid rows rejected.")
