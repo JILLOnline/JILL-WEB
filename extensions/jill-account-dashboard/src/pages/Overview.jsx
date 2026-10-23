@@ -44,6 +44,7 @@ export default function Overview({accountState,onNavigate}) {
             </s-box>
           </s-grid>
           <s-button variant="secondary" onClick={()=>onNavigate('messages')}>Your Messages</s-button>
+          <s-button variant="secondary" onClick={()=>onNavigate('contact-requests')}>Contact Requests</s-button>
           <s-button variant="secondary" onClick={()=>onNavigate('saved')}>Saved for You</s-button>
         </s-stack>
       </s-section>
