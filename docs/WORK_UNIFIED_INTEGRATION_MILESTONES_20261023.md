@@ -61,3 +61,46 @@ Every record has a **kind**, **canonical stable ID**, **source/version/revision*
 
 ### Release safety (mandatory)
 No hidden deploy, merge, paid service, LIVE/KEEP change, customer reply flag, draft order creation, invoice issuance or file exposure. CI is source proof, **not** provider deployment certification. All integration changes must be idempotent and default OFF; fail closed if identity, ownership, source, catalog, consent or staff permission is unknown. No historical receipt replay, no old @9 Google detail endpoint repurposing, no changing billing limits.
+
+## Executed source deliverables — 2026-10-23 (NOT A RELEASE)
+
+**HQ side, draft PR #157:** created `0004_work_contact_tickets_source_only.sql`,
+a constrained WORK-only Contact Us ticket schema with no automatic Shopify
+Customer GID ownership. Created `backend/work-contact-ticket-intake.mjs`:
+default OFF, verifies the WORK Shopify app-proxy signature, shop, origin,
+content type, bounded JSON, rate limit, and a server-normalized idempotency
+hash; a repeated identical submission returns its original ticket reference,
+and a conflicting repeated ID is rejected. Only after a future distinct
+approved Shopify app-proxy routing release can this write to WORK D1.
+Unlike Shopify's existing native form, this candidate is NOT connected and
+is not a replacement until anti-spam and acceptance review.
+
+Created `services/jill-order-desk/work-contact-ticket-inbox.mjs`:
+Owner-only HQ D1 source reader, permission gate BEFORE database access,
+whitelisted status metadata only, no email/phone/message in list responses.
+Registered an HQ `/app/contacts` candidate with navigation and a truthful
+not-connected state; its environment flag `JILL_WORK_CONTACT_INBOX_ENABLED`
+is **absent/OFF** by default. The D1 migration has not been applied and
+no Shopify source has been changed.
+
+**My JILL side, independent PR #156:** planned signed-account-only
+Contact Us ticket reader, customer navigation and `Contact Requests`
+screen (hard `enabled={false}`), no guessed ownership, no account JWT or
+network call while OFF, no fake delivery/unread/reply affordances.
+The existing native Shopify Contact Us form remains unchanged and is not
+a verified account inbox source. Signed Customer A/B testing and the real
+contact-account backend are still missing.
+
+**Source-only test additions:** intake signature/guest/idempotency,
+Owner-only HQ projection, route gate, fake/cross-customer receipt denial,
+My JILL contact reader and new account page guards. Passing unit tests do
+not prove native Contact Us flow integration.
+
+**Critical remaining U2/U4 wiring:** an approved and rate-limited WORK
+storefront form adapter that preserves Shopify spam controls; real WORK
+database migration after binding audit; D1 ticket detail and canonical
+staff/customer conversation events; verified Shopify Customer JWT owner
+claim; signed read projection from WORK D1 through an independently
+certified account gateway; real end-to-end Customer A/B/guest smoke tests.
+Only afterwards can the WORK flags be safely enabled. No LIVE/KEEP or
+paid resource authorization is implied.
