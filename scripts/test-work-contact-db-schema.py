@@ -83,5 +83,29 @@ assert db.execute("SELECT state,revision FROM jill_work_contact_tickets").fetcho
 assert db.execute("SELECT COUNT(*) FROM jill_work_contact_status_events").fetchone()[0] == 2
 assert db.execute("SELECT name FROM sqlite_master WHERE type='index' "
                   "AND name='jill_work_contact_tickets_account'").fetchone()
+# Contact messages are immutable per ticket and sequence, and cannot
+# impersonate staff or become a Shopify delivery/read confirmation.
+msg_cols=("shop,ticket_id,sequence,operation_id,actor_staff_id,body_text,"
+          "body_sha256,created_at_ms")
+msg_sql=f"INSERT INTO jill_work_contact_messages ({msg_cols}) VALUES ({','.join('?'*8)})"
+msg_op="jill:work:contact:msg:11111111-2222-4333-8444-555555555555"
+db.execute(msg_sql,(shop,ticket,1,msg_op,"111","Your question is under review.",
+                    "c"*64,1791800000002))
+assert db.execute("SELECT sequence,body_text FROM jill_work_contact_messages").fetchone() == (
+    1,"Your question is under review.")
+for bad in (
+    (shop,ticket,1,msg_op,"111","again","c"*64,1791800000002),
+    (shop,ticket,2,msg_op,"111","different","c"*64,1791800000002),
+    (shop,ticket,2,"bad","111","different","c"*64,1791800000002),
+    (shop,ticket,2,"jill:work:contact:msg:22222222-2222-4333-8444-555555555555",
+     "111","", "c"*64,1791800000002),
+):
+    try:
+        db.execute(msg_sql,bad)
+    except sqlite3.IntegrityError:
+        pass
+    else:
+        raise AssertionError("Contact message uniqueness/length protection failed")
+assert db.execute("SELECT COUNT(*) FROM jill_work_contact_messages").fetchone()[0] == 1
 db.close()
-print("PASS WORK Contact D1 migration in memory: hashed claim, exact owner, atomic audited status timeline, bounded JSON, invalid rows rejected.")
+print("PASS WORK Contact D1 migration in memory: hashed claim, exact owner, atomic audited status and unique customer thread, bounded JSON, invalid rows rejected.")
