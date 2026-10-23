@@ -35,6 +35,11 @@ assert.equal(me.hq_visible,false);
 const other=planWorkInquiryVisibility({verified:good,customerAuthenticatedGid:foreign});
 assert.equal(other.my_jill_visible,false);
 assert.equal(other.can_send_reply,false);
+const counterfeit={...good};
+assert.equal(planWorkInquiryVisibility({
+ verified:counterfeit,merchantAuthenticated:true,
+ customerAuthenticatedGid:owner,
+}).state,'held','a copied verified-looking record has no minting authority');
 assert.equal(planWorkInquiryVisibility({verified:good,merchantAuthenticated:true}).hq_visible,true);
 
 const contact=signed({...base,kind:'contact',source:'shopify_contact_bridge',
