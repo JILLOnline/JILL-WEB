@@ -34,8 +34,8 @@ export function projectVerifiedContactThread({ticket,messages,expectedId,
   if(!m||!Number.isSafeInteger(m.sequence)||
     m.sequence!==last+1||typeof m.body_text!=='string'||
     m.body_text.length<1||m.body_text.length>1000||
-    !validTime(m.created_at_ms)||m.created_at_ms>ticket.updated_at_ms+
-     7*24*3600*1000)throw Error('contact_thread_unverified');
+    !validTime(m.created_at_ms)||m.body_text!==m.body_text.trim()||
+    /[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/.test(m.body_text))throw Error('contact_thread_unverified');
   last=m.sequence;
   // whitelist excludes staff IDs, secret hashes, D1 operation receipts,
   // email, contact body/PII, customer GID and internal staff metadata.
