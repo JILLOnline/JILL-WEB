@@ -126,7 +126,9 @@ jobs:
         run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
       - name: Typecheck real WORK embedded-app routes
         run: npm run typecheck --prefix services/jill-order-desk/app-home
-      - name: Build real WORK embedded app without deployment
+      - name: Build real WORK canary embedded app without deployment
+        env:
+          JILL_BUILD_TARGET: canary
         run: npm run build --prefix services/jill-order-desk/app-home
       - name: Inspect generated HQ Worker entrypoint exports
         run: node scripts/check-work-contact-hq-bundle.mjs
