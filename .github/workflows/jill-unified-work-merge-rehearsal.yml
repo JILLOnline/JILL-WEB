@@ -1,0 +1,65 @@
+name: JILL Unified WORK integration merge rehearsal
+
+# READ-ONLY GIT REHEARSAL. Never writes a branch, pushes code, changes
+# a release lock, runs Wrangler or Shopify publish, or contacts providers.
+# A successful dry-run says only Git can combine the source trees; it
+# DOES NOT authorize deployment, D1 migration, customer replies or payment.
+on:
+  push:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+  pull_request:
+    branches:
+      - jill/m1-work-queue-preview-20261021
+    paths:
+      - '.github/workflows/jill-unified-work-merge-rehearsal.yml'
+      - 'backend/**'
+      - 'services/**'
+      - 'extensions/jill-account-dashboard/**'
+      - 'shared/**'
+      - 'theme/**'
+
+permissions:
+  contents: read
+
+jobs:
+  merge-rehearsal:
+    name: Rehearse My JILL + HQ source merge without committing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout HQ draft full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch only My JILL draft refs
+        run: |
+          git fetch --no-tags origin refs/heads/jill/myjill-message-handoff-preview-20261022:refs/remotes/origin/jill/myjill-message-handoff-preview-20261022
+      - name: Inspect branch common ancestor and test merge in ephemeral worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          HQ_SHA="$(git rev-parse HEAD)"
+          MY_SHA="$(git rev-parse refs/remotes/origin/jill/myjill-message-handoff-preview-20261022)"
+          BASE_SHA="$(git merge-base "$HQ_SHA" "$MY_SHA")"
+          echo "HQ_SHA=$HQ_SHA"
+          echo "MYJILL_SHA=$MY_SHA"
+          echo "COMMON_ANCESTOR=$BASE_SHA"
+          mkdir -p "$RUNNER_TEMP/jill-unified-rehearsal"
+          git worktree add --detach "$RUNNER_TEMP/jill-unified-rehearsal" "$HQ_SHA"
+          cd "$RUNNER_TEMP/jill-unified-rehearsal"
+          git -c user.name='JILL Source QA' -c user.email='qa@invalid.example' \
+            merge --no-commit --no-ff "$MY_SHA" > merge.log 2>&1 && result=0 || result=$?
+          if [ "$result" -ne 0 ]; then
+            echo 'INTEGRATION_MERGE_BLOCKED: conflicts require an explicit source reconciliation.'
+            sed -n '1,80p' merge.log
+            git diff --name-only --diff-filter=U
+            exit 1
+          fi
+          echo 'SOURCE_MERGE_REHEARSAL=clean'
+          echo 'SOURCE_COMMIT_CREATED=false'
+          echo 'DEPLOYMENT_PERFORMED=false'
+          git status --short | head -70
+          git merge --abort
+          echo 'NO_MERGE_PROMOTED=true'
