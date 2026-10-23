@@ -20,4 +20,14 @@ assert.doesNotMatch(route,/contact_json|customer_email|contact\[email\]|localSto
 assert.match(intake,/if\(enabled!==true\)return respond\(503,'not_connected'\)/);
 assert.match(inbox,/if\(enabled!==true\)return output\(503,'not_connected'\)/);
 assert.doesNotMatch(route+inbox,/draftOrderCreate|draftOrderInvoiceSend|orderCreate|\.appendRow/);
+const detail=readFileSync(
+ 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx','utf8');
+assert.match(routes,/route\("contacts\/:ticketId","routes\/app\.contacts\.\$ticketId\.tsx"\)/);
+assert.match(route,/encodeURIComponent\(item.ticket_id\)/);
+assert.match(detail,/JILL_WORK_CONTACT_INBOX_ENABLED==="true"/);
+assert.match(detail,/readWorkContactTicketDetail\(\{/);
+assert.match(detail,/authenticateWorkAdminOnce\(\{/);
+assert.match(detail,/No contact details are displayed/);
+assert.match(detail,/Customer identity and reply availability are not yet verified/);
+assert.doesNotMatch(detail,/draftOrderCreate|fetch\(|localStorage|orderCreate/);
 console.log('PASS HQ WORK Contact Us route and navigation remain gated, authenticated and metadata-only.');
