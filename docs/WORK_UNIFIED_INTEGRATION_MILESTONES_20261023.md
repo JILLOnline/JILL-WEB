@@ -161,3 +161,39 @@ As of 2026-10-23 the **draft-only**, unmerged HQ tree now has:
 
 There has been **no deployment, Shopify form replacement, D1 migration,
 customer claim, message send, invoice, order creation or LIVE/KEEP change**.
+
+## Contact Us status → My JILL tracking: verified draft source (October 23)
+
+New `work-contact-status-change.mjs` is an **Owner-only** WORK HQ
+candidate requiring a trusted Shopify online admin session, D1
+`requests.write` authorization, an exact ticket ID and bounded JSON
+command, and the separate `JILL_WORK_CONTACT_STATUS_ENABLED==='true'`
+flag (absent/OFF). It compares expected status and revision in one
+conditional SQL UPDATE and supports receipt recovery only for the exact
+same merchant staff ID, operation ID, revision and resulting status.
+Unauthorized staff, stale tabs, forged actors, ambiguous repeats and
+payment/fulfillment-like statuses cannot produce a successful change.
+
+The draft D1 0004 migration now adds an **immutable Contact status-event
+table** and SQLite triggers: the initial `received` event is written
+when a ticket is created, and every revision-checked merchant status
+change writes an event atomically with the ticket update. A claim to a
+verified My JILL Customer GID does not create fake status events.
+The customer-facing status remains read from the **same canonical WORK
+D1 row** through a signed Shopify account JWT; it is never inferred from
+a merchant email or duplicate private timeline store.
+
+The WORK HQ private ticket-detail page contains status buttons, revision
+and bounded failure states, gated by both `JILL_WORK_CONTACT_INBOX_ENABLED`
+and `JILL_WORK_CONTACT_STATUS_ENABLED`. It never sends messages,
+creates orders or invoices. My JILL's Contact Requests list in separate
+PR #156 offers Active/Resolved filtering and displays verified revision.
+The source-only cross-surface test proves status/revision consistency and
+does not claim a real customer readback.
+
+**CI:** `39996666381` passed HQ source tests, actual SQLite migration
+and triggers, embedded-app TypeScript and build. **Not yet complete:**
+WORK D1 migration and Workers binding, released Shopify contact adapter,
+enabled signed-account gateway and Customer A/B/guest browser acceptance.
+The historical My JILL release branch lock remains intact. No deployment,
+paid resource, LIVE/KEEP edit or user notification was made.
