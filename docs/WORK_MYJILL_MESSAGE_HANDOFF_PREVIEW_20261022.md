@@ -125,3 +125,18 @@ or any LIVE/KEEP, Google, Cloudflare or Shopify release.
   lifecycle remains an explicit WORK Customer A/B acceptance gate.
 - Offline regression: `node scripts/test-work-customer-read-cancellation.mjs`.
   No remote endpoint, fake customer record, storage or release mutation.
+
+## Shared My JILL account display validation (October 23; source-only)
+
+The common `loadWorkCustomerConversationState` reader now runs the same
+verified inbox contract before returning ANY account orders. Thus both
+Custom Orders and Messages reject duplicate request IDs, invalid request
+identifiers, malformed public timeline revisions, untrusted message actors,
+and invalid activity timestamps. An invalid response fails closed; neither
+screen receives a partial account list or enables a reply composer.
+The separate `test-work-myjill-account-response-integrity.mjs` checks
+legitimate v1/v2 histories and synthetic malformed records, and is now
+included in the dedicated My JILL preview workflow. This is defense in
+depth after the server-side Shopify JWT/Google ownership verification;
+it does not replace or relax either authority. No real customer data,
+extension publication, Worker release, or message delivery occurred.
