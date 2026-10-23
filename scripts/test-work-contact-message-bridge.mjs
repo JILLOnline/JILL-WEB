@@ -79,6 +79,12 @@ assert.equal(disabled.status,503);
 assert.equal(messages.length,0);
 const blocked=await write(post(),{authorize:async()=>({allowed:false})});
 assert.equal(blocked.status,403);assert.equal(messages.length,0);
+const missingOrigin=new Request('https://hq.work.example.test/app/contacts/'+ticket+'/message',{
+ method:'POST',headers:{'content-type':'application/json'},
+ body:JSON.stringify({ticket_id:ticket,operation_id:operation,message:'Hello from HQ'}),
+});
+assert.equal((await write(missingOrigin)).status,400);
+assert.equal(messages.length,0);
 ticketRow.owner_customer_gid=null;
 const guest=await write(post());
 assert.equal(guest.status,409);assert.equal(messages.length,0);
