@@ -21,16 +21,16 @@ assert db.execute("SELECT COUNT(*) FROM jill_work_contact_tickets").fetchone()[0
 assert db.execute("SELECT revision,from_state,to_state,actor_staff_id FROM "
                   "jill_work_contact_status_events").fetchone() == (1,None,"received","")
 
-db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
+claim_first = db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
            "WHERE shop=? AND ticket_id=? AND owner_customer_gid IS NULL "
            "AND claim_sha256=? AND created_at_ms>=?",
            ("gid://shopify/Customer/111",shop,ticket,"b"*64,1791700000000))
-assert db.total_changes == 2
-db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
+assert claim_first.rowcount == 1
+"claim_second = db.execute("UPDATE jill_work_contact_tickets SET owner_customer_gid=? "
            "WHERE shop=? AND ticket_id=? AND owner_customer_gid IS NULL "
            "AND claim_sha256=? AND created_at_ms>=?",
            ("gid://shopify/Customer/222",shop,ticket,"b"*64,1791700000000))
-assert db.total_changes == 2, "a second customer must never overwrite claimed owner"
+assert claim_second.rowcount == 0, "a second customer must never overwrite claimed owner"
 assert db.execute("SELECT owner_customer_gid FROM jill_work_contact_tickets").fetchone()[0] == "gid://shopify/Customer/111"
 
 def rejected(row):
