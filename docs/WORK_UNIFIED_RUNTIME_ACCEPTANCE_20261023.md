@@ -75,3 +75,60 @@ separately reviewed WORK-only switch-over. Never dual-send.
 
 **No endpoint flags, migrations, releases or customer messages are
 activated by this document, its read-only inspector, or the source CI.**
+
+## Owner-confirmed WORK migration 0004 — completed October 23, 2026
+
+This section supersedes the earlier **pending 0004 schema** statements above,
+but does not change the overall **HOLD for runtime activation** decision.
+
+The owner executed Wrangler `4.152.0` from the isolated, reviewed HEAD
+`9e2d64df9d88ef863111b31b9e8965cb9c621255`, using the existing
+`services/jill-order-desk/app-home/wrangler.canary.jsonc` configuration.
+A guarded preflight confirmed:
+
+- remote database `jill-order-desk-work`, database ID
+  `3f17c186-c794-4e00-8f20-017191373a19`
+- existing `d1_migrations` records for **0001**, **0002**, **0003**
+- only pending migration `0004_work_contact_tickets_source_only.sql`
+- pre-execution contact schema `unapplied`
+- an available pre-execution D1 Time Travel bookmark, preserved locally
+  by the owner (the bookmark is deliberately **not** committed)
+
+**Actual remote write:** Wrangler
+`d1 migrations apply jill-order-desk-work --remote --config
+./wrangler.canary.jsonc` returned one successful `0004` migration
+(`10 commands` executed; no error). The immediately subsequent
+authenticated read-only `inspect-work-contact-d1-readonly.mjs` result
+was `remote_schema.state = "present_unverified"`, with **all six expected
+tables/triggers found** and no names missing:
+
+- `jill_work_contact_tickets`
+- `jill_work_contact_status_events`
+- `jill_work_contact_messages`
+- `jill_contact_initial_event`
+- `jill_contact_status_revision_guard`
+- `jill_contact_status_event`
+
+The post-inspection returned `status:"HOLD"`. The original inspector
+also emitted `migration_performed:false` and
+`customer_messages_enabled:false` as **hard-coded inspector-only
+placeholders**; those did *not* mean that Wrangler had not applied the
+migration or that current deployed runtime flags were verified.
+A subsequent source-only fix renames them to unambiguous
+inspection-specific fields and marks runtime message flags unverified.
+
+**Next read-only postflight:** independently confirm the remote
+`d1_migrations` entry for `0004`, the three named indexes and the
+existing merchant/quote/session tables. No further migration commands
+are required for this checkpoint. In particular, **do not reapply 0004
+or restore the database automatically**.
+
+Still NOT verified: actual active HQ / gateway Worker versions and D1
+bindings, active Shopify proxy child path, real Customer A/B/guest JWT,
+Staff Owner online authorization, public form routing, feature flags,
+real message persistence, rollback execution, quota/cost limits for new
+traffic, or protected-account release certificate.
+
+**No Shopify/Cloudflare Worker deployed, no My JILL extension published,
+no LIVE/KEEP changes, and no paid infrastructure enabled** as part of
+the authorized D1 schema migration.
