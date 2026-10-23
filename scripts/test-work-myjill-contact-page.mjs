@@ -26,7 +26,7 @@ assert.match(page,/Filter verified Contact Requests/);
 assert.match(page,/ticketFilter==='open'/);
 assert.match(page,/ticket.status!=='resolved'/);
 assert.match(page,/filteredTickets.map/);
-assert.match(page,/Tracking revision \\{ticket.revision\\}/);
+assert.ok(page.includes('Tracking revision {ticket.revision}'));
 assert.match(page,/No verified tickets match this filter/);
 assert.doesNotMatch(page+hub,/draftOrderCreate|fetch\(|customer\.email|localStorage|sessionStorage/);
 let reads=0;
