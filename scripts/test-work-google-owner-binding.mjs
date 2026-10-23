@@ -103,9 +103,27 @@ await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
  backendFetch:async()=>new Response('{}',{status:403})}),/unavailable/);
 await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
  backendFetch:async()=>new Response('a'.repeat(3000),{status:200})}),/oversized/);
+// A signed response is not usable when its originating challenge has expired,
+// even if a simulated backend assigns a newer signed response timestamp.
+let tick=NOW;
+await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
+ now:()=>{const value=tick;tick+=121000;return value;},
+ backendFetch:async()=>new Response(JSON.stringify(body(owner)),{status:200}),
+}),/request_expired/);
+await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
+ now:()=>Number.NaN,backendFetch:()=>{throw Error('MUST NOT FETCH');},
+}),/invalid_clock/);
+await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
+ backendFetch:async()=>new Response(JSON.stringify(body(owner)),{
+  status:200,headers:{'content-length':'-1'},
+ }),
+}),/oversized/);
+await assert.rejects(()=>readWorkGoogleQaOwnerBinding({...args,
+ backendFetch:async()=>new Response(new Uint8Array([0xff,0xfe]),{status:200}),
+}),/invalid_json/);
 const source=readFileSync('services/jill-order-desk/work-google-owner-binding.mjs','utf8');
 assert.doesNotMatch(source,/getSheet_|SpreadsheetApp|draftOrderCreate|draftOrderInvoiceSend|db\.batch/);
 assert.match(source,/jill_order_merchant_owner_binding:'1'/);
 assert.match(source,/verifyWorkQuoteOwnerBindingReceipt/);
 assert.match(source,/approvedEndpoint===DENY_DETAIL/);
-console.log('PASS future WORK Google owner-binding client: domain-separated signed request, nonce-bound receipt HMAC, strict no-PII 2 KB response, @9 denied, OFF makes zero requests.');
+console.log('PASS future WORK Google owner-binding client: domain-separated signed request, nonce-bound receipt HMAC, strict no-PII 2 KB response, challenge expiry, invalid UTF-8 denied, @9 denied, OFF makes zero requests.');
