@@ -158,7 +158,7 @@ const account=(path,gid,data)=>new Request('https://qa.workers.dev'+path,{
  method:'POST',
  headers:{'content-type':'application/json',
   ...(gid?{authorization:'Bearer '+jwt(gid)}:{})},
- body:JSON.stringify(data),
+ ...(path==='/jill-contact-account'?{}:{body:JSON.stringify(data)}),
 });
 const call=request=>handleCloudflareCustomOrderWork(request,gateway);
 
