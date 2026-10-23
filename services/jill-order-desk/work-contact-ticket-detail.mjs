@@ -3,6 +3,7 @@
 // Exact Owner/D1 permission comes BEFORE any contact data lookup.
 import {createHash} from 'node:crypto';
 import {readWorkMerchantPermission} from './merchant-access.mjs';
+import {projectVerifiedContactThread} from '../../backend/work-contact-thread-read.mjs';
 
 const SHOP='jill-work.myshopify.com';
 const ID=/^jill:contact:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
@@ -71,12 +72,13 @@ export function projectVerifiedWorkContactDetail({row,ticketId}={}){
  * request?:Request,ticketId?:string,enabled?:boolean,
  * authenticate?:{admin:(request:Request)=>Promise<any>},
  * db?:any,authorize?:typeof readWorkMerchantPermission,
- * statusControlsEnabled?:boolean
+ * statusControlsEnabled?:boolean,messageControlsEnabled?:boolean
  * }} [options]
  */
 export async function readWorkContactTicketDetail({
  request,ticketId,enabled=false,authenticate,db,
- statusControlsEnabled=false,authorize=readWorkMerchantPermission,
+ statusControlsEnabled=false,messageControlsEnabled=false,
+ authorize=readWorkMerchantPermission,
 }={}){
  if(enabled!==true)return result(503,'not_connected');
  if(request?.method!=='GET')return result(405,'method_not_allowed');
@@ -98,6 +100,25 @@ export async function readWorkContactTicketDetail({
   ).bind(SHOP,ticketId).first();
   if(row===null)return result(404,'not_found');
   const detail=projectVerifiedWorkContactDetail({row,ticketId});
-  return result(200,'ready',{detail,can_change_status:statusControlsEnabled===true});
+  let messages=[];
+  // The private Owner view may show public messages only for a ticket
+  // already claimed into an exact Shopify Customer Account.
+  if(messageControlsEnabled===true&&GID.test(row.owner_customer_gid||'')){
+   const collection=await db.prepare(
+    'SELECT sequence,body_text,created_at_ms '+
+    'FROM jill_work_contact_messages WHERE shop=? AND ticket_id=? '+
+    'ORDER BY sequence ASC LIMIT 51'
+   ).bind(SHOP,ticketId).all();
+   if(!Array.isArray(collection?.results)||collection.results.length>50)
+    return result(503,'message_source_unverified');
+   messages=projectVerifiedContactThread({
+    ticket,row,messages:collection.results,expectedId:ticketId,
+    customerGid:row.owner_customer_gid,
+   }).messages;
+  }
+  return result(200,'ready',{detail,messages,
+   can_change_status:statusControlsEnabled===true,
+   can_post_message:messageControlsEnabled===true&&
+      GID.test(row.owner_customer_gid||'')});
  }catch{return result(503,'source_unavailable');}
 }
