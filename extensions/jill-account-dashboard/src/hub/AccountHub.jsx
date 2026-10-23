@@ -52,7 +52,7 @@ export default function AccountHub({accountState = null}) {
     'custom-orders': <CustomOrders onNavigate={onNavigate}
       drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     messages: <Messages requestedSubmissionId={messageRequestTarget}
-      drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
+      onNavigate={onNavigate} drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     celebrations: <Celebrations />,
     saved: <SavedPreferences />,
     settings: <Settings onNavigate={onNavigate} />,
