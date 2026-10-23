@@ -30,6 +30,9 @@ const HEADERS={'cache-control':'no-store',
 const denied=(status,code)=>Response.json(
  {ok:false,code,kind:'jill_work_contact_private_bridge'},
  {status,headers:HEADERS});
+/** @param {{
+ * request?:Request,env?:any,now?:()=>number
+ * }} [options] */
 export async function handleWorkContactPrivateBridge({
  request,env,now=Date.now,
 }={}){
