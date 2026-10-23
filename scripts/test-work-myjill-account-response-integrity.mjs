@@ -38,6 +38,10 @@ const bad=[
    /unverified_message_thread/],
  [[{...order,timeline:order.timeline.map((ev,i)=>i===1?{...ev,revision:1}:ev)}],
    /unverified_message_thread/],
+ [[{...order,timeline:order.timeline.map((ev,i)=>i===1?{...ev,note:'x'.repeat(501)}:ev)}],
+   /Invalid Custom Order history/],
+ [[{...order,timeline:order.timeline.map((ev,i)=>i===1?{...ev,note:{private:'not text'}}:ev)}],
+   /Invalid Custom Order history/],
 ];
 for(const [orders,reason] of bad){
  await assert.rejects(()=>read(orders),reason);
