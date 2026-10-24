@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
  VERSION_PIN,compareUploadedWorkHqVersion,inspectUploadedWorkHqInactive,
+ describeUploadedWorkHqBindingDelta,
 } from './inspect-work-hq-uploaded-inactive-readonly.mjs';
 const src=JSON.parse(readFileSync(
  'services/jill-order-desk/app-home/wrangler.canary.jsonc','utf8'));
@@ -34,6 +35,35 @@ const uploadedView={id:VERSION_PIN.uploaded,
  resources:{bindings:structuredClone(expectedBindings)}};
 const copyView=()=>structuredClone(uploadedView);
 const safe=compareUploadedWorkHqVersion({activeView,uploadedView});
+const cleanDiagnostic=describeUploadedWorkHqBindingDelta({
+ activeView,uploadedView,
+});
+assert.deepEqual(cleanDiagnostic.removed_bindings,[]);
+assert.deepEqual(cleanDiagnostic.changed_binding_types,[]);
+assert.deepEqual(cleanDiagnostic.new_bindings,[]);
+assert.equal(cleanDiagnostic.status,'HOLD');
+assert.equal(cleanDiagnostic.uploaded_version_is_safe_to_promote,false);
+const oldWithMetadata=structuredClone(activeView);
+oldWithMetadata.resources.bindings.push(mk(
+ 'CF_VERSION_METADATA','version_metadata'));
+const typedDelta=describeUploadedWorkHqBindingDelta({
+ activeView:oldWithMetadata,uploadedView,
+});
+assert.deepEqual(typedDelta.removed_bindings,[
+ {name:'CF_VERSION_METADATA',active_type:'version_metadata'},
+]);
+assert.equal(JSON.stringify(typedDelta).includes('secret_test_value'),false);
+const changedTypeView=copyView();
+changedTypeView.resources.bindings.push(mk(
+ 'CF_VERSION_METADATA','assets'));
+const changedTypeDelta=describeUploadedWorkHqBindingDelta({
+ activeView:oldWithMetadata,uploadedView:changedTypeView,
+});
+assert.deepEqual(changedTypeDelta.changed_binding_types,[{
+ name:'CF_VERSION_METADATA',active_type:'version_metadata',
+ uploaded_type:'assets',
+}]);
+assert.equal(changedTypeDelta.uploaded_version_is_safe_to_promote,false);
 assert.equal(safe.uploaded_binding_scope_matches_active,true);
 assert.equal(safe.remote_secret_value_continuity_verified,false);
 assert.equal(safe.actual_shopify_owner_login_verified,false);
@@ -109,10 +139,11 @@ function scenario(options={}){
   return {hq:{enabled:true,previews_enabled:false},
    gateway:{enabled:true,previews_enabled:false}};
  };
- return {calls,run:()=>inspectUploadedWorkHqInactive({
-  readLocal,readMetadata,readSubdomains,
-  compiledHq:src,gatewayCandidate:gw,
- })};
+ return {calls,run:(diagnosticOnly=false)=>
+  inspectUploadedWorkHqInactive({
+   readLocal,readMetadata,readSubdomains,
+   compiledHq:src,gatewayCandidate:gw,diagnosticOnly,
+  })};
 }
 const good=scenario();
 const report=await good.run();
@@ -151,4 +182,26 @@ const badLocal=scenario({local:data=>{
 await assert.rejects(badLocal.run(),
  /contact_inactive_upload_offline_owner_pinned_local_bytes_changed/);
 assert.equal(badLocal.calls.meta.length,0);
-console.log('PASS: WORK HQ exact uploaded inactive version verified against active OAuth/flags/D1/secret names, rejects allocation and metadata drift; read-only HOLD.');
+const diagnosticScenario=scenario({meta:({which,mode,id},view)=>{
+ if(which==='hq'&&mode==='version'&&id===VERSION_PIN.active){
+  view.resources.bindings.push(mk(
+   'CF_VERSION_METADATA','version_metadata'));
+ }
+ return view;
+}});
+const mismatchReport=await diagnosticScenario.run(true);
+assert.equal(mismatchReport.status,'HOLD');
+assert.equal(mismatchReport.diagnostic_only,true);
+assert.equal(mismatchReport.confirmed_not_in_current_traffic_allocation,true);
+assert.deepEqual(mismatchReport.removed_bindings,[
+ {name:'CF_VERSION_METADATA',active_type:'version_metadata'},
+]);
+assert.equal(mismatchReport.uploaded_version_is_safe_to_promote,false);
+assert.equal(mismatchReport.deployment_performed,false);
+assert.equal(mismatchReport.traffic_changed,false);
+await assert.rejects(diagnosticScenario.run(false),
+ /work_hq_inactive_postflight_existing_binding_removed_or_retyped/);
+const diagnosticBlocked=scenario({allocated:true});
+await assert.rejects(diagnosticBlocked.run(true),
+ /work_hq_inactive_postflight_new_version_serving_or_allocation_changed_hq/);
+console.log('PASS: WORK HQ inactive version strict checker still fails closed; diagnostic emits only bounded binding names and types, no release authorization.');
