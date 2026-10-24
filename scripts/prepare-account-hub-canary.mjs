@@ -138,6 +138,9 @@ export function prepareCanary(mode) {
       // WORK canary copy next to the canonical screen, without a new API owner.
       fs.copyFileSync(path.join(base,'src','pages','custom-order-presentation.mjs'),
         path.join(dest,'src','pages','custom-order-presentation.mjs'));
+      // Canonical signed-list filters contain only statuses and IDs.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-order-activity.mjs'),
+        path.join(dest,'src','pages','myjill-order-activity.mjs'));
       // Home's signed recent request reader has no independent identity
       // store; ship its small read-only projection with the WORK canary.
       fs.copyFileSync(path.join(base,'src','pages','myjill-recent-requests.mjs'),
