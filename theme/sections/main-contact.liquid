@@ -14,7 +14,9 @@
   endif
 %}
 
-<section class="jill-contact jill-page-width" data-jill-contact>
+<section class="jill-contact jill-page-width" data-jill-contact
+  data-jill-work-contact-mode="off"
+  data-jill-work-contact-endpoint="/apps/jill-custom-order/contact">
   <header class="jill-contact__header">
     <h1 class="jill-contact__title">{{ section.settings.heading | escape }}</h1>
     {% if section.settings.intro != blank %}

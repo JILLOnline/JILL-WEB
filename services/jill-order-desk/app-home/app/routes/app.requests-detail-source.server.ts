@@ -12,13 +12,17 @@ import {workQuoteDraftFeatureReady}
   from "../../../work-quote-release-readiness.mjs";
 import {workQuoteCatalogReviewReady}
   from "../../../work-quote-catalog-review.mjs";
+import {workQuoteOwnerPreflightReady}
+  from "../../../work-quote-owner-preflight.mjs";
 
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const headers={"cache-control":"private, no-store, max-age=0",
   "x-content-type-options":"nosniff"};
 function result(status:number,state:string,detail:unknown=null,
-  quoteDraftEnabled=false,quoteCatalogReviewEnabled=false){
-  return Response.json({state,detail,quoteDraftEnabled,quoteCatalogReviewEnabled},{status,headers});
+  quoteDraftEnabled=false,quoteCatalogReviewEnabled=false,
+  quotePreflightEnabled=false){
+  return Response.json({state,detail,quoteDraftEnabled,
+    quoteCatalogReviewEnabled,quotePreflightEnabled},{status,headers});
 }
 export async function loadAuthorizedWorkRequestDetail({
   request,context,params,
@@ -55,7 +59,7 @@ export async function loadAuthorizedWorkRequestDetail({
     // Merely surfacing this boolean never authorizes a write: the quote
     // endpoint independently checks capability, origin, and fresh source.
     return result(200,"ready",detail,workQuoteDraftFeatureReady(env),
-      workQuoteCatalogReviewReady(env));
+      workQuoteCatalogReviewReady(env),workQuoteOwnerPreflightReady(env));
   }catch{
     // No internal failure details, stale customer data, raw records or keys.
     return result(503,"source_unavailable");

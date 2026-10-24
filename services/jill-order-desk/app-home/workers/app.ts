@@ -1,4 +1,8 @@
 import {createRequestHandler} from "react-router";
+import {WorkerEntrypoint} from "cloudflare:workers";
+import {handleWorkContactPrivateBridge}
+  from "../../work-contact-private-bridge.mjs";
+
 import {workAppHomeOrigin,workAdminAppDestination} from "../../shopify-host/sdk-config.mjs";
 import {workQuoteDraftFeatureReady,workQuoteDraftSchemaReady}
   from "../../work-quote-release-readiness.mjs";
@@ -63,10 +67,13 @@ export default {
     // A matching Origin is ONLY a browser CSRF precondition, never merchant
     // authorization: the downstream action still verifies Shopify Owner,
     // the WORK D1 grant, write flag, and the Google QA HMAC signature.
+    // Match the whole Contact detail subtree: React Router percent-encodes
+    // ticket colons, so a literal-ID regexp would miss valid write paths.
     if(request.method==="POST" &&
        (url.pathname==="/app/requests/command" ||
         url.pathname==="/app/requests/media/inspect" ||
-        url.pathname==="/app/requests/quote-draft") &&
+        url.pathname==="/app/requests/quote-draft" ||
+        url.pathname.startsWith("/app/contacts/")) &&
        request.headers.get("origin")!==expected)
       return unavailable("invalid_origin",403);
     // The current v34 Worker continues to deny quote routes. This
@@ -121,3 +128,14 @@ export default {
     return handler(request,{cloudflare:{env,ctx}});
   },
 } satisfies ExportedHandler<Env>;
+
+/** A named, private Service Binding RPC endpoint — never an HTTP URL.
+ *  The default fetch handler above remains unchanged.
+ *  A separate HQ hard-OFF flag is required even with this binding. */
+export class JillContactPrivate extends WorkerEntrypoint {
+  async fetch(request:Request):Promise<Response>{
+    return handleWorkContactPrivateBridge({
+      request,env:this.env as Env,
+    });
+  }
+}

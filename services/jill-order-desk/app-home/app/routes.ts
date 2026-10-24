@@ -9,6 +9,9 @@ export default [
     route("catalog","routes/app.catalog.tsx"),
     route("queue","routes/app.queue.tsx"),
     route("messages","routes/app.messages.tsx"),
+    route("contacts","routes/app.contacts.tsx"),
+    route("contacts/:ticketId","routes/app.contacts.$ticketId.tsx"),
+    route("contacts/:ticketId/message","routes/app.contacts.$ticketId.message.tsx"),
     route("requests","routes/app.requests.layout.tsx",[
       index("routes/app.requests.tsx"),
       route(":submissionId","routes/app.requests.$submissionId.tsx"),
@@ -19,6 +22,7 @@ export default [
     route("requests/thread","routes/app.requests.thread.tsx"),
     route("requests/quote-draft","routes/app.requests.quote-draft.tsx"),
     route("requests/quote-catalog","routes/app.requests.quote-catalog.tsx"),
+    route("requests/quote-preflight","routes/app.requests.quote-preflight.tsx"),
     route("requests/media/inspect","routes/app.requests.media.inspect.tsx"),
     route("setup-owner","routes/app.setup-owner.tsx"),
   ]),

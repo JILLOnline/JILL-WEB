@@ -1,0 +1,31 @@
+// Owner Quote WORK UI entrypoint is hidden until certified signed owner detail
+// explicitly grants all THREE independent WORK capability flags.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(p,'utf8');
+const root='services/jill-order-desk/app-home/app/';
+const source=read(root+'routes/app.requests-detail-source.server.ts');
+const detail=read(root+'routes/app.requests.$submissionId.tsx');
+const worksheet=read(root+'components/WorkQuoteWorksheet.tsx');
+const panel=read(root+'components/WorkQuoteOwnerPreflightPanel.tsx');
+const route=read(root+'routes/app.requests.quote-preflight.tsx');
+const registry=read(root+'routes.ts');
+assert.match(source,/workQuoteOwnerPreflightReady\(env\)/);
+assert.match(source,/quotePreflightEnabled=false/);
+assert.match(source,/result\(200,"ready",detail,workQuoteDraftFeatureReady\(env\)/);
+assert.match(detail,/quotePreflightEnabled=\{original\?\.quotePreflightEnabled===true &&/);
+assert.match(detail,/controlsEnabled\}/);
+assert.match(worksheet,/quotePreflightEnabled=false/);
+assert.match(worksheet,/\{quotePreflightEnabled&&<WorkQuoteOwnerPreflightPanel/);
+assert.match(panel,/useFetcher<State>\(\)/);
+assert.match(panel,/fetcher\.load\("\/app\/requests\/quote-preflight\?submission_id="/);
+assert.match(panel,/encodeURIComponent\(submissionId\)/);
+assert.match(panel,/data\.can_invoice===false/);
+assert.match(panel,/data\.can_create_order===false/);
+assert.match(panel,/data\.can_charge_customer===false/);
+assert.match(panel,/This does not approve a payment, invoice, or order/);
+assert.doesNotMatch(panel,/fetch\s*\(|draftOrderCreate|draftOrderInvoiceSend|fetcher\.submit|localStorage|sessionStorage/);
+assert.match(registry,/route\("requests\/quote-preflight","routes\/app\.requests\.quote-preflight\.tsx"\)/);
+assert.match(route,/workQuoteOwnerPreflightReady\(env\)/);
+assert.doesNotMatch(route,/action\s*\(|draftOrderCreate|fetch\s*\(/);
+console.log('PASS Owner-only quote readiness UI: 3-source signed owner gating, no unauthorized button/auto read, GET-only, never invoice/checkout.');

@@ -37,6 +37,7 @@ export default function App(){
           <NavLink to="/app" end>Home</NavLink>
           <NavLink to="/app/requests">Requests</NavLink>
           <NavLink to="/app/messages">Messages</NavLink>
+          <NavLink to="/app/contacts">Contact Us</NavLink>
           <NavLink to="/app/catalog">Catalog</NavLink>
           <NavLink to="/app/access">Settings</NavLink>
         </div>

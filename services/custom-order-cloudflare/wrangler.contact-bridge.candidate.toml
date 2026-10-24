@@ -1,0 +1,37 @@
+# SOURCE-ONLY candidate. DO NOT DEPLOY without a reviewed paired HQ
+# JillContactPrivate named WorkerEntrypoint and WORK-only activation plan.
+# Existing production/WORK gateway wrangler.toml remains unchanged.
+name = "jill-work-custom-orders-qa"
+main = "worker.mjs"
+compatibility_date = "2026-10-12"
+workers_dev = true
+# PROPOSED WORK-only hardening: disables Version URLs, not the existing
+# workers.dev route. This candidate is never the active deployment config.
+# Must NOT be uploaded until the current preview settings are independently
+# changed/protected with explicit owner approval, then re-read as disabled.
+preview_urls = false
+
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "CustomOrderRateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CustomOrderRateLimiter"]
+
+# This grants ONLY an RPC connection to the named HQ contact controller.
+# No public Worker access to HQ D1, no paid resources, no Contact flags.
+[[services]]
+binding = "JILL_WORK_HQ_CONTACT_PRIVATE"
+service = "jill-order-desk-canary-work"
+entrypoint = "JillContactPrivate"
+
+# Preserve every credential required by the ACTIVE WORK gateway. This
+# declares names only. It must never contain secret values.
+# A later approved upload must independently verify those names are
+# inherited on its newly created, still-INACTIVE version.
+[secrets]
+required = ["SHOPIFY_WORK_APP_SECRET", "JILL_CUSTOM_ORDER_GATEWAY_SECRET", "JILL_CUSTOM_ORDER_QA_BACKEND_URL"]

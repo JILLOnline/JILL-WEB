@@ -1,0 +1,55 @@
+name: JILL HQ to My JILL integration preview
+
+# Source-only partner check against the separate My JILL draft. Keeps
+# independent protected-work release checks intact. No provider secrets,
+# Cloudflare/Shopify/Google publish, database writes, or production traffic.
+on:
+  push:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+  pull_request:
+    branches:
+      - jill/m1-work-queue-preview-20261021
+    paths:
+      - 'backend/work-contact-ticket-claim.mjs'
+      - 'backend/work-contact-account-read.mjs'
+      - 'backend/work-contact-thread-read.mjs'
+      - 'backend/customer-account-work-session.mjs'
+      - 'services/custom-order-cloudflare/handler.mjs'
+      - 'services/jill-order-desk/migrations/0004_work_contact_tickets_source_only.sql'
+      - '.github/workflows/jill-hq-myjill-integration-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contact-bridge:
+    name: Verify HQ implementation against actual My JILL client (A/B)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout HQ source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout My JILL draft source read-only
+        uses: actions/checkout@v4
+        with:
+          ref: jill/myjill-message-handoff-preview-20261022
+          path: myjill-source
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record paired source commits
+        run: |
+          git rev-parse HEAD
+          git -C myjill-source rev-parse HEAD
+      - name: Run two-tree contract test
+        working-directory: myjill-source
+        env:
+          JILL_HQ_SOURCE_DIR: ..
+        run: |
+          node --check scripts/test-work-cross-pr-contact-integration.mjs
+          node scripts/test-work-cross-pr-contact-integration.mjs

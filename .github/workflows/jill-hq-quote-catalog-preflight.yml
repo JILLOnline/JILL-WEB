@@ -1,0 +1,297 @@
+name: JILL HQ quote + catalog preflight preview
+
+# New independent source-only CI. No release certificate changes; no
+# Cloudflare Worker upload, Shopify Draft Order, Google, D1 or R2 writes.
+on:
+  push:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+  pull_request:
+    branches:
+      - jill/rewards-work
+      - jill/m1-work-queue-preview-20261021
+    paths:
+      - 'services/jill-order-desk/work-quote-catalog-preflight.mjs'
+      - 'scripts/test-work-quote-catalog-preflight.mjs'
+      - 'services/jill-order-desk/work-quote-owner-preflight.mjs'
+      - 'scripts/test-work-hq-quote-owner-preflight.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.requests.quote-preflight.tsx'
+      - 'services/jill-order-desk/app-home/app/routes.ts'
+      - 'services/jill-order-desk/app-home/app/routes/app.requests-detail-source.server.ts'
+      - 'services/jill-order-desk/app-home/app/routes/app.requests.$submissionId.tsx'
+      - 'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx'
+      - 'services/jill-order-desk/app-home/app/components/WorkQuoteOwnerPreflightPanel.tsx'
+      - 'scripts/test-work-hq-quote-owner-ui.mjs'
+      - 'services/jill-order-desk/work-quote-shopify-customer-bridge.mjs'
+      - 'scripts/test-work-quote-shopify-customer-bridge.mjs'
+      - 'services/jill-order-desk/work-google-owner-binding.mjs'
+      - 'scripts/test-work-google-owner-binding.mjs'
+      - 'backend/google-apps-script/JILL_WORK_HQ_OWNER_BINDING_QA_SOURCE.gs'
+      - 'scripts/test-work-google-owner-ledger-qa.mjs'
+      - 'scripts/test-work-owner-proof-contract.mjs'
+      - 'services/jill-order-desk/work-unified-inquiry-bridge.mjs'
+      - 'scripts/test-work-unified-inquiry-bridge.mjs'
+      - 'backend/work-contact-ticket-intake.mjs'
+      - 'scripts/test-work-contact-ticket-intake.mjs'
+      - 'services/jill-order-desk/work-contact-ticket-inbox.mjs'
+      - 'scripts/test-work-contact-ticket-inbox.mjs'
+      - 'services/jill-order-desk/work-contact-ticket-detail.mjs'
+      - 'scripts/test-work-contact-ticket-detail.mjs'
+      - 'theme/assets/jill-contact-work-contract.js'
+      - 'theme/assets/jill-contact.js'
+      - 'theme/layout/theme.liquid'
+      - 'theme/sections/main-contact.liquid'
+      - 'services/custom-order-cloudflare/handler.mjs'
+      - 'services/custom-order-cloudflare/wrangler.contact-bridge.candidate.toml'
+      - 'services/jill-order-desk/work-contact-private-bridge.mjs'
+      - 'services/jill-order-desk/app-home/workers/app.ts'
+      - 'scripts/check-work-contact-hq-bundle.mjs'
+      - 'scripts/test-work-contact-storefront-adapter.mjs'
+      - 'scripts/test-work-contact-worker-routing.mjs'
+      - 'scripts/test-work-contact-private-e2e.mjs'
+      - 'scripts/audit-work-contact-paired-release.mjs'
+      - 'scripts/test-work-contact-paired-release.mjs'
+      - 'scripts/plan-work-contact-binding-parity.mjs'
+      - 'scripts/test-work-contact-binding-parity.mjs'
+      - 'scripts/test-work-contact-hq-reconcile.mjs'
+      - 'scripts/prepare-work-contact-reconcile-synthetic.mjs'
+      - 'scripts/inspect-work-contact-paired-baseline-readonly.mjs'
+      - 'scripts/test-work-contact-paired-baseline-readonly.mjs'
+      - 'scripts/prepare-work-contact-owner-local-candidate.mjs'
+      - 'scripts/attest-work-contact-local-artifact-readonly.mjs'
+      - 'scripts/test-work-contact-owner-local-candidate.mjs'
+      - 'scripts/inspect-work-contact-preview-exposure-readonly.mjs'
+      - 'scripts/test-work-contact-preview-exposure-readonly.mjs'
+      - 'scripts/plan-work-contact-preview-lockdown.mjs'
+      - 'scripts/test-work-contact-preview-lockdown.mjs'
+      - 'scripts/disable-work-version-urls-owner-approved.mjs'
+      - 'scripts/test-disable-work-version-urls-owner-approved.mjs'
+      - 'scripts/prepare-work-contact-owner-preview-locked.mjs'
+      - 'scripts/test-work-contact-owner-preview-locked.mjs'
+      - 'scripts/review-work-contact-inactive-upload-offline.mjs'
+      - 'scripts/test-work-contact-inactive-upload-offline.mjs'
+      - 'scripts/review-work-contact-combined-evidence-readonly.mjs'
+      - 'scripts/test-work-contact-combined-evidence-readonly.mjs'
+      - 'scripts/inspect-work-hq-uploaded-inactive-readonly.mjs'
+      - 'scripts/test-work-hq-uploaded-inactive-readonly.mjs'
+      - 'scripts/prepare-work-hq-version-metadata-repair-local-only.mjs'
+      - 'scripts/test-work-hq-version-metadata-repair-local-only.mjs'
+      - 'scripts/review-work-hq-repaired-artifact-offline.mjs'
+      - 'scripts/test-work-hq-repaired-artifact-offline.mjs'
+      - 'scripts/inspect-work-hq-corrected-inactive-readonly.mjs'
+      - 'scripts/test-work-hq-corrected-inactive-readonly.mjs'
+      - 'scripts/inspect-work-hq-visual-activation-readonly.mjs'
+      - 'scripts/test-work-hq-visual-activation-readonly.mjs'
+      - 'scripts/prepare-work-contact-preview-lockdown-synthetic.mjs'
+      - 'backend/work-contact-account-read.mjs'
+      - 'scripts/test-work-contact-account-read.mjs'
+      - 'backend/work-contact-ticket-claim.mjs'
+      - 'scripts/test-work-contact-ticket-claim.mjs'
+      - 'scripts/test-work-contact-db-schema.py'
+      - 'scripts/inspect-work-contact-d1-readonly.mjs'
+      - 'scripts/test-work-contact-d1-readonly.mjs'
+      - 'scripts/inspect-work-contact-runtime-readonly.mjs'
+      - 'scripts/test-work-contact-runtime-readonly.mjs'
+      - 'scripts/verify-work-contact-d1-postflight.mjs'
+      - 'scripts/test-work-contact-d1-postflight.mjs'
+      - 'services/jill-order-desk/work-contact-status-change.mjs'
+      - 'scripts/test-work-contact-status-change.mjs'
+      - 'scripts/test-work-contact-status-handoff.mjs'
+      - 'services/jill-order-desk/work-contact-message-write.mjs'
+      - 'backend/work-contact-thread-read.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.message.tsx'
+      - 'scripts/test-work-contact-message-bridge.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.tsx'
+      - 'scripts/test-work-hq-contact-route.mjs'
+      - 'services/jill-order-desk/migrations/0004_work_contact_tickets_source_only.sql'
+      - 'docs/WORK_UNIFIED_INTEGRATION_MILESTONES_20261023.md'
+      - 'docs/WORK_HQ_QUOTE_CATALOG_PREFLIGHT_20261022.md'
+      - '.github/workflows/jill-hq-quote-catalog-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quote-preflight-offline:
+    name: Verify original request, saved D1 draft model and Shopify Catalog source handoff (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify pure quote-stage orchestration and refusal cases
+        run: |
+          node scripts/test-work-quote-catalog-preflight.mjs
+          node scripts/test-work-hq-quote-owner-preflight.mjs
+          node scripts/test-work-hq-quote-owner-ui.mjs
+          node scripts/test-work-quote-shopify-customer-bridge.mjs
+          node scripts/test-work-google-owner-binding.mjs
+          node scripts/test-work-google-owner-ledger-qa.mjs
+          node scripts/test-work-owner-proof-contract.mjs
+          node scripts/test-work-unified-inquiry-bridge.mjs
+          node scripts/test-work-contact-ticket-intake.mjs
+          node scripts/test-work-contact-ticket-inbox.mjs
+          node scripts/test-work-contact-ticket-detail.mjs
+          node scripts/test-work-contact-storefront-adapter.mjs
+          node scripts/test-work-contact-worker-routing.mjs
+          node scripts/test-work-contact-private-e2e.mjs
+          node scripts/test-work-contact-paired-release.mjs
+          node scripts/test-work-contact-binding-parity.mjs
+          node scripts/test-work-contact-hq-reconcile.mjs
+          node scripts/test-work-contact-paired-baseline-readonly.mjs
+          node scripts/test-work-contact-owner-local-candidate.mjs
+          node scripts/test-work-contact-preview-exposure-readonly.mjs
+          node scripts/test-work-contact-preview-lockdown.mjs
+          node scripts/test-disable-work-version-urls-owner-approved.mjs
+          node scripts/test-work-contact-owner-preview-locked.mjs
+          node scripts/test-work-contact-inactive-upload-offline.mjs
+          node scripts/test-work-contact-combined-evidence-readonly.mjs
+          node scripts/test-work-hq-uploaded-inactive-readonly.mjs
+          node scripts/test-work-hq-version-metadata-repair-local-only.mjs
+          node scripts/test-work-hq-repaired-artifact-offline.mjs
+          node scripts/review-work-hq-repaired-artifact-offline.mjs
+          node scripts/test-work-hq-corrected-inactive-readonly.mjs
+          node scripts/test-work-hq-visual-activation-readonly.mjs
+          node scripts/inspect-work-hq-visual-activation-readonly.mjs
+          node scripts/inspect-work-hq-corrected-inactive-readonly.mjs
+          node scripts/inspect-work-hq-uploaded-inactive-readonly.mjs
+          node scripts/review-work-contact-combined-evidence-readonly.mjs
+          node scripts/review-work-contact-inactive-upload-offline.mjs
+          node scripts/inspect-work-contact-preview-exposure-readonly.mjs
+          node scripts/inspect-work-contact-paired-baseline-readonly.mjs
+          node scripts/audit-work-contact-paired-release.mjs
+          node scripts/test-work-contact-account-read.mjs
+          node scripts/test-work-contact-ticket-claim.mjs
+          node scripts/test-work-contact-status-change.mjs
+          node scripts/test-work-contact-status-handoff.mjs
+          node scripts/test-work-contact-message-bridge.mjs
+          python3 scripts/test-work-contact-db-schema.py
+          node scripts/test-work-contact-d1-readonly.mjs
+          node scripts/test-work-contact-runtime-readonly.mjs
+          node scripts/test-work-contact-d1-postflight.mjs
+          node scripts/verify-work-contact-d1-postflight.mjs
+          node scripts/inspect-work-contact-runtime-readonly.mjs
+          node scripts/inspect-work-contact-d1-readonly.mjs
+          node scripts/test-work-hq-contact-route.mjs
+      - name: Regress original saved-quote handoff and exact variant read security
+        run: |
+          node scripts/test-work-quote-commerce-handoff.mjs
+          node scripts/test-work-hq-catalog-quote-bridge.mjs
+          node scripts/test-work-quote-calculation.mjs
+      - name: Install embedded WORK app dependencies for compile checks only
+        run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+      - name: Typecheck real WORK embedded-app routes
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Build real WORK canary embedded app without deployment
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Inspect generated HQ Worker entrypoint exports
+        run: node scripts/check-work-contact-hq-bundle.mjs
+      - name: Create local OAuth-preserving HQ canary candidate (never publish)
+        run: node scripts/prepare-work-canary-oauth-manifest.mjs
+      - name: Compile OAuth-ON HQ canary candidate without deploying
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.oauth-canary.json --outdir "$RUNNER_TEMP/jill-contact-hq-oauth-preview"
+      - name: Produce synthetic five-setting HQ WORK parity candidate (never upload)
+        run: node scripts/prepare-work-contact-reconcile-synthetic.mjs
+      - name: Dry-run compile reconciled HQ candidate with existing business flags
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.contact-reconcile-synthetic.json --outdir "$RUNNER_TEMP/jill-contact-reconcile-smoke"
+      - name: Generate synthetic WORK HQ Version URL disabled candidate
+        run: node scripts/prepare-work-contact-preview-lockdown-synthetic.mjs
+      - name: Wrangler compile only HQ version URL lockdown (never upload)
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.contact-preview-disabled-synthetic.json --outdir "$RUNNER_TEMP/jill-contact-hq-preview-disabled"
+      - name: Install isolated WORK gateway compiler dependencies
+        run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund --package-lock=false
+      - name: Compile unshipped WORK gateway service binding candidate (dry-run only)
+        working-directory: services/custom-order-cloudflare
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./wrangler.contact-bridge.candidate.toml --outdir "$RUNNER_TEMP/jill-contact-gateway-candidate"
+      - name: No deploy/production script, only compiled pure Node source
+        run: |
+          node --check services/jill-order-desk/work-quote-catalog-preflight.mjs
+          node --check scripts/test-work-quote-catalog-preflight.mjs
+          node --check services/jill-order-desk/work-quote-owner-preflight.mjs
+          node --check scripts/test-work-hq-quote-owner-preflight.mjs
+          node --check scripts/test-work-hq-quote-owner-ui.mjs
+          node --check services/jill-order-desk/work-quote-shopify-customer-bridge.mjs
+          node --check scripts/test-work-quote-shopify-customer-bridge.mjs
+          node --check services/jill-order-desk/work-google-owner-binding.mjs
+          node --check scripts/test-work-google-owner-binding.mjs
+          node --check scripts/test-work-google-owner-ledger-qa.mjs
+          node --check scripts/test-work-owner-proof-contract.mjs
+          node --check services/jill-order-desk/work-unified-inquiry-bridge.mjs
+          node --check scripts/test-work-unified-inquiry-bridge.mjs
+          node --check backend/work-contact-ticket-intake.mjs
+          node --check scripts/test-work-contact-ticket-intake.mjs
+          node --check services/jill-order-desk/work-contact-ticket-inbox.mjs
+          node --check scripts/test-work-contact-ticket-inbox.mjs
+          node --check services/jill-order-desk/work-contact-ticket-detail.mjs
+          node --check scripts/test-work-contact-ticket-detail.mjs
+          node --check theme/assets/jill-contact-work-contract.js
+          node --check theme/assets/jill-contact.js
+          node --check services/custom-order-cloudflare/handler.mjs
+          node --check services/jill-order-desk/work-contact-private-bridge.mjs
+          node --check scripts/check-work-contact-hq-bundle.mjs
+          node --check scripts/test-work-contact-storefront-adapter.mjs
+          node --check scripts/test-work-contact-worker-routing.mjs
+          node --check scripts/test-work-contact-private-e2e.mjs
+          node --check scripts/audit-work-contact-paired-release.mjs
+          node --check scripts/test-work-contact-paired-release.mjs
+          node --check scripts/plan-work-contact-binding-parity.mjs
+          node --check scripts/test-work-contact-binding-parity.mjs
+          node --check scripts/test-work-contact-hq-reconcile.mjs
+          node --check scripts/prepare-work-contact-reconcile-synthetic.mjs
+          node --check scripts/inspect-work-contact-paired-baseline-readonly.mjs
+          node --check scripts/test-work-contact-paired-baseline-readonly.mjs
+          node --check scripts/prepare-work-contact-owner-local-candidate.mjs
+          node --check scripts/attest-work-contact-local-artifact-readonly.mjs
+          node --check scripts/test-work-contact-owner-local-candidate.mjs
+          node --check scripts/inspect-work-contact-preview-exposure-readonly.mjs
+          node --check scripts/test-work-contact-preview-exposure-readonly.mjs
+          node --check scripts/plan-work-contact-preview-lockdown.mjs
+          node --check scripts/test-work-contact-preview-lockdown.mjs
+          node --check scripts/disable-work-version-urls-owner-approved.mjs
+          node --check scripts/test-disable-work-version-urls-owner-approved.mjs
+          node --check scripts/prepare-work-contact-owner-preview-locked.mjs
+          node --check scripts/test-work-contact-owner-preview-locked.mjs
+          node --check scripts/review-work-contact-inactive-upload-offline.mjs
+          node --check scripts/test-work-contact-inactive-upload-offline.mjs
+          node --check scripts/review-work-contact-combined-evidence-readonly.mjs
+          node --check scripts/test-work-contact-combined-evidence-readonly.mjs
+          node --check scripts/inspect-work-hq-uploaded-inactive-readonly.mjs
+          node --check scripts/test-work-hq-uploaded-inactive-readonly.mjs
+          node --check scripts/prepare-work-hq-version-metadata-repair-local-only.mjs
+          node --check scripts/test-work-hq-version-metadata-repair-local-only.mjs
+          node --check scripts/review-work-hq-repaired-artifact-offline.mjs
+          node --check scripts/test-work-hq-repaired-artifact-offline.mjs
+          node --check scripts/inspect-work-hq-corrected-inactive-readonly.mjs
+          node --check scripts/test-work-hq-corrected-inactive-readonly.mjs
+          node --check scripts/inspect-work-hq-visual-activation-readonly.mjs
+          node --check scripts/test-work-hq-visual-activation-readonly.mjs
+          node --check scripts/prepare-work-contact-preview-lockdown-synthetic.mjs
+          node --check backend/work-contact-account-read.mjs
+          node --check scripts/test-work-contact-account-read.mjs
+          node --check backend/work-contact-ticket-claim.mjs
+          node --check scripts/inspect-work-contact-d1-readonly.mjs
+          node --check scripts/test-work-contact-d1-readonly.mjs
+          node --check scripts/inspect-work-contact-runtime-readonly.mjs
+          node --check scripts/test-work-contact-runtime-readonly.mjs
+          node --check scripts/verify-work-contact-d1-postflight.mjs
+          node --check scripts/test-work-contact-d1-postflight.mjs
+          node --check scripts/test-work-contact-ticket-claim.mjs
+          node --check services/jill-order-desk/work-contact-status-change.mjs
+          node --check scripts/test-work-contact-status-change.mjs
+          node --check scripts/test-work-contact-status-handoff.mjs
+          node --check services/jill-order-desk/work-contact-message-write.mjs
+          node --check backend/work-contact-thread-read.mjs
+          node --check scripts/test-work-contact-message-bridge.mjs
+          node --check scripts/test-work-hq-contact-route.mjs

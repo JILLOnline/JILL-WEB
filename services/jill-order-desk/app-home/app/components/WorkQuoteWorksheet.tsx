@@ -20,6 +20,7 @@ import {inspectWorkQuoteUnitLinePlan}
 import {projectWorkQuoteUnitPriceReview}
   from "../../../work-quote-unit-price-review.mjs";
 import {WorkQuoteCatalogComparison} from "./WorkQuoteCatalogComparison";
+import {WorkQuoteOwnerPreflightPanel} from "./WorkQuoteOwnerPreflightPanel";
 import {WorkQuoteArtworkAudit} from "./WorkQuoteArtworkAudit";
 import "../styles/quote-worksheet.css";
 
@@ -107,11 +108,13 @@ function WorkQuoteUnitReview({item}:{item:QuoteItem}){
 export function WorkQuoteWorksheet({
   model,submissionId,customerStatus,sourceRevision,
   savedDraft=null,saveDraftEnabled=false,catalogReviewEnabled=false,
+  quotePreflightEnabled=false,
 }:{
   model:VerifiedModel|undefined;submissionId:string;customerStatus:string;
   sourceRevision?:number;
   savedDraft?:VerifiedSavedDraft|null;
   saveDraftEnabled?:boolean;catalogReviewEnabled?:boolean;
+  quotePreflightEnabled?:boolean;
 }){
   // Hydration only accepts the server's verified projection matched to the
   // exact canonical item snapshot. This parent is keyed by submission ID.
@@ -400,6 +403,8 @@ export function WorkQuoteWorksheet({
           <WorkQuoteCatalogComparison
             submissionId={submissionId} sourceRevision={sourceRevision}
             review={priceReview} enabled={catalogReviewEnabled}/>
+          {quotePreflightEnabled&&<WorkQuoteOwnerPreflightPanel
+            submissionId={submissionId}/>}
           <WorkQuoteArtworkAudit detail={detail}
             submissionId={submissionId} sourceRevision={sourceRevision}/>
           <div className="jill-quote__draft-actions" aria-label="Quote draft management">
