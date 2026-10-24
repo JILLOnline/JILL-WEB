@@ -86,11 +86,10 @@ export function compareUploadedWorkHqVersion({activeView,uploadedView}={}){
   gate(![...map].some(([name,item])=>item.type==='d1'&&
    name!=='JILL_ORDER_DESK_WORK_DB'),'additional_database_'+label);
  }
- const activePlain=Object.fromEntries([...active].filter(([,v])=>
-  v.type==='plain_text').map(([k,v])=>[k,v.text]));
- const uploadedPlain=Object.fromEntries([...uploaded].filter(([,v])=>
-  v.type==='plain_text').map(([k,v])=>[k,v.text]));
- gate(same(activePlain,uploadedPlain),'plaintext_added_removed_or_modified');
+ const sortedPlain=map=>[...map].filter(([,v])=>v.type==='plain_text')
+  .map(([k,v])=>[k,v.text]).sort(([a],[b])=>a.localeCompare(b));
+ gate(same(sortedPlain(active),sortedPlain(uploaded)),
+  'plaintext_added_removed_or_modified');
  // Nonsecret, non-D1 resource names must remain present. A newly
  // uploaded static assets binding is permitted only as type 'assets'.
  // No other new binding is permitted and no existing one may disappear.
