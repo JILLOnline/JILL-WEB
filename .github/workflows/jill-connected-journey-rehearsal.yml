@@ -13,6 +13,7 @@ on:
       - 'scripts/test-work-connected-three-surface-contract.mjs'
       - 'scripts/test-work-unified-owner-queue.mjs'
       - 'scripts/test-work-quote-sqlite-roundtrip.mjs'
+      - 'scripts/test-work-quote-http-sqlite-roundtrip.mjs'
       - 'services/jill-order-desk/work-unified-owner-queue.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.inquiries.tsx'
@@ -95,6 +96,7 @@ jobs:
           node scripts/test-work-hq-quote-owner-ui.mjs
           node scripts/test-work-quote-calculation.mjs
           node --no-warnings scripts/test-work-quote-sqlite-roundtrip.mjs
+          node --no-warnings scripts/test-work-quote-http-sqlite-roundtrip.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           echo 'JOINED_SYNTHETIC_CUSTOMER_A_B_GUEST_CHECKS=passed'
       - name: Install WORK HQ dependencies for offline compile only
