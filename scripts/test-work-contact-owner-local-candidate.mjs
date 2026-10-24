@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
-import {readFileSync,mkdtempSync,existsSync,mkdirSync,rmSync,
+import {readFileSync,writeFileSync,mkdtempSync,existsSync,mkdirSync,rmSync,
  statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {planOwnerLocalContactCandidate,writeOwnerLocalManifest}
  from './prepare-work-contact-owner-local-candidate.mjs';
+import {attestWorkContactLocalManifest,fingerprintLocalContactBuild}
+ from './attest-work-contact-local-artifact-readonly.mjs';
 const compiledHq=JSON.parse(readFileSync(
  'services/jill-order-desk/app-home/wrangler.canary.jsonc','utf8'));
 const gatewayCandidate=readFileSync(
@@ -131,4 +133,50 @@ await assert.rejects(()=>planOwnerLocalContactCandidate({
   return mode==='version'?view(which):deployed(which);
  },
 }),/work_contact_local_candidate_paired_allocation_changed_after_inspection/);
+
+const readSynthetic=async(which,mode)=>
+ mode==='version'?view(which):deployed(which);
+const cert=await attestWorkContactLocalManifest({
+ compiled:compiledHq,candidate:audit.manifest,
+ gatewayCandidate,readMetadata:readSynthetic,
+});
+assert.equal(cert.status,'HOLD');
+assert.equal(cert.local_manifest_matches_active_reconciled_candidate,true);
+assert.equal(cert.existing_hq_flag_count,5);
+assert.equal(cert.required_hq_secret_name_count,4);
+assert.equal(cert.release_authorized,undefined);
+assert.equal(cert.secret_values_read,false);
+await assert.rejects(()=>attestWorkContactLocalManifest({
+ compiled:compiledHq,candidate:{...audit.manifest,vars:{
+  ...audit.manifest.vars,JILL_WORK_CATALOG_ENABLED:'false',
+ }},gatewayCandidate,readMetadata:readSynthetic,
+}),/work_contact_artifact_attestation_candidate_not_equal_to_active/);
+const checkDir=mkdtempSync(join(tmpdir(),'jill-local-evidence-'));
+try{
+ const server=join(checkDir,'dist','server');
+ const client=join(checkDir,'dist','client');
+ mkdirSync(join(server,'assets'),{recursive:true});
+ mkdirSync(join(client,'assets'),{recursive:true});
+ const output=join(server,'wrangler.contact-owner-local-only.json');
+ writeFileSync(output,JSON.stringify(audit.manifest));
+ writeFileSync(join(server,'index.js'),'export * from "./assets/worker-entry-test.js";');
+ writeFileSync(join(server,'assets','worker-entry-test.js'),
+  'export class JillContactPrivate {}');
+ writeFileSync(join(server,'assets','server-build-test.js'),'export default {};');
+ writeFileSync(join(client,'assets','app-test.js'),'console.log("synthetic");');
+ const result=fingerprintLocalContactBuild({
+  server,client,candidatePath:output,
+ });
+ assert.equal(result.status,'HOLD');
+ assert.equal(result.private_worker_entry_found,true);
+ assert.equal(result.bundled_file_count,5);
+ assert.match(result.fingerprint_sha256,/^[a-f0-9]{64}$/);
+ assert.match(result.manifest_sha256,/^[a-f0-9]{64}$/);
+ const first=result.fingerprint_sha256;
+ writeFileSync(join(server,'assets','server-build-test.js'),
+  'export default {different:true};');
+ assert.notEqual(fingerprintLocalContactBuild({
+  server,client,candidatePath:output,
+ }).fingerprint_sha256,first);
+}finally{rmSync(checkDir,{recursive:true,force:true});}
 console.log('PASS WORK Contact local-only owner parity candidate: pinned active OAuth, five preserved runtime flags, all secret names, 0600 artifact, rollback HOLD and no Cloudflare mutation.');
