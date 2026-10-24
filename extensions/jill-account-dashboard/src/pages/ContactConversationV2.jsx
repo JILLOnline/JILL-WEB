@@ -91,12 +91,18 @@ export default function ContactConversationV2({
   try{
    if(!onlyVerify){
     try{
-     await postOwnedContactReply({
+     const receipt=await postOwnedContactReply({
       enabled:true,
       sessionToken:typeof shopify!=='undefined'?shopify.sessionToken:null,
       ticketId,operationId:command.operationId,
       expectedReplySequence:command.expectedReplySequence,
       message:command.message,
+     });
+     // The exact operation-specific POST ACK is mandatory, in addition
+     // to the independent readback. A concurrent identical-text reply
+     // from another tab cannot confirm this operation.
+     onDraftChange({acknowledgedSequence:receipt.sequence},{
+      expectedOperationId:command.operationId,serverReceipt:receipt,
      });
     }catch{
      // A timeout can mean the original operation succeeded. NEVER
@@ -169,9 +175,10 @@ export default function ContactConversationV2({
       },{expectedOperationId:null})}/>
      {feedback==='unconfirmed'&&activePending&&
       <s-banner tone="warning">
-       We couldn't confirm your reply in a fresh account read.
-       Your text stays here when you navigate within My JILL.
-       Check the same operation before trying it again.
+       The reply has not been confirmed using both its save receipt
+       and the signed conversation history. Your text stays here
+       when navigating My JILL. If the receipt was lost, retry the
+       SAME reply safely; do not create another message.
       </s-banner>}
      {feedback==='confirmed'&&
       <s-banner tone="success">
@@ -180,10 +187,11 @@ export default function ContactConversationV2({
       </s-banner>}
      <s-stack direction="inline" gap="small-200">
       {activePending?<>
-       <s-button variant="primary" disabled={busy}
-        onClick={()=>send(true)}>
-        {busy?'Checking…':'Check saved reply'}
-       </s-button>
+       {draft.acknowledgedSequence===activePending.expectedReplySequence+1&&
+        <s-button variant="primary" disabled={busy}
+         onClick={()=>send(true)}>
+         {busy?'Checking…':'Check saved reply'}
+        </s-button>}
        {thread.reply_enabled&&
         <s-button variant="secondary" disabled={busy}
          onClick={()=>send(false)}>Retry same reply</s-button>}
