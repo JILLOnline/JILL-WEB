@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {createHmac} from 'node:crypto';
+import {loadOwnedContactConversationV2,postOwnedContactReply}
+ from '../shared/customer-contact-conversation-v2.mjs';
 import {handleCloudflareCustomOrderWork}
  from '../services/custom-order-cloudflare/handler.mjs';
 import {handleWorkContactPrivateBridge}
@@ -63,6 +65,7 @@ const Hq={
  JILL_ORDER_DESK_WORK_DB:db,
  JILL_WORK_CONTACT_PRIVATE_BRIDGE_ENABLED:'true',
  JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED:'true',
+ JILL_WORK_CONTACT_THREAD_ENABLED:'true',
 };
 const service={fetch:async request=>{
  rpc++;
@@ -96,6 +99,8 @@ const make=(gid=A,id=T,op=OP(1),text='Can we use purple?',expected=0,
 });
 const act=(request,env=Gateway)=>handleCloudflareCustomOrderWork(request,env);
 const n=()=>DB.prepare('SELECT count(*) AS n FROM jill_work_contact_customer_replies').get().n;
+const sessionToken={get:async()=>jwt(A)};
+const appRequest=(url,options)=>act(new Request(url,options));
 try{
  let resp=await act(make(),{...Gateway,
   JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED:'false'});
@@ -150,6 +155,54 @@ try{
  resp=await act(make(A,T,OP(3),' Hi ',2));
  assert.equal(resp.status,400);
  assert.equal(n(),3);
+ // Merchant-only v1 remains immutable; V2 merges it with verified
+ // customer replies without exposing staff/Customer GID or receipt hashes.
+ DB.prepare('INSERT INTO jill_work_contact_messages '+
+  '(shop,ticket_id,sequence,operation_id,actor_staff_id,body_text,'+
+  'body_sha256,created_at_ms) VALUES (?,?,?,?,?,?,?,?)')
+  .run(SHOP,T,1,
+   'jill:work:contact:msg:33333333-2222-4333-8444-555555555555',
+   '111','JILL confirms your theme.','c'.repeat(64),NOW-100);
+ const v2=await loadOwnedContactConversationV2({
+  enabled:true,sessionToken,request:appRequest,ticketId:T,
+ });
+ assert.equal(v2.state,'ready');
+ assert.equal(v2.reply_enabled,true);
+ assert.equal(v2.next_customer_reply_sequence,2);
+ assert.deepEqual(v2.messages.map(m=>m.author),['jill','customer','customer']);
+ assert.deepEqual(v2.messages.map(m=>m.text),[
+  'JILL confirms your theme.','Can we use purple?','Please add a name',
+ ]);
+ assert.equal(v2.read_receipt_available,false);
+ assert.equal(v2.delivery_verified,false);
+ assert.equal(v2.unread_count,null);
+ assert.equal(JSON.stringify(v2).includes(A),false);
+ assert.equal(JSON.stringify(v2).includes('actor_staff_id'),false);
+ assert.equal(JSON.stringify(v2).includes('operation_id'),false);
+ const off=await loadOwnedContactConversationV2({
+  enabled:false,sessionToken:{get:()=>{throw Error('no token while OFF')}},
+  request:()=>{throw Error('no network while OFF')},ticketId:T,
+ });
+ assert.equal(off.state,'not_connected');
+ await assert.rejects(loadOwnedContactConversationV2({
+  enabled:true,sessionToken:{get:async()=>jwt(B)},
+  request:appRequest,ticketId:T,
+ }),/contact_conversation_v2_unverified/);
+ const replyResult=await postOwnedContactReply({
+  enabled:true,sessionToken,request:appRequest,
+  ticketId:T,operationId:OP(3),
+  expectedReplySequence:2,message:'Great, thanks!',
+ });
+ assert.equal(replyResult.state,'persisted_unconfirmed_readback');
+ assert.equal(replyResult.read,false);
+ assert.equal(replyResult.delivered,false);
+ assert.equal(n(),4);
+ const confirmed=await loadOwnedContactConversationV2({
+  enabled:true,sessionToken,request:appRequest,ticketId:T,
+ });
+ assert.equal(confirmed.messages.at(-1).text,'Great, thanks!');
+ assert.equal(confirmed.next_customer_reply_sequence,3);
+ assert.equal(confirmed.messages.at(-1).author,'customer');
  const wrongJwt=jwt(A).slice(0,-1)+(jwt(A).endsWith('A')?'B':'A');
  resp=await act(new Request(path,{method:'POST',headers:{
   authorization:'Bearer '+wrongJwt,'content-type':'application/json',
@@ -183,6 +236,6 @@ try{
   '(shop,ticket_id,reply_sequence,operation_id,actor_customer_gid,'+
   'body_text,body_sha256,created_at_ms) VALUES (?,?,?,?,?,?,?,?)'
  ).run(SHOP,T,3,OP(6),B,'forged','c'.repeat(64),NOW));
- assert.equal(n(),3);
+ assert.equal(n(),4);
  console.log('PASS WORK Contact customer reply: real 0004+0005 SQLite schema, dual OFF switches, private bounded gateway, signed Customer A/B isolation, exact CAS, replay, forged JWT, quota, closed ticket, immutability, no remote D1.');
 }finally{DB.close();}
