@@ -12,7 +12,7 @@ const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const HQ=join(ROOT,'services/jill-order-desk/app-home');
 const GW=join(ROOT,'services/custom-order-cloudflare');
 const WRANGLER=join(HQ,'node_modules/wrangler/bin/wrangler.js');
-const SCRIPTS=Object.freeze({
+export const SCRIPTS=Object.freeze({
  hq:'jill-order-desk-canary-work',
  gateway:'jill-work-custom-orders-qa',
 });
@@ -61,7 +61,7 @@ export function evaluateWorkPreviewSettings({
   secret_values_read:false,customer_data_read:false,
  });
 }
-function wranglerJson(...args){
+export function wranglerJson(...args){
  check(existsSync(WRANGLER),'missing_wrangler');
  const result=spawnSync(process.execPath,[WRANGLER,...args],{
   cwd:HQ,encoding:'utf8',windowsHide:true,shell:false,
@@ -90,7 +90,7 @@ export function resolveExactWorkAccount(whoami,environmentAccountId){
  check(ids.length===1,'multiple_accounts_select_explicit_id');
  return ids[0];
 }
-function tokenFromWrangler(){
+export function tokenFromWrangler(){
  const auth=wranglerJson('auth','token','--json');
  check(['oauth','api_token'].includes(auth?.type)&&
   typeof auth.token==='string'&&auth.token.length>=20&&
