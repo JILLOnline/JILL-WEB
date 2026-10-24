@@ -7,6 +7,8 @@ import {join,resolve,basename,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {inspectContactPairedBaseline,readWorkContactMetadata}
  from './inspect-work-contact-paired-baseline-readonly.mjs';
+import {current100Version}
+ from './inspect-work-contact-runtime-readonly.mjs';
 import {reconcileActiveHqContactManifest}
  from './plan-work-contact-binding-parity.mjs';
 
@@ -40,6 +42,16 @@ export async function planOwnerLocalContactCandidate({
   report.hq_reconciliation?.candidate_plaintext_parity_after_reconcile===true&&
   report.gateway?.gateway_secret_name_contract_matches_active===true,
   'owner_baseline_not_certified');
+ // Cross-worker TOCTOU guard: re-read BOTH current deployments after
+ // reconciliation. A change between first HQ read and final gateway read
+ // must stop local artifact creation; no stale version may be considered.
+ const finalHq=current100Version(await readMetadata('hq','deployments'));
+ const finalGateway=current100Version(await readMetadata('gateway','deployments'));
+ check(finalHq.active===report.hq_active_version&&
+  finalGateway.active===report.gateway_active_version&&
+  finalHq.deployment===report.hq_active_deployment&&
+  finalGateway.deployment===report.gateway_active_deployment,
+  'paired_allocation_changed_after_inspection');
  const result=reconcileActiveHqContactManifest({
   activeView:hqVersionView,compiled:compiledHq,
  });
