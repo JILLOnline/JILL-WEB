@@ -11,6 +11,11 @@ on:
     paths:
       - '.github/workflows/jill-connected-journey-rehearsal.yml'
       - 'scripts/test-work-connected-three-surface-contract.mjs'
+      - 'scripts/test-work-unified-owner-queue.mjs'
+      - 'services/jill-order-desk/work-unified-owner-queue.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx'
+      - 'services/jill-order-desk/app-home/app/routes.ts'
+      - 'services/jill-order-desk/app-home/workers/app.ts'
       - 'docs/WORK_CONNECTED_THREE_LANE_20261024.md'
 permissions:
   contents: read
@@ -74,6 +79,7 @@ jobs:
           cd "$JILL_EPHEMERAL_JOIN"
           JILL_HQ_SOURCE_DIR="$PWD" node scripts/test-work-cross-pr-contact-integration.mjs
           node scripts/test-work-connected-three-surface-contract.mjs
+          node scripts/test-work-unified-owner-queue.mjs
           node scripts/test-work-contact-worker-routing.mjs
           node scripts/test-work-contact-private-e2e.mjs
           node scripts/test-work-contact-message-bridge.mjs
