@@ -135,3 +135,65 @@ Official documentation:
 **HOLD** — Local source and artifact verified. Inactive upload,
 preview security, runtime credential continuity and customer experience
 have not been approved or proven. LIVE and KEEP untouched.
+
+## Version URL access: independent authenticated read-only gate
+
+The September 22, 2026 Cloudflare Version URLs guide clarifies that
+`preview_urls` is the Wrangler setting controlling Version URL routing.
+When it is **omitted**, Wrangler does not override a previously saved
+setting. If no setting was previously saved, Version URLs initially
+follow `workers_dev`. **Our WORK configurations have
+`workers_dev=true` and omit `preview_urls`, so source configuration
+alone cannot certify that inactive versions are private.**
+
+Official API: `GET /accounts/{account_id}/workers/scripts/{script_name}/subdomain`
+returns **two booleans**, `enabled` for ordinary workers.dev routing,
+and `previews_enabled` for Version URLs. No POST is required for
+read-only inspection. Sources:
+- https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
+- https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/methods/get/
+- https://developers.cloudflare.com/workers/wrangler/commands/general/
+
+New `scripts/inspect-work-contact-preview-exposure-readonly.mjs`:
+
+- Without arguments it reports `HOLD`, unknown preview settings,
+  **zero Cloudflare calls**.
+- With the explicit `--owner-readonly` flag it first invokes the
+  existing pinned HQ/gateway active Worker baseline inspector; uses
+  `wrangler whoami --json` to establish authenticated Cloudflare
+  account membership; requires either **exactly one** available
+  account or `JILL_WORK_CLOUDFLARE_ACCOUNT_ID` explicitly set to a
+  listed account. It does **not** choose the first of multiple accounts.
+- Retrieves Wrangler's current OAuth/API token into process memory
+  using `wrangler auth token --json`, never prints/stores the token,
+  and issues only two exact HTTPS GET requests (WORK HQ and WORK gateway)
+  to Cloudflare's script/subdomain setting API.
+- Prints only `workers_dev_enabled`, `version_urls_enabled` and the
+  exposure-only policy verdict for each Worker. Discards all other API
+  fields. Rechecks unchanged HQ/gateway 100%-traffic deployment
+  identity after both GETs.
+- Returns `status:HOLD`, `upload_authorized:false` regardless of
+  the observed booleans. If **either** `previews_enabled=true`, the
+  `preview_url_exposure_gate_cleared` field must be false and the
+  release stays blocked without an independently reviewed Cloudflare
+  Access restriction or safe configuration change. If both are false,
+  the **Version URL exposure gate only** is satisfied; uploads remain
+  unauthorized until all other gates pass.
+- Missing/malformed API response, ambiguous account, auth failure,
+  worker version drift, deleted secret binding, or network failure
+  must fail closed. Tokens and script settings cannot be inferred
+  from deployment metadata.
+- No Version URL visit, customer session test, release upload, secret
+  mutation, traffic allocation, preview-setting change, paid service
+  enablement, or D1 write is done by this script.
+
+This **does not** equate disabling Version URLs with disabling the
+normal workers.dev route, nor does it imply any preview Access
+policy is installed. The gateway implements a Durable Object, and
+Cloudflare documentation limits Version URL generation for such
+Workers; still read and record the actual gateway flag, rather than
+assuming its exposure status.
+
+**Status: HOLD** until the owner runs and shares the non-sensitive
+read-only result. Never request the Cloudflare API token to be pasted
+into chat.
