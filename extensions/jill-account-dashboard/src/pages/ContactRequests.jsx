@@ -18,7 +18,7 @@ const statusLabel={
  received:'Received',reviewing:'Under review',
  waiting_customer:'Waiting on you',resolved:'Resolved',
 };
-export default function ContactRequests({enabled=false,threadEnabled=false,onNavigate}){
+export default function ContactRequests({enabled=false,threadEnabled=false,replyEnabled=false,onNavigate}){
  const [state,setState]=useState({status:'not_connected',tickets:[]});
  const [attempt,setAttempt]=useState(0);
  const [claimId,setClaimId]=useState('');
@@ -149,9 +149,13 @@ export default function ContactRequests({enabled=false,threadEnabled=false,onNav
           Last verified update: {ticket.updated_at}
         </s-text>
         <ContactThread ticketId={ticket.ticket_id}
-         enabled={enabled===true&&threadEnabled===true}/>
-        <s-text color="subdued">Customer replies to Contact Us messages
-         remain disabled pending a separate authorization review.</s-text>
+         enabled={enabled===true&&threadEnabled===true}
+         v2Enabled={enabled===true&&threadEnabled===true&&replyEnabled===true}/>
+        <s-text color="subdued">
+         {replyEnabled===true&&enabled===true&&threadEnabled===true
+          ?'Reply availability is verified separately inside each claimed conversation.'
+          :'Customer replies to Contact Us messages remain disabled pending a separate authorization review.'}
+        </s-text>
        </s-stack>
       </s-box>)}
       <s-button variant="secondary" onClick={()=>setAttempt(n=>n+1)}>
