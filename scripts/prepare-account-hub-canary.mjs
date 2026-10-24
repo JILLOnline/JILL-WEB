@@ -129,8 +129,8 @@ export function prepareCanary(mode) {
       fs.copyFileSync(path.join(base,'src','hub','routes.mjs'),
         path.join(dest,'src','hub','routes.mjs'));
       fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
-      for (const page of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-        'RequestConversation.jsx','Messages.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+      for (const page of ['Overview.jsx','RecentRequests.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
+        'RequestConversation.jsx','Messages.jsx','ContactRequests.jsx','ContactThread.jsx','ContactConversationV2.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
       }
@@ -138,6 +138,13 @@ export function prepareCanary(mode) {
       // WORK canary copy next to the canonical screen, without a new API owner.
       fs.copyFileSync(path.join(base,'src','pages','custom-order-presentation.mjs'),
         path.join(dest,'src','pages','custom-order-presentation.mjs'));
+      // Canonical signed-list filters contain only statuses and IDs.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-order-activity.mjs'),
+        path.join(dest,'src','pages','myjill-order-activity.mjs'));
+      // Home's signed recent request reader has no independent identity
+      // store; ship its small read-only projection with the WORK canary.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-recent-requests.mjs'),
+        path.join(dest,'src','pages','myjill-recent-requests.mjs'));
       // Reuse the one canonical Rewards UI and Customer Account transaction
       // transport in the WORK-only hub preview (no copied backend engine).
       fs.mkdirSync(path.join(dest,'src','rewards'),{recursive:true});
@@ -149,6 +156,10 @@ export function prepareCanary(mode) {
       for (const filename of [
         'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
         'customer-custom-orders.mjs','custom-order-message-inbox.mjs',
+        'customer-contact-tickets.mjs','customer-contact-claim.mjs',
+        'customer-contact-thread.mjs',
+        'customer-contact-conversation-v2.mjs',
+        'customer-contact-draft-ledger.mjs',
       ]) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));

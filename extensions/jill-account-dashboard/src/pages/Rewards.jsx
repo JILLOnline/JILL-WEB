@@ -48,7 +48,24 @@ export default function Rewards({onNavigate}) {
   const meta=metaMap(customer);
   const hasVerifiedLedger=rewardsAccountReady(customer);
   return (
-    <s-stack direction="block" gap="base">
+    <s-stack direction="block" gap="large">
+      <s-section>
+        <s-box padding="base" background="subdued" borderRadius="large">
+          <s-stack direction="block" gap="base">
+            <s-heading>Your JILL Rewards</s-heading>
+            <s-text color="subdued">
+              See your verified points, explore available rewards and
+              return to your personal coupon wallet whenever you need.
+            </s-text>
+            <s-stack direction="inline" gap="small-200">
+              <s-button variant="secondary"
+                onClick={()=>onNavigate('coupons')}>My Coupons</s-button>
+              <s-button variant="secondary"
+                onClick={()=>onNavigate('custom-orders')}>Custom Orders</s-button>
+            </s-stack>
+          </s-stack>
+        </s-box>
+      </s-section>
       {error && <s-banner tone="critical">{error}</s-banner>}
       {storeError && <s-banner tone="critical">Shopify storefront identity is unavailable. Use Now links are disabled.</s-banner>}
       {loading && <s-section><s-text>Loading your verified Rewards account…</s-text></s-section>}
@@ -70,6 +87,31 @@ export default function Rewards({onNavigate}) {
             }
           }} store={store} onCoupons={()=>onNavigate('coupons')} />
       )}
+      <s-section>
+        <s-box padding="base" border="base base solid" borderRadius="large"
+          background="base">
+          <s-stack direction="block" gap="small-300">
+            <s-heading>How your rewards work</s-heading>
+            <s-text>
+              1. Your points and eligible rewards are checked against
+              your signed-in Shopify account.
+            </s-text>
+            <s-text>
+              2. Select an available reward and review the confirmation
+              before redeeming any points.
+            </s-text>
+            <s-text>
+              3. After a reward is confirmed in your wallet, open
+              My Coupons to review its status and any usage conditions.
+            </s-text>
+            <s-text color="subdued">
+              A pending request is not a usable coupon. Any expiration,
+              minimum purchase and discount restrictions are shown in
+              the reward or coupon details.
+            </s-text>
+          </s-stack>
+        </s-box>
+      </s-section>
     </s-stack>
   );
 }
