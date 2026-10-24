@@ -45,6 +45,30 @@ const latest={state:'ready',ticket_id:ID,messages:[
  {author:'jill',source_sequence:1,text:'We received your request.'},
  {author:'customer',source_sequence:3,text:cmd.message},
 ]};
+const receipt={state:'persisted_unconfirmed_readback',
+ operation_id:OP,sequence:3};
+assert.equal(updateOwnedContactDraft(resumed,ID,finish,{
+ expectedOperationId,verifiedThread:latest,
+}),resumed,
+ 'Matching text/sequence without operation ACK cannot confirm a send');
+for(const badReceipt of [
+ null,
+ {...receipt,operation_id:OTHER_OP},
+ {...receipt,sequence:4},
+ {...receipt,state:'unconfirmed'},
+]){
+ assert.equal(updateOwnedContactDraft(resumed,ID,{
+  acknowledgedSequence:3,
+ },{expectedOperationId,serverReceipt:badReceipt}),resumed,
+ 'Forged, missing or crossed operation ACK cannot confirm a send');
+}
+const acked=updateOwnedContactDraft(resumed,ID,{
+ acknowledgedSequence:3,
+},{expectedOperationId,serverReceipt:receipt});
+assert.equal(acked[ID].acknowledgedSequence,3);
+const restoredAck=retainOwnedContactDrafts(acked,[ticket(ID),ticket(FOREIGN)]);
+assert.equal(restoredAck[ID].acknowledgedSequence,3);
+assert.equal(restoredAck[ID].operation.operationId,OP);
 for(const invalid of [
  null,
  {...latest,state:'loading'},
@@ -55,11 +79,11 @@ for(const invalid of [
  {...latest,messages:[{author:'customer',source_sequence:4,text:cmd.message}]},
  {...latest,messages:latest.messages.concat(latest.messages[1])},
 ]){
- assert.equal(updateOwnedContactDraft(resumed,ID,finish,{
+ assert.equal(updateOwnedContactDraft(restoredAck,ID,finish,{
   expectedOperationId,verifiedThread:invalid,
- }),resumed,'No proof, no editor clearing');
+ }),restoredAck,'No signed readback, no editor clearing');
 }
-const confirmed=updateOwnedContactDraft(resumed,ID,finish,{
+const confirmed=updateOwnedContactDraft(restoredAck,ID,finish,{
  expectedOperationId,verifiedThread:latest,
 });
 assert.equal(confirmed[ID].state,'confirmed');
@@ -103,6 +127,8 @@ assert.match(thread,/draft=\{draft\} onDraftChange=\{onDraftChange\}/);
 assert.match(v2,/const activePending=draft\.operation\?\.ticketId===ticketId/);
 assert.match(v2,/onDraftChange\(\{text:'',operation:null,state:'confirmed',busy:false\}/);
 assert.match(v2,/expectedOperationId:command\.operationId,verifiedThread:latest/);
+assert.match(v2,/onDraftChange\(\{acknowledgedSequence:receipt\.sequence\}/);
+assert.match(v2,/serverReceipt:receipt/);
 assert.match(v2,/liveTicket\.current=null/);
 assert.match(v2,/Retry same reply/);
 assert.match(v2,/Check saved reply/);
