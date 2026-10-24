@@ -128,3 +128,30 @@ remain under their pre-existing hard-OFF controls. Test this optional
 read-only route in WORK **only after** a fresh account/Owner approval,
 D1 and source proof, and separate deployment decision. The currently
 working 100% WORK Worker is unchanged.
+
+### Owner screen candidate (still disabled)
+
+The same integration branch also has
+`app/routes/app.inquiries.tsx` and isolated `hq-inquiries.css`.
+This is a **real React Router read-only Owner page** at
+`/app/inquiries` registered alongside the JSON resource route.
+Both URLs share the exact same **absent-by-default**
+`JILL_WORK_UNIFIED_QUEUE_ENABLED` Worker ingress block, before any
+Shopify OAuth or database read. No navigation entry points to this
+route yet; the currently accepted Requests page is untouched.
+
+The page shows only canonical ID, kind, source status, last activity,
+and verified Custom Order item/date or Contact reason. It links to
+the existing restricted detail routes; it never shows names, emails,
+private data, message contents, paid/fulfilled status, or fictional
+read receipts. If Contact is OFF it states that *only verified Custom
+Orders* are being shown and explicitly refuses to interpret that
+as no Contact inquiries. Responsive layout and keyboard focus
+are isolated to the new page; no global UI overrides.
+
+The synthetic test additionally checks registration, both exact
+route ingress guards, no enabled manifest flag, read-only rendering,
+and a blocked Shopify/customer/browser storage surface. CI typechecks
+and builds this page together with My JILL and the accepted visual
+polish. It remains **source-only** until a separate Owner-authorized
+WORK deployment and real end-to-end acceptance.
