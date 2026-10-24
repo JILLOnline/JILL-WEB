@@ -146,6 +146,6 @@ await assert.rejects(()=>preparePreviewLockedCandidate({
   return readMetadata(which,mode);
  },
  readSubdomains:async()=>off(),
-}),/work_contact_runtime_contact_feature_enabled_or_unverified/);
+}),/work_contact_binding_parity_contact_flag_runtime_not_off/);
 assert.ok(remoteReads>0);
 console.log('PASS WORK owner preview locked local-only: exact one-key manifest diff, full OAuth/flags/secrets parity, real preview GET OFF gate, no cloud writes, immutable original and refuses unsafe variants.');
