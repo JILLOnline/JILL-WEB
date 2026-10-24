@@ -1,0 +1,80 @@
+# JILL WORK — three-lane connection rehearsal (October 24, 2026)
+
+## What is happening
+This is a **new source-only, non-deploying integration lane** that tests the
+existing work together rather than asking the Owner to run PowerShell or
+switch production versions.
+
+| Source lane | Draft | Authority/goal | Current release status |
+| --- | --- | --- | --- |
+| HQ custom orders, Shopify Catalog, draft quotes, Contact Us D1 handlers | #157 (`jill/hq-quote-catalog-preflight-20261022`) | Merchant Shopify Admin session + Owner D1 role; only verified source requests and native Shopify truth | HQ shell/catalog/request read deployed to WORK separately; Contact/conversation/quote save disabled |
+| My JILL customer account and message navigation/contact claim clients | #156 (`jill/myjill-message-handoff-preview-20261022`) | Signed Customer Account JWT + exact Customer GID; no email-based claim | Draft; **not published** as a customer extension |
+| HQ interface typography, request details and quote disclosure | #158 (`jill/hq-visual-polish-source-20261024`) | Changes display only, preserving request actions and quote logic | Draft; **not** deployed to serving WORK |
+| Cross-lane source integration | THIS branch | Synthetic hard-OFF/customer A/B/guest acceptance and combined HQ TypeScript/build in an ephemeral worktree | Source/CI only; **not released** |
+
+### Concrete seams exercised
+`scripts/test-work-connected-three-surface-contract.mjs` and the
+existing `scripts/test-work-cross-pr-contact-integration.mjs` verify
+actual modules from BOTH source branches after an ephemeral Git merge:
+
+1. A signed canonical WORK inquiry receipt grants Owner view and
+   Customer A view only for exact Customer A GID; B and guest remain held.
+   Forged, cloned and incorrectly signed receipts are refused.
+2. Existing My JILL Contact client remains hard OFF before a real
+   approved customer-specific endpoint. **Zero session token calls or
+   network fetches** in OFF mode.
+3. A synthetic, server-projected HQ contact thread passes the actual
+   My JILL client projection with identical ordered public messages,
+   but staff IDs, operation receipts and private email are excluded.
+4. My JILL and HQ both interpret the **same Custom Order** public v2
+   conversation timeline; no separate message store, fake unread count,
+   read/delivery receipt, or automatic guest account attachment.
+5. Raw typed Shopify customer identities or unsigned Owner binding data
+   cannot make a quote publish, invoice or order-ready.
+6. The visual layer from #158 and its Quote Save/Reload no-persistence
+   warning are included in the combined source build.
+7. The combined HQ React routes typecheck/build and original quote
+   regression suite execute without contacting real providers.
+
+### Non-negotiable deployment protections
+- The **running HQ WORK** should remain version
+  `d1f4e07f-8c9b-4b40-97a4-0c13d2c5149a`,
+  deployment `5d996637-73b4-427e-92a0-a36a12581172`,
+  pending separate Owner rollout decision.
+- Gateway, LIVE and KEEP must be unchanged. No Shopify Theme change,
+  no Cloudflare Worker or D1 write, no customer email/SMS, no reward
+  redemption, no draftOrderCreate, and no paid cloud resources.
+- This workflow **may create temporary merge commits in a disposable
+  CI worktree only**. They are never pushed, merged to protected
+  branches or deployed. A failed merge is a HOLD, not permission to
+  force files through.
+- Shopify authority remains the sole source of Products, Customers,
+  taxes, payments and Orders. Google signed intake remains canonical
+  for original Custom Order source/status; HQ D1 is not a shadow
+  customer directory.
+- No feature flags are enabled by these synthetic tests. Actual signed
+  Customer A/B/guest browser sessions, Owner session refresh, data
+  persistence, Shopify app proxy routing, private media, and quota/cost
+  gates **still require real WORK acceptance**.
+
+## What comes next after green source reconciliation
+1. Create a reviewable, conflict-free **source integration PR** combining
+   the three branches. Do not merge existing drafts blindly; preserve
+   protected release history, backend ownership, Storefront and rewards.
+2. Certify verified Custom Order account/source mapping with real signed
+   Customer A/B sessions; only then enable a WORK Owner/customer
+   conversation *read* path.
+3. Commission Contact Us server-to-server gateway/HQ trust boundaries
+   after D1 and Shopify app proxy checks; do not wire the native form
+   until full intake idempotency and abuse protections are accepted.
+4. Turn on durable Owner quote Save/Reload only after fresh Owner D1
+   write/readback and separate approval. Quote acceptance, Shopify-native
+   tax/discount/approval, draft-order/invoice and tracking are independent
+   later gates.
+5. Visually accept #158 in Shopify Admin, including desktop/mobile, full
+   row request accordion and quote disclosure preserving unsaved values.
+6. Only with fresh explicit owner approval stage/deploy a reversible
+   WORK-only candidate. LIVE/KEEP remain entirely separate.
+
+**Status: SOURCE ONLY / NOT ACTIVATED. CI success is not an authenticated
+provider or real-customer acceptance receipt.**
