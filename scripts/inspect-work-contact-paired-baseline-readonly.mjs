@@ -8,7 +8,8 @@ import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {current100Version,verifyWorkActiveBindings}
  from './inspect-work-contact-runtime-readonly.mjs';
-import {compareHqWorkContactCandidate,compareGatewayWorkContactCandidate}
+import {compareHqWorkContactCandidate,compareGatewayWorkContactCandidate,
+ reconcileActiveHqContactManifest}
  from './plan-work-contact-binding-parity.mjs';
 
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -67,6 +68,20 @@ export async function inspectContactPairedBaseline({readMetadata,
    :compareGatewayWorkContactCandidate({
      activeView:view,candidateManifestText:gatewayCandidate,
     });
+  // In-memory only. Never print plaintext values or write a candidate.
+  // The original baseline parity report stays visible for transparency.
+  if(which==='hq'){
+   const reconciled=reconcileActiveHqContactManifest({
+    activeView:view,compiled:compiledHq,
+   });
+   report.hq_reconciliation={
+    existing_flag_names_preserved:reconciled.restored_existing_flag_names,
+    required_existing_secret_names:reconciled.required_existing_secret_names,
+    candidate_plaintext_parity_after_reconcile:true,
+    manifest_written:false,secret_values_read:false,
+    upload_or_deployment_authorized:false,
+   };
+  }
   report[which+'_active_version']=before.active;
  }
  report.active_versions_verified=true;
