@@ -55,7 +55,6 @@ assert.ok(quote.indexOf('className="jill-quote__draft-actions"')<
 assert.ok(quote.includes('Entries are lost on refresh'));
 assert.ok(quote.includes('aria-label="Quote worksheet"'));
 assert.ok(quote.includes('NOT SAVED · NOT SENT'));
-assert.ok(quote.includes('nothing')===false||true);
 // Ensure numerical input, source consistency, permissions and fail-closed
 // quote actions have not been modified in the pre-UI logic.
 for(const token of [
