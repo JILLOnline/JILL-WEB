@@ -328,3 +328,51 @@ For a later WORK commissioning phase, verify the actual deployed
 JillContactPrivate export and exact private binding before any
 feature flag activation. Preserve the Shopify-native Contact Us form
 as the only live intake until its switch-over is independently approved.
+
+## Paired Contact release: checked-in canary manifest is not a safe deploy input
+
+The owner-confirmed active HQ WORK Worker (version
+`44ad4a81-55ad-4f49-9965-61260cc2294d`) has Shopify OAuth **ON**.
+The checked-in `services/jill-order-desk/app-home/wrangler.canary.jsonc`
+still intentionally declares
+`JILL_WORK_OAUTH_ENABLED="false"` for disconnected source builds.
+**Do NOT run `wrangler deploy` against this raw canary manifest.**
+That would risk disabling the already-functioning WORK Shopify HQ login
+and may fail to preserve the exact active runtime bindings/secrets.
+
+New **offline fail-closed acceptance tools**:
+
+- `scripts/audit-work-contact-paired-release.mjs` verifies WORK
+  tenant/D1 scope, existing public gateway isolation, the exact
+  *unshipped* named service-binding candidate, feature flags still OFF,
+  the native Shopify Contact Us form as fallback, and the absence of
+  public gateway D1 access. It **always returns HOLD**. It explicitly
+  marks direct deployment of the checked-in HQ canary manifest unsafe.
+- `scripts/test-work-contact-paired-release.mjs` provides adversarial
+  tests for a wrong Shopify Worker, wrong D1, enabled Contact flags,
+  gateway D1 binding, changed service entrypoint, wrong HQ worker,
+  removed native Contact form, and OAuth configuration drift.
+- `scripts/check-work-contact-hq-bundle.mjs` checks both the compiled
+  named entrypoint and the generated `dist/server/wrangler.json`
+  configuration for WORK D1 identity, OAuth-OFF source-only guard,
+  canary target, no unexpected service binding and no Contact flags ON.
+  This proves a build artifact's source scope, **not** deployment
+  readiness.
+
+### Separate authorization needed before the first inactive paired upload
+
+Even a **0%-traffic** WORK upload requires a deliberate approval and a
+reviewed configuration that preserves the deployed HQ Shopify OAuth ON,
+the current merchant/session secrets, D1, OAuth host, existing flags,
+assets and merchant routes. The gateway candidate must separately
+preserve its known WORK secrets, Durable Object limiter, existing Custom
+Order route, and only add the named `JillContactPrivate` service binding
+with all Contact flags OFF. Read back exact uploaded version IDs,
+bindings, and allocations. Do not promote traffic automatically.
+Real Owner login, Shopify app-proxy child route, synthetic WORK
+Customer A/B/guest, staff message readback and native form
+single-delivery regression must pass before any Contact activation.
+
+The `0004` schema migration is already independently verified and
+requires no repeat. No paid upgrade, LIVE/KEEP action, or Shopify
+production change is authorized by these read-only source checks.
