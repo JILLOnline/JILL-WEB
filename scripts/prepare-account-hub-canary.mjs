@@ -130,7 +130,7 @@ export function prepareCanary(mode) {
         path.join(dest,'src','hub','routes.mjs'));
       fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
       for (const page of ['Overview.jsx','RecentRequests.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-        'RequestConversation.jsx','Messages.jsx','ContactRequests.jsx','ContactThread.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+        'RequestConversation.jsx','Messages.jsx','ContactRequests.jsx','ContactThread.jsx','ContactConversationV2.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
       }
@@ -155,6 +155,7 @@ export function prepareCanary(mode) {
         'customer-custom-orders.mjs','custom-order-message-inbox.mjs',
         'customer-contact-tickets.mjs','customer-contact-claim.mjs',
         'customer-contact-thread.mjs',
+        'customer-contact-conversation-v2.mjs',
       ]) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));
