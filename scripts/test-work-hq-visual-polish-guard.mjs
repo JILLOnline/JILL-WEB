@@ -84,7 +84,10 @@ for(const selector of [
 }
 assert.ok(!/\@import\b|https?:\/\/|url\(|position\s*:\s*fixed\b/i.test(css),
  'Visual layer must not fetch external resources or create fixed overlays');
-assert.ok(!/\b(?:display|visibility)\s*:\s*none\b/i.test(css),
+const withoutNativeDetailsMarker=css.replace(
+ '.jill-workspace .jill-quote__advanced>summary::-webkit-details-marker{display:none}',
+ '');
+assert.ok(!/\b(?:display|visibility)\s*:\s*none\b/i.test(withoutNativeDetailsMarker),
  'Visual layer must not hide existing business controls or disclosures');
 assert.ok(!/\b!important\b/i.test(css),
  'Visual layer must not force override protected Shopify styling');
