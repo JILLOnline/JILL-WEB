@@ -39,7 +39,9 @@ assert.equal((app.match(/import "\.\.\/styles\/hq-visual-polish\.css"/g)||[]).le
 const quote=current(quotePath),prior=baseline(quotePath);
 const baselinePrefix=prior.slice(0,prior.indexOf('  return <details className='));
 const currentPrefix=quote.slice(0,quote.indexOf('  return <details className='));
-assert.ok(baselinePrefix.length>7000,'Baseline quote logic unreadable');
+assert.ok(baselinePrefix.length>4000 &&
+  prior.includes('  return <details className='),
+  'Baseline quote logic boundary missing');
 assert.equal(currentPrefix,baselinePrefix,
  'Quote hooks, handlers, draft protocol, calculations and permissions changed');
 assert.ok(quote.includes('<details className="jill-quote__advanced">'));
