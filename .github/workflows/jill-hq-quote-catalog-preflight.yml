@@ -68,6 +68,8 @@ on:
       - 'scripts/test-disable-work-version-urls-owner-approved.mjs'
       - 'scripts/prepare-work-contact-owner-preview-locked.mjs'
       - 'scripts/test-work-contact-owner-preview-locked.mjs'
+      - 'scripts/review-work-contact-inactive-upload-offline.mjs'
+      - 'scripts/test-work-contact-inactive-upload-offline.mjs'
       - 'scripts/prepare-work-contact-preview-lockdown-synthetic.mjs'
       - 'backend/work-contact-account-read.mjs'
       - 'scripts/test-work-contact-account-read.mjs'
@@ -133,6 +135,8 @@ jobs:
           node scripts/test-work-contact-preview-lockdown.mjs
           node scripts/test-disable-work-version-urls-owner-approved.mjs
           node scripts/test-work-contact-owner-preview-locked.mjs
+          node scripts/test-work-contact-inactive-upload-offline.mjs
+          node scripts/review-work-contact-inactive-upload-offline.mjs
           node scripts/inspect-work-contact-preview-exposure-readonly.mjs
           node scripts/inspect-work-contact-paired-baseline-readonly.mjs
           node scripts/audit-work-contact-paired-release.mjs
@@ -236,6 +240,8 @@ jobs:
           node --check scripts/test-disable-work-version-urls-owner-approved.mjs
           node --check scripts/prepare-work-contact-owner-preview-locked.mjs
           node --check scripts/test-work-contact-owner-preview-locked.mjs
+          node --check scripts/review-work-contact-inactive-upload-offline.mjs
+          node --check scripts/test-work-contact-inactive-upload-offline.mjs
           node --check scripts/prepare-work-contact-preview-lockdown-synthetic.mjs
           node --check backend/work-contact-account-read.mjs
           node --check scripts/test-work-contact-account-read.mjs
