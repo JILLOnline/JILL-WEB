@@ -114,6 +114,40 @@ export function compareUploadedWorkHqVersion({activeView,uploadedView}={}){
   private_entrypoint_remote_execution_verified:false,
  });
 }
+
+// Only report binding NAMES and TYPES, never env values/secret material.
+// Deliberately diagnostic-only: does not remove the underlying release HOLD.
+export function describeUploadedWorkHqBindingDelta({activeView,uploadedView}={}){
+ const old=bindings(activeView,VERSION_PIN.active);
+ const next=bindings(uploadedView,VERSION_PIN.uploaded);
+ const missing=[...old].filter(([name])=>!next.has(name))
+  .map(([name,b])=>({name,active_type:b.type}));
+ const retyped=[...old].filter(([name,b])=>
+  next.has(name)&&next.get(name).type!==b.type)
+  .map(([name,b])=>({name,active_type:b.type,
+   uploaded_type:next.get(name).type}));
+ const added=[...next].filter(([name])=>!old.has(name))
+  .map(([name,b])=>({name,uploaded_type:b.type}));
+ const byName=(a,b)=>a.name.localeCompare(b.name);
+ missing.sort(byName);retyped.sort(byName);added.sort(byName);
+ // Only a non-sensitive, bounded difference report: no raw version views.
+ return Object.freeze({
+  status:'HOLD',
+  checked_versions_exact:true,
+  removed_bindings:missing,
+  changed_binding_types:retyped,
+  new_bindings:added,
+  active_binding_count:old.size,
+  uploaded_binding_count:next.size,
+  all_binding_names_and_types_match:missing.length===0&&
+   retyped.length===0&&added.length===0,
+  compatibility_explanation:'not_yet_verified',
+  uploaded_version_is_safe_to_promote:false,
+  secret_values_read:false,work_traffic_changed:false,
+  diagnostic_performed_without_cloudflare_writes:true,
+ });
+}
+
 function sameActive(actual,which){
  const ver=which==='hq'?VERSION_PIN.active:VERSION_PIN.gateway;
  const dep=which==='hq'?VERSION_PIN.deployment:
@@ -124,7 +158,9 @@ function sameActive(actual,which){
 }
 export async function inspectUploadedWorkHqInactive({
  readLocal,readMetadata,readSubdomains,compiledHq,gatewayCandidate,
+ diagnosticOnly=false,
 }={}){
+ gate(typeof diagnosticOnly==='boolean','invalid_diagnostic_mode');
  gate(typeof readMetadata==='function','missing_metadata_reader');
  // Existing combined review includes local SHA pin, both Worker binding
  // baselines, two authenticated Version URL GETs per Worker and traffic
@@ -145,7 +181,9 @@ export async function inspectUploadedWorkHqInactive({
  // Direct GET of exact ID; versions LIST pagination is not proof.
  const activeView=await readMetadata('hq','version',VERSION_PIN.active);
  const uploadedView=await readMetadata('hq','version',VERSION_PIN.uploaded);
- const compared=compareUploadedWorkHqVersion({activeView,uploadedView});
+ const compared=diagnosticOnly?
+  describeUploadedWorkHqBindingDelta({activeView,uploadedView}):
+  compareUploadedWorkHqVersion({activeView,uploadedView});
  const hqAfter=current100Version(await readMetadata('hq','deployments'));
  const gatewayAfter=current100Version(await readMetadata('gateway','deployments'));
  sameActive(hqAfter,'hq');
@@ -155,6 +193,7 @@ export async function inspectUploadedWorkHqInactive({
 
  return Object.freeze({
   environment:'WORK',status:'HOLD',
+  diagnostic_only:diagnosticOnly,
   worker:'jill-order-desk-canary-work',
   inactive_uploaded_version:VERSION_PIN.uploaded,
   current_active_version:VERSION_PIN.active,
@@ -183,7 +222,8 @@ function readOwnerLocal(){
 }
 async function main(){
  gate(process.argv.length===2||process.argv.length===3&&
-  process.argv[2]==='--owner-readonly','invalid_invocation');
+  ['--owner-readonly','--diagnose-readonly'].includes(process.argv[2]),
+  'invalid_invocation');
  if(process.argv.length===2){
   console.log(JSON.stringify({
    environment:'WORK',status:'HOLD',
@@ -207,6 +247,7 @@ async function main(){
  const report=await inspectUploadedWorkHqInactive({
   readLocal:readOwnerLocal,readMetadata:readWorkContactMetadata,
   readSubdomains,compiledHq,gatewayCandidate,
+  diagnosticOnly:process.argv[2]==='--diagnose-readonly',
  });
  console.log(JSON.stringify(report,null,2));
 }
