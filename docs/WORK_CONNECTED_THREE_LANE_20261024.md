@@ -155,3 +155,59 @@ and a blocked Shopify/customer/browser storage surface. CI typechecks
 and builds this page together with My JILL and the accepted visual
 polish. It remains **source-only** until a separate Owner-authorized
 WORK deployment and real end-to-end acceptance.
+
+## Quote Save/Reload: actual SQL + handler acceptance, still offline
+
+Added two **executable integration tests** to the same three-lane source
+rehearsal (using Node.js 22's in-memory SQLite, NOT Cloudflare D1):
+
+1. `scripts/test-work-quote-sqlite-roundtrip.mjs` executes the **exact
+   audited SQL plans** from `planLocalWorkQuoteDraftSave` in an isolated,
+   transactional SQLite database. It asserts original amounts and total
+   in integer cents, the idempotent original operation receipt, no second
+   receipt on a repeat, optimistic-revision conflicts on stale write,
+   correct second revision, unique-operation rollback preserving the
+   previous row, and cryptographic rejection of corrupted price hashes,
+   foreign shops and changed signed source revisions. It passes a verified
+   D1-shaped row through the **actual** server projection and UI
+   `hydrateVerifiedWorkQuoteWorksheet`, proving the same cents and
+   item identities survive Save → Read → Restore.
+2. `scripts/test-work-quote-http-sqlite-roundtrip.mjs` calls the **actual
+   Owner HTTP Save and Read handler functions**. Their D1 interface is
+   backed by disposable SQLite with a synthetic WORK Owner authority
+   and Shopify-SDK-shaped online session, not a real Shopify token.
+   It proves the capability OFF state reads neither Shopify nor the
+   signed source, Owner/WORK D1 authorization precedes business data,
+   Save/Read produces a server-verified draft, replay reports a
+   duplicate rather than a second write, stale revisions return 409,
+   legitimate CAS updates increment once, foreign shop/non-owner/
+   wrong Origin cannot write, source revision drift refuses both
+   Save and Reload, corrupted stored hash cannot leave the server,
+   and no provider mutation occurs.
+
+The scripts are **tests of real application code**, not a simulated
+UI “Save succeeded” label. However they do **NOT** certify live
+Cloudflare/D1 schema state, real OAuth expiry, worker ingress,
+network delivery, payments or external customer acceptance.
+
+### Separate Owner release gate to enable quote drafts later
+
+- Keep `JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED=false` in all currently deployed
+  WORK versions and leave LIVE/KEEP unchanged.
+- Verify WORK D1 migration/table/unique operation receipt identity and
+  free-tier usage on the exact existing account, fresh authenticated
+  Shopify Owner session, and signed Google QA request/source revision.
+- Check locked existing Workers' bindings/secret names, publish a
+  separately authorized **inactive** WORK candidate, inspect exact
+  version bindings and rollback version, and separately authorize any
+  traffic promotion. No assumptions from source CI.
+- Owner then tests one synthetic request Save → Reload → page refresh →
+  second edit → Save → Reload, plus two simultaneous tabs,
+  stale source revision and denied non-Owner session. Observe actual D1
+  readback and ensure no quote sent, draft Shopify order generated,
+  invoice sent or customer messaged.
+- **Do not enable** quote publication, invoice, Shopify order creation
+  or customer approvals as a side effect of persisting merchant drafts.
+
+**Current result: source/SQLite synthetic acceptance only; HQ WORK
+quote Save/Reload remains OFF until a distinct Owner authorization.**
