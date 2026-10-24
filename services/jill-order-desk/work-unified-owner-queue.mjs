@@ -129,9 +129,12 @@ export function projectUnifiedWorkOwnerQueue({
   if(ids.has(ticket.id))fail();
   ids.add(ticket.id);
  }
+ // Equal timestamps prefer the already established Custom Order queue;
+ // within a kind the stable canonical ID breaks any remaining ties.
+ const rank={custom_order:0,contact:1};
  const rows=[...orders,...contacts].sort((a,b)=>
   b.updated_at_ms-a.updated_at_ms||
-  a.kind.localeCompare(b.kind)||a.id.localeCompare(b.id));
+  rank[a.kind]-rank[b.kind]||a.id.localeCompare(b.id));
  return state('ready',rows,{
   custom_orders_connected:true,contact_connected:true,
   contact_state:'ready',
