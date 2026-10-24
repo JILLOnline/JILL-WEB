@@ -197,3 +197,86 @@ assuming its exposure status.
 **Status: HOLD** until the owner runs and shares the non-sensitive
 read-only result. Never request the Cloudflare API token to be pasted
 into chat.
+
+## Owner-confirmed active preview URLs: BOTH enabled — upload BLOCKED
+
+The owner ran `inspect-work-contact-preview-exposure-readonly.mjs
+--owner-readonly` against the pinned WORK HQ/gateway versions:
+HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`; gateway
+`9322193f-5e87-4479-88c9-39229dddb5f2`. Both read-only
+Cloudflare subdomain GETs returned **`workers_dev_enabled:true`**
+AND **`version_urls_enabled:true`**. The final report confirmed
+`preview_url_exposure_gate_cleared:false`,
+`version_uploaded:false`, `traffic_changed:false`,
+`subdomain_settings_changed:false`, `upload_authorized:false`.
+
+This is not evidence of a breach or public access to private customer
+data; it is proof the **version-routing setting is currently ON** for
+both workers. Cloudflare warns that newly uploaded versions have public
+Version URLs when enabled. The gateway implements a Durable Object
+and Cloudflare currently limits generated Version URLs for such Workers,
+but it would be unsafe to rely on that exception for future features or
+as a substitute for reading the actual setting.
+
+### Minimal no-new-service remediation (proposal, NOT executed)
+
+**Option A, recommended for current WORK:** With explicit owner
+authorization, disable only **Version URLs** for **both** existing WORK
+Workers using Cloudflare dashboard **Workers & Pages → worker →
+Settings → Domains & Routes → Version URLs → Disable**. Leave the
+normal `workers.dev` route **enabled** on both; changing that route
+could interrupt current HQ and gateway operation. This setting change
+will disable existing aliased/versioned preview routes for each worker,
+so any current preview-only URLs would cease routing. Check whether
+anyone relies on them before authorizing the change.
+
+After an authorized change, rerun the **GET-only** preview inspector and
+the pinned active-binding inspector. Both `version_urls_enabled`
+results must be **false**, both `workers_dev_enabled` results must
+remain **true**, active version IDs/allocations and every binding must
+be unchanged. Even with both disabled, `upload_authorized` stays
+**false** until the separate inactive-upload review passes.
+
+**Option B:** Protect both Version URL surfaces through Cloudflare
+Access (including preview paths), with independently verified Access
+policy enforcement. This requires Zero Trust setup and may have plan
+or management consequences; NO Access provisioning/paid enrollment is
+approved. Do not infer that Shopify OAuth alone protects all URL paths
+or that enabling Access is harmless to existing HQ login.
+
+### Immutable source preparation performed only in the draft PR
+
+- The **unshipped gateway** `wrangler.contact-bridge.candidate.toml`
+  now explicitly declares `preview_urls = false` and retains
+  `workers_dev = true`, existing limiter, gateway secrets and named
+  HQ-only service binding. This is **not** the active gateway config
+  `wrangler.toml`. Do not upload it now.
+- The source-only `scripts/plan-work-contact-preview-lockdown.mjs`
+  clones a separately reviewed owner-derived HQ candidate, adding
+  **only** `preview_urls:false`. It independently refuses any change
+  to the HQ WORK tenant, existing Shopify OAuth, customer flags,
+  original D1 ID, original secret names or normal `workers_dev`
+  routing. It does not change the existing artifact.
+- A disposable **synthetic** HQ locked candidate is compiled using
+  `wrangler deploy --dry-run` in CI; the original owner-attested
+  fingerprint `ed1379e8723a10fe3a73cb662249c7e327b534187b25c929286ca7a3ebdd490f`
+  continues to identify **only the owner's original local build**.
+  Adding `preview_urls:false` to a future real manifest requires a
+  new local hash and attestation. Do not claim the original fingerprint
+  covers a changed manifest.
+
+The settings on the active Cloudflare workers are currently **still
+enabled**. Merely setting `preview_urls=false` in an unshipped
+candidate cannot turn existing routing OFF. Cloudflare docs confirm
+this field is applied when configuration is uploaded/deployed; we
+do NOT rely on an upload as a safe, atomic way to disable an
+already-enabled preview route.
+
+**Release decision: HOLD.** No preview-setting mutation, version
+upload, traffic deployment, paid service enrollment, Shopify form
+switch, D1 write, LIVE or KEEP change has been approved or performed.
+
+Provider references:
+- https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
+- https://developers.cloudflare.com/workers/configuration/cloudflare-access/
+- https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/
