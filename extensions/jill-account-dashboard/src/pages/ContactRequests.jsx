@@ -4,6 +4,8 @@ import {loadWorkCustomerContactTickets}
 import {claimWorkCustomerContactTicket}
  from '../../../../shared/customer-contact-claim.mjs';
 import ContactThread from './ContactThread.jsx';
+import {retainOwnedContactDrafts,updateOwnedContactDraft}
+ from '../../../../shared/customer-contact-draft-ledger.mjs';
 
 // Source-only My JILL Contact Requests screen. Future certified WORK
 // gateway must validate the Shopify Customer session + exact ticket owner.
@@ -18,7 +20,8 @@ const statusLabel={
  received:'Received',reviewing:'Under review',
  waiting_customer:'Waiting on you',resolved:'Resolved',
 };
-export default function ContactRequests({enabled=false,threadEnabled=false,replyEnabled=false,onNavigate}){
+export default function ContactRequests({enabled=false,threadEnabled=false,replyEnabled=false,
+ onNavigate,drafts={},onDraftsChange=()=>{}}){
  const [state,setState]=useState({status:'not_connected',tickets:[]});
  const [attempt,setAttempt]=useState(0);
  const [claimId,setClaimId]=useState('');
@@ -30,16 +33,27 @@ export default function ContactRequests({enabled=false,threadEnabled=false,reply
   let active=true;
   const controller=new AbortController();
   setState({status:enabled===true?'loading':'not_connected',tickets:[]});
+  if(enabled!==true)onDraftsChange({});
   const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
   loadWorkCustomerContactTickets({
    enabled:enabled===true,sessionToken,signal:controller.signal,
   }).then(result=>{
    if(!active)return;
-   if(result.state==='ready')
+   if(result.state==='ready'){
+    // Signed account owner list is the ONLY authorization to retain any
+    // previously typed reply or pending operation across hub navigation.
+    onDraftsChange(previous=>
+     retainOwnedContactDrafts(previous,result.tickets));
     setState({status:'ready',tickets:result.tickets});
-   else setState({status:'not_connected',tickets:[]});
+   }else{
+    onDraftsChange({});
+    setState({status:'not_connected',tickets:[]});
+   }
   }).catch(()=>{
-   if(active)setState({status:'error',tickets:[]});
+   if(active){
+    onDraftsChange({}); // Fail closed on account change or source outage.
+    setState({status:'error',tickets:[]});
+   }
   });
   return ()=>{active=false;controller.abort();};
  },[enabled,attempt]);
@@ -150,7 +164,12 @@ export default function ContactRequests({enabled=false,threadEnabled=false,reply
         </s-text>
         <ContactThread ticketId={ticket.ticket_id}
          enabled={enabled===true&&threadEnabled===true}
-         v2Enabled={enabled===true&&threadEnabled===true&&replyEnabled===true}/>
+         v2Enabled={enabled===true&&threadEnabled===true&&replyEnabled===true&&
+          Object.hasOwn(drafts,ticket.ticket_id)}
+         draft={Object.hasOwn(drafts,ticket.ticket_id)
+          ?drafts[ticket.ticket_id]:{}}
+         onDraftChange={(change,meta)=>onDraftsChange(previous=>
+          updateOwnedContactDraft(previous,ticket.ticket_id,change,meta))}/>
         <s-text color="subdued">
          {replyEnabled===true&&enabled===true&&threadEnabled===true
           ?'Reply availability is verified separately inside each claimed conversation.'
