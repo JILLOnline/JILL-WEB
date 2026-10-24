@@ -421,3 +421,61 @@ HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`,
 gateway `9322193f-5e87-4479-88c9-39229dddb5f2`.
 Changes from either baseline produce a new review, not an automatic
 promotion. **No staging or activation authority is implied.**
+
+## Owner-confirmed active WORK parity blockers and protected candidate reconciliation
+
+The owner ran `inspect-work-contact-paired-baseline-readonly.mjs
+--owner-readonly` against the **same** pinned 100%-traffic active WORK
+versions (HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`, gateway
+`9322193f-5e87-4479-88c9-39229dddb5f2`). Both identities and
+allocations verified. The source-only HQ OAuth-ON candidate was **NOT**
+ready to upload because its runtime parity lacked five *existing* HQ
+boolean variables:
+
+- `JILL_WORK_CATALOG_ENABLED`
+- `JILL_WORK_CONVERSATION_ENABLED`
+- `JILL_WORK_HQ_DETAIL_ENABLED`
+- `JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED`
+- `JILL_WORK_MERCHANT_WRITES_ENABLED`
+
+The owner-provided inspection exposed variable **names, not values**.
+Do not guess their states or disable existing features. The gateway
+also has `JILL_CUSTOM_ORDER_QA_BACKEND_URL` as an existing
+**secret binding name** alongside its two other secret names. Do not
+turn that URL into a plaintext variable or overwrite its value.
+
+New protection: `reconcileActiveHqContactManifest()` reads those
+five exact boolean values **in memory from authenticated,
+version-pinned Cloudflare metadata** and copies only those known,
+already-existing controls into an OAuth-ON local candidate; it refuses
+any unrelated added/missing plaintext variable, malformed value,
+unsupported binding, enabled Contact flag or incorrect WORK D1.
+Its output must not be treated as deployment approval. The source-only
+test covers both true and false existing states with synthetic data.
+
+The gateway's separate *unshipped* Contact binding candidate now
+declares `[secrets].required` with the three exact WORK secret
+binding **names**: `SHOPIFY_WORK_APP_SECRET`,
+`JILL_CUSTOM_ORDER_GATEWAY_SECRET` and
+`JILL_CUSTOM_ORDER_QA_BACKEND_URL`. The planner independently
+rejects any mismatch with the **active** secret names.
+Wrangler has an explicit required-secret validation mechanism but
+the candidate's secret values have **not** been independently verified
+on a newly staged version. The public gateway still has no D1 binding.
+
+`inspect-work-contact-paired-baseline-readonly.mjs` now reports a
+separate `hq_reconciliation` summary with the restored setting
+**names**, the preserved existing secret **names**, and
+`candidate_plaintext_parity_after_reconcile`; it **never prints
+actual business-variable values, secrets or a candidate manifest**.
+The command remains read-only and always returns `status:"HOLD"`.
+The extra synthetic CI dry-run compiles the same reconciler using
+dummy true/false values and a temporary build output. No authentic
+Worker version, Shopify setup, D1, or customer data is modified.
+
+The next owner read-only baseline observation is required to verify
+the reconciliation against actual Cloudflare metadata. An upload
+requires separate explicit WORK-only approval and a reviewed plan to
+verify ALL active bindings, version provenance, secret inheritance,
+Shopify login and native form behavior. Do not merge/release merely
+because source tests are green.
