@@ -536,3 +536,65 @@ customer A/B/guest experience, and a separately approved WORK-only
 inactive upload with full existing secret/binding continuity
 verification. LIVE/KEEP and all customer-facing switches remain
 untouched.
+
+## Owner-completed REAL local reconciled WORK HQ build and Wrangler dry-run (2026-10-23/24)
+
+The owner executed the guarded command from their isolated
+`%TEMP%/JILL_CONTACT_D1_QA_20261023` checkout at **source commit
+`7c3e95a323adfa078f343ffcd0d7c138fd494837`**. This section
+**supersedes the previous "real owner-local candidate not generated"
+statement**. The owner-reported terminal output confirms:
+
+- `npm.cmd run typecheck --prefix <isolated HQ app>` — **pass**.
+- `JILL_BUILD_TARGET=canary npm.cmd run build` — **pass**;
+  generated `dist/server/wrangler.json`, compiled default HQ app and
+  named private `JillContactPrivate` entrypoint.
+- `check-work-contact-hq-bundle.mjs` — **pass**; source canary
+  manifest intentionally OAuth OFF.
+- `prepare-work-contact-owner-local-candidate.mjs --owner-local-only`
+  — **pass** against the same pinned active 100%-traffic HQ and gateway
+  versions, with `hq_existing_flags_preserved` containing all five
+  existing business controls, four existing HQ secret binding NAMES,
+  gateway three-secret contract matching active, and
+  `artifact_written_locally:true`.
+- `wrangler 4.152.0 deploy --dry-run --config
+  dist/server/wrangler.contact-owner-local-only.json` — **pass**,
+  explicitly reported `--dry-run: exiting now` and
+  `PASS: WORK local candidate compiled. No Worker uploaded.`
+
+The actual **owner-observed** local candidate's WORK HQ variable
+values (no secret values present) were:
+
+| Existing runtime variable | Local candidate |
+| --- | --- |
+| `JILL_WORK_HOST_STAGE` | `canary` |
+| `JILL_WORK_OWNER_BOOTSTRAP_ENABLED` | `false` |
+| `JILL_WORK_OAUTH_ENABLED` | `true` |
+| `JILL_WORK_CATALOG_ENABLED` | `true` |
+| `JILL_WORK_CONVERSATION_ENABLED` | `false` |
+| `JILL_WORK_HQ_DETAIL_ENABLED` | `true` |
+| `JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED` | `false` |
+| `JILL_WORK_MERCHANT_WRITES_ENABLED` | `true` |
+
+Cloudflare's CLI showed the correct **WORK-only D1 name**
+`jill-order-desk-work`; no gateway D1 exposure. The compile
+included **two server modules**, **44 client assets** and produced
+only a temporary local dry-run output directory.
+
+The candidate is a **local ignored build artifact**: do not commit
+it or share its contents. This result proves local compilation,
+source entrypoint presence and owner-session-derived binding parity
+at inspection time. It does **NOT** prove deployed code provenance,
+secret VALUE continuity on a *new* version, Shopify/customer real
+auth, staff access after upload, or behavior of a newly uploaded
+version. No Cloudflare version upload, traffic allocation or
+activation, Shopify submission, D1 writes or paid infrastructure
+were performed. WORK Contact Us remains OFF, and LIVE/KEEP remain
+untouched.
+
+**Next**: independently attest the local artifact against fresh
+version-pinned Cloudflare binding metadata, record a non-sensitive
+artifact fingerprint for later comparison, review a *separately
+authorized* inactive WORK-only version upload protocol and require
+post-upload Owner login, Customer A/B/guest and fallback QA before
+any traffic promotion. HOLD remains.
