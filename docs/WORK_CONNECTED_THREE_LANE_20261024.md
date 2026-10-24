@@ -78,3 +78,53 @@ actual modules from BOTH source branches after an ephemeral Git merge:
 
 **Status: SOURCE ONLY / NOT ACTIVATED. CI success is not an authenticated
 provider or real-customer acceptance receipt.**
+
+## Source slice U4a — verified unified Owner read queue (October 24)
+
+Added a **real, registered but hard-OFF** Owner JSON route candidate
+`GET /app/queue/unified`, separate from the established
+`GET /app/queue` and `/app/requests`. This route does not replace
+existing HQ screens or change their state.
+
+- `services/jill-order-desk/work-unified-owner-queue.mjs`:
+  bounded/strict projection and orchestration for Google-signed
+  Custom Order merchant-list metadata plus authorized WORK D1 Contact
+  ticket metadata. It discards customer names, emails, private notes,
+  phone, raw Contact bodies, staff/owner IDs and message contents.
+  Stable ordering by verified update time, Custom Orders first at
+  identical timestamps, and then canonical ID.
+- `services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx`:
+  calls both **existing** independently Owner/D1-authenticated readers.
+  `authenticateWorkAdminOnce` shares the exact same request-scoped
+  Shopify SDK result without sharing authorization across requests.
+  It never accepts a caller-supplied shop, customer GID or email.
+- `routes.ts` registers the resource route; `workers/app.ts`
+  refuses it with 503 **before Shopify SDK and D1** unless a new,
+  separately owner-authorized `JILL_WORK_UNIFIED_QUEUE_ENABLED=true`
+  is installed. **That flag is absent in the current WORK manifest.**
+  Even with this future flag enabled, Contact is read only if
+  `JILL_WORK_CONTACT_INBOX_ENABLED=true` is separately approved.
+  Neither flag gives message, quote, invoice, order or Contact intake
+  write authority.
+- A verified Custom Orders source and Contact OFF gives `state=partial`
+  with `contact_state=not_connected` (not "zero tickets"). If the
+  Contact source is explicitly enabled but unverified, partial/paged,
+  inaccessible or malformed, the **combined list is held with no
+  records** instead of falsely claiming completeness.
+- Contact JSON response is bounded at 24KiB before parsing and
+  validates strict UTF-8. Duplicate IDs, missing provenance, cross-shop
+  records, impossible revisions/times or forged delivery flags hold.
+- `scripts/test-work-unified-owner-queue.mjs` exercises both valid
+  queues, no PII, deterministic sorting, hard OFF (zero sources read),
+  false Contact readiness, unauthorized Owner and source errors.
+  The three-lane ephemeral workflow runs the tests and builds the
+  registered React Router route.
+
+**Limitations:** This is a source-only read integration, not an
+activated unified HQ inbox or a reason to re-route Shopify's native
+Contact form. Real requests are still authoritative in their current
+separate displays; customer messaging, Contact intake and quote drafts
+remain under their pre-existing hard-OFF controls. Test this optional
+read-only route in WORK **only after** a fresh account/Owner approval,
+D1 and source proof, and separate deployment decision. The currently
+working 100% WORK Worker is unchanged.
