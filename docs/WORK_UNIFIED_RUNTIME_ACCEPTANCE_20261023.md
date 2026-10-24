@@ -376,3 +376,48 @@ single-delivery regression must pass before any Contact activation.
 The `0004` schema migration is already independently verified and
 requires no repeat. No paid upgrade, LIVE/KEEP action, or Shopify
 production change is authorized by these read-only source checks.
+
+## Latest release blocker: exact active-binding parity before any upload
+
+A successful local build is not enough for Cloudflare's **running WORK**
+services. The original canary manifest in Git deliberately keeps OAuth
+OFF while the active Shopify Admin HQ runtime has OAuth ON. Active
+HQ/gateway Workers can also contain plaintext variables, secrets,
+Durable Object bindings and flags that are absent from the checked-in
+manifest. Dropping any of those would risk breaking current features.
+
+The new `scripts/plan-work-contact-binding-parity.mjs` provides
+a **pure/offline** comparison of active Worker version metadata versus
+reviewed Contact bridge candidate sources:
+
+- HQ: preserves Shopify OAuth ON, canary host, Owner bootstrap OFF, the
+  exact WORK D1 identity and the existence of critical Shopify/session
+  secret bindings. Compares **every active plaintext variable** with
+  the OAuth-preserving candidate. If any active value is missing or
+  different or an unsupported binding appears, the candidate is **NO**
+  for staging. No secret value is extracted or considered attested.
+- Gateway: rejects active public D1, enforces existing Shopify/Gateway
+  secret **names** and Durable Object limiter, requires the private
+  candidate target `jill-order-desk-canary-work#JillContactPrivate`,
+  and reports other existing binding names that a future release must
+  explicitly preserve. No unsafe assumption is made about Wrangler
+  secret inheritance.
+- Both: Contact flags must be OFF; every result remains `HOLD` and
+  `upload_or_deployment_authorized:false`.
+
+`scripts/inspect-work-contact-paired-baseline-readonly.mjs` exposes
+a second, optional `--owner-readonly` mode. It can check the
+**currently active 100%-traffic** HQ and gateway version metadata
+with Wrangler, pin the previously owner-attested version IDs and verify
+unchanged deployment allocations before running the parity planner.
+By default it runs **offline with zero remote calls**. It never
+deploys, migrates, submits forms, changes traffic or logs secret
+values. It cannot prove *secret-value* continuity or an uploaded
+candidate's actual runtime handlers; those need a separate signed
+staging and post-upload acceptance procedure.
+
+Exact baseline IDs most recently reported by the owner:
+HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`,
+gateway `9322193f-5e87-4479-88c9-39229dddb5f2`.
+Changes from either baseline produce a new review, not an automatic
+promotion. **No staging or activation authority is implied.**
