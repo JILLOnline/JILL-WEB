@@ -132,3 +132,71 @@ export function compareGatewayWorkContactCandidate({activeView,
   upload_or_deployment_authorized:false,
  });
 }
+
+/**
+ * Prepare a LOCAL, immutable WORK HQ manifest using only the five specifically
+ * attested existing business flags. This does not ask Cloudflare to change
+ * variables and cannot be used to infer authorization for a version upload.
+ * Must be preceded by a 100%-traffic active version/identity pin.
+ */
+export const RESTORE_EXISTING_HQ_FLAGS=Object.freeze([
+ 'JILL_WORK_CATALOG_ENABLED',
+ 'JILL_WORK_CONVERSATION_ENABLED',
+ 'JILL_WORK_HQ_DETAIL_ENABLED',
+ 'JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED',
+ 'JILL_WORK_MERCHANT_WRITES_ENABLED',
+]);
+export function reconcileActiveHqContactManifest({activeView,compiled}={}){
+ const before=compareHqWorkContactCandidate({activeView,compiled});
+ gate(before.unsupported_active_binding_names.length===0,
+  'unexpected_active_binding_type');
+ const map=namesOnly(activeView);
+ const existing=activePlainValues(map);
+ const difference=before.missing_or_changed_plaintext_names;
+ // Only exact known non-Contact business toggles may differ. Preserve their
+ // actual string booleans; NEVER silently guess true or set new features ON.
+ gate(difference.every(k=>RESTORE_EXISTING_HQ_FLAGS.includes(k))&&
+  difference.every(k=>Object.hasOwn(existing,k))&&
+  difference.every(k=>existing[k]==='true'||existing[k]==='false'),
+  'unreviewed_hq_plaintext_drift');
+ const base=prepareWorkContactOauthOnly(compiled);
+ const next=structuredClone(base);
+ const restored=[];
+ for(const key of RESTORE_EXISTING_HQ_FLAGS){
+  if(!Object.hasOwn(existing,key))continue;
+  gate(existing[key]==='true'||existing[key]==='false',
+   'unreviewed_hq_plaintext_value');
+  gate(!Object.hasOwn(next.vars,key),'source_hq_flag_collision');
+  next.vars[key]=existing[key];
+  restored.push(key);
+ }
+ const result=compareHqWorkContactCandidate({activeView,compiled:{
+  ...compiled,vars:{
+   ...compiled.vars,
+   // This is used for parity comparison only: prepareOAuthManifest
+   // requires the source manifest to remain OAuth OFF.
+   ...Object.fromEntries(restored.map(k=>[k,existing[k]])),
+  },
+ }});
+ gate(result.candidate_plaintext_parity &&
+  result.unsupported_active_binding_names.length===0,
+  'reconciled_manifest_not_equal_to_active');
+ gate(!CONTACT.some(k=>next.vars[k]==='true')&&
+  next.vars.JILL_WORK_OAUTH_ENABLED==='true'&&
+  next.vars.JILL_WORK_OWNER_BOOTSTRAP_ENABLED==='false',
+  'contact_or_oauth_flag_drift');
+ // Keep required secret NAMES only; Cloudflare can validate them upon
+ // a separately authorized versions upload. Values are never retrieved.
+ const required=['SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64'];
+ gate(required.every(k=>map.get(k)?.type==='secret_text'),
+  'required_secret_names_missing');
+ next.secrets={required};
+ return Object.freeze({
+  environment:'WORK',status:'HOLD',manifest:next,
+  restored_existing_flag_names:restored,
+  original_candidate_unchanged:JSON.stringify(compiled)===JSON.stringify(compiled),
+  secret_values_read:false,
+  source_only:true,
+  upload_or_deployment_authorized:false,
+ });
+}
