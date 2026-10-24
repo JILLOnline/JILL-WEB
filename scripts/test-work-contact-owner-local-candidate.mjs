@@ -1,0 +1,109 @@
+import assert from 'node:assert/strict';
+import {readFileSync,mkdtempSync,existsSync,mkdirSync,rmSync,
+ statSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {planOwnerLocalContactCandidate,writeOwnerLocalManifest}
+ from './prepare-work-contact-owner-local-candidate.mjs';
+const compiledHq=JSON.parse(readFileSync(
+ 'services/jill-order-desk/app-home/wrangler.canary.jsonc','utf8'));
+const gatewayCandidate=readFileSync(
+ 'services/custom-order-cloudflare/wrangler.contact-bridge.candidate.toml','utf8');
+const version={hq:'44ad4a81-55ad-4f49-9965-61260cc2294d',
+ gateway:'9322193f-5e87-4479-88c9-39229dddb5f2'};
+const b=(name,type,extra={})=>({name,type,...extra});
+const hq=[
+ b('JILL_ORDER_DESK_WORK_DB','d1',{
+  id:'3f17c186-c794-4e00-8f20-017191373a19'}),
+ b('JILL_WORK_HOST_STAGE','plain_text',{text:'canary'}),
+ b('JILL_WORK_OWNER_BOOTSTRAP_ENABLED','plain_text',{text:'false'}),
+ b('JILL_WORK_OAUTH_ENABLED','plain_text',{text:'true'}),
+ b('SHOPIFY_API_SECRET','secret_text'),
+ b('JILL_WORK_SESSION_KEY_B64','secret_text'),
+ b('JILL_HQ_MERCHANT_READ_SECRET','secret_text'),
+ b('JILL_HQ_MERCHANT_WRITE_SECRET','secret_text'),
+ b('JILL_WORK_CATALOG_ENABLED','plain_text',{text:'true'}),
+ b('JILL_WORK_CONVERSATION_ENABLED','plain_text',{text:'false'}),
+ b('JILL_WORK_HQ_DETAIL_ENABLED','plain_text',{text:'true'}),
+ b('JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED','plain_text',{text:'true'}),
+ b('JILL_WORK_MERCHANT_WRITES_ENABLED','plain_text',{text:'false'}),
+];
+const gateway=[
+ b('RATE_LIMITER','durable_object_namespace'),
+ b('SHOPIFY_WORK_APP_SECRET','secret_text'),
+ b('JILL_CUSTOM_ORDER_GATEWAY_SECRET','secret_text'),
+ b('JILL_CUSTOM_ORDER_QA_BACKEND_URL','secret_text'),
+ b('CF_VERSION_METADATA','version_metadata'),
+];
+const deployed=which=>({
+ deployments:[{id:'11111111-2222-4333-8444-555555555555',
+ created_on:'2026-10-23T20:00:00Z',
+ versions:[{version_id:version[which],percentage:100}]}],
+});
+const view=which=>({
+ id:version[which],resources:{bindings:which==='hq'?hq:gateway},
+});
+const original=JSON.stringify(compiledHq);
+const audit=await planOwnerLocalContactCandidate({
+ compiledHq,gatewayCandidate,
+ readMetadata:async(which,mode)=>
+  mode==='version'?view(which):deployed(which),
+});
+assert.equal(audit.report.status,'HOLD');
+assert.equal(audit.report.active_versions_verified,true);
+assert.equal(audit.report.gateway.gateway_secret_name_contract_matches_active,true);
+assert.equal(audit.manifest.vars.JILL_WORK_OAUTH_ENABLED,'true');
+assert.equal(audit.manifest.vars.JILL_WORK_MERCHANT_WRITES_ENABLED,'false');
+assert.equal(audit.manifest.vars.JILL_WORK_CONVERSATION_ENABLED,'false');
+assert.equal(audit.manifest.vars.JILL_WORK_CATALOG_ENABLED,'true');
+assert.deepEqual(audit.manifest.secrets.required,[
+ 'JILL_HQ_MERCHANT_READ_SECRET','JILL_HQ_MERCHANT_WRITE_SECRET',
+ 'JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET',
+]);
+assert.equal(JSON.stringify(compiledHq),original);
+const dir=mkdtempSync(join(tmpdir(),'jill-contact-local-manifest-'));
+try{
+ const output=join(dir,'wrangler.contact-owner-local-only.json');
+ const result=writeOwnerLocalManifest(audit.manifest,{
+  buildDir:dir,output,
+ });
+ assert.equal(result.status,'HOLD');
+ assert.equal(result.artifact_written_locally,true);
+ assert.equal(result.upload_or_deployment_authorized,false);
+ assert.equal(existsSync(output),true);
+ const manifest=JSON.parse(readFileSync(output,'utf8'));
+ assert.equal(manifest.vars.JILL_WORK_CATALOG_ENABLED,'true');
+ assert.equal(manifest.secrets.required.length,4);
+ if(process.platform!=='win32')
+  assert.equal(statSync(output).mode&0o777,0o600);
+ assert.throws(()=>writeOwnerLocalManifest(audit.manifest,{
+  buildDir:dir,output,
+ }),/work_contact_local_candidate_unsafe_or_existing_local_output/);
+ assert.throws(()=>writeOwnerLocalManifest(audit.manifest,{
+  buildDir:dir,output:join(dir,'..','escape.json'),
+ }),/work_contact_local_candidate_unsafe_or_existing_local_output/);
+ assert.throws(()=>writeOwnerLocalManifest({
+  ...audit.manifest,
+  d1_databases:[{...audit.manifest.d1_databases[0],database_id:'WRONG'}],
+ },{buildDir:dir,output:join(dir,'bad.json')}),
+ /work_contact_local_candidate_local_manifest_unverified/);
+ assert.equal(existsSync(join(dir,'bad.json')),false);
+}finally{rmSync(dir,{recursive:true,force:true});}
+await assert.rejects(()=>planOwnerLocalContactCandidate({
+ compiledHq,gatewayCandidate,
+ readMetadata:async(which,mode)=>
+  which==='hq'&&mode==='version'
+   ?{...view('hq'),resources:{bindings:[
+      ...hq,b('JILL_WORK_UNREVIEWED_ENABLED','plain_text',{text:'true'}),
+    ]}}
+   :mode==='version'?view(which):deployed(which),
+}),/work_contact_binding_parity_unreviewed_hq_plaintext_drift/);
+await assert.rejects(()=>planOwnerLocalContactCandidate({
+ compiledHq,gatewayCandidate,
+ readMetadata:async(which,mode)=>
+  which==='gateway'&&mode==='version'
+   ?{...view('gateway'),resources:{bindings:gateway.filter(
+      x=>x.name!=='JILL_CUSTOM_ORDER_QA_BACKEND_URL')}}
+   :mode==='version'?view(which):deployed(which),
+}),/work_contact_binding_parity_gateway_secret_names_do_not_match_active/);
+console.log('PASS WORK Contact local-only owner parity candidate: pinned active OAuth, five preserved runtime flags, all secret names, 0600 artifact, rollback HOLD and no Cloudflare mutation.');
