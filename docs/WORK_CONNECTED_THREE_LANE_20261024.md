@@ -378,3 +378,29 @@ one real QA request progression; Shopify extension publishing
 authorization; V2 D1 migration and private gateway authorization.
 Keep LIVE/KEEP, original WORK HQ deployment and Cloudflare free-tier
 protections in place.
+
+### My JILL signed Contact draft resilience — latest draft #156
+
+The latest source-only My JILL component uses the hub's in-memory
+`customer-contact-draft-ledger.mjs` rather than discarding an
+unconfirmed send on section navigation. A fresh signed Contact ticket
+list is mandatory to restore the text/operation for that ticket.
+Foreign and invalid lists fail closed; old callbacks cannot resurrect
+the ticket. The customer sees accurate unsent/pending badges.
+
+Confirmation now needs **two independent observations**: (a) the
+exact idempotency operation ID and sequence acknowledged by the
+customer reply handler, and (b) a fresh signed Customer A-only V2
+thread containing the exact author, source sequence and text.
+Identical concurrent messages from another tab cannot produce a
+false confirmation after an uncertain POST. Without an acknowledged
+receipt, My JILL preserves the operation and requires manual
+same-ID retry. No duplicate auto-sends, email or read claims.
+
+The three-lane CI invokes
+`scripts/test-myjill-contact-draft-navigation.mjs` as a part of
+the source-only My JILL branch merge, exercising forged receipts,
+wrong-ticket restoration, signed history mismatch and stale callbacks.
+WORK/LIVE/KEEP, Shopify extension publishing and D1 remain unchanged.
+Real account A/B reassignment and Owner-authorized release QA are
+still separate hard gates.
