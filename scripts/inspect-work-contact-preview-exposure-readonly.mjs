@@ -53,7 +53,7 @@ export function evaluateWorkPreviewSettings({
   active_worker_versions_verified:true,
   ...observed,
   any_version_urls_enabled:publicPreview,
-  safe_for_unprotected_inactive_upload:!publicPreview,
+  preview_url_exposure_gate_cleared:!publicPreview,
   // A 'safe' flag here only concerns PUBLIC VERSION URL exposure. It
   // does NOT establish secrets, source provenance, costs, or approval.
   upload_authorized:false,traffic_changed:false,
