@@ -1,12 +1,12 @@
 // My JILL: source-only overview projection for already signed Custom Orders.
 // Never infer account identity from email/name, manufacture status counts,
 // or present a failed/partial signed read as "zero requests".
-const VALID_ID=/^[A-Za-z0-9:_-]{8,128}$/;
+const VALID_ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const isValidDate=value=>typeof value==='string'&&
  value.length<=40&&Number.isFinite(Date.parse(value))&&
  /^\d{4}-\d{2}-\d{2}T/.test(value);
 export function projectMyJillRecentRequests(orders,{limit=3}={}){
- if(!Array.isArray(orders)||orders.length>50||
+ if(!Array.isArray(orders)||orders.length>20||
   !Number.isSafeInteger(limit)||limit<1||limit>5)
   throw Error('myjill_recent_requests_unverified');
  const seen=new Set();
@@ -19,7 +19,7 @@ export function projectMyJillRecentRequests(orders,{limit=3}={}){
     !['received','reviewing','awaiting_approval','in_production',
       'ready_pickup','on_hold','cancelled','completed'].includes(row.status)||
     !row.summary||typeof row.summary!=='object'||
-    !Array.isArray(row.summary.items)||row.summary.items.length>30)
+    !Array.isArray(row.summary.items)||row.summary.items.length>20)
     throw Error('myjill_recent_requests_unverified');
   seen.add(row.submission_id);
   const title=row.summary.items.find(item=>
