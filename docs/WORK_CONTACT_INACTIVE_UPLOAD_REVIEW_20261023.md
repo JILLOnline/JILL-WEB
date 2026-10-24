@@ -398,3 +398,35 @@ local hash/dry-run and authenticated readback.
 NOT been given.** No actual candidate version was uploaded or
 deployed; traffic, Shopify, D1, LIVE/KEEP and paid services unchanged.
 The WORK release decision remains HOLD.
+
+## Next non-upload milestone — preview-disabled local HQ artifact (source-only)
+
+A new **local-only**, fail-closed preparer,
+`scripts/prepare-work-contact-owner-preview-locked.mjs`, allows a
+future Owner action `--owner-local-only` after the completed preview
+setting change. It does **not** upload a Worker or mutate Cloudflare.
+
+Before writing anything, it insists on the exact original,
+Owner-attested local 50-file build fingerprint
+`ed1379e8723a10fe3a73cb662249c7e327b534187b25c929286ca7a3ebdd490f`
+and manifest hash
+`c0ae54ac0b29aedf12b9090b6575d04e913ce80329005333bc1439a7bed4fe07`.
+It reruns version-pinned HQ/gateway binding parity and authentic
+Cloudflare preview-setting GETs, requires both Version URL flags
+**OFF**, workers.dev routing ON and verifies unchanged active versions.
+A final second preview setting read rejects a concurrent re-enable.
+
+Only after these checks does it create the **new distinct local file**
+`dist/server/wrangler.contact-owner-preview-disabled.json`,
+using exclusive-create without overwriting the ORIGINAL artifact.
+Its sole allowed manifest change is `preview_urls:false`. It
+prints a **new SHA-256 hash** for the updated manifest and compiled
+file bundle. The old fingerprint remains historical evidence,
+and is not reused to claim certification for the new bytes.
+
+GitHub CI tests success and refusal cases with **synthetic metadata**;
+the local owner operation itself has not yet been performed. A
+successful new local hash followed by Wrangler `--dry-run` will
+improve *release review readiness*; it is NOT authority for
+`wrangler versions upload` or any production/WORK traffic
+promotion. The separate upload approval remains required.
