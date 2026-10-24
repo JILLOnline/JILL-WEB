@@ -284,3 +284,70 @@ independently inspected via exact new version ID, and verified to retain
 the active binding inventory. Traffic promotion is a second and
 independent decision, contingent on account/preview security and
 reversible Owner UX acceptance.
+
+## October 24 — corrected second inactive HQ version accepted by metadata postflight
+
+The owner provided Wrangler 4.152.0 output for the **separately
+authorized second WORK HQ-only inactive upload**. Exact NEW version:
+
+`d1f4e07f-8c9b-4b40-97a4-0c13d2c5149a`
+
+The completed independent `--owner-readonly` postflight confirmed:
+- uploaded binding scope equal to active **14** bindings;
+- restored `CF_VERSION_METADATA` type `version_metadata`;
+- exact WORK D1 and existing plaintext flags intact;
+- all four required HQ secret binding *names* present;
+- original 50-file corrected artifact matches fingerprint
+  `3625479c615109b980153d40e009f147523e8fe95b53d7403c92afe9abebe9db`;
+- both WORK Version URLs still OFF;
+- HQ and Gateway ordinary traffic allocations unchanged, with the
+  corrected version **outside** the active traffic allocation.
+
+The original active HQ Worker is
+`44ad4a81-55ad-4f49-9965-61260cc2294d`
+(deployment `f80335de-98ea-4831-b00e-87cd1a397596`).
+Original active gateway is
+`9322193f-5e87-4479-88c9-39229dddb5f2`
+(deployment `4fad4b6f-3596-4797-83a3-05edb7f89097`).
+The earlier invalid inactive HQ version
+`8fd0153b-3071-47df-8836-81973dab6cb4` must **never** be promoted.
+
+The newly committed read-only
+`scripts/inspect-work-hq-visual-activation-readonly.mjs`
+will independently prove actual **100% routing of the new corrected HQ
+version** only *after* a separate Owner-approved WORK-only deployment.
+It compares the active and corrected binding inventories, rechecks
+the original gateway and double-reads Version URL settings, and returns
+`HOLD_OWNER_VISUAL_ACCEPTANCE` even on success. The source-only
+synthetic suite proves it refuses unchanged HQ routing, split/drifted
+allocations, exposed Version URLs, absent secrets, and metadata drift.
+
+### Decision boundary before user-visible HQ activation
+
+- **Current status:** corrected candidate UPLOADED + metadata verified;
+  not serving traffic, Owner login **not tested**.
+- An explicit, new, one-time **WORK HQ version promotion at 100%**
+  authorization is required; neither prior inactive-upload approval
+  covers this action.
+- No change to gateway, D1 schemas, My JILL deployment, themes, Google,
+  Contact feature flags, quote-publication/commerce, LIVE or KEEP.
+- Owner must be able to roll back to the exact original HQ version
+  `44ad4a81-55ad-4f49-9965-61260cc2294d`; confirm deployment
+  readback before and after activation. No paid provisioning.
+- A **successful post-activation metadata check does not prove** that
+  Shopify OAuth/session credentials work, nor does it mean the new
+  source-only My JILL PR #156 is live. After activation the owner
+  should visit the existing WORK HQ app in Shopify Admin and visually
+  test login, navigation, request inbox, single-row details, catalog
+  and any enabled messaging/status action. Missing or unavailable
+  features remain honest; some flags are still OFF.
+- Cloudflare command reference for a later separately approved release:
+  `wrangler versions deploy <version-id>@100% --name
+  jill-order-desk-canary-work -y`; for rollback,
+  `wrangler rollback <original-version-id> --name
+  jill-order-desk-canary-work`. Never run on LIVE/KEEP.
+- Under no circumstance treat source-only CI as proof that an actual
+  Cloudflare traffic shift or owner UX acceptance occurred.
+
+**Status now: UPLOADED + VERIFIED INACTIVE. VISUAL PROMOTION AWAITS
+EXPLICIT OWNER AUTHORIZATION.**
