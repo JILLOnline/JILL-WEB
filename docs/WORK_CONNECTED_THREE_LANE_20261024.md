@@ -255,3 +255,81 @@ not deploy Contact intake, claims, merchant sends, My JILL publishing,
 quote saving or conversation flags. These are source-only negative
 and happy-path tests in GitHub's ephemeral three-lane CI, not live
 OAuth/Customer A/B browser acceptance.
+
+## Contact Us two-way customer replies — source-only V2 (October 24)
+
+Created an **additive** Customer Contact reply protocol. Existing
+merchant-only `jill_work_contact_messages` and its Owner actor
+requirements remain unchanged. There is **NO deployed schema migration,
+app extension publishing, or feature activation**.
+
+New files:
+- `services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql`
+  — separate immutable customer reply table with exact claimed Customer
+  GID, unique operation receipt, sequence 1–50, bounded body/hash and
+  foreign key. SQLite triggers deny other account owners, unclaimed or
+  resolved tickets, over-50 combined threads, and mutation/deletion of
+  recorded customer messages. **Never run migration without separate
+  explicit WORK Owner approval.**
+- `backend/work-contact-customer-reply.mjs` — signed Shopify Customer
+  Account JWT, strict 2.2 KB POST input bound, exact Customer GID-to-ticket
+  ownership query, operation replay identity, optimistic expected reply
+  sequence, database-checked combined count and denied guest/B/forged
+  tokens. No email/notification/status/Order/quote side effects.
+- `backend/work-contact-conversation-v2.mjs` — separate signed
+  customer-only V2 read handler merging verified merchant and customer
+  ledgers into a bounded, strictly ordered, *public* two-author thread.
+  Server projections discard staff IDs, customer GID, operation receipts
+  and hashes; unread, delivered and read receipts remain unverified.
+- `shared/customer-contact-conversation-v2.mjs` — bounded JWT-authenticated
+  My JILL V2 reader and explicit customer reply command with an
+  immutable operation ID. Both helpers default OFF and never claim
+  a successful POST proves a customer read or delivery.
+- `services/custom-order-cloudflare/handler.mjs` and
+  `services/jill-order-desk/work-contact-private-bridge.mjs` —
+  **new exact** `/jill-contact-reply` and
+  `/jill-contact-conversation-v2` routes. Public gateway remains
+  D1-free; each request is bounded/sanitized and goes through existing
+  Durable Object quota and the private HQ service. BOTH workers must
+  separately set the entirely new, currently absent
+  `JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED=true`. V2 reads
+  ALSO require existing `JILL_WORK_CONTACT_THREAD_ENABLED=true`.
+- `services/jill-order-desk/work-contact-ticket-detail.mjs` —
+  adds a strictly Owner-authenticated/claimed-only customer reply
+  projection behind the same new OFF flag and existing merchant message
+  authorization. The HQ Contact detail UI can render customer and
+  merchant messages together, without modifying the existing exact
+  merchant readback/operation confirmation protocol.
+- `scripts/test-work-contact-customer-reply-sqlite.mjs` and
+  `scripts/test-work-contact-owner-customer-replies.mjs` —
+  execute the **actual 0004+0005** SQLite migration and real
+  gateway/private HQ handlers with signed synthetic Customer A/B JWTs,
+  CAS/replay, quota, forgery, status close, immutable schema and
+  customer→HQ→My JILL readback. Owner projection rejects wrong GIDs,
+  broken sequences, hidden customer/private metadata and dangerous text.
+
+Important limits: A green ephemeral test suite is NOT proof of a
+production Shopify Customer Account JWT, provider quota operation,
+real WORK D1 migration or exact account claim, nor a published My JILL
+composer. V2 helpers are not yet wired to visible My JILL navigation:
+source-only composition precedes account extension deployment and
+actual user acceptance. Existing V1 Contact read behavior is preserved.
+No Contact Us form intake or customer reply feature is active on
+deployed WORK; LIVE/KEEP are strictly untouched.
+
+### Commissioning prerequisites (distinct Owner decisions)
+1. Fresh, authenticated read-only WORK baseline: HQ/Gateway versions,
+   bindings, original Cloudflare/free budget, secrets **names**,
+   disabled feature flags, D1 schema/migration status and rollback pin.
+2. Explicit independent WORK-only D1 `0005` migration authorization;
+   validate application against actual D1 SQLite semantics and
+   inspect constraints/indexes without exposing customer data.
+3. Explicit new inactive Worker upload authorization, exact version
+   binding parity/Version URLs disabled, and separate traffic deployment
+   authorization. Neither follows from source CI.
+4. Real Work Customer A/B/guest/expired JWT, quota, Contact claim,
+   Owner login and false-read/notification negative tests; then
+   independently opt in to published My JILL account composer and
+   V2 reader. No email/phone account matching.
+5. Continue safeguarding against paid infrastructure and preserve the
+   existing Shopify-native Contact Us form until intake is certified.
