@@ -143,6 +143,12 @@ jobs:
         run: npm run build --prefix services/jill-order-desk/app-home
       - name: Inspect generated HQ Worker entrypoint exports
         run: node scripts/check-work-contact-hq-bundle.mjs
+      - name: Create local OAuth-preserving HQ canary candidate (never publish)
+        run: node scripts/prepare-work-canary-oauth-manifest.mjs
+      - name: Compile OAuth-ON HQ canary candidate without deploying
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.oauth-canary.json --outdir "$RUNNER_TEMP/jill-contact-hq-oauth-preview"
       - name: Install isolated WORK gateway compiler dependencies
         run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund --package-lock=false
       - name: Compile unshipped WORK gateway service binding candidate (dry-run only)
