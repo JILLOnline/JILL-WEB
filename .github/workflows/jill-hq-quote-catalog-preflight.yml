@@ -54,6 +54,7 @@ on:
       - 'scripts/plan-work-contact-binding-parity.mjs'
       - 'scripts/test-work-contact-binding-parity.mjs'
       - 'scripts/test-work-contact-hq-reconcile.mjs'
+      - 'scripts/prepare-work-contact-reconcile-synthetic.mjs'
       - 'scripts/inspect-work-contact-paired-baseline-readonly.mjs'
       - 'scripts/test-work-contact-paired-baseline-readonly.mjs'
       - 'backend/work-contact-account-read.mjs'
@@ -151,6 +152,12 @@ jobs:
         working-directory: services/jill-order-desk/app-home
         run: |
           node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.oauth-canary.json --outdir "$RUNNER_TEMP/jill-contact-hq-oauth-preview"
+      - name: Produce synthetic five-setting HQ WORK parity candidate (never upload)
+        run: node scripts/prepare-work-contact-reconcile-synthetic.mjs
+      - name: Dry-run compile reconciled HQ candidate with existing business flags
+        working-directory: services/jill-order-desk/app-home
+        run: |
+          node ./node_modules/wrangler/bin/wrangler.js deploy --dry-run --config ./dist/server/wrangler.contact-reconcile-synthetic.json --outdir "$RUNNER_TEMP/jill-contact-reconcile-smoke"
       - name: Install isolated WORK gateway compiler dependencies
         run: npm install --prefix services/custom-order-cloudflare --no-audit --no-fund --package-lock=false
       - name: Compile unshipped WORK gateway service binding candidate (dry-run only)
@@ -191,6 +198,7 @@ jobs:
           node --check scripts/plan-work-contact-binding-parity.mjs
           node --check scripts/test-work-contact-binding-parity.mjs
           node --check scripts/test-work-contact-hq-reconcile.mjs
+          node --check scripts/prepare-work-contact-reconcile-synthetic.mjs
           node --check scripts/inspect-work-contact-paired-baseline-readonly.mjs
           node --check scripts/test-work-contact-paired-baseline-readonly.mjs
           node --check backend/work-contact-account-read.mjs
