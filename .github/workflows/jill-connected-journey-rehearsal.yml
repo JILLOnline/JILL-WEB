@@ -99,6 +99,7 @@ jobs:
           node scripts/test-work-connected-three-surface-contract.mjs
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-contact-v2-source.mjs
+          node scripts/test-myjill-contact-draft-navigation.mjs
           node scripts/test-account-hub-template.mjs
           node scripts/test-work-unified-owner-queue.mjs
           node scripts/test-work-contact-worker-routing.mjs
