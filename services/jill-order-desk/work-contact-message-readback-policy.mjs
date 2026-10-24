@@ -24,7 +24,8 @@ export function verifyWorkContactMessageReadback({
     !Number.isSafeInteger(ack.sequence)||ack.sequence<1||
     ack.sequence>50)
   return hold('unconfirmed_operation_ack');
- if(!obj(refreshedThread)||!Array.isArray(refreshedThread.messages)||
+ if(!obj(refreshedThread)||refreshedThread.ticket_id!==ticketId||
+    !Array.isArray(refreshedThread.messages)||
     refreshedThread.messages.length>50)
   return hold('refresh_unavailable');
  const matches=refreshedThread.messages.filter(m=>
