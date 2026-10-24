@@ -36,6 +36,9 @@ export default function AccountHub({accountState = null}) {
   // Shared in-memory reply ledger: uncertain delivery op IDs survive screen
   // navigation, but are never stored in a URL, cookie or second database.
   const [conversationDrafts,setConversationDrafts]=useState({});
+  // Contact replies have their own ticket-scoped ledger; a fresh signed
+  // Contact list re-authorizes it whenever the screen is mounted.
+  const [contactDrafts,setContactDrafts]=useState({});
   const [messageRequestTarget,setMessageRequestTarget]=useState(null);
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export default function AccountHub({accountState = null}) {
     coupons: <Coupons onNavigate={onNavigate} />,
     'custom-orders': <CustomOrders onNavigate={onNavigate}
       drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
-    'contact-requests': <ContactRequests enabled={false} onNavigate={onNavigate} />,
+    'contact-requests': <ContactRequests enabled={false} onNavigate={onNavigate}
+      drafts={contactDrafts} onDraftsChange={setContactDrafts} />,
     messages: <Messages requestedSubmissionId={messageRequestTarget}
       onNavigate={onNavigate} drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     celebrations: <Celebrations />,
