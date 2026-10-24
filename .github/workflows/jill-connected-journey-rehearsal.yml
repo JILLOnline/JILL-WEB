@@ -16,6 +16,11 @@ on:
       - 'scripts/test-work-quote-http-sqlite-roundtrip.mjs'
       - 'scripts/test-work-contact-sqlite-customer-readback.mjs'
       - 'scripts/test-work-contact-message-readback-policy.mjs'
+      - 'scripts/test-work-contact-customer-reply-sqlite.mjs'
+      - 'backend/work-contact-customer-reply.mjs'
+      - 'services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql'
+      - 'services/jill-order-desk/work-contact-private-bridge.mjs'
+      - 'services/custom-order-cloudflare/handler.mjs'
       - 'services/jill-order-desk/work-contact-message-readback-policy.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
       - 'services/jill-order-desk/work-unified-owner-queue.mjs'
@@ -92,6 +97,7 @@ jobs:
           node scripts/test-work-contact-private-e2e.mjs
           node --no-warnings scripts/test-work-contact-sqlite-customer-readback.mjs
           node scripts/test-work-contact-message-readback-policy.mjs
+          node --no-warnings scripts/test-work-contact-customer-reply-sqlite.mjs
           node scripts/test-work-contact-message-bridge.mjs
           node scripts/test-work-myjill-contact-claim.mjs
           node scripts/test-work-myjill-contact-thread.mjs
