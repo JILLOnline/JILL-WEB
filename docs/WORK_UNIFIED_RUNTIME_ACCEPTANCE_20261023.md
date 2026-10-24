@@ -598,3 +598,34 @@ artifact fingerprint for later comparison, review a *separately
 authorized* inactive WORK-only version upload protocol and require
 post-upload Owner login, Customer A/B/guest and fallback QA before
 any traffic promotion. HOLD remains.
+
+## Independent review before any inactive WORK Contact upload
+
+Added `scripts/attest-work-contact-local-artifact-readonly.mjs` as a
+**second gate** after the successful real local candidate and Wrangler
+`--dry-run`. It is invoked separately with `--owner-readonly`
+and never performs a Cloudflare or Shopify write.
+
+It rechecks current 100%-traffic HQ **and** gateway version/deployment
+pins through read-only Wrangler metadata, runs the existing five-flag
+reconciliation and exact gateway secret-name contract again, and
+refuses if the saved owner-local candidate manifest differs in **any**
+field from what the live pinned metadata requires. It fingerprints
+the local compiled HQ Worker entrypoint and support assets, client
+build assets, and reconciled manifest using SHA-256. The printed
+evidence consists only of version IDs, counts and hashes — no
+secret values, client information or manifest plaintext.
+
+The independent unit tests verify that a changed HQ business toggle
+or modified build file changes or fails the attestation. The fingerprint
+is strictly **local build evidence**, not proof of uploaded code
+identity, source attestation or secret VALUE continuity. It should be
+captured as part of a future *separately approved* staging record.
+The CLI requires the already generated
+`dist/server/wrangler.contact-owner-local-only.json` and an intact
+local canary build; it never overwrites a candidate or creates one.
+
+An inactive Cloudflare version upload and post-upload secret/binding
+verification remain **HOLD**, requiring explicit owner approval and
+a rollback plan. Keep Shopify native Contact form, current HQ OAuth,
+gateway backend secret and all customer flags unchanged.
