@@ -20,6 +20,10 @@ on:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
+      - 'scripts/test-myjill-mobile-orders-rewards.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Rewards.jsx'
       - 'scripts/prepare-account-hub-canary.mjs'
       - '.github/workflows/jill-myjill-customer-home-preview.yml'
 permissions:
@@ -40,6 +44,7 @@ jobs:
       - name: Strict source and authenticated customer-home projections
         run: |
           node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-mobile-orders-rewards.mjs
           node scripts/test-myjill-contact-v2-source.mjs
           node scripts/test-myjill-contact-draft-navigation.mjs
           node scripts/test-account-hub-template.mjs
