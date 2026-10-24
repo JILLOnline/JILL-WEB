@@ -21,14 +21,14 @@ const states={
 const disabled=evaluateWorkPreviewSettings({baseline,subdomains:states});
 assert.equal(disabled.status,'HOLD');
 assert.equal(disabled.any_version_urls_enabled,false);
-assert.equal(disabled.safe_for_unprotected_inactive_upload,true);
+assert.equal(disabled.preview_url_exposure_gate_cleared,true);
 assert.equal(disabled.upload_authorized,false);
 assert.equal(disabled.subdomain_settings_changed,false);
 const publicPreview=evaluateWorkPreviewSettings({
  baseline,subdomains:{...states,hq:{enabled:true,previews_enabled:true}},
 });
 assert.equal(publicPreview.any_version_urls_enabled,true);
-assert.equal(publicPreview.safe_for_unprotected_inactive_upload,false);
+assert.equal(publicPreview.preview_url_exposure_gate_cleared,false);
 assert.equal(publicPreview.hq.preview_url_exposure,'POTENTIALLY_PUBLIC');
 assert.equal(publicPreview.gateway.preview_url_exposure,'DISABLED');
 for(const unsafe of [
@@ -143,7 +143,7 @@ const whole=await inspectWorkPreviewProtection({
  readSubdomains:async()=>({...states}),
 });
 assert.equal(whole.status,'HOLD');
-assert.equal(whole.safe_for_unprotected_inactive_upload,true);
+assert.equal(whole.preview_url_exposure_gate_cleared,true);
 assert.deepEqual(visited,[
  'hq:deployments','hq:version','hq:deployments',
  'gateway:deployments','gateway:version','gateway:deployments',
