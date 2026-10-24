@@ -165,9 +165,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                         ?'Hide tracking & details':'View tracking & details'}
                     </s-button>
                     <s-button variant="primary"
-                      onClick={()=>onNavigate('messages',{
-                        submissionId:order.submission_id,
-                      })}>
+                      onClick={()=>onNavigate('messages',{submissionId:order.submission_id})}>
                       Conversation
                     </s-button>
                   </s-stack>
