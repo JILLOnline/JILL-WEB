@@ -28,7 +28,7 @@ const T=Object.freeze({
 });
 const STOP=reason=>{throw Error('contact_paired_baseline_'+reason);};
 const check=(ok,reason)=>{if(!ok)STOP(reason);};
-const cli=(which,mode,id)=>{
+export const readWorkContactMetadata=(which,mode,id)=>{
  check(Object.hasOwn(T,which),'unapproved_worker');
  check(mode==='deployments'||mode==='version','unapproved_operation');
  check(existsSync(WRANGLER),'missing_local_wrangler');
@@ -105,7 +105,7 @@ async function main(){
  }
  const report=await inspectContactPairedBaseline({
   compiledHq,gatewayCandidate,
-  readMetadata:async(which,mode,id)=>cli(which,mode,id),
+  readMetadata:async(which,mode,id)=>readWorkContactMetadata(which,mode,id),
  });
  console.log(JSON.stringify(report,null,2));
 }
