@@ -68,6 +68,25 @@ export function writeOwnerLocalManifest(manifest,{
   manifest.secrets.required.includes('SHOPIFY_API_SECRET')&&
   manifest.secrets.required.includes('JILL_WORK_SESSION_KEY_B64'),
   'local_manifest_unverified');
+ // Even standalone use must not produce an activating or plaintext-secret
+ // manifest. Source and remote checks are necessary, not the only defense.
+ for(const key of [
+  'JILL_WORK_CONTACT_PRIVATE_BRIDGE_ENABLED',
+  'JILL_WORK_CONTACT_INTAKE_ENABLED',
+  'JILL_WORK_CONTACT_ACCOUNT_ENABLED','JILL_WORK_CONTACT_CLAIM_ENABLED',
+  'JILL_WORK_CONTACT_THREAD_ENABLED',
+  'JILL_WORK_CONTACT_INBOX_ENABLED','JILL_WORK_CONTACT_STATUS_ENABLED',
+  'JILL_WORK_CONTACT_MESSAGES_ENABLED',
+ ]){
+  check(!Object.hasOwn(manifest.vars,key)||
+   manifest.vars[key]==='false','contact_feature_not_off');
+ }
+ check(!Object.hasOwn(manifest.vars,'SHOPIFY_API_SECRET')&&
+  !Object.hasOwn(manifest.vars,'JILL_WORK_SESSION_KEY_B64')&&
+  manifest.secrets.required.every(k=>typeof k==='string'&&
+   /^[A-Z][A-Z0-9_]{2,127}$/.test(k))&&
+  new Set(manifest.secrets.required).size===manifest.secrets.required.length,
+  'plaintext_secret_or_duplicate_name');
  check(resolve(dirname(output))===resolve(buildDir)&&
   !lstatSync(buildDir).isSymbolicLink()&&
   !existsSync(output),'unsafe_or_existing_local_output');
