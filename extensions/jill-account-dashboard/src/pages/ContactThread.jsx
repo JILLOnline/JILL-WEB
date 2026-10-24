@@ -1,9 +1,10 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadOwnedContactThread} from '../../../../shared/customer-contact-thread.mjs';
+import ContactConversationV2 from './ContactConversationV2.jsx';
 
 // Status and public messages only. Not a composer, delivery receipt, email,
 // notification, Shopify Order, private contact form or staff action.
-export default function ContactThread({ticketId,enabled=false}){
+export default function ContactThread({ticketId,enabled=false,v2Enabled=false}){
  const [opened,setOpened]=useState(false);
  const [attempt,setAttempt]=useState(0);
  const [state,setState]=useState({status:'closed',messages:[]});
@@ -25,6 +26,10 @@ export default function ContactThread({ticketId,enabled=false}){
   });
   return ()=>{active=false;controller.abort();};
  },[ticketId,enabled,opened,attempt]);
+ // The original V1 read remains unchanged until V2 has its own approval.
+ // Both V2 and the existing Contact account/ticket flags must opt in.
+ if(v2Enabled===true)return <ContactConversationV2 ticketId={ticketId}
+  enabled={enabled===true}/>;
  if(enabled!==true)return <s-text color="subdued">
   Verified My JILL conversation history is not connected yet.
  </s-text>;
