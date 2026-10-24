@@ -78,7 +78,8 @@ export default function ContactTicketDetail(){
   if(!ticket||!op||messageFetcher.state!=="idle"||!ack||
      ack.ok!==true||ack.ticket_id!==ticket.ticket_id||
      !["persisted_for_customer_account","already_persisted"].includes(ack.code)||
-     !Number.isSafeInteger(ack.sequence)||!ack.sequence||
+     typeof ack.sequence!=="number"||
+     !Number.isSafeInteger(ack.sequence)||ack.sequence<1||
      processedAck.current===op.operation_id)return;
   processedAck.current=op.operation_id;
   setReadbackWasLoading(false);
