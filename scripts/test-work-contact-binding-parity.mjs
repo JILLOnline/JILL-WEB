@@ -80,6 +80,7 @@ const gatewayGood=compareGatewayWorkContactCandidate({
 assert.equal(gatewayGood.status,'HOLD');
 assert.equal(gatewayGood.named_service_binding_in_candidate,true);
 assert.equal(gatewayGood.candidate_inherits_secrets_unverified,true);
+assert.equal(gatewayGood.gateway_secret_name_contract_matches_active,true);
 assert.deepEqual(gatewayGood.active_other_binding_names_to_preserve,
  ['JILL_CUSTOM_ORDER_QA_BACKEND_URL']);
 assert.equal(gatewayGood.private_d1_in_gateway,false);
@@ -100,4 +101,14 @@ assert.throws(()=>compareGatewayWorkContactCandidate({
  candidateManifestText:gateway.replace(
   'entrypoint = "JillContactPrivate"','entrypoint = "default"'),
 }),/work_contact_binding_parity_gateway_candidate_target_drift/);
+assert.throws(()=>compareGatewayWorkContactCandidate({
+ activeView:GATEWAY_ACTIVE,
+ candidateManifestText:gateway.replace(
+  '"JILL_CUSTOM_ORDER_QA_BACKEND_URL"', '"WRONG_SECRET"'),
+}),/work_contact_binding_parity_gateway_secret_names_do_not_match_active/);
+assert.throws(()=>compareGatewayWorkContactCandidate({
+ activeView:GATEWAY_ACTIVE,
+ candidateManifestText:gateway.replace(
+  '[secrets]','[not_secrets]'),
+}),/work_contact_binding_parity_gateway_secret_contract_missing/);
 console.log('PASS WORK Contact active-binding parity planner: exact HQ OAuth/D1/vars and gateway secret/limiter preservation; fail-closed on drift, always HOLD.');
