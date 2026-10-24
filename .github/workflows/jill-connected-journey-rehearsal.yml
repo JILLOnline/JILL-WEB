@@ -14,6 +14,7 @@ on:
       - 'scripts/test-work-unified-owner-queue.mjs'
       - 'scripts/test-work-quote-sqlite-roundtrip.mjs'
       - 'scripts/test-work-quote-http-sqlite-roundtrip.mjs'
+      - 'scripts/test-work-contact-sqlite-customer-readback.mjs'
       - 'services/jill-order-desk/work-unified-owner-queue.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.inquiries.tsx'
@@ -86,6 +87,7 @@ jobs:
           node scripts/test-work-unified-owner-queue.mjs
           node scripts/test-work-contact-worker-routing.mjs
           node scripts/test-work-contact-private-e2e.mjs
+          node --no-warnings scripts/test-work-contact-sqlite-customer-readback.mjs
           node scripts/test-work-contact-message-bridge.mjs
           node scripts/test-work-myjill-contact-claim.mjs
           node scripts/test-work-myjill-contact-thread.mjs
