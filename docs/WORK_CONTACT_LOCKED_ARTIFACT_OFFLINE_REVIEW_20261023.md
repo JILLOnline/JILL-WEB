@@ -128,3 +128,65 @@ The real `--owner-readonly` mode has not been executed for this new
 reviewer unless the owner separately provides its output. It also
 does not replace the separate owner approval required for any
 0%-traffic WORK version upload.
+
+## October 24: owner-confirmed inactive HQ upload and postflight
+
+The owner explicitly confirmed Workers Free and separately authorized
+**one inactive WORK HQ-only upload**. Wrangler 4.152.0
+`versions upload` completed, producing:
+
+- new, independently addressable uploaded version
+  `8fd0153b-3071-47df-8836-81973dab6cb4`;
+- original HQ still **100% serving**
+  `44ad4a81-55ad-4f49-9965-61260cc2294d`
+  via deployment `f80335de-98ea-4831-b00e-87cd1a397596`;
+- gateway remained serving
+  `9322193f-5e87-4479-88c9-39229dddb5f2`;
+- 7 changed static assets successfully uploaded, 35 reused;
+- candidate local digest stayed
+  `c2216770580d87659c75ba82c0776a54995db149a40830ebb55f8dd00f501996`;
+- post-upload combined authenticated GET-only review passed with
+  both Version URL routes disabled and WORK ordinary routing unchanged.
+
+**Important distinction:** The combined reviewer reports
+`worker_uploaded:false` because it makes no upload itself.
+The authoritative Wrangler upload result proves one version was uploaded.
+No `versions deploy` happened, no normal traffic was promoted, no
+gateway upload or Shopify/customer/D1 write was performed by that command.
+
+### New exact uploaded version inspector
+
+`scripts/inspect-work-hq-uploaded-inactive-readonly.mjs` has an
+offline HOLD default. The `--owner-readonly` mode:
+
+1. Re-verifies exact local candidate bytes and both Workers' current
+   100%-traffic metadata/Version URL settings with authenticated GETs;
+2. reads `versions view` for the **specific new uploaded version**
+   and the known active HQ version, rather than trusting a paginated
+   version list;
+3. compares OAuth, all existing plain-text business flags, disabled
+   Contact feature state, exact WORK D1 binding and **names** of all
+   four required HQ secret bindings. A new `ASSETS` binding is allowed
+   only as the explicit static asset type;
+4. rechecks active HQ and gateway deployments, rejecting a changed
+   allocation or even a new 0%-deployment reference to the uploaded
+   version (this checkpoint requires truly *un-deployed*);
+5. returns `HOLD` despite successful inspection. Secret **values**,
+   browser Owner login, source-to-published provenance, actual free
+   allowance consumption, private entrypoint execution, and
+   operational readiness still require independent proof.
+
+Its tests run offline with synthetic Cloudflare snapshots and no
+provider mutation or credentials. The exact current version observed by
+the owner remains the working WORK baseline for any future reversible
+rollout; old receipts are never re-used.
+
+**Next:** Owner performs new postflight read-only command from the
+already prepared temporary checkout, after pinning the reviewed source
+commit. If metadata drift or missing required secrets is found,
+stop without promoting or trying to repair in place. Only after the
+postflight plus a new, explicit WORK-only **traffic promotion**
+authorization may a protected Owner UI browser review be scheduled.
+
+**Status: UPLOADED, NOT DEPLOYED. WORK visual release remains HOLD.
+LIVE and KEEP unchanged; no paid plan enabled.**
