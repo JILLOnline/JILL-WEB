@@ -146,6 +146,15 @@ export function projectUnifiedWorkOwnerQueue({
  * Any failed/partial/unauthorized source HOLDs the combined result, rather
  * than presenting an apparently complete but misleading empty inbox.
  */
+/**
+ * @param {{
+ * enabled?:boolean,
+ * contactEnabled?:boolean,
+ * request?:Request,
+ * readRequests?:(request:Request)=>Promise<{status:number,model:any}>,
+ * readContacts?:(request:Request)=>Promise<Response>,
+ * }} [options]
+ */
 export async function readUnifiedWorkOwnerQueue({
  enabled=false,contactEnabled=false,request,readRequests,readContacts,
 }={}){
