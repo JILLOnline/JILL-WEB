@@ -82,3 +82,49 @@ Contact Us fallback and a reversible WORK-only traffic promotion.
 - https://developers.cloudflare.com/workers/platform/limits/
 
 **Strict near-zero-cost requirement remains in force. LIVE and KEEP untouched.**
+
+## Combined authenticated GET-only evidence review (next milestone)
+
+New source: `scripts/review-work-contact-combined-evidence-readonly.mjs`.
+It is not a deployment script. There is **no** automatic remote
+invocation in CI and no automatic upload upon a passing verdict.
+
+- Default execution (no arguments) performs **zero Cloudflare reads**
+  and returns HOLD.
+- Owner `--owner-readonly` first independently rehashes the existing
+  preview-locked local build, confirming both owner-pinned SHA-256 values,
+  the 50-file count, WORK OAuth/business flags, D1 identity, existing
+  secret *names* and Contact flags OFF. A missing or changed local
+  artifact exits before provider authentication.
+- Only when the local gate passes, the script reads the active,
+  pinned HQ and gateway WORK deployments/bindings with Wrangler
+  **read-only** commands; it refuses changes in version or allocation,
+  unsupported bindings, secret-name drift or active flag drift.
+- The provider's exact WORK HQ and gateway subdomain settings are
+  each obtained **twice by authenticated HTTPS GET**. Both
+  `previews_enabled` flags must be `false`, both ordinary
+  `workers.dev` settings must remain `true`, and any change between
+  the reads aborts the review.
+- It rechecks active traffic/deployment identity around those reads,
+  then recomputes the local bytes again before its last deployment
+  identity read. All errors fail closed. Its report returns only
+  bounded non-secret identifiers, hashes and booleans, not provider
+  tokens, secret values, customer records or raw metadata.
+- Even a successful authenticated owner review always reports
+  `status:HOLD`, `inactive_upload_authorized:false`,
+  `free_tier_budget_verified:false`,
+  `remote_secret_value_continuity_verified:false` and
+  `readiness_certificate_issued:false`.
+
+`scripts/test-work-contact-combined-evidence-readonly.mjs` uses
+synthetic provider data to cover successful read-only behavior and
+failure on missing/wrong local bytes, public previews, preview-setting
+drift, changed deployment allocations, changed local files, removed
+secrets and OAuth/Contact flag violations. It runs without network or
+Cloudflare credentials in the existing source-only preview CI.
+
+**A passing GitHub test is NOT an owner-authenticated remote read.**
+The real `--owner-readonly` mode has not been executed for this new
+reviewer unless the owner separately provides its output. It also
+does not replace the separate owner approval required for any
+0%-traffic WORK version upload.
