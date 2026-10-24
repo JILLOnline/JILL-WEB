@@ -165,3 +165,58 @@ adversarial same-text/wrong-operation acknowledgment test; the
 My JILL Preact source workflow verifies it. This protection is not
 a substitute for real signed account A/B browser acceptance and
 the still-unapproved release gates.
+
+## My JILL mobile Custom Orders + Rewards clarity pass
+
+The canonical Custom Orders screen now presents the **current verified
+status first** and leaves the complete tracking timeline and request
+details behind a labeled, reversible expand action. Customers can use
+the **Conversation** shortcut immediately without opening a very long
+history on a narrow phone screen. Expanded details retain every
+existing timeline event, requested item/quantity, event date,
+fulfillment, full reference and the current `RequestConversation`
+component; no history, merchant status or ownership logic was removed.
+
+From the same signed Customer Account order list, the pure
+`myjill-order-activity.mjs` projection derives:
+- total, active, and finished (completed/cancelled) counts;
+- exact counts for `awaiting_approval` and `ready_pickup`;
+- deterministic newest-update-first ID ordering;
+- All / Active / Completed & cancelled customer filters.
+
+These are **confirmed statuses only**: awaiting approval is not an
+enabled quote acceptance action, ready for pickup is not a promise
+of shipping, and they never imply a delivery ETA or unread count.
+The projection rejects duplicate IDs, unknown states, impossible
+revisions and invalid update dates; it emits IDs/counts, never
+customer personal details, costs, customer GIDs or private notes.
+
+The Home **Track details** shortcut now passes a *selection hint*
+to Custom Orders, which expands that card **only after a fresh signed
+list contains the exact request ID**. If unverified or belonging to
+another account, no request detail opens. The original Messages
+handoff and in-memory reply ledger remain unchanged; its existing
+source assertion stays intact.
+
+Rewards gained a simple customer-first introduction and "How your
+rewards work" guide, with navigation to verified Coupons and
+Custom Orders. This is **presentation only**. The exact
+`RewardsCard` component, points calculation, wallet verification,
+confirmation modal, redemption request/nonce, duplicate protection,
+coupon expiry and Use Now integration are unchanged. The account
+still fails closed if its wallet cannot be verified. Both Overview
+cards and the needed-date/fulfillment fields use a single column
+to avoid cramped two-column content on small screens.
+
+`scripts/test-myjill-mobile-orders-rewards.mjs` checks all eight
+canonical order statuses, counts, sorting, negative malformed source,
+zero personal detail leakage, exact fresh signed selection, unchanged
+message handoff and Rewards transaction ownership. The dedicated
+My JILL source + Preact bundle workflow and ephemeral HQ / My JILL
+integration preview passed after these changes. The full three-lane
+CI also includes this test.
+
+**Not published**. Real Shopify desktop/mobile visual acceptance,
+actual Customer A/B/guest session tests, reward redemption/expiry
+safety and a separately approved WORK-only Customer Account extension
+preview remain mandatory. Nothing enabled in LIVE, KEEP or WORK.
