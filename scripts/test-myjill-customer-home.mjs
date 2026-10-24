@@ -33,7 +33,7 @@ for(const input of [
  [{...row(1),updated_at:'not-a-date'}],
  [{...row(1),status:'paid'}],
  [{...row(1),revision:0}],
- [{...row(1),submission_id:'unverified'}],
+ [{...row(1),submission_id:'bad'}],
  [{...row(1),summary:{items:'not-verified'}}],
  Array(51).fill(row(1)),
 ]){
