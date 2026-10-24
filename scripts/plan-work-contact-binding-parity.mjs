@@ -118,7 +118,7 @@ export function compareGatewayWorkContactCandidate({activeView,
  // currently attached secret binding NAMES in the unshipped TOML so Wrangler
  // can later fail closed if a credential was not inherited by an upload.
  const requiredMatch=candidateManifestText.match(
-  /^\\[secrets\\]\\r?\\nrequired\\s*=\\s*\\[([^\\r\\n]*)\\]/m);
+  /^\[secrets\]\r?\nrequired\s*=\s*\[([^\r\n]*)\]/m);
  gate(requiredMatch!==null,'gateway_secret_contract_missing');
  const names=requiredMatch[1].split(',').map(s=>s.trim());
  gate(names.every(n=>/^"[A-Z][A-Z0-9_]*"$/.test(n)),
