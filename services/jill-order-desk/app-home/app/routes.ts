@@ -10,6 +10,8 @@ export default [
     route("queue","routes/app.queue.tsx"),
     // Source-only Owner unified queue; Worker ingress flag is absent by default.
     route("queue/unified","routes/app.queue-unified.tsx"),
+    // Owner-only unified inquiries page, no menu link or release flag yet.
+    route("inquiries","routes/app.inquiries.tsx"),
     route("messages","routes/app.messages.tsx"),
     route("contacts","routes/app.contacts.tsx"),
     route("contacts/:ticketId","routes/app.contacts.$ticketId.tsx"),
