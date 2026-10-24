@@ -157,6 +157,13 @@ export default function ContactRequests({enabled=false,threadEnabled=false,reply
        <s-stack direction="block" gap="small-200">
         <s-heading>{reasonLabel[ticket.reason]}</s-heading>
         <s-badge>{statusLabel[ticket.status]}</s-badge>
+        {Object.hasOwn(drafts,ticket.ticket_id)&&
+         drafts[ticket.ticket_id]?.operation&&
+         <s-badge tone="warning">Reply needs verification</s-badge>}
+        {Object.hasOwn(drafts,ticket.ticket_id)&&
+         !drafts[ticket.ticket_id]?.operation&&
+         Boolean(drafts[ticket.ticket_id]?.text?.trim())&&
+         <s-badge>Unsent reply in this session</s-badge>}
         <s-text color="subdued">Tracking revision {ticket.revision}</s-text>
         <s-text color="subdued">{ticket.ticket_id}</s-text>
         <s-text color="subdued">
