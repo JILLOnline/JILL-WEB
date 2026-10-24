@@ -83,6 +83,7 @@ export async function inspectContactPairedBaseline({readMetadata,
    };
   }
   report[which+'_active_version']=before.active;
+  report[which+'_active_deployment']=before.deployment;
  }
  report.active_versions_verified=true;
  return report;
