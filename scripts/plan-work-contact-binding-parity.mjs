@@ -147,6 +147,7 @@ export const RESTORE_EXISTING_HQ_FLAGS=Object.freeze([
  'JILL_WORK_MERCHANT_WRITES_ENABLED',
 ]);
 export function reconcileActiveHqContactManifest({activeView,compiled}={}){
+ const sourceSnapshot=JSON.stringify(compiled);
  const before=compareHqWorkContactCandidate({activeView,compiled});
  gate(before.unsupported_active_binding_names.length===0,
   'unexpected_active_binding_type');
@@ -187,14 +188,18 @@ export function reconcileActiveHqContactManifest({activeView,compiled}={}){
   'contact_or_oauth_flag_drift');
  // Keep required secret NAMES only; Cloudflare can validate them upon
  // a separately authorized versions upload. Values are never retrieved.
- const required=['SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64'];
- gate(required.every(k=>map.get(k)?.type==='secret_text'),
+ const required=[...map].filter(([,b])=>b.type==='secret_text')
+  .map(([name])=>name).sort();
+ gate(required.length>=2&&required.length<=60&&
+  ['SHOPIFY_API_SECRET','JILL_WORK_SESSION_KEY_B64']
+   .every(k=>required.includes(k)),
   'required_secret_names_missing');
  next.secrets={required};
  return Object.freeze({
   environment:'WORK',status:'HOLD',manifest:next,
   restored_existing_flag_names:restored,
-  original_candidate_unchanged:JSON.stringify(compiled)===JSON.stringify(compiled),
+  original_candidate_unchanged:JSON.stringify(compiled)===sourceSnapshot,
+  required_existing_secret_names:required,
   secret_values_read:false,
   source_only:true,
   upload_or_deployment_authorized:false,
