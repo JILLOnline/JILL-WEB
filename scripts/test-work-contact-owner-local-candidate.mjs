@@ -87,6 +87,18 @@ try{
   d1_databases:[{...audit.manifest.d1_databases[0],database_id:'WRONG'}],
  },{buildDir:dir,output:join(dir,'bad.json')}),
  /work_contact_local_candidate_local_manifest_unverified/);
+ assert.throws(()=>writeOwnerLocalManifest({
+  ...audit.manifest,
+  vars:{...audit.manifest.vars,JILL_WORK_CONTACT_INTAKE_ENABLED:'true'},
+ },{buildDir:dir,output:join(dir,'unsafe-flag.json')}),
+ /work_contact_local_candidate_contact_feature_not_off/);
+ assert.equal(existsSync(join(dir,'unsafe-flag.json')),false);
+ assert.throws(()=>writeOwnerLocalManifest({
+  ...audit.manifest,
+  vars:{...audit.manifest.vars,SHOPIFY_API_SECRET:'plaintext'},
+ },{buildDir:dir,output:join(dir,'unsafe-secret.json')}),
+ /work_contact_local_candidate_plaintext_secret_or_duplicate_name/);
+ assert.equal(existsSync(join(dir,'unsafe-secret.json')),false);
  assert.equal(existsSync(join(dir,'bad.json')),false);
 }finally{rmSync(dir,{recursive:true,force:true});}
 await assert.rejects(()=>planOwnerLocalContactCandidate({
