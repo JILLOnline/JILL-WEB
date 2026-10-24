@@ -112,7 +112,7 @@ try{
  assert.equal(resp.status,401);assert.equal(n(),0);
  resp=await act(make(B));
  assert.equal(resp.status,404);assert.equal(n(),0);
- resp=await act(make(B,OTHER));
+ resp=await act(make(B,OTHER,OP(10)));
  assert.equal(resp.status,200);
  assert.equal((await resp.json()).code,'reply_saved');
  assert.equal(n(),1);
