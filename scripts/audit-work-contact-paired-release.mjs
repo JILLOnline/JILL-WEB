@@ -49,7 +49,7 @@ export function auditWorkContactReleaseSources({
   hqCanary.d1_databases[0].database_name==='jill-order-desk-work',
   'hq_d1_mismatch');
  requireIt(typeof publicGateway==='string'&&
-  tomlString(publicGateway,'name').length===1&&
+  tomlString(publicGateway,'name').length===2&&
   tomlString(publicGateway,'name')[0]==='jill-work-custom-orders-qa'&&
   tomlSection(publicGateway,'services')===0&&
   tomlSection(publicGateway,'d1_databases')===0&&
@@ -57,7 +57,7 @@ export function auditWorkContactReleaseSources({
   !publicGateway.includes('JILL_ORDER_DESK_WORK_DB'),
   'public_gateway_scope_changed');
  requireIt(typeof privateCandidate==='string'&&
-  tomlString(privateCandidate,'name').length===1&&
+  tomlString(privateCandidate,'name').length===2&&
   tomlString(privateCandidate,'name')[0]==='jill-work-custom-orders-qa'&&
   tomlSection(privateCandidate,'services')===1&&
   tomlSection(privateCandidate,'d1_databases')===0&&
