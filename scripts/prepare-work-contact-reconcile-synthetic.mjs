@@ -23,6 +23,7 @@ const synthetic={resources:{bindings:[
  {name:'SHOPIFY_API_SECRET',type:'secret_text'},
  {name:'JILL_WORK_SESSION_KEY_B64',type:'secret_text'},
  {name:'JILL_HQ_MERCHANT_READ_SECRET',type:'secret_text'},
+ {name:'JILL_HQ_MERCHANT_WRITE_SECRET',type:'secret_text'},
  ...existingFlags,
 ]}};
 const result=reconcileActiveHqContactManifest({
