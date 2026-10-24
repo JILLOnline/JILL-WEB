@@ -156,6 +156,7 @@ export function prepareCanary(mode) {
         'customer-contact-tickets.mjs','customer-contact-claim.mjs',
         'customer-contact-thread.mjs',
         'customer-contact-conversation-v2.mjs',
+        'customer-contact-draft-ledger.mjs',
       ]) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));
