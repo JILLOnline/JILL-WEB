@@ -118,4 +118,17 @@ await assert.rejects(()=>planOwnerLocalContactCandidate({
       x=>x.name!=='JILL_CUSTOM_ORDER_QA_BACKEND_URL')}}
    :mode==='version'?view(which):deployed(which),
 }),/work_contact_binding_parity_gateway_secret_names_do_not_match_active/);
+// A new HQ deployment arriving after both initial inspections MUST stop
+// candidate writing even if its version ID is coincidentally unchanged.
+let deploymentReads=0;
+await assert.rejects(()=>planOwnerLocalContactCandidate({
+ compiledHq,gatewayCandidate,
+ readMetadata:async(which,mode)=>{
+  if(which==='hq'&&mode==='deployments'&&++deploymentReads===3){
+   return {deployments:[{...deployed('hq').deployments[0],
+    id:'88888888-9999-4000-8000-111111111111'}]};
+  }
+  return mode==='version'?view(which):deployed(which);
+ },
+}),/work_contact_local_candidate_paired_allocation_changed_after_inspection/);
 console.log('PASS WORK Contact local-only owner parity candidate: pinned active OAuth, five preserved runtime flags, all secret names, 0600 artifact, rollback HOLD and no Cloudflare mutation.');
