@@ -10,6 +10,11 @@ on:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/Overview.jsx'
       - 'extensions/jill-account-dashboard/src/pages/RecentRequests.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactConversationV2.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactThread.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactRequests.jsx'
+      - 'shared/customer-contact-conversation-v2.mjs'
+      - 'scripts/test-myjill-contact-v2-source.mjs'
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
       - 'scripts/prepare-account-hub-canary.mjs'
@@ -32,6 +37,7 @@ jobs:
       - name: Strict source and authenticated customer-home projections
         run: |
           node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-contact-v2-source.mjs
           node scripts/test-account-hub-template.mjs
           node scripts/test-work-customer-message-navigation.mjs
           node scripts/test-work-customer-message-operation-races.mjs
