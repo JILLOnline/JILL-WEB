@@ -60,7 +60,7 @@ for(const group of ['Your activity','Rewards & offers','Make it yours'])
 assert.match(hub,/HUB_ROUTES\.map/);
 assert.match(hub,/navigation\.navigate\(extensionRoute\(id\)\)/);
 assert.match(hub,/currententrychange/);
-assert.match(hub,/retainOwnedMessageDrafts/);
+assert.match(hub,/onDraftsChange=\{setConversationDrafts\}/);
 assert.match(hub,/messages: <Messages requestedSubmissionId/);
 assert.match(home,/import RecentRequests from '\.\/RecentRequests\.jsx'/);
 assert.match(home,/<RecentRequests onNavigate=\{onNavigate\}/);
