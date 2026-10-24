@@ -347,3 +347,54 @@ narrow setting-only operation and reports two verified false values.**
 References:
 https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/
 https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
+
+## OWNER-CONFIRMED WORK preview shutdown — completed and independently re-read
+
+The owner ran the explicitly approved
+`disable-work-version-urls-owner-approved.mjs
+--owner-approved-disable-work-version-urls-only` from source
+`9fd5775fb9225375662ff324e9bb69c092519f0e`.
+The command performed the two narrowly scoped Cloudflare
+script/subdomain settings updates, reporting `applied_to`:
+
+- `jill-order-desk-canary-work`
+- `jill-work-custom-orders-qa`
+
+Its guarded result confirmed
+`hq_version_urls_enabled:false`,
+`gateway_version_urls_enabled:false`,
+`hq_workers_dev_enabled:true`,
+`gateway_workers_dev_enabled:true`,
+`active_worker_versions_unchanged:true`,
+`normal_traffic_unchanged:true`,
+`preview_url_exposure_gate_cleared:true`,
+`contact_flags_enabled:false`, and
+`worker_uploaded:false`.
+
+The owner immediately ran a **separate read-only inspector**, which
+independently returned for **both** exact WORK scripts:
+`workers_dev_enabled:true`, `version_urls_enabled:false`,
+`preview_url_exposure:"DISABLED"` with active pinned Worker versions
+unchanged:
+
+- HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`
+- gateway `9322193f-5e87-4479-88c9-39229dddb5f2`.
+
+This completes ONLY the **public Version URL exposure-setting gate**.
+It does not prove application access controls, remote secret values,
+upload safety or real authenticated Customer A/B/guest behavior.
+
+**The original owner-attested HQ artifact still lacks an explicit
+`preview_urls:false` value.** That original candidate's fingerprint
+`ed1379e8723a10fe3a73cb662249c7e327b534187b25c929286ca7a3ebdd490f`
+and manifest hash
+`c0ae54ac0b29aedf12b9090b6575d04e913ce80329005333bc1439a7bed4fe07`
+are immutable historical evidence, **not** approval to upload those
+bytes. Any subsequent HQ candidate must preserve the observed WORK
+configuration, explicitly set `preview_urls:false`, undergo a new
+local hash/dry-run and authenticated readback.
+
+**Separate authorization for inactive WORK-only version upload has
+NOT been given.** No actual candidate version was uploaded or
+deployed; traffic, Shopify, D1, LIVE/KEEP and paid services unchanged.
+The WORK release decision remains HOLD.
