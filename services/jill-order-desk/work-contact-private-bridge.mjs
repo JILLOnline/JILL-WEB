@@ -9,6 +9,8 @@ import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-i
 import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-claim.mjs';
 import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
 import {readWorkCustomerContactThread} from '../../backend/work-contact-thread-read.mjs';
+import {persistWorkCustomerContactReply}
+ from '../../backend/work-contact-customer-reply.mjs';
 
 const ROUTES=Object.freeze({
  '/jill-custom-order-proxy/contact':{
@@ -23,6 +25,9 @@ const ROUTES=Object.freeze({
  '/jill-contact-thread':{
   flag:'JILL_WORK_CONTACT_THREAD_ENABLED',
   handler:readWorkCustomerContactThread},
+ '/jill-contact-reply':{
+  flag:'JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED',
+  handler:persistWorkCustomerContactReply},
 });
 const HEADERS={'cache-control':'no-store',
  'x-content-type-options':'nosniff',
