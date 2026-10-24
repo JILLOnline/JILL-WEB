@@ -629,3 +629,35 @@ An inactive Cloudflare version upload and post-upload secret/binding
 verification remain **HOLD**, requiring explicit owner approval and
 a rollback plan. Keep Shopify native Contact form, current HQ OAuth,
 gateway backend secret and all customer flags unchanged.
+
+## Owner-verified local artifact SHA-256 — release evidence frozen
+
+The owner ran `attest-work-contact-local-artifact-readonly.mjs
+--owner-readonly` from the isolated QA checkout after the successful
+real HQ canary build. The result **passed**:
+`local_manifest_matches_active_reconciled_candidate:true`,
+`existing_hq_flag_count:5`, `required_hq_secret_name_count:4`,
+`gateway_secret_names_match_active:true`,
+`private_worker_entry_found:true`, `bundled_file_count:50`.
+The report pinned the same running HQ and gateway WORK versions
+`44ad4a81-55ad-4f49-9965-61260cc2294d` and
+`9322193f-5e87-4479-88c9-39229dddb5f2`.
+
+Original local build fingerprint SHA-256:
+`ed1379e8723a10fe3a73cb662249c7e327b534187b25c929286ca7a3ebdd490f`
+
+Original local manifest SHA-256:
+`c0ae54ac0b29aedf12b9090b6575d04e913ce80329005333bc1439a7bed4fe07`
+
+Both fingerprints identify **local ignored files**, not an uploaded
+Cloudflare version. `published_source_provenance_verified:false`,
+`uploaded_worker_secret_continuity_verified:false`, and
+`release_authorized:false` are still correct. No user data, secret
+values, uploads or traffic mutations were used.
+
+Read [WORK_CONTACT_INACTIVE_UPLOAD_REVIEW_20261023.md](./WORK_CONTACT_INACTIVE_UPLOAD_REVIEW_20261023.md)
+**before** considering an owner-authorized inactive WORK upload. The
+review identifies a critical public-preview caveat: Cloudflare
+Version URLs may be publicly reachable even with 0% normal
+deployment traffic. Explicit access checks and owner approval are
+mandatory; do not assume an inactive version is private.
