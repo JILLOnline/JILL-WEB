@@ -197,7 +197,21 @@ const loader=readFileSync(
  'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx','utf8');
 const manifest=readFileSync(
  'services/jill-order-desk/app-home/wrangler.canary.jsonc','utf8');
+const page=readFileSync(
+ 'services/jill-order-desk/app-home/app/routes/app.inquiries.tsx','utf8');
+const css=readFileSync(
+ 'services/jill-order-desk/app-home/app/styles/hq-inquiries.css','utf8');
 assert.match(routes,/route\("queue\/unified","routes\/app\.queue-unified\.tsx"\)/);
+assert.match(routes,/route\("inquiries","routes\/app\.inquiries\.tsx"\)/);
+assert.match(worker,/url\.pathname==="\/app\/inquiries"/);
+assert.match(page,/loader as unifiedQueueLoader/);
+assert.match(page,/Contact Us is not connected here/);
+assert.match(page,/No unread counts or message delivery status is assumed/);
+assert.match(page,/const ready=data\?\.state==="ready"\|\|data\?\.state==="partial"/);
+assert.match(css,/@media\(max-width:560px\)/);
+assert.match(css,/:focus-visible/);
+assert.doesNotMatch(css,/!important|@import|url\(|position:\s*fixed/);
+assert.doesNotMatch(page,/localStorage|sessionStorage|fetch\(|draftOrderCreate|invoiceSend|shopify\.customer/);
 assert.match(worker,/url\.pathname==="\/app\/queue\/unified"/);
 assert.match(worker,/JILL_WORK_UNIFIED_QUEUE_ENABLED!=="true"/);
 assert.match(loader,/readUnifiedWorkOwnerQueue\(/);
