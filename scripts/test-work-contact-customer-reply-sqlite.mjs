@@ -210,6 +210,14 @@ try{
  },body:JSON.stringify({ticket_id:T,operation_id:OP(4),
   expected_reply_sequence:2,message:'Forged token'})}));
  assert.equal(resp.status,401);
+ // Database owner guard must refuse Customer B on Customer A's still
+ // open ticket even if a hypothetical handler bypasses JWT validation.
+ assert.throws(()=>DB.prepare(
+  'INSERT INTO jill_work_contact_customer_replies '+
+  '(shop,ticket_id,reply_sequence,operation_id,actor_customer_gid,'+
+  'body_text,body_sha256,created_at_ms) VALUES (?,?,?,?,?,?,?,?)'
+ ).run(SHOP,T,4,OP(6),B,'forged','c'.repeat(64),NOW));
+ assert.equal(n(),4);
  quota=false;const prev={rpc,writes,queries};
  resp=await act(make(A,T,OP(4),'Limited',2));
  assert.equal(resp.status,429);
@@ -223,7 +231,7 @@ try{
   SHOP,T,1,'reviewing');
  resp=await act(make(A,T,OP(4),'Closed should not accept',2));
  assert.equal(resp.status,409);
- assert.equal(n(),3);
+ assert.equal(n(),4);
  // Database-level immutability guard, regardless of application access.
  assert.throws(()=>DB.prepare(
   'UPDATE jill_work_contact_customer_replies SET body_text=? WHERE shop=? AND ticket_id=?'
