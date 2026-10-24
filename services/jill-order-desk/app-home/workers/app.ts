@@ -92,6 +92,13 @@ export default {
       if(!await workQuoteDraftSchemaReady(env.JILL_ORDER_DESK_WORK_DB))
         return unavailable("quote_storage_unavailable");
     }
+    // Unified Owner queue is a source-only candidate. Every released
+    // WORK manifest omits this new flag; reject before SDK/D1/Google.
+    // Enabling it later cannot enable Contact Us or message delivery.
+    if(url.pathname==="/app/queue/unified" &&
+       (env as Env & {JILL_WORK_UNIFIED_QUEUE_ENABLED?:string})
+         .JILL_WORK_UNIFIED_QUEUE_ENABLED!=="true")
+      return unavailable("unified_owner_queue_not_enabled");
     // Media inspect is OFF before D1 access or Shopify OAuth by default.
     // Enabling this INSPECT flag never enables real uploads or delivery.
     if(url.pathname==="/app/requests/media/inspect"){
