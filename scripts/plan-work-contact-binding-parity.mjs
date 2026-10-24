@@ -114,8 +114,22 @@ export function compareGatewayWorkContactCandidate({activeView,
   map.get('JILL_CUSTOM_ORDER_GATEWAY_SECRET')?.type==='secret_text',
   'gateway_original_bindings_unverified');
  checkContactOff(map);
- // The candidate TOML does not include runtime vars or secrets. Do not
- // conclude that the upload preserves them; flag a required parity step.
+ // Existing Cloudflare WORK secret values remain hidden. Require the EXACT
+ // currently attached secret binding NAMES in the unshipped TOML so Wrangler
+ // can later fail closed if a credential was not inherited by an upload.
+ const requiredMatch=candidateManifestText.match(
+  /^\\[secrets\\]\\r?\\nrequired\\s*=\\s*\\[([^\\r\\n]*)\\]/m);
+ gate(requiredMatch!==null,'gateway_secret_contract_missing');
+ const names=requiredMatch[1].split(',').map(s=>s.trim());
+ gate(names.every(n=>/^"[A-Z][A-Z0-9_]*"$/.test(n)),
+  'gateway_secret_contract_invalid');
+ const expectedNames=[...map].filter(([,b])=>b.type==='secret_text')
+  .map(([key])=>key).sort();
+ const declaredNames=names.map(n=>n.slice(1,-1)).sort();
+ gate(expectedNames.length>0&&
+  expectedNames.length===declaredNames.length&&
+  expectedNames.every((n,i)=>n===declaredNames[i]),
+  'gateway_secret_names_do_not_match_active');
  const plain=Object.keys(activePlainValues(map)).sort();
  const additionalBindings=[...map].filter(([name,b])=>!
   ['RATE_LIMITER','SHOPIFY_WORK_APP_SECRET',
@@ -127,6 +141,7 @@ export function compareGatewayWorkContactCandidate({activeView,
   active_other_binding_names_to_preserve:additionalBindings,
   original_rate_limiter_and_secret_names_present:true,
   named_service_binding_in_candidate:true,
+  gateway_secret_name_contract_matches_active:true,
   candidate_inherits_secrets_unverified:true,
   private_d1_in_gateway:false,
   upload_or_deployment_authorized:false,
