@@ -86,3 +86,52 @@ Customer A/B and guest account switching, signed order and Contact
 claim isolation, ordinary Rewards/coupon redemptions, uncertain message
 retries and exact readback, and do not publish before separate Owner
 authorization. LIVE/KEEP must remain untouched.
+
+## Contact V2 reply recovery across My JILL navigation
+
+The original source-only Contact V2 editor kept the text and pending
+operation in its own component state. Switching My JILL sections
+unmounted it and could discard an uncertain save, encouraging a
+duplicate retry.
+
+Updated customer source:
+- New `shared/customer-contact-draft-ledger.mjs`: in-memory
+  ticket-scoped draft/receipt ledger retained by the **existing**
+  `AccountHub`; no browser storage, URL query, account metafield,
+  second conversation database or external sender.
+- `ContactRequests` must first read a **fresh authenticated Customer
+  Account ticket list**. Only the ticket IDs in that verified list
+  are admitted into the ledger. Missing/duplicate/invalid list,
+  not-connected mode and read error purge existing drafts.
+  Old async callbacks cannot restore removed/foreign tickets.
+- Switching sections and returning revalidates the ticket list, then
+  resumes an uncertain operation as **unconfirmed** with the **exact
+  original idempotency UUID, source reply sequence and immutable text**.
+  It never auto-sends on navigation.
+- A new incoming response cannot overwrite the pending operation;
+  completion cannot clear a newer message or a different ticket.
+  The editor clears ONLY through a ledger mutation carrying the
+  **fresh signed V2 thread**, with exact ticket ID, customer author,
+  source sequence and text. A stale read/POST acknowledgment is not
+  enough. A delayed `finally` cannot undo a confirmed state.
+- A customer may manually select *Check saved reply* or *Retry same
+  reply*. A retry uses the existing operation; there is no second
+  operation generated while an unconfirmed one exists.
+- The Contact Hub entry still passes `enabled={false}`, so this code
+  is source-only and no JWT, D1 query, email, reply or notification
+  occurs in the deployed extension.
+
+New source test:
+`scripts/test-myjill-contact-draft-navigation.mjs` exercises
+cross-screen resume, exact receipt reuse, confirmed public readback,
+stale callbacks, invalid ticket lists and foreign ticket denial.
+The dedicated My JILL Preact source CI and the three-lane HQ integration
+both run it.
+
+**Residual release gate:** before enabling in real customer sessions,
+verify account switching and **ticket ownership reassignment** with
+signed Customer A/B identities. Ticket ID alone must not be treated
+as proof of immutable customer identity; account identity binding or
+explicit purging on owner changes must be accepted in real WORK QA.
+A successful source-only test is not permission to publish or
+activate the Contact reply endpoint.
