@@ -129,7 +129,7 @@ export function prepareCanary(mode) {
       fs.copyFileSync(path.join(base,'src','hub','routes.mjs'),
         path.join(dest,'src','hub','routes.mjs'));
       fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
-      for (const page of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
+      for (const page of ['Overview.jsx','RecentRequests.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
         'RequestConversation.jsx','Messages.jsx','ContactRequests.jsx','ContactThread.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
@@ -138,6 +138,10 @@ export function prepareCanary(mode) {
       // WORK canary copy next to the canonical screen, without a new API owner.
       fs.copyFileSync(path.join(base,'src','pages','custom-order-presentation.mjs'),
         path.join(dest,'src','pages','custom-order-presentation.mjs'));
+      // Home's signed recent request reader has no independent identity
+      // store; ship its small read-only projection with the WORK canary.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-recent-requests.mjs'),
+        path.join(dest,'src','pages','myjill-recent-requests.mjs'));
       // Reuse the one canonical Rewards UI and Customer Account transaction
       // transport in the WORK-only hub preview (no copied backend engine).
       fs.mkdirSync(path.join(dest,'src','rewards'),{recursive:true});
