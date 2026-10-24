@@ -187,7 +187,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                         </s-stack>
                       ))}
                       {(summary.date_needed || summary.fulfillment) && (
-                        <s-grid gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="base">
+                        <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
                           {summary.date_needed && (
                             <s-stack direction="block" gap="small-100">
                               <s-text color="subdued">Needed by</s-text>
