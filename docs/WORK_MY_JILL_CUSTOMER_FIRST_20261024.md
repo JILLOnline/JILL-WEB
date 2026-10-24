@@ -135,3 +135,33 @@ as proof of immutable customer identity; account identity binding or
 explicit purging on owner changes must be accepted in real WORK QA.
 A successful source-only test is not permission to publish or
 activate the Contact reply endpoint.
+
+### Strict operation receipt correlation (race guard)
+
+The Contact V2 ledger now distinguishes **an acknowledged operation**
+from merely seeing the same text at the expected sequence. A separate
+tab could have submitted the same text while our POST timed out; public
+thread text alone cannot prove which idempotency operation succeeded.
+
+The draft therefore keeps an optional `acknowledgedSequence` ONLY
+after `postOwnedContactReply` returns the exact matching operation ID
+and sequence. The editor clears only when BOTH are true:
+
+1. The current pending command has its own verified server receipt
+   (the exact operation ID and expected sequence).
+2. A **fresh signed account read** contains the exact customer
+   author, source reply sequence and message text on that ticket.
+
+If the POST receipt is missing, a matching public message cannot clear
+the editor. The customer can safely **Retry same reply**, using the
+original operation ID; successful idempotent replay returns the
+missing receipt without a second message. This is a conservative
+user-experience trade-off. A newly typed operation is never generated
+for an unresolved pending reply. Confirmation still does not assert
+email, push delivery or a human read receipt.
+
+`scripts/test-myjill-contact-draft-navigation.mjs` includes an
+adversarial same-text/wrong-operation acknowledgment test; the
+My JILL Preact source workflow verifies it. This protection is not
+a substitute for real signed account A/B browser acceptance and
+the still-unapproved release gates.
