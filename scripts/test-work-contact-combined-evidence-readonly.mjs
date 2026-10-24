@@ -142,7 +142,7 @@ for(const unsafe of [
  const trial=scenario({preview:unsafe===null?undefined:(s)=>{
   unsafe(s);return s;
  }});
- await assert.rejects(trial.run(),/work_contact_combined_review_/);
+ await assert.rejects(trial.run(),/work_(?:contact_combined_review|preview_guard)_/);
 }
 const previewDrift=scenario({preview:(s,n)=>{
  if(n===2)s.hq.previews_enabled=true;
