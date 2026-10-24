@@ -38,7 +38,7 @@ export default function Overview({accountState,onNavigate}){
   </s-section>
 
   <s-section heading="Your Rewards & offers">
-   <s-grid gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="base">
+   <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
     <s-box padding="base" background="base" borderRadius="large"
      border="base base solid">
      <s-stack direction="block" gap="small-300">
@@ -71,7 +71,7 @@ export default function Overview({accountState,onNavigate}){
   </s-section>
 
   <s-section heading="Explore more at JILL">
-   <s-grid gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="base">
+   <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
     <s-box padding="base" background="subdued" borderRadius="large">
      <s-stack direction="block" gap="small-300">
       <s-heading>Contact Requests</s-heading>
