@@ -11,7 +11,7 @@ import {
 
 // UI-only WORK account screen. Every read obtains a fresh Shopify session
 // token through the existing canonical reader. Never select orders by email.
-export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
+export default function CustomOrders({onNavigate,drafts,onDraftsChange,requestedSubmissionId=null}) {
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[],activity:null,replyEnabled:false});
   const [filter,setFilter]=useState('all');
@@ -32,7 +32,13 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
           // the newly verified account response. Other accounts' drafts go.
           const activity=projectMyJillOrderActivity(orders);
           onDraftsChange(previous=>retainOwnedMessageDrafts(previous,orders));
-          setExpandedIds({});
+          // The Home navigation ID is an untrusted selection hint. Only
+          // a freshly signed account list can authorize which details open.
+          const ownedTarget=typeof requestedSubmissionId==='string'&&
+            orders.some(order=>order.submission_id===requestedSubmissionId)
+            ?requestedSubmissionId:null;
+          setExpandedIds(ownedTarget?{[ownedTarget]:true}:{});
+          if(ownedTarget)setFilter('all');
           setState({status:'ready',orders,activity,replyEnabled});
           setRefreshing(false);
         }
@@ -46,7 +52,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange}) {
         }
       });
     return ()=>{active=false;controller.abort();};
-  },[attempt]);
+  },[attempt,requestedSubmissionId]);
 
   const loading=state.status==='loading';
   const ids=selectMyJillOrderIds(state.activity,filter);
