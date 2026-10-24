@@ -77,6 +77,7 @@ const Gateway={
  JILL_WORK_HQ_CONTACT_PRIVATE:service,
  SHOPIFY_WORK_APP_SECRET:SECRET,
  JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED:'true',
+ JILL_WORK_CONTACT_THREAD_ENABLED:'true',
  RATE_LIMITER:{getByName:()=>({
   allow:async()=>{rate++;return quota},
  })},
