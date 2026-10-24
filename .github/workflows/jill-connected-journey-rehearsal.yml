@@ -14,6 +14,8 @@ on:
       - 'scripts/test-work-unified-owner-queue.mjs'
       - 'services/jill-order-desk/work-unified-owner-queue.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx'
+      - 'services/jill-order-desk/app-home/app/routes/app.inquiries.tsx'
+      - 'services/jill-order-desk/app-home/app/styles/hq-inquiries.css'
       - 'services/jill-order-desk/app-home/app/routes.ts'
       - 'services/jill-order-desk/app-home/workers/app.ts'
       - 'docs/WORK_CONNECTED_THREE_LANE_20261024.md'
