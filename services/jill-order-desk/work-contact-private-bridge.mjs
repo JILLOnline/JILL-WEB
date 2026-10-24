@@ -9,6 +9,10 @@ import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-i
 import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-claim.mjs';
 import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
 import {readWorkCustomerContactThread} from '../../backend/work-contact-thread-read.mjs';
+import {persistWorkCustomerContactReply}
+ from '../../backend/work-contact-customer-reply.mjs';
+import {readWorkContactConversationV2}
+ from '../../backend/work-contact-conversation-v2.mjs';
 
 const ROUTES=Object.freeze({
  '/jill-custom-order-proxy/contact':{
@@ -23,6 +27,12 @@ const ROUTES=Object.freeze({
  '/jill-contact-thread':{
   flag:'JILL_WORK_CONTACT_THREAD_ENABLED',
   handler:readWorkCustomerContactThread},
+ '/jill-contact-reply':{
+  flag:'JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED',
+  handler:persistWorkCustomerContactReply},
+ '/jill-contact-conversation-v2':{
+  flag:'JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED',
+  handler:readWorkContactConversationV2},
 });
 const HEADERS={'cache-control':'no-store',
  'x-content-type-options':'nosniff',
@@ -50,6 +60,9 @@ export async function handleWorkContactPrivateBridge({
  const route=Object.hasOwn(ROUTES,path)?ROUTES[path]:null;
  if(!route)return denied(404,'not_found');
  if(env?.[route.flag]!=='true')return denied(503,'not_connected');
+ if(path==='/jill-contact-conversation-v2'&&
+    env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
+  return denied(503,'not_connected');
  if(request.method!=='POST'&&request.method!=='OPTIONS')
   return denied(405,'method_not_allowed');
  if(typeof env?.SHOPIFY_API_SECRET!=='string'||

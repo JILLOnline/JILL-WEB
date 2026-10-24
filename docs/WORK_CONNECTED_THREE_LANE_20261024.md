@@ -1,0 +1,435 @@
+# JILL WORK — three-lane connection rehearsal (October 24, 2026)
+
+## What is happening
+This is a **new source-only, non-deploying integration lane** that tests the
+existing work together rather than asking the Owner to run PowerShell or
+switch production versions.
+
+| Source lane | Draft | Authority/goal | Current release status |
+| --- | --- | --- | --- |
+| HQ custom orders, Shopify Catalog, draft quotes, Contact Us D1 handlers | #157 (`jill/hq-quote-catalog-preflight-20261022`) | Merchant Shopify Admin session + Owner D1 role; only verified source requests and native Shopify truth | HQ shell/catalog/request read deployed to WORK separately; Contact/conversation/quote save disabled |
+| My JILL customer account and message navigation/contact claim clients | #156 (`jill/myjill-message-handoff-preview-20261022`) | Signed Customer Account JWT + exact Customer GID; no email-based claim | Draft; **not published** as a customer extension |
+| HQ interface typography, request details and quote disclosure | #158 (`jill/hq-visual-polish-source-20261024`) | Changes display only, preserving request actions and quote logic | Draft; **not** deployed to serving WORK |
+| Cross-lane source integration | THIS branch | Synthetic hard-OFF/customer A/B/guest acceptance and combined HQ TypeScript/build in an ephemeral worktree | Source/CI only; **not released** |
+
+### Concrete seams exercised
+`scripts/test-work-connected-three-surface-contract.mjs` and the
+existing `scripts/test-work-cross-pr-contact-integration.mjs` verify
+actual modules from BOTH source branches after an ephemeral Git merge:
+
+1. A signed canonical WORK inquiry receipt grants Owner view and
+   Customer A view only for exact Customer A GID; B and guest remain held.
+   Forged, cloned and incorrectly signed receipts are refused.
+2. Existing My JILL Contact client remains hard OFF before a real
+   approved customer-specific endpoint. **Zero session token calls or
+   network fetches** in OFF mode.
+3. A synthetic, server-projected HQ contact thread passes the actual
+   My JILL client projection with identical ordered public messages,
+   but staff IDs, operation receipts and private email are excluded.
+4. My JILL and HQ both interpret the **same Custom Order** public v2
+   conversation timeline; no separate message store, fake unread count,
+   read/delivery receipt, or automatic guest account attachment.
+5. Raw typed Shopify customer identities or unsigned Owner binding data
+   cannot make a quote publish, invoice or order-ready.
+6. The visual layer from #158 and its Quote Save/Reload no-persistence
+   warning are included in the combined source build.
+7. The combined HQ React routes typecheck/build and original quote
+   regression suite execute without contacting real providers.
+
+### Non-negotiable deployment protections
+- The **running HQ WORK** should remain version
+  `d1f4e07f-8c9b-4b40-97a4-0c13d2c5149a`,
+  deployment `5d996637-73b4-427e-92a0-a36a12581172`,
+  pending separate Owner rollout decision.
+- Gateway, LIVE and KEEP must be unchanged. No Shopify Theme change,
+  no Cloudflare Worker or D1 write, no customer email/SMS, no reward
+  redemption, no draftOrderCreate, and no paid cloud resources.
+- This workflow **may create temporary merge commits in a disposable
+  CI worktree only**. They are never pushed, merged to protected
+  branches or deployed. A failed merge is a HOLD, not permission to
+  force files through.
+- Shopify authority remains the sole source of Products, Customers,
+  taxes, payments and Orders. Google signed intake remains canonical
+  for original Custom Order source/status; HQ D1 is not a shadow
+  customer directory.
+- No feature flags are enabled by these synthetic tests. Actual signed
+  Customer A/B/guest browser sessions, Owner session refresh, data
+  persistence, Shopify app proxy routing, private media, and quota/cost
+  gates **still require real WORK acceptance**.
+
+## What comes next after green source reconciliation
+1. Create a reviewable, conflict-free **source integration PR** combining
+   the three branches. Do not merge existing drafts blindly; preserve
+   protected release history, backend ownership, Storefront and rewards.
+2. Certify verified Custom Order account/source mapping with real signed
+   Customer A/B sessions; only then enable a WORK Owner/customer
+   conversation *read* path.
+3. Commission Contact Us server-to-server gateway/HQ trust boundaries
+   after D1 and Shopify app proxy checks; do not wire the native form
+   until full intake idempotency and abuse protections are accepted.
+4. Turn on durable Owner quote Save/Reload only after fresh Owner D1
+   write/readback and separate approval. Quote acceptance, Shopify-native
+   tax/discount/approval, draft-order/invoice and tracking are independent
+   later gates.
+5. Visually accept #158 in Shopify Admin, including desktop/mobile, full
+   row request accordion and quote disclosure preserving unsaved values.
+6. Only with fresh explicit owner approval stage/deploy a reversible
+   WORK-only candidate. LIVE/KEEP remain entirely separate.
+
+**Status: SOURCE ONLY / NOT ACTIVATED. CI success is not an authenticated
+provider or real-customer acceptance receipt.**
+
+## Source slice U4a — verified unified Owner read queue (October 24)
+
+Added a **real, registered but hard-OFF** Owner JSON route candidate
+`GET /app/queue/unified`, separate from the established
+`GET /app/queue` and `/app/requests`. This route does not replace
+existing HQ screens or change their state.
+
+- `services/jill-order-desk/work-unified-owner-queue.mjs`:
+  bounded/strict projection and orchestration for Google-signed
+  Custom Order merchant-list metadata plus authorized WORK D1 Contact
+  ticket metadata. It discards customer names, emails, private notes,
+  phone, raw Contact bodies, staff/owner IDs and message contents.
+  Stable ordering by verified update time, Custom Orders first at
+  identical timestamps, and then canonical ID.
+- `services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx`:
+  calls both **existing** independently Owner/D1-authenticated readers.
+  `authenticateWorkAdminOnce` shares the exact same request-scoped
+  Shopify SDK result without sharing authorization across requests.
+  It never accepts a caller-supplied shop, customer GID or email.
+- `routes.ts` registers the resource route; `workers/app.ts`
+  refuses it with 503 **before Shopify SDK and D1** unless a new,
+  separately owner-authorized `JILL_WORK_UNIFIED_QUEUE_ENABLED=true`
+  is installed. **That flag is absent in the current WORK manifest.**
+  Even with this future flag enabled, Contact is read only if
+  `JILL_WORK_CONTACT_INBOX_ENABLED=true` is separately approved.
+  Neither flag gives message, quote, invoice, order or Contact intake
+  write authority.
+- A verified Custom Orders source and Contact OFF gives `state=partial`
+  with `contact_state=not_connected` (not "zero tickets"). If the
+  Contact source is explicitly enabled but unverified, partial/paged,
+  inaccessible or malformed, the **combined list is held with no
+  records** instead of falsely claiming completeness.
+- Contact JSON response is bounded at 24KiB before parsing and
+  validates strict UTF-8. Duplicate IDs, missing provenance, cross-shop
+  records, impossible revisions/times or forged delivery flags hold.
+- `scripts/test-work-unified-owner-queue.mjs` exercises both valid
+  queues, no PII, deterministic sorting, hard OFF (zero sources read),
+  false Contact readiness, unauthorized Owner and source errors.
+  The three-lane ephemeral workflow runs the tests and builds the
+  registered React Router route.
+
+**Limitations:** This is a source-only read integration, not an
+activated unified HQ inbox or a reason to re-route Shopify's native
+Contact form. Real requests are still authoritative in their current
+separate displays; customer messaging, Contact intake and quote drafts
+remain under their pre-existing hard-OFF controls. Test this optional
+read-only route in WORK **only after** a fresh account/Owner approval,
+D1 and source proof, and separate deployment decision. The currently
+working 100% WORK Worker is unchanged.
+
+### Owner screen candidate (still disabled)
+
+The same integration branch also has
+`app/routes/app.inquiries.tsx` and isolated `hq-inquiries.css`.
+This is a **real React Router read-only Owner page** at
+`/app/inquiries` registered alongside the JSON resource route.
+Both URLs share the exact same **absent-by-default**
+`JILL_WORK_UNIFIED_QUEUE_ENABLED` Worker ingress block, before any
+Shopify OAuth or database read. No navigation entry points to this
+route yet; the currently accepted Requests page is untouched.
+
+The page shows only canonical ID, kind, source status, last activity,
+and verified Custom Order item/date or Contact reason. It links to
+the existing restricted detail routes; it never shows names, emails,
+private data, message contents, paid/fulfilled status, or fictional
+read receipts. If Contact is OFF it states that *only verified Custom
+Orders* are being shown and explicitly refuses to interpret that
+as no Contact inquiries. Responsive layout and keyboard focus
+are isolated to the new page; no global UI overrides.
+
+The synthetic test additionally checks registration, both exact
+route ingress guards, no enabled manifest flag, read-only rendering,
+and a blocked Shopify/customer/browser storage surface. CI typechecks
+and builds this page together with My JILL and the accepted visual
+polish. It remains **source-only** until a separate Owner-authorized
+WORK deployment and real end-to-end acceptance.
+
+## Quote Save/Reload: actual SQL + handler acceptance, still offline
+
+Added two **executable integration tests** to the same three-lane source
+rehearsal (using Node.js 22's in-memory SQLite, NOT Cloudflare D1):
+
+1. `scripts/test-work-quote-sqlite-roundtrip.mjs` executes the **exact
+   audited SQL plans** from `planLocalWorkQuoteDraftSave` in an isolated,
+   transactional SQLite database. It asserts original amounts and total
+   in integer cents, the idempotent original operation receipt, no second
+   receipt on a repeat, optimistic-revision conflicts on stale write,
+   correct second revision, unique-operation rollback preserving the
+   previous row, and cryptographic rejection of corrupted price hashes,
+   foreign shops and changed signed source revisions. It passes a verified
+   D1-shaped row through the **actual** server projection and UI
+   `hydrateVerifiedWorkQuoteWorksheet`, proving the same cents and
+   item identities survive Save → Read → Restore.
+2. `scripts/test-work-quote-http-sqlite-roundtrip.mjs` calls the **actual
+   Owner HTTP Save and Read handler functions**. Their D1 interface is
+   backed by disposable SQLite with a synthetic WORK Owner authority
+   and Shopify-SDK-shaped online session, not a real Shopify token.
+   It proves the capability OFF state reads neither Shopify nor the
+   signed source, Owner/WORK D1 authorization precedes business data,
+   Save/Read produces a server-verified draft, replay reports a
+   duplicate rather than a second write, stale revisions return 409,
+   legitimate CAS updates increment once, foreign shop/non-owner/
+   wrong Origin cannot write, source revision drift refuses both
+   Save and Reload, corrupted stored hash cannot leave the server,
+   and no provider mutation occurs.
+
+The scripts are **tests of real application code**, not a simulated
+UI “Save succeeded” label. However they do **NOT** certify live
+Cloudflare/D1 schema state, real OAuth expiry, worker ingress,
+network delivery, payments or external customer acceptance.
+
+### Separate Owner release gate to enable quote drafts later
+
+- Keep `JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED=false` in all currently deployed
+  WORK versions and leave LIVE/KEEP unchanged.
+- Verify WORK D1 migration/table/unique operation receipt identity and
+  free-tier usage on the exact existing account, fresh authenticated
+  Shopify Owner session, and signed Google QA request/source revision.
+- Check locked existing Workers' bindings/secret names, publish a
+  separately authorized **inactive** WORK candidate, inspect exact
+  version bindings and rollback version, and separately authorize any
+  traffic promotion. No assumptions from source CI.
+- Owner then tests one synthetic request Save → Reload → page refresh →
+  second edit → Save → Reload, plus two simultaneous tabs,
+  stale source revision and denied non-Owner session. Observe actual D1
+  readback and ensure no quote sent, draft Shopify order generated,
+  invoice sent or customer messaged.
+- **Do not enable** quote publication, invoice, Shopify order creation
+  or customer approvals as a side effect of persisting merchant drafts.
+
+**Current result: source/SQLite synthetic acceptance only; HQ WORK
+quote Save/Reload remains OFF until a distinct Owner authorization.**
+
+## Contact merchant message readback — source-only acceptance
+
+Added executable `scripts/test-work-contact-sqlite-customer-readback.mjs`.
+This runs the **actual** `persistWorkContactMerchantMessage` SQL
+against an isolated transactional SQLite schema and the actual
+`readWorkCustomerContactThread` signed Customer Account JWT verifier.
+Its server result then passes through My JILL's existing
+`projectOwnedContactThread` public client projection.
+
+Tests establish: hard OFF performs zero D1 operations, unclaimed
+Contact tickets cannot be messaged, Owner-only authenticated writes,
+idempotent operation receipts, stable sequential messages (1, 2),
+unchanged content on duplicate submissions, cross-ID conflicts,
+Customer A-only exact claim, Customer B/guest/forged-token denial, and
+exclusion of staff IDs, operations, hashes, owner GIDs and private
+Contact details from customer-visible records. The D1 is **only**
+Node's disposable in-memory SQLite. No actual WORK resource is read
+or modified.
+
+The existing HQ Contact detail page previously discarded merchant
+draft text immediately on an acknowledged write, without a fresh
+public-thread readback. Added a pure
+`verifyWorkContactMessageReadback` policy and updated source-only
+`app.contacts.$ticketId.tsx` to retain the typed message and
+operation ID until a separate authenticated Owner detail revalidation
+returns the **same ticket, exact sequence, exact message text and
+public author**. A late server response must also echo the **exact
+idempotency operation ID**: a stale acknowledgment cannot confirm a
+different/newer draft. The editor shows an explicit Verify saved
+message action when the readback is pending. After exact confirmation
+the editor clears; the UI explicitly distinguishes stored message
+visibility from customer reading, email delivery and push
+notifications. The test file
+`scripts/test-work-contact-message-readback-policy.mjs`
+covers wrong ticket, stale receipt, crossed operation, altered text,
+wrong author, incomplete thread and duplicate matches.
+
+**This does not enable customer-authored replies to Contact tickets.**
+That is a separate protocol/database/schema design. It also does
+not deploy Contact intake, claims, merchant sends, My JILL publishing,
+quote saving or conversation flags. These are source-only negative
+and happy-path tests in GitHub's ephemeral three-lane CI, not live
+OAuth/Customer A/B browser acceptance.
+
+## Contact Us two-way customer replies — source-only V2 (October 24)
+
+Created an **additive** Customer Contact reply protocol. Existing
+merchant-only `jill_work_contact_messages` and its Owner actor
+requirements remain unchanged. There is **NO deployed schema migration,
+app extension publishing, or feature activation**.
+
+New files:
+- `services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql`
+  — separate immutable customer reply table with exact claimed Customer
+  GID, unique operation receipt, sequence 1–50, bounded body/hash and
+  foreign key. SQLite triggers deny other account owners, unclaimed or
+  resolved tickets, over-50 combined threads, and mutation/deletion of
+  recorded customer messages. **Never run migration without separate
+  explicit WORK Owner approval.**
+- `backend/work-contact-customer-reply.mjs` — signed Shopify Customer
+  Account JWT, strict 2.2 KB POST input bound, exact Customer GID-to-ticket
+  ownership query, operation replay identity, optimistic expected reply
+  sequence, database-checked combined count and denied guest/B/forged
+  tokens. No email/notification/status/Order/quote side effects.
+- `backend/work-contact-conversation-v2.mjs` — separate signed
+  customer-only V2 read handler merging verified merchant and customer
+  ledgers into a bounded, strictly ordered, *public* two-author thread.
+  Server projections discard staff IDs, customer GID, operation receipts
+  and hashes; unread, delivered and read receipts remain unverified.
+- `shared/customer-contact-conversation-v2.mjs` — bounded JWT-authenticated
+  My JILL V2 reader and explicit customer reply command with an
+  immutable operation ID. Both helpers default OFF and never claim
+  a successful POST proves a customer read or delivery.
+- `services/custom-order-cloudflare/handler.mjs` and
+  `services/jill-order-desk/work-contact-private-bridge.mjs` —
+  **new exact** `/jill-contact-reply` and
+  `/jill-contact-conversation-v2` routes. Public gateway remains
+  D1-free; each request is bounded/sanitized and goes through existing
+  Durable Object quota and the private HQ service. BOTH workers must
+  separately set the entirely new, currently absent
+  `JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED=true`. V2 reads
+  ALSO require existing `JILL_WORK_CONTACT_THREAD_ENABLED=true`.
+- `services/jill-order-desk/work-contact-ticket-detail.mjs` —
+  adds a strictly Owner-authenticated/claimed-only customer reply
+  projection behind the same new OFF flag and existing merchant message
+  authorization. The HQ Contact detail UI can render customer and
+  merchant messages together, without modifying the existing exact
+  merchant readback/operation confirmation protocol.
+- `scripts/test-work-contact-customer-reply-sqlite.mjs` and
+  `scripts/test-work-contact-owner-customer-replies.mjs` —
+  execute the **actual 0004+0005** SQLite migration and real
+  gateway/private HQ handlers with signed synthetic Customer A/B JWTs,
+  CAS/replay, quota, forgery, status close, immutable schema and
+  customer→HQ→My JILL readback. Owner projection rejects wrong GIDs,
+  broken sequences, hidden customer/private metadata and dangerous text.
+
+Important limits: A green ephemeral test suite is NOT proof of a
+production Shopify Customer Account JWT, provider quota operation,
+real WORK D1 migration or exact account claim, nor a published My JILL
+composer. The V2 helpers are now wired into My JILL's
+source-only `ContactConversationV2` component in draft #156, but
+the AccountHub still passes `ContactRequests enabled={false}`, and
+the V2 reply gate defaults OFF. They cannot be used by real customers
+without a separate approved extension release and authenticated
+Customer A/B/guest acceptance. Existing V1 Contact read is preserved.
+No Contact Us form intake or customer reply feature is active on
+deployed WORK; LIVE/KEEP are strictly untouched.
+
+### Commissioning prerequisites (distinct Owner decisions)
+1. Fresh, authenticated read-only WORK baseline: HQ/Gateway versions,
+   bindings, original Cloudflare/free budget, secrets **names**,
+   disabled feature flags, D1 schema/migration status and rollback pin.
+2. Explicit independent WORK-only D1 `0005` migration authorization;
+   validate application against actual D1 SQLite semantics and
+   inspect constraints/indexes without exposing customer data.
+3. Explicit new inactive Worker upload authorization, exact version
+   binding parity/Version URLs disabled, and separate traffic deployment
+   authorization. Neither follows from source CI.
+4. Real Work Customer A/B/guest/expired JWT, quota, Contact claim,
+   Owner login and false-read/notification negative tests; then
+   independently opt in to published My JILL account composer and
+   V2 reader. No email/phone account matching.
+5. Continue safeguarding against paid infrastructure and preserve the
+   existing Shopify-native Contact Us form until intake is certified.
+
+## October 24 — My JILL customer-first UI joined and certified (source-only)
+
+My JILL draft **#156** now adds:
+- A redesigned Overview built around real, signed Customer Account
+  requests, their status and a limited three-item recent-activity panel.
+  Error/empty/loading are distinct; missing rewards points are unknown,
+  not invented zero. Existing Rewards redemption and Coupons are untouched.
+- All nine existing Shopify account deep-link routes grouped into
+  activity/rewards/personal categories. The shared in-memory Custom
+  Order message draft and route ownership remain unchanged.
+- A gated V2 Contact conversation and reply composer, sourced from
+  the same V2 client defined in this HQ integration branch.
+  Uncertain sends retain the exact message and operation ID;
+  an independently reauthenticated V2 read must contain the same
+  customer author, source sequence and text before clearing the editor.
+  No read/delivery claim. V1 Contact is unchanged.
+- Source and preview copy tests:
+  `scripts/test-myjill-customer-home.mjs`,
+  `scripts/test-myjill-contact-v2-source.mjs`,
+  the existing My JILL account/message/Contact regression tests,
+  and the source-only Preact build in
+  `.github/workflows/jill-myjill-customer-home-preview.yml`.
+  Its last checked source run passed, while a separate broad
+  `My JILL WORK account certification` workflow has legacy
+  branch-specific Owner/HQ source pin failures on this draft branch.
+  Those broad failures must not be mistaken for approved remote
+  functionality or for a reason to bypass guards.
+
+The WORK three-lane CI now executes the two new My JILL tests
+inside its disposable HQ #157 + My JILL #156 + visual #158 merge,
+with the combined React Router HQ build. The source joins cleanly.
+This establishes **source compatibility only**: it does not activate
+the disabled WORK Contact/customer reply flags or publish a Customer
+Account extension.
+
+**Separate next Owner steps:** customer-account visual preview across
+phone and desktop; exact signed Customer A/B/guest browser testing;
+one real QA request progression; Shopify extension publishing
+authorization; V2 D1 migration and private gateway authorization.
+Keep LIVE/KEEP, original WORK HQ deployment and Cloudflare free-tier
+protections in place.
+
+### My JILL signed Contact draft resilience — latest draft #156
+
+The latest source-only My JILL component uses the hub's in-memory
+`customer-contact-draft-ledger.mjs` rather than discarding an
+unconfirmed send on section navigation. A fresh signed Contact ticket
+list is mandatory to restore the text/operation for that ticket.
+Foreign and invalid lists fail closed; old callbacks cannot resurrect
+the ticket. The customer sees accurate unsent/pending badges.
+
+Confirmation now needs **two independent observations**: (a) the
+exact idempotency operation ID and sequence acknowledged by the
+customer reply handler, and (b) a fresh signed Customer A-only V2
+thread containing the exact author, source sequence and text.
+Identical concurrent messages from another tab cannot produce a
+false confirmation after an uncertain POST. Without an acknowledged
+receipt, My JILL preserves the operation and requires manual
+same-ID retry. No duplicate auto-sends, email or read claims.
+
+The three-lane CI invokes
+`scripts/test-myjill-contact-draft-navigation.mjs` as a part of
+the source-only My JILL branch merge, exercising forged receipts,
+wrong-ticket restoration, signed history mismatch and stale callbacks.
+WORK/LIVE/KEEP, Shopify extension publishing and D1 remain unchanged.
+Real account A/B reassignment and Owner-authorized release QA are
+still separate hard gates.
+
+### Customer-first mobile Custom Orders and Rewards source integration
+
+My JILL draft #156 now provides a compact, signed-account Custom
+Orders tracker: verified current status and last update stay visible;
+complete timeline, submitted items/date/fulfillment and reply
+composer are disclosed on demand. All/Active/Completed & cancelled
+filters and status counts are computed from the **existing** signed
+Customer Account order source and do not fetch new external identity
+data or imply quote approval, shipping ETA or unread messages.
+
+The My JILL Overview's **Track details** passes a selection hint,
+but Custom Orders opens the exact card only after an independent
+fresh signed account list returns the same canonical submission ID.
+The original Custom Order→Messages navigation and receipt-safe
+message draft code remain intact.
+
+Rewards gains mobile-friendly introductory guidance and quick
+navigation to Coupons and Custom Orders, without changing
+`RewardsCard`, the wallet reader, point calculation, redemption
+confirmation or Shopify coupon application. Overview and selected
+Custom Orders details use non-cramped single-column presentation.
+
+The ephemeral three-lane workflow now includes
+`scripts/test-myjill-mobile-orders-rewards.mjs`, alongside the
+existing HQ quote, Contact A/B, request privacy and My JILL tests.
+Source CI success does **not** replace account/mobile visual
+acceptance, real Rewards redemption QA or Owner approval for WORK
+customer extension publishing. WORK/LIVE/KEEP stay untouched.

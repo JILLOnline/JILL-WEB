@@ -1,0 +1,112 @@
+/* JILL HQ WORK: optional Owner Inquiries view.
+ * Local-only styling. Does NOT overwrite approved Requests/Catalog/Message CSS.
+ */
+.jill-inquiries{
+ --inq-border:#e5dbea;
+ --inq-plum:#2a1932;
+ --inq-primary:#682e87;
+ --inq-muted:#62546b;
+ color:var(--inq-plum);
+ border:1px solid var(--inq-border);
+ border-radius:14px;
+ padding:20px;
+ background:#fff;
+ font-size:14px;
+ line-height:1.5;
+}
+.jill-inquiries__heading{
+ display:flex;align-items:flex-start;justify-content:space-between;
+ flex-wrap:wrap;gap:12px 20px;margin-bottom:18px;
+}
+.jill-inquiries__heading h2{font-size:25px;line-height:1.25;margin:2px 0 5px}
+.jill-inquiries__heading p{margin:0;color:var(--inq-muted)}
+.jill-inquiries__eyebrow{
+ color:var(--inq-primary);
+ text-transform:uppercase;letter-spacing:.09em;font-weight:750;font-size:11px;
+}
+.jill-inquiries__readonly{
+ background:#fff5dc;color:#6f531d;border:1px solid #f2d694;
+ border-radius:999px;padding:6px 10px;font-size:11px;font-weight:750;
+}
+.jill-inquiries__notice{
+ padding:14px 16px;border:1px solid #e7d6a9;border-radius:10px;
+ background:#fff9ec;color:#684d26;margin:12px 0 16px;
+}
+.jill-inquiries__notice p{margin:5px 0 7px}
+.jill-inquiries__tools{
+ display:grid;grid-template-columns:minmax(0,1.65fr) minmax(210px,.85fr);
+ gap:12px;padding:14px;background:#faf7fc;
+ border:1px solid var(--inq-border);border-radius:10px;
+}
+.jill-inquiries__tools label{display:grid;gap:5px;font-size:12px;font-weight:740}
+.jill-inquiries__tools input,.jill-inquiries__tools select{
+ width:100%;min-width:0;min-height:40px;border:1px solid #bbaac7;
+ border-radius:8px;padding:8px 10px;background:#fff;color:var(--inq-plum);
+ font:inherit;font-size:14px;
+}
+.jill-inquiries :where(a,input,select):focus-visible{
+ outline:3px solid #9a69c1;outline-offset:3px;
+}
+.jill-inquiries__count{
+ color:var(--inq-muted);font-size:12px;margin:14px 0 10px;
+}
+.jill-inquiries__list{display:grid;gap:9px}
+.jill-inquiries__item{
+ display:grid;grid-template-columns:minmax(0,1.5fr) minmax(160px,.65fr) auto;
+ gap:12px 20px;align-items:center;
+ padding:14px 16px;border:1px solid var(--inq-border);
+ border-radius:10px;background:#fff;
+}
+.jill-inquiries__item:nth-child(even){background:#fdfbfe}
+.jill-inquiries__identity{min-width:0}
+.jill-inquiries__identity h3{
+ font-size:14px;line-height:1.45;margin:4px 0 4px;
+ overflow-wrap:anywhere;font-weight:780;
+}
+.jill-inquiries__identity p{
+ font-size:12px;color:var(--inq-muted);margin:0;
+}
+.jill-inquiries__kind{
+ font-size:11px;font-weight:740;display:inline-block;
+ border-radius:5px;padding:3px 8px;color:#613080;
+ background:#f0e7f7;
+}
+.jill-inquiries__state{display:grid;gap:4px;min-width:0}
+.jill-inquiries__state strong{font-size:13px}
+.jill-inquiries__state time{font-size:12px;color:var(--inq-muted)}
+.jill-inquiries__open{
+ border:1px solid #dac9e6;background:#faf6fd;
+ border-radius:7px;color:var(--inq-primary);
+ text-decoration:none;font-weight:740;font-size:12px;
+ padding:9px 12px;min-height:38px;display:inline-flex;
+ gap:6px;align-items:center;white-space:nowrap;
+}
+.jill-inquiries__open:hover{background:#f1e7fa}
+.jill-inquiries__empty{
+ padding:25px 15px;border:1px dashed var(--inq-border);
+ border-radius:10px;color:var(--inq-muted);text-align:center;
+}
+.jill-inquiries__footer{
+ margin-top:18px;padding-top:12px;border-top:1px solid var(--inq-border);
+ font-size:12px;color:var(--inq-muted);
+}
+.jill-inquiries__footer p{margin:0 0 10px}
+.jill-inquiries__footer a{color:var(--inq-primary)}
+@media(max-width:800px){
+ .jill-inquiries__item{
+  grid-template-columns:minmax(0,1fr) auto;
+ }
+ .jill-inquiries__state{grid-column:1}
+ .jill-inquiries__open{grid-column:2;grid-row:1/span 2;align-self:center}
+}
+@media(max-width:560px){
+ .jill-inquiries{padding:13px}
+ .jill-inquiries__tools{grid-template-columns:minmax(0,1fr)}
+ .jill-inquiries__tools input,.jill-inquiries__tools select{font-size:16px}
+ .jill-inquiries__item{grid-template-columns:minmax(0,1fr)}
+ .jill-inquiries__state,.jill-inquiries__open{grid-column:1;grid-row:auto}
+ .jill-inquiries__open{min-height:44px;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){
+ .jill-inquiries *{scroll-behavior:auto;transition:none}
+}
