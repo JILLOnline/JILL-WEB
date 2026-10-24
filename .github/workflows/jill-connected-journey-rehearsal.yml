@@ -20,6 +20,9 @@ on:
       - 'backend/work-contact-customer-reply.mjs'
       - 'backend/work-contact-conversation-v2.mjs'
       - 'shared/customer-contact-conversation-v2.mjs'
+      - 'scripts/test-work-contact-owner-customer-replies.mjs'
+      - 'services/jill-order-desk/work-contact-ticket-detail.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
       - 'services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql'
       - 'services/jill-order-desk/work-contact-private-bridge.mjs'
       - 'services/custom-order-cloudflare/handler.mjs'
@@ -100,6 +103,7 @@ jobs:
           node --no-warnings scripts/test-work-contact-sqlite-customer-readback.mjs
           node scripts/test-work-contact-message-readback-policy.mjs
           node --no-warnings scripts/test-work-contact-customer-reply-sqlite.mjs
+          node scripts/test-work-contact-owner-customer-replies.mjs
           node scripts/test-work-contact-message-bridge.mjs
           node scripts/test-work-myjill-contact-claim.mjs
           node scripts/test-work-myjill-contact-thread.mjs
