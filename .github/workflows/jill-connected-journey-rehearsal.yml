@@ -74,6 +74,8 @@ jobs:
           cd "$JILL_EPHEMERAL_JOIN"
           JILL_HQ_SOURCE_DIR="$PWD" node scripts/test-work-cross-pr-contact-integration.mjs
           node scripts/test-work-connected-three-surface-contract.mjs
+          node scripts/test-work-contact-worker-routing.mjs
+          node scripts/test-work-contact-private-e2e.mjs
           node scripts/test-work-contact-message-bridge.mjs
           node scripts/test-work-myjill-contact-claim.mjs
           node scripts/test-work-myjill-contact-thread.mjs
