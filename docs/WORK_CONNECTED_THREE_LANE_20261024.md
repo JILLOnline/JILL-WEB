@@ -404,3 +404,32 @@ wrong-ticket restoration, signed history mismatch and stale callbacks.
 WORK/LIVE/KEEP, Shopify extension publishing and D1 remain unchanged.
 Real account A/B reassignment and Owner-authorized release QA are
 still separate hard gates.
+
+### Customer-first mobile Custom Orders and Rewards source integration
+
+My JILL draft #156 now provides a compact, signed-account Custom
+Orders tracker: verified current status and last update stay visible;
+complete timeline, submitted items/date/fulfillment and reply
+composer are disclosed on demand. All/Active/Completed & cancelled
+filters and status counts are computed from the **existing** signed
+Customer Account order source and do not fetch new external identity
+data or imply quote approval, shipping ETA or unread messages.
+
+The My JILL Overview's **Track details** passes a selection hint,
+but Custom Orders opens the exact card only after an independent
+fresh signed account list returns the same canonical submission ID.
+The original Custom Order→Messages navigation and receipt-safe
+message draft code remain intact.
+
+Rewards gains mobile-friendly introductory guidance and quick
+navigation to Coupons and Custom Orders, without changing
+`RewardsCard`, the wallet reader, point calculation, redemption
+confirmation or Shopify coupon application. Overview and selected
+Custom Orders details use non-cramped single-column presentation.
+
+The ephemeral three-lane workflow now includes
+`scripts/test-myjill-mobile-orders-rewards.mjs`, alongside the
+existing HQ quote, Contact A/B, request privacy and My JILL tests.
+Source CI success does **not** replace account/mobile visual
+acceptance, real Rewards redemption QA or Owner approval for WORK
+customer extension publishing. WORK/LIVE/KEEP stay untouched.
