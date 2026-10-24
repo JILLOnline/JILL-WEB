@@ -22,6 +22,7 @@ const gatewayView={id:gatewayVersion,resources:{bindings:[
  bind('RATE_LIMITER','durable_object_namespace'),
  bind('SHOPIFY_WORK_APP_SECRET','secret_text'),
  bind('JILL_CUSTOM_ORDER_GATEWAY_SECRET','secret_text'),
+ bind('JILL_CUSTOM_ORDER_QA_BACKEND_URL','secret_text'),
  bind('CF_VERSION_METADATA','version_metadata'),
 ]}};
 const deployed=(id)=>({deployments:[{
@@ -43,6 +44,11 @@ assert.equal(report.status,'HOLD');
 assert.equal(report.active_versions_verified,true);
 assert.equal(report.hq.candidate_plaintext_parity,true);
 assert.equal(report.gateway.named_service_binding_in_candidate,true);
+assert.equal(report.gateway.gateway_secret_name_contract_matches_active,true);
+assert.deepEqual(report.hq_reconciliation.existing_flag_names_preserved,[]);
+assert.deepEqual(report.hq_reconciliation.required_existing_secret_names,
+ ['JILL_WORK_SESSION_KEY_B64','SHOPIFY_API_SECRET']);
+assert.equal(report.hq_reconciliation.manifest_written,false);
 assert.equal(report.secret_values_read,false);
 assert.equal(report.release_authorized,false);
 assert.deepEqual(requestTrace,[
