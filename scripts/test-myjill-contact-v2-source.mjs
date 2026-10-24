@@ -121,8 +121,11 @@ for(const token of [
 ]){
  assert.ok(page.includes(token),'Missing protected Contact UI feature '+token);
 }
-assert.ok(page.indexOf('matches.length!==1')<
- page.indexOf('setPending(null)'));
+const readbackBlock=page.slice(page.indexOf('const checkReadback=async'));
+assert.ok(readbackBlock.indexOf('matches.length!==1')>=0);
+assert.ok(readbackBlock.indexOf('matches.length!==1')<
+ readbackBlock.indexOf('setPending(null)'),
+ 'Only readback confirmation may clear a pending response');
 assert.match(thread,/v2Enabled=false/);
 assert.match(thread,/if\(v2Enabled===true\)return <ContactConversationV2/);
 assert.match(requestsPage,/v2Enabled=\{enabled===true&&threadEnabled===true&&replyEnabled===true\}/);
