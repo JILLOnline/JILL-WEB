@@ -66,9 +66,15 @@ const names=(map,type)=>[...map].filter(([,v])=>v.type===type)
  .map(([k])=>k).sort();
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const d1id=b=>b?.id??b?.database_id;
-export function compareUploadedWorkHqVersion({activeView,uploadedView}={}){
+export function compareUploadedWorkHqVersion({
+ activeView,uploadedView,uploadedVersion=VERSION_PIN.uploaded,
+}={}){
+ gate(typeof uploadedVersion==='string'&&
+  /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(uploadedVersion)&&
+  uploadedVersion!==VERSION_PIN.active,
+  'invalid_new_version_id');
  const active=bindings(activeView,VERSION_PIN.active);
- const uploaded=bindings(uploadedView,VERSION_PIN.uploaded);
+ const uploaded=bindings(uploadedView,uploadedVersion);
  for(const [label,map] of [['active',active],['uploaded',uploaded]]){
   const d1=map.get('JILL_ORDER_DESK_WORK_DB');
   gate(d1?.type==='d1'&&d1id(d1)===VERSION_PIN.d1&&
