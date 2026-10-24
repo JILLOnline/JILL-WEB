@@ -311,9 +311,12 @@ New files:
 Important limits: A green ephemeral test suite is NOT proof of a
 production Shopify Customer Account JWT, provider quota operation,
 real WORK D1 migration or exact account claim, nor a published My JILL
-composer. V2 helpers are not yet wired to visible My JILL navigation:
-source-only composition precedes account extension deployment and
-actual user acceptance. Existing V1 Contact read behavior is preserved.
+composer. The V2 helpers are now wired into My JILL's
+source-only `ContactConversationV2` component in draft #156, but
+the AccountHub still passes `ContactRequests enabled={false}`, and
+the V2 reply gate defaults OFF. They cannot be used by real customers
+without a separate approved extension release and authenticated
+Customer A/B/guest acceptance. Existing V1 Contact read is preserved.
 No Contact Us form intake or customer reply feature is active on
 deployed WORK; LIVE/KEEP are strictly untouched.
 
@@ -333,3 +336,45 @@ deployed WORK; LIVE/KEEP are strictly untouched.
    V2 reader. No email/phone account matching.
 5. Continue safeguarding against paid infrastructure and preserve the
    existing Shopify-native Contact Us form until intake is certified.
+
+## October 24 — My JILL customer-first UI joined and certified (source-only)
+
+My JILL draft **#156** now adds:
+- A redesigned Overview built around real, signed Customer Account
+  requests, their status and a limited three-item recent-activity panel.
+  Error/empty/loading are distinct; missing rewards points are unknown,
+  not invented zero. Existing Rewards redemption and Coupons are untouched.
+- All nine existing Shopify account deep-link routes grouped into
+  activity/rewards/personal categories. The shared in-memory Custom
+  Order message draft and route ownership remain unchanged.
+- A gated V2 Contact conversation and reply composer, sourced from
+  the same V2 client defined in this HQ integration branch.
+  Uncertain sends retain the exact message and operation ID;
+  an independently reauthenticated V2 read must contain the same
+  customer author, source sequence and text before clearing the editor.
+  No read/delivery claim. V1 Contact is unchanged.
+- Source and preview copy tests:
+  `scripts/test-myjill-customer-home.mjs`,
+  `scripts/test-myjill-contact-v2-source.mjs`,
+  the existing My JILL account/message/Contact regression tests,
+  and the source-only Preact build in
+  `.github/workflows/jill-myjill-customer-home-preview.yml`.
+  Its last checked source run passed, while a separate broad
+  `My JILL WORK account certification` workflow has legacy
+  branch-specific Owner/HQ source pin failures on this draft branch.
+  Those broad failures must not be mistaken for approved remote
+  functionality or for a reason to bypass guards.
+
+The WORK three-lane CI now executes the two new My JILL tests
+inside its disposable HQ #157 + My JILL #156 + visual #158 merge,
+with the combined React Router HQ build. The source joins cleanly.
+This establishes **source compatibility only**: it does not activate
+the disabled WORK Contact/customer reply flags or publish a Customer
+Account extension.
+
+**Separate next Owner steps:** customer-account visual preview across
+phone and desktop; exact signed Customer A/B/guest browser testing;
+one real QA request progression; Shopify extension publishing
+authorization; V2 D1 migration and private gateway authorization.
+Keep LIVE/KEEP, original WORK HQ deployment and Cloudflare free-tier
+protections in place.
