@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {
  projectUnifiedWorkOwnerQueue,readUnifiedWorkOwnerQueue,
 } from '../services/jill-order-desk/work-unified-owner-queue.mjs';
@@ -184,4 +185,29 @@ assert.equal(failRequests.state,'held');
 const safe=JSON.stringify(failRequests);
 assert.equal(safe.includes('synthetic Google source failed'),false,
  'Error details never cross the view boundary');
+
+// Future route is safe to compile, but inactive in every deployed manifest.
+// Retain two independently authenticated Owner/D1 source readers: no public
+// endpoint and no client-supplied account/email filtering.
+const routes=readFileSync(
+ 'services/jill-order-desk/app-home/app/routes.ts','utf8');
+const worker=readFileSync(
+ 'services/jill-order-desk/app-home/workers/app.ts','utf8');
+const loader=readFileSync(
+ 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx','utf8');
+const manifest=readFileSync(
+ 'services/jill-order-desk/app-home/wrangler.canary.jsonc','utf8');
+assert.match(routes,/route\("queue\/unified","routes\/app\.queue-unified\.tsx"\)/);
+assert.match(worker,/url\.pathname==="\/app\/queue\/unified"/);
+assert.match(worker,/JILL_WORK_UNIFIED_QUEUE_ENABLED!=="true"/);
+assert.match(loader,/readUnifiedWorkOwnerQueue\(/);
+assert.match(loader,/loadWorkMerchantInbox\(/);
+assert.match(loader,/readWorkContactTicketInbox\(/);
+assert.match(loader,/authenticateWorkAdminOnce/);
+assert.match(loader,/JILL_WORK_CONTACT_INBOX_ENABLED==="true"/);
+assert.match(loader,/JILL_WORK_UNIFIED_QUEUE_ENABLED!=="true"/);
+assert.doesNotMatch(manifest,/JILL_WORK_UNIFIED_QUEUE_ENABLED/);
+assert.doesNotMatch(loader,/localStorage|sessionStorage|document\.cookie|customer\.email|fetch\(/);
+assert.doesNotMatch(loader,/draftOrderCreate|invoiceSend|ShopifyOrder|customerGid/);
+
 console.log('PASS unified WORK owner queue: exact whitelisted read records, no PII, deterministic sort, safe contact OFF/partial state, strict dual-source Owner gate, source failure HOLD, no network/write or activation.');
