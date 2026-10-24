@@ -115,20 +115,19 @@ const hub=readFileSync(root+'hub/AccountHub.jsx','utf8');
 const canary=readFileSync('scripts/prepare-account-hub-canary.mjs','utf8');
 for(const token of [
  'loadOwnedContactConversationV2','postOwnedContactReply',
- 'expectedReplySequence','source_sequence===command.expectedReplySequence+1',
- 'matches.length!==1','setPending(null)','setText(\'\')',
+ 'expectedReplySequence','verifiedThread:latest',
+ 'onDraftChange({text:\'\',operation:null,state:\'confirmed\',busy:false}',
  'Retry same reply','Check saved reply','This is not an email or read receipt',
 ]){
  assert.ok(page.includes(token),'Missing protected Contact UI feature '+token);
 }
-const readbackBlock=page.slice(page.indexOf('const checkReadback=async'));
-assert.ok(readbackBlock.indexOf('matches.length!==1')>=0);
-assert.ok(readbackBlock.indexOf('matches.length!==1')<
- readbackBlock.indexOf('setPending(null)'),
- 'Only readback confirmation may clear a pending response');
+// The pure ticket-scoped hub ledger verifies the exact public receipt;
+// the component never clears its own pending command optimistically.
+assert.doesNotMatch(page,/setPending\(null\)|setText\('\'\)/);
+assert.match(page,/onDraftChange\(\{text:'',operation:null,state:'confirmed',busy:false\}/);
 assert.match(thread,/v2Enabled=false/);
 assert.match(thread,/if\(v2Enabled===true\)return <ContactConversationV2/);
-assert.match(requestsPage,/v2Enabled=\{enabled===true&&threadEnabled===true&&replyEnabled===true\}/);
+assert.match(requestsPage,/v2Enabled=\{enabled===true&&threadEnabled===true&&replyEnabled===true&&/);
 assert.match(hub,/'contact-requests': <ContactRequests enabled=\{false\}/);
 assert.ok(canary.includes("'ContactConversationV2.jsx'"));
 assert.ok(canary.includes("'customer-contact-conversation-v2.mjs'"));
