@@ -10,7 +10,7 @@ const command={
  message:'Your custom request is under review.',
 };
 const ack={ok:true,kind:'contact',code:'persisted_for_customer_account',
- ticket_id:ticketId,sequence:2};
+ ticket_id:ticketId,operation_id:command.operation_id,sequence:2};
 const message={sequence:2,author:'jill',message:command.message,
  created_at:'2026-10-24T14:00:00.000Z'};
 const refreshedThread={ticket_id:ticketId,messages:[{
@@ -35,6 +35,7 @@ const altered=[
  {ack:{...ack,sequence:3}},
  {ack:{...ack,code:'unconfirmed'}},
  {ack:{...ack,ticket_id:other}},
+ {ack:{...ack,operation_id:'jill:work:contact:msg:99999999-2222-4333-8444-555555555555'}},
  {ticketId:other},
  {command:{...command,operation_id:'forged'}},
  {command:{...command,message:'Unexpected old message'}},
