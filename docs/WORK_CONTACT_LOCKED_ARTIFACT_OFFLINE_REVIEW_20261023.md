@@ -190,3 +190,42 @@ authorization may a protected Owner UI browser review be scheduled.
 
 **Status: UPLOADED, NOT DEPLOYED. WORK visual release remains HOLD.
 LIVE and KEEP unchanged; no paid plan enabled.**
+
+## Postflight binding mismatch — owner observed (October 24)
+
+The first authenticated postflight against exact uploaded version
+`8fd0153b-3071-47df-8836-81973dab6cb4` returned
+`HOLD work_hq_inactive_postflight_existing_binding_removed_or_retyped`.
+The final owner PowerShell `Write-Host PASS` printed because it was
+executed as a separate later command; it does NOT override the failed
+inspection. No promotion is authorized.
+
+The postflight's error occurred **after** checking the pinned WORK D1,
+OAuth and existing business flags, required four HQ secret *names*,
+CONTACT OFF, and exact plaintext parity against the active version.
+Therefore a non-core binding absent or with an altered type is likely,
+but the actual name/type is not yet verified. Do **not** guess, ignore
+a missing resource or automatically re-upload.
+
+New `--diagnose-readonly` mode in
+`scripts/inspect-work-hq-uploaded-inactive-readonly.mjs` uses the same
+local bytes, authenticated baseline and preview GETs, exact two HQ
+version views, pinned deployment IDs and before/after allocation checks.
+It returns only a bounded metadata diff: `removed_bindings`,
+`changed_binding_types`, `new_bindings`, each with names and
+types only. No secret values or raw HTTP payloads; diagnostic result
+remains `status:HOLD`,
+`uploaded_version_is_safe_to_promote:false`. The original
+`--owner-readonly` remains **strict** and is never overridden by this
+diagnostic mode.
+
+Cloudflare documents `CF_VERSION_METADATA` as an opt-in
+`version_metadata` binding. Whether it is the observed difference
+is UNKNOWN until the owner runs the diagnostic. If this or any other
+binding is actually absent from the uploaded version, check whether
+the running application depends on it and whether the source/manifest
+must be corrected and re-uploaded under **new authorization**.
+No automatic approval for ignoring metadata/bindings.
+
+**Current decision: HOLD — the uploaded version has NOT passed
+postflight. Do not run `wrangler versions deploy`.**
