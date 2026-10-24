@@ -82,7 +82,8 @@ export function projectVerifiedOwnerContactReplies({
    r.actor_customer_gid!==claimedCustomerGid||
    typeof r.body_text!=='string'||r.body_text.length<1||
    r.body_text.length>500||r.body_text!==r.body_text.trim()||
-   /[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/.test(r.body_text)||
+   [...r.body_text].some(ch=>{const n=ch.codePointAt(0);return n===127||
+    (n<32&&n!==9&&n!==10&&n!==13);})||
    !Number.isSafeInteger(r.created_at_ms)||
    r.created_at_ms<1600000000000||
    r.created_at_ms<lastTime)fail();
