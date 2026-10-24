@@ -28,10 +28,13 @@ export async function loader({request,context}:LoaderFunctionArgs){
    .JILL_WORK_UNIFIED_QUEUE_ENABLED!=="true")
   return Response.json({state:"not_connected",records:[]},
    {status:503,headers});
- const admin=()=>authenticateWorkAdminOnce({
-  scope:context.cloudflare,
-  authenticate:()=>workShopify(env).authenticate.admin(request),
- });
+ // The Shopify Admin SDK returns a {session,...} shape. The existing
+ // request-scoped auth promise is shared; it never bypasses WORK D1 grants.
+ const admin=():Promise<{session:any}>=>
+  authenticateWorkAdminOnce({
+   scope:context.cloudflare,
+   authenticate:()=>workShopify(env).authenticate.admin(request),
+  }) as Promise<{session:any}>;
  const data=await readUnifiedWorkOwnerQueue({
   enabled:true,
   contactEnabled:(env as typeof env & {
