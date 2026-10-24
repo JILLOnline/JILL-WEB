@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
+          # Source repo intentionally carries no npm lockfile.
       - name: Strict source and authenticated customer-home projections
         run: |
           node scripts/test-myjill-customer-home.mjs
@@ -39,7 +39,7 @@ jobs:
           node scripts/test-work-myjill-contact-thread.mjs
           node scripts/audit-work-myjill-message-extension-source.mjs
       - name: Install source-only compile dependencies without lifecycle hooks
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
       - name: Compile My JILL Preact full-page source without publishing
         run: |
           ./node_modules/.bin/esbuild extensions/jill-account-dashboard/src/Dashboard.jsx \
