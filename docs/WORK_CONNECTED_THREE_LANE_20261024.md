@@ -211,3 +211,47 @@ network delivery, payments or external customer acceptance.
 
 **Current result: source/SQLite synthetic acceptance only; HQ WORK
 quote Save/Reload remains OFF until a distinct Owner authorization.**
+
+## Contact merchant message readback — source-only acceptance
+
+Added executable `scripts/test-work-contact-sqlite-customer-readback.mjs`.
+This runs the **actual** `persistWorkContactMerchantMessage` SQL
+against an isolated transactional SQLite schema and the actual
+`readWorkCustomerContactThread` signed Customer Account JWT verifier.
+Its server result then passes through My JILL's existing
+`projectOwnedContactThread` public client projection.
+
+Tests establish: hard OFF performs zero D1 operations, unclaimed
+Contact tickets cannot be messaged, Owner-only authenticated writes,
+idempotent operation receipts, stable sequential messages (1, 2),
+unchanged content on duplicate submissions, cross-ID conflicts,
+Customer A-only exact claim, Customer B/guest/forged-token denial, and
+exclusion of staff IDs, operations, hashes, owner GIDs and private
+Contact details from customer-visible records. The D1 is **only**
+Node's disposable in-memory SQLite. No actual WORK resource is read
+or modified.
+
+The existing HQ Contact detail page previously discarded merchant
+draft text immediately on an acknowledged write, without a fresh
+public-thread readback. Added a pure
+`verifyWorkContactMessageReadback` policy and updated source-only
+`app.contacts.$ticketId.tsx` to retain the typed message and
+operation ID until a separate authenticated Owner detail revalidation
+returns the **same ticket, exact sequence, exact message text and
+public author**. A late server response must also echo the **exact
+idempotency operation ID**: a stale acknowledgment cannot confirm a
+different/newer draft. The editor shows an explicit Verify saved
+message action when the readback is pending. After exact confirmation
+the editor clears; the UI explicitly distinguishes stored message
+visibility from customer reading, email delivery and push
+notifications. The test file
+`scripts/test-work-contact-message-readback-policy.mjs`
+covers wrong ticket, stale receipt, crossed operation, altered text,
+wrong author, incomplete thread and duplicate matches.
+
+**This does not enable customer-authored replies to Contact tickets.**
+That is a separate protocol/database/schema design. It also does
+not deploy Contact intake, claims, merchant sends, My JILL publishing,
+quote saving or conversation flags. These are source-only negative
+and happy-path tests in GitHub's ephemeral three-lane CI, not live
+OAuth/Customer A/B browser acceptance.
