@@ -37,11 +37,13 @@ assert.equal(app.replace(add,''),oldApp,
  'Authenticated HQ app route must differ ONLY by CSS import');
 assert.equal((app.match(/import "\.\.\/styles\/hq-visual-polish\.css"/g)||[]).length,1);
 const quote=current(quotePath),prior=baseline(quotePath);
-const baselinePrefix=prior.slice(0,prior.indexOf('  return <details className='));
-const currentPrefix=quote.slice(0,quote.indexOf('  return <details className='));
-assert.ok(baselinePrefix.length>4000 &&
-  prior.includes('  return <details className='),
-  'Baseline quote logic boundary missing');
+const mainDisclosure='  return <details className="jill-request__panel jill-request__full jill-quote jill-request__fold"';
+const baselineOffset=prior.indexOf(mainDisclosure);
+const currentOffset=quote.indexOf(mainDisclosure);
+assert.ok(baselineOffset>5000&&currentOffset>5000,
+ 'Baseline main quote worksheet boundary missing');
+const baselinePrefix=prior.slice(0,baselineOffset);
+const currentPrefix=quote.slice(0,currentOffset);
 assert.equal(currentPrefix,baselinePrefix,
  'Quote hooks, handlers, draft protocol, calculations and permissions changed');
 assert.ok(quote.includes('<details className="jill-quote__advanced">'));
