@@ -53,6 +53,8 @@ on:
       - 'scripts/test-work-contact-paired-release.mjs'
       - 'scripts/plan-work-contact-binding-parity.mjs'
       - 'scripts/test-work-contact-binding-parity.mjs'
+      - 'scripts/inspect-work-contact-paired-baseline-readonly.mjs'
+      - 'scripts/test-work-contact-paired-baseline-readonly.mjs'
       - 'backend/work-contact-account-read.mjs'
       - 'scripts/test-work-contact-account-read.mjs'
       - 'backend/work-contact-ticket-claim.mjs'
@@ -110,6 +112,8 @@ jobs:
           node scripts/test-work-contact-private-e2e.mjs
           node scripts/test-work-contact-paired-release.mjs
           node scripts/test-work-contact-binding-parity.mjs
+          node scripts/test-work-contact-paired-baseline-readonly.mjs
+          node scripts/inspect-work-contact-paired-baseline-readonly.mjs
           node scripts/audit-work-contact-paired-release.mjs
           node scripts/test-work-contact-account-read.mjs
           node scripts/test-work-contact-ticket-claim.mjs
@@ -178,6 +182,8 @@ jobs:
           node --check scripts/test-work-contact-paired-release.mjs
           node --check scripts/plan-work-contact-binding-parity.mjs
           node --check scripts/test-work-contact-binding-parity.mjs
+          node --check scripts/inspect-work-contact-paired-baseline-readonly.mjs
+          node --check scripts/test-work-contact-paired-baseline-readonly.mjs
           node --check backend/work-contact-account-read.mjs
           node --check scripts/test-work-contact-account-read.mjs
           node --check backend/work-contact-ticket-claim.mjs
