@@ -4,25 +4,31 @@ import {loadOwnedContactConversationV2,postOwnedContactReply}
 
 // Future My JILL Contact reply composer. Hard OFF until Contact claims,
 // the private WORK gateway, V2 schema, and exact account acceptance pass.
-// Do not infer email, push delivery, unread counts, or customer read receipts.
-export default function ContactConversationV2({ticketId,enabled=false}){
+// Draft and uncertain operation live ONLY in the My JILL hub's in-memory,
+// signed-ticket-scoped ledger. They survive section navigation, never
+// browser storage. No inferred email, push delivery or read receipts.
+export default function ContactConversationV2({
+ ticketId,enabled=false,draft={},onDraftChange=()=>{},
+}){
  const [opened,setOpened]=useState(false);
  const [attempt,setAttempt]=useState(0);
  const [state,setState]=useState({ticketId:null,status:'closed',thread:null});
- const [text,setText]=useState('');
- const [pending,setPending]=useState(null);
- const [feedback,setFeedback]=useState('idle');
  const [busy,setBusy]=useState(false);
  const busyRef=useRef(false);
  const liveTicket=useRef(ticketId);
  liveTicket.current=ticketId;
+ const text=typeof draft.text==='string'?draft.text:'';
+ const activePending=draft.operation?.ticketId===ticketId?draft.operation:null;
+ const feedback=draft.state??'idle';
+
  useEffect(()=>{
   setOpened(false);
-  setText('');
-  setPending(null);
-  setFeedback('idle');
   setState({ticketId:null,status:'closed',thread:null});
  },[ticketId,enabled]);
+ useEffect(()=>()=>{
+  // Old asynchronous results must not render on an unmounted account screen.
+  liveTicket.current=null;
+ },[]);
  useEffect(()=>{
   if(!opened||enabled!==true){
    setState({ticketId,status:'closed',thread:null});
@@ -38,42 +44,33 @@ export default function ContactConversationV2({ticketId,enabled=false}){
    if(active&&liveTicket.current===ticketId)
     setState({ticketId,status:'ready',thread});
   }).catch(()=>{
-   if(active&&liveTicket.current===ticketId){
+   if(active&&liveTicket.current===ticketId)
     setState({ticketId,status:'error',thread:null});
-    setFeedback(current=>current==='checking'?'unconfirmed':current);
-   }
   });
   return ()=>{active=false;controller.abort();};
  },[ticketId,enabled,opened,attempt]);
 
  const thread=state.ticketId===ticketId&&state.status==='ready'
   ?state.thread:null;
- const activePending=pending?.ticketId===ticketId?pending:null;
  const canWrite=enabled===true&&opened&&thread?.reply_enabled===true;
  const refresh=()=>setAttempt(n=>n+1);
  const checkReadback=async(command)=>{
   const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
-  // A fresh JWT and protected read is required, independently of POST ACK.
+  // A fresh signed account read is independent of the POST acknowledgment.
   const latest=await loadOwnedContactConversationV2({
    enabled:true,sessionToken,ticketId,
   });
   if(liveTicket.current!==ticketId)return;
   setState({ticketId,status:'ready',thread:latest});
-  const matches=latest.messages.filter(item=>
-   item.author==='customer'&&
-   item.source_sequence===command.expectedReplySequence+1&&
-   item.text===command.message);
-  if(matches.length!==1){
-   setFeedback('unconfirmed');
-   return;
-  }
-  setPending(null);
-  setText('');
-  setFeedback('confirmed');
+  // The hub ledger performs the final ticket + operation ID + exact public
+  // author/sequence/text check. An unverified readback CANNOT clear text.
+  onDraftChange({text:'',operation:null,state:'confirmed',busy:false},{
+   expectedOperationId:command.operationId,verifiedThread:latest,
+  });
  };
  const send=async(onlyVerify=false)=>{
   if(enabled!==true||!opened||busyRef.current||
-   (onlyVerify?!activePending:(!canWrite&&!activePending)))return;
+    (onlyVerify?!activePending:(!canWrite&&!activePending)))return;
   let command=activePending;
   if(!command){
    const message=text.trim();
@@ -86,12 +83,13 @@ export default function ContactConversationV2({ticketId,enabled=false}){
   }
   busyRef.current=true;
   setBusy(true);
-  setPending(command);
-  setFeedback('checking');
+  // Establish the immutable receipt BEFORE the network call. If this
+  // component is unmounted, only the hub ledger can retain or clear it.
+  onDraftChange({
+   text:command.message,operation:command,state:'busy',busy:true,
+  },{expectedOperationId:activePending?.operationId??null});
   try{
    if(!onlyVerify){
-    // On an uncertain POST, preserve this SAME operation for retry.
-    // An accepted ACK still requires an independent signed readback.
     try{
      await postOwnedContactReply({
       enabled:true,
@@ -101,18 +99,20 @@ export default function ContactConversationV2({ticketId,enabled=false}){
       message:command.message,
      });
     }catch{
-     // A timeout might mean the reply WAS saved; verify before retry.
+     // A timeout can mean the original operation succeeded. NEVER
+     // generate a new ID automatically or erase the pending text.
     }
    }
    await checkReadback(command);
   }catch{
-   if(liveTicket.current===ticketId){
+   if(liveTicket.current===ticketId)
     setState({ticketId,status:'error',thread:null});
-    setFeedback('unconfirmed');
-   }
   }finally{
+   onDraftChange({state:'unconfirmed',busy:false},{
+    expectedOperationId:command.operationId,
+   });
    busyRef.current=false;
-   setBusy(false);
+   if(liveTicket.current===ticketId)setBusy(false);
   }
  };
  if(enabled!==true)return <s-text color="subdued">
@@ -159,16 +159,19 @@ export default function ContactConversationV2({ticketId,enabled=false}){
     <s-banner tone="info">
      This conversation is closed or full. New replies are unavailable.
     </s-banner>}
-   {(thread.reply_enabled||activePending)&&
+   {(thread.reply_enabled||activePending||text)&&
     <s-stack direction="block" gap="small-300">
      <s-text-area label="Your reply to JILL" rows={4}
       maxLength={500} value={text}
-      disabled={busy||activePending!==null}
-      onInput={event=>setText(event.currentTarget.value)}/>
-     {feedback==='unconfirmed'&&
+      disabled={busy||activePending!==null||!thread.reply_enabled}
+      onInput={event=>onDraftChange({
+       text:event.currentTarget.value,state:'idle',busy:false,
+      },{expectedOperationId:null})}/>
+     {feedback==='unconfirmed'&&activePending&&
       <s-banner tone="warning">
        We couldn't confirm your reply in a fresh account read.
-       Your text is still here. Check before trying the same reply again.
+       Your text stays here when you navigate within My JILL.
+       Check the same operation before trying it again.
       </s-banner>}
      {feedback==='confirmed'&&
       <s-banner tone="success">
