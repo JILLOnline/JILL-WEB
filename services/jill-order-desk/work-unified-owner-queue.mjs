@@ -181,9 +181,26 @@ export async function readUnifiedWorkOwnerQueue({
    return state('held',[],{
     reason:'contact_source_unavailable',contact_state:'unverified',
    });
-  const raw=await response.text();
-  if(Buffer.byteLength(raw,'utf8')>24000)fail();
-  contact=JSON.parse(raw);
+  // A provider error must not allocate unlimited bytes in the Worker.
+  const declared=response.headers.get('content-length');
+  if(declared!==null&&(!/^(0|[1-9][0-9]*)$/.test(declared)||
+    Number(declared)>24000))fail();
+  const reader=response.body?.getReader();
+  if(!reader)fail();
+  const chunks=[];let total=0;
+  try{
+   while(true){
+    const {done,value}=await reader.read();
+    if(done)break;
+    total+=value.byteLength;
+    if(total>24000)fail();
+    chunks.push(value);
+   }
+  }finally{reader.releaseLock();}
+  const bytes=new Uint8Array(total);
+  let pos=0;
+  for(const chunk of chunks){bytes.set(chunk,pos);pos+=chunk.byteLength;}
+  contact=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
  }catch{return state('held',[],{
   reason:'contact_source_unavailable',contact_state:'unverified',
  });}
