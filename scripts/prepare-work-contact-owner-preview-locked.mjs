@@ -56,6 +56,14 @@ export async function preparePreviewLockedCandidate({
   preview.hq.version_urls_enabled===false&&
   preview.gateway.version_urls_enabled===false,
   'public_preview_not_disabled');
+ // Re-read BOTH settings after the metadata check, just before
+ // producing any file. A concurrent preview re-enable must fail closed.
+ const finalPreview=await readSubdomains();
+ gate(finalPreview?.hq?.enabled===true&&
+  finalPreview?.hq?.previews_enabled===false&&
+  finalPreview?.gateway?.enabled===true&&
+  finalPreview?.gateway?.previews_enabled===false,
+  'preview_settings_changed_during_attestation');
  const proposed=proposeHqPreviewDisabledManifest(original);
  gate(proposed.status==='HOLD'&&
   proposed.changed_keys.length===1&&
