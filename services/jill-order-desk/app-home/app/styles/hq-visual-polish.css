@@ -1,0 +1,356 @@
+/*
+ * JILL HQ WORK visual polish — scoped additive layer, 2026-10-24.
+ * NO business logic, routes, flags, auth, D1, Shopify mutations, or deployed Worker changes.
+ * Existing plum + champagne/gold identity and all approved interaction flows are retained.
+ * See docs/WORK_HQ_VISUAL_POLISH_20261024.md for invariants and review checkpoints.
+ */
+
+.jill-workspace{
+  --jill-control-height:38px;
+  --jill-field-size:14px;
+  --jill-radius:12px;
+  --jill-soft:#faf7fc;
+  --jill-border:#e5dbea;
+  --jill-muted:#62546b;
+  font-size:14px;
+  line-height:1.5;
+  letter-spacing:normal;
+}
+.jill-workspace :where(h2){font-size:23px;line-height:1.22;letter-spacing:-.025em}
+.jill-workspace :where(h3){font-size:16px;line-height:1.3}
+.jill-workspace :where(p){line-height:1.55}
+.jill-workspace :where(button,input,select,textarea){font-size:14px}
+.jill-workspace :where(button,input,select,textarea,summary){
+  scroll-margin-block:16px;
+}
+.jill-workspace :where(button):disabled{
+  opacity:.75;
+}
+.jill-workspace :where(a,button,input,select,textarea,summary):focus-visible{
+  outline:3px solid var(--jill-focus);
+  outline-offset:3px;
+}
+
+/* Reuse the exact existing navigation, brand colors, tabs and link behavior. */
+.jill-workspace .jill-workspace__navigation{
+  gap:16px;
+  min-height:54px;
+  padding:11px 16px;
+  margin-bottom:18px;
+  box-shadow:0 4px 18px rgb(33 21 37 / 8%);
+}
+.jill-workspace .jill-workspace__navigation-items{gap:5px}
+.jill-workspace .jill-workspace__navigation-items a{
+  min-height:36px;
+  padding:8px 12px;
+  font-size:13px;
+  line-height:1.25;
+}
+.jill-workspace .jill-workspace__navigation-items a[aria-current="page"]{
+  background:#f0ce79;
+  color:#2c1838;
+}
+.jill-workspace .jill-workspace__work{
+  padding:5px 9px;
+  font-size:11px;
+}
+.jill-workspace .jill-workspace__tabs{gap:4px;margin-block:14px}
+.jill-workspace .jill-workspace__tabs a{
+  min-height:36px;
+  padding:7px 12px;
+  font-size:13px;
+}
+
+/* Common actionable surfaces: hierarchy over decoration. */
+.jill-workspace .jill-button,
+.jill-workspace .jill-inbox__back,
+.jill-workspace .jill-request__inline-link,
+.jill-workspace .jill-hq__card-link{
+  min-height:36px;
+  font-size:13px;
+  padding:8px 12px;
+  border-radius:8px;
+}
+.jill-workspace .jill-request__panel,
+.jill-workspace .jill-hq__card,
+.jill-workspace .jill-catalog__collection,
+.jill-workspace .jill-messages__conversation{
+  border-radius:12px;
+  box-shadow:0 3px 14px rgb(48 24 58 / 3%);
+}
+.jill-workspace .jill-request__panel{padding:14px}
+.jill-workspace .jill-request__panel h3{font-size:16px;margin-bottom:10px}
+.jill-workspace .jill-request__locked,
+.jill-workspace .jill-catalog__notice,
+.jill-workspace .jill-messages__notice,
+.jill-workspace .jill-quote__notice{
+  font-size:13px;
+  line-height:1.5;
+  padding:11px 13px;
+}
+
+/* Home cards and owner status — no changes to source/role visibility. */
+.jill-workspace .jill-hq__status{padding:12px 14px}
+.jill-workspace .jill-hq__status strong,
+.jill-workspace .jill-hq__status p{font-size:13px}
+.jill-workspace .jill-hq__section-heading h2{font-size:20px}
+.jill-workspace .jill-hq__card{padding:17px;min-height:166px}
+.jill-workspace .jill-hq__card h3{font-size:17px}
+.jill-workspace .jill-hq__card p,
+.jill-workspace .jill-hq__source-note{font-size:13px}
+.jill-workspace .jill-hq__metrics>div{padding:14px 16px}
+
+/* Requests: preserve THE full clickable row and the 2 direct actions.
+ * This layer cannot change JSX event handlers, grid column identity, or menus. */
+.jill-workspace .jill-inbox__row-trigger{min-height:48px}
+.jill-workspace .jill-inbox__cell{font-size:13px}
+.jill-workspace .jill-inbox__customer-name,
+.jill-workspace .jill-inbox__request-id{font-size:13px}
+.jill-workspace .jill-inbox__status,
+.jill-workspace .jill-inbox__internal{font-size:12px}
+.jill-workspace .jill-inbox__columns{font-size:11px}
+.jill-workspace .jill-inbox__row-end{min-height:40px}
+.jill-workspace .jill-actions__direct-buttons button{
+  min-height:38px;
+  font-size:12px;
+  padding:8px 11px;
+  font-weight:740;
+  border-radius:8px;
+}
+.jill-workspace .jill-inbox__editor-panel{
+  padding:12px 14px;
+  border-color:var(--jill-border);
+}
+.jill-workspace .jill-actions__body label{font-size:13px}
+.jill-workspace .jill-actions__body select,
+.jill-workspace .jill-actions__body textarea,
+.jill-workspace .jill-actions__body input{font-size:14px;min-height:38px}
+
+/* Request Detail: keep the verified overview, source timeline and actions.
+ * More readable labels without expanding the page excessively. */
+.jill-workspace .jill-request__header{padding-bottom:10px}
+.jill-workspace .jill-request__heading h2{
+  font-size:clamp(22px,2vw,26px);
+  margin-bottom:4px;
+}
+.jill-workspace .jill-request__heading p,
+.jill-workspace .jill-request__highlights span{font-size:12px}
+.jill-workspace .jill-request__highlights strong{font-size:14px}
+.jill-workspace .jill-request__highlights>div{padding:10px 13px}
+.jill-workspace .jill-request__data>div{
+  grid-template-columns:minmax(115px,.85fr) minmax(0,1.3fr);
+  gap:9px;
+  padding:8px 0;
+}
+.jill-workspace .jill-request__data dt,
+.jill-workspace .jill-request__data dd,
+.jill-workspace .jill-request__muted,
+.jill-workspace .jill-request__activity strong,
+.jill-workspace .jill-request__original-subsection>p{
+  font-size:13px;
+}
+.jill-workspace .jill-request__activity small{font-size:12px}
+.jill-workspace .jill-request__fold-title{font-size:15px}
+.jill-workspace .jill-request__full h4,
+.jill-workspace .jill-request__full-overview h4{font-size:14px}
+.jill-workspace .jill-request__original-item{padding:12px}
+.jill-workspace .jill-request__original-item h4{font-size:15px}
+
+/* Quote worksheet: give pricing and honest save status the visual priority.
+ * Read-only verification remains mounted, available on demand. */
+.jill-workspace .jill-quote__lines{
+  border-color:var(--jill-border);
+  margin-block:12px;
+}
+.jill-workspace .jill-quote__row{
+  padding:10px 12px;
+}
+.jill-workspace .jill-quote__row strong,
+.jill-workspace .jill-quote__qty,
+.jill-workspace .jill-quote__fees label>span{font-size:14px}
+.jill-workspace .jill-quote__row small,
+.jill-workspace .jill-quote__fees label>small{font-size:12px}
+.jill-workspace .jill-quote__fees-title{font-size:15px}
+.jill-workspace .jill-quote input{font-size:14px;min-height:40px;padding:8px 10px}
+.jill-workspace .jill-quote__summary{
+  margin-top:14px;
+  padding:13px 16px;
+  background:#f8faf8;
+}
+.jill-workspace .jill-quote__summary>p{font-size:13px}
+.jill-workspace .jill-quote__summary dl>div{font-size:13px}
+.jill-workspace .jill-quote__summary .jill-quote__total{font-size:17px}
+.jill-workspace .jill-quote__tag{font-size:11px}
+.jill-workspace .jill-quote__draft-actions{
+  margin-top:12px;
+  padding-top:13px;
+}
+.jill-workspace .jill-quote__draft-buttons button{
+  min-height:38px;
+  font-size:13px;
+}
+.jill-workspace .jill-quote__advanced{
+  margin-top:16px;
+  border:1px solid var(--jill-border);
+  border-radius:12px;
+  background:#fff;
+  min-width:0;
+  overflow:clip;
+}
+.jill-workspace .jill-quote__advanced>summary{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px 14px;
+  list-style:none;
+  padding:13px 16px;
+  min-height:48px;
+  cursor:pointer;
+  background:#faf7fc;
+  color:#5e2b80;
+  font-size:14px;
+  font-weight:780;
+}
+.jill-workspace .jill-quote__advanced>summary::-webkit-details-marker{display:none}
+.jill-workspace .jill-quote__advanced>summary::marker{content:""}
+.jill-workspace .jill-quote__advanced>summary:hover{background:#f3eafa}
+.jill-workspace .jill-quote__advanced>summary::after{
+  content:"+";
+  font-size:20px;
+  line-height:1;
+  font-weight:500;
+  margin-left:auto;
+}
+.jill-workspace .jill-quote__advanced[open]>summary{
+  border-bottom:1px solid var(--jill-border);
+}
+.jill-workspace .jill-quote__advanced[open]>summary::after{content:"−"}
+.jill-workspace .jill-quote__advanced-hint{
+  color:var(--jill-muted);
+  font-size:12px;
+  font-weight:520;
+  line-height:1.4;
+}
+.jill-workspace .jill-quote__advanced-content{
+  display:grid;
+  gap:12px;
+  padding:13px 15px 15px;
+  min-width:0;
+}
+.jill-workspace .jill-quote__advanced-content>*{min-width:0}
+.jill-workspace .jill-quote__preflight,
+.jill-workspace .jill-quote__unit-plan{margin:0}
+.jill-workspace .jill-quote__preflight h4,
+.jill-workspace .jill-quote__unit-plan h4,
+.jill-workspace .jill-quote__catalog-comparison h4,
+.jill-workspace .jill-quote__artwork-audit h4{font-size:15px}
+.jill-workspace .jill-quote__preflight li{font-size:12px;gap:8px;padding:9px 11px}
+.jill-workspace .jill-quote__preflight li strong{font-size:11px}
+.jill-workspace .jill-quote__unit-plan p,
+.jill-workspace .jill-quote__catalog-comparison p,
+.jill-workspace .jill-quote__artwork-audit p,
+.jill-workspace .jill-quote__artwork-audit li{font-size:13px}
+
+/* Messages: preserve real-status honesty while improving inbox scanning. */
+.jill-workspace .jill-messages__intro h2{font-size:23px}
+.jill-workspace .jill-messages__intro p,
+.jill-workspace .jill-messages__hint{font-size:13px}
+.jill-workspace .jill-messages__filters{padding:13px;gap:12px}
+.jill-workspace .jill-messages__filters label{font-size:13px}
+.jill-workspace .jill-messages__filters input,
+.jill-workspace .jill-messages__filters select{font-size:14px;min-height:40px}
+.jill-workspace .jill-messages__thread{
+  min-height:70px;
+  padding:13px;
+}
+.jill-workspace .jill-messages__thread strong{font-size:14px}
+.jill-workspace .jill-messages__thread span{font-size:13px}
+.jill-workspace .jill-messages__thread small{font-size:12px}
+.jill-workspace .jill-messages__conversation{padding:17px;min-height:210px}
+.jill-workspace .jill-messages__conversation-head h3{font-size:17px}
+.jill-workspace .jill-messages__placeholder{font-size:14px;line-height:1.6}
+.jill-workspace .jill-messages__filters p{font-size:12px}
+
+/* Shopify Catalog: increase scanability, retain Shopify read-only authority. */
+.jill-workspace .jill-catalog__heading h2{font-size:24px}
+.jill-workspace .jill-catalog__heading p{font-size:13px;line-height:1.55}
+.jill-workspace .jill-catalog__meta{font-size:12px}
+.jill-workspace .jill-catalog__search{padding:14px;gap:10px}
+.jill-workspace .jill-catalog__search label{font-size:13px}
+.jill-workspace .jill-catalog__search input,
+.jill-workspace .jill-catalog__search button,
+.jill-workspace .jill-catalog__search>a{min-height:40px;font-size:14px}
+.jill-workspace .jill-catalog__columns{font-size:11px;letter-spacing:.045em}
+.jill-workspace .jill-catalog__row{gap:12px;padding:13px 15px}
+.jill-workspace .jill-catalog__cell{font-size:13px;line-height:1.5}
+.jill-workspace .jill-catalog__cell small{font-size:12px}
+.jill-workspace .jill-catalog__identity>strong{font-size:14px}
+.jill-workspace .jill-catalog__identity>span{font-size:12px}
+.jill-workspace .jill-catalog__variants>div{font-size:12px}
+.jill-workspace .jill-catalog__variants code{font-size:11px}
+.jill-workspace .jill-catalog__status{font-size:11px}
+.jill-workspace .jill-catalog__collection{padding:16px}
+.jill-workspace .jill-catalog__collection h3{font-size:15px}
+
+/* Responsive constraints remain native page flow; never lock iframe body,
+ * create fixed overlays or scroll customer data into local storage. */
+@media(max-width:1100px){
+  .jill-workspace .jill-request__grid{
+    grid-template-columns:minmax(0,1.15fr) minmax(275px,1fr);
+  }
+  .jill-workspace .jill-request__side{grid-template-columns:1fr}
+}
+@media(max-width:850px){
+  .jill-workspace .jill-request__grid{grid-template-columns:minmax(0,1fr)}
+  .jill-workspace .jill-request__side{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .jill-workspace .jill-inbox__row-trigger{min-height:0}
+  .jill-workspace .jill-inbox__cell{font-size:13px}
+  .jill-workspace .jill-inbox__row-end{min-height:44px}
+  .jill-workspace .jill-actions__direct-buttons button{min-height:44px}
+}
+@media(max-width:600px){
+  .jill-workspace{
+    --jill-control-height:44px;
+    --jill-field-size:16px;
+    font-size:14px;
+  }
+  .jill-workspace .jill-workspace__navigation{gap:8px;padding:10px 12px}
+  .jill-workspace .jill-workspace__navigation-items{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:4px;
+  }
+  .jill-workspace .jill-workspace__navigation-items a{
+    min-height:44px;
+    padding:7px 5px;
+    font-size:12px;
+  }
+  .jill-workspace .jill-request__side{grid-template-columns:minmax(0,1fr)}
+  .jill-workspace .jill-request__panel{padding:13px}
+  .jill-workspace .jill-request__data>div{grid-template-columns:minmax(0,1fr);gap:3px}
+  .jill-workspace .jill-quote__row{gap:7px;padding:9px}
+  .jill-workspace .jill-quote__advanced>summary{padding:13px}
+  .jill-workspace .jill-quote__advanced-content{padding:12px}
+  .jill-workspace .jill-catalog__row{padding:13px}
+  .jill-workspace .jill-messages__filters input,
+  .jill-workspace .jill-messages__filters select,
+  .jill-workspace .jill-quote input{font-size:16px}
+}
+@media(pointer:coarse){
+  .jill-workspace .jill-workspace__navigation-items a,
+  .jill-workspace .jill-actions__direct-buttons button,
+  .jill-workspace .jill-quote__draft-buttons button,
+  .jill-workspace .jill-catalog__search button{
+    min-height:44px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .jill-workspace .jill-inbox__card,
+  .jill-workspace .jill-inbox__chevron,
+  .jill-workspace .jill-actions__direct-buttons button{
+    transition:none;
+    scroll-behavior:auto;
+  }
+}

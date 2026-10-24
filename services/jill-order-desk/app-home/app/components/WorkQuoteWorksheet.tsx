@@ -359,6 +359,31 @@ export function WorkQuoteWorksheet({
                 : ERROR[quote.code]??"The quote cannot be calculated."}
             </p>}
           </div>
+          <div className="jill-quote__draft-actions" aria-label="Quote draft management">
+            <div className="jill-quote__draft-buttons">
+              <button type="button" disabled={!canSaveDraft||!ready}
+                onClick={onSaveDraft}>
+                {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
+              </button>
+              <button type="button" disabled={!canReloadDraft}
+                onClick={onReloadDraft}>
+                {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
+              </button>
+            </div>
+            {!saveDraftEnabled&&<p className="jill-quote__notice" role="status">
+              Saving is unavailable in this WORK version. Entries are lost on refresh.
+            </p>}
+            {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
+              role="status">{feedback}</p>}
+          </div>
+          <details className="jill-quote__advanced">
+            <summary>
+              <span>Advanced verification</span>
+              <span className="jill-quote__advanced-hint">
+                Readiness, P1/P2, Shopify prices and artwork
+              </span>
+            </summary>
+            <div className="jill-quote__advanced-content">
           <section className="jill-quote__preflight" aria-label="Quote release readiness">
             <h4>Quote → Customer → Shopify readiness</h4>
             <p>Estimate and source review only. Nothing below sends a quote,
@@ -407,23 +432,9 @@ export function WorkQuoteWorksheet({
             submissionId={submissionId}/>}
           <WorkQuoteArtworkAudit detail={detail}
             submissionId={submissionId} sourceRevision={sourceRevision}/>
-          <div className="jill-quote__draft-actions" aria-label="Quote draft management">
-            <div className="jill-quote__draft-buttons">
-              <button type="button" disabled={!canSaveDraft||!ready}
-                onClick={onSaveDraft}>
-                {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
-              </button>
-              <button type="button" disabled={!canReloadDraft}
-                onClick={onReloadDraft}>
-                {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
-              </button>
             </div>
-            {!saveDraftEnabled&&<p className="jill-quote__notice" role="status">
-              Saving is unavailable in this WORK version. Entries are lost on refresh.
-            </p>}
-            {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
-              role="status">{feedback}</p>}
-          </div>
+          </details>
+
         </>}
     </div>
   </details>;
