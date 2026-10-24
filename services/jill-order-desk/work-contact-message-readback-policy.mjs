@@ -21,6 +21,7 @@ export function verifyWorkContactMessageReadback({
  if(!obj(ack)||ack.ok!==true||ack.kind!=='contact'||
     !['persisted_for_customer_account','already_persisted'].includes(ack.code)||
     ack.ticket_id!==ticketId||
+    ack.operation_id!==command.operation_id||
     !Number.isSafeInteger(ack.sequence)||ack.sequence<1||
     ack.sequence>50)
   return hold('unconfirmed_operation_ack');
