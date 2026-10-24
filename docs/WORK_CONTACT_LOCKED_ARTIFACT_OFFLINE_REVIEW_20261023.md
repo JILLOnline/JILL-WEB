@@ -229,3 +229,58 @@ No automatic approval for ignoring metadata/bindings.
 
 **Current decision: HOLD — the uploaded version has NOT passed
 postflight. Do not run `wrangler versions deploy`.**
+
+## Metadata binding difference conclusively identified (Oct 24)
+
+The owner performed a new authenticated `--diagnose-readonly` run
+against HQ uploaded version
+`8fd0153b-3071-47df-8836-81973dab6cb4`. The precise results:
+
+- active version `44ad4a81-55ad-4f49-9965-61260cc2294d`
+  has **14** bindings;
+- inactive version has **13** bindings;
+- **one removed binding only**:
+  `CF_VERSION_METADATA`, type `version_metadata`;
+- `changed_binding_types:[]` and `new_bindings:[]`;
+- active HQ/gateway deployment pins unchanged, public Version URLs
+  still OFF; new version still outside serving traffic.
+
+This is a **configuration parity defect**, not evidence that the
+existing four required OAuth/merchant secret binding NAMES,
+WORK D1 or existing business flags are absent. No secret VALUES or
+actual Shopify Owner browser login were inspected. The strict
+postflight correctly denied a promotion. Its conditions remain intact.
+
+Cloudflare's version metadata documentation explicitly states the
+Wrangler JSON key:
+`"version_metadata":{"binding":"CF_VERSION_METADATA"}`.
+Reference:
+https://developers.cloudflare.com/workers/runtime-apis/bindings/version-metadata/
+
+New source-only helper:
+`scripts/prepare-work-hq-version-metadata-repair-local-only.mjs`.
+Explicit `--owner-local-only` validates the existing *unchanged*
+owner-pinned 50-file artifact/fingerprint and creates a separate
+local manifest:
+`dist/server/wrangler.contact-owner-version-metadata-restored.json`.
+It adds **one top-level property** `version_metadata` with the
+required binding; it preserves OAuth, all existing five business flags,
+required secret names, D1 identity, preview_urls=false, worker routing,
+source/compiled JS and client assets. Output is exclusive-create
+(`wx`) with restricted mode and a newly computed manifest and
+full-artifact digest; the original local manifest is untouched.
+
+The helper makes **zero Cloudflare calls**. A future owner
+`wrangler deploy --dry-run` using only the new local config may confirm
+Wrangler recognizes the version metadata binding without any upload.
+It must be inspected and compared before any later, separately
+authorized `versions upload` of an amended candidate. The earlier
+one-upload approval is already **spent**; never reuse the old
+`8fd0153b` candidate or silently auto-promote it.
+
+**HOLD until:** corrected candidate is locally generated, fingerprinted,
+dry-run compiled, separately authorized for a new inactive upload,
+independently inspected via exact new version ID, and verified to retain
+the active binding inventory. Traffic promotion is a second and
+independent decision, contingent on account/preview security and
+reversible Owner UX acceptance.
