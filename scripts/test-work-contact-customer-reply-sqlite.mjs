@@ -164,6 +164,20 @@ try{
   .run(SHOP,T,1,
    'jill:work:contact:msg:33333333-2222-4333-8444-555555555555',
    '111','JILL confirms your theme.','c'.repeat(64),NOW-100);
+ // Backwards compatibility: the original V1 Customer A thread still
+ // returns the same merchant-only message after V2 is present.
+ const oldThread=await act(new Request(
+  'https://jill-gateway.invalid/jill-contact-thread',{
+   method:'POST',headers:{
+    authorization:'Bearer '+jwt(A),'content-type':'application/json',
+   },body:JSON.stringify({ticket_id:T}),
+  }));
+ assert.equal(oldThread.status,200);
+ const oldData=await oldThread.json();
+ assert.equal(oldData.version,1);
+ assert.equal(oldData.thread.messages.length,1);
+ assert.equal(oldData.thread.messages[0].author,'jill');
+ assert.equal(oldData.thread.reply_enabled,false);
  const v2=await loadOwnedContactConversationV2({
   enabled:true,sessionToken,request:appRequest,ticketId:T,
  });
@@ -229,6 +243,10 @@ try{
   .run('resolved',NOW+10,'111',
   'jill:work:contact:status:11111111-2222-4333-8444-555555555555',
   SHOP,T,1,'reviewing');
+ // Idempotent replay remains confirmed after closure, but cannot append.
+ resp=await act(make(A,T,OP(3),'Great, thanks!',2));
+ assert.equal(resp.status,200);
+ assert.equal((await resp.json()).code,'already_persisted');
  resp=await act(make(A,T,OP(4),'Closed should not accept',2));
  assert.equal(resp.status,409);
  assert.equal(n(),4);
