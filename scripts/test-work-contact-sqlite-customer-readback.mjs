@@ -137,6 +137,7 @@ try{
  assert.equal(response.status,200);
  let ack=await response.json();
  assert.equal(ack.code,'persisted_for_customer_account');
+ assert.equal(ack.operation_id,op(1),'ACK tied to exact request operation');
  assert.equal(ack.sequence,1);
  assert.equal(count(),1);
  assert.equal(sqlite.prepare('SELECT actor_staff_id FROM jill_work_contact_messages').get().actor_staff_id,'123');
