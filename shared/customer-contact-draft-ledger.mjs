@@ -4,6 +4,8 @@
 const ID=/^jill:contact:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const OP=/^jill:customer:contact:reply:[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+const receiptFor=(sequence,cmd)=>Number.isSafeInteger(sequence)&&
+ sequence===cmd?.expectedReplySequence+1;
 const validCommand=(cmd,id,text)=>object(cmd)&&cmd.ticketId===id&&
  OP.test(cmd.operationId||'')&&
  Number.isSafeInteger(cmd.expectedReplySequence)&&
@@ -25,7 +27,8 @@ const validTickets=tickets=>{
  return ids;
 };
 const recover=(entry,id)=>{
- if(!object(entry))return {text:'',state:'idle',operation:null,busy:false};
+ if(!object(entry))return {text:'',state:'idle',operation:null,busy:false,
+ acknowledgedSequence:null};
  const text=typeof entry.text==='string'&&entry.text.length<=500
   ?entry.text:'';
  const operation=validCommand(entry.operation,id,text)?Object.freeze({
@@ -35,7 +38,10 @@ const recover=(entry,id)=>{
  }):null;
  const state=operation?'unconfirmed':
   entry.state==='confirmed'?'confirmed':'idle';
- return Object.freeze({text,state,operation,busy:false});
+ return Object.freeze({text,state,operation,busy:false,
+  acknowledgedSequence:operation&&receiptFor(entry.acknowledgedSequence,operation)
+   ?entry.acknowledgedSequence:null,
+ });
 };
 export function retainOwnedContactDrafts(previous,verifiedTickets){
  const owned=validTickets(verifiedTickets);
@@ -71,9 +77,15 @@ export function updateOwnedContactDraft(previous,id,change,meta={}){
  if(expected!==(current?.operationId??null))return previous;
  const keys=Object.keys(change);
  if(keys.length===0||keys.some(key=>
-  !['text','state','operation','busy'].includes(key)))return previous;
+  !['text','state','operation','busy','acknowledgedSequence'].includes(key)))return previous;
  if(Object.hasOwn(change,'text')&&
   (typeof change.text!=='string'||change.text.length>500))return previous;
+ if(Object.hasOwn(change,'acknowledgedSequence')&&
+  (!current||change.acknowledgedSequence!==current.expectedReplySequence+1||
+   meta.serverReceipt?.state!=='persisted_unconfirmed_readback'||
+   meta.serverReceipt?.operation_id!==current.operationId||
+   meta.serverReceipt?.sequence!==change.acknowledgedSequence))
+  return previous;
  if(Object.hasOwn(change,'busy')&&typeof change.busy!=='boolean')
   return previous;
  if(Object.hasOwn(change,'state')&&
@@ -84,10 +96,12 @@ export function updateOwnedContactDraft(previous,id,change,meta={}){
  const finishing=change.operation===null&&change.text===''&&
   change.state==='confirmed'&&change.busy===false;
  if(finishing){
-  if(!current||!confirmedInFreshThread(meta.verifiedThread,current))
+  if(!current||!receiptFor(prior.acknowledgedSequence,current)||
+     !confirmedInFreshThread(meta.verifiedThread,current))
    return previous;
   return {...previous,[id]:Object.freeze({
    text:'',operation:null,state:'confirmed',busy:false,
+   acknowledgedSequence:null,
   })};
  }
  // All other changes must keep the same immutable pending command.
@@ -101,6 +115,9 @@ export function updateOwnedContactDraft(previous,id,change,meta={}){
   if(!validCommand(nextOperation,id,merged.text))return previous;
  }
  if(merged.state==='confirmed')return previous;
+ if(current&&receiptFor(prior.acknowledgedSequence,current)&&
+    merged.acknowledgedSequence!==prior.acknowledgedSequence)
+  return previous;
  if(['busy','unconfirmed'].includes(merged.state)&&
     !validCommand(nextOperation,id,merged.text))return previous;
  if(merged.state==='idle'&&nextOperation)return previous;
@@ -108,6 +125,9 @@ export function updateOwnedContactDraft(previous,id,change,meta={}){
  const safe=Object.freeze({
   text:merged.text??'',state:merged.state??'idle',
   operation:nextOperation??null,busy:merged.busy??false,
+  acknowledgedSequence:nextOperation?
+   (receiptFor(merged.acknowledgedSequence,nextOperation)
+    ?merged.acknowledgedSequence:null):null,
  });
  return {...previous,[id]:safe};
 }
