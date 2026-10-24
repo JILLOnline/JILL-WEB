@@ -233,8 +233,11 @@ export default function ContactTicketDetail(){
        .filter(([,value])=>value!=="").map(([name,value])=>
         <div key={name}><dt>{name.replaceAll("_"," ")}</dt>
           <dd>{value}</dd></div>)}</dl>
-      <p>Customer identity and reply availability are not yet verified
-       for this contact ticket. Shopify order numbers are references only.</p>
+      <p>{data.can_post_message===true
+       ?"A verified customer account is linked for merchant message storage. "+
+        "Customer replies and notifications remain unavailable."
+       :"Customer account ownership or messaging permission is not verified."}
+       {" "}Shopify order numbers are references only.</p>
      </main>}
   </s-section>
  </s-page>;
