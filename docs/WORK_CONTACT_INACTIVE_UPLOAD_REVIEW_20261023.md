@@ -280,3 +280,70 @@ Provider references:
 - https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
 - https://developers.cloudflare.com/workers/configuration/cloudflare-access/
 - https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/
+
+## Owner authorization received: disable WORK Version URLs, and NOTHING else
+
+The owner explicitly approved the prior narrowly scoped proposal:
+disable Version URLs for **only** `jill-order-desk-canary-work` and
+`jill-work-custom-orders-qa`, while preserving both ordinary
+`workers.dev` routes. This authorization does **NOT** approve a
+Worker version upload, deployment, traffic switch, contact feature
+activation, Cloudflare Access setup, paid product, D1 write, or LIVE/KEEP.
+
+Provider's documented setting endpoint:
+`POST /accounts/{account_id}/workers/scripts/{script_name}/subdomain`
+with **both** booleans `{"enabled":true,"previews_enabled":false}`.
+The POST requires Workers Scripts Write/Editor/Admin permission on
+the authenticated account. A separate `GET` to the same path
+confirms the persisted values. No endpoint requiring a full Worker
+upload should be used for this setting-only operation.
+
+Added `scripts/disable-work-version-urls-owner-approved.mjs`,
+invoked only as
+`node scripts/disable-work-version-urls-owner-approved.mjs
+--owner-approved-disable-work-version-urls-only` from the
+owner-authenticated WORK source checkout. It has no default write mode.
+
+Release guardrails:
+
+- Reuses known-good Wrangler account/token authentication in-process
+  and the exact `WORK` HQ/gateway names.
+- Requires current 100%-traffic HQ and gateway versions, WORK-only
+  DB/OAuth, original merchant/catalog flags, limiter and named secrets
+  to match the prior owner-attested baseline. No token, secret or
+  private/customer payload is logged.
+- Reads both script subdomain settings before changing either. Both
+  `workers.dev` routes must already be enabled; an unexpected
+  setting or changed active version stops the run.
+- Executes at most **one POST per WORK script**, in explicit HQ then
+  gateway order, with `enabled:true` and
+  `previews_enabled:false`. If already disabled, a Worker's POST
+  is skipped, making a safe retry possible after partial completion.
+- After each POST, independently re-GETs BOTH subdomain settings to
+  ensure only the intended Version URL flag changed.
+- Before the next POST and at completion, rechecks all active
+  versions/deployments and original binding names/flags.
+- On a failure, never auto-re-enables Version URLs. Stop, run the
+  standalone read-only `inspect-work-contact-preview-exposure-readonly.mjs
+  --owner-readonly`, and review partial success before retrying.
+- A successful response must contain `preview_url_exposure_gate_cleared:true`,
+  `hq_workers_dev_enabled:true`,
+  `gateway_workers_dev_enabled:true`,
+  `hq_version_urls_enabled:false`,
+  `gateway_version_urls_enabled:false`,
+  `active_worker_versions_unchanged:true` and
+  `worker_uploaded:false`. Status remains `HOLD`: no upload approval.
+- Any future authorized Worker upload/deployment must explicitly
+  retain `preview_urls:false`; the current HQ source-only
+  `wrangler.canary.jsonc` remains unsafe for direct deploy because
+  its OAuth setting differs from active. The separate, unshipped
+  gateway Contact candidate and HQ preview-lockdown proposal already
+  use `preview_urls:false`.
+
+This source + tests do NOT themselves alter Cloudflare. **Do not mark
+the Version URL gate cleared until the owner actually runs the
+narrow setting-only operation and reports two verified false values.**
+
+References:
+https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/subdomain/
+https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
