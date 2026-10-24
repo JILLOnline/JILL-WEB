@@ -17,7 +17,7 @@ type PublicMessage={sequence:number;author:string;message:string;created_at:stri
 type Data={ok:boolean;code:string;detail?:Detail;can_change_status?:boolean;
  can_post_message?:boolean;messages?:PublicMessage[]};
 type UpdateData={ok:boolean;code:string;revision?:number;status?:string;
- ticket_id?:string;sequence?:number;kind?:string};
+ ticket_id?:string;operation_id?:string;sequence?:number;kind?:string};
 type StatusOp={ticket_id:string;operation_id:string;expected_revision:number;
  expected_status:string;next_status:string};
 
@@ -77,6 +77,7 @@ export default function ContactTicketDetail(){
   const op=messageOp.current,ack=messageFetcher.data;
   if(!ticket||!op||messageFetcher.state!=="idle"||!ack||
      ack.ok!==true||ack.ticket_id!==ticket.ticket_id||
+     ack.operation_id!==op.operation_id||
      !["persisted_for_customer_account","already_persisted"].includes(ack.code)||
      typeof ack.sequence!=="number"||
      !Number.isSafeInteger(ack.sequence)||ack.sequence<1||
@@ -101,7 +102,9 @@ export default function ContactTicketDetail(){
    command:{operation_id:pendingReceipt.operation_id,
     message:pendingReceipt.message},
    ack:{ok:true,kind:"contact",code:pendingReceipt.code,
-    ticket_id:pendingReceipt.ticketId,sequence:pendingReceipt.sequence},
+    ticket_id:pendingReceipt.ticketId,
+    operation_id:pendingReceipt.operation_id,
+    sequence:pendingReceipt.sequence},
    refreshedThread:{ticket_id:ticket.ticket_id,
     messages:data.messages},
   });
