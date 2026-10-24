@@ -18,6 +18,8 @@ on:
       - 'scripts/test-work-contact-message-readback-policy.mjs'
       - 'scripts/test-work-contact-customer-reply-sqlite.mjs'
       - 'backend/work-contact-customer-reply.mjs'
+      - 'backend/work-contact-conversation-v2.mjs'
+      - 'shared/customer-contact-conversation-v2.mjs'
       - 'services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql'
       - 'services/jill-order-desk/work-contact-private-bridge.mjs'
       - 'services/custom-order-cloudflare/handler.mjs'
