@@ -40,6 +40,7 @@ export default function AccountHub({accountState = null}) {
   // Contact list re-authorizes it whenever the screen is mounted.
   const [contactDrafts,setContactDrafts]=useState({});
   const [messageRequestTarget,setMessageRequestTarget]=useState(null);
+  const [customOrderTarget,setCustomOrderTarget]=useState(null);
 
   useEffect(() => {
     if (typeof navigation === 'undefined' || !navigation.addEventListener) return;
@@ -52,6 +53,8 @@ export default function AccountHub({accountState = null}) {
     const id = canonicalRoute(nextRoute);
     // Selection hint only; Messages independently verifies account ownership.
     setMessageRequestTarget(id==='messages'&&typeof submissionId==='string'
+      ?submissionId:null);
+    setCustomOrderTarget(id==='custom-orders'&&typeof submissionId==='string'
       ?submissionId:null);
     setRoute(id);
     if (typeof navigation !== 'undefined' && navigation.navigate) {
@@ -69,6 +72,7 @@ export default function AccountHub({accountState = null}) {
     rewards: <Rewards accountState={accountState} onNavigate={onNavigate} />,
     coupons: <Coupons onNavigate={onNavigate} />,
     'custom-orders': <CustomOrders onNavigate={onNavigate}
+      requestedSubmissionId={customOrderTarget}
       drafts={conversationDrafts} onDraftsChange={setConversationDrafts} />,
     'contact-requests': <ContactRequests enabled={false} onNavigate={onNavigate}
       drafts={contactDrafts} onDraftsChange={setContactDrafts} />,
