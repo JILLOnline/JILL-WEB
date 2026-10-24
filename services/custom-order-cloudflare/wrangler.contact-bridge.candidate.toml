@@ -23,3 +23,10 @@ new_sqlite_classes = ["CustomOrderRateLimiter"]
 binding = "JILL_WORK_HQ_CONTACT_PRIVATE"
 service = "jill-order-desk-canary-work"
 entrypoint = "JillContactPrivate"
+
+# Preserve every credential required by the ACTIVE WORK gateway. This
+# declares names only. It must never contain secret values.
+# A later approved upload must independently verify those names are
+# inherited on its newly created, still-INACTIVE version.
+[secrets]
+required = ["SHOPIFY_WORK_APP_SECRET", "JILL_CUSTOM_ORDER_GATEWAY_SECRET", "JILL_CUSTOM_ORDER_QA_BACKEND_URL"]
