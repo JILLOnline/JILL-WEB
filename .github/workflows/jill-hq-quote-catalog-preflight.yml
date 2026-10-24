@@ -74,6 +74,8 @@ on:
       - 'scripts/test-work-contact-combined-evidence-readonly.mjs'
       - 'scripts/inspect-work-hq-uploaded-inactive-readonly.mjs'
       - 'scripts/test-work-hq-uploaded-inactive-readonly.mjs'
+      - 'scripts/prepare-work-hq-version-metadata-repair-local-only.mjs'
+      - 'scripts/test-work-hq-version-metadata-repair-local-only.mjs'
       - 'scripts/prepare-work-contact-preview-lockdown-synthetic.mjs'
       - 'backend/work-contact-account-read.mjs'
       - 'scripts/test-work-contact-account-read.mjs'
@@ -142,6 +144,7 @@ jobs:
           node scripts/test-work-contact-inactive-upload-offline.mjs
           node scripts/test-work-contact-combined-evidence-readonly.mjs
           node scripts/test-work-hq-uploaded-inactive-readonly.mjs
+          node scripts/test-work-hq-version-metadata-repair-local-only.mjs
           node scripts/inspect-work-hq-uploaded-inactive-readonly.mjs
           node scripts/review-work-contact-combined-evidence-readonly.mjs
           node scripts/review-work-contact-inactive-upload-offline.mjs
@@ -254,6 +257,8 @@ jobs:
           node --check scripts/test-work-contact-combined-evidence-readonly.mjs
           node --check scripts/inspect-work-hq-uploaded-inactive-readonly.mjs
           node --check scripts/test-work-hq-uploaded-inactive-readonly.mjs
+          node --check scripts/prepare-work-hq-version-metadata-repair-local-only.mjs
+          node --check scripts/test-work-hq-version-metadata-repair-local-only.mjs
           node --check scripts/prepare-work-contact-preview-lockdown-synthetic.mjs
           node --check backend/work-contact-account-read.mjs
           node --check scripts/test-work-contact-account-read.mjs
