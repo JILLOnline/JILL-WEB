@@ -128,6 +128,7 @@ export async function persistWorkContactMerchantMessage({
      !Number.isSafeInteger(exact?.sequence))
    return reply(409,'message_not_confirmed');
   return reply(200,saved.meta.changes===1?'persisted_for_customer_account':
-    'already_persisted',{ticket_id:data.ticket_id,sequence:exact.sequence});
+    'already_persisted',{ticket_id:data.ticket_id,
+    operation_id:data.operation_id,sequence:exact.sequence});
  }catch{return reply(503,'source_unavailable');}
 }
