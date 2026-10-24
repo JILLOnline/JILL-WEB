@@ -9,6 +9,8 @@ import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-cl
 import {readWorkCustomerContactThread} from '../../backend/work-contact-thread-read.mjs';
 import {persistWorkCustomerContactReply}
  from '../../backend/work-contact-customer-reply.mjs';
+import {readWorkContactConversationV2}
+ from '../../backend/work-contact-conversation-v2.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -208,6 +210,12 @@ export async function handleCloudflareCustomOrderWork(request,env) {
   if(pathname==='/jill-contact-reply'){
     if(env?.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED!=='true')
       return persistWorkCustomerContactReply({request,enabled:false});
+    return forwardContactToPrivateHq(request,env);
+  }
+  if(pathname==='/jill-contact-conversation-v2'){
+    if(env?.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED!=='true'||
+       env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
+      return readWorkContactConversationV2({request,enabled:false});
     return forwardContactToPrivateHq(request,env);
   }
   // A separate signed Shopify Customer Account JWT is the ONLY owner
