@@ -15,7 +15,8 @@ type Detail={ticket_id:string;name:string;email:string;phone:string;
  revision:number;details:Record<string,string>};
 type PublicMessage={sequence:number;author:string;message:string;created_at:string};
 type Data={ok:boolean;code:string;detail?:Detail;can_change_status?:boolean;
- can_post_message?:boolean;messages?:PublicMessage[]};
+ can_post_message?:boolean;messages?:PublicMessage[];
+ customerReplies?:PublicMessage[]};
 type UpdateData={ok:boolean;code:string;revision?:number;status?:string;
  ticket_id?:string;operation_id?:string;sequence?:number;kind?:string};
 type StatusOp={ticket_id:string;operation_id:string;expected_revision:number;
@@ -28,6 +29,7 @@ export async function loader({request,params,context}:LoaderFunctionArgs){
   enabled:env.JILL_WORK_CONTACT_INBOX_ENABLED==="true",
   statusControlsEnabled:env.JILL_WORK_CONTACT_STATUS_ENABLED==="true",
   messageControlsEnabled:env.JILL_WORK_CONTACT_MESSAGES_ENABLED==="true",
+  customerRepliesEnabled:env.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED==="true",
   db:env.JILL_ORDER_DESK_WORK_DB,
   authenticate:{admin:()=>authenticateWorkAdminOnce({
    scope:context.cloudflare,
@@ -187,13 +189,19 @@ export default function ContactTicketDetail(){
         this ticket is securely linked to a Shopify customer account
         and the WORK messaging feature is approved.</p>}
        {data.can_post_message===true&&<>
-        {(data.messages||[]).length===0?<p>No verified customer-visible
-         messages have been recorded.</p>:<ol>
-         {(data.messages||[]).map(item=><li key={item.sequence}>
-          <strong>JILL</strong> — {item.message}
-          <small> {new Date(item.created_at).toLocaleString()}</small>
-         </li>)}
-        </ol>}
+        {(data.messages||[]).length===0&&
+          (data.customerReplies||[]).length===0?
+          <p>No verified customer-visible messages have been recorded.</p>:
+          <ol>
+           {[...(data.messages||[]),...(data.customerReplies||[])].sort(
+             (a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at)||
+              a.author.localeCompare(b.author)||a.sequence-b.sequence
+           ).map(item=><li key={item.author+":"+item.sequence}>
+            <strong>{item.author==="customer"?"Customer":"JILL"}</strong>
+            {" — "}{item.message}
+            <small> {new Date(item.created_at).toLocaleString()}</small>
+           </li>)}
+          </ol>}
         <label htmlFor="work-contact-public-message">Message for customer</label>
         <textarea id="work-contact-public-message" value={messageDraft}
           maxLength={1000} rows={4} disabled={messageFetcher.state!=="idle"||
