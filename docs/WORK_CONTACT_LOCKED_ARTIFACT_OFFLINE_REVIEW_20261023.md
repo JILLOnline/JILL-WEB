@@ -351,3 +351,76 @@ allocations, exposed Version URLs, absent secrets, and metadata drift.
 
 **Status now: UPLOADED + VERIFIED INACTIVE. VISUAL PROMOTION AWAITS
 EXPLICIT OWNER AUTHORIZATION.**
+
+## Owner-proven visual WORK HQ activation — October 24, 2026
+
+**This supersedes the preceding inactive/approval-only checkpoint.**
+The owner separately approved **one WORK HQ-only traffic activation**
+by entering `ACTIVATE_WORK_HQ_VISUAL_100`, after successful owner-local
+fingerprint review, authenticated active WORK+gateway preview/traffic
+checks, and exact corrected inactive-version security postflight.
+Wrangler 4.152.0 first showed a `--dry-run` selecting the corrected
+version at 100%, then performed the real command successfully:
+
+- Worker: `jill-order-desk-canary-work` (WORK only)
+- Worker version **deployed at 100%**:
+  `d1f4e07f-8c9b-4b40-97a4-0c13d2c5149a`
+- New deployment ID:
+  `5d996637-73b4-427e-92a0-a36a12581172`
+- Source branch used in owner QA checkout:
+  `jill/hq-quote-catalog-preflight-20261022`, pinned
+  commit `1ce6af4b639f93a6bb749ce4d0ca4c9f04114216`
+  (NOTE: this pin is the _readback tooling_ commit; the
+  compiled uploaded worker bundle fingerprint below was separately
+  and independently verified)
+- Candidate bundle owner-pin SHA-256:
+  `3625479c615109b980153d40e009f147523e8fe95b53d7403c92afe9abebe9db`
+- Candidate manifest SHA-256:
+  `ccec9a3f0d84ba5b3e07e9170450146c12238995b13b990b51747d2f3ff929cc`
+- Previous HQ Worker for rollback:
+  `44ad4a81-55ad-4f49-9965-61260cc2294d`
+- Gateway **unchanged**:
+  `9322193f-5e87-4479-88c9-39229dddb5f2`
+
+The owner's separate read-only post-activation script
+`scripts/inspect-work-hq-visual-activation-readonly.mjs` returned
+`status:HOLD_OWNER_VISUAL_ACCEPTANCE` with:
+`new_hq_version_at_100_percent:true`,
+`all_14_hq_bindings_restored:true`,
+`uploaded_binding_scope_matches_active:true`,
+`work_d1_identity_preserved:true`,
+`original_plaintext_flags_preserved:true`,
+`required_secret_names_preserved:true`,
+`gateway_unchanged:true`,
+`version_urls_off_for_both_work_workers:true`, and
+`local_50_file_fingerprint_verified:true`.
+
+**Important unverified items:** actual Shopify Owner Admin session/OAuth
+credential functionality, source-to-deployed provenance stronger than
+local artifact owner pin, private route execution, actual customer
+data ownership, and UI visual acceptance. The absence of these checks
+does not reverse the verified *traffic activation*; it means the UX
+and authentication acceptance gate is still outstanding.
+
+### Immediate Owner smoke test — no further PowerShell needed
+
+Open the existing WORK JILL HQ app **from Shopify Admin > Apps**.
+Test login/embedded Admin session first; then inspect:
+Home, Requests/Queue, single-line rows and expandable request details,
+Owner request status and message controls, Messages, Catalog,
+Contact Us and Settings. Only validate genuinely enabled operations,
+do not send customer-facing tests or quotes without separate consent.
+The WORK Contact feature pipeline, Conversations and Quote Drafts
+remain OFF in uploaded plaintext vars; a navigation item alone does
+not prove runtime integration. My JILL draft PR #156 is source-only
+and **not included in this Cloudflare HQ release**.
+
+If OAuth login or navigation is broken, stop merchant actions; record
+screen/error (redacting customer PII). Prepare rollback using the
+previous HQ Worker version, but do not blindly redeploy on ambiguous
+traffic state. Read actual current deployment and request separate
+owner approval for any rollback write if necessary.
+
+**Current decision: WORK HQ DEPLOYED 100%; AWAITING OWNER VISUAL
+ACCEPTANCE. Gateway, LIVE/KEEP, customer-facing feature flags
+and paid infrastructure were not targets of the activation.**
