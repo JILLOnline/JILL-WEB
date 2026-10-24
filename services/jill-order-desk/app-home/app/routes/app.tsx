@@ -5,6 +5,8 @@ import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {JILL_WORK_MERCHANT_CLIENT_ID} from "../../../../../backend/jill-merchant-auth.mjs";
 import "../styles/hq-theme.css";
+// Source-only, WORK-scoped visual layer; no behavior or security changes.
+import "../styles/hq-visual-polish.css";
 export async function loader({request,context}:LoaderFunctionArgs) {
   await authenticateWorkAdminOnce({
     scope:context.cloudflare,
