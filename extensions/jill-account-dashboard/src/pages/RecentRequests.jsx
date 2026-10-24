@@ -77,7 +77,9 @@ export default function RecentRequests({onNavigate}){
      </s-text>
      <s-stack direction="inline" gap="small-200">
       <s-button variant="secondary"
-       onClick={()=>onNavigate('custom-orders')}>Track details</s-button>
+       onClick={()=>onNavigate('custom-orders',{
+        submissionId:item.submission_id,
+       })}>Track details</s-button>
       <s-button variant="secondary"
        onClick={()=>onNavigate('messages',{
         submissionId:item.submission_id,
