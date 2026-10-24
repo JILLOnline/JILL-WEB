@@ -68,17 +68,42 @@ export function projectVerifiedWorkContactDetail({row,ticketId}={}){
   can_invoice:false,can_create_order:false,
  });
 }
+// Owner-only, public-message subset from signed Customer A's immutable
+// reply ledger. Never reveal Customer GID, JWT, operation or payload hash.
+export function projectVerifiedOwnerContactReplies({
+ rows,claimedCustomerGid,
+}={}){
+ if(!GID.test(claimedCustomerGid||'')||
+    !Array.isArray(rows)||rows.length>50)
+  fail();
+ let sequence=0,lastTime=0;
+ return Object.freeze(rows.map(r=>{
+  if(!obj(r)||r.reply_sequence!==sequence+1||
+   r.actor_customer_gid!==claimedCustomerGid||
+   typeof r.body_text!=='string'||r.body_text.length<1||
+   r.body_text.length>500||r.body_text!==r.body_text.trim()||
+   /[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/.test(r.body_text)||
+   !Number.isSafeInteger(r.created_at_ms)||
+   r.created_at_ms<1600000000000||
+   r.created_at_ms<lastTime)fail();
+  sequence=r.reply_sequence;lastTime=r.created_at_ms;
+  return Object.freeze({sequence,author:'customer',message:r.body_text,
+   created_at:new Date(r.created_at_ms).toISOString()});
+ }));
+}
+
 /** @param {{
  * request?:Request,ticketId?:string,enabled?:boolean,
  * authenticate?:{admin:(request:Request)=>Promise<any>},
  * db?:any,authorize?:typeof readWorkMerchantPermission,
- * statusControlsEnabled?:boolean,messageControlsEnabled?:boolean
+ * statusControlsEnabled?:boolean,messageControlsEnabled?:boolean,
+ * customerRepliesEnabled?:boolean
  * }} [options]
  */
 export async function readWorkContactTicketDetail({
  request,ticketId,enabled=false,authenticate,db,
  statusControlsEnabled=false,messageControlsEnabled=false,
- authorize=readWorkMerchantPermission,
+ customerRepliesEnabled=false,authorize=readWorkMerchantPermission,
 }={}){
  if(enabled!==true)return result(503,'not_connected');
  if(request?.method!=='GET')return result(405,'method_not_allowed');
@@ -116,7 +141,19 @@ export async function readWorkContactTicketDetail({
     customerGid:row.owner_customer_gid,
    }).messages;
   }
-  return result(200,'ready',{detail,messages,
+  let customerReplies=[];
+  if(messageControlsEnabled===true&&customerRepliesEnabled===true&&
+     GID.test(row.owner_customer_gid||'')){
+   const replies=await db.prepare(
+    'SELECT reply_sequence,actor_customer_gid,body_text,created_at_ms '+
+    'FROM jill_work_contact_customer_replies WHERE shop=? AND ticket_id=? '+
+    'ORDER BY reply_sequence ASC LIMIT 51'
+   ).bind(SHOP,ticketId).all();
+   customerReplies=projectVerifiedOwnerContactReplies({
+    rows:replies?.results,claimedCustomerGid:row.owner_customer_gid,
+   });
+  }
+  return result(200,'ready',{detail,messages,customerReplies,
    can_change_status:statusControlsEnabled===true,
    can_post_message:messageControlsEnabled===true&&
       GID.test(row.owner_customer_gid||'')});
