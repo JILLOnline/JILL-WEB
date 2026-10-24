@@ -97,6 +97,8 @@ assert.match(contact,/retainOwnedContactDrafts\(previous,result\.tickets\)/);
 assert.match(contact,/onDraftsChange\(\{\}\)/);
 assert.match(contact,/updateOwnedContactDraft\(previous,ticket\.ticket_id,change,meta\)/);
 assert.match(contact,/Object\.hasOwn\(drafts,ticket\.ticket_id\)/);
+assert.match(contact,/Reply needs verification/);
+assert.match(contact,/Unsent reply in this session/);
 assert.match(thread,/draft=\{draft\} onDraftChange=\{onDraftChange\}/);
 assert.match(v2,/const activePending=draft\.operation\?\.ticketId===ticketId/);
 assert.match(v2,/onDraftChange\(\{text:'',operation:null,state:'confirmed',busy:false\}/);
