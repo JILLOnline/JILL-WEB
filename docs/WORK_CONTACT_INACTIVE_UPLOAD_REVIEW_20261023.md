@@ -1,0 +1,137 @@
+# JILL WORK Contact Us — inactive-version upload review (HOLD)
+
+**Scope:** WORK HQ canary `jill-order-desk-canary-work` and WORK
+Custom Orders gateway `jill-work-custom-orders-qa`. No other Workers,
+Shopify store, source branch, databases, domains or paid services.
+**This document is NOT approval to upload, deploy, promote, enable flags,
+send real customer messages or perform any destructive rollback.**
+
+## Owner-verified, unchanged pre-upload evidence (Oct 23, 2026)
+
+From the user's local, authenticated read-only attestation:
+- Source checkout `7c3e95a323adfa078f343ffcd0d7c138fd494837`
+  (later source-only documentation/test commits do NOT make a new build).
+- Existing active HQ version:
+  `44ad4a81-55ad-4f49-9965-61260cc2294d`.
+- Existing active gateway version:
+  `9322193f-5e87-4479-88c9-39229dddb5f2`.
+- Original Owner-generated local HQ candidate, pre-upload:
+  - combined local build fingerprint SHA-256:
+    `ed1379e8723a10fe3a73cb662249c7e327b534187b25c929286ca7a3ebdd490f`
+  - local manifest SHA-256:
+    `c0ae54ac0b29aedf12b9090b6575d04e913ce80329005333bc1439a7bed4fe07`
+  - 50 bundled files; private `JillContactPrivate` entrypoint present
+  - five existing HQ business flags reconciled to **actual active** values:
+    `CATALOG=true`, `CONVERSATION=false`, `HQ_DETAIL=true`,
+    `HQ_QUOTE_DRAFTS=false`, `MERCHANT_WRITES=true`
+  - `JILL_WORK_OAUTH_ENABLED=true`,
+    `JILL_WORK_OWNER_BOOTSTRAP_ENABLED=false`, canary host
+  - four existing HQ required secret binding **names** accounted for,
+    no secret VALUE read; gateway's three existing secret names matched.
+- `wrangler 4.152.0 deploy --dry-run` completed successfully and
+  explicitly exited before upload. Zero D1 writes, zero traffic changed.
+- Independent `attest-work-contact-local-artifact-readonly.mjs
+  --owner-readonly` returned
+  `local_manifest_matches_active_reconciled_candidate:true`,
+  `private_worker_entry_found:true`,
+  `published_source_provenance_verified:false`,
+  `uploaded_worker_secret_continuity_verified:false`,
+  `release_authorized:false`.
+
+**Evidence is bound to exact local bytes and observed version IDs.**
+After any new build, changed manifest or changed active Cloudflare
+deployment, recompute and review — do not substitute a hash from
+another checkout or assume those fingerprints still apply.
+
+## Provider behavior to account for
+
+Cloudflare's documentation separates **version uploads** from
+**deployments**: `wrangler deploy` normally uploads and immediately
+deploys 100%; `wrangler versions upload` creates a version without
+switching normal traffic, while `wrangler versions deploy` is a
+separate traffic-changing action. Worker versions contain bindings and
+assets but NOT snapshots of D1 or other connected storage.
+
+**CRITICAL:** If Workers Version URLs are enabled, uploading a version
+may create a **publicly accessible Version URL even when the version
+receives 0% of normal traffic**. Version URLs use the uploaded
+version's existing bindings/resources. Confirm the WORK worker's
+Version URL setting and/or access protection *before* approving any
+upload, and never send customer credentials to an unprotected preview.
+A Cloudflare Worker service binding ordinarily targets the deployed
+callee; an unpromoted HQ named entrypoint cannot be assumed reachable
+from the gateway's normal active version for full acceptance.
+
+Cloudflare's `secrets.required` configuration can make a version
+upload fail if required secret names are absent; that is a **name
+contract**, not a test that credentials still work. Cloudflare's
+documented preservation semantics do not replace post-upload
+binding readback or protected login testing.
+
+Official documentation:
+- https://developers.cloudflare.com/workers/versions-and-deployments/
+- https://developers.cloudflare.com/workers/versions-and-deployments/deployment-management/
+- https://developers.cloudflare.com/workers/versions-and-deployments/version-urls/
+- https://developers.cloudflare.com/workers/configuration/secrets/
+
+## Independent pre-upload acceptance gates
+
+1. **Explicit new owner authorization.** The previously approved
+   `0004` D1 migration and read-only inspections did NOT authorize
+   uploading either Worker. Do not assume consent from a generic
+   "continue" instruction. Approval must name **WORK-only**, the
+   intended Worker(s), and **inactive version upload only**.
+2. **No new provider charges.** Reconfirm Workers Free, D1 Free,
+   Durable Object/free-allowance constraints and expected resource
+   usage. Never select a paid upgrade or plan without approval.
+3. **Artifact scope:** local-only candidate matches the exact recorded
+   fingerprint, correct target Worker, compiled named RPC, OAuth ON,
+   five original business vars, zero Contact flags ON, correct WORK
+   D1, and the four existing required HQ secret **names**.
+   Gateway candidate preserves the three gateway secret names,
+   existing limiter, the external QA backend binding, and has
+   **no private D1 binding**.
+4. **Current metadata:** recapture both 100%-traffic version IDs,
+   deployment IDs, resource-binding name/type inventory, and
+   unchanged active allocations. STOP on any drift. Keep credentials
+   and customer data out of logs.
+5. **Preview access:** explicitly check whether Version URLs are
+   enabled/public. With any protected-preview requirement unresolved,
+   HOLD; do not upload. Confirm any preview would still fail closed
+   for unauthenticated requests.
+6. **Readiness certificate:** a reviewed, non-secret review record
+   must pin exact source and artifact hashes, expected Cloudflare
+   command semantics, target names, rollback IDs, post-upload
+   verification steps, and Owner approval. A CI pass alone is not
+   such a certificate.
+
+## Conditional steps only AFTER separate approval
+
+- Prefer an upload-only Cloudflare operation (provider-documented
+  `wrangler versions upload`, NOT plain `wrangler deploy`),
+  with a reviewed local manifest and exact target.
+- **Immediately verify** that the normal active deployment/traffic
+  allocations and pinned versions are unchanged; STOP if they moved.
+- Collect the new uploaded version ID, deployed/not-deployed state,
+  name/type of all bindings, explicit secret-name contract and
+  effective Contact flags OFF. Record the new version separately from
+  the old 100%-traffic version. Do not claim to have proven secret
+  values from metadata alone.
+- Validate public Version URL access/authorization. Treat any
+  unexpected public response or privileged-route exposure as a
+  blocker requiring containment and separate approval.
+- Do NOT automatically deploy the newly uploaded version, change
+  routing percentages, enable HQ/Gateway/Storefront/My JILL flags,
+  change Shopify installation, send customer notifications, alter D1,
+  or perform Cloudflare Time Travel restoration.
+- The paired Gateway/HQ link cannot be declared operational merely
+  because each Worker has an uploaded but **un-deployed** candidate.
+  Plan a separate OWNER-reviewed, reversible canary promotion and
+  real Owner, Customer A/B/guest and Shopify app-proxy acceptance
+  with the native form left intact.
+
+## Decision
+
+**HOLD** — Local source and artifact verified. Inactive upload,
+preview security, runtime credential continuity and customer experience
+have not been approved or proven. LIVE and KEEP untouched.
