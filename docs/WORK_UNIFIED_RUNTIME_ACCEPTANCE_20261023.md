@@ -479,3 +479,60 @@ requires separate explicit WORK-only approval and a reviewed plan to
 verify ALL active bindings, version provenance, secret inheritance,
 Shopify login and native form behavior. Do not merge/release merely
 because source tests are green.
+
+## Owner-verified WORK reconciliation and private local preview (October 23, 2026)
+
+The owner successfully reran the authenticated
+`node scripts/inspect-work-contact-paired-baseline-readonly.mjs
+--owner-readonly` from the isolated temporary HQ QA checkout at
+source commit `315134b24079d38e6e737f4960d63b8887cdcb00`.
+The inspector confirmed the same stable, currently deployed 100%-traffic
+version IDs:
+
+- HQ `44ad4a81-55ad-4f49-9965-61260cc2294d`
+- gateway `9322193f-5e87-4479-88c9-39229dddb5f2`
+
+The original HQ source candidate **still fails**
+`candidate_plaintext_parity:false` due to the five named existing
+merchant/catalog/conversation/quote/request-write variables.
+The independently verified **in-memory** HQ reconciliation returned
+`candidate_plaintext_parity_after_reconcile:true` and all five
+variable **names** preserved, without exposing or assuming their
+actual values. It also listed the existing four HQ secret binding
+names: `JILL_HQ_MERCHANT_READ_SECRET`,
+`JILL_HQ_MERCHANT_WRITE_SECRET`,
+`JILL_WORK_SESSION_KEY_B64`, and `SHOPIFY_API_SECRET`.
+The gateway returned `gateway_secret_name_contract_matches_active:true`
+covering its three existing Shopify/Custom Order/backend URL secrets.
+The public gateway still has **no private HQ D1 binding**. No
+version was uploaded, traffic changed or secret value read.
+
+New guarded source utility
+`scripts/prepare-work-contact-owner-local-candidate.mjs` offers a
+**separately invoked** `--owner-local-only` mode. It requires a
+fresh, compiled, canary-target WORK HQ build at
+`services/jill-order-desk/app-home/dist/server/wrangler.json`.
+It performs only pinned deployment and version **metadata reads**
+for both WORK Workers, and creates a new, local-only, gitignored,
+owner-session-derived HQ candidate
+`dist/server/wrangler.contact-owner-local-only.json`.
+The file preserves OAuth ON, actual active boolean states of those
+five original controls, WORK D1 and exact required secret **names**.
+It contains **no secret values**. The file is created once with
+exclusive-create and private file permissions where supported;
+a repeated run refuses overwrite. It can later be compiled with a
+separate Wrangler `deploy --dry-run`, which is **not** an upload.
+
+Unit tests use mock Cloudflare metadata and deny a changed active
+Worker, a new/unrecognized variable, an absent gateway secret name,
+a Contact flag set to true, embedded plaintext secrets, wrong D1,
+or an existing output file. CI runs these tests with no Cloudflare
+credentials. **The real owner-local candidate has not yet been
+generated**, and no real candidate has been staged in Cloudflare.
+
+Release **HOLD** remains in effect. Further steps require checking
+exact active Worker source provenance and authenticated Shopify
+customer A/B/guest experience, and a separately approved WORK-only
+inactive upload with full existing secret/binding continuity
+verification. LIVE/KEEP and all customer-facing switches remain
+untouched.
