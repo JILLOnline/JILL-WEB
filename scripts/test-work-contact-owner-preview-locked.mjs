@@ -133,6 +133,17 @@ await assert.rejects(()=>preparePreviewLockedCandidate({
  }},gatewayCandidate,readMetadata,
  readSubdomains:async()=>off(),
 }),/work_contact_artifact_attestation_candidate_not_equal_to_active/);
+let previewReads=0;
+await assert.rejects(()=>preparePreviewLockedCandidate({
+ compiled,original:orig,gatewayCandidate,readMetadata,
+ readSubdomains:async()=>{
+  previewReads++;
+  return previewReads===1?off():{
+   ...off(),hq:{enabled:true,previews_enabled:true},
+  };
+ },
+}),/work_contact_preview_locked_local_preview_settings_changed_during_attestation/);
+assert.equal(previewReads,2);
 let remoteReads=0;
 await assert.rejects(()=>preparePreviewLockedCandidate({
  compiled,original:orig,gatewayCandidate,
