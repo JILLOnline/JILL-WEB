@@ -104,3 +104,48 @@ dev preview, account A/B/guest switching, and review at 375–390 px,
 768 px and 1280–1440 px with synthetic customer accounts. Check menu
 focus/selection, long product titles, points unavailable/loading,
 message badge wrapping and the active RequestConversation actions.
+
+## Customer journey clarity — October 25 source increment
+
+The customer-facing experience now does more than list statuses:
+a presentation-only `customOrderNextStep` map explains the **next
+safe customer action** for every supported signed Custom Order status.
+
+- **Received / Reviewing:** where to check for the next confirmed
+  update; no fabricated response deadline.
+- **Awaiting approval:** review the latest conversation and tracking,
+  with an explicit note that **quote approval and payment are not
+  available on this screen**.
+- **In production:** visible creation progress without promising a
+  delivery or completion date.
+- **Ready for pickup:** check conversation and confirm collection
+  arrangements before traveling; no inferred pickup time.
+- **On hold:** review the current history and message context.
+- **Cancelled:** preserve the request record without implying a
+  refund or payment outcome.
+- **Completed:** thank the customer and keep history accessible.
+
+The same verified status guidance appears on **Home → Recent Requests**,
+**Custom Orders** and **Messages**, using the existing signed account
+readers, `customOrderStatus`, safe message selection and original
+reply composer. No new API, status writer, payment route or owner
+identification has been added.
+
+The empty and unavailable states are more approachable: customers
+see understandable copy about where their next Custom Order will
+appear, that guest submissions remain separated for privacy, and
+when replies are unavailable. Internal WORK-development wording
+was removed from customer-visible messaging. If Shopify identity
+cannot be verified, My JILL clearly explains why private request
+history is hidden until the account is refreshed.
+
+`scripts/test-myjill-customer-next-step-journey.mjs` guards all eight
+status-specific next steps, rejects fabricated approval/payment,
+delivery and refund claims, and verifies the same customer journey
+copy is sourced from protected account views. Dedicated My JILL
+source/Preact and ephemeral HQ integration CI run the test.
+
+**Release condition unchanged:** source-only drafts, no real Shopify
+authenticated browser acceptance yet, no customer extension publish,
+WORK Cloudflare/D1 write, LIVE/KEEP change or paid service. Actual
+signed-account mobile/desktop acceptance is still required.
