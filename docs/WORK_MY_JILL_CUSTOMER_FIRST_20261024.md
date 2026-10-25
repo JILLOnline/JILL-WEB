@@ -220,3 +220,32 @@ CI also includes this test.
 actual Customer A/B/guest session tests, reward redemption/expiry
 safety and a separately approved WORK-only Customer Account extension
 preview remain mandatory. Nothing enabled in LIVE, KEEP or WORK.
+
+## Mobile My JILL Messages — compact signed-in conversation picker
+
+The previous Messages screen hardcoded a two-column grid
+(`1fr / 1.6fr`) even on narrow phones, forcing both the request list
+and reply thread into cramped regions. The updated presentation uses
+a **single-column Shopify-native grid**, followed by a compact labeled
+`s-select` of all verified request conversations. The dropdown
+replaces the tall stack of up to twenty request buttons.
+
+The chosen request still passes through the **existing**
+`selectOwnedMessageRequest` policy. Forged or foreign selected IDs
+cannot open an unverified message. The customer can now select
+**Track this request** within the conversation: the existing
+Custom Orders screen only expands that exact request after a fresh
+signed account-list read confirms ownership. Message read/write
+operations, response acknowledgments, receipts, draft persistence
+and the original legacy status-only fallback are unchanged.
+
+`scripts/test-myjill-mobile-inbox.mjs` verifies signed selection,
+foreign-ID fallback, single-column layout, the verified tracking
+handoff and the unchanged canonical composer. Its dedicated My JILL
+source CI and ephemeral HQ/My JILL integration run this check.
+
+Visual/mobile acceptance in a **real Shopify WORK Customer Account
+browser** is still pending: do not claim the compiled single-column
+layout proves Shopify extension rendering. New Shopify publication,
+Contact enablement, quote writes and Rewards redemption are outside
+this source-only update. LIVE and KEEP remain untouched.
