@@ -1,8 +1,8 @@
 import RecentRequests from './RecentRequests.jsx';
 
-// Customer home is a read-only composition of independently verified sources.
-// Rewards value comes only from the Shopify Customer Account summary;
-// recent requests have their own signed Customer Account JWT read.
+// Presentation only: status and Rewards counts come exclusively from the
+// already verified signed-in Shopify account and request readers.
+// Shopify-native elements preserve mobile sizing and account accessibility.
 export default function Overview({accountState,onNavigate}){
  const summary=accountState?.status==='ready'?accountState.summary:null;
  const name=typeof summary?.displayName==='string'&&summary.displayName.trim()
@@ -14,83 +14,98 @@ export default function Overview({accountState,onNavigate}){
   points===null?'Not available':points.toLocaleString()+' points';
  return <s-stack direction="block" gap="large">
   <s-section>
-   <s-box padding="base" background="subdued" borderRadius="large">
+   <s-box padding="large" background="subdued" borderRadius="large">
     <s-stack direction="block" gap="base">
-     <s-text color="subdued">YOUR SPACE AT JILL</s-text>
+     <s-stack direction="inline" gap="small-200" alignItems="center">
+      <s-badge>MY JILL</s-badge>
+      <s-text color="subdued">Your celebration corner</s-text>
+     </s-stack>
      <s-heading>Welcome back{name} ✨</s-heading>
-     <s-text>Every celebration starts somewhere. Find your requests,
-      messages, rewards and favorite ideas together.</s-text>
+     <s-text>
+      Your ideas, custom creations and happy little details—all
+      together in one place.
+     </s-text>
      <s-stack direction="inline" gap="small-200">
       <s-button variant="primary"
-       onClick={()=>onNavigate('custom-orders')}>My Custom Orders</s-button>
+       onClick={()=>onNavigate('custom-orders')}>Track a Custom Order</s-button>
       <s-button variant="secondary"
-       onClick={()=>onNavigate('messages')}>My Messages</s-button>
+       onClick={()=>onNavigate('messages')}>Open Messages</s-button>
      </s-stack>
      <s-text color="subdued">
-      Your regular purchases and addresses stay securely managed by Shopify.
+      Regular purchases and addresses stay securely managed by Shopify.
      </s-text>
     </s-stack>
    </s-box>
   </s-section>
 
-  <s-section heading="Your JILL activity">
+  <s-section heading="Pick up where you left off">
    <RecentRequests onNavigate={onNavigate}/>
   </s-section>
 
-  <s-section heading="Your Rewards & offers">
-   <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
-    <s-box padding="base" background="base" borderRadius="large"
-     border="base base solid">
+  <s-section heading="A little extra for you">
+   <s-stack direction="block" gap="base">
+    <s-box padding="base" background="base"
+     border="base base solid" borderRadius="large">
      <s-stack direction="block" gap="small-300">
-      <s-text color="subdued">SHOPIFY ACCOUNT POINTS</s-text>
+      <s-stack direction="inline" justifyContent="space-between"
+       alignItems="center" gap="small-200">
+       <s-text color="subdued">YOUR REWARDS BALANCE</s-text>
+       <s-badge>Rewards</s-badge>
+      </s-stack>
       <s-heading>{balance}</s-heading>
       <s-text color="subdued">
-       This is the account summary, not a redemption confirmation.
-       Rewards verifies the wallet before any points are spent.
+       Your signed-in account summary. The Rewards wallet is checked
+       separately before any redemption.
       </s-text>
       <s-button variant="primary" onClick={()=>onNavigate('rewards')}>
-       Explore Rewards
+       See my Rewards
       </s-button>
      </s-stack>
     </s-box>
-    <s-box padding="base" background="base" borderRadius="large"
-     border="base base solid">
+    <s-box padding="base" background="base"
+     border="base base solid" borderRadius="large">
      <s-stack direction="block" gap="small-300">
-      <s-text color="subdued">YOUR JILL OFFERS</s-text>
-      <s-heading>Coupons & promotions</s-heading>
+      <s-text color="subdued">SOMETHING SPECIAL</s-text>
+      <s-heading>Coupons & offers</s-heading>
       <s-text color="subdued">
-       View verified personal rewards, storewide offers and upcoming
-       promotions. Availability is checked in Coupons.
+       Your personal reward wallet and available JILL promotions,
+       verified when you open Coupons.
       </s-text>
       <s-button variant="secondary" onClick={()=>onNavigate('coupons')}>
-       Open Coupons
+       Explore Coupons
       </s-button>
      </s-stack>
     </s-box>
-   </s-grid>
+   </s-stack>
   </s-section>
 
-  <s-section heading="Explore more at JILL">
-   <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
+  <s-section heading="More ways to celebrate">
+   <s-stack direction="block" gap="base">
     <s-box padding="base" background="subdued" borderRadius="large">
      <s-stack direction="block" gap="small-300">
-      <s-heading>Contact Requests</s-heading>
-      <s-badge>Not connected yet</s-badge>
+      <s-stack direction="inline" alignItems="center"
+       justifyContent="space-between" gap="small-200">
+       <s-heading>Contact Requests</s-heading>
+       <s-badge>Not connected yet</s-badge>
+      </s-stack>
       <s-text color="subdued">
-       Your website inquiries will appear only after we securely verify
-       account ownership. We never attach guest tickets by email alone.
+       Website inquiries will appear after account ownership is
+       verified. Guest tickets are never linked by email alone.
       </s-text>
       <s-button variant="secondary"
-       onClick={()=>onNavigate('contact-requests')}>View connection status</s-button>
+       onClick={()=>onNavigate('contact-requests')}>Connection status</s-button>
      </s-stack>
     </s-box>
     <s-box padding="base" background="subdued" borderRadius="large">
      <s-stack direction="block" gap="small-300">
-      <s-heading>Celebrations & favorites</s-heading>
-      <s-badge>Coming later</s-badge>
+      <s-stack direction="inline" alignItems="center"
+       justifyContent="space-between" gap="small-200">
+       <s-heading>Your celebrations & favorites</s-heading>
+       <s-badge>Coming later</s-badge>
+      </s-stack>
       <s-text color="subdued">
-       A place for your important dates, favorite themes and personal
-       touches—without saving anything until you choose to.
+       Your future place for favorite themes, special dates and
+       creative ideas—nothing is saved without your choice.
       </s-text>
       <s-stack direction="inline" gap="small-200">
        <s-button variant="secondary"
@@ -100,17 +115,18 @@ export default function Overview({accountState,onNavigate}){
       </s-stack>
      </s-stack>
     </s-box>
-   </s-grid>
+   </s-stack>
   </s-section>
 
   <s-section>
-   <s-box padding="base" background="base" border="base base solid"
-    borderRadius="large">
+   <s-box padding="base" background="base"
+    border="base base solid" borderRadius="large">
     <s-stack direction="block" gap="small-300">
-     <s-heading>Looking for a regular purchase?</s-heading>
-     <s-text color="subdued">Shopify keeps your completed purchases,
-      delivery information, profile and addresses in your secure account.
-      Custom requests are tracked separately above.</s-text>
+     <s-heading>Your everyday JILL orders</s-heading>
+     <s-text color="subdued">
+      Shopify purchases and addresses live in your secure
+      customer account. Custom requests are tracked above.
+     </s-text>
      <s-stack direction="inline" gap="base">
       <s-link href="shopify:customer-account/orders">Shopify Orders</s-link>
       <s-link href="shopify:customer-account/profile">Profile & addresses</s-link>
