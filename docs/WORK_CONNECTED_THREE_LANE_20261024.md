@@ -433,3 +433,30 @@ existing HQ quote, Contact A/B, request privacy and My JILL tests.
 Source CI success does **not** replace account/mobile visual
 acceptance, real Rewards redemption QA or Owner approval for WORK
 customer extension publishing. WORK/LIVE/KEEP stay untouched.
+
+### October 25 — Shopify principal recheck before exposing My JILL account screens
+
+The My JILL source-only WORK draft adds a separate authenticated
+`loadAccountHubScopedSummary` and fail-closed
+`reconcileMyJillAccountScope`. The Shopify Customer Account API
+`customer.id` is verified independently on initial mount, account
+navigation, and when the page returns to the foreground. A suspended
+identity check withholds account-owned screens; stale async checks
+cannot overwrite a newer result.
+
+The ephemeral My JILL hub is **keyed to the verified Shopify
+principal**. Same customer A→A can retain legitimate in-memory
+Custom Order/Contact drafts. A→B or A→guest/error destroys the prior
+hub instance and its draft/selection state. This is a secondary
+front-end privacy safeguard, never a replacement for the server's
+signed JWT/exact owner checks. No customer ID is written to the URL,
+logs, browser storage, Shopify metafields or Contact commands.
+
+The joined CI now runs
+`scripts/test-myjill-account-switch-fence.mjs` and
+`scripts/test-account-hub-summary.mjs`, plus the existing mobile
+Rewards/Custom Orders and Contact negative tests. Actual Shopify
+Customer A/B sign-out/sign-in and same-tab navigation/visibility
+behavior still require the separate *real browser* WORK acceptance
+before account extension publication. No worker uploads, D1 migrations,
+live data mutation, paid infrastructure or LIVE/KEEP change.
