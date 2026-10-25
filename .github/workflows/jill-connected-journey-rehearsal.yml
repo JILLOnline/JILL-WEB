@@ -98,6 +98,7 @@ jobs:
           JILL_HQ_SOURCE_DIR="$PWD" node scripts/test-work-cross-pr-contact-integration.mjs
           node scripts/test-work-connected-three-surface-contract.mjs
           node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-visual-polish-source.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-signed-preview-command.mjs
           node scripts/test-myjill-work-canary-module-graph.mjs
