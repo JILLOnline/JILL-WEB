@@ -27,7 +27,7 @@ export default function Overview({accountState,onNavigate}){
      </s-text>
      <s-stack direction="inline" gap="small-200">
       <s-button variant="primary"
-       onClick={()=>onNavigate('custom-orders')}>Track a Custom Order</s-button>
+       onClick={()=>onNavigate('custom-orders')}>My Custom Orders</s-button>
       <s-button variant="secondary"
        onClick={()=>onNavigate('messages')}>Open Messages</s-button>
      </s-stack>
