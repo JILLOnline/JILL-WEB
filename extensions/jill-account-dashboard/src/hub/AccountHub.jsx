@@ -87,36 +87,43 @@ export default function AccountHub({accountState = null}) {
   // Loading/unverified Shopify principal must not mount account-owned
   // screens, even if the previous hub instance is still in memory.
   const guardedScreen=accountState?.status==='ready'?screen:null;
-  const groupedRoutes=HUB_ROUTES.map(item=>({
-    ...item,group:NAV_GROUP[item.id]||'activity',
-  }));
+  const activeRoute=canonicalRoute(route);
+  const activeGroup=GROUPS.find(group=>
+    group.id===(NAV_GROUP[activeRoute]||'activity'));
+  const activeLabel=HUB_ROUTES.find(item=>
+    item.id===activeRoute)?.label||'Overview';
   return (
     <s-page heading="My JILL" subheading="Your little corner of JILL — made for every celebration">
-      <s-section heading="Explore My JILL">
-        <s-stack direction="block" gap="base">
-          <s-text color="subdued">
-            Your account, conversations and rewards—easy to find.
-          </s-text>
-          <s-box padding="base" background="subdued" borderRadius="large">
-            <s-stack direction="block" gap="base">
-              {GROUPS.map(group=>(
-                <s-stack key={group.id} direction="block" gap="small-200">
-                  <s-text color="subdued">{group.name}</s-text>
-                  <s-stack direction="inline" gap="small-200">
-                    {groupedRoutes.filter(item=>item.group===group.id)
-                      .map(item=>(
-                      <s-button key={item.id}
-                        variant={canonicalRoute(route)===item.id?'primary':'secondary'}
-                        onClick={()=>onNavigate(item.id)}>
-                        {item.label}
-                      </s-button>
-                    ))}
-                  </s-stack>
-                </s-stack>
-              ))}
+      <s-section>
+        <s-box padding="base" background="subdued" borderRadius="large">
+          <s-stack direction="block" gap="base">
+            <s-stack direction="inline" gap="small-200"
+              justifyContent="space-between" alignItems="center">
+              <s-text color="subdued">MY JILL · EXPLORE</s-text>
+              <s-badge>{activeGroup?.name||'Your activity'}</s-badge>
             </s-stack>
-          </s-box>
-        </s-stack>
+            <s-select label="Jump to a My JILL section" value={activeRoute}
+              onChange={event=>onNavigate(event.currentTarget.value)}>
+              {HUB_ROUTES.map(item=>(
+                <s-option key={item.id} value={item.id}>
+                  {item.label}
+                </s-option>
+              ))}
+            </s-select>
+            <s-stack direction="inline" gap="small-200">
+              <s-button variant={activeRoute==='overview'?'primary':'secondary'}
+                onClick={()=>onNavigate('overview')}>Home</s-button>
+              <s-button variant={activeRoute==='custom-orders'?'primary':'secondary'}
+                onClick={()=>onNavigate('custom-orders')}>Custom Orders</s-button>
+              <s-button variant={activeRoute==='messages'?'primary':'secondary'}
+                onClick={()=>onNavigate('messages')}>Messages</s-button>
+            </s-stack>
+            <s-text color="subdued">
+              Viewing {activeLabel}. Find Rewards & offers and
+              Make it yours in the section menu.
+            </s-text>
+          </s-stack>
+        </s-box>
       </s-section>
       {accountState?.status === 'loading' && (
         <s-section>
