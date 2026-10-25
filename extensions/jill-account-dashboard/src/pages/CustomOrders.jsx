@@ -5,7 +5,7 @@ import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,selectMyJillOrderIds}
  from './myjill-order-activity.mjs';
 import {retainOwnedMessageDrafts,updateOwnedMessageDraft} from '../../../../shared/customer-message-selection.mjs';
 import {
-  customOrderStatus,customOrderTitle,customOrderShortId,
+  customOrderStatus,customOrderNextStep,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
 } from './custom-order-presentation.mjs';
 
@@ -134,6 +134,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
           </s-stack>}
           {visibleOrders.map((order)=> {
             const current=customOrderStatus(order.status);
+            const nextStep=customOrderNextStep(order.status);
             const summary=order.summary;
             const firstEvent=order.timeline[0];
             return (
@@ -153,6 +154,9 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                     <s-stack direction="block" gap="small-300">
                       <s-text type="strong">{current.detail}</s-text>
                       <s-text color="subdued">Last update: {customOrderDateTime(order.updated_at)}{refreshing?' · Refreshing…':''}</s-text>
+                      <s-divider/>
+                      <s-heading>{nextStep.heading}</s-heading>
+                      <s-text>{nextStep.text}</s-text>
                     </s-stack>
                   </s-box>
 
