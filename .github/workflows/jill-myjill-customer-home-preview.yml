@@ -21,6 +21,8 @@ on:
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
       - 'scripts/test-myjill-work-preview-readiness.mjs'
+      - 'scripts/test-myjill-signed-preview-command.mjs'
+      - 'package.json'
       - 'scripts/test-myjill-account-switch-fence.mjs'
       - 'scripts/test-myjill-mobile-inbox.mjs'
       - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
@@ -54,6 +56,7 @@ jobs:
         run: |
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-signed-preview-command.mjs
           node scripts/test-myjill-account-switch-fence.mjs
           node scripts/test-myjill-mobile-inbox.mjs
           node scripts/test-account-hub-summary.mjs
