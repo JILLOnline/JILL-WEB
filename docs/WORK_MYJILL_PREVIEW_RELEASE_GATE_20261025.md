@@ -211,3 +211,48 @@ and **disabled Contact V2**. Record pass/fail without copying live
 customer PII or JWTs into GitHub. Customer reward redemption,
 extension publication, Contact flag activation and D1 migrations each
 need their own later approval.
+
+## October 25 — Isolated WORK preview dependency-graph repair
+
+A deeper review discovered a **real packaging defect**, despite the
+canonical customer extension building successfully: the isolated
+`prepare-account-hub-canary.mjs --read` copied
+`Messages.jsx` and `CustomOrders.jsx` but **omitted**
+`shared/custom-order-conversation-view.mjs` and
+`shared/customer-message-selection.mjs`, which those screens
+import through four-level relative paths.
+
+That can create a misleading result where the normal Shopify
+dashboard Preact source bundles successfully, but the isolated
+WORK-only customer-account canary cannot resolve two imports.
+It also risks blocking the first protected signed Shopify preview
+for reasons unrelated to customer authentication.
+
+The source-only fix:
+
+- Copies both missing dependencies without altering their source or
+  message selection/operation logic.
+- Introduces a shared, immutable page/shared module copy manifest,
+  used by the actual canary copier.
+- Adds `scripts/test-myjill-work-canary-module-graph.mjs` to the
+  dedicated My JILL workflow and the HQ/My JILL/visual three-lane
+  rehearsal. The test starts at the **generated `--read` Dashboard
+  entrypoint**, resolves every relative import inside the *copied*
+  virtual file tree, and rejects missing files or unreviewed external
+  imports before anyone launches Shopify CLI.
+- The first successful targeted CI run reported **35 modules reached,
+  3 supported package imports**, and a passing normal Preact bundle.
+  This is evidence of offline module closure, **not actual browser
+  rendering** or a Shopify development-session login.
+
+The canary source comments now accurately distinguish
+`--minimal`/`--hub` diagnostics from `--read`, which intentionally
+queries the Shopify Customer Account API and may expose available
+account actions if a user interacts. A signed dev preview is **not**
+a no-network or automatically side-effect-free session. Do not start
+one without explicit separate Owner authorization.
+
+No Shopify dev session, extension publication, Cloudflare operation,
+D1 migration, customer message, Rewards points modification or
+LIVE/KEEP change was caused by this source-only fix. Existing
+historical release-source and gateway certification holds remain.
