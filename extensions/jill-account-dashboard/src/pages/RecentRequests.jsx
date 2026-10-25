@@ -3,7 +3,7 @@ import {loadWorkCustomerConversationState}
  from '../../../../shared/customer-custom-orders.mjs';
 import {projectMyJillRecentRequests}
  from './myjill-recent-requests.mjs';
-import {customOrderShortId,customOrderStatus,customOrderDateTime}
+import {customOrderShortId,customOrderStatus,customOrderNextStep,customOrderDateTime}
  from './custom-order-presentation.mjs';
 
 // Uses exactly the same signed Shopify Customer Account reader as Custom
@@ -62,6 +62,7 @@ export default function RecentRequests({onNavigate}){
    </s-box>}
   {state.status==='ready'&&state.recent.map(item=>{
    const status=customOrderStatus(item.status);
+   const nextStep=customOrderNextStep(item.status);
    return <s-box key={item.submission_id}
     padding="base" borderRadius="large" background="base"
     border="base base solid">
@@ -77,7 +78,11 @@ export default function RecentRequests({onNavigate}){
       </s-text>
      </s-stack>
      <s-box padding="small-300" background="subdued" borderRadius="base">
-      <s-text>{status.detail}</s-text>
+      <s-stack direction="block" gap="small-100">
+       <s-text>{status.detail}</s-text>
+       <s-text type="strong">{nextStep.heading}</s-text>
+       <s-text color="subdued">{nextStep.text}</s-text>
+      </s-stack>
      </s-box>
      <s-stack direction="inline" gap="small-200">
       <s-button variant="primary"
