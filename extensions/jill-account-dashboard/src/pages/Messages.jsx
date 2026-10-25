@@ -7,7 +7,7 @@ import {projectVerifiedConversation}
   from '../../../../shared/custom-order-conversation-view.mjs';
 import {selectOwnedMessageRequest,retainOwnedMessageDrafts,updateOwnedMessageDraft}
   from '../../../../shared/customer-message-selection.mjs';
-import {customOrderShortId,customOrderDateTime,customOrderTitle}
+import {customOrderShortId,customOrderDateTime,customOrderTitle,customOrderNextStep}
   from './custom-order-presentation.mjs';
 import RequestConversation from './RequestConversation.jsx';
 
@@ -143,6 +143,12 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                   {customOrderShortId(order.submission_id)}
                   {' · '}Last request activity: {customOrderDateTime(order.updated_at)}
                 </s-text>
+                <s-box padding="small-300" background="subdued" borderRadius="base">
+                  <s-stack direction="block" gap="small-200">
+                    <s-text type="strong">{customOrderNextStep(order.status).heading}</s-text>
+                    <s-text color="subdued">{customOrderNextStep(order.status).text}</s-text>
+                  </s-stack>
+                </s-box>
                 <s-button variant="secondary"
                   onClick={()=>onNavigate?.('custom-orders',{
                     submissionId:order.submission_id,
