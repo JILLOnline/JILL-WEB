@@ -91,6 +91,6 @@ assert.match(main,/enabled=replyEnabled===true&&order\.timeline_version===2/);
 assert.match(ordersCode,/replyEnabled=\{state\.replyEnabled\}/);
 assert.match(messagesCode,/replyEnabled=\{state\.replyEnabled\}/);
 assert.match(messagesCode,/availableThreads>0&&!state\.replyEnabled/);
-assert.match(messagesCode,/New customer replies remain disabled until the WORK connection is enabled/);
+assert.match(messagesCode,/Replying from My JILL isn't available yet/);
 assert.match(worker,/conversationEnabled:env\.JILL_WORK_CONVERSATION_ENABLED==='true'/);
 console.log('PASS WORK reply capability: only JWT-authenticated Worker flag, defaults OFF for legacy/forged Google, v2 history not send authorization; customer array reader preserved.');
