@@ -160,6 +160,7 @@ export function prepareCanary(mode) {
         'customer-contact-thread.mjs',
         'customer-contact-conversation-v2.mjs',
         'customer-contact-draft-ledger.mjs',
+        'myjill-account-scope.mjs',
       ]) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));
