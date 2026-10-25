@@ -7,6 +7,10 @@ assert.equal(baseline.operation,'jill.myjill.work.preview.readiness.v1');
 assert.equal(baseline.source_verified,true,
  'Do not report preview readiness unless OFF flags and canary source pass');
 assert.equal(baseline.contact_replies_enabled,false);
+assert.equal(baseline.shell_preview_only,true);
+assert.equal(baseline.connected_preview_source_verified,true);
+assert.equal(baseline.connected_work_account_session_started,false);
+assert.equal(baseline.owner_approved_launch_verified,false);
 assert.equal(baseline.real_shopify_browser_render_verified,false);
 assert.equal(baseline.customer_A_B_guest_verified,false);
 assert.equal(baseline.rewards_redemption_runtime_verified,false);
@@ -28,6 +32,9 @@ const preview=inspectMyJillWorkPreview({linkedWorkConfig:work});
 assert.equal(preview.source_verified,true);
 assert.equal(preview.linked_work_app,'verified_work_app');
 assert.equal(preview.local_preview_prerequisites_met,true);
+assert.equal(preview.connected_preview_source_verified,true);
+assert.equal(preview.connected_work_account_session_started,false);
+assert.equal(preview.owner_approved_launch_verified,false);
 assert.equal(preview.real_shopify_browser_render_verified,false,
  'Correct config does not prove browser authentication/rendering');
 assert.equal(preview.legacy_account_certification_cleared,false);
@@ -54,6 +61,8 @@ for(const snapshot of [baseline,preview,foreign,live,missingScope,absent]){
  const serial=JSON.stringify(snapshot);
  assert.doesNotMatch(serial,/[a-f0-9]{32}/i,
  'Do not print client identifiers or secret values in QA reports');
+ assert.equal(snapshot.connected_work_account_session_started,false);
+ assert.equal(snapshot.owner_approved_launch_verified,false);
  assert.equal(snapshot.extension_published,false);
  assert.equal(snapshot.cloudflare_deployment_performed,false);
 }
@@ -62,4 +71,7 @@ assert.doesNotMatch(code,/fetch\(|writeFile|rmSync|execFile|spawn\(|process\.env
 assert.match(code,/--require-local-work/);
 assert.match(code,/legacy_account_certification_cleared:false/);
 assert.match(code,/real_shopify_browser_render_verified:false/);
+assert.match(code,/shell_preview_only:true/);
+assert.match(code,/connected_work_account_session_started:false/);
+assert.match(code,/--read/);
 console.log('PASS My JILL WORK preview gate: exact WORK-only linked config verified offline; wrong/LIVE held; Contact OFF; legacy gate red; no secrets, browser or deploy claims.');
