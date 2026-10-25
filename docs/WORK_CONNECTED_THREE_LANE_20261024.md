@@ -511,3 +511,30 @@ Require an explicit separate Owner authorization before *starting*
 Shopify CLI dev. Real Customer A/B/guest and phone/desktop acceptance
 remains open; do not clear the broad legacy account certification
 or publish any extension on the basis of source-only CI.
+
+### Exact signed Shopify WORK canary module-closure guard
+
+The canonical My JILL `Dashboard.jsx` bundled in CI, but the
+isolated sentinel-owned WORK-only `--read` canary previously omitted
+two imported shared modules:
+`custom-order-conversation-view.mjs` and
+`customer-message-selection.mjs`. Both are required by the
+mobile Messages / Custom Orders source. Without them, an actual
+WORK developer preview could fail to compile despite a green
+normal-source build.
+
+My JILL draft #156 now owns a manifest of copied page/shared
+modules and uses it to construct the isolated canary. New
+`scripts/test-myjill-work-canary-module-graph.mjs` traverses
+the real generated signed `--read` import tree and rejects
+every missing/extra/unreviewed relative dependency before Shopify CLI.
+In the first successful My JILL CI run, all **35 reached modules**
+and **3 reviewed package imports** resolved. The full
+HQ/My JILL/visual source merge independently passed afterward.
+
+Source tests still cannot demonstrate real browser layout,
+Customer Account JWT acceptance, Customer A/B/guest switching,
+Rewards redemption or WORK preview runtime behavior.
+No Shopify session has been opened and no release gate has been
+waived. Separate Owner permission remains required to launch
+the **connected** Shopify WORK development preview.
