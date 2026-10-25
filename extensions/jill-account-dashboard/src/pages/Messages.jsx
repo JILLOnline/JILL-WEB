@@ -54,7 +54,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
           Your verified Custom Orders and messages with JILL.
           {state.status==='ready'&&state.replyEnabled
             ?' Secure replies are available for eligible conversations.'
-            :' Replies are not yet connected to this WORK account.'}
+            :' You can review available messages here. Replies are not available yet.'}
         </s-text>
         {state.status==='loading'&&<s-stack direction="inline"
           gap="small-200" alignItems="center">
@@ -73,8 +73,8 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
         {state.status==='ready'&&inbox.length===0&&
           <s-box padding="base" background="subdued" borderRadius="large">
             <s-stack direction="block" gap="small-300">
-              <s-heading>No verified requests yet</s-heading>
-              <s-text>Account-owned Custom Orders will appear here when available.</s-text>
+              <s-heading>Nothing in your inbox yet</s-heading>
+              <s-text>When a Custom Order is linked to your account, you can find its messages here.</s-text>
               <s-text color="subdued">
                 Guest requests aren't attached to your account by email alone.
               </s-text>
@@ -90,7 +90,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
           </s-banner>}
           {availableThreads>0&&!state.replyEnabled&&<s-banner tone="info">
             Verified conversation history is available to read.
-            New customer replies remain disabled until the WORK connection is enabled.
+            You can read your conversation history here. Replying from My JILL isn't available yet.
           </s-banner>}
           <s-stack direction="inline" justifyContent="space-between"
             alignItems="center">
