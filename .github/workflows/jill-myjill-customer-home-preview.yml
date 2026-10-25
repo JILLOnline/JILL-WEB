@@ -21,6 +21,8 @@ on:
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
       - 'scripts/test-myjill-visual-polish-source.mjs'
+      - 'scripts/test-myjill-customer-next-step-journey.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs'
       - 'scripts/test-myjill-work-preview-readiness.mjs'
       - 'scripts/test-myjill-signed-preview-command.mjs'
       - 'scripts/test-myjill-work-canary-module-graph.mjs'
@@ -58,6 +60,7 @@ jobs:
         run: |
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-visual-polish-source.mjs
+          node scripts/test-myjill-customer-next-step-journey.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-signed-preview-command.mjs
           node scripts/test-myjill-work-canary-module-graph.mjs
