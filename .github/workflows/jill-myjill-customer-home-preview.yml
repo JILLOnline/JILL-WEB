@@ -20,6 +20,7 @@ on:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
+      - 'scripts/test-myjill-visual-polish-source.mjs'
       - 'scripts/test-myjill-work-preview-readiness.mjs'
       - 'scripts/test-myjill-signed-preview-command.mjs'
       - 'scripts/test-myjill-work-canary-module-graph.mjs'
@@ -56,6 +57,7 @@ jobs:
       - name: Strict source and authenticated customer-home projections
         run: |
           node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-visual-polish-source.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-signed-preview-command.mjs
           node scripts/test-myjill-work-canary-module-graph.mjs
