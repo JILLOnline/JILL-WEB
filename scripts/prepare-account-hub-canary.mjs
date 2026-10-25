@@ -5,8 +5,10 @@ import {fileURLToPath} from 'node:url';
 import {assertRewardsWorkConfig, WORK_STORE} from './verify-rewards-work-target.mjs';
 
 // Creates an IGNORED local-only Shopify WORK app project, preserving the
-// existing release UIDs but substituting official no-network canary entrypoints.
-// No Shopify deploy, backend write, customer mutation, or LIVE config access.
+// existing release UIDs. Minimal/hub entries are presentation diagnostics;
+// --read intentionally loads authenticated Shopify Customer Account data and
+// is NOT a no-network/no-side-effect runtime browser acceptance.
+// This preparer never invokes Shopify CLI, deploys, or touches LIVE config.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workdir = path.join(root, '.work-account-canary');
 const sentinel = '.jill-work-canary.json';
