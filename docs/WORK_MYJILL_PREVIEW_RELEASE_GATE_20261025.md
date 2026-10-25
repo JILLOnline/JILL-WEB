@@ -110,3 +110,42 @@ verify a real Customer A/B/guest browser session, review exact extension
 UIDs and OAuth permissions, and obtain explicit owner authorization.
 Contact V2, HQ messaging, quote writes and migrations require separate
 authorization. No paid Cloudflare resources or LIVE/KEEP changes.
+
+## New: Shopify account-switch draft fence (source only)
+
+My JILL's previous full-page hub held pending Custom Order and Contact
+drafts across section navigation, and only each individual list reader
+reauthorized its own records. This could leave **unmounted** draft state
+in memory while the customer identity changed in another tab.
+
+The updated source adds:
+- `loadAccountHubScopedSummary` which reads Shopify's canonical
+  `customer.id` with the existing authenticated Customer Account API
+  summary query; it validates a nonzero Shopify Customer GID. This
+  transient ID is never printed, included in a merchant request, used
+  instead of JWT ownership, or persisted in storage. The public Rewards
+  summary shape and transaction engine are unchanged.
+- `reconcileMyJillAccountScope` fail-closed immutable transitions.
+  While identity is being rechecked, the account-owned screens are
+  withheld. A failed/guest/malformed Shopify response clears the scope.
+- `ConnectedHub` revalidates on customer-account navigation events and
+  when the page becomes visible after being in the background. Async
+  generation checks suppress a late former-account response.
+  The `AccountHub` instance is keyed to the freshly verified Shopify
+  principal: Customer A→A retains legitimate pending drafts, A→B
+  remounts the hub and discards A's in-memory drafts, and A→guest/error
+  remounts with no owner data.
+- `scripts/test-myjill-account-switch-fence.mjs` tests the signed
+  identity projection, invalid IDs, state transitions, and source
+  event/remount wiring. This remains an offline source check, **not**
+  a real browser account-switch acceptance.
+
+Important limits: observing actual account changes depends on Shopify
+customer-account runtime events, document visibility and normal
+remount behavior. It does not prove that silently changing credentials
+without any navigation/visibility event is detectable. Every remote
+request still requires its **own signed Customer Account JWT** and
+exact owner check. Avoid falsely equating a React component key with
+server authorization. The previous real Customer A/B/guest browser
+acceptance gate remains open. No Shopify app publication or WORK
+Cloudflare deployment was performed by these commits.
