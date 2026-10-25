@@ -43,7 +43,7 @@ export default function Overview({accountState,onNavigate}){
   </s-section>
 
   <s-section heading="A little extra for you">
-   <s-stack direction="block" gap="base">
+   <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
     <s-box padding="base" background="base"
      border="base base solid" borderRadius="large">
      <s-stack direction="block" gap="small-300">
@@ -76,7 +76,7 @@ export default function Overview({accountState,onNavigate}){
       </s-button>
      </s-stack>
     </s-box>
-   </s-stack>
+   </s-grid>
   </s-section>
 
   <s-section heading="More ways to celebrate">
