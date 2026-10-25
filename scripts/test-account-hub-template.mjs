@@ -29,7 +29,9 @@ assert.match(hub,/HUB_ROUTES\.map/);
 assert.match(hub,/navigation\.navigate\(extensionRoute\(id\)\)/);
 assert.match(hub,/currententrychange/);
 assert.match(hub,/<s-page heading="My JILL"/);
-assert.match(connected,/loadAccountHubSummary\(\)/);
+assert.match(connected,/loadAccountHubScopedSummary\(\)/);
+assert.match(connected,/reconcileMyJillAccountScope/);
+assert.match(connected,/key=\{accountState\.scope\?\?'unverified'\}/);
 for (const name of pages) {
   const source=read(root+'pages/'+name+'.jsx');
   assert.ok(source.includes('export default function ' + name),'Missing screen owner: '+name);
