@@ -29,6 +29,8 @@
     "rewards:work:hub:canary": "node scripts/prepare-account-hub-canary.mjs && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com",
     "rewards:work:hub:preview": "node scripts/prepare-account-hub-canary.mjs --hub && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com",
     "rewards:work:hub:read": "node scripts/prepare-account-hub-canary.mjs --read && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com",
+    "myjill:work:preview:preflight": "node scripts/inspect-myjill-work-preview-readiness.mjs --require-local-work",
+    "myjill:work:preview:signed": "node scripts/inspect-myjill-work-preview-readiness.mjs --require-local-work && node scripts/prepare-account-hub-canary.mjs --read && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com",
     "rewards:work:hub:template": "node scripts/prepare-account-hub-canary.mjs --template && shopify app dev --path .work-account-canary --config work --store jill-work.myshopify.com",
     "test:account-hub-template": "node scripts/test-account-hub-template.mjs",
     "test:customer-coupons": "node scripts/test-customer-coupons.mjs",
