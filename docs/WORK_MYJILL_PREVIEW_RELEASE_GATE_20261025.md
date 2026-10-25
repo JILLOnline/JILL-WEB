@@ -149,3 +149,65 @@ exact owner check. Avoid falsely equating a React component key with
 server authorization. The previous real Customer A/B/guest browser
 acceptance gate remains open. No Shopify app publication or WORK
 Cloudflare deployment was performed by these commits.
+
+## October 25 — Separate shell-only and real signed-account WORK preview
+
+**Important discovered mismatch:** the existing
+`npm run rewards:work:hub:preview` invokes
+`prepare-account-hub-canary.mjs --hub`. That mode mounts
+`AccountHub` **without** `ConnectedHub` and without the Shopify
+Customer Account identity query. Because account-owned screens now
+correctly require a verified account state, this is **only a navigation
+shell smoke test**. It cannot establish the appearance or behavior of
+Custom Orders, Messages or signed Rewards.
+
+The new, separately named command is:
+
+```powershell
+npm.cmd run myjill:work:preview:preflight
+# After separate, explicit owner authorization for a Shopify WORK dev session:
+npm.cmd run myjill:work:preview:signed
+```
+
+- **Preflight** executes only the offline inspection and exits nonzero
+  unless `shopify.app.work.toml` already exists locally and matches
+  WORK identity, app name, scope set and LIVE exclusions. It does not
+  auto-link the app, print credentials, alter Customer Account
+  settings, or open a browser.
+- **Signed preview** first runs the same fail-closed preflight, then
+  prepares the isolated, ignored, sentinel-owned canary with `--read`
+  (which imports `ConnectedHub`, not bare `AccountHub`). Finally
+  it starts Shopify CLI `app dev` using
+  `--path .work-account-canary --config work --store jill-work.myshopify.com`.
+- The original hub-shell, read and template scripts remain unchanged.
+  Nothing launches automatically in GitHub CI. This is **not a
+  deployment or publication authorization**: Shopify CLI `app dev`
+  opens a developer session and may adjust preview state. Its effects
+  and target must be reviewed and explicitly approved first.
+- Source verification now independently checks that the new signed
+  preview command is exactly guarded, that `--read` imports
+  `ConnectedHub`, that `--hub` remains a shell-only smoke test,
+  that Contact replies stay OFF, and that a successful offline
+  config preflight still **cannot** claim browser acceptance or owner
+  release approval.
+
+**Current result:** these commands were added to PR #156 and its
+joined CI test contract. No signed Shopify preview has been launched,
+no browser screenshots have been verified, and the historical broad
+account-certification failures remain unresolved. WORK/LIVE/KEEP
+deployments, customer messages, Rewards points, D1 and paid
+infrastructure are unchanged.
+
+### Acceptance before any published extension
+
+Once the owner independently authorizes a scoped WORK dev preview,
+review Customer A, Customer B, guest and expired-session cases on a
+narrow phone and desktop. The browser checks must independently
+demonstrate the correct signed-in person, absence of A's drafts or
+requests after switching to B, no guest email-based claim, current
+Custom Order status/history, selection from the compact inbox, proper
+Rewards and Coupons read-only states, native Shopify back navigation,
+and **disabled Contact V2**. Record pass/fail without copying live
+customer PII or JWTs into GitHub. Customer reward redemption,
+extension publication, Contact flag activation and D1 migrations each
+need their own later approval.
