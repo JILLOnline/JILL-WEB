@@ -84,6 +84,9 @@ export default function AccountHub({accountState = null}) {
   }[canonicalRoute(route)];
 
   // Navigation grouping cannot alter route IDs or the security boundary.
+  // Loading/unverified Shopify principal must not mount account-owned
+  // screens, even if the previous hub instance is still in memory.
+  const guardedScreen=accountState?.status==='ready'?screen:null;
   const groupedRoutes=HUB_ROUTES.map(item=>({
     ...item,group:NAV_GROUP[item.id]||'activity',
   }));
@@ -131,7 +134,7 @@ export default function AccountHub({accountState = null}) {
           </s-banner>
         </s-section>
       )}
-      {screen}
+      {guardedScreen}
       <s-section>
         <s-box padding="base" background="subdued" borderRadius="large">
           <s-stack direction="block" gap="small-300">
