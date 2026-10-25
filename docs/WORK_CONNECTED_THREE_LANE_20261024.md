@@ -538,3 +538,24 @@ Rewards redemption or WORK preview runtime behavior.
 No Shopify session has been opened and no release gate has been
 waived. Separate Owner permission remains required to launch
 the **connected** Shopify WORK development preview.
+
+### October 25 — My JILL native visual refinement
+
+My JILL draft #156 now has a warmer native Shopify Customer Account
+Overview hierarchy (welcome → signed recent request status →
+Rewards/Coupons → honest future features), a compact labeled
+nine-route selector plus Home/Custom Orders/Messages shortcuts, and
+clearer JILL/You conversation cards with original event content.
+
+This is **presentation-only**: canonical signed customer ownership,
+hard-OFF Contact V2, RewardsCard redemption state machine, account
+switch fence, custom-order selection, message operation receipts and
+Shopify-native account navigation all stay intact.
+
+The source-only three-lane rehearsal now runs
+`scripts/test-myjill-visual-polish-source.mjs` and validates native
+navigation, status author labels, guarded route selection, no new
+browser storage or provider writes, and complete My JILL + HQ builds.
+There is **no authenticated screenshot** yet. More details in
+My JILL #156 `docs/WORK_MYJILL_VISUAL_POLISH_20261025.md`.
+No Shopify extension publication, WORK traffic, D1 or LIVE/KEEP change.
