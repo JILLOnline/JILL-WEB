@@ -50,10 +50,10 @@ export default function RecentRequests({onNavigate}){
   {state.status==='ready'&&state.total===0&&
    <s-box padding="base" background="subdued" borderRadius="large">
     <s-stack direction="block" gap="small-300">
-     <s-heading>Nothing to track just yet</s-heading>
+     <s-heading>Your next celebration starts here</s-heading>
      <s-text color="subdued">
-      Requests associated with your verified Shopify account will
-      appear here. Guest submissions are never linked by email alone.
+      Once a Custom Order is linked to your signed-in account, its updates
+      will appear here. Guest requests stay separate unless securely claimed.
      </s-text>
      <s-button variant="secondary" onClick={()=>onNavigate('custom-orders')}>
       Explore Custom Orders
