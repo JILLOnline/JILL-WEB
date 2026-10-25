@@ -460,3 +460,25 @@ Customer A/B sign-out/sign-in and same-tab navigation/visibility
 behavior still require the separate *real browser* WORK acceptance
 before account extension publication. No worker uploads, D1 migrations,
 live data mutation, paid infrastructure or LIVE/KEEP change.
+
+### Source-only My JILL mobile messaging improvement
+
+After joining the Shopify principal recheck, the My JILL draft adds
+a one-column Messages screen. Instead of a fixed two-column grid with
+up to 20 tall account-request buttons, a native, labeled Shopify
+`s-select` chooses among **only authenticated account-owned** request
+threads. Foreign selection hints fail through the existing
+`selectOwnedMessageRequest` policy. A visible Track this request
+shortcut routes to Custom Orders, which independently re-verifies
+the target request before expanding its history.
+
+The core message sender, idempotent receipt guard, safe draft
+recovery, direct navigation hints and Contact V2 OFF flags were not
+relaxed. The three-lane CI runs
+`scripts/test-myjill-mobile-inbox.mjs` in addition to the account
+switch, quote, customer A/B, Shopify Catalog and visual source tests.
+
+No screenshot or authenticated phone browser has been certified.
+This change remains draft/source-only with no Shopify customer account
+extension publication, WORK Worker traffic changes, D1 migration,
+LIVE/KEEP writes or paid infrastructure.
