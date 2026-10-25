@@ -1,6 +1,6 @@
 // WORK HQ — private Contact Us detail. SOURCE ONLY, flag defaults OFF.
 import {useEffect,useRef,useState} from "react";
-import {useFetcher,useLoaderData,type LoaderFunctionArgs,type ActionFunctionArgs,Link} from "react-router";
+import {useFetcher,useLoaderData,useRevalidator,type LoaderFunctionArgs,type ActionFunctionArgs,Link} from "react-router";
 import {workShopify} from "../shopify.server";
 import {authenticateWorkAdminOnce}
  from "../../../work-admin-auth-once.mjs";
@@ -8,13 +8,17 @@ import {readWorkContactTicketDetail}
  from "../../../work-contact-ticket-detail.mjs";
 import {handleWorkContactStatusChange}
  from "../../../work-contact-status-change.mjs";
+import {verifyWorkContactMessageReadback}
+ from "../../../work-contact-message-readback-policy.mjs";
 type Detail={ticket_id:string;name:string;email:string;phone:string;
  reason:string;message:string;preferred_contact:string;status:string;
  revision:number;details:Record<string,string>};
 type PublicMessage={sequence:number;author:string;message:string;created_at:string};
 type Data={ok:boolean;code:string;detail?:Detail;can_change_status?:boolean;
- can_post_message?:boolean;messages?:PublicMessage[]};
-type UpdateData={ok:boolean;code:string;revision?:number;status?:string};
+ can_post_message?:boolean;messages?:PublicMessage[];
+ customerReplies?:PublicMessage[]};
+type UpdateData={ok:boolean;code:string;revision?:number;status?:string;
+ ticket_id?:string;operation_id?:string;sequence?:number;kind?:string};
 type StatusOp={ticket_id:string;operation_id:string;expected_revision:number;
  expected_status:string;next_status:string};
 
@@ -25,6 +29,7 @@ export async function loader({request,params,context}:LoaderFunctionArgs){
   enabled:env.JILL_WORK_CONTACT_INBOX_ENABLED==="true",
   statusControlsEnabled:env.JILL_WORK_CONTACT_STATUS_ENABLED==="true",
   messageControlsEnabled:env.JILL_WORK_CONTACT_MESSAGES_ENABLED==="true",
+  customerRepliesEnabled:env.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED==="true",
   db:env.JILL_ORDER_DESK_WORK_DB,
   authenticate:{admin:()=>authenticateWorkAdminOnce({
    scope:context.cloudflare,
@@ -59,15 +64,62 @@ export default function ContactTicketDetail(){
  const ticket=data.ok===true&&data.code==="ready"?data.detail:null;
  const fetcher=useFetcher<UpdateData>();
  const messageFetcher=useFetcher<UpdateData>();
+ const revalidator=useRevalidator();
  const [messageDraft,setMessageDraft]=useState("");
  const messageOp=useRef<{operation_id:string;message:string}|null>(null);
+ const processedAck=useRef<string|null>(null);
+ type Receipt={ticketId:string;operation_id:string;message:string;
+  sequence:number;code:string};
+ const [pendingReceipt,setPendingReceipt]=useState<Receipt|null>(null);
+ const [readbackWasLoading,setReadbackWasLoading]=useState(false);
+ const [confirmedReceipt,setConfirmedReceipt]=useState<number|null>(null);
+ // A D1 handler ACK is not enough to discard unsaved merchant text.
+ // First request a separate authenticated Owner detail revalidation.
  useEffect(()=>{
-  if(messageFetcher.state!=="idle"||messageFetcher.data?.ok!==true)return;
-  if(messageOp.current){
-   messageOp.current=null;
-   setMessageDraft("");
-  }
- },[messageFetcher.state,messageFetcher.data]);
+  const op=messageOp.current,ack=messageFetcher.data;
+  if(!ticket||!op||messageFetcher.state!=="idle"||!ack||
+     ack.ok!==true||ack.ticket_id!==ticket.ticket_id||
+     ack.operation_id!==op.operation_id||
+     !["persisted_for_customer_account","already_persisted"].includes(ack.code)||
+     typeof ack.sequence!=="number"||
+     !Number.isSafeInteger(ack.sequence)||ack.sequence<1||
+     processedAck.current===op.operation_id)return;
+  processedAck.current=op.operation_id;
+  setReadbackWasLoading(false);
+  setPendingReceipt({ticketId:ticket.ticket_id,
+   operation_id:op.operation_id,message:op.message,
+   sequence:ack.sequence,code:ack.code});
+  revalidator.revalidate();
+ },[messageFetcher.state,messageFetcher.data,ticket?.ticket_id,revalidator.revalidate]);
+ useEffect(()=>{
+  if(pendingReceipt&&revalidator.state==="loading")
+   setReadbackWasLoading(true);
+ },[pendingReceipt,revalidator.state]);
+ useEffect(()=>{
+  if(!ticket||!pendingReceipt||!readbackWasLoading||
+     revalidator.state!=="idle"||pendingReceipt.ticketId!==ticket.ticket_id)
+   return;
+  const verdict=verifyWorkContactMessageReadback({
+   ticketId:ticket.ticket_id,
+   command:{operation_id:pendingReceipt.operation_id,
+    message:pendingReceipt.message},
+   ack:{ok:true,kind:"contact",code:pendingReceipt.code,
+    ticket_id:pendingReceipt.ticketId,
+    operation_id:pendingReceipt.operation_id,
+    sequence:pendingReceipt.sequence},
+   refreshedThread:{ticket_id:ticket.ticket_id,
+    messages:data.messages},
+  });
+  if(verdict.state!=="verified_public_thread_readback")return;
+  // Only a matching refreshed public thread authorizes clearing the editor.
+  if(messageOp.current?.operation_id!==pendingReceipt.operation_id)return;
+  messageOp.current=null;
+  setMessageDraft("");
+  setConfirmedReceipt(pendingReceipt.sequence);
+  setPendingReceipt(null);
+  setReadbackWasLoading(false);
+ },[ticket?.ticket_id,data.messages,pendingReceipt,
+  readbackWasLoading,revalidator.state]);
  const pending=useRef<StatusOp|null>(null);
  const busy=fetcher.state!=="idle";
  const sendStatus=(next:string)=>{
@@ -96,6 +148,7 @@ export default function ContactTicketDetail(){
    operation_id:"jill:work:contact:msg:"+crypto.randomUUID(),message,
   };
   messageOp.current=op;
+  setConfirmedReceipt(null);
   messageFetcher.submit({
    ticket_id:ticket.ticket_id,operation_id:op.operation_id,
    message:op.message,
@@ -136,24 +189,41 @@ export default function ContactTicketDetail(){
         this ticket is securely linked to a Shopify customer account
         and the WORK messaging feature is approved.</p>}
        {data.can_post_message===true&&<>
-        {(data.messages||[]).length===0?<p>No verified customer-visible
-         messages have been recorded.</p>:<ol>
-         {(data.messages||[]).map(item=><li key={item.sequence}>
-          <strong>JILL</strong> — {item.message}
-          <small> {new Date(item.created_at).toLocaleString()}</small>
-         </li>)}
-        </ol>}
+        {(data.messages||[]).length===0&&
+          (data.customerReplies||[]).length===0?
+          <p>No verified customer-visible messages have been recorded.</p>:
+          <ol>
+           {[...(data.messages||[]),...(data.customerReplies||[])].sort(
+             (a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at)||
+              a.author.localeCompare(b.author)||a.sequence-b.sequence
+           ).map(item=><li key={item.author+":"+item.sequence}>
+            <strong>{item.author==="customer"?"Customer":"JILL"}</strong>
+            {" — "}{item.message}
+            <small> {new Date(item.created_at).toLocaleString()}</small>
+           </li>)}
+          </ol>}
         <label htmlFor="work-contact-public-message">Message for customer</label>
         <textarea id="work-contact-public-message" value={messageDraft}
-          maxLength={1000} rows={4} disabled={messageFetcher.state!=="idle"}
+          maxLength={1000} rows={4} disabled={messageFetcher.state!=="idle"||
+           pendingReceipt!==null}
           onChange={event=>setMessageDraft(event.currentTarget.value)}/>
         <button type="button" disabled={messageFetcher.state!=="idle"||
-         !messageDraft.trim()||Boolean(messageOp.current&&
+         pendingReceipt!==null||!messageDraft.trim()||Boolean(messageOp.current&&
          messageOp.current.message!==messageDraft.trim())}
          onClick={sendMessage}>Save message to My JILL thread</button>
-        {messageFetcher.data?.ok===true&&
-         <p role="status">Message saved for the verified customer account.
-          This is not an email, push notification, or read receipt.</p>}
+        {pendingReceipt&&<div role="status">
+         <p>Message save acknowledged. Verifying the exact message in a
+          refreshed Owner-approved public thread before clearing the editor.
+          This does not confirm email delivery or customer reading.</p>
+         <button type="button" disabled={revalidator.state!=="idle"}
+          onClick={()=>{setReadbackWasLoading(false);revalidator.revalidate();}}>
+          {revalidator.state==="idle"?"Verify saved message":"Verifying…"}
+         </button>
+        </div>}
+        {confirmedReceipt!==null&&
+         <p role="status">Message #{confirmedReceipt} confirmed in a fresh
+          verified customer-visible Contact thread. No email, push notification
+          or customer read receipt has been verified.</p>}
         {messageFetcher.data&&messageFetcher.data.ok!==true&&
          <p role="alert">Message save unconfirmed. Retry the same text;
           no customer notification is confirmed.</p>}
@@ -171,8 +241,11 @@ export default function ContactTicketDetail(){
        .filter(([,value])=>value!=="").map(([name,value])=>
         <div key={name}><dt>{name.replaceAll("_"," ")}</dt>
           <dd>{value}</dd></div>)}</dl>
-      <p>Customer identity and reply availability are not yet verified
-       for this contact ticket. Shopify order numbers are references only.</p>
+      <p>{data.can_post_message===true
+       ?"A verified customer account is linked for merchant message storage. "+
+        "Customer replies and notifications remain unavailable."
+       :"Customer account ownership or messaging permission is not verified."}
+       {" "}Shopify order numbers are references only.</p>
      </main>}
   </s-section>
  </s-page>;

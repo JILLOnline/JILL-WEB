@@ -1,0 +1,153 @@
+name: JILL WORK three-lane customer journey integration
+# Source-only integration rehearsal: NO remote merge, push, deploy, DB write,
+# customer message, Shopify API, paid Cloudflare usage or live system change.
+on:
+  push:
+    branches:
+      - jill/connected-journey-three-lane-20261024
+  pull_request:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+    paths:
+      - '.github/workflows/jill-connected-journey-rehearsal.yml'
+      - 'scripts/test-work-connected-three-surface-contract.mjs'
+      - 'scripts/test-work-unified-owner-queue.mjs'
+      - 'scripts/test-work-quote-sqlite-roundtrip.mjs'
+      - 'scripts/test-work-quote-http-sqlite-roundtrip.mjs'
+      - 'scripts/test-work-contact-sqlite-customer-readback.mjs'
+      - 'scripts/test-work-contact-message-readback-policy.mjs'
+      - 'scripts/test-work-contact-customer-reply-sqlite.mjs'
+      - 'backend/work-contact-customer-reply.mjs'
+      - 'backend/work-contact-conversation-v2.mjs'
+      - 'shared/customer-contact-conversation-v2.mjs'
+      - 'scripts/test-work-contact-owner-customer-replies.mjs'
+      - 'services/jill-order-desk/work-contact-ticket-detail.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
+      - 'services/jill-order-desk/migrations/0005_work_contact_customer_replies_source_only.sql'
+      - 'services/jill-order-desk/work-contact-private-bridge.mjs'
+      - 'services/custom-order-cloudflare/handler.mjs'
+      - 'services/jill-order-desk/work-contact-message-readback-policy.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.tsx'
+      - 'services/jill-order-desk/work-unified-owner-queue.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.queue-unified.tsx'
+      - 'services/jill-order-desk/app-home/app/routes/app.inquiries.tsx'
+      - 'services/jill-order-desk/app-home/app/styles/hq-inquiries.css'
+      - 'services/jill-order-desk/app-home/app/routes.ts'
+      - 'services/jill-order-desk/app-home/workers/app.ts'
+      - 'docs/WORK_CONNECTED_THREE_LANE_20261024.md'
+permissions:
+  contents: read
+
+jobs:
+  source-join:
+    name: Reconcile HQ + My JILL + visual PRs in disposable worktree
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout three-lane orchestration source without deploy credentials
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch exact existing WORK draft lanes (never push)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin \
+            refs/heads/jill/myjill-message-handoff-preview-20261022:refs/remotes/origin/jill/myjill-message-handoff-preview-20261022 \
+            refs/heads/jill/hq-visual-polish-source-20261024:refs/remotes/origin/jill/hq-visual-polish-source-20261024
+          echo 'Three remote SOURCE references fetched; no release configuration changed.'
+      - name: Rehearse three-way WORK source integration; deny unresolved conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          MY_SHA="$(git rev-parse refs/remotes/origin/jill/myjill-message-handoff-preview-20261022)"
+          VIS_SHA="$(git rev-parse refs/remotes/origin/jill/hq-visual-polish-source-20261024)"
+          ROOT="$(pwd)"
+          DIR="$RUNNER_TEMP/jill-work-3lane-rehearsal"
+          git worktree add --detach "$DIR" HEAD
+          cd "$DIR"
+          git config user.name 'JILL Source QA (Ephemeral)'
+          git config user.email 'source-qa@invalid.example'
+          printf 'INTEGRATION_SOURCE_HEAD=%s\n' "$(git rev-parse HEAD)"
+          printf 'MY_JILL_SOURCE_HEAD=%s\n' "$MY_SHA"
+          printf 'VISUAL_SOURCE_HEAD=%s\n' "$VIS_SHA"
+          for candidate in "$MY_SHA" "$VIS_SHA"; do
+            if ! git merge --no-ff --no-edit "$candidate" > /tmp/jill-work-join-result.log 2>&1; then
+              echo 'HOLD: Source merge has conflicts; DO NOT infer the drafts are integrated.'
+              git diff --name-only --diff-filter=U | head -60
+              exit 1
+            fi
+          done
+          test -f scripts/test-work-connected-three-surface-contract.mjs
+          test -f services/jill-order-desk/app-home/app/styles/hq-visual-polish.css
+          test -f extensions/jill-account-dashboard/src/pages/Messages.jsx
+          echo "INTEGRATED_EPHEMERAL_HEAD=$(git rev-parse HEAD)"
+          echo 'NO_GITHUB_BRANCH_UPDATE=true'
+          echo 'NO_WORKER_DEPLOYMENT=true'
+          # Subsequent steps share this isolated worktree, NOT the source checkout.
+          echo "JILL_EPHEMERAL_JOIN=$DIR" >> "$GITHUB_ENV"
+      - name: Exercise real joined HQ and My JILL source contracts with synthetic data
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$JILL_EPHEMERAL_JOIN"
+          JILL_HQ_SOURCE_DIR="$PWD" node scripts/test-work-cross-pr-contact-integration.mjs
+          node scripts/test-work-connected-three-surface-contract.mjs
+          node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-visual-polish-source.mjs
+          node scripts/test-myjill-customer-next-step-journey.mjs
+          node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-signed-preview-command.mjs
+          node scripts/test-myjill-work-canary-module-graph.mjs
+          node scripts/test-myjill-account-switch-fence.mjs
+          node scripts/test-myjill-mobile-inbox.mjs
+          node scripts/test-account-hub-summary.mjs
+          node scripts/inspect-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-mobile-orders-rewards.mjs
+          node scripts/test-myjill-contact-v2-source.mjs
+          node scripts/test-myjill-contact-draft-navigation.mjs
+          node scripts/test-account-hub-template.mjs
+          node scripts/test-work-unified-owner-queue.mjs
+          node scripts/test-work-contact-worker-routing.mjs
+          node scripts/test-work-contact-private-e2e.mjs
+          node --no-warnings scripts/test-work-contact-sqlite-customer-readback.mjs
+          node scripts/test-work-contact-message-readback-policy.mjs
+          node --no-warnings scripts/test-work-contact-customer-reply-sqlite.mjs
+          node scripts/test-work-contact-owner-customer-replies.mjs
+          node scripts/test-work-contact-message-bridge.mjs
+          node scripts/test-work-myjill-contact-claim.mjs
+          node scripts/test-work-myjill-contact-thread.mjs
+          node scripts/test-work-myjill-account-response-integrity.mjs
+          node scripts/test-work-customer-message-navigation.mjs
+          node scripts/test-work-customer-message-operation-races.mjs
+          node scripts/test-work-message-inboxes.mjs
+          node scripts/test-work-hq-quote-owner-ui.mjs
+          node scripts/test-work-quote-calculation.mjs
+          node --no-warnings scripts/test-work-quote-sqlite-roundtrip.mjs
+          node --no-warnings scripts/test-work-quote-http-sqlite-roundtrip.mjs
+          node scripts/test-work-hq-catalog-quote-bridge.mjs
+          echo 'JOINED_SYNTHETIC_CUSTOMER_A_B_GUEST_CHECKS=passed'
+      - name: Install WORK HQ dependencies for offline compile only
+        shell: bash
+        run: npm install --prefix "$JILL_EPHEMERAL_JOIN/services/jill-order-desk/app-home" --no-audit --no-fund
+      - name: Typecheck joined HQ routes, including visual quote disclosure
+        shell: bash
+        run: npm run typecheck --prefix "$JILL_EPHEMERAL_JOIN/services/jill-order-desk/app-home"
+      - name: Build joined HQ WORK UI without upload
+        shell: bash
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix "$JILL_EPHEMERAL_JOIN/services/jill-order-desk/app-home"
+      - name: Check built Worker entrypoint without deployment
+        shell: bash
+        run: |
+          cd "$JILL_EPHEMERAL_JOIN"
+          node scripts/check-work-contact-hq-bundle.mjs
+          echo 'WORK_SOURCE_JOIN_COMPILED=true'
+          echo 'MY_JILL_EXTENSION_PUBLISHED=false'
+          echo 'WORK_TRAFFIC_UNCHANGED=true'
+          echo 'LIVE_KEEP_UNCHANGED=true'

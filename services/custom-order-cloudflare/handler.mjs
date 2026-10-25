@@ -7,6 +7,10 @@ import {handleWorkContactTicketIntake} from '../../backend/work-contact-ticket-i
 import {handleWorkContactAccountRead} from '../../backend/work-contact-account-read.mjs';
 import {handleWorkContactTicketClaim} from '../../backend/work-contact-ticket-claim.mjs';
 import {readWorkCustomerContactThread} from '../../backend/work-contact-thread-read.mjs';
+import {persistWorkCustomerContactReply}
+ from '../../backend/work-contact-customer-reply.mjs';
+import {readWorkContactConversationV2}
+ from '../../backend/work-contact-conversation-v2.mjs';
 
 const MAX_BYTES=256*1024;
 const ROUTE='/jill-custom-order-proxy';
@@ -198,6 +202,20 @@ export async function handleCloudflareCustomOrderWork(request,env) {
   if(pathname==='/jill-contact-thread'){
     if(env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
       return readWorkCustomerContactThread({request,enabled:false});
+    return forwardContactToPrivateHq(request,env);
+  }
+  // Customer-authored Contact replies are a separate private D1 ledger.
+  // Even if other Contact features are ON, this remains hard OFF unless
+  // its own explicit WORK-only gateway and HQ flags are commissioned.
+  if(pathname==='/jill-contact-reply'){
+    if(env?.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED!=='true')
+      return persistWorkCustomerContactReply({request,enabled:false});
+    return forwardContactToPrivateHq(request,env);
+  }
+  if(pathname==='/jill-contact-conversation-v2'){
+    if(env?.JILL_WORK_CONTACT_CUSTOMER_REPLIES_ENABLED!=='true'||
+       env?.JILL_WORK_CONTACT_THREAD_ENABLED!=='true')
+      return readWorkContactConversationV2({request,enabled:false});
     return forwardContactToPrivateHq(request,env);
   }
   // A separate signed Shopify Customer Account JWT is the ONLY owner
