@@ -99,6 +99,8 @@ jobs:
           node scripts/test-work-connected-three-surface-contract.mjs
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-account-switch-fence.mjs
+          node scripts/test-account-hub-summary.mjs
           node scripts/inspect-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-mobile-orders-rewards.mjs
           node scripts/test-myjill-contact-v2-source.mjs
