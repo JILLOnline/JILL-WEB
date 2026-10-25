@@ -2,6 +2,8 @@ import {useEffect,useRef,useState} from 'preact/hooks';
 import {loadAccountHubScopedSummary}
  from '../../../../shared/customer-account-api.mjs';
 import AccountHub from './AccountHub.jsx';
+import {reconcileMyJillAccountScope}
+ from '../../../../shared/myjill-account-scope.mjs';
 
 // A verified Shopify Customer Account GID only partitions ephemeral hub
 // state. It is NEVER displayed, used as endpoint ownership or persisted.
@@ -18,19 +20,20 @@ export default function ConnectedHub(){
       // Hide account-owned screens while a new Shopify principal is checked.
       // Preserve drafts only provisionally; the verified scope decides
       // whether the existing AccountHub may survive the next response.
-      setAccountState(previous=>({
-        status:'loading',summary:null,scope:previous.scope,
-      }));
+      setAccountState(previous=>reconcileMyJillAccountScope(previous,
+        {type:'checking'}));
       loadAccountHubScopedSummary()
         .then(({principal,summary})=>{
           if(!active||generation!==currentRead.current)return;
-          setAccountState({status:'ready',scope:principal,summary});
+          setAccountState(previous=>reconcileMyJillAccountScope(previous,
+            {type:'verified',principal,summary}));
         })
         .catch(()=>{
           if(!active||generation!==currentRead.current)return;
           // A missing/changed session invalidates all in-memory drafts:
           // "unverified" AccountHub gets a fresh key, never an old owner.
-          setAccountState({status:'error',scope:null,summary:null});
+          setAccountState(previous=>reconcileMyJillAccountScope(previous,
+            {type:'failed'}));
         });
     };
     refreshAccount();
