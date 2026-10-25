@@ -103,24 +103,36 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
               Refresh messages
             </s-button>
           </s-stack>
-          <s-grid gridTemplateColumns="minmax(0, 1fr) minmax(0, 1.6fr)"
+          <s-grid gridTemplateColumns="minmax(0, 1fr)"
             gap="base">
             <s-box padding="base" background="subdued" borderRadius="large">
               <s-stack direction="block" gap="small-300">
                 <s-heading>Requests & conversations</s-heading>
-                {inbox.map(item=>{
-                  const source=state.orders.find(o=>
-                    o.submission_id===item.submission_id);
-                  return <s-button key={item.submission_id}
-                    variant={selected===item.submission_id?'primary':'secondary'}
-                    onClick={()=>setSelected(item.submission_id)}>
-                    {customOrderShortId(item.submission_id)} ·
-                    {' '}{customOrderTitle(source?.summary)}
-                    {item.timeline_version===1?' · Status history only'
-                      :item.last_message?' · '+(item.last_message.author==='customer'
-                      ?'You':'JILL')+' replied':' · No messages yet'}
-                  </s-button>;
-                })}
+                <s-select label="Choose a verified conversation"
+                  value={selected??''}
+                  onChange={event=>setSelected(
+                    selectOwnedMessageRequest(inbox,{
+                      requestedId:event.currentTarget.value,
+                      previousId:selected,
+                    })
+                  )}>
+                  {inbox.map(item=>{
+                    const source=state.orders.find(o=>
+                      o.submission_id===item.submission_id);
+                    return <s-option key={item.submission_id}
+                      value={item.submission_id}>
+                      {customOrderShortId(item.submission_id)} ·
+                      {' '}{customOrderTitle(source?.summary)}
+                      {item.timeline_version===1?' · Status history only'
+                        :item.last_message?' · '+(item.last_message.author==='customer'
+                        ?'You':'JILL')+' replied':' · No messages yet'}
+                    </s-option>;
+                  })}
+                </s-select>
+                <s-text color="subdued">
+                  Select a signed-in request to read its conversation.
+                  Unread indicators and delivery receipts aren't available.
+                </s-text>
               </s-stack>
             </s-box>
             <s-box padding="base" background="base" borderRadius="large"
@@ -131,6 +143,12 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                   {customOrderShortId(order.submission_id)}
                   {' · '}Last request activity: {customOrderDateTime(order.updated_at)}
                 </s-text>
+                <s-button variant="secondary"
+                  onClick={()=>onNavigate?.('custom-orders',{
+                    submissionId:order.submission_id,
+                  })}>
+                  Track this request
+                </s-button>
                 <s-divider/>
                 <s-heading>Conversation</s-heading>
                 {order.timeline_version!==2?<s-stack direction="block" gap="small-200">
