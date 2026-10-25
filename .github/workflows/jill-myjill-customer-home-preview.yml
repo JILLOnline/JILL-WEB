@@ -20,6 +20,8 @@ on:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
+      - 'scripts/test-myjill-work-preview-readiness.mjs'
+      - 'scripts/inspect-myjill-work-preview-readiness.mjs'
       - 'scripts/test-myjill-mobile-orders-rewards.mjs'
       - 'extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs'
       - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
@@ -44,6 +46,8 @@ jobs:
       - name: Strict source and authenticated customer-home projections
         run: |
           node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/inspect-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-mobile-orders-rewards.mjs
           node scripts/test-myjill-contact-v2-source.mjs
           node scripts/test-myjill-contact-draft-navigation.mjs
@@ -64,5 +68,7 @@ jobs:
             --outfile=/tmp/jill-myjill-source-preview.mjs
           test -s /tmp/jill-myjill-source-preview.mjs
           echo 'MY_JILL_SOURCE_BUNDLE=PASS'
+          echo 'SIGNED_SHOPIFY_BROWSER_PREVIEW=NOT_VERIFIED'
+          echo 'LEGACY_ACCOUNT_CERTIFICATION=NOT_CLEARED'
           echo 'SHOPIFY_EXTENSION_PUBLISHED=false'
           echo 'WORK_TRAFFIC_UNCHANGED=true'
