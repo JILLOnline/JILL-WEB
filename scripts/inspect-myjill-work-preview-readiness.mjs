@@ -27,12 +27,17 @@ const REQUIRED=[
 const CANNED_SCRIPT='node scripts/prepare-account-hub-canary.mjs --hub && '+
   'shopify app dev --path .work-account-canary --config work --store '+
   WORK_STORE;
+const SIGNED_SCRIPT='node scripts/inspect-myjill-work-preview-readiness.mjs --require-local-work && '+
+  'node scripts/prepare-account-hub-canary.mjs --read && '+
+  'shopify app dev --path .work-account-canary --config work --store '+
+  WORK_STORE;
 
 export function inspectMyJillWorkPreview({linkedWorkConfig}={}){
  const missing=REQUIRED.filter(path=>!exists(path));
  const issues=[];
  if(missing.length)issues.push('required_source_missing');
  let flagsOff=false,canaryIsolated=false,previewCommandExact=false;
+ let signedPreviewCommandExact=false,preflightCommandExact=false;
  if(!missing.length){
   const hub=read('extensions/jill-account-dashboard/src/hub/AccountHub.jsx');
   const canary=read('scripts/prepare-account-hub-canary.mjs');
@@ -50,6 +55,18 @@ export function inspectMyJillWorkPreview({linkedWorkConfig}={}){
   previewCommandExact=
     pkg.scripts?.['rewards:work:hub:preview']===CANNED_SCRIPT;
   if(!previewCommandExact)issues.push('work_preview_command_unreviewed');
+  preflightCommandExact=pkg.scripts?.['myjill:work:preview:preflight']===
+    'node scripts/inspect-myjill-work-preview-readiness.mjs --require-local-work';
+  signedPreviewCommandExact=
+    pkg.scripts?.['myjill:work:preview:signed']===SIGNED_SCRIPT;
+  if(!preflightCommandExact||!signedPreviewCommandExact)
+    issues.push('signed_preview_command_unreviewed');
+  // Existing --hub uses AccountHub without a signed account summary,
+  // so it is a shell/layout smoke test ONLY; the signed WORK experience
+  // requires the separate --read/ConnectedHub path.
+  signedPreviewCommandExact=signedPreviewCommandExact&&
+    canary.includes("(mode === 'read' || mode === 'template') ? 'ConnectedHub' : 'AccountHub'");
+  if(!signedPreviewCommandExact)issues.push('connected_hub_mode_unverified');
  }else{
   issues.push('source_module_graph_incomplete');
  }
@@ -68,7 +85,8 @@ export function inspectMyJillWorkPreview({linkedWorkConfig}={}){
  if(configState==='missing')issues.push('local_work_app_link_missing');
  if(configState==='unverified')issues.push('local_work_app_link_unverified');
  const sourceVerified=missing.length===0&&flagsOff&&
-   canaryIsolated&&previewCommandExact;
+   canaryIsolated&&previewCommandExact&&
+   preflightCommandExact&&signedPreviewCommandExact;
  const canPreparePreview=sourceVerified&&configState==='verified_work_app';
  return Object.freeze({
   operation:'jill.myjill.work.preview.readiness.v1',
@@ -77,6 +95,10 @@ export function inspectMyJillWorkPreview({linkedWorkConfig}={}){
   contact_replies_enabled:false,
   linked_work_app:configState,
   local_preview_prerequisites_met:canPreparePreview,
+  shell_preview_only:true,
+  connected_preview_source_verified:signedPreviewCommandExact,
+  connected_work_account_session_started:false,
+  owner_approved_launch_verified:false,
   real_shopify_browser_render_verified:false,
   customer_A_B_guest_verified:false,
   rewards_redemption_runtime_verified:false,
