@@ -164,16 +164,20 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                     No messages yet. Request status updates remain in Custom Orders.
                   </s-text>:null}
                 {visibleConversation?.messages.map(event=>
-                  <s-box key={event.revision} padding="base" background="subdued"
-                    borderRadius="large">
-                    <s-stack direction="block" gap="small-100">
-                      <s-text type="strong">
-                        {event.author==='customer'?'You':'JILL'}
-                      </s-text>
+                  <s-box key={event.revision} padding="base"
+                    background={event.author==='customer'?'subdued':'base'}
+                    border="base base solid" borderRadius="large">
+                    <s-stack direction="block" gap="small-200">
+                      <s-stack direction="inline" gap="small-200"
+                        alignItems="center" justifyContent="space-between">
+                        <s-badge tone={event.author==='customer'?'info':'neutral'}>
+                          {event.author==='customer'?'You':'JILL'}
+                        </s-badge>
+                        <s-text color="subdued">
+                          {customOrderDateTime(event.occurred_at)}
+                        </s-text>
+                      </s-stack>
                       <s-text>{event.note}</s-text>
-                      <s-text color="subdued">
-                        {customOrderDateTime(event.occurred_at)}
-                      </s-text>
                     </s-stack>
                   </s-box>
                 )}
