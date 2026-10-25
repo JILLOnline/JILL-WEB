@@ -482,3 +482,32 @@ No screenshot or authenticated phone browser has been certified.
 This change remains draft/source-only with no Shopify customer account
 extension publication, WORK Worker traffic changes, D1 migration,
 LIVE/KEEP writes or paid infrastructure.
+
+### Signed My JILL WORK browser entry — not the hub shell
+
+The old `rewards:work:hub:preview` command starts `--hub`, whose
+canary entry mounts `AccountHub` without the signed Shopify
+`ConnectedHub` owner loader. Since My JILL account-owned screens are
+now strictly hidden until customer verification, this old preview is
+only a shell/navigation smoke test. It is **not** real account visual QA.
+
+The My JILL draft adds a distinct fail-closed
+`myjill:work:preview:preflight` and separately approved
+`myjill:work:preview:signed` command. The latter requires
+a verified locally ignored WORK app link, prepares only the
+sentinel-owned WORK canary with `--read` / `ConnectedHub`, then
+starts an explicit Shopify WORK CLI dev session. **Neither command
+has been executed in an actual Shopify session here**. The signed
+command is never run by GitHub CI.
+
+A new pure test `scripts/test-myjill-signed-preview-command.mjs`
+is included in the disposable three-lane merge and verifies exact
+WORK-only store targeting, preflight order, no LIVE/app deploy,
+the signed-account entrypoint, disabled Contact and truthful
+browser-acceptance flags. See draft #156
+`docs/WORK_MYJILL_PREVIEW_RELEASE_GATE_20261025.md`.
+
+Require an explicit separate Owner authorization before *starting*
+Shopify CLI dev. Real Customer A/B/guest and phone/desktop acceptance
+remains open; do not clear the broad legacy account certification
+or publish any extension on the basis of source-only CI.
