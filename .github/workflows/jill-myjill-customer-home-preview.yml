@@ -1,0 +1,94 @@
+name: JILL My JILL customer home source preview
+# Source-only: no extension publish, Shopify mutation, network reads,
+# Cloudflare/D1/Worker operations, LIVE/KEEP, or paid services.
+on:
+  push:
+    branches:
+      - jill/myjill-message-handoff-preview-20261022
+  pull_request:
+    paths:
+      - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Overview.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/RecentRequests.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactConversationV2.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactThread.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/ContactRequests.jsx'
+      - 'shared/customer-contact-conversation-v2.mjs'
+      - 'scripts/test-myjill-contact-v2-source.mjs'
+      - 'scripts/test-myjill-contact-draft-navigation.mjs'
+      - 'shared/customer-contact-draft-ledger.mjs'
+      - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
+      - 'scripts/test-myjill-customer-home.mjs'
+      - 'scripts/test-myjill-visual-polish-source.mjs'
+      - 'scripts/test-myjill-customer-next-step-journey.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs'
+      - 'scripts/test-myjill-work-preview-readiness.mjs'
+      - 'scripts/test-myjill-signed-preview-command.mjs'
+      - 'scripts/test-myjill-work-canary-module-graph.mjs'
+      - 'package.json'
+      - 'scripts/test-myjill-account-switch-fence.mjs'
+      - 'scripts/test-myjill-mobile-inbox.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
+      - 'shared/myjill-account-scope.mjs'
+      - 'shared/customer-account-api.mjs'
+      - 'extensions/jill-account-dashboard/src/hub/ConnectedHub.jsx'
+      - 'scripts/test-account-hub-summary.mjs'
+      - 'scripts/inspect-myjill-work-preview-readiness.mjs'
+      - 'scripts/test-myjill-mobile-orders-rewards.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Rewards.jsx'
+      - 'scripts/prepare-account-hub-canary.mjs'
+      - '.github/workflows/jill-myjill-customer-home-preview.yml'
+permissions:
+  contents: read
+jobs:
+  source-only:
+    name: Verify signed customer-home UX and compile Preact extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          # Source repo intentionally carries no npm lockfile.
+      - name: Strict source and authenticated customer-home projections
+        run: |
+          node scripts/test-myjill-customer-home.mjs
+          node scripts/test-myjill-visual-polish-source.mjs
+          node scripts/test-myjill-customer-next-step-journey.mjs
+          node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-signed-preview-command.mjs
+          node scripts/test-myjill-work-canary-module-graph.mjs
+          node scripts/test-myjill-account-switch-fence.mjs
+          node scripts/test-myjill-mobile-inbox.mjs
+          node scripts/test-account-hub-summary.mjs
+          node scripts/inspect-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-mobile-orders-rewards.mjs
+          node scripts/test-myjill-contact-v2-source.mjs
+          node scripts/test-myjill-contact-draft-navigation.mjs
+          node scripts/test-account-hub-template.mjs
+          node scripts/test-work-customer-message-navigation.mjs
+          node scripts/test-work-customer-message-operation-races.mjs
+          node scripts/test-work-myjill-contact-page.mjs
+          node scripts/test-work-myjill-contact-thread.mjs
+          node scripts/audit-work-myjill-message-extension-source.mjs
+      - name: Install source-only compile dependencies without lifecycle hooks
+        run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+      - name: Compile My JILL Preact full-page source without publishing
+        run: |
+          ./node_modules/.bin/esbuild extensions/jill-account-dashboard/src/Dashboard.jsx \
+            --bundle --platform=browser --format=esm \
+            --jsx=automatic --jsx-import-source=preact \
+            --external:@shopify/ui-extensions/preact \
+            --outfile=/tmp/jill-myjill-source-preview.mjs
+          test -s /tmp/jill-myjill-source-preview.mjs
+          echo 'MY_JILL_SOURCE_BUNDLE=PASS'
+          echo 'SIGNED_SHOPIFY_BROWSER_PREVIEW=NOT_VERIFIED'
+          echo 'LEGACY_ACCOUNT_CERTIFICATION=NOT_CLEARED'
+          echo 'SHOPIFY_EXTENSION_PUBLISHED=false'
+          echo 'WORK_TRAFFIC_UNCHANGED=true'

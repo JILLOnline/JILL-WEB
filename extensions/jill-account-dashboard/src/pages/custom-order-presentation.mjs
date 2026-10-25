@@ -11,6 +11,52 @@ export const CUSTOM_ORDER_STATUS = Object.freeze({
   completed: {label:'Completed',tone:'success',detail:'This request is marked completed.'},
 });
 
+// Informational customer journey copy only. None of these statuses grants
+// quote approval, payment, shipping, notifications or reply capability.
+// Text deliberately avoids ETAs and commitments not in the signed source.
+export const CUSTOM_ORDER_NEXT_STEP = Object.freeze({
+  received: Object.freeze({
+    heading:'What happens next?',
+    text:'JILL has your request. Check back here for the next verified update after review.',
+  }),
+  reviewing: Object.freeze({
+    heading:'What happens next?',
+    text:'Your details are being reviewed. Any new status or message will appear in your account when available.',
+  }),
+  awaiting_approval: Object.freeze({
+    heading:'Review the latest details',
+    text:'This request is marked awaiting approval. Check the conversation and tracking history for instructions. Quote approval and payment are not available on this screen.',
+  }),
+  in_production: Object.freeze({
+    heading:'Your creation is in progress',
+    text:'The request is marked in production. Keep an eye on tracking for confirmed progress updates; no completion date is guaranteed here.',
+  }),
+  ready_pickup: Object.freeze({
+    heading:'Before you collect',
+    text:'The request is marked ready for pickup. Check the latest conversation for collection details and confirm arrangements with JILL before traveling.',
+  }),
+  on_hold: Object.freeze({
+    heading:'Check for an update',
+    text:'This request is on hold. Review the timeline and conversation for any explanation or next instructions.',
+  }),
+  cancelled: Object.freeze({
+    heading:'Your request history',
+    text:'The request is marked cancelled. Your tracking history remains available; this status does not establish any refund or payment outcome.',
+  }),
+  completed: Object.freeze({
+    heading:'Thanks for celebrating with JILL!',
+    text:'This request is marked completed. You can still review its details and conversation in your account.',
+  }),
+});
+export function customOrderNextStep(status){
+  return Object.hasOwn(CUSTOM_ORDER_NEXT_STEP,status)
+    ? CUSTOM_ORDER_NEXT_STEP[status]
+    : Object.freeze({
+      heading:'Request details unavailable',
+      text:'We cannot verify the next step yet. Refresh your signed-in request history for the latest status.',
+    });
+}
+
 export function customOrderStatus(status) {
   return Object.hasOwn(CUSTOM_ORDER_STATUS,status) ? CUSTOM_ORDER_STATUS[status] : {
     label:'Status unavailable',

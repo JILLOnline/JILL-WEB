@@ -1,0 +1,52 @@
+name: JILL HQ x My JILL integration preview
+
+# Isolated SOURCE contract test between BOTH draft PRs. This is not the
+# historically protected release gate. No secrets, D1, Shopify release,
+# Cloudflare deploy, paid service, or real customer traffic.
+on:
+  push:
+    branches:
+      - jill/myjill-message-handoff-preview-20261022
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'shared/customer-contact-tickets.mjs'
+      - 'shared/customer-contact-claim.mjs'
+      - 'shared/customer-contact-thread.mjs'
+      - 'scripts/test-work-cross-pr-contact-integration.mjs'
+      - '.github/workflows/jill-cross-pr-contact-integration-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contact-signed-bridge:
+    name: Verify HQ handlers against My JILL clients (synthetic A/B)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout My JILL draft source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout distinct HQ draft source read-only
+        uses: actions/checkout@v4
+        with:
+          ref: jill/hq-quote-catalog-preflight-20261022
+          path: hq-work-source
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record exact source identities
+        run: |
+          git rev-parse HEAD
+          git -C hq-work-source rev-parse HEAD
+      - name: Exercise real server / customer modules across branch boundary
+        env:
+          JILL_HQ_SOURCE_DIR: hq-work-source
+        run: |
+          node --check scripts/test-work-cross-pr-contact-integration.mjs
+          node scripts/test-work-cross-pr-contact-integration.mjs

@@ -5,8 +5,10 @@ import {fileURLToPath} from 'node:url';
 import {assertRewardsWorkConfig, WORK_STORE} from './verify-rewards-work-target.mjs';
 
 // Creates an IGNORED local-only Shopify WORK app project, preserving the
-// existing release UIDs but substituting official no-network canary entrypoints.
-// No Shopify deploy, backend write, customer mutation, or LIVE config access.
+// existing release UIDs. Minimal/hub entries are presentation diagnostics;
+// --read intentionally loads authenticated Shopify Customer Account data and
+// is NOT a no-network/no-side-effect runtime browser acceptance.
+// This preparer never invokes Shopify CLI, deploys, or touches LIVE config.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workdir = path.join(root, '.work-account-canary');
 const sentinel = '.jill-work-canary.json';
@@ -16,6 +18,34 @@ const modules = [
   ['jill-account-coupons','Coupons.jsx','Coupons'],
   ['jill-account-home','AccountHome.jsx','JILL Settings'],
 ];
+const HUB_PAGE_FILES = Object.freeze([
+  'Overview.jsx','RecentRequests.jsx','Rewards.jsx','Coupons.jsx',
+  'CustomOrders.jsx','RequestConversation.jsx','Messages.jsx',
+  'ContactRequests.jsx','ContactThread.jsx','ContactConversationV2.jsx',
+  'Celebrations.jsx','SavedPreferences.jsx','Settings.jsx',
+]);
+const HUB_SHARED_FILES = Object.freeze([
+  'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
+  'customer-custom-orders.mjs','custom-order-message-inbox.mjs',
+  'custom-order-conversation-view.mjs','customer-message-selection.mjs',
+  'customer-contact-tickets.mjs','customer-contact-claim.mjs',
+  'customer-contact-thread.mjs','customer-contact-conversation-v2.mjs',
+  'customer-contact-draft-ledger.mjs','myjill-account-scope.mjs',
+]);
+// A single immutable manifest owns actual canary copy and offline graph QA.
+// Missing relative imports must fail CI BEFORE any Shopify developer session.
+export const WORK_MYJILL_READ_SOURCE_MANIFEST = Object.freeze([
+  'extensions/jill-account-dashboard/src/hub/AccountHub.jsx',
+  'extensions/jill-account-dashboard/src/hub/ConnectedHub.jsx',
+  'extensions/jill-account-dashboard/src/hub/routes.mjs',
+  ...HUB_PAGE_FILES.map(name=>'extensions/jill-account-dashboard/src/pages/'+name),
+  'extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs',
+  'extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs',
+  'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs',
+  'extensions/jill-account-dashboard/src/rewards/RewardsCard.jsx',
+  'extensions/jill-account-dashboard/src/rewards/account-transport.mjs',
+  ...HUB_SHARED_FILES.map(name=>'shared/'+name),
+]);
 
 export function makeCanaryModule(handle, mode = 'minimal') {
   if (!['minimal','hub','read','template'].includes(mode)) throw new Error('Unsupported WORK canary mode');
@@ -129,8 +159,7 @@ export function prepareCanary(mode) {
       fs.copyFileSync(path.join(base,'src','hub','routes.mjs'),
         path.join(dest,'src','hub','routes.mjs'));
       fs.mkdirSync(path.join(dest,'src','pages'),{recursive:true});
-      for (const page of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-        'RequestConversation.jsx','Messages.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+      for (const page of HUB_PAGE_FILES) {
         fs.copyFileSync(path.join(base,'src','pages',page),
           path.join(dest,'src','pages',page));
       }
@@ -138,6 +167,13 @@ export function prepareCanary(mode) {
       // WORK canary copy next to the canonical screen, without a new API owner.
       fs.copyFileSync(path.join(base,'src','pages','custom-order-presentation.mjs'),
         path.join(dest,'src','pages','custom-order-presentation.mjs'));
+      // Canonical signed-list filters contain only statuses and IDs.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-order-activity.mjs'),
+        path.join(dest,'src','pages','myjill-order-activity.mjs'));
+      // Home's signed recent request reader has no independent identity
+      // store; ship its small read-only projection with the WORK canary.
+      fs.copyFileSync(path.join(base,'src','pages','myjill-recent-requests.mjs'),
+        path.join(dest,'src','pages','myjill-recent-requests.mjs'));
       // Reuse the one canonical Rewards UI and Customer Account transaction
       // transport in the WORK-only hub preview (no copied backend engine).
       fs.mkdirSync(path.join(dest,'src','rewards'),{recursive:true});
@@ -146,10 +182,7 @@ export function prepareCanary(mode) {
           path.join(dest,'src','rewards',module));
       }
       fs.mkdirSync(path.join(workdir,'shared'),{recursive:true});
-      for (const filename of [
-        'rewards.mjs','customer-account-api.mjs','customer-coupons.mjs',
-        'customer-custom-orders.mjs','custom-order-message-inbox.mjs',
-      ]) {
+      for (const filename of HUB_SHARED_FILES) {
         fs.copyFileSync(path.join(root,'shared',filename),
           path.join(workdir,'shared',filename));
       }

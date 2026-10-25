@@ -5,13 +5,13 @@ import {HUB_ROUTES, canonicalRoute, routeFromEntry, extensionRoute}
 
 const read = (p) => fs.readFileSync(p,'utf8');
 const root = 'extensions/jill-account-dashboard/src/';
-const pages = ['Overview','Rewards','Coupons','CustomOrders','Messages',
+const pages = ['Overview','Rewards','Coupons','CustomOrders','Messages','ContactRequests',
   'Celebrations','SavedPreferences','Settings'];
 assert.deepEqual(HUB_ROUTES.map((r)=>r.id),[
-  'overview','rewards','coupons','custom-orders','messages','celebrations','saved','settings',
+  'overview','rewards','coupons','custom-orders','contact-requests','messages','celebrations','saved','settings',
 ]);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,8);
-assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,8);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.id)).size,9);
+assert.equal(new Set(HUB_ROUTES.map((r)=>r.path)).size,9);
 assert.equal(extensionRoute('overview'),'extension://');
 assert.equal(extensionRoute('coupons'),'extension://coupons');
 assert.equal(extensionRoute('messages'),'extension://messages');
@@ -29,7 +29,9 @@ assert.match(hub,/HUB_ROUTES\.map/);
 assert.match(hub,/navigation\.navigate\(extensionRoute\(id\)\)/);
 assert.match(hub,/currententrychange/);
 assert.match(hub,/<s-page heading="My JILL"/);
-assert.match(connected,/loadAccountHubSummary\(\)/);
+assert.match(connected,/loadAccountHubScopedSummary\(\)/);
+assert.match(connected,/reconcileMyJillAccountScope/);
+assert.match(connected,/key=\{accountState\.scope\?\?'unverified'\}/);
 for (const name of pages) {
   const source=read(root+'pages/'+name+'.jsx');
   assert.ok(source.includes('export default function ' + name),'Missing screen owner: '+name);
@@ -56,7 +58,7 @@ assert.match(coupons,/loadCustomerAccountStorefront\(\)/);
 assert.doesNotMatch(coupons,/metafieldsSet|discountCodeBasicCreate/);
 assert.match(read(root+'pages/Celebrations.jsx'),/Reminders will be optional and off/);
 const customOrders=read(root+'pages/CustomOrders.jsx');
-assert.match(customOrders,/loadWorkCustomerCustomOrders/);
+assert.match(customOrders,/loadWorkCustomerConversationState/);
 assert.match(customOrders,/signed-in account/);
 assert.match(customOrders,/Try again/);
 assert.match(customOrders,/customOrderStatus/);
@@ -72,7 +74,7 @@ assert.match(preparer,/custom-order-presentation\.mjs/);
 assert.match(preparer,/mode === 'read' \|\| mode === 'template'/);
 assert.match(preparer,/\'rewards\.mjs\',\'customer-account-api\.mjs\',\'customer-coupons\.mjs\'/);
 for (const file of ['Overview.jsx','Rewards.jsx','Coupons.jsx','CustomOrders.jsx',
-  'Messages.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
+  'Messages.jsx','ContactRequests.jsx','Celebrations.jsx','SavedPreferences.jsx','Settings.jsx']) {
   assert.ok(preparer.includes("'"+file+"'"),'Canary does not copy '+file);
 }
 const expected='node scripts/prepare-account-hub-canary.mjs --template && '+
@@ -80,8 +82,8 @@ const expected='node scripts/prepare-account-hub-canary.mjs --template && '+
 const scripts=JSON.parse(read('package.json')).scripts;
 assert.equal(scripts['rewards:work:hub:template'],expected);
 const messages=read(root+'pages/Messages.jsx');
-assert.match(messages,/loadWorkCustomerCustomOrders/);
+assert.match(messages,/loadWorkCustomerConversationState/);
 assert.match(messages,/projectCustomerMessageInbox/);
 assert.match(messages,/RequestConversation/);
 assert.ok(preparer.includes("'custom-order-message-inbox.mjs'"));
-console.log('Eight-screen My JILL template with verified customer-owned Messages and JWT-authenticated WORK Custom Order history; isolated preview contract verified.');
+console.log('Nine-screen My JILL template with verified customer-owned Messages and JWT-authenticated WORK Custom Order history; isolated preview contract verified.');
