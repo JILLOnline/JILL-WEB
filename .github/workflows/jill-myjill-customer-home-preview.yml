@@ -21,6 +21,11 @@ on:
       - 'extensions/jill-account-dashboard/src/pages/myjill-recent-requests.mjs'
       - 'scripts/test-myjill-customer-home.mjs'
       - 'scripts/test-myjill-work-preview-readiness.mjs'
+      - 'scripts/test-myjill-account-switch-fence.mjs'
+      - 'shared/myjill-account-scope.mjs'
+      - 'shared/customer-account-api.mjs'
+      - 'extensions/jill-account-dashboard/src/hub/ConnectedHub.jsx'
+      - 'scripts/test-account-hub-summary.mjs'
       - 'scripts/inspect-myjill-work-preview-readiness.mjs'
       - 'scripts/test-myjill-mobile-orders-rewards.mjs'
       - 'extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs'
@@ -47,6 +52,8 @@ jobs:
         run: |
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
+          node scripts/test-myjill-account-switch-fence.mjs
+          node scripts/test-account-hub-summary.mjs
           node scripts/inspect-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-mobile-orders-rewards.mjs
           node scripts/test-myjill-contact-v2-source.mjs
