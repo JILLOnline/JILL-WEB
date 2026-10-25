@@ -136,8 +136,9 @@ export default function AccountHub({accountState = null}) {
       {accountState?.status === 'error' && (
         <s-section>
           <s-banner tone="critical">
-            We couldn't load your account details. My JILL is still available.
-            Refresh this page to retry. No points or coupons were changed.
+            We couldn't verify your account details. For your privacy,
+            your request history is hidden until you refresh.
+            No points or coupons were changed.
           </s-banner>
         </s-section>
       )}
