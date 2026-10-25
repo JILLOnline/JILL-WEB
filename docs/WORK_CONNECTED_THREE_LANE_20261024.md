@@ -559,3 +559,35 @@ browser storage or provider writes, and complete My JILL + HQ builds.
 There is **no authenticated screenshot** yet. More details in
 My JILL #156 `docs/WORK_MYJILL_VISUAL_POLISH_20261025.md`.
 No Shopify extension publication, WORK traffic, D1 or LIVE/KEEP change.
+
+### October 25 — My JILL customer next-step experience
+
+The protected My JILL source now explains what to do next based only
+on the signed Custom Order's **canonical status**. A presentation-only
+`customOrderNextStep` in the existing copied presentation module
+provides clear, non-transactional guidance for all eight states:
+received, reviewing, awaiting approval, in production, ready pickup,
+on hold, cancelled, completed.
+
+That same copy is shown with the verified status in Overview's
+Recent Requests, Custom Orders status cards, and the selected
+Messages conversation. Awaiting-approval guidance explicitly says
+there is **no in-page quote approval or payment**, ready-pickup
+guidance asks customers to confirm collection arrangements, and
+completed/cancelled never imply refund or delivery. No speculative
+ETA, fake unread count, customer permission bypass, or notification
+claim is added.
+
+Customer-facing empty/error screens now avoid internal WORK-gateway
+language. They explain verified account-only visibility and guest
+separation in approachable terms; on unverified account identity,
+private screens remain hidden. Real signed request/messaging readers,
+idempotent replies, RewardsCard, HQ quote persistence, original
+hard-OFF Contact V2 and LIVE/KEEP all remain unchanged.
+
+A new source test
+`scripts/test-myjill-customer-next-step-journey.mjs` runs in the
+ephemeral three-lane CI and the dedicated My JILL build, confirming
+all eight state messages and safe lack-of-permission claims.
+This is source readiness only; real signed Shopify WORK phone/desktop
+customer acceptance and rollout approval are still pending.
