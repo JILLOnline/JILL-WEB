@@ -66,17 +66,21 @@ export default function RecentRequests({onNavigate}){
     padding="base" borderRadius="large" background="base"
     border="base base solid">
     <s-stack direction="block" gap="small-300">
-     <s-stack direction="inline" justifyContent="space-between"
-      alignItems="center" gap="base">
-      <s-text type="strong">{item.title}</s-text>
-      <s-badge tone={status.tone}>{status.label}</s-badge>
-     </s-stack>
      <s-text color="subdued">
-      {customOrderShortId(item.submission_id)}
-      {' · Updated '}{customOrderDateTime(item.updated_at)}
+      CUSTOM REQUEST · {customOrderShortId(item.submission_id)}
      </s-text>
+     <s-text type="strong">{item.title}</s-text>
+     <s-stack direction="inline" gap="small-200" alignItems="center">
+      <s-badge tone={status.tone}>{status.label}</s-badge>
+      <s-text color="subdued">
+       Updated {customOrderDateTime(item.updated_at)}
+      </s-text>
+     </s-stack>
+     <s-box padding="small-300" background="subdued" borderRadius="base">
+      <s-text>{status.detail}</s-text>
+     </s-box>
      <s-stack direction="inline" gap="small-200">
-      <s-button variant="secondary"
+      <s-button variant="primary"
        onClick={()=>onNavigate('custom-orders',{
         submissionId:item.submission_id,
        })}>Track details</s-button>
