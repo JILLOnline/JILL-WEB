@@ -100,6 +100,7 @@ jobs:
           node scripts/test-myjill-customer-home.mjs
           node scripts/test-myjill-work-preview-readiness.mjs
           node scripts/test-myjill-signed-preview-command.mjs
+          node scripts/test-myjill-work-canary-module-graph.mjs
           node scripts/test-myjill-account-switch-fence.mjs
           node scripts/test-myjill-mobile-inbox.mjs
           node scripts/test-account-hub-summary.mjs
