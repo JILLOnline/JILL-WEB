@@ -11,6 +11,7 @@ on:
       - jill/hq-quote-reload-revision-guard-20261026
       - jill/hq-quote-recovery-guidance-20261026
       - jill/hq-quote-response-once-20261026
+      - jill/hq-quote-save-single-flight-20261027
   pull_request:
     branches:
       - jill/hq-visual-polish-source-20261024
@@ -21,6 +22,7 @@ on:
       - jill/hq-prefetch-lease-guard-20261026
       - jill/hq-quote-reload-revision-guard-20261026
       - jill/hq-quote-recovery-guidance-20261026
+      - jill/hq-quote-response-once-20261026
     paths:
       - 'services/jill-order-desk/work-catalog-stock-label.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.catalog.tsx'
@@ -31,6 +33,8 @@ on:
       - 'scripts/test-work-quote-reload-revision-guard.mjs'
       - 'scripts/test-work-quote-recovery-guidance.mjs'
       - 'scripts/test-work-quote-response-once.mjs'
+      - 'scripts/test-work-quote-save-single-flight.mjs'
+      - 'services/jill-order-desk/work-quote-save-flight.mjs'
       - 'services/jill-order-desk/work-quote-recovery-guidance.mjs'
       - 'services/jill-order-desk/work-quote-readback-policy.mjs'
       - 'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx'
@@ -61,6 +65,7 @@ jobs:
           node scripts/test-work-quote-reload-revision-guard.mjs
           node scripts/test-work-quote-recovery-guidance.mjs
           node scripts/test-work-quote-response-once.mjs
+          node scripts/test-work-quote-save-single-flight.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node --check services/jill-order-desk/work-catalog-stock-label.mjs
       - name: Install WORK HQ compile dependencies only
