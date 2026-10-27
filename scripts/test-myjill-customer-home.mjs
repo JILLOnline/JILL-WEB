@@ -18,6 +18,27 @@ const row=(n,status='reviewing')=>({
 });
 const source=[row(1,'received'),row(3,'reviewing'),row(2,'completed')];
 const result=projectMyJillRecentRequests(source);
+assert.equal(result.focus,null,'Routine status alone must not imply urgent action');
+const attention=projectMyJillRecentRequests([
+ row(11,'awaiting_approval'),row(12,'ready_pickup'),
+ row(13,'on_hold'),row(14,'completed'),
+],{limit:1});
+assert.deepEqual(attention.focus,{
+ submission_id:id(13),status:'on_hold',
+},'Verified hold outranks pickup and awaiting approval');
+assert.equal(attention.recent.length,1);
+assert.equal(Object.isFrozen(attention.focus),true);
+assert.equal(JSON.stringify(attention.focus).includes('PRIVATE_'),false);
+const pickup=projectMyJillRecentRequests([
+ row(11,'awaiting_approval'),row(12,'ready_pickup'),
+]);
+assert.equal(pickup.focus.submission_id,id(12));
+const newestHold=projectMyJillRecentRequests([
+ row(15,'on_hold'),row(16,'on_hold'),
+]);
+assert.equal(newestHold.focus.submission_id,id(16));
+assert.equal(projectMyJillRecentRequests([row(17,'completed')]).focus,null);
+
 const dated=projectMyJillRecentRequests([{
   ...row(4,'received'),
   summary:{items:[{title:'Paint-your-own tote',quantity:3},
@@ -91,6 +112,12 @@ assert.match(home,/Coming later/);
 assert.match(home,/points===null\?'Not available'/);
 assert.match(recent,/loadWorkCustomerConversationState\(\{sessionToken,signal:controller\.signal\}\)/);
 assert.match(recent,/projectMyJillRecentRequests\(orders\)/);
+assert.match(recent,/state\.status==='ready'&&state\.focus/);
+assert.match(recent,/One request to check/);
+assert.match(recent,/customOrderNextStep\(state\.focus\.status\)/);
+assert.match(recent,/submissionId:state\.focus\.submission_id/);
+assert.match(recent,/Review this request/);
+assert.doesNotMatch(recent,/Pay now|Approve quote now|unread messages/);
 assert.match(recent,/Requested quantity: \{item\.requested_quantity\}/);
 assert.match(recent,/customOrderDateOnly\(item\.date_needed\)/);
 assert.match(recent,/customOrderFulfillment\(item\.fulfillment\)/);
