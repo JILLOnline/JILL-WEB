@@ -138,6 +138,11 @@ export function WorkQuoteWorksheet({
   const saveFetcher=useFetcher<DraftResult>();
   const readFetcher=useFetcher<DraftResult>();
   const operation=useRef<string|null>(null);
+  // Each completed fetcher payload is handled at most once. React Router
+  // may retain an old data object while a later source/detail prop changes.
+  // Reprocessing that response must never restore stale prices or clear HOLD.
+  const processedSaveResponse=useRef<DraftResult|null>(null);
+  const processedReadResponse=useRef<DraftResult|null>(null);
   // Never let a cached/slow GET from before Save unlock a later revision.
   const acknowledgedRevision=useRef<number|null>(null);
   const initialReadStarted=useRef(false);
@@ -164,7 +169,9 @@ export function WorkQuoteWorksheet({
   // a freshly verified request to reconcile before another write.
   useEffect(()=>{
     if(!saveDraftEnabled||saveFetcher.state!=="idle"||
-       !saveFetcher.data)return;
+       !saveFetcher.data||processedSaveResponse.current===saveFetcher.data)
+      return;
+    processedSaveResponse.current=saveFetcher.data;
     if(saveFetcher.data.ok&&saveFetcher.data.code==="draft_saved"&&
        Number.isSafeInteger(saveFetcher.data.revision)){
       const rev=saveFetcher.data.revision!;
@@ -184,7 +191,9 @@ export function WorkQuoteWorksheet({
   },[saveDraftEnabled,saveFetcher.state,saveFetcher.data]);
   useEffect(()=>{
     if(!saveDraftEnabled||readFetcher.state!=="idle"||
-       !readFetcher.data)return;
+       !readFetcher.data||processedReadResponse.current===readFetcher.data)
+      return;
+    processedReadResponse.current=readFetcher.data;
     const projection=readFetcher.data.ok&&
       readFetcher.data.code==="draft_ready"
       ?hydrateVerifiedWorkQuoteWorksheet({
