@@ -76,7 +76,7 @@ jobs:
           # A new draft commit intentionally produces HOLD until reviewed
           # and both pins are explicitly updated in a separate source PR.
           EXPECTED_MY_SHA="7e1513ac53dbdb389d70fb60af3fa328327a9ba4"
-          EXPECTED_VIS_SHA="4d95fb4c1f9b3cbd51883ddfb84c5155926dacee"
+          EXPECTED_VIS_SHA="52ec09aee09e4e9fa071eeb6f65d106a65bf8e20"
           if [[ "$MY_SHA" != "$EXPECTED_MY_SHA" || "$VIS_SHA" != "$EXPECTED_VIS_SHA" ]]; then
             echo 'HOLD: My JILL/HQ visuals draft moved since reviewed integration source.'
             echo 'Review the changed lane before intentionally updating both source pins.'
