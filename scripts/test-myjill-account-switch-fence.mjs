@@ -63,10 +63,20 @@ for(const token of [
 ]){
  assert.ok(connected.includes(token),'missing account switch protection: '+token);
 }
+// A failed identity verification offers a retry of the signed principal
+// reader; neither failure nor retry can make an unverified hub visible.
+assert.match(connected,/const \[retryNonce,setRetryNonce\]=useState\(0\)/);
+assert.match(connected,/const retryVerification=\(\)=>setRetryNonce\(n=>n\+1\)/);
+assert.match(connected,/\},\[retryNonce\]\);/);
+assert.match(connected,/onRetryVerification=\{retryVerification\}/);
+assert.match(hub,/onRetryVerification = null/);
+assert.match(hub,/accountState\?\.status === 'error'/);
+assert.match(hub,/onClick=\{onRetryVerification\}/);
+assert.match(hub,/Try verifying again/);
 assert.match(hub,/const guardedScreen=accountState\?\.status==='ready'\?screen:null/);
 assert.match(hub,/\{guardedScreen\}/);
 assert.match(hub,/contactDrafts,setContactDrafts/);
 assert.match(hub,/conversationDrafts,setConversationDrafts/);
 assert.match(hub,/'contact-requests': <ContactRequests enabled=\{false\}/);
 assert.doesNotMatch(connected+hub,/localStorage|sessionStorage|document\.cookie/);
-console.log('PASS My JILL account switching: A/A retained, A/B remounts, guest/errors purge, pending hides personal screens, stale loads fenced; Contact OFF.');
+console.log('PASS My JILL account switching: A/A retained, A/B remounts, guest/errors purge, pending hides personal screens, stale loads fenced, signed retry requires recheck; Contact OFF.');

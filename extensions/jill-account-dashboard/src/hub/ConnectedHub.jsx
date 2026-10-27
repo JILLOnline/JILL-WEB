@@ -13,6 +13,10 @@ export default function ConnectedHub(){
     status:'loading',summary:null,scope:null,
   });
   const currentRead=useRef(0);
+  // Customer-initiated retry only rechecks the signed Shopify principal.
+  // It never restores the previous customer's in-memory drafts by itself.
+  const [retryNonce,setRetryNonce]=useState(0);
+  const retryVerification=()=>setRetryNonce(n=>n+1);
   useEffect(()=>{
     let active=true;
     const refreshAccount=()=>{
@@ -52,7 +56,7 @@ export default function ConnectedHub(){
       if(typeof document!=='undefined')
         document.removeEventListener('visibilitychange',onVisibility);
     };
-  },[]);
+  },[retryNonce]);
   return <AccountHub key={accountState.scope??'unverified'}
-    accountState={accountState}/>;
+    accountState={accountState} onRetryVerification={retryVerification}/>;
 }

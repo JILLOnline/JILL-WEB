@@ -27,7 +27,7 @@ const NAV_GROUP=Object.freeze({
 
 // The hub is the one Shopify full-page entrypoint. Screen owners and native
 // Shopify account navigation remain unchanged; styling uses platform components.
-export default function AccountHub({accountState = null}) {
+export default function AccountHub({accountState = null, onRetryVerification = null}) {
   const [route, setRoute] = useState(() => {
     if (typeof navigation === 'undefined') return 'overview';
     return routeFromEntry(navigation.currentEntry);
@@ -135,11 +135,17 @@ export default function AccountHub({accountState = null}) {
       )}
       {accountState?.status === 'error' && (
         <s-section>
-          <s-banner tone="critical">
-            We couldn't verify your account details. For your privacy,
-            your request history is hidden until you refresh.
-            No points or coupons were changed.
-          </s-banner>
+          <s-stack direction="block" gap="small-200">
+            <s-banner tone="critical">
+              We couldn't verify your Shopify account. For your privacy,
+              your request history and messages are hidden until sign-in
+              is verified. No points or coupons were changed.
+            </s-banner>
+            {typeof onRetryVerification==='function'&&
+              <s-button variant="secondary" onClick={onRetryVerification}>
+                Try verifying again
+              </s-button>}
+          </s-stack>
         </s-section>
       )}
       {guardedScreen}
