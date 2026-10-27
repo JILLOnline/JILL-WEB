@@ -1,5 +1,24 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 source provenance hold (separate draft; never a release)
+
+The ephemeral three-lane GitHub rehearsal now **fail-closes on upstream
+source drift**, rather than automatically trusting whatever each open
+draft branch points to on the day of a rerun.
+
+- My JILL customer source (draft #156): `bae1a67f4b761e12293fcc901a3caede070acc0a`.
+- HQ visuals source (draft #158): `0c7d006c12274390878ae2c327efb3111a30d2cd`.
+- HQ/catalog/conversation integration uses the currently checked-out
+  branch and requires its independent draft/CI review (#157 and #159).
+
+On any drift, the job prints `HOLD` before ephemeral merges, Node tests,
+dependency installation or compilation. To accept newer source, review
+the Git differences, privacy/authentication and hard-OFF guarantees,
+update these exact pins intentionally, then rerun source-only CI.
+A passing run identifies the exact integrated revisions but **does not**
+authorize Contact or quote activation, D1 migrations, extension publishing,
+Cloudflare traffic allocation, WORK provider acceptance, or LIVE/KEEP changes.
+
 ## What is happening
 This is a **new source-only, non-deploying integration lane** that tests the
 existing work together rather than asking the Owner to run PowerShell or
