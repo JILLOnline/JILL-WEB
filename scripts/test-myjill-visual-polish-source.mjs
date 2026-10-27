@@ -79,8 +79,8 @@ assert.match(messages,/event\.author==='customer'\?'You':'JILL'/);
 assert.match(messages,/background=\{event\.author==='customer'\?'subdued':'base'\}/);
 assert.match(messages,/tone=\{event\.author==='customer'\?'info':'neutral'\}/);
 assert.match(messages,/RequestConversation order=\{order\}/);
-assert.match(messages,/selectOwnedMessageRequest\\(visibleInbox,\\{/);
-assert.match(messages,/filterOwnedMessageThreads\\(inbox,filter\\)/);
+assert.match(messages,/selectOwnedMessageRequest\(visibleInbox,\{/);
+assert.match(messages,/filterOwnedMessageThreads\(inbox,filter\)/);
 assert.match(messages,/onDraftsChange\(previous=>\s*updateOwnedMessageDraft/);
 
 for(const src of [hub,home,recent,messages]){
