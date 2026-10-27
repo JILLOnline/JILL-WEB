@@ -20,6 +20,13 @@ const mixed=projectCustomerMessageInbox([
  order(A,'received'),order(B,'completed'),
 ]);
 assert.deepEqual(filterOwnedMessageThreads(mixed,'active').map(x=>x.submission_id),[A]);
+// A notification/Recent Requests deep link must be able to open a finished
+// owned thread even after the user previously viewed the Active folder.
+assert.equal(selectOwnedMessageRequest(filterOwnedMessageThreads(mixed,'active'),
+ {requestedId:B}),A,'An active-only filter intentionally excludes finished B');
+assert.equal(selectOwnedMessageRequest(filterOwnedMessageThreads(mixed,'all'),
+ {requestedId:B}),B,'Clearing the filter restores the verified deep link');
+
 assert.deepEqual(filterOwnedMessageThreads(mixed,'finished').map(x=>x.submission_id),[B]);
 assert.equal(filterOwnedMessageThreads(mixed,'all').length,2);
 assert.equal(filterOwnedMessageThreads(mixed,'weird').length,0);
@@ -52,6 +59,8 @@ assert.match(page,/<s-select label="Choose a verified conversation"/);
 assert.match(page,/selectOwnedMessageRequest\(visibleInbox,\{/);
 assert.match(page,/filterOwnedMessageThreads\(inbox,filter\)/);
 assert.match(page,/<s-select label="Show conversations"/);
+assert.match(page,/if\(requestedSubmissionId!==null\)setFilter\('all'\)/);
+assert.match(page,/\[attempt,requestedSubmissionId\]/);
 assert.match(page,/MYJILL_MESSAGE_FILTERS\.map/);
 assert.match(page,/No verified conversations match this filter/);
 assert.match(page,/previousId:selected/);
