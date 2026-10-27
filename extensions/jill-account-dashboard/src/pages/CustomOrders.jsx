@@ -147,15 +147,21 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                     <s-stack direction="block" gap="small-100">
                       <s-text color="subdued">JILL CUSTOM REQUEST · {customOrderShortId(order.submission_id)}</s-text>
                       <s-heading>{customOrderTitle(summary)}</s-heading>
-                      {requestedQuantity!==null&&
-                        <s-text color="subdued">
-                          {summary.items.length} {summary.items.length===1?'item type':'item types'} ·
-                          {' '}Qty {requestedQuantity}
+                      {(requestedQuantity!==null||summary.date_needed||summary.fulfillment)&&
+                        <s-stack direction="inline" gap="small-200">
+                          {requestedQuantity!==null&&
+                            <s-text color="subdued">
+                              {summary.items.length} {summary.items.length===1?'item type':'item types'} · Qty {requestedQuantity}
+                            </s-text>}
                           {summary.date_needed&&
-                            <> · Needed by {customOrderDateOnly(summary.date_needed)}</>}
+                            <s-text color="subdued">
+                              Needed by {customOrderDateOnly(summary.date_needed)}
+                            </s-text>}
                           {summary.fulfillment&&
-                            <> · {customOrderFulfillment(summary.fulfillment)}</>}
-                        </s-text>}
+                            <s-text color="subdued">
+                              {customOrderFulfillment(summary.fulfillment)}
+                            </s-text>}
+                        </s-stack>}
                       {firstEvent && <s-text color="subdued">Requested {customOrderDateTime(firstEvent.occurred_at)}</s-text>}
                     </s-stack>
                     <s-badge tone={current.tone}>{current.label}</s-badge>
