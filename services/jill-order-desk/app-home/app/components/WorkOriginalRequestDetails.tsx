@@ -96,9 +96,9 @@ export function WorkOrderDetailsContent({model,submissionId,stacked=false}:{mode
             ...details.request_attributes].filter(attribute=>attribute.id!=="order_type")}/>
         </div>
       </div>
-      {stacked&&<div className="jill-request__original-items"
-        aria-label="Verified requested items and personalization">
+      {stacked&&<section aria-label="Verified requested items and personalization">
         <h4>Requested items ({details.items.length})</h4>
+        <div className="jill-request__original-items">
         {details.items.map((item,i)=>
           <article key={item.item_id} className="jill-request__original-item">
             <div className="jill-request__item-header">
@@ -141,7 +141,8 @@ export function WorkOrderDetailsContent({model,submissionId,stacked=false}:{mode
                 Secure previews are not available here.
               </p>}
           </article>)}
-      </div>}
+        </div>
+      </section>}
     </>;
 }
 export function WorkOrderDetails({model,submissionId}:{model:Model|undefined;submissionId:string}){
