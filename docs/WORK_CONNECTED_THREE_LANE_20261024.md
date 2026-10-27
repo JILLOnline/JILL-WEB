@@ -1,5 +1,30 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — quote Save/Reload revision fencing in source integration
+
+The HQ quote worksheet now has a pure, guarded readback policy in
+**draft #180** (exact SHA `f2dc1528a3a1897770a8b6c88cc444082a264828`).
+It is joined in a disposable worktree to the unchanged signed
+My JILL **draft #178** (`11477272445e6d0081532c46dd8bc0877db5a055`).
+All source pins are exact and checked before merge.
+
+After Owner Save acknowledges draft revision N, no stale Reload with
+revision less than N can silently overwrite the quote or unlock a
+new Save. A different revision must be explicitly reloaded by the
+merchant; unverified reads and missing records after an acknowledgment
+fail closed. Unsaved edits are preserved on background reads, and
+an explicitly chosen, independently verified newer draft can be
+restored. Existing D1 CAS/source SHA, authenticated Owner checks,
+feature-OFF gating, Shopify quote-readiness preflight, client
+operation ID and no automatic retry remain unchanged.
+
+These are simulated state-transition/source tests, NOT a live
+WORK D1 Save → Leave → Reload acceptance or customer quote publication.
+A green run may not activate `JILL_WORK_HQ_QUOTE_DRAFTS_ENABLED`,
+issue a Shopify order, send an invoice, accept customer consent, or
+change LIVE/KEEP. Require fresh Owner/Cloudflare D1/runtime version,
+rollback/usage proof and distinct written release authorization.
+
 ## October 26 — connected Shopify WORK read-only provider evidence
 
 Read-only Shopify account and Admin GraphQL reads independently verified that the
