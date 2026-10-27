@@ -66,6 +66,17 @@ assert.deepEqual(searchVerifiedMyJillOrders(summary,[...signedOrders.slice(0,7),
 assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'weird','tote'),[]);
 assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','x'.repeat(81)),[]);
 assert.equal(Object.isFrozen(searchVerifiedMyJillOrders(summary,signedOrders,'all','tote')),true);
+// A previously selected product filter can hide a later Home deep-link.
+// After *signed ownership verification*, clearing both UI filters restores it.
+const target=id(7);
+assert.equal(searchVerifiedMyJillOrders(summary,signedOrders,'active','hoodie')
+ .includes(target),false);
+assert.equal(searchVerifiedMyJillOrders(summary,signedOrders,'all','')
+ .includes(target),true);
+const unowned='jill:foreign:99999999';
+assert.equal(summary.all_ids.includes(unowned),false);
+assert.equal(searchVerifiedMyJillOrders(summary,signedOrders,'all','')
+ .includes(unowned),false);
 assert.equal(projectMyJillOrderActivity([]).total,0);
 const ties=projectMyJillOrderActivity([
  row(1,'received',5),row(2,'completed',5),
@@ -123,7 +134,9 @@ assert.match(page,/awaiting approval/);
 assert.match(page,/marked ready for pickup/);
 assert.match(page,/Counts reflect confirmed request statuses/);
 assert.match(page,/orders\.some\(order=>order\.submission_id===requestedSubmissionId\)/);
-assert.match(page,/if\(ownedTarget\)setFilter\('all'\)/);
+assert.match(page,/if\(ownedTarget\)\{\s*setFilter\('all'\);\s*setSearchQuery\(''\);\s*\}/);
+assert.match(page,/orders\.some\(order=>order\.submission_id===requestedSubmissionId\)/);
+assert.match(page,/setExpandedIds\(ownedTarget\?\{\[ownedTarget\]:true\}:\{\}\)/);
 assert.match(page,/\[attempt,requestedSubmissionId\]/);
 assert.match(recent,/onNavigate\('custom-orders',\{/);
 assert.match(hub,/customOrderTarget,setCustomOrderTarget/);
