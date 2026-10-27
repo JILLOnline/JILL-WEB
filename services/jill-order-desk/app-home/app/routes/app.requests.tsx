@@ -116,7 +116,11 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
     const next=!detailsOpen;
     setDetailsOpen(next);
     if(!next)return;
-    if(requestedId.current!==item.submission_id){
+    // A failed background detail read must not permanently poison this row.
+    // The merchant can reopen it to retry the same exact-ID signed route;
+    // successful authorized reads remain unchanged and are not duplicated.
+    if(requestedId.current!==item.submission_id||
+      (orderDetails.state==="idle"&&orderDetails.data?.state==="source_unavailable")){
       requestedId.current=item.submission_id;
       orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
     }
@@ -144,7 +148,9 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       <span className="jill-inbox__cell jill-inbox__cell--customer" data-label="Customer">
         {customerName
           ?<span className="jill-inbox__customer-name" title={customerName}>{customerName}</span>
-          :<span className="jill-inbox__customer-unverified">Name unavailable</span>}
+          :<span className="jill-inbox__customer-unverified">
+            {orderDetails.state!=="idle"?"Checking name…":"Name unavailable"}
+          </span>}
       </span>
       <span className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
         <span className="jill-inbox__request-id">
@@ -200,10 +206,21 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
             Open full request <span aria-hidden="true">→</span>
           </Link>
         </div>
-        {orderDetails.state!=="idle"||!orderDetails.data
-          ?<p role="status">Loading order details…</p>
-          :<WorkOrderDetailsContent model={orderDetails.data}
-            submissionId={item.submission_id} stacked/>}
+        {orderDetails.state!=="idle"
+          ?<p role="status">Checking verified request details…</p>
+          :orderDetails.data
+            ?<WorkOrderDetailsContent model={orderDetails.data}
+              submissionId={item.submission_id} stacked/>
+            :<p role="status">Request details could not be loaded yet.</p>}
+        {orderDetails.state==="idle"&&
+          (!orderDetails.data||orderDetails.data.state==="source_unavailable")&&
+          <button type="button" className="jill-button jill-button--quiet"
+            onClick={()=>{
+              requestedId.current=item.submission_id;
+              orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+            }}>
+            Retry verified details
+          </button>}
       </>:null}
     </section>
   </article>;
