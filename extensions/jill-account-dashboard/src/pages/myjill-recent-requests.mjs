@@ -26,7 +26,7 @@ export function projectMyJillRecentRequests(orders,{limit=3}={}){
   const needed=row.summary.date_needed;
   const method=row.summary.fulfillment;
   if(needed!==undefined&&(typeof needed!=='string'||
-    (needed!==''&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(needed)))||
+    (needed!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(needed)))||
     method!==undefined&&!['','pickup','shipping'].includes(method))
     throw Error('myjill_recent_requests_unverified');
   seen.add(row.submission_id);
