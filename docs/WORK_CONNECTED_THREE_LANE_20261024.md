@@ -1,5 +1,12 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — exact recovery UX follow-up (source QA only)
+
+- HQ #168 exact reviewed source `c86f286a6457a4fefaf70f76485148bd0867147a`: on the established Owner-scoped request row, a failed/empty details fetch no longer leaves an endless loading indicator; same signed exact-ID route may be retried. Row accordion and two direct actions remain.
+- My JILL #169 exact reviewed source `53c92371522bbad5ef1d5452d68f48cbe898d4ab`: a navigation hint from verified Recent Requests/Custom Orders clears the prior inbox folder filter so a finished owned conversation can open; the reader still verifies the exact account before selecting.
+- This ephemeral rehearsal rejects either moved head before merging, keeps the prior #167 verified source ledger intact, reruns synthetic customer A/B/guest, quote/Contact/message tests, the focused HQ retry and My JILL filter/deep-link regression, and HQ compile/bundle.
+- **No WORK provider session or deployment happened.** Live account/browser presentation, actual Owner detail error recovery, current flags, Cloudflare/Shopify QA, payments, sends, data migration, LIVE and KEEP remain independent approval gates.
+
 ## October 26 — independent HQ + My JILL increments joined (new draft)
 
 **Source-only, pinned multi-branch rehearsal; NO release.**
