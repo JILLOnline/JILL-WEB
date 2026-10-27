@@ -7,6 +7,13 @@ const VALID_ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const isValidDate=value=>typeof value==='string'&&
  value.length<=40&&Number.isFinite(Date.parse(value))&&
  /^\d{4}-\d{2}-\d{2}T/.test(value);
+// Only canonical public request states can produce a Home attention item.
+// Awaiting approval here is an INFORMATIONAL status, never a live consent
+// button, bill, or Shopify payment instruction.
+const FOCUS_PRIORITY=Object.freeze({
+ on_hold:0,ready_pickup:1,awaiting_approval:2,
+});
+
 export function projectMyJillRecentRequests(orders,{limit=3}={}){
  if(!Array.isArray(orders)||orders.length>20||
   !Number.isSafeInteger(limit)||limit<1||limit>5)
@@ -44,8 +51,16 @@ export function projectMyJillRecentRequests(orders,{limit=3}={}){
  });
  sorted.sort((a,b)=>b.updated_at_ms-a.updated_at_ms||
   a.submission_id.localeCompare(b.submission_id));
+ // Find the most relevant verified active request, even if it is older
+ // than the three recent cards. Read-only navigation still re-verifies ID.
+ const focus=sorted.filter(row=>Object.hasOwn(FOCUS_PRIORITY,row.status))
+  .sort((a,b)=>FOCUS_PRIORITY[a.status]-FOCUS_PRIORITY[b.status]||
+    b.updated_at_ms-a.updated_at_ms||a.submission_id.localeCompare(b.submission_id))[0];
  return Object.freeze({
   total:sorted.length,
+  focus:focus?Object.freeze({
+   submission_id:focus.submission_id,status:focus.status,
+  }):null,
   recent:Object.freeze(sorted.slice(0,limit).map(({updated_at_ms,...rest})=>
    Object.freeze(rest))),
  });
