@@ -109,7 +109,10 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
         orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
       });
     };
-    if(typeof IntersectionObserver==="undefined"){loadName();return;}
+    if(typeof IntersectionObserver==="undefined"){
+      loadName();
+      return ()=>{namePrefetch.current?.cancel();namePrefetch.current=null;};
+    }
     const observer=new IntersectionObserver(entries=>{
       if(entries.some(entry=>entry.isIntersecting)){
         observer.disconnect();
