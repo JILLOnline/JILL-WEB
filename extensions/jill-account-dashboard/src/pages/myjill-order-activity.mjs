@@ -45,6 +45,35 @@ export function projectMyJillOrderActivity(orders){
   finished_ids:Object.freeze(rows.filter(x=>FINISHED.has(x.status)).map(x=>x.id)),
  });
 }
+// Local search over ONLY the already authenticated, status-verified order
+// projection. No new Shopify fetch, email matching, notes or guest claim.
+// We return canonical IDs in the original verified sort order, never PII.
+export function searchVerifiedMyJillOrders(activity,orders,filter,query=''){
+ const ids=selectMyJillOrderIds(activity,filter);
+ if(!Array.isArray(activity?.all_ids)||!Array.isArray(orders)||
+    orders.length>20||orders.length!==activity.all_ids.length||
+    typeof query!=='string'||query.length>80||
+    !['all','active','finished'].includes(filter))return Object.freeze([]);
+ const all=new Set(activity.all_ids);
+ const byId=new Map();
+ for(const order of orders){
+  const id=order?.submission_id;
+  if(typeof id!=='string'||!ID.test(id)||!all.has(id)||
+     byId.has(id)||!Array.isArray(order?.summary?.items)||
+     order.summary.items.length>20)return Object.freeze([]);
+  byId.set(id,order);
+ }
+ if(byId.size!==all.size)return Object.freeze([]);
+ const needle=query.trim().toLocaleLowerCase('en-US').replace(/^#/,'');
+ if(!needle)return ids;
+ return Object.freeze(ids.filter(id=>{
+  const items=byId.get(id).summary.items;
+  return id.toLocaleLowerCase('en-US').includes(needle)||
+    items.some(item=>typeof item?.title==='string'&&
+      item.title.toLocaleLowerCase('en-US').includes(needle));
+ }));
+}
+
 export function selectMyJillOrderIds(activity,filter='all'){
  if(!activity||typeof activity!=='object'||
    !['all','active','finished'].includes(filter))
