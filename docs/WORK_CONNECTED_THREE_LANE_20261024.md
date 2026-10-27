@@ -1,5 +1,12 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — one-time quote response processing + signed customer search
+
+- **HQ draft #185** pinned to `01e49d0e36153b539e135ce4e8391f49ab893688`: the Owner quote worksheet consumes each specific completed Save and Reload `useFetcher` data result only once. A later signed-detail prop/rerender cannot reapply a retained response, clear a newer HOLD or overwrite unsaved prices. New results still pass the earlier explicit revision/ACK/state, D1 CAS and authentication gates. This is a frontend response identity guard, not a remote idempotency guarantee.
+- **My JILL draft #186** pinned to `8194a8a73d730f0584f80e56eac3646247e21e29`: a mobile-friendly Custom Orders input searches by signed request reference or item title within the existing bounded, authorized Customer Account request list; composes with active/finished filters, not a separate search API or historical guest claim. Foreign/duplicate IDs and oversized terms yield no selection. No searches of email, names, notes, private messages or receipts.
+- Independent source tests, privacy, existing Catalog/quote/Contact/Rewards/Message contracts, HQ TS/UI bundle and Worker entrypoint all run in a disposable exact SHA-pinned source rehearsal. No remote code merge.
+- **HOLD:** Real authenticated WORK Owner Save→Leave→Reload, 20-run HQ latency, My JILL Customer A/B/guest mobile interaction/Shopify Account extension version, D1/Cloudflare source/flags, actual two-way sends, customer quote approval, Shopify draft/invoice/order/payments, paid usage, LIVE/KEEP. No signed owner/browser or deployed version acceptance is inferred from CI.
+
 ## October 26 — independent merchant recovery + customer request truth
 
 Source-only follow-up to the green readback revision guard:
