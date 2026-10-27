@@ -1,6 +1,8 @@
 import {Form,Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {handleWorkCatalogRead} from "../../../work-catalog-read.mjs";
+import {describeWorkCatalogProductInventory}
+  from "../../../work-catalog-stock-label.mjs";
 import "../styles/inbox.css";
 import "../styles/request-detail.css";
 import "../styles/hq-catalog.css";
@@ -20,6 +22,10 @@ type Record={id:string;title:string;status?:string;admin_url:string;
 type Catalog={state:string;as_of?:string;next_cursor?:string;
   view?:string;search?:string;currency?:string;records?:Record[]};
 const viewOptions=["products","collections","inventory","locations"] as const;
+function ProductStock({reported}:{reported:number|null|undefined}){
+  const stock=describeWorkCatalogProductInventory(reported);
+  return <><strong>{stock.label}</strong><small>{stock.detail}</small></>;
+}
 function price(value:string,currency:string){
   // Preserve Shopify-provided amount; never convert currencies client-side.
   return value+" "+currency;
@@ -81,7 +87,7 @@ export default function Catalog(){
         </p>}
         {view==="products"?<div className="jill-catalog__table">
           <div className="jill-catalog__columns" aria-hidden="true">
-            <span>Product</span><span>Status</span><span>Shopify stock</span>
+            <span>Product</span><span>Status</span><span>Shopify product inventory report</span>
             <span>Variants / price / SKU</span><span>Manage</span>
           </div>
           {records.length===0?<p className="jill-catalog__empty">
@@ -98,10 +104,8 @@ export default function Catalog(){
               <span className={"jill-catalog__status jill-catalog__status--"+
                 (product.status||"UNKNOWN").toLowerCase()}>{product.status||"Unknown"}</span>
             </div>
-            <div className="jill-catalog__cell" data-label="Shopify stock">
-              {product.total_inventory===null||product.total_inventory===undefined
-                ?"Unknown":product.total_inventory+" total"}
-              <small>Not custom-order capacity</small>
+            <div className="jill-catalog__cell" data-label="Shopify inventory report">
+              <ProductStock reported={product.total_inventory}/>
             </div>
             <div className="jill-catalog__cell jill-catalog__variants" data-label="Variants">
               {product.variants?.map(variant=><div key={variant.id}>
@@ -123,9 +127,9 @@ export default function Catalog(){
             <article className="jill-catalog__collection" key={entry.id}>
               <h3>{entry.product_title?entry.product_title+" · ":""}{entry.title}</h3>
               {entry.active!==undefined&&<p>{entry.active?"Active location":"Inactive location"}</p>}
-              {entry.tracked===false&&<p>Inventory tracking is off. Stock is unknown.</p>}
+              {entry.tracked===false&&<p>Not tracked / quantity unknown. No out-of-stock conclusion.</p>}
               {entry.locations&&<ul>{entry.locations.map(location=><li key={location.id}>
-                {location.name}: {location.available===null?"Not tracked":location.available+" available"}
+                {location.name}: {location.available===null?"Not tracked / quantity unknown":location.available+" available"}
               </li>)}</ul>}
               {entry.tracked===true&&entry.locations?.length===0&&<p>No stocking locations returned.</p>}
               {entry.locations_truncated&&<p>More locations are available in Shopify Admin.</p>}
