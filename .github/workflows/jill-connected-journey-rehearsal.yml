@@ -11,6 +11,7 @@ on:
       - jill/connected-journey-three-lane-20261024
       - jill/connected-journey-pinned-rehearsal-20261026
       - jill/connected-journey-account-retry-20261026
+      - jill/connected-journey-independent-polish-20261026
     paths:
       - '.github/workflows/jill-connected-journey-rehearsal.yml'
       - 'scripts/test-work-connected-three-surface-contract.mjs'
@@ -60,21 +61,21 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --no-tags origin \
-            refs/heads/jill/myjill-message-filter-20261026:refs/remotes/origin/jill/myjill-message-filter-20261026 \
-            refs/heads/jill/hq-catalog-stock-truth-20261026:refs/remotes/origin/jill/hq-catalog-stock-truth-20261026
+            refs/heads/jill/myjill-deeplink-inbox-selection-20261026:refs/remotes/origin/jill/myjill-deeplink-inbox-selection-20261026 \
+            refs/heads/jill/hq-request-detail-recovery-20261026:refs/remotes/origin/jill/hq-request-detail-recovery-20261026
           echo 'Three remote SOURCE references fetched; no release configuration changed.'
       - name: Rehearse three-way WORK source integration; deny unresolved conflicts
         shell: bash
         run: |
           set -euo pipefail
-          MY_SHA="$(git rev-parse refs/remotes/origin/jill/myjill-message-filter-20261026)"
-          VIS_SHA="$(git rev-parse refs/remotes/origin/jill/hq-catalog-stock-truth-20261026)"
+          MY_SHA="$(git rev-parse refs/remotes/origin/jill/myjill-deeplink-inbox-selection-20261026)"
+          VIS_SHA="$(git rev-parse refs/remotes/origin/jill/hq-request-detail-recovery-20261026)"
           # Immutable source provenance: a successful rehearsal must mean
           # THESE EXACT reviewed lane commits were merged, not moving HEADs.
           # A new draft commit intentionally produces HOLD until reviewed
           # and both pins are explicitly updated in a separate source PR.
-          EXPECTED_MY_SHA="54c03aa6982d881365ec9093115075e0f7bee01f"
-          EXPECTED_VIS_SHA="3641d156a6b8b1d63e7af86f25dc10fb968d5c91"
+          EXPECTED_MY_SHA="53c92371522bbad5ef1d5452d68f48cbe898d4ab"
+          EXPECTED_VIS_SHA="c86f286a6457a4fefaf70f76485148bd0867147a"
           if [[ "$MY_SHA" != "$EXPECTED_MY_SHA" || "$VIS_SHA" != "$EXPECTED_VIS_SHA" ]]; then
             echo 'HOLD: My JILL/HQ visuals draft moved since reviewed integration source.'
             echo 'Review the changed lane before intentionally updating both source pins.'
@@ -148,6 +149,7 @@ jobs:
           node --no-warnings scripts/test-work-quote-http-sqlite-roundtrip.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node scripts/test-work-catalog-stock-label.mjs
+          node scripts/test-work-hq-request-detail-recovery.mjs
           echo 'JOINED_SYNTHETIC_CUSTOMER_A_B_GUEST_CHECKS=passed'
       - name: Install WORK HQ dependencies for offline compile only
         shell: bash
