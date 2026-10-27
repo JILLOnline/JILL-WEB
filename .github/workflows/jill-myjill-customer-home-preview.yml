@@ -5,7 +5,10 @@ on:
   push:
     branches:
       - jill/myjill-message-handoff-preview-20261022
+      - jill/myjill-message-filter-20261026
   pull_request:
+    branches:
+      - jill/myjill-identity-retry-20261026
     paths:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/Overview.jsx'
@@ -30,6 +33,7 @@ on:
       - 'scripts/test-myjill-account-switch-fence.mjs'
       - 'scripts/test-myjill-mobile-inbox.mjs'
       - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
+      - 'shared/customer-message-selection.mjs'
       - 'shared/myjill-account-scope.mjs'
       - 'shared/customer-account-api.mjs'
       - 'extensions/jill-account-dashboard/src/hub/ConnectedHub.jsx'
