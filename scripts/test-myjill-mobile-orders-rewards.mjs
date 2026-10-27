@@ -5,6 +5,8 @@ import {readFileSync} from 'node:fs';
 import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,
  selectMyJillOrderIds}
  from '../extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs';
+import {customOrderRequestedQuantity}
+ from '../extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs';
 
 const ROOT='extensions/jill-account-dashboard/src/';
 const id=n=>'jill:fixture:request:'+String(n).padStart(8,'0');
@@ -19,6 +21,15 @@ const orders=[
  row(4,'in_production'),row(5,'ready_pickup'),row(6,'on_hold'),
  row(7,'completed'),row(8,'cancelled'),
 ];
+assert.equal(customOrderRequestedQuantity({items:[{quantity:1},{quantity:4}]}),5);
+assert.equal(customOrderRequestedQuantity({items:[{quantity:999}]}),999);
+assert.equal(customOrderRequestedQuantity({items:[]}),null);
+assert.equal(customOrderRequestedQuantity({items:[{quantity:0}]}),null);
+assert.equal(customOrderRequestedQuantity({items:[{quantity:'2'}]}),null);
+assert.equal(customOrderRequestedQuantity({items:[{quantity:1.5}]}),null);
+assert.equal(customOrderRequestedQuantity({items:[{quantity:1000}]}),null);
+assert.equal(customOrderRequestedQuantity(null),null);
+assert.equal(customOrderRequestedQuantity({items:Array(21).fill({quantity:1})}),null);
 const summary=projectMyJillOrderActivity(orders);
 assert.equal(summary.total,8);
 assert.equal(summary.active,6);
@@ -68,6 +79,12 @@ assert.match(page,/projectMyJillOrderActivity\(orders\)/);
 assert.match(page,/selectMyJillOrderIds\(state\.activity,filter\)/);
 assert.match(page,/visibleOrders\.map\(\(order\)=>/);
 assert.match(page,/View tracking & details/);
+assert.match(page,/customOrderRequestedQuantity\(summary\)/);
+assert.match(page,/\{summary\.items\.length\} \{summary\.items\.length===1\?'item type':'item types'\}/);
+assert.match(page,/Qty \{requestedQuantity\}/);
+assert.match(page,/Needed by \{customOrderDateOnly\(summary\.date_needed\)\}/);
+assert.match(page,/customOrderFulfillment\(summary\.fulfillment\)/);
+assert.match(page,/requestedQuantity!==null/);
 assert.match(page,/Hide tracking & details/);
 assert.match(page,/expandedIds\[order\.submission_id\] &&/);
 assert.match(page,/RequestConversation order=\{order\}/);
@@ -102,4 +119,4 @@ assert.doesNotMatch(page+rewards+home+hub,
 /localStorage|sessionStorage|document\.cookie|logged_in_customer_id/);
 assert.ok(canary.includes("'custom-order-presentation.mjs'"));
 assert.ok(canary.includes("'myjill-order-activity.mjs'"));
-console.log('PASS: Mobile-first My JILL orders and rewards: canonical status-only counts, stable filters, signed exact request targeting, expandable histories, one-column cards and untouched Rewards redemption.');
+console.log('PASS: Mobile-first My JILL verified quantity/date/fulfillment, orders and rewards: canonical status-only counts, stable filters, signed exact request targeting, expandable histories, one-column cards and untouched Rewards redemption.');
