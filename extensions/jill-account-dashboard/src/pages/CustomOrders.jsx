@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'preact/hooks';
 import {loadWorkCustomerConversationState} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
-import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,selectMyJillOrderIds}
+import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,searchVerifiedMyJillOrders}
  from './myjill-order-activity.mjs';
 import {retainOwnedMessageDrafts,updateOwnedMessageDraft} from '../../../../shared/customer-message-selection.mjs';
 import {
@@ -16,6 +16,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[],activity:null,replyEnabled:false});
   const [filter,setFilter]=useState('all');
+  const [searchQuery,setSearchQuery]=useState('');
   const [expandedIds,setExpandedIds]=useState({});
   const [refreshing,setRefreshing]=useState(false);
 
@@ -56,7 +57,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
   },[attempt,requestedSubmissionId]);
 
   const loading=state.status==='loading';
-  const ids=selectMyJillOrderIds(state.activity,filter);
+  const ids=searchVerifiedMyJillOrders(state.activity,state.orders,filter,searchQuery);
   const byId=new Map(state.orders.map(order=>[order.submission_id,order]));
   const visibleOrders=ids.map(id=>byId.get(id)).filter(Boolean);
   return (
@@ -121,6 +122,16 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                 </s-text>
               </s-stack>
             </s-box>
+            <s-stack direction="inline" gap="small-200" alignItems="end">
+              <s-text-field label="Find a Custom Order"
+                value={searchQuery} maxLength={80}
+                onInput={event=>setSearchQuery(event.currentTarget.value)}
+                placeholder="Item name or request number"/>
+              {Boolean(searchQuery)&&
+                <s-button variant="secondary" onClick={()=>setSearchQuery('')}>
+                  Clear search
+                </s-button>}
+            </s-stack>
             <s-select label="Show Custom Orders" value={filter}
               onChange={event=>setFilter(event.currentTarget.value)}>
               {MYJILL_ORDER_FILTERS.map(option=>
@@ -130,7 +141,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
             </s-select>
             {visibleOrders.length===0 && state.orders.length>0 &&
               <s-box padding="base" background="subdued" borderRadius="large">
-                <s-text>No verified Custom Orders match this filter.</s-text>
+                <s-text>No verified Custom Orders match your search or filter.</s-text>
               </s-box>}
           </s-stack>}
           {visibleOrders.map((order)=> {
