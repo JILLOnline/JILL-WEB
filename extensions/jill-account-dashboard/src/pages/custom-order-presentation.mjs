@@ -65,6 +65,20 @@ export function customOrderStatus(status) {
   };
 }
 
+// Presentation-only count from the already signed, bounded customer summary.
+// Never derive quantities from the Shopify Orders API or a guessed SKU.
+export function customOrderRequestedQuantity(summary) {
+  if(!Array.isArray(summary?.items)||summary.items.length<1||
+     summary.items.length>20)return null;
+  let total=0;
+  for(const item of summary.items) {
+    if(!Number.isSafeInteger(item?.quantity)||item.quantity<1||
+       item.quantity>999)return null;
+    total+=item.quantity;
+  }
+  return total;
+}
+
 export function customOrderTitle(summary) {
   const items=Array.isArray(summary?.items) ? summary.items : [];
   if (!items.length) return 'Personalized Custom Order';
