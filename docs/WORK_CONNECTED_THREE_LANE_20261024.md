@@ -1,5 +1,14 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — HQ item preview + My JILL order summary (source only)
+
+These two **independent** UI increments implement existing master plan #152 / HQ #163 / My JILL #164 commitments without new data sources.
+
+- HQ draft #171 pinned to `52ec09aee09e4e9fa071eeb6f65d106a65bf8e20`: the previously verified exact-ID Owner request detail now renders requested item titles/quantities, selected variation quantities, item options and expandable P1/P2 personalization within the existing row accordion. It does not display raw reference IDs or media URLs, alter the original full-detail page, staff rights, Messages/Status actions or business writes.
+- My JILL draft #172 pinned to `7e1513ac53dbdb389d70fb60af3fa328327a9ba4`: original signed Customer Account Custom Order cards show item-line count, total requested quantity, needed-by calendar date and chosen pickup/shipping when verified. This does not imply an invoice, payment, confirmed shipping or delivery ETA.
+- Same isolated source-join workflow **fails closed on either source drift**, runs signed projection privacy/guest A/B/Contact/message/quote/Rewards/Catalog synthetic checks, both focused UI tests and HQ typecheck/build. No remote branch merge.
+- Historical PR #167 and PR #170 source receipts remain separate evidence. **CI is not a WORK provider/browser acceptance**: exact Shopify app version/UIDs, Cloudflare headroom and current bindings, actual owner/customer permissions, phone/desktop visuals, D1 migrations, message sends, quote approval and commerce are all HOLD.
+
 ## October 26 — exact recovery UX follow-up (source QA only)
 
 - HQ #168 exact reviewed source `c86f286a6457a4fefaf70f76485148bd0867147a`: on the established Owner-scoped request row, a failed/empty details fetch no longer leaves an endless loading indicator; same signed exact-ID route may be retried. Row accordion and two direct actions remain.
