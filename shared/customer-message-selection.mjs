@@ -14,6 +14,31 @@ const validIds=records=>{
  }
  return ids;
 };
+// Presentation-only Inbox filter. The authenticated Custom Order reader
+// determines ownership; filters NEVER authorize an ID or query another store.
+export const MYJILL_MESSAGE_FILTERS=Object.freeze([
+ Object.freeze({id:'all',label:'All conversations'}),
+ Object.freeze({id:'active',label:'Active requests'}),
+ Object.freeze({id:'finished',label:'Finished requests'}),
+]);
+const FINISHED_MESSAGES=new Set(['completed','cancelled']);
+const ACTIVE_MESSAGES=new Set(['received','reviewing','awaiting_approval',
+ 'in_production','ready_pickup','on_hold']);
+export function filterOwnedMessageThreads(inbox,filter='all'){
+ const owned=validIds(inbox);
+ if(!owned||!MYJILL_MESSAGE_FILTERS.some(option=>option.id===filter))
+  return Object.freeze([]);
+ // Reject a malformed or unsupported status for the WHOLE projection;
+ // never claim a thread is finished, paid, delivered, or unread.
+ if(inbox.some(item=>!object(item)||
+   !FINISHED_MESSAGES.has(item.status)&&!ACTIVE_MESSAGES.has(item.status)))
+  return Object.freeze([]);
+ return Object.freeze(inbox.filter(item=>filter==='all'||
+   (filter==='finished'
+     ?FINISHED_MESSAGES.has(item.status)
+     :ACTIVE_MESSAGES.has(item.status))));
+}
+
 export function selectOwnedMessageRequest(inbox,{requestedId=null,previousId=null}={}){
  const owned=validIds(inbox);
  if(!owned)return null;
