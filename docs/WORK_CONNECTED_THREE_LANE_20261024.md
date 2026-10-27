@@ -1,5 +1,35 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 27 — source-only quote Save single-flight + signed deep-link search reset
+
+These two independent product increments build on the earlier green
+drafts #185 and #186; they are **not published to WORK**.
+
+- **HQ draft #188** pinned `49bb87db467d2455f2ffe5f093e2c23d9488d841`:
+  a quote Save click synchronously reserves one in-memory operation lease
+  immediately before the existing signed D1 POST, preventing repeated
+  rapid button clicks while React Router is still updating the disabled
+  state. An acknowledged or ambiguous server response retains HOLD;
+  only the separately verified signed draft readback releases the lease
+  for another Save. Deterministic pure tests simulate 50 clicks. No
+  new endpoint, automatic retry, Shopify draft, invoice or payment.
+- **My JILL draft #189** pinned `a93f601e2864028c7e9671a946e3bdac7c553282`:
+  after a freshly signed Shopify Customer Account response confirms
+  an explicit request deep link belongs to the customer, the Custom
+  Orders page clears *both* the previous status filter and text
+  search so the correct card is actually visible. Unverified/foreign
+  request hints are never granted access; no new account read.
+- Rehearsal checks exact source SHA pins before ephemeral merging and
+  reruns the HQ Save lease/revision tests, signed My JILL search,
+  A/B/guest/privacy, messaging/Contact/quote/Catalog/Rewards,
+  HQ typecheck, UI and Worker builds. Keep all prior source
+  receipts separately; no remote merge.
+- **Runtime HOLD:** real authenticated Owner WORK D1
+  Save→Leave→Reload, current Cloudflare app/Worker/D1 version,
+  Customer A/B/guest browser/mobile, verified messaging,
+  Shopify quote approval/order/invoice/payment and rollback/free
+  budget proof. LIVE and KEEP unchanged.
+
 ## October 26 — one-time quote response processing + signed customer search
 
 - **HQ draft #185** pinned to `01e49d0e36153b539e135ce4e8391f49ab893688`: the Owner quote worksheet consumes each specific completed Save and Reload `useFetcher` data result only once. A later signed-detail prop/rerender cannot reapply a retained response, clear a newer HOLD or overwrite unsaved prices. New results still pass the earlier explicit revision/ACK/state, D1 CAS and authentication gates. This is a frontend response identity guard, not a remote idempotency guarantee.
