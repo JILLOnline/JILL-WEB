@@ -11,6 +11,8 @@ import {hydrateVerifiedWorkQuoteWorksheet}
   from "../../../work-quote-restore-model.mjs";
 import {inspectWorkQuoteReload}
   from "../../../work-quote-readback-policy.mjs";
+import {createWorkQuoteSaveFlight}
+  from "../../../work-quote-save-flight.mjs";
 import {describeWorkQuoteReadbackHold,describeWorkQuoteSaveFailure}
   from "../../../work-quote-recovery-guidance.mjs";
 import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
@@ -146,7 +148,7 @@ export function WorkQuoteWorksheet({
   // The first click reserves this quote's operation synchronously, before
   // React Router marks useFetcher busy. Keep it reserved after an uncertain
   // response until independently verified saved-draft readback.
-  const saveFlightReserved=useRef(false);
+  const saveFlight=useRef(createWorkQuoteSaveFlight());
   // Never let a cached/slow GET from before Save unlock a later revision.
   const acknowledgedRevision=useRef<number|null>(null);
   const initialReadStarted=useRef(false);
@@ -221,7 +223,7 @@ export function WorkQuoteWorksheet({
       setDraftRevision(projection.draftRevision);
       setRestoredActive(true);
       setBlocked(false);
-      saveFlightReserved.current=false;
+      saveFlight.current.verifiedRelease();
       operation.current=null;
       setFeedback("Verified draft revision "+
         projection.draftRevision+" restored.");
@@ -278,12 +280,12 @@ export function WorkQuoteWorksheet({
   // but must NOT disable the independent Owner/D1 Reload recovery path.
   const canReloadDraft=saveDraftEnabled===true&&verifiedSource&&
     detail!==null&&!locked&&!busy;
-  const canSaveDraft=canReloadDraft&&!blocked&&!saveFlightReserved.current;
+  const canSaveDraft=canReloadDraft&&!blocked&&!saveFlight.current.isReserved();
   const onSaveDraft=()=>{
     // The disabled button is render-state and may lag behind rapid clicks.
     // Reserve synchronously, never issue a second POST for this quote while
     // its original operation has not been independently reconciled.
-    if(!canSaveDraft||!readyQuote||saveFlightReserved.current)return;
+    if(!canSaveDraft||!readyQuote||saveFlight.current.isReserved())return;
     const op=operation.current??"jill:hq:quote:"+crypto.randomUUID();
     const intent=prepareWorkQuoteUiSavePayload({
       submissionId,detail,sourceRevision,customerStatus,
@@ -294,7 +296,7 @@ export function WorkQuoteWorksheet({
         "verified request revision agree.");
       return;
     }
-    saveFlightReserved.current=true;
+    if(!saveFlight.current.reserve())return;
     setBlocked(true);
     operation.current=op;
     saveFetcher.submit(intent.payload,{
