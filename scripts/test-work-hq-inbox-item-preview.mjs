@@ -11,7 +11,8 @@ assert.ok(from>=0&&to>from,'Expected verified Owner detail content component');
 const card=source.slice(from,to);
 assert.match(card,/const details=verifiedDetails\(model,submissionId\)/,
  'Inbox cannot use an unverified or wrong submission detail');
-assert.match(card,/\{stacked&&<div className="jill-request__original-items"/);
+assert.match(card,/\{stacked&&<section aria-label="Verified requested items and personalization"/);
+assert.match(card,/<h4>Requested items \(\{details\.items\.length\}\)<\/h4>\s*<div className="jill-request__original-items"/);
 assert.match(card,/aria-label="Verified requested items and personalization"/);
 assert.match(card,/Requested items \(\{details\.items\.length\}\)/);
 assert.match(card,/details\.items\.map\(\(item,i\)=>/);
