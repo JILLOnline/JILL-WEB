@@ -1,0 +1,21 @@
+// WORK source-only UI recovery regression; no external calls, data or deploy.
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const file='services/jill-order-desk/app-home/app/routes/app.requests.tsx';
+const source=readFileSync(file,'utf8');
+assert.match(source,/requestedId\.current!==item\.submission_id\|\|/);
+assert.match(source,/orderDetails\.state==="idle"&&orderDetails\.data\?\.state==="source_unavailable"/);
+assert.match(source,/orderDetails\.state!=="idle"\?"Checking name…"\:"Name unavailable"/);
+assert.match(source,/orderDetails\.state!=="idle"\s*\?<p role="status">Checking verified request details…<\/p>/);
+assert.match(source,/Request details could not be loaded yet/);
+assert.match(source,/Retry verified details/);
+assert.match(source,/orderDetails\.data\.state==="source_unavailable"/);
+assert.match(source,/orderDetails\.load\("\/app\/requests\/"\+encodeURIComponent\(item\.submission_id\)\)/);
+assert.match(source,/aria-expanded=\{detailsOpen\}/);
+assert.match(source,/aria-controls=\{"jill-inbox-details-"\+requestShortId\(item\.submission_id\)\}/);
+assert.match(source,/WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}/);
+assert.match(source,/direct editorHost=\{editorHost\}/);
+assert.match(source,/Open full request/);
+assert.match(source,/WorkOrderDetailsContent model=\{orderDetails\.data\}/);
+assert.doesNotMatch(source,/localStorage|sessionStorage|metafieldsSet|draftOrderCreate/);
+console.log('PASS HQ exact-ID detail UI: no idle loading trap, signed retry, full-row accordion and direct actions retained.');
