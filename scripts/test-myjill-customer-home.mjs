@@ -18,6 +18,24 @@ const row=(n,status='reviewing')=>({
 });
 const source=[row(1,'received'),row(3,'reviewing'),row(2,'completed')];
 const result=projectMyJillRecentRequests(source);
+const dated=projectMyJillRecentRequests([{
+  ...row(4,'received'),
+  summary:{items:[{title:'Paint-your-own tote',quantity:3},
+    {title:'Brush and paint',quantity:2}],
+    date_needed:'2026-12-15',fulfillment:'pickup'},
+}]);
+assert.deepEqual({
+  requested_quantity:dated.recent[0].requested_quantity,
+  date_needed:dated.recent[0].date_needed,
+  fulfillment:dated.recent[0].fulfillment,
+},{requested_quantity:5,date_needed:'2026-12-15',fulfillment:'pickup'});
+assert.equal(result.recent[0].requested_quantity,1);
+assert.equal(result.recent[0].date_needed,'');
+assert.equal(result.recent[0].fulfillment,'');
+const emptyQuantity=projectMyJillRecentRequests([{
+ ...row(5),summary:{items:[],date_needed:'',fulfillment:''},
+}]);
+assert.equal(emptyQuantity.recent[0].requested_quantity,null);
 assert.equal(result.total,3);
 assert.deepEqual(result.recent.map(x=>x.submission_id),[id(3),id(2),id(1)]);
 assert.equal(result.recent[0].title,'Birthday piñata 3');
@@ -35,6 +53,8 @@ for(const input of [
  [{...row(1),revision:0}],
  [{...row(1),submission_id:'bad'}],
  [{...row(1),summary:{items:'not-verified'}}],
+ [{...row(1),summary:{items:[],date_needed:'12/15/2026'}}],
+ [{...row(1),summary:{items:[],fulfillment:'delivery'}}],
  Array(51).fill(row(1)),
 ]){
  assert.throws(()=>projectMyJillRecentRequests(input),
@@ -71,6 +91,10 @@ assert.match(home,/Coming later/);
 assert.match(home,/points===null\?'Not available'/);
 assert.match(recent,/loadWorkCustomerConversationState\(\{sessionToken,signal:controller\.signal\}\)/);
 assert.match(recent,/projectMyJillRecentRequests\(orders\)/);
+assert.match(recent,/Requested quantity: \{item\.requested_quantity\}/);
+assert.match(recent,/customOrderDateOnly\(item\.date_needed\)/);
+assert.match(recent,/customOrderFulfillment\(item\.fulfillment\)/);
+assert.match(recent,/item\.requested_quantity!==null/);
 assert.match(recent,/onNavigate\('messages',\{/);
 assert.match(recent,/onNavigate\('custom-orders'\)/);
 assert.doesNotMatch(recent,/onDraftsChange|sendWorkCustomerReply|metafieldsSet/);

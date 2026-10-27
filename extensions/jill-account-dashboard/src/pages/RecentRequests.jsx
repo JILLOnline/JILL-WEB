@@ -3,7 +3,8 @@ import {loadWorkCustomerConversationState}
  from '../../../../shared/customer-custom-orders.mjs';
 import {projectMyJillRecentRequests}
  from './myjill-recent-requests.mjs';
-import {customOrderShortId,customOrderStatus,customOrderNextStep,customOrderDateTime}
+import {customOrderShortId,customOrderStatus,customOrderNextStep,customOrderDateTime,
+ customOrderDateOnly,customOrderFulfillment}
  from './custom-order-presentation.mjs';
 
 // Uses exactly the same signed Shopify Customer Account reader as Custom
@@ -77,6 +78,12 @@ export default function RecentRequests({onNavigate}){
        Updated {customOrderDateTime(item.updated_at)}
       </s-text>
      </s-stack>
+     {(item.requested_quantity!==null||item.date_needed||item.fulfillment)&&
+      <s-text color="subdued">
+       {item.requested_quantity!==null&&<>Requested quantity: {item.requested_quantity}</>}
+       {item.date_needed&&<> · Needed by {customOrderDateOnly(item.date_needed)}</>}
+       {item.fulfillment&&<> · {customOrderFulfillment(item.fulfillment)}</>}
+      </s-text>}
      <s-box padding="small-300" background="subdued" borderRadius="base">
       <s-stack direction="block" gap="small-100">
        <s-text>{status.detail}</s-text>

@@ -1,3 +1,5 @@
+import {customOrderRequestedQuantity} from './custom-order-presentation.mjs';
+
 // My JILL: source-only overview projection for already signed Custom Orders.
 // Never infer account identity from email/name, manufacture status counts,
 // or present a failed/partial signed read as "zero requests".
@@ -21,6 +23,12 @@ export function projectMyJillRecentRequests(orders,{limit=3}={}){
     !row.summary||typeof row.summary!=='object'||
     !Array.isArray(row.summary.items)||row.summary.items.length>20)
     throw Error('myjill_recent_requests_unverified');
+  const needed=row.summary.date_needed;
+  const method=row.summary.fulfillment;
+  if(needed!==undefined&&(typeof needed!=='string'||
+    (needed!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(needed)))||
+    method!==undefined&&!['','pickup','shipping'].includes(method))
+    throw Error('myjill_recent_requests_unverified');
   seen.add(row.submission_id);
   const title=row.summary.items.find(item=>
     typeof item?.title==='string'&&item.title.trim().length>0)?.title;
@@ -29,6 +37,8 @@ export function projectMyJillRecentRequests(orders,{limit=3}={}){
    revision:row.revision,status:row.status,
    updated_at:row.updated_at,
    title:typeof title==='string'?title.trim().slice(0,90):'Custom request',
+   requested_quantity:customOrderRequestedQuantity(row.summary),
+   date_needed:needed||'',fulfillment:method||'',
    updated_at_ms:Date.parse(row.updated_at),
   });
  });
