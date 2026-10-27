@@ -1,5 +1,14 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — bounded Owner detail prefetch + My JILL Home context (isolated QA)
+
+**Source-only, not an authorized WORK rollout or measured performance certification.**
+
+- HQ #174 exact pin: `3aec81fa5fc935b6b65b17edd7efb652983a8bc0`. The existing Requests viewport-based name/detail lookup uses a two-slot FIFO queue per verified inbox component instance instead of unrestricted parallel automatic reads. Explicit row expansion bypasses the queue; unused queued rows can cancel; failed starts do not block future rows. This may reduce Owner request-load contention, but real 20-run authenticated WORK cold/warm p50/p95 measurement remains required.
+- My JILL #175 exact pin: `4b11fc9f8db467b194122da197cd391e953db6c8`. The source-backed recent Custom Orders on the Home screen show total requested quantity, the customer's needed-by date, and original pickup/shipping preference, when verified. No new account identity, API calls, storage, Rewards or promise about paid/shipped/delivered state.
+- CI must SHA-check both exact lane heads before ephemeral merging, run queue/FIFO/abort synthetic tests and signed recent customer-account projection tests, together with A/B/guest messaging, quote, Contact, Catalog, HQ TS/build, Worker entrypoint. No GitHub remote branch merge or provider mutation.
+- The previous PR #173 source receipts remain separate evidence. Shopify staff/customer signed runtime, app extension publication, WORK bindings, D1/R2/Cloudflare, quote sends, payments, LIVE/KEEP, operating costs and actual UI/p95 acceptance remain HOLD.
+
 ## October 26 — HQ item preview + My JILL order summary (source only)
 
 These two **independent** UI increments implement existing master plan #152 / HQ #163 / My JILL #164 commitments without new data sources.
