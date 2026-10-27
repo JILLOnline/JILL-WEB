@@ -7,6 +7,7 @@ import {retainOwnedMessageDrafts,updateOwnedMessageDraft} from '../../../../shar
 import {
   customOrderStatus,customOrderNextStep,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
+  customOrderRequestedQuantity,
 } from './custom-order-presentation.mjs';
 
 // UI-only WORK account screen. Every read obtains a fresh Shopify session
@@ -136,6 +137,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
             const current=customOrderStatus(order.status);
             const nextStep=customOrderNextStep(order.status);
             const summary=order.summary;
+            const requestedQuantity=customOrderRequestedQuantity(summary);
             const firstEvent=order.timeline[0];
             return (
               <s-box key={order.submission_id}
@@ -145,6 +147,15 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
                     <s-stack direction="block" gap="small-100">
                       <s-text color="subdued">JILL CUSTOM REQUEST · {customOrderShortId(order.submission_id)}</s-text>
                       <s-heading>{customOrderTitle(summary)}</s-heading>
+                      {requestedQuantity!==null&&
+                        <s-text color="subdued">
+                          {summary.items.length} {summary.items.length===1?'item type':'item types'} ·
+                          {' '}Qty {requestedQuantity}
+                          {summary.date_needed&&
+                            <> · Needed by {customOrderDateOnly(summary.date_needed)}</>}
+                          {summary.fulfillment&&
+                            <> · {customOrderFulfillment(summary.fulfillment)}</>}
+                        </s-text>}
                       {firstEvent && <s-text color="subdued">Requested {customOrderDateTime(firstEvent.occurred_at)}</s-text>}
                     </s-stack>
                     <s-badge tone={current.tone}>{current.label}</s-badge>
