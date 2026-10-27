@@ -11,6 +11,8 @@ import "../styles/request-detail.css";
 import {WorkOrderDetailsContent} from "../components/WorkOriginalRequestDetails";
 import {WorkRequestQuickActions} from "../components/WorkRequestQuickActions";
 import {JillChevronDown} from "../components/JillChevronDown";
+import {createWorkRequestDetailPrefetchQueue}
+  from "../../../work-request-name-prefetch.mjs";
 import "../styles/request-actions.css";
 
 type InboxRecord={
@@ -75,9 +77,12 @@ function ArchiveControl({item,removed,enabled,onSaved}:{
       <p role="alert">Archive change not confirmed. Refresh the request status before trying again.</p>:null}
   </div>;
 }
-function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChange}:{
+type DetailPrefetchQueue=ReturnType<typeof createWorkRequestDetailPrefetchQueue>;
+function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChange,
+  namePrefetchQueue}:{
   item:InboxRecord;controlsEnabled:boolean;archiveEnabled:boolean;
   removed:boolean;onArchiveChange:()=>void;
+  namePrefetchQueue:DetailPrefetchQueue;
 }) {
   const statusTone=STATUS_TONE[item.customer_status]??"muted";
   type OrderModel=NonNullable<Parameters<typeof WorkOrderDetailsContent>[0]["model"]>;
@@ -86,6 +91,8 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
   const [editorHost,setEditorHost]=useState<HTMLDivElement|null>(null);
   const cardNode=useRef<HTMLElement|null>(null);
   const requestedId=useRef<string|null>(null);
+  const namePrefetch=useRef<ReturnType<DetailPrefetchQueue["schedule"]>|null>(null);
+  const namePrefetchWasLoading=useRef(false);
   // The nine-field canonical list intentionally contains no customer PII.
   // Read the verified name only from the existing signed exact-ID Owner route,
   // and only for cards near the viewport. Never cache names or guess from email.
@@ -93,11 +100,19 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
     const node=cardNode.current;
     if(!node)return;
     const loadName=()=>{
-      if(requestedId.current===item.submission_id)return;
-      requestedId.current=item.submission_id;
-      orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+      if(requestedId.current===item.submission_id||namePrefetch.current)return;
+      // Only the lightweight nine-field list is fetched on navigation.
+      // Limit optional Owner detail reads for names to two in-flight rows.
+      // An explicit row expansion still loads its exact ID immediately.
+      namePrefetch.current=namePrefetchQueue.schedule(()=>{
+        requestedId.current=item.submission_id;
+        orderDetails.load("/app/requests/"+encodeURIComponent(item.submission_id));
+      });
     };
-    if(typeof IntersectionObserver==="undefined"){loadName();return;}
+    if(typeof IntersectionObserver==="undefined"){
+      loadName();
+      return ()=>{namePrefetch.current?.cancel();namePrefetch.current=null;};
+    }
     const observer=new IntersectionObserver(entries=>{
       if(entries.some(entry=>entry.isIntersecting)){
         observer.disconnect();
@@ -105,8 +120,21 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       }
     },{rootMargin:"120px 0px"});
     observer.observe(node);
-    return ()=>observer.disconnect();
-  },[item.submission_id,orderDetails.load]);
+    return ()=>{observer.disconnect();namePrefetch.current?.cancel();
+      namePrefetch.current=null;};
+  },[item.submission_id,orderDetails.load,namePrefetchQueue]);
+  useEffect(()=>{
+    // The queue slot belongs to the request, not the rendered name. Release
+    // after the fetcher returns to idle, including signed source failures.
+    if(orderDetails.state!=="idle"){
+      if(namePrefetch.current?.started)namePrefetchWasLoading.current=true;
+      return;
+    }
+    if(namePrefetchWasLoading.current||orderDetails.data!==undefined){
+      namePrefetch.current?.finish();namePrefetch.current=null;
+      namePrefetchWasLoading.current=false;
+    }
+  },[orderDetails.state,orderDetails.data]);
   const original=orderDetails.data;
   const customerName=original?.state==="ready"&&
     original.detail?.submission_id===item.submission_id&&
@@ -116,6 +144,9 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
     const next=!detailsOpen;
     setDetailsOpen(next);
     if(!next)return;
+    // User actions bypass optional prefetch scheduling. Cancel a waiting
+    // slot so an old viewport callback cannot issue a duplicate request.
+    namePrefetch.current?.cancel();namePrefetch.current=null;
     // A failed background detail read must not permanently poison this row.
     // The merchant can reopen it to retry the same exact-ID signed route;
     // successful authorized reads remain unchanged and are not duplicated.
@@ -233,6 +264,9 @@ export default function WorkMerchantInbox() {
   const [status,setStatus]=useState("all");
   const [sort,setSort]=useState("recent");
   const archiveFetch=useFetcher<ArchiveModel>();
+  // One queue per authenticated inbox mount, no global/shared customer cache.
+  const namePrefetchQueue=useMemo(()=>
+    createWorkRequestDetailPrefetchQueue(2),[]);
   const detailSearch=useFetcher<SearchModel>();
   const [search,setSearch]=useState<SearchProgress|null>(null);
   const [archiveRefresh,setArchiveRefresh]=useState(0);
@@ -431,6 +465,7 @@ export default function WorkMerchantInbox() {
                         <div className="jill-inbox__cards">
                           {visible.map((item:InboxRecord)=>
                             <RequestCard key={item.submission_id} item={item}
+                              namePrefetchQueue={namePrefetchQueue}
                               controlsEnabled={data.controlsEnabled===true}
                               archiveEnabled={archiveReady}
                               removed={removedSet.has(item.submission_id)}
