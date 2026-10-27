@@ -8,6 +8,7 @@ on:
       - jill/hq-inbox-item-preview-20261026
       - jill/hq-bounded-request-prefetch-20261026
       - jill/hq-prefetch-lease-guard-20261026
+      - jill/hq-quote-reload-revision-guard-20261026
   pull_request:
     branches:
       - jill/hq-visual-polish-source-20261024
@@ -15,6 +16,7 @@ on:
       - jill/hq-request-detail-recovery-20261026
       - jill/hq-inbox-item-preview-20261026
       - jill/hq-bounded-request-prefetch-20261026
+      - jill/hq-prefetch-lease-guard-20261026
     paths:
       - 'services/jill-order-desk/work-catalog-stock-label.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.catalog.tsx'
@@ -22,6 +24,9 @@ on:
       - 'scripts/test-work-hq-request-detail-recovery.mjs'
       - 'scripts/test-work-hq-inbox-item-preview.mjs'
       - 'scripts/test-work-hq-bounded-detail-prefetch.mjs'
+      - 'scripts/test-work-quote-reload-revision-guard.mjs'
+      - 'services/jill-order-desk/work-quote-readback-policy.mjs'
+      - 'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx'
       - 'services/jill-order-desk/work-request-name-prefetch.mjs'
       - 'services/jill-order-desk/app-home/app/components/WorkOriginalRequestDetails.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.requests.tsx'
@@ -46,6 +51,7 @@ jobs:
           node scripts/test-work-hq-request-detail-recovery.mjs
           node scripts/test-work-hq-inbox-item-preview.mjs
           node scripts/test-work-hq-bounded-detail-prefetch.mjs
+          node scripts/test-work-quote-reload-revision-guard.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node --check services/jill-order-desk/work-catalog-stock-label.mjs
       - name: Install WORK HQ compile dependencies only
