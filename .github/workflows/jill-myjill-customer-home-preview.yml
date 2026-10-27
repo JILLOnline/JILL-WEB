@@ -11,6 +11,7 @@ on:
       - jill/myjill-home-request-context-20261026
       - jill/myjill-action-center-20261026
       - jill/myjill-partial-summary-truth-20261026
+      - jill/myjill-signed-order-search-20261026
   pull_request:
     branches:
       - jill/myjill-identity-retry-20261026
@@ -19,6 +20,7 @@ on:
       - jill/myjill-order-card-context-20261026
       - jill/myjill-home-request-context-20261026
       - jill/myjill-action-center-20261026
+      - jill/myjill-partial-summary-truth-20261026
     paths:
       - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
       - 'extensions/jill-account-dashboard/src/pages/Overview.jsx'

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,
- selectMyJillOrderIds}
+ selectMyJillOrderIds,searchVerifiedMyJillOrders}
  from '../extensions/jill-account-dashboard/src/pages/myjill-order-activity.mjs';
 import {customOrderRequestedQuantity}
  from '../extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs';
@@ -46,6 +46,26 @@ assert.deepEqual(selectMyJillOrderIds(summary,'malformed'),[]);
 assert.equal(Object.isFrozen(summary),true);
 assert.equal(Object.isFrozen(summary.all_ids),true);
 assert.equal(JSON.stringify(summary).includes('PRIVATE_'),false);
+const signedOrders=orders.map((entry,i)=>({
+ ...entry,summary:{items:[{title:i===0?'Sesame Street Pinata':
+   i===1?'DTF Hoodie':'Paint your tote'}]},
+}));
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','SESAME'),[id(1)]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'active','hoodie'),[id(2)]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'finished','tote'),
+ [id(8),id(7)]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'active','tote'),
+ [id(6),id(5),id(4),id(3)]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','#'+id(3).slice(-8)),[id(3)]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'finished','hoodie'),[]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','   '),summary.all_ids);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','PRIVATE_EMAIL'),[]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders.slice(1),'all','tote'),[]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,[...signedOrders.slice(0,7),
+ {...signedOrders[7],submission_id:'jill:foreign:99999999'}],'all','tote'),[]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'weird','tote'),[]);
+assert.deepEqual(searchVerifiedMyJillOrders(summary,signedOrders,'all','x'.repeat(81)),[]);
+assert.equal(Object.isFrozen(searchVerifiedMyJillOrders(summary,signedOrders,'all','tote')),true);
 assert.equal(projectMyJillOrderActivity([]).total,0);
 const ties=projectMyJillOrderActivity([
  row(1,'received',5),row(2,'completed',5),
@@ -76,7 +96,12 @@ for(const filter of MYJILL_ORDER_FILTERS){
  assert.ok(['all','active','finished'].includes(filter.id));
 }
 assert.match(page,/projectMyJillOrderActivity\(orders\)/);
-assert.match(page,/selectMyJillOrderIds\(state\.activity,filter\)/);
+assert.match(page,/searchVerifiedMyJillOrders\(state\.activity,state\.orders,filter,searchQuery\)/);
+assert.match(page,/<s-text-field label="Find a Custom Order"/);
+assert.match(page,/maxLength=\{80\}/);
+assert.match(page,/onInput=\{event=>setSearchQuery\(event\.currentTarget\.value\)\}/);
+assert.match(page,/Clear search/);
+assert.match(page,/No verified Custom Orders match your search or filter/);
 assert.match(page,/visibleOrders\.map\(\(order\)=>/);
 assert.match(page,/View tracking & details/);
 assert.match(page,/customOrderRequestedQuantity\(summary\)/);
