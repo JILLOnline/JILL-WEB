@@ -48,6 +48,28 @@ export default function RecentRequests({onNavigate}){
      Try again
     </s-button>
    </s-banner>}
+  {state.status==='ready'&&state.focus&&
+   <s-box padding="base" background="subdued" borderRadius="large">
+    <s-stack direction="block" gap="small-300">
+     <s-heading>One request to check</s-heading>
+     <s-text type="strong">
+      {customOrderNextStep(state.focus.status).heading}
+     </s-text>
+     <s-text color="subdued">
+      {customOrderNextStep(state.focus.status).text}
+     </s-text>
+     <s-text color="subdued">
+      {customOrderShortId(state.focus.submission_id)} ·
+      Status and instructions are shown only from verified request history.
+     </s-text>
+     <s-button variant="primary"
+      onClick={()=>onNavigate('custom-orders',{
+       submissionId:state.focus.submission_id,
+      })}>
+      Review this request
+     </s-button>
+    </s-stack>
+   </s-box>}
   {state.status==='ready'&&state.total===0&&
    <s-box padding="base" background="subdued" borderRadius="large">
     <s-stack direction="block" gap="small-300">
