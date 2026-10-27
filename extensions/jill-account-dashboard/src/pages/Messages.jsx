@@ -5,7 +5,8 @@ import {projectCustomerMessageInbox}
   from '../../../../shared/custom-order-message-inbox.mjs';
 import {projectVerifiedConversation}
   from '../../../../shared/custom-order-conversation-view.mjs';
-import {selectOwnedMessageRequest,retainOwnedMessageDrafts,updateOwnedMessageDraft}
+import {selectOwnedMessageRequest,retainOwnedMessageDrafts,updateOwnedMessageDraft,
+  filterOwnedMessageThreads,MYJILL_MESSAGE_FILTERS}
   from '../../../../shared/customer-message-selection.mjs';
 import {customOrderShortId,customOrderDateTime,customOrderTitle,customOrderNextStep}
   from './custom-order-presentation.mjs';
@@ -17,6 +18,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
   const [attempt,setAttempt]=useState(0);
   const [state,setState]=useState({status:'loading',orders:[],replyEnabled:false});
   const [selected,setSelected]=useState(null);
+  const [filter,setFilter]=useState('all');
   useEffect(()=>{
     let active=true;
     const controller=new AbortController();
@@ -43,8 +45,11 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
   const inbox=useMemo(()=>state.status==='ready'
     ?projectCustomerMessageInbox(state.orders):[],[state]);
   const availableThreads=inbox.filter(item=>item.timeline_version===2).length;
-  const order=state.orders.find(x=>x.submission_id===selected);
-  const current=inbox.find(x=>x.submission_id===selected);
+  const visibleInbox=useMemo(()=>filterOwnedMessageThreads(inbox,filter),[inbox,filter]);
+  const currentSelection=visibleInbox.some(x=>x.submission_id===selected)
+    ?selected:visibleInbox[0]?.submission_id??null;
+  const order=state.orders.find(x=>x.submission_id===currentSelection);
+  const current=visibleInbox.find(x=>x.submission_id===currentSelection);
   const visibleConversation=order&&current?projectVerifiedConversation(order):null;
   return <s-stack direction="block" gap="large">
     <s-section>
@@ -108,15 +113,28 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
             <s-box padding="base" background="subdued" borderRadius="large">
               <s-stack direction="block" gap="small-300">
                 <s-heading>Requests & conversations</s-heading>
-                <s-select label="Choose a verified conversation"
-                  value={selected??''}
+                <s-select label="Show conversations" value={filter}
+                  onChange={event=>{
+                    const next=event.currentTarget.value;
+                    setFilter(next);
+                    setSelected(previous=>selectOwnedMessageRequest(
+                      filterOwnedMessageThreads(inbox,next),{previousId:previous}));
+                  }}>
+                  {MYJILL_MESSAGE_FILTERS.map(option=>
+                    <s-option key={option.id} value={option.id}>{option.label}</s-option>)}
+                </s-select>
+                {visibleInbox.length===0&&<s-text color="subdued">
+                  No verified conversations match this filter.
+                </s-text>}
+                {visibleInbox.length>0&&<s-select label="Choose a verified conversation"
+                  value={currentSelection??''}
                   onChange={event=>setSelected(
-                    selectOwnedMessageRequest(inbox,{
+                    selectOwnedMessageRequest(visibleInbox,{
                       requestedId:event.currentTarget.value,
                       previousId:selected,
                     })
                   )}>
-                  {inbox.map(item=>{
+                  {visibleInbox.map(item=>{
                     const source=state.orders.find(o=>
                       o.submission_id===item.submission_id);
                     return <s-option key={item.submission_id}
@@ -128,8 +146,9 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                         ?'You':'JILL')+' replied':' · No messages yet'}
                     </s-option>;
                   })}
-                </s-select>
+                </s-select>}
                 <s-text color="subdued">
+                  Showing {visibleInbox.length} of {inbox.length} verified requests.
                   Select a signed-in request to read its conversation.
                   Unread indicators and delivery receipts aren't available.
                 </s-text>
