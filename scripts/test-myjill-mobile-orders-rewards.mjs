@@ -134,7 +134,15 @@ assert.match(page,/awaiting approval/);
 assert.match(page,/marked ready for pickup/);
 assert.match(page,/Counts reflect confirmed request statuses/);
 assert.match(page,/orders\.some\(order=>order\.submission_id===requestedSubmissionId\)/);
-assert.match(page,/if\(ownedTarget\)\{\s*setFilter\('all'\);\s*setSearchQuery\(''\);\s*\}/);
+const ownedBranchStart=page.indexOf('if(ownedTarget){');
+const ownedBranchEnd=page.indexOf("setState({status:'ready',orders,activity,replyEnabled});",
+ ownedBranchStart);
+assert.ok(ownedBranchStart>=0&&ownedBranchEnd>ownedBranchStart);
+const ownedBranch=page.slice(ownedBranchStart,ownedBranchEnd);
+assert.match(ownedBranch,/setFilter\('all'\)/);
+assert.match(ownedBranch,/setSearchQuery\(''\)/);
+assert.ok(ownedBranch.indexOf("setFilter('all')") <
+ ownedBranch.indexOf("setSearchQuery('')"));
 assert.match(page,/orders\.some\(order=>order\.submission_id===requestedSubmissionId\)/);
 assert.match(page,/setExpandedIds\(ownedTarget\?\{\[ownedTarget\]:true\}:\{\}\)/);
 assert.match(page,/\[attempt,requestedSubmissionId\]/);
