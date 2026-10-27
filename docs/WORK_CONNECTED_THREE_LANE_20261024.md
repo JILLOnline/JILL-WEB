@@ -1,5 +1,17 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — independent HQ + My JILL increments joined (new draft)
+
+**Source-only, pinned multi-branch rehearsal; NO release.**
+
+- HQ Catalog truth (#165) source pinned: `3641d156a6b8b1d63e7af86f25dc10fb968d5c91` — distinguishes Shopify *reported* product inventory totals, especially 0 or untracked, from verified available stock. Preserves Admin read permissions, existing product/variant queries and route UI.
+- My JILL Messages filters (#166) source pinned: `54c03aa6982d881365ec9093115075e0f7bee01f` — filters only verified owned Custom Order conversations by canonical active/finished statuses. Keeps original signed account identity checks, conversation writer, operation receipts, contact flags and Rewards untouched.
+- The integration workflow refuses SHA drift **before** ephemeral merges and reruns cross-surface A/B/guest, public-thread, Quote/Contact/Shopify Catalog synthetic tests, HQ typecheck/UI build, and new pure inventory truth tests.
+- Preserve the independently successful original #160 and #162 pinned integration checkpoints. This draft does NOT merge branches into release, publish My JILL, migrate D1, send messages, activate WORK flags, operate Shopify APIs, alter Cloudflare traffic, LIVE or KEEP.
+- Separate real authenticated WORK merchant and customer phone/desktop acceptance, current identity/rollback/budget audit and explicit Owner approval remain required.
+
+
+
 ## October 26 source provenance hold (separate draft; never a release)
 
 The ephemeral three-lane GitHub rehearsal now **fail-closes on upstream
