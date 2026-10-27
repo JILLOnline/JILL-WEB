@@ -3,7 +3,7 @@
 ## October 26 — quote Save/Reload revision fencing in source integration
 
 The HQ quote worksheet now has a pure, guarded readback policy in
-**draft #180** (exact SHA `f2dc1528a3a1897770a8b6c88cc444082a264828`).
+**draft #180** (exact SHA `4540acb5726815f23d2157c2260232414beba372`).
 It is joined in a disposable worktree to the unchanged signed
 My JILL **draft #178** (`11477272445e6d0081532c46dd8bc0877db5a055`).
 All source pins are exact and checked before merge.
