@@ -101,11 +101,14 @@ export default function RecentRequests({onNavigate}){
       </s-text>
      </s-stack>
      {(item.requested_quantity!==null||item.date_needed||item.fulfillment)&&
-      <s-text color="subdued">
-       {item.requested_quantity!==null&&<>Requested quantity: {item.requested_quantity}</>}
-       {item.date_needed&&<> · Needed by {customOrderDateOnly(item.date_needed)}</>}
-       {item.fulfillment&&<> · {customOrderFulfillment(item.fulfillment)}</>}
-      </s-text>}
+      <s-stack direction="inline" gap="small-200">
+       {item.requested_quantity!==null&&
+        <s-text color="subdued">Requested quantity: {item.requested_quantity}</s-text>}
+       {item.date_needed&&
+        <s-text color="subdued">Needed by {customOrderDateOnly(item.date_needed)}</s-text>}
+       {item.fulfillment&&
+        <s-text color="subdued">{customOrderFulfillment(item.fulfillment)}</s-text>}
+      </s-stack>}
      <s-box padding="small-300" background="subdued" borderRadius="base">
       <s-stack direction="block" gap="small-100">
        <s-text>{status.detail}</s-text>
