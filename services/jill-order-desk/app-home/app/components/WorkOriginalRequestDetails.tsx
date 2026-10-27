@@ -96,6 +96,53 @@ export function WorkOrderDetailsContent({model,submissionId,stacked=false}:{mode
             ...details.request_attributes].filter(attribute=>attribute.id!=="order_type")}/>
         </div>
       </div>
+      {stacked&&<section aria-label="Verified requested items and personalization">
+        <h4>Requested items ({details.items.length})</h4>
+        <div className="jill-request__original-items">
+        {details.items.map((item,i)=>
+          <article key={item.item_id} className="jill-request__original-item">
+            <div className="jill-request__item-header">
+              <div>
+                <small>Item {i+1}</small>
+                <h4>{item.title||"Custom item"}</h4>
+              </div>
+              <strong className="jill-request__item-quantity">
+                Qty {item.quantity}
+              </strong>
+            </div>
+            {item.variant_allocations.length>0&&
+              <div className="jill-request__original-subsection">
+                <strong>Selected variations</strong>
+                {item.variant_allocations.map((variant,j)=>
+                  <p key={variant.variant_id+"-"+j}>
+                    {variant.title||"Selected variation"} · Qty {variant.quantity}
+                  </p>)}
+              </div>}
+            {item.attributes.length>0&&
+              <details className="jill-request__references">
+                <summary>Item options ({item.attributes.length})</summary>
+                <Attributes values={item.attributes}/>
+              </details>}
+            {item.personalization_groups.length>0&&
+              <details className="jill-request__references">
+                <summary>Per-unit personalization ({item.personalization_groups.length})</summary>
+                <div className="jill-request__personalization-grid">
+                  {item.personalization_groups.map((group,j)=>
+                    <section key={group.id+"-"+j}
+                      className="jill-request__personalization">
+                      <strong>{group.id}</strong>
+                      <Attributes values={group.attributes}/>
+                    </section>)}
+                </div>
+              </details>}
+            {item.reference_ids.length>0&&
+              <p className="jill-request__muted">
+                {item.reference_ids.length} artwork reference(s) recorded.
+                Secure previews are not available here.
+              </p>}
+          </article>)}
+        </div>
+      </section>}
     </>;
 }
 export function WorkOrderDetails({model,submissionId}:{model:Model|undefined;submissionId:string}){
