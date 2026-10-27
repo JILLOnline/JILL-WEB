@@ -1,5 +1,43 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — connected Shopify WORK read-only provider evidence
+
+Read-only Shopify account and Admin GraphQL reads independently verified that the
+connected store is **JILL WORK** (`jill-work.myshopify.com`), currency
+**USD**, plan label **Basic App Development**. This is the intended
+testing store, not a LIVE checkout certification.
+
+A bounded Catalog query returned **15 total products** (exact count);
+the three newest sampled made-to-order products (custom tote bag,
+18-inch piñata and DTF hoodie) each reported product `totalInventory = 0`.
+A product-level reported zero does not prove that its variants track stock,
+that physical inventory is unavailable, or that JILL cannot make the item
+to order. HQ inventory presentation must remain conservative and
+variant-tracking/fulfillment truth must be read independently.
+
+The WORK store's current Shopify Admin `appInstallations` read contained
+an installed app **JILL HQ — WORK** (handle `jill-work-rewards`) with
+**16 granted access scopes**, including `read_products`,
+`read_inventory`, `read_locations`, `read_customers`,
+`read_orders`, `write_draft_orders`, `read_app_proxy` and
+`write_app_proxy`. This confirms the **store's installed-app scope
+inventory** from a fresh provider read. It **does not** verify the active
+published extension version, current Owner online session, proxy destination,
+WORK Worker/D1 bindings, real quote saved-draft readback, Shopify
+`draftOrderCalculate` results, invoice consent, native customer sign-in
+or LIVE readiness. No private customer or order rows were read.
+
+No Shopify API mutation, credential change, order, invoice, customer
+message, discount, upload, paid service or Cloudflare operation occurred.
+All real WORK end-to-end and release gates remain **HOLD**.
+
+## October 26 — started-read lease integrity + customer attention (next source QA)
+
+- HQ #177 exact source `3e795f71103c44d15023e5292eaec97bbad53015`: bounded request viewport prefetch now **does not free an active slot merely because its row was canceled/unmounted**. A started read holds its lease until fetcher completion, or a 30-second safety deadline if the component disappears; queued jobs cancel immediately. Explicit Owner row expansion remains immediate. Source unit tests include a deterministic fake clock; **this is not proof of actual WORK network latency**.
+- My JILL #178 exact source `11477272445e6d0081532c46dd8bc0877db5a055`: one read-only Home "request to check" from already verified signed requests—on hold, ready for pickup, awaiting approval by strict priority and last activity. The existing safe next-step text does **not** imply available quote approval, payment, messages or fulfillment.
+- The CI joins these exact immutable sources in a disposable worktree, exercises race/ownership/presentation/quote/Contact/Catalog/Rewards synthetic regression, HQ typecheck/app build and Worker bundle. Earlier #176 source proof remains unchanged.
+- No Shopify authenticated Owner or Customer A/B/guest WORK browser acceptance, no provider verification, no Cloudflare/D1/R2 rollout, no Shopify app publication, customer message, invoice, Rewards mutation, LIVE/KEEP or paid usage.
+
 ## October 26 — bounded Owner detail prefetch + My JILL Home context (isolated QA)
 
 **Source-only, not an authorized WORK rollout or measured performance certification.**
