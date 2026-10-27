@@ -1,5 +1,14 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## October 26 — independent merchant recovery + customer request truth
+
+Source-only follow-up to the green readback revision guard:
+
+- **HQ #182**, exact SHA `016118aee6bdd5650a443bfec062076e56f57943`: when a guarded quote Save outcome is ambiguous or a Reload is stale/missing, show clear owner-facing next actions instead of raw internal D1 error codes. Preserve the same hard-OFF feature switch, exact signed Owner source and checked operation receipt; no automatic resend, invoice or customer disclosure.
+- **My JILL #183**, exact SHA `25cb2c56d16b22011c6a02aa26150363ac8b5ee6`: request date and pickup/shipping metadata no longer disappear when the separately verified quantity is missing, and Home/cards avoid leading separators. Quantities remain unknown rather than invented.
+- A disposable pinned source join checks these revisions before merge, then re-executes current Customer A/B/guest ownership, all customer presentation/mobile tests, HQ quote/stale reload and merchant messaging/Contact/Catalog/Rewards contracts, HQ typecheck/UI build and Worker bundle. Previous #181 remains unchanged.
+- Real Owner WORK D1 Saved→Leave→Reload, current app/Worker source and rollback, signed Customer A/B/guest browser acceptance, Shopify calculation/quote acceptance, contact intake, sending, LIVE/KEEP or paid infrastructure are **NOT certified** by these source checks.
+
 ## October 26 — quote Save/Reload revision fencing in source integration
 
 The HQ quote worksheet now has a pure, guarded readback policy in
