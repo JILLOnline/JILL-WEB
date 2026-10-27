@@ -9,6 +9,8 @@ import {evaluateWorkQuoteWorksheet,formatWorkUsd}
   from "../../../work-quote-worksheet.mjs";
 import {hydrateVerifiedWorkQuoteWorksheet}
   from "../../../work-quote-restore-model.mjs";
+import {inspectWorkQuoteReload}
+  from "../../../work-quote-readback-policy.mjs";
 import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
   from "../../../work-quote-ui-payload.mjs";
 import {inspectWorkQuoteUnitReview}
@@ -134,6 +136,8 @@ export function WorkQuoteWorksheet({
   const saveFetcher=useFetcher<DraftResult>();
   const readFetcher=useFetcher<DraftResult>();
   const operation=useRef<string|null>(null);
+  // Never let a cached/slow GET from before Save unlock a later revision.
+  const acknowledgedRevision=useRef<number|null>(null);
   const initialReadStarted=useRef(false);
   const merchantEdited=useRef(false);
   const merchantExplicitReload=useRef(false);
@@ -162,6 +166,7 @@ export function WorkQuoteWorksheet({
     if(saveFetcher.data.ok&&saveFetcher.data.code==="draft_saved"&&
        Number.isSafeInteger(saveFetcher.data.revision)){
       const rev=saveFetcher.data.revision!;
+      acknowledgedRevision.current=rev;
       setDraftRevision(rev);
       operation.current=null;
       // A server acknowledgment is not an independently verified readback.
@@ -178,38 +183,46 @@ export function WorkQuoteWorksheet({
   useEffect(()=>{
     if(!saveDraftEnabled||readFetcher.state!=="idle"||
        !readFetcher.data)return;
-    if(readFetcher.data.ok&&readFetcher.data.code==="draft_ready"){
-      const projection=hydrateVerifiedWorkQuoteWorksheet({
+    const projection=readFetcher.data.ok&&
+      readFetcher.data.code==="draft_ready"
+      ?hydrateVerifiedWorkQuoteWorksheet({
         draft:readFetcher.data.draft,
         detail:model?.state==="ready"?model.detail:null,
         submissionId,
-      });
-      if(projection){
-        if(merchantEdited.current&&!merchantExplicitReload.current){
-          setFeedback("A saved draft exists. Your newer unsaved inputs were "+
-            "kept. Select Reload saved draft to replace them explicitly.");
-          return;
-        }
-        merchantEdited.current=false;
-        merchantExplicitReload.current=false;
-        setPrices(projection.prices);
-        setFees(projection.fees as Fees);
-        setDraftRevision(projection.draftRevision);
-        setRestoredActive(true);
-        setBlocked(false);
-        operation.current=null;
-        setFeedback("Verified draft revision "+
-          projection.draftRevision+" restored.");
-        return;
-      }
+      }):null;
+    const check=inspectWorkQuoteReload({
+      readCode:readFetcher.data.ok?readFetcher.data.code:null,
+      restored:projection,
+      acknowledgedRevision:acknowledgedRevision.current,
+      merchantEdited:merchantEdited.current,
+      explicitReload:merchantExplicitReload.current,
+    });
+    if(check.state==="apply"&&projection){
+      merchantEdited.current=false;
+      merchantExplicitReload.current=false;
+      acknowledgedRevision.current=null;
+      setPrices(projection.prices);
+      setFees(projection.fees as Fees);
+      setDraftRevision(projection.draftRevision);
+      setRestoredActive(true);
+      setBlocked(false);
+      operation.current=null;
+      setFeedback("Verified draft revision "+
+        projection.draftRevision+" restored.");
+      return;
     }
-    if(readFetcher.data.ok&&readFetcher.data.code==="no_saved_draft"){
+    if(check.state==="none"){
       setFeedback("No saved quote draft exists for this request.");
       return;
     }
+    if(check.code==="unsaved_editor_changes"){
+      setFeedback("A saved draft exists. Your newer unsaved inputs were "+
+        "kept. Select Reload saved draft to replace them explicitly.");
+      return;
+    }
     setBlocked(true);
-    setFeedback("Draft could not be verified ("+readFetcher.data.code+
-      "). No prices were overwritten.");
+    setFeedback("Saved draft readback is on HOLD ("+check.code+
+      "). No prices were overwritten or further saves authorized.");
   },[saveDraftEnabled,readFetcher.state,readFetcher.data,
     model,submissionId]);
   const edited=()=>{
