@@ -21,7 +21,7 @@ for(const v of ['0',NaN,Infinity,0.5,{},Number.MAX_SAFE_INTEGER+1]){
 assert.equal(Object.isFrozen(zero),true);
 const path='services/jill-order-desk/app-home/app/routes/app.catalog.tsx';
 const ui=readFileSync(path,'utf8');
-assert.match(ui,/describeWorkCatalogProductInventory\(product\.total_inventory\)/);
+assert.match(ui,/describeWorkCatalogProductInventory\(reported\)/);
 assert.match(ui,/Shopify product inventory report/);
 assert.match(ui,/stock\.label/);
 assert.match(ui,/stock\.detail/);
