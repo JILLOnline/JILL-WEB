@@ -21,6 +21,7 @@ export const MYJILL_MESSAGE_FILTERS=Object.freeze([
  Object.freeze({id:'active',label:'Active requests'}),
  Object.freeze({id:'finished',label:'Finished requests'}),
 ]);
+const UNSAFE_MESSAGE_KEYS=new Set(['__proto__','prototype','constructor']);
 const FINISHED_MESSAGES=new Set(['completed','cancelled']);
 const ACTIVE_MESSAGES=new Set(['received','reviewing','awaiting_approval',
  'in_production','ready_pickup','on_hold']);
@@ -30,7 +31,7 @@ export function filterOwnedMessageThreads(inbox,filter='all'){
   return Object.freeze([]);
  // Reject a malformed or unsupported status for the WHOLE projection;
  // never claim a thread is finished, paid, delivered, or unread.
- if(inbox.some(item=>!object(item)||
+ if(inbox.some(item=>!object(item)||UNSAFE_MESSAGE_KEYS.has(item.submission_id)||
    !FINISHED_MESSAGES.has(item.status)&&!ACTIVE_MESSAGES.has(item.status)))
   return Object.freeze([]);
  return Object.freeze(inbox.filter(item=>filter==='all'||
