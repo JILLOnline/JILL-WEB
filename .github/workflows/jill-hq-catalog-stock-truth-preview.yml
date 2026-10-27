@@ -1,0 +1,43 @@
+name: JILL HQ WORK catalog inventory truth source QA
+# Ephemeral checkout + no provider credentials. Never deploy or change stock.
+on:
+  push:
+    branches:
+      - jill/hq-catalog-stock-truth-20261026
+  pull_request:
+    branches:
+      - jill/hq-visual-polish-source-20261024
+    paths:
+      - 'services/jill-order-desk/work-catalog-stock-label.mjs'
+      - 'services/jill-order-desk/app-home/app/routes/app.catalog.tsx'
+      - 'scripts/test-work-catalog-stock-label.mjs'
+      - '.github/workflows/jill-hq-catalog-stock-truth-preview.yml'
+permissions:
+  contents: read
+jobs:
+  truthful-catalog-source:
+    name: Verify product stock wording and compile authenticated HQ UI without deploying
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact inventory label policy and unchanged source access
+        run: |
+          node scripts/test-work-catalog-stock-label.mjs
+          node scripts/test-work-hq-catalog-quote-bridge.mjs
+          node --check services/jill-order-desk/work-catalog-stock-label.mjs
+      - name: Install WORK HQ compile dependencies only
+        run: npm install --prefix services/jill-order-desk/app-home --ignore-scripts --no-audit --no-fund
+      - name: Typecheck scoped HQ change
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Compile HQ UI without publishing
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Check Worker bundle without deployment
+        run: node scripts/check-work-contact-hq-bundle.mjs
