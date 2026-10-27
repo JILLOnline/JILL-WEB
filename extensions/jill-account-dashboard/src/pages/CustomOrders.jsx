@@ -40,7 +40,13 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
             orders.some(order=>order.submission_id===requestedSubmissionId)
             ?requestedSubmissionId:null;
           setExpandedIds(ownedTarget?{[ownedTarget]:true}:{});
-          if(ownedTarget)setFilter('all');
+          if(ownedTarget){
+            // An authenticated deep link must not stay hidden behind an old
+            // search term or status folder. Only clear after the fresh signed
+            // account response proves ownership of this exact request ID.
+            setFilter('all');
+            setSearchQuery('');
+          }
           setState({status:'ready',orders,activity,replyEnabled});
           setRefreshing(false);
         }
