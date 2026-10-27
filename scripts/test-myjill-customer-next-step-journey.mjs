@@ -42,8 +42,8 @@ assert.match(orders,/\{nextStep.text\}/);
 assert.match(orders,/projectMyJillOrderActivity\(orders\)/);
 assert.match(inbox,/customOrderNextStep\(order.status\).heading/);
 assert.match(inbox,/customOrderNextStep\(order.status\).text/);
-assert.match(inbox,/selectOwnedMessageRequest\\(visibleInbox,\\{/);
-assert.match(inbox,/filterOwnedMessageThreads\\(inbox,filter\\)/);
+assert.match(inbox,/selectOwnedMessageRequest\(visibleInbox,\{/);
+assert.match(inbox,/filterOwnedMessageThreads\(inbox,filter\)/);
 assert.match(inbox,/RequestConversation order=\{order\}/);
 for(const src of [home,orders,inbox]){
  assert.doesNotMatch(src,/metafieldsSet|discountCodeBasicCreate|draftOrderCreate/);
