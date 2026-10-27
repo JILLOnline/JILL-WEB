@@ -6,17 +6,21 @@ on:
       - jill/hq-catalog-stock-truth-20261026
       - jill/hq-request-detail-recovery-20261026
       - jill/hq-inbox-item-preview-20261026
+      - jill/hq-bounded-request-prefetch-20261026
   pull_request:
     branches:
       - jill/hq-visual-polish-source-20261024
       - jill/hq-catalog-stock-truth-20261026
       - jill/hq-request-detail-recovery-20261026
+      - jill/hq-inbox-item-preview-20261026
     paths:
       - 'services/jill-order-desk/work-catalog-stock-label.mjs'
       - 'services/jill-order-desk/app-home/app/routes/app.catalog.tsx'
       - 'scripts/test-work-catalog-stock-label.mjs'
       - 'scripts/test-work-hq-request-detail-recovery.mjs'
       - 'scripts/test-work-hq-inbox-item-preview.mjs'
+      - 'scripts/test-work-hq-bounded-detail-prefetch.mjs'
+      - 'services/jill-order-desk/work-request-name-prefetch.mjs'
       - 'services/jill-order-desk/app-home/app/components/WorkOriginalRequestDetails.tsx'
       - 'services/jill-order-desk/app-home/app/routes/app.requests.tsx'
       - '.github/workflows/jill-hq-catalog-stock-truth-preview.yml'
@@ -39,6 +43,7 @@ jobs:
           node scripts/test-work-catalog-stock-label.mjs
           node scripts/test-work-hq-request-detail-recovery.mjs
           node scripts/test-work-hq-inbox-item-preview.mjs
+          node scripts/test-work-hq-bounded-detail-prefetch.mjs
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node --check services/jill-order-desk/work-catalog-stock-label.mjs
       - name: Install WORK HQ compile dependencies only
