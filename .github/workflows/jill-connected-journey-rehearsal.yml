@@ -9,6 +9,7 @@ on:
     branches:
       - jill/hq-quote-catalog-preflight-20261022
       - jill/connected-journey-three-lane-20261024
+      - jill/connected-journey-pinned-rehearsal-20261026
     paths:
       - '.github/workflows/jill-connected-journey-rehearsal.yml'
       - 'scripts/test-work-connected-three-surface-contract.mjs'
