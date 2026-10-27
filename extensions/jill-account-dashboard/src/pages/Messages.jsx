@@ -22,6 +22,10 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
   useEffect(()=>{
     let active=true;
     const controller=new AbortController();
+    // A signed navigation hint must not be hidden by the previous
+    // Active/Finished filter. Open the full verified list first, then
+    // select only if the freshly authenticated account actually owns it.
+    if(requestedSubmissionId!==null)setFilter('all');
     setState({status:'loading',orders:[],replyEnabled:false});
     const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
     loadWorkCustomerConversationState({sessionToken,signal:controller.signal}).then(({orders,replyEnabled})=>{
