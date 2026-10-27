@@ -11,6 +11,8 @@ import {hydrateVerifiedWorkQuoteWorksheet}
   from "../../../work-quote-restore-model.mjs";
 import {inspectWorkQuoteReload}
   from "../../../work-quote-readback-policy.mjs";
+import {describeWorkQuoteReadbackHold,describeWorkQuoteSaveFailure}
+  from "../../../work-quote-recovery-guidance.mjs";
 import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
   from "../../../work-quote-ui-payload.mjs";
 import {inspectWorkQuoteUnitReview}
@@ -176,8 +178,8 @@ export function WorkQuoteWorksheet({
         " was acknowledged. Reload the saved draft to verify before saving again.");
     }else{
       setBlocked(true);
-      setFeedback("Save not confirmed ("+saveFetcher.data.code+
-        "). Stop and verify the latest draft before another save.");
+      setFeedback("Save not confirmed. "+
+        describeWorkQuoteSaveFailure(saveFetcher.data.code));
     }
   },[saveDraftEnabled,saveFetcher.state,saveFetcher.data]);
   useEffect(()=>{
@@ -221,8 +223,9 @@ export function WorkQuoteWorksheet({
       return;
     }
     setBlocked(true);
-    setFeedback("Saved draft readback is on HOLD ("+check.code+
-      "). No prices were overwritten or further saves authorized.");
+    setFeedback("Saved draft readback is on HOLD. "+
+      describeWorkQuoteReadbackHold(check.code)+
+      " No prices were overwritten or further saves authorized.");
   },[saveDraftEnabled,readFetcher.state,readFetcher.data,
     model,submissionId]);
   const edited=()=>{
