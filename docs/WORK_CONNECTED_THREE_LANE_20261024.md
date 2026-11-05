@@ -1,5 +1,25 @@
 # JILL WORK — three-lane connection rehearsal (October 24, 2026)
 
+## November 5 — exact-operation recovery and joined certification
+
+Current SOURCE inputs: HQ `43a4deab3e909d59bc9aa054110942c8dc737260`; My JILL `a93f601e2864028c7e9671a946e3bdac7c553282` (unchanged).
+The selected disposable join is orchestration source → HQ → My JILL.
+CI checks both exact remote heads before merging and records the actual final
+Git tree plus locked dependency and build digests. No shared branch merge.
+
+The HQ quote recovery protocol is documented in `WORK_QUOTE_OPERATION_RECOVERY.md`.
+Joined CI adds its mounted lifecycle, exact-handler SQLite races, reply-capability
+and commerce-handoff denial, six/nine-route and visual invariants, both My JILL
+bundles, full postinstall, HQ TypeScript/build and compiled local Worker OFF smoke.
+Dependency lockfiles and action commits pin the source build inputs.
+
+Historical V4 and three-migration standalone guards remain immutable; the
+current joined certificate explicitly inventories five source migration files
+and keeps the quote proposal outside that directory. No migration is run.
+This does not certify authenticated WORK, browser storage compatibility,
+actual D1 Save/Reload, messaging, payment or deployment. All release gates remain.
+
+
 ## October 27 — source-only quote Save single-flight + signed deep-link search reset
 
 These two independent product increments build on the earlier green

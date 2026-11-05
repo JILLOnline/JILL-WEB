@@ -218,12 +218,69 @@ try{
  assert.equal(version(),2);
  assert.equal(count('jill_work_quote_draft_operations'),writes);
  sourceRevision=3;
+ // Exact operation reconciliation is read-only and scoped by the Owner.
+ const reconcile=async(op,expected)=>{
+  const url=new URL(reqRead().url);
+  url.searchParams.set('operation_id',op);
+  url.searchParams.set('expected_draft_revision',String(expected));
+  return handleWorkQuoteDraftRead({...common,enabled:true,request:new Request(url)});
+ };
+ let recovered=await (await reconcile(OP(3),1)).json();
+ assert.equal(recovered.recovery.state,'committed');
+ assert.equal(recovered.recovery.operation_id,OP(3));
+ assert.match(recovered.recovery_scope,/^[a-f0-9]{64}$/);
+ recovered=await (await reconcile(OP(999),1)).json();
+ assert.equal(recovered.recovery.state,'not_applied',
+  'Missing receipt + CAS advanced means the old write cannot commit later');
+ recovered=await (await reconcile(OP(999),2)).json();
+ assert.equal(recovered.recovery.state,'unresolved',
+  'No receipt at current CAS revision never proves an uncertain write failed');
+ recovered=await (await reconcile(OP(1),0)).json();
+ assert.equal(recovered.recovery.state,'committed','Earlier exact receipt survives later revisions');
+ recovered=await (await reconcile(OP(1),1)).json();
+ assert.equal(recovered.recovery.state,'conflict','Wrong expected revision cannot borrow a receipt');
+ assert.equal(count('jill_work_quote_draft_operations'),writes);
+ assert.equal((await reconcile(OP(3),'01')).status,400);
+ owner=false;
+ assert.equal((await reconcile(OP(3),1)).status,403);
+ owner=true;
+ // A genuinely delayed transaction remains invisible while its HTTP
+ // handler is still alive. Neither old-row read nor missing receipt settles it.
+ const realBatch=db.batch;
+ let release,started;
+ const waiting=new Promise(resolve=>{started=resolve;});
+ db.batch=async statements=>{
+  started();
+  await new Promise(resolve=>{release=resolve;});
+  return realBatch(statements);
+ };
+ const late=save(payload('28.00',2,OP(99)));
+ await waiting;
+ recovered=await (await reconcile(OP(99),2)).json();
+ assert.equal(recovered.draft.draft_revision,2);
+ assert.equal(recovered.recovery.state,'unresolved');
+ release();
+ assert.equal((await late).status,200);
+ db.batch=realBatch;
+ recovered=await (await reconcile(OP(99),2)).json();
+ assert.equal(recovered.recovery.state,'committed');
+ assert.equal(recovered.draft.draft_revision,3);
+ // Competing tabs: one CAS winner. The losing delayed operation has
+ // no receipt and cannot write later against the winner's revision.
+ const results=await Promise.all([
+  save(payload('29.00',3,OP(100))),save(payload('30.00',3,OP(101))),
+ ]);
+ assert.deepEqual(results.map(x=>x.status).sort(),[200,409]);
+ const loser=results[0].status===409?OP(100):OP(101);
+ recovered=await (await reconcile(loser,3)).json();
+ assert.equal(recovered.recovery.state,'not_applied');
+ assert.equal(version(),4);
  // Corrupted DB amount/hash must stop at server projection.
  sqlite.exec("UPDATE jill_work_quote_drafts SET quote_sha256='"+'a'.repeat(64)+"'");
  r=await read();
  assert.equal(r.status,503);
  assert.equal((await r.json()).code,'quote_draft_unverified');
- assert.equal(version(),2);
+ assert.equal(version(),4);
 
- console.log('PASS: Real source quote HTTP Save/Reload + synthetic Shopify Owner/D1/SQLite transaction: OFF zero reads, idempotent replay, CAS conflict, 2 verified revisions, stale source and foreign/anonymous origin denial, tampering HOLD, no provider calls.');
+ console.log('PASS: Quote HTTP/SQLite: OFF zero reads, idempotency, delayed commit, competing CAS writers, exact operation reconciliation, stale source/foreign Owner/origin denial, corruption HOLD. No provider calls.');
 }finally{sqlite.close();}
