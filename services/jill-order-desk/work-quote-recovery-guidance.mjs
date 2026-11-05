@@ -2,6 +2,10 @@
 // permission to retry an uncertain write or publish a customer quote.
 // Do not expose internal errors, D1 row contents or customer PII.
 const READ=Object.freeze({
+ pending_operation_unresolved:
+  'Your original Save is still being verified. Keep these inputs and check again; an older draft cannot unlock another Save.',
+ invalid_pending_operation:
+  'Save recovery could not be verified. Leave this request unchanged and ask the Owner to reconcile it.',
  stale_draft_readback:
   'The returned draft is older than your acknowledged Save. Keep these inputs and reload the verified draft; do not save again until its revision matches.',
  acknowledged_draft_not_visible:

@@ -76,7 +76,8 @@ for(const title of ['Request overview','Customers','Your store','Access &amp; pe
   assert.ok(page.includes(title),'Missing HQ module '+title);
 assert.match(page,/data.state==="staff_verified"/);
 assert.match(page,/const owner=verified && data.role==="owner"/);
-assert.doesNotMatch(page,/to="\/app\/requests"/);
+// Master Plan 3.0 retains Requests as a first-class HQ destination.
+assert.match(page,/to="\/app\/requests"/);
 for(const path of ['/products','/collections','/customers','/orders'])
   assert.ok(page.includes('WORK_ADMIN}'+path),'Missing native WORK Shopify path '+path);
 assert.doesNotMatch(page,/jill-hq__footnote|Rewards policy ready/);

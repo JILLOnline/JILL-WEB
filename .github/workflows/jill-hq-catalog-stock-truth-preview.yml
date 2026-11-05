@@ -34,6 +34,12 @@ on:
       - 'scripts/test-work-quote-recovery-guidance.mjs'
       - 'scripts/test-work-quote-response-once.mjs'
       - 'scripts/test-work-quote-save-single-flight.mjs'
+      - 'scripts/test-work-quote-recovery-mounted.mjs'
+      - 'scripts/fixtures/work-quote-recovery-browser.mjs'
+      - 'services/jill-order-desk/work-quote-draft-read.mjs'
+      - 'services/jill-order-desk/work-quote-save-boundary.mjs'
+      - 'services/jill-order-desk/work-quote-ui-payload.mjs'
+      - '**/package-lock.json'
       - 'services/jill-order-desk/work-quote-save-flight.mjs'
       - 'services/jill-order-desk/work-quote-recovery-guidance.mjs'
       - 'services/jill-order-desk/work-quote-readback-policy.mjs'
@@ -50,12 +56,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '22.23.3'
       - name: Verify exact inventory label policy and unchanged source access
         run: |
           node scripts/test-work-catalog-stock-label.mjs
@@ -69,7 +75,13 @@ jobs:
           node scripts/test-work-hq-catalog-quote-bridge.mjs
           node --check services/jill-order-desk/work-catalog-stock-label.mjs
       - name: Install WORK HQ compile dependencies only
-        run: npm install --prefix services/jill-order-desk/app-home --ignore-scripts --no-audit --no-fund
+        run: |
+          npm ci --prefix services/jill-order-desk/app-home --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/work-account-local --ignore-scripts --no-audit --no-fund
+      - name: Verify mounted quote recovery without provider access
+        run: |
+          node scripts/test-work-quote-recovery-mounted.mjs
+          node scripts/test-work-hq-quote-ui-wiring.mjs
       - name: Typecheck scoped HQ change
         run: npm run typecheck --prefix services/jill-order-desk/app-home
       - name: Compile HQ UI without publishing

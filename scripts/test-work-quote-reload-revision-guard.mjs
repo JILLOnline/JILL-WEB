@@ -28,6 +28,18 @@ assert.equal(code(opts('draft_ready',5,0)),'invalid_acknowledged_revision');
 assert.equal(code(opts('draft_ready',5,101)),'invalid_acknowledged_revision');
 assert.equal(code(opts('draft_ready',5,null,'false')),'invalid_editor_state');
 assert.equal(Object.isFrozen(check(opts('draft_ready',5,5))),true);
+const pending={operationId:'jill:hq:quote:11111111-2222-4333-8444-555555555555',
+ expectedDraftRevision:4,sourceRevision:3};
+const proof={operation_id:pending.operationId,expected_draft_revision:4,state:'committed'};
+for(const revision of [null,4,5,6]){
+ const input={...opts(revision===null?'no_saved_draft':'draft_ready',revision,null,true,true),pendingSave:pending};
+ assert.equal(check(input).code,'pending_operation_unresolved');
+ assert.equal(check({...input,reconciliation:{...proof,state:'unresolved'}}).state,'hold');
+}
+assert.equal(check({...opts('draft_ready',4,null,true,true),pendingSave:pending,reconciliation:proof}).state,'hold');
+assert.equal(check({...opts('draft_ready',5,null,true,true),pendingSave:pending,reconciliation:proof}).state,'apply');
+assert.equal(check({...opts('draft_ready',6,null,true,true),pendingSave:pending,
+ reconciliation:{...proof,state:'not_applied'}}).state,'apply');
 
 const ui=readFileSync(
  'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx',

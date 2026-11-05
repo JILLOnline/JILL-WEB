@@ -1,40 +1,46 @@
 // Offline WORK HQ double-click/ambiguous result acceptance.
 // No D1 writes, no browser/Owner session and no invoice publication.
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import {createWorkQuoteSaveFlight} from
  '../services/jill-order-desk/work-quote-save-flight.mjs';
-
-const flight=createWorkQuoteSaveFlight();
+import {createQuoteRecoveryBrowser} from './fixtures/work-quote-recovery-browser.mjs';
+const browser=createQuoteRecoveryBrowser();
+const opts={...browser,scope:'a'.repeat(64),submissionId:'jill:synthetic-request-1234'};
+const pending={operationId:'jill:hq:quote:11111111-2222-4333-8444-555555555555',
+ expectedDraftRevision:4,sourceRevision:3};
+const proof={operation_id:pending.operationId,expected_draft_revision:4,state:'committed'};
+const flight=createWorkQuoteSaveFlight(opts);
 assert.equal(flight.isReserved(),false);
-assert.equal(flight.reserve(),true,'First click reserves synchronously');
-for(let i=0;i<50;i++)assert.equal(flight.reserve(),false,
- '50 rapid clicks must never reserve another quote Save');
+const clicks=Array.from({length:50},()=>flight.reserve(pending));
+assert.equal(flight.isReserved(),true,'First click reserves before awaiting a lock');
+assert.equal((await Promise.all(clicks)).filter(Boolean).length,1);
 assert.equal(flight.isReserved(),true);
-// Simulate a timeout, an ambiguous reply, and a Save acknowledgment.
-// None is proof that the D1 draft was independently re-read.
-assert.equal(flight.reserve(),false,'A response alone cannot release the reservation');
-flight.verifiedRelease();
-assert.equal(flight.reserve(),true,
- 'Only the independently verified readback gate can permit a later Save');
-assert.equal(flight.reserve(),false);
-flight.verifiedRelease();
+assert.equal(await flight.reserve(pending),false);
+for(const invalid of [undefined,{...proof,state:'unresolved'},
+ {...proof,operation_id:'jill:hq:quote:aaaaaaaa-2222-4333-8444-555555555555'},
+ {...proof,expected_draft_revision:3}]){
+ assert.equal(await flight.verifiedRelease(invalid),false);
+ assert.deepEqual(flight.pending(),pending);
+}
+const remount=createWorkQuoteSaveFlight(opts);
+assert.deepEqual(remount.pending(),pending,'Refresh/remount retains the original operation');
+assert.equal(await remount.reserve({...pending,expectedDraftRevision:5}),false);
+const foreign=createWorkQuoteSaveFlight({...opts,scope:'b'.repeat(64)});
+assert.equal(foreign.pending(),null,'Different authenticated Owner gets no pending operation');
+assert.equal(await remount.verifiedRelease(proof),true);
+assert.equal(flight.pending(),null);
+// Independent tabs contend through the same exclusive lock and marker.
+const tabs=Array.from({length:20},()=>createWorkQuoteSaveFlight(opts));
+assert.equal((await Promise.all(tabs.map(t=>t.reserve(pending)))).filter(Boolean).length,1);
+assert.equal(await flight.verifiedRelease({...proof,state:'not_applied'}),true);
 assert.equal(Object.isFrozen(flight),true);
-const path='services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx';
-const s=readFileSync(path,'utf8');
-assert.match(s,/saveFlight=useRef\(createWorkQuoteSaveFlight\(\)\)/);
-assert.match(s,/const canSaveDraft=canReloadDraft&&!blocked&&!saveFlight\.current\.isReserved\(\)/);
-assert.match(s,/if\(!canSaveDraft\|\|!readyQuote\|\|saveFlight\.current\.isReserved\(\)\)return/);
-assert.match(s,/if\(!saveFlight\.current\.reserve\(\)\)return;\s*setBlocked\(true\);\s*operation\.current=op;\s*saveFetcher\.submit/);
-assert.match(s,/if\(check\.state==="apply"&&projection\)/);
-const release=s.indexOf('saveFlight.current.verifiedRelease()');
-const verified=s.indexOf('if(check.state==="apply"&&projection)');
-const next=s.indexOf('if(check.state==="none")');
-assert.ok(release>verified&&release<next,
- 'Reservation released ONLY in independently verified draft restore branch');
-assert.equal(s.split('saveFlight.current.verifiedRelease()').length,2);
-assert.match(s,/acknowledgedRevision\.current=rev/);
-assert.match(s,/processedSaveResponse\.current===saveFetcher\.data/);
-assert.match(s,/describeWorkQuoteSaveFailure\(saveFetcher\.data\.code\)/);
-assert.doesNotMatch(s,/draftOrderCreate|draftOrderInvoiceSend|localStorage|sessionStorage/);
-console.log('PASS HQ quote single-flight: rapid clicks suppressed, unknown Save remains held, verified readback alone releases next write.');
+assert.throws(()=>createWorkQuoteSaveFlight({...opts,locks:null}),/unavailable/);
+const broken=createWorkQuoteSaveFlight({...opts,storage:{...browser.storage,
+ setItem(){throw Error('quota denied');}}});
+await assert.rejects(()=>broken.reserve(pending),/quota denied/);
+// Explicitly corrupt the current key. Corruption must block, never reset it.
+browser.storage.setItem('jill:work:quote-flight:'+opts.scope+':'+opts.submissionId,'{}');
+assert.throws(()=>flight.pending(),/unverified/);
+await assert.rejects(()=>flight.reserve(pending),/unverified/);
+assert.equal(browser.storage.getItem('jill:work:quote-flight:'+opts.scope+':'+opts.submissionId),'{}');
+console.log('PASS quote recovery lease: 50 clicks/20 tabs, remount retention, Owner partition, exact receipt release and storage/lock failure denial.');
