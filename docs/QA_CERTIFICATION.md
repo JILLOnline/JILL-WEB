@@ -1,5 +1,16 @@
 # JILL Theme Core QA Certification
 
+## 2026-11-05 — HQ inbox readback correction, source preparation
+
+The shared date formatter now accepts complete source timestamps without
+appending a second time suffix. The actual mounted inbox regression covers
+off-screen and queued names versus loading/failure, the existing two-read
+limit, wrong-ID denial, explicit recovery and remount privacy. Current inbox
+UI and mounted checks are included in the source workflows. This is source
+preparation, not a replacement WORK deployment or real authentication pass.
+See `WORK_HQ_INBOX_READBACK_2026-11-05.md`; final local check results and exact
+candidate provenance are retained in the workspace review packet.
+
 ## 2026-10-19 — shared HQ visual theme, synthetic browser certification
 
 Shared presentation theme and full-width `s-page` layouts cover all six

@@ -44,10 +44,16 @@ assert.equal(customerStatusLabel('reviewing'),'In review');
 assert.equal(internalStatusLabel('needs_quote'),'Needs quote');
 assert.equal(customerStatusLabel('unknown'),'Unknown status');
 assert.equal(dateLabel('2026-10-30'),'Oct 30, 2026');
+assert.equal(dateLabel('2026-10-13T21:13:57.364Z'),'Oct 13, 2026');
+assert.equal(dateLabel('2026-10-13T23:30:00-04:00'),'Oct 14, 2026',
+  'Full timestamps use their authoritative instant in UTC');
+assert.equal(dateLabel('2026-01-01T00:30:00+02:00'),'Dec 31, 2025');
 assert.equal(dateLabel('2026-10-13T21:13:57.364Z',{includeTime:true}),
   'Oct 13, 2026, 9:13 PM UTC');
 assert.equal(dateLabel(''),'Not supplied');
 assert.equal(dateLabel('bad-date'),'Not supplied');
+for(const value of [null,undefined,0,{},'2026-10-13T21:13:57Zjunk'])
+  assert.equal(dateLabel(value),'Not supplied');
 assert.equal(INBOX_FILTERS[0][0],'all');
 assert.deepEqual(new Set(INBOX_FILTERS.map(row=>row[0])).size,INBOX_FILTERS.length);
 
@@ -92,7 +98,8 @@ assert.match(style,/--jill-list-cols/);
 assert.match(style,/\.jill-inbox__columns\{/);
 assert.match(style,/grid-template-columns:var\(--jill-list-cols\)/);
 assert.match(style,/@media\(max-width:760px\)/);
-assert.doesNotMatch(landing,/to="\/app\/requests"/);
+assert.match(landing,/selectWorkHomePriorities/);
+assert.match(landing,/View requests/);
 assert.doesNotMatch(style,/!important|@import|url\(/i);
 // Search and soft-archive actions are intentional new Owner-only routes.
 // They must use the dedicated WORK actions, never direct Google/browser IO.
@@ -118,7 +125,7 @@ assert.match(route,/onClick=\{toggleDetails\}/);
 assert.match(route,/<div className="jill-inbox__columns"/);
 assert.match(route,/<div className="jill-inbox__row"/);
 assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
-assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
 assert.doesNotMatch(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
 assert.match(quickActions,/className="jill-actions__direct-buttons"/);

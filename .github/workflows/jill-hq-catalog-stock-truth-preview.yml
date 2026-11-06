@@ -12,6 +12,7 @@ on:
       - jill/hq-quote-recovery-guidance-20261026
       - jill/hq-quote-response-once-20261026
       - jill/hq-quote-save-single-flight-20261027
+      - jill/hq-inbox-readback-20261105
   pull_request:
     branches:
       - jill/hq-visual-polish-source-20261024
@@ -30,6 +31,9 @@ on:
       - 'scripts/test-work-hq-request-detail-recovery.mjs'
       - 'scripts/test-work-hq-inbox-item-preview.mjs'
       - 'scripts/test-work-hq-bounded-detail-prefetch.mjs'
+      - 'scripts/test-work-hq-inbox-ui.mjs'
+      - 'scripts/test-work-hq-inbox-mounted.mjs'
+      - 'services/jill-order-desk/inbox-display.mjs'
       - 'scripts/test-work-quote-reload-revision-guard.mjs'
       - 'scripts/test-work-quote-recovery-guidance.mjs'
       - 'scripts/test-work-quote-response-once.mjs'
@@ -68,6 +72,7 @@ jobs:
           node scripts/test-work-hq-request-detail-recovery.mjs
           node scripts/test-work-hq-inbox-item-preview.mjs
           node scripts/test-work-hq-bounded-detail-prefetch.mjs
+          node scripts/test-work-hq-inbox-ui.mjs
           node scripts/test-work-quote-reload-revision-guard.mjs
           node scripts/test-work-quote-recovery-guidance.mjs
           node scripts/test-work-quote-response-once.mjs
@@ -81,6 +86,7 @@ jobs:
       - name: Verify mounted quote recovery without provider access
         run: |
           node scripts/test-work-quote-recovery-mounted.mjs
+          node scripts/test-work-hq-inbox-mounted.mjs
           node scripts/test-work-hq-quote-ui-wiring.mjs
       - name: Typecheck scoped HQ change
         run: npm run typecheck --prefix services/jill-order-desk/app-home

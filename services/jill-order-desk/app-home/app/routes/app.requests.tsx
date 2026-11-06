@@ -180,7 +180,8 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
         {customerName
           ?<span className="jill-inbox__customer-name" title={customerName}>{customerName}</span>
           :<span className="jill-inbox__customer-unverified">
-            {orderDetails.state!=="idle"?"Checking name…":"Name unavailable"}
+            {orderDetails.state!=="idle"?"Checking name…":
+              requestedId.current===item.submission_id?"Name unavailable":"Name not loaded"}
           </span>}
       </span>
       <span className="jill-inbox__cell jill-inbox__cell--request" data-label="Request">
