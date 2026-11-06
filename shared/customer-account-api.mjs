@@ -67,3 +67,20 @@ export async function loadAccountHubSummary(request = fetch) {
     await queryCustomerAccount(ACCOUNT_HUB_SUMMARY_QUERY, request),
   );
 }
+
+// Read-only identity fencing for My JILL's in-memory draft owners.
+// The Shopify Customer Account GraphQL response, not an email or client hint,
+// supplies this GID. It is used ONLY to isolate ephemeral UI state, never as
+// an authorization credential or as an API request parameter.
+export async function loadAccountHubScopedSummary(request = fetch) {
+  const data = await queryCustomerAccount(ACCOUNT_HUB_SUMMARY_QUERY, request);
+  const principal = data?.customer?.id;
+  if(typeof principal!=='string'||
+     !/^gid:\/\/shopify\/Customer\/[1-9][0-9]*$/.test(principal))
+    throw Error('Authenticated Shopify account identity is unavailable.');
+  return Object.freeze({
+    principal,
+    summary: normalizeAccountHubSummary(data),
+  });
+}
+

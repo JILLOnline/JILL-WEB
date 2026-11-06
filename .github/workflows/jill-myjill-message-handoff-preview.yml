@@ -1,0 +1,91 @@
+name: JILL My JILL message handoff preview
+
+# Source-only checks. No store deployment, tokens, credentials, billing, or
+# bypass of the independent M1/M2 protected-history release certificate.
+on:
+  push:
+    branches:
+      - jill/myjill-message-handoff-preview-20261022
+  pull_request:
+    branches:
+      - jill/rewards-work
+    paths:
+      - 'extensions/jill-account-dashboard/src/hub/AccountHub.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/CustomOrders.jsx'
+      - 'extensions/jill-account-dashboard/src/pages/Messages.jsx'
+      - 'shared/customer-message-selection.mjs'
+      - 'scripts/test-work-customer-message-navigation.mjs'
+      - 'scripts/test-work-customer-message-operation-races.mjs'
+      - 'scripts/test-work-customer-read-cancellation.mjs'
+      - 'scripts/test-work-myjill-account-response-integrity.mjs'
+      - 'scripts/test-work-message-inboxes.mjs'
+      - 'scripts/audit-work-myjill-message-extension-source.mjs'
+      - 'scripts/test-audit-work-myjill-message-extension-source.mjs'
+      - 'backend/custom-order-account-read.mjs'
+      - 'services/custom-order-cloudflare/handler.mjs'
+      - 'shared/customer-custom-orders.mjs'
+      - 'shared/customer-contact-tickets.mjs'
+      - 'scripts/test-work-myjill-contact-ticket-contract.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/ContactRequests.jsx'
+      - 'extensions/jill-account-dashboard/src/hub/routes.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/Overview.jsx'
+      - 'scripts/test-work-myjill-contact-page.mjs'
+      - 'shared/customer-contact-claim.mjs'
+      - 'scripts/test-work-myjill-contact-claim.mjs'
+      - 'shared/customer-contact-thread.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/ContactThread.jsx'
+      - 'scripts/test-work-myjill-contact-thread.mjs'
+      - 'extensions/jill-account-dashboard/src/pages/RequestConversation.jsx'
+      - 'scripts/test-work-myjill-reply-capability.mjs'
+      - '.github/workflows/jill-myjill-message-handoff-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  customer-handoff-offline:
+    name: Check signed-customer selection and preserved reply receipts without deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify owned request selection and single in-memory reply operation
+        run: |
+          node scripts/test-work-customer-message-navigation.mjs
+          node scripts/test-work-customer-message-operation-races.mjs
+          node scripts/test-work-customer-read-cancellation.mjs
+          node scripts/test-work-myjill-account-response-integrity.mjs
+          node scripts/test-work-myjill-contact-ticket-contract.mjs
+          node scripts/test-work-myjill-contact-page.mjs
+          node scripts/test-work-myjill-contact-claim.mjs
+          node scripts/test-work-myjill-contact-thread.mjs
+      - name: Verify customer-account page module, Shopify grants and same WORK-only gateway (offline)
+        run: node scripts/test-audit-work-myjill-message-extension-source.mjs
+      - name: Verify signed reply-capability source and reject forged upstream enablement
+        run: |
+          node scripts/test-work-myjill-reply-capability.mjs
+          node scripts/test-custom-order-account-read.mjs
+      - name: Regress existing two-sided public projection and account ownership
+        run: |
+          node scripts/test-work-message-inboxes.mjs
+          node scripts/test-customer-custom-orders.mjs
+          node scripts/test-my-jill-presentation.mjs
+          node scripts/test-account-hub-canary.mjs
+          node scripts/test-work-conversation.mjs
+      - name: Assert source-only scope, never a Cloudflare/Shopify/Google deployment
+        run: |
+          node --check shared/customer-message-selection.mjs
+          node --check scripts/test-work-customer-message-navigation.mjs
+          node --check scripts/test-work-customer-message-operation-races.mjs
+          node --check scripts/test-work-customer-read-cancellation.mjs
+          node --check scripts/test-work-myjill-account-response-integrity.mjs
+          node --check shared/customer-contact-tickets.mjs
+          node --check scripts/test-work-myjill-contact-ticket-contract.mjs
+          node --check scripts/test-work-myjill-contact-page.mjs
+          node --check shared/customer-contact-claim.mjs
+          node --check scripts/test-work-myjill-contact-claim.mjs
+          node --check shared/customer-contact-thread.mjs
+          node --check scripts/test-work-myjill-contact-thread.mjs

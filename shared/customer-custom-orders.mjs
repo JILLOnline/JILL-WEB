@@ -1,3 +1,5 @@
+import {projectCustomerMessageInbox} from './custom-order-message-inbox.mjs';
+
 // WORK-only My JILL Custom Orders account reader.
 // Source of customer identity is Shopify's signed session token ONLY.
 // Never send a user-supplied email, customer ID or order ID to the endpoint.
@@ -50,19 +52,27 @@ export function readAccountOrderSummary(value) {
   };
 }
 
-export async function loadWorkCustomerCustomOrders({
+export async function loadWorkCustomerConversationState({
   sessionToken,request=fetch,endpoint=WORK_CUSTOM_ORDER_ACCOUNT_URL,
+  signal,
 }={}) {
   if(!sessionToken||typeof sessionToken.get!=='function')
     throw new Error('Authenticated Shopify customer session is unavailable.');
   if(endpoint!==WORK_CUSTOM_ORDER_ACCOUNT_URL)
     throw new Error('Refusing an unverified Custom Order account endpoint.');
+  if(signal!==undefined&&!(typeof signal?.aborted==='boolean'&&
+    typeof signal?.addEventListener==='function'))
+    throw new Error('Invalid account verification cancellation signal.');
+  // An old signed read must not be rendered after its screen/attempt leaves.
+  signal?.throwIfAborted?.();
   const jwt=await sessionToken.get();
   if(typeof jwt!=='string'||jwt.length<32||jwt.length>8192)
     throw new Error('Shopify could not verify your current session.');
+  signal?.throwIfAborted?.();
   const response=await request(endpoint,{
     method:'POST',
-    signal:AbortSignal.timeout(20000),
+    signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)])
+      :AbortSignal.timeout(20000),
     headers:{
       'Content-Type':'application/json',
       Authorization:'Bearer '+jwt,
@@ -75,13 +85,14 @@ export async function loadWorkCustomerCustomOrders({
       : 'Your Custom Orders could not be verified. Please try again.',
   );
   const data=await response.json();
+  signal?.throwIfAborted?.();
   if(data?.version!==1||
      data?.operation!=='custom_order.account.list.result'||
      data?.ok!==true||!Array.isArray(data.orders)||data.orders.length>20)
     throw new Error('Invalid Custom Orders response.');
   // Gateway already returns a strict public-only projection and validates
   // the JWT; use a tiny second check for corrupted data during rendering.
-  return data.orders.map(item=>{
+  const orders=data.orders.map(item=>{
     const thread=item.timeline_version===2;
     if(typeof item.submission_id!=='string'||item.submission_id.length>128||
        !Number.isSafeInteger(item.revision)||item.revision<1||
@@ -97,12 +108,33 @@ export async function loadWorkCustomerCustomOrders({
       status:item.status,
       revision:item.revision,
       updated_at:String(item.updated_at||''),
-      timeline:item.timeline.map(event=>({
-        ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
-        status:String(event.status||''),
-        note:String(event.note||'').slice(0,500),
-        occurred_at:String(event.occurred_at||''),
-      })),
+      timeline:item.timeline.map(event=>{
+        // Do not make malformed server data appear trustworthy through
+        // string coercion or silent message truncation.
+        if(!event||typeof event!=='object'||Array.isArray(event)||
+           typeof event.status!=='string'||
+           typeof event.note!=='string'||event.note.length>500||
+           typeof event.occurred_at!=='string'||event.occurred_at.length>40)
+          throw new Error('Invalid Custom Order history.');
+        return {
+          ...(thread?{revision:event.revision,kind:event.kind,author:event.author}:{}),
+          status:event.status,note:event.note,occurred_at:event.occurred_at,
+        };
+      }),
     };
   });
+  // Require the same bounded, unique, chronological public contract for
+  // BOTH My JILL screens. Reject a malformed/duplicated order before the
+  // Custom Orders page can render it (Messages already checks this).
+  projectCustomerMessageInbox(orders);
+  signal?.throwIfAborted?.();
+  if(data.reply_enabled!==undefined&&typeof data.reply_enabled!=='boolean')
+    throw new Error('Invalid reply capability.');
+  return Object.freeze({orders,replyEnabled:data.reply_enabled===true});
+}
+// Historical callers still get exactly an array of orders. Only messaging
+// screens consume the authenticated WORK reply capability.
+export async function loadWorkCustomerCustomOrders(options={}){
+ const state=await loadWorkCustomerConversationState(options);
+ return state.orders;
 }

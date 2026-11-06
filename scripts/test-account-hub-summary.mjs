@@ -62,9 +62,10 @@ await assert.rejects(
 );
 const connected=fs.readFileSync('extensions/jill-account-dashboard/src/hub/ConnectedHub.jsx','utf8');
 const shell=fs.readFileSync('extensions/jill-account-dashboard/src/hub/AccountHub.jsx','utf8');
-assert.match(connected,/loadAccountHubSummary\(\)/);
-assert.match(connected,/status: 'error'/);
-assert.match(connected,/active = false/);
+assert.match(connected,/loadAccountHubScopedSummary\(\)/);
+assert.match(connected,/reconcileMyJillAccountScope/);
+assert.match(connected,/type:'failed'/);
+assert.match(connected,/active=false/);
 assert.doesNotMatch(connected,/metafieldsSet|discountCodeBasicCreate|setInterval|write_customers/);
 assert.match(shell,/accountState\?\.status === 'ready'|accountState\?\.status === 'loading'/);
 const rewardsPage=fs.readFileSync('extensions/jill-account-dashboard/src/pages/Rewards.jsx','utf8');

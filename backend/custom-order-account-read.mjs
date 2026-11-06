@@ -108,7 +108,7 @@ export function onlyPublicCustomOrderProjection(orders) {
 
 export async function handleWorkCustomOrderAccountRead(request,{
   shopifyAppSecret,googleGatewaySecret,googleQaEndpoint,
-  rateLimit,backendFetch=fetch,now=Date.now,
+  rateLimit,backendFetch=fetch,now=Date.now,conversationEnabled=false,
 }={}) {
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:HEADERS});
   if(request.method!=='POST')return failure(405,'method_not_allowed');
@@ -163,7 +163,10 @@ export async function handleWorkCustomOrderAccountRead(request,{
        result?.ok!==true)throw Error('Unverified Google account projection.');
     const orders=onlyPublicCustomOrderProjection(result.orders);
     return reply(200,{version:1,operation:'custom_order.account.list.result',
-      ok:true,orders});
+      ok:true,orders,
+      // Only this verified WORK Worker runtime may declare capability.
+      // Ignore untrusted Google payload flags and fail closed by default.
+      reply_enabled:conversationEnabled===true});
   } catch {
     // A backend failure must never show cached requests from another user.
     return failure(503,'account_status_unavailable');

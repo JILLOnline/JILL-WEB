@@ -1,43 +1,71 @@
 import {useEffect,useState} from 'preact/hooks';
-import {loadWorkCustomerCustomOrders} from '../../../../shared/customer-custom-orders.mjs';
+import {loadWorkCustomerConversationState} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
+import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,searchVerifiedMyJillOrders}
+ from './myjill-order-activity.mjs';
+import {retainOwnedMessageDrafts,updateOwnedMessageDraft} from '../../../../shared/customer-message-selection.mjs';
 import {
-  customOrderStatus,customOrderTitle,customOrderShortId,
+  customOrderStatus,customOrderNextStep,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
+  customOrderRequestedQuantity,
 } from './custom-order-presentation.mjs';
 
 // UI-only WORK account screen. Every read obtains a fresh Shopify session
 // token through the existing canonical reader. Never select orders by email.
-export default function CustomOrders() {
+export default function CustomOrders({onNavigate,drafts,onDraftsChange,requestedSubmissionId=null}) {
   const [attempt,setAttempt]=useState(0);
-  const [state,setState]=useState({status:'loading',orders:[]});
+  const [state,setState]=useState({status:'loading',orders:[],activity:null,replyEnabled:false});
+  const [filter,setFilter]=useState('all');
+  const [searchQuery,setSearchQuery]=useState('');
+  const [expandedIds,setExpandedIds]=useState({});
   const [refreshing,setRefreshing]=useState(false);
-  const [drafts,setDrafts]=useState({});
 
   useEffect(()=>{
     let active=true;
-    setState({status:'loading',orders:[]});
+    const controller=new AbortController();
+    setState({status:'loading',orders:[],activity:null,replyEnabled:false});
     setRefreshing(true);
     const sessionToken=typeof shopify!=='undefined'
       ? shopify.sessionToken : null;
-    loadWorkCustomerCustomOrders({sessionToken})
-      .then(orders=>{
+    loadWorkCustomerConversationState({sessionToken,signal:controller.signal})
+      .then(({orders,replyEnabled})=>{
         if(active){
           // Keep text and the SAME uncertain operation only for requests in
           // the newly verified account response. Other accounts' drafts go.
-          setDrafts(previous=>Object.fromEntries(orders.map(order=>[
-            order.submission_id,previous[order.submission_id]||{},
-          ])));
-          setState({status:'ready',orders});setRefreshing(false);
+          const activity=projectMyJillOrderActivity(orders);
+          onDraftsChange(previous=>retainOwnedMessageDrafts(previous,orders));
+          // The Home navigation ID is an untrusted selection hint. Only
+          // a freshly signed account list can authorize which details open.
+          const ownedTarget=typeof requestedSubmissionId==='string'&&
+            orders.some(order=>order.submission_id===requestedSubmissionId)
+            ?requestedSubmissionId:null;
+          setExpandedIds(ownedTarget?{[ownedTarget]:true}:{});
+          if(ownedTarget){
+            // An authenticated deep link must not stay hidden behind an old
+            // search term or status folder. Only clear after the fresh signed
+            // account response proves ownership of this exact request ID.
+            setFilter('all');
+            setSearchQuery('');
+          }
+          setState({status:'ready',orders,activity,replyEnabled});
+          setRefreshing(false);
         }
       })
       .catch(()=>{
-        if(active){setState({status:'error',orders:[]});setRefreshing(false);}
+        if(active){
+          onDraftsChange({}); // Account could have changed; clear uncertain replies.
+          setExpandedIds({});
+          setState({status:'error',orders:[],activity:null,replyEnabled:false});
+          setRefreshing(false);
+        }
       });
-    return ()=>{active=false;};
-  },[attempt]);
+    return ()=>{active=false;controller.abort();};
+  },[attempt,requestedSubmissionId]);
 
   const loading=state.status==='loading';
+  const ids=searchVerifiedMyJillOrders(state.activity,state.orders,filter,searchQuery);
+  const byId=new Map(state.orders.map(order=>[order.submission_id,order]));
+  const visibleOrders=ids.map(id=>byId.get(id)).filter(Boolean);
   return (
     <s-stack direction="block" gap="large">
       <s-section>
@@ -78,9 +106,55 @@ export default function CustomOrders() {
               </s-stack>
             </s-box>
           )}
-          {state.orders.map((order)=> {
+          {state.status==='ready' && <s-stack direction="block" gap="base">
+            <s-box padding="base" background="subdued" borderRadius="large">
+              <s-stack direction="block" gap="small-300">
+                <s-heading>Your request activity</s-heading>
+                <s-stack direction="inline" gap="base">
+                  <s-badge tone="info">{state.activity.active} active</s-badge>
+                  <s-badge>{state.activity.finished} finished</s-badge>
+                  {state.activity.awaiting_approval>0 &&
+                    <s-badge tone="warning">
+                      {state.activity.awaiting_approval} awaiting approval
+                    </s-badge>}
+                  {state.activity.ready_pickup>0 &&
+                    <s-badge tone="success">
+                      {state.activity.ready_pickup} marked ready for pickup
+                    </s-badge>}
+                </s-stack>
+                <s-text color="subdued">
+                  Counts reflect confirmed request statuses, not Shopify purchases,
+                  estimated delivery dates or unread messages.
+                </s-text>
+              </s-stack>
+            </s-box>
+            <s-stack direction="inline" gap="small-200" alignItems="end">
+              <s-text-field label="Find a Custom Order"
+                value={searchQuery} maxLength={80}
+                onInput={event=>setSearchQuery(event.currentTarget.value)}
+                placeholder="Item name or request number"/>
+              {Boolean(searchQuery)&&
+                <s-button variant="secondary" onClick={()=>setSearchQuery('')}>
+                  Clear search
+                </s-button>}
+            </s-stack>
+            <s-select label="Show Custom Orders" value={filter}
+              onChange={event=>setFilter(event.currentTarget.value)}>
+              {MYJILL_ORDER_FILTERS.map(option=>
+                <s-option key={option.id} value={option.id}>
+                  {option.label}
+                </s-option>)}
+            </s-select>
+            {visibleOrders.length===0 && state.orders.length>0 &&
+              <s-box padding="base" background="subdued" borderRadius="large">
+                <s-text>No verified Custom Orders match your search or filter.</s-text>
+              </s-box>}
+          </s-stack>}
+          {visibleOrders.map((order)=> {
             const current=customOrderStatus(order.status);
+            const nextStep=customOrderNextStep(order.status);
             const summary=order.summary;
+            const requestedQuantity=customOrderRequestedQuantity(summary);
             const firstEvent=order.timeline[0];
             return (
               <s-box key={order.submission_id}
@@ -90,6 +164,21 @@ export default function CustomOrders() {
                     <s-stack direction="block" gap="small-100">
                       <s-text color="subdued">JILL CUSTOM REQUEST · {customOrderShortId(order.submission_id)}</s-text>
                       <s-heading>{customOrderTitle(summary)}</s-heading>
+                      {(requestedQuantity!==null||summary.date_needed||summary.fulfillment)&&
+                        <s-stack direction="inline" gap="small-200">
+                          {requestedQuantity!==null&&
+                            <s-text color="subdued">
+                              {summary.items.length} {summary.items.length===1?'item type':'item types'} · Qty {requestedQuantity}
+                            </s-text>}
+                          {summary.date_needed&&
+                            <s-text color="subdued">
+                              Needed by {customOrderDateOnly(summary.date_needed)}
+                            </s-text>}
+                          {summary.fulfillment&&
+                            <s-text color="subdued">
+                              {customOrderFulfillment(summary.fulfillment)}
+                            </s-text>}
+                        </s-stack>}
                       {firstEvent && <s-text color="subdued">Requested {customOrderDateTime(firstEvent.occurred_at)}</s-text>}
                     </s-stack>
                     <s-badge tone={current.tone}>{current.label}</s-badge>
@@ -99,9 +188,30 @@ export default function CustomOrders() {
                     <s-stack direction="block" gap="small-300">
                       <s-text type="strong">{current.detail}</s-text>
                       <s-text color="subdued">Last update: {customOrderDateTime(order.updated_at)}{refreshing?' · Refreshing…':''}</s-text>
+                      <s-divider/>
+                      <s-heading>{nextStep.heading}</s-heading>
+                      <s-text>{nextStep.text}</s-text>
                     </s-stack>
                   </s-box>
 
+                  <s-stack direction="inline" gap="small-200">
+                    <s-button variant="secondary"
+                      onClick={()=>setExpandedIds(previous=>({
+                        ...previous,[order.submission_id]:!previous[order.submission_id],
+                      }))}>
+                      {expandedIds[order.submission_id]
+                        ?'Hide tracking & details':'View tracking & details'}
+                    </s-button>
+                    <s-button variant="primary"
+                      onClick={()=>onNavigate('messages',{submissionId:order.submission_id})}>
+                      Conversation
+                    </s-button>
+                  </s-stack>
+                  {Boolean(drafts?.[order.submission_id]?.operation) &&
+                    <s-badge tone="warning">
+                      Message delivery needs verification
+                    </s-badge>}
+                  {expandedIds[order.submission_id] && <>
                   {(summary.items.length>0 || summary.date_needed || summary.fulfillment) && (
                     <s-stack direction="block" gap="small-300">
                       <s-heading>Request details</s-heading>
@@ -113,7 +223,7 @@ export default function CustomOrders() {
                         </s-stack>
                       ))}
                       {(summary.date_needed || summary.fulfillment) && (
-                        <s-grid gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="base">
+                        <s-grid gridTemplateColumns="minmax(0, 1fr)" gap="base">
                           {summary.date_needed && (
                             <s-stack direction="block" gap="small-100">
                               <s-text color="subdued">Needed by</s-text>
@@ -154,15 +264,17 @@ export default function CustomOrders() {
                       </s-grid>
                     ))}
                   </s-stack>
-                  <RequestConversation order={order} draft={drafts[order.submission_id]||{}}
-                    onDraftChange={change=>setDrafts(previous=>Object.hasOwn(previous,order.submission_id)?
-                      {...previous,[order.submission_id]:{...previous[order.submission_id],...change}}:previous)}
+                  <RequestConversation order={order} replyEnabled={state.replyEnabled}
+                    draft={drafts[order.submission_id]||{}}
+                    onDraftChange={(change,meta)=>onDraftsChange(previous=>
+                      updateOwnedMessageDraft(previous,order.submission_id,change,meta))}
                     onRefresh={()=>setAttempt(value=>value+1)}/>
                   <s-divider/>
                   <s-stack direction="block" gap="small-100">
                     <s-text color="subdued">Your request reference</s-text>
                     <s-text>{order.submission_id}</s-text>
                   </s-stack>
+                  </>}
                 </s-stack>
               </s-box>
             );
