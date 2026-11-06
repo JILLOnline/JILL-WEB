@@ -3,12 +3,14 @@
 // The authenticated read handler verifies the saved row and original source.
 // Acknowledged Save revision is a minimum readback fence: an older response
 // must never unlock the next write or replace unsaved prices.
+import {validWorkQuotePendingSave} from './work-quote-save-flight.mjs';
 /** @param {{
   readCode?:string|null,
   restored?:{state:string,draftRevision:number}|null,
   acknowledgedRevision?:number|null,
   merchantEdited?:boolean,
-  explicitReload?:boolean
+  explicitReload?:boolean,
+  pendingSave?:any,reconciliation?:any
 }} [options] */
 export function inspectWorkQuoteReload({
   readCode,
@@ -16,8 +18,20 @@ export function inspectWorkQuoteReload({
   acknowledgedRevision=null,
   merchantEdited=false,
   explicitReload=false,
+  pendingSave=null,reconciliation=null,
 }={}){
   const hold=code=>Object.freeze({state:'hold',code});
+  // A revision alone cannot settle an uncertain operation, even when the
+  // Owner explicitly asks to replace local inputs with an older draft.
+  if(pendingSave!==null){
+    if(!validWorkQuotePendingSave(pendingSave))return hold('invalid_pending_operation');
+    if(reconciliation?.operation_id!==pendingSave.operationId||
+       reconciliation.expected_draft_revision!==pendingSave.expectedDraftRevision||
+       !['committed','not_applied'].includes(reconciliation.state)||
+       restored?.draftRevision<pendingSave.expectedDraftRevision+1||
+       !Number.isSafeInteger(restored?.draftRevision))
+      return hold('pending_operation_unresolved');
+  }
   if(acknowledgedRevision!==null&&(
     !Number.isSafeInteger(acknowledgedRevision)||
     acknowledgedRevision<1||acknowledgedRevision>100))

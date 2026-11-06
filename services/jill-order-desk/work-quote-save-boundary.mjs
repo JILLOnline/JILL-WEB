@@ -145,6 +145,7 @@ export async function handleWorkQuoteDraftSave({
       if(accepted(already,current,binding))
         return respond(200,'draft_saved',{
           revision:binding.next_draft_revision,duplicate:true,
+          operation_id:input.operation_id,
         });
     }catch{}
     return respond(409,'draft_revision_changed');
@@ -169,6 +170,7 @@ export async function handleWorkQuoteDraftSave({
     if(receipt!==undefined && accepted(receipt,current,binding))
       return respond(200,'draft_saved',{
         revision:binding.next_draft_revision,duplicate:false,
+        operation_id:input.operation_id,
       });
   }catch{}
   return respond(503,'commit_unconfirmed');

@@ -9,6 +9,7 @@ import {projectWorkMerchantInbox} from './merchant-inbox-read.mjs';
 const SHOP='jill-work.myshopify.com';
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
 const HASH=/^[0-9a-f]{64}$/;
+const OP=/^jill:hq:quote:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const FEES=['materials','labor','shipping','other','discount','tax'];
 const MAX_TOTAL=100_000_000;
 const HEADER={'cache-control':'private, no-store, max-age=0',
@@ -154,12 +155,37 @@ export async function handleWorkQuoteDraftRead({
       'access_denied');
   const url=new URL(request.url);
   const keys=[...url.searchParams.keys()];
-  if(keys.length!==1||keys[0]!=='submission_id'||
+  const operationId=url.searchParams.get('operation_id');
+  const expected=url.searchParams.get('expected_draft_revision');
+  const reconcile=operationId!==null||expected!==null;
+  if(keys.length!==(reconcile?3:1)||new Set(keys).size!==keys.length||
+     keys.some(k=>!['submission_id','operation_id','expected_draft_revision'].includes(k))||
+     reconcile&&(!OP.test(operationId||'')||!/^(?:0|[1-9][0-9]?)$/.test(expected||''))||
      !ID.test(url.searchParams.get('submission_id')||'')||
      request.headers.get('origin') &&
        request.headers.get('origin')!==url.origin)
     return result(400,'invalid_quote_request');
   const id=url.searchParams.get('submission_id');
+  // Opaque stable partition, not a credential or an authorization grant.
+  const recovery_scope=hash('jill_work_quote_recovery_v1\n'+SHOP+'\n'+permission.staffId);
+  const recovery=row=>{
+    if(!reconcile)return {};
+    const next=Number(expected)+1;
+    let state='unresolved';
+    if(row?.operation_submission_id!==null&&row?.operation_submission_id!==undefined){
+      state=row.operation_submission_id===id&&row.operation_revision===next&&
+        HASH.test(row.operation_quote_sha256||'')&&row.draft_revision>=next&&
+        (row.draft_revision!==next||row.quote_sha256===row.operation_quote_sha256)
+        ?'committed':'conflict';
+    }else if(row&&row.draft_revision>=next){
+      // The single SELECT observes current row + receipt in ONE snapshot.
+      // With no receipt and CAS revision already advanced, this operation
+      // cannot commit later against its old expected revision.
+      state='not_applied';
+    }
+    return {recovery:{operation_id:operationId,
+      expected_draft_revision:Number(expected),state}};
+  };
   let original;
   try{
     const list=projectWorkMerchantInbox(await readFreshList());
@@ -170,18 +196,27 @@ export async function handleWorkQuoteDraftRead({
        detail.revision!==original.revision||
        detail.items?.length!==original.item_count)
       return result(409,'source_revision_changed');
-    const row=await db.prepare(
+    const row=await db.prepare(reconcile?
+      'SELECT d.shop,d.submission_id,d.draft_revision,d.source_revision,'+
+      'd.source_sha256,d.quote_sha256,d.quote_json,d.total_cents,d.currency,'+
+      'd.state,d.updated_at_ms,o.submission_id AS operation_submission_id,'+
+      'o.draft_revision AS operation_revision,o.quote_sha256 AS operation_quote_sha256 '+
+      'FROM jill_work_quote_drafts d LEFT JOIN jill_work_quote_draft_operations o '+
+      'ON o.shop=d.shop AND o.operation_id=? '+
+      'WHERE d.shop=? AND d.submission_id=?':
       'SELECT shop,submission_id,draft_revision,source_revision,'+
       'source_sha256,quote_sha256,quote_json,total_cents,currency,'+
       'state,updated_at_ms FROM jill_work_quote_drafts '+
       'WHERE shop=? AND submission_id=?'
-    ).bind(SHOP,id).first();
-    if(row===null)return result(200,'no_saved_draft',{state:'none'});
+    ).bind(...(reconcile?[operationId,SHOP,id]:[SHOP,id])).first();
+    if(row===null)return result(200,'no_saved_draft',{
+      state:'none',submission_id:id,recovery_scope,...recovery(null),
+    });
     try{
       const draft=projectVerifiedWorkQuoteDraft({
         row,detail,submissionId:id,
       });
-      return result(200,'draft_ready',{draft});
+      return result(200,'draft_ready',{draft,submission_id:id,recovery_scope,...recovery(row)});
     }catch(error){
       if(error?.message==='stale_quote_draft_source')
         return result(409,'source_revision_changed');

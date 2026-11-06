@@ -59,9 +59,17 @@ export function prepareWorkQuoteUiSavePayload({
     remote_d1_write_authorized:false,shopify_invoice_authorized:false,
   });
 }
-export function workQuoteDraftReadPath(submissionId){
+export function workQuoteDraftReadPath(submissionId,pending=null){
   if(typeof submissionId!=='string'||!ID.test(submissionId))
     throw Error('invalid_quote_request_id');
-  return '/app/requests/quote-draft?submission_id='+
-    encodeURIComponent(submissionId);
+  let path='/app/requests/quote-draft?submission_id='+encodeURIComponent(submissionId);
+  if(pending!==null){
+    if(!OP.test(pending.operationId||'')||
+       !Number.isSafeInteger(pending.expectedDraftRevision)||
+       pending.expectedDraftRevision<0||pending.expectedDraftRevision>=100)
+      throw Error('invalid_quote_operation');
+    path+='&operation_id='+encodeURIComponent(pending.operationId)+
+      '&expected_draft_revision='+pending.expectedDraftRevision;
+  }
+  return path;
 }
