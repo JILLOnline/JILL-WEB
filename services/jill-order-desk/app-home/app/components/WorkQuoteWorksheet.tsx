@@ -9,6 +9,12 @@ import {evaluateWorkQuoteWorksheet,formatWorkUsd}
   from "../../../work-quote-worksheet.mjs";
 import {hydrateVerifiedWorkQuoteWorksheet}
   from "../../../work-quote-restore-model.mjs";
+import {inspectWorkQuoteReload}
+  from "../../../work-quote-readback-policy.mjs";
+import {createWorkQuoteSaveFlight}
+  from "../../../work-quote-save-flight.mjs";
+import {describeWorkQuoteReadbackHold,describeWorkQuoteSaveFailure}
+  from "../../../work-quote-recovery-guidance.mjs";
 import {prepareWorkQuoteUiSavePayload,workQuoteDraftReadPath}
   from "../../../work-quote-ui-payload.mjs";
 import {inspectWorkQuoteUnitReview}
@@ -130,10 +136,30 @@ export function WorkQuoteWorksheet({
     ()=>({...EMPTY_FEES,...restored?.fees}),
   );
   type DraftResult={ok:boolean;code:string;revision?:number;
-    duplicate?:boolean;state?:string;draft?:VerifiedSavedDraft};
+    duplicate?:boolean;state?:string;draft?:VerifiedSavedDraft;
+    operation_id?:string;submission_id?:string;recovery_scope?:string;
+    recovery?:{operation_id:string;expected_draft_revision:number;state:string}};
   const saveFetcher=useFetcher<DraftResult>();
   const readFetcher=useFetcher<DraftResult>();
-  const operation=useRef<string|null>(null);
+  // Each completed fetcher payload is handled at most once. React Router
+  // may retain an old data object while a later source/detail prop changes.
+  // Reprocessing that response must never restore stale prices or clear HOLD.
+  const processedSaveResponse=useRef<DraftResult|null>(null);
+  const processedReadResponse=useRef<DraftResult|null>(null);
+  // The first click reserves this quote's operation synchronously, before
+  // React Router marks useFetcher busy. Keep it reserved after an uncertain
+  // response until independently verified saved-draft readback.
+  const saveFlight=useRef<ReturnType<typeof createWorkQuoteSaveFlight>|null>(null);
+  const [recoveryReady,setRecoveryReady]=useState(false);
+  const mounted=useRef(false);
+  const writeContext=useRef("");
+  writeContext.current=JSON.stringify([submissionId,sourceRevision,customerStatus,saveDraftEnabled]);
+  useEffect(()=>{
+    mounted.current=true;
+    return ()=>{mounted.current=false;};
+  },[]);
+  // Never let a cached/slow GET from before Save unlock a later revision.
+  const acknowledgedRevision=useRef<number|null>(null);
   const initialReadStarted=useRef(false);
   const merchantEdited=useRef(false);
   const merchantExplicitReload=useRef(false);
@@ -158,12 +184,17 @@ export function WorkQuoteWorksheet({
   // a freshly verified request to reconcile before another write.
   useEffect(()=>{
     if(!saveDraftEnabled||saveFetcher.state!=="idle"||
-       !saveFetcher.data)return;
-    if(saveFetcher.data.ok&&saveFetcher.data.code==="draft_saved"&&
-       Number.isSafeInteger(saveFetcher.data.revision)){
+       !saveFetcher.data||processedSaveResponse.current===saveFetcher.data)
+      return;
+    processedSaveResponse.current=saveFetcher.data;
+    let pending;
+    try{pending=saveFlight.current?.pending();}catch{}
+    if(saveFetcher.data.ok&&saveFetcher.data.code==="draft_saved"&&pending&&
+       saveFetcher.data.operation_id===pending.operationId&&
+       saveFetcher.data.revision===pending.expectedDraftRevision+1){
       const rev=saveFetcher.data.revision!;
+      acknowledgedRevision.current=rev;
       setDraftRevision(rev);
-      operation.current=null;
       // A server acknowledgment is not an independently verified readback.
       // Keep the next Save blocked until a fresh Owner-backed Reload succeeds.
       setBlocked(true);
@@ -171,51 +202,95 @@ export function WorkQuoteWorksheet({
         " was acknowledged. Reload the saved draft to verify before saving again.");
     }else{
       setBlocked(true);
-      setFeedback("Save not confirmed ("+saveFetcher.data.code+
-        "). Stop and verify the latest draft before another save.");
+      setFeedback("Save not confirmed. "+
+        describeWorkQuoteSaveFailure(saveFetcher.data.code));
     }
   },[saveDraftEnabled,saveFetcher.state,saveFetcher.data]);
   useEffect(()=>{
     if(!saveDraftEnabled||readFetcher.state!=="idle"||
-       !readFetcher.data)return;
-    if(readFetcher.data.ok&&readFetcher.data.code==="draft_ready"){
-      const projection=hydrateVerifiedWorkQuoteWorksheet({
-        draft:readFetcher.data.draft,
+       !readFetcher.data||processedReadResponse.current===readFetcher.data)
+      return;
+    processedReadResponse.current=readFetcher.data;
+    const response=readFetcher.data;
+    let cancelled=false;
+    const reconcile=async()=>{
+    try{
+    if(!response.ok||!response.recovery_scope||response.submission_id!==submissionId)
+      throw Error('quote_readback_unverified');
+    let flight=saveFlight.current;
+    if(!flight||flight.scope!==response.recovery_scope){
+      flight=createWorkQuoteSaveFlight({scope:response.recovery_scope,submissionId});
+      saveFlight.current=flight;
+      acknowledgedRevision.current=null;
+    }
+    const pending=flight.pending();
+    setRecoveryReady(true);
+    if(pending&&!response.recovery){
+      // Remount/refresh: discover the authenticated Owner partition first,
+      // then reconcile its retained operation. Never apply this older read.
+      setBlocked(true);
+      readFetcher.load(workQuoteDraftReadPath(submissionId,pending));
+      return;
+    }
+    const projection=response.ok&&
+      response.code==="draft_ready"
+      ?hydrateVerifiedWorkQuoteWorksheet({
+        draft:response.draft,
         detail:model?.state==="ready"?model.detail:null,
         submissionId,
-      });
-      if(projection){
-        if(merchantEdited.current&&!merchantExplicitReload.current){
-          setFeedback("A saved draft exists. Your newer unsaved inputs were "+
-            "kept. Select Reload saved draft to replace them explicitly.");
-          return;
-        }
-        merchantEdited.current=false;
-        merchantExplicitReload.current=false;
-        setPrices(projection.prices);
-        setFees(projection.fees as Fees);
-        setDraftRevision(projection.draftRevision);
-        setRestoredActive(true);
-        setBlocked(false);
-        operation.current=null;
-        setFeedback("Verified draft revision "+
-          projection.draftRevision+" restored.");
-        return;
-      }
+      }):null;
+    const check=inspectWorkQuoteReload({
+      readCode:response.code,
+      restored:projection,
+      acknowledgedRevision:acknowledgedRevision.current,
+      merchantEdited:merchantEdited.current,
+      explicitReload:merchantExplicitReload.current,
+      pendingSave:pending,reconciliation:response.recovery,
+    });
+    if(check.state==="apply"&&projection){
+      if(pending&&!await flight.verifiedRelease(response.recovery))
+        throw Error('quote_operation_changed');
+      if(cancelled||saveFlight.current!==flight)return;
+      merchantEdited.current=false;
+      merchantExplicitReload.current=false;
+      acknowledgedRevision.current=null;
+      setPrices(projection.prices);
+      setFees(projection.fees as Fees);
+      setDraftRevision(projection.draftRevision);
+      setRestoredActive(true);
+      setBlocked(false);
+      setFeedback("Verified draft revision "+
+        projection.draftRevision+" restored.");
+      return;
     }
-    if(readFetcher.data.ok&&readFetcher.data.code==="no_saved_draft"){
+    if(check.state==="none"){
+      setBlocked(false);
       setFeedback("No saved quote draft exists for this request.");
       return;
     }
+    if(check.code==="unsaved_editor_changes"){
+      setFeedback("A saved draft exists. Your newer unsaved inputs were "+
+        "kept. Select Reload saved draft to replace them explicitly.");
+      return;
+    }
     setBlocked(true);
-    setFeedback("Draft could not be verified ("+readFetcher.data.code+
-      "). No prices were overwritten.");
+    setFeedback("Saved draft readback is on HOLD. "+
+      describeWorkQuoteReadbackHold(check.code)+
+      " No prices were overwritten or further saves authorized.");
+    }catch{
+      if(cancelled)return;
+      setRecoveryReady(false);
+      setBlocked(true);
+      setFeedback("Save recovery is unavailable. Keep these entries and check the saved draft again before saving.");
+    }
+    };
+    void reconcile();
+    return ()=>{cancelled=true;};
   },[saveDraftEnabled,readFetcher.state,readFetcher.data,
     model,submissionId]);
   const edited=()=>{
     // Do not replace the operation ID after an ambiguous commit.
     merchantEdited.current=true;
-    if(!blocked)operation.current=null;
     setRestoredActive(false);
     setFeedback("");
   };
@@ -248,10 +323,20 @@ export function WorkQuoteWorksheet({
   // but must NOT disable the independent Owner/D1 Reload recovery path.
   const canReloadDraft=saveDraftEnabled===true&&verifiedSource&&
     detail!==null&&!locked&&!busy;
-  const canSaveDraft=canReloadDraft&&!blocked;
-  const onSaveDraft=()=>{
-    if(!canSaveDraft||!readyQuote)return;
-    const op=operation.current??"jill:hq:quote:"+crypto.randomUUID();
+  const canSaveDraft=canReloadDraft&&recoveryReady&&!blocked;
+  const onSaveDraft=async()=>{
+    // The disabled button is render-state and may lag behind rapid clicks.
+    // Reserve synchronously, never issue a second POST for this quote while
+    // its original operation has not been independently reconciled.
+    if(!canSaveDraft||!readyQuote||!saveFlight.current)return;
+    const flight=saveFlight.current;
+    const context=writeContext.current;
+    if(flight.isReserved()){
+      setBlocked(true);
+      setFeedback("Another Save is still being verified. Reload the saved draft before saving again.");
+      return;
+    }
+    const op="jill:hq:quote:"+crypto.randomUUID();
     const intent=prepareWorkQuoteUiSavePayload({
       submissionId,detail,sourceRevision,customerStatus,
       prices,fees,draftRevision,operationId:op,
@@ -261,18 +346,38 @@ export function WorkQuoteWorksheet({
         "verified request revision agree.");
       return;
     }
-    operation.current=op;
+    setBlocked(true);
+    try{
+    if(!await flight.reserve({operationId:op,
+      expectedDraftRevision:draftRevision,sourceRevision:sourceRevision!})){
+      setFeedback("Another Save is still being verified. Reload the saved draft before saving again.");
+      return;
+    }
+    // A queued browser lock must not dispatch after unmount, revocation or
+    // request/source change. Keep any reserved metadata for reconciliation.
+    if(!mounted.current||writeContext.current!==context||saveFlight.current!==flight)return;
     saveFetcher.submit(intent.payload,{
       method:"post",action:"/app/requests/quote-draft",
       encType:"application/json",
     });
+    }catch{
+      if(!mounted.current)return;
+      setRecoveryReady(false);
+      setFeedback("Save recovery could not be secured. Check the saved draft before saving again.");
+    }
   };
   const onReloadDraft=()=>{
     if(!canReloadDraft)return;
     // Explicit user action may replace unsaved form inputs. The
     // initial automatic read cannot.
     merchantExplicitReload.current=true;
-    readFetcher.load(workQuoteDraftReadPath(submissionId));
+    try{
+      readFetcher.load(workQuoteDraftReadPath(submissionId,saveFlight.current?.pending()??null));
+    }catch{
+      setBlocked(true);
+      setRecoveryReady(false);
+      setFeedback("Save recovery could not be read. Leave this request unchanged and ask the Owner to reconcile it.");
+    }
   };
 
   // Native disclosure keeps the quote form mounted while collapsed.
@@ -359,6 +464,31 @@ export function WorkQuoteWorksheet({
                 : ERROR[quote.code]??"The quote cannot be calculated."}
             </p>}
           </div>
+          <div className="jill-quote__draft-actions" aria-label="Quote draft management">
+            <div className="jill-quote__draft-buttons">
+              <button type="button" disabled={!canSaveDraft||!ready}
+                onClick={onSaveDraft}>
+                {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
+              </button>
+              <button type="button" disabled={!canReloadDraft}
+                onClick={onReloadDraft}>
+                {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
+              </button>
+            </div>
+            {!saveDraftEnabled&&<p className="jill-quote__notice" role="status">
+              Saving is unavailable in this WORK version. Entries are lost on refresh.
+            </p>}
+            {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
+              role="status">{feedback}</p>}
+          </div>
+          <details className="jill-quote__advanced">
+            <summary>
+              <span>Advanced verification</span>
+              <span className="jill-quote__advanced-hint">
+                Readiness, P1/P2, Shopify prices and artwork
+              </span>
+            </summary>
+            <div className="jill-quote__advanced-content">
           <section className="jill-quote__preflight" aria-label="Quote release readiness">
             <h4>Quote → Customer → Shopify readiness</h4>
             <p>Estimate and source review only. Nothing below sends a quote,
@@ -407,23 +537,9 @@ export function WorkQuoteWorksheet({
             submissionId={submissionId}/>}
           <WorkQuoteArtworkAudit detail={detail}
             submissionId={submissionId} sourceRevision={sourceRevision}/>
-          <div className="jill-quote__draft-actions" aria-label="Quote draft management">
-            <div className="jill-quote__draft-buttons">
-              <button type="button" disabled={!canSaveDraft||!ready}
-                onClick={onSaveDraft}>
-                {saveFetcher.state!=="idle"?"Saving draft…":"Save Draft"}
-              </button>
-              <button type="button" disabled={!canReloadDraft}
-                onClick={onReloadDraft}>
-                {readFetcher.state!=="idle"?"Checking draft…":"Reload saved draft"}
-              </button>
             </div>
-            {!saveDraftEnabled&&<p className="jill-quote__notice" role="status">
-              Saving is unavailable in this WORK version. Entries are lost on refresh.
-            </p>}
-            {saveDraftEnabled&&feedback&&<p className="jill-quote__notice"
-              role="status">{feedback}</p>}
-          </div>
+          </details>
+
         </>}
     </div>
   </details>;

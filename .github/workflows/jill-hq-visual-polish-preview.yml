@@ -1,0 +1,50 @@
+name: JILL HQ visual-only source preview
+# Explicitly excluded: Cloudflare upload/deploy, Shopify writes, Google QA,
+# D1 migration/queries, R2, LIVE/KEEP changes, or paid cloud provisioning.
+on:
+  push:
+    branches:
+      - jill/hq-visual-polish-source-20261024
+  pull_request:
+    branches:
+      - jill/hq-quote-catalog-preflight-20261022
+    paths:
+      - 'services/jill-order-desk/app-home/app/routes/app.tsx'
+      - 'services/jill-order-desk/app-home/app/components/WorkQuoteWorksheet.tsx'
+      - 'services/jill-order-desk/app-home/app/styles/hq-visual-polish.css'
+      - 'scripts/test-work-hq-visual-polish-guard.mjs'
+      - '.github/workflows/jill-hq-visual-polish-preview.yml'
+      - 'docs/WORK_HQ_VISUAL_POLISH_20261024.md'
+permissions:
+  contents: read
+jobs:
+  source-and-interface:
+    name: Preserve WORK auth, merchant actions, and quote logic; compile visual changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce visual-only diff against owner-accepted WORK source
+        run: node scripts/test-work-hq-visual-polish-guard.mjs
+      - name: Verify unchanged merchant/quote source contracts
+        run: |
+          node scripts/test-work-hq-quote-owner-ui.mjs
+          node scripts/test-work-quote-commerce-handoff.mjs
+          node scripts/test-work-hq-catalog-quote-bridge.mjs
+          node scripts/test-work-quote-calculation.mjs
+          node scripts/test-work-hq-visual-activation-readonly.mjs
+      - name: Install embedded WORK app compile dependencies only
+        run: npm install --prefix services/jill-order-desk/app-home --no-audit --no-fund
+      - name: Typecheck WORK embedded React routes
+        run: npm run typecheck --prefix services/jill-order-desk/app-home
+      - name: Compile authenticated WORK HQ UI only
+        env:
+          JILL_BUILD_TARGET: canary
+        run: npm run build --prefix services/jill-order-desk/app-home
+      - name: Inspect Worker bundle shape without deployment
+        run: node scripts/check-work-contact-hq-bundle.mjs

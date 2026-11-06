@@ -39,8 +39,11 @@ export function requestShortId(id){
   return id.slice(-8).toUpperCase();
 }
 export function dateLabel(value,{includeTime=false}={}){
-  if(!value)return 'Not supplied';
-  const iso=includeTime?value:value+'T12:00:00.000Z';
+  if(typeof value!=='string'||!value)return 'Not supplied';
+  // Event dates need a stable UTC anchor; complete source timestamps already
+  // identify an instant and must not receive a second time suffix.
+  const iso=!includeTime&&/^\d{4}-\d{2}-\d{2}$/.test(value)
+    ?value+'T12:00:00.000Z':value;
   const date=new Date(iso);
   if(!Number.isFinite(date.getTime()))return 'Not supplied';
   const formatted=new Intl.DateTimeFormat('en-US',{

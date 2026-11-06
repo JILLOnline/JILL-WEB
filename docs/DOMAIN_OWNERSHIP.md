@@ -88,6 +88,22 @@ This registry answers one question: **where does this behavior belong?**
 
 ## Registry rule
 
+HQ request date/status/short-ID formatting remains in
+`services/jill-order-desk/inbox-display.mjs`. Date-only event values receive a
+UTC anchor; complete source timestamps keep their existing instant. The
+existing `RequestCard` controller in `app.requests.tsx` owns whether its
+optional exact-ID name read has started. An unrequested or queued row must
+not claim a failed read. The existing two-slot prefetch queue owns only
+leases; it never caches customer names or grants access.
+
+WORK quote Save recovery belongs to `services/jill-order-desk/work-quote-save-flight.mjs`
+(identity-scoped browser operation metadata and cross-tab lock),
+`work-quote-readback-policy.mjs` (restore decision), and the existing
+`work-quote-draft-read.mjs` / `work-quote-save-boundary.mjs` (authenticated
+D1 operation receipts/CAS). The browser marker contains only operation ID,
+expected draft revision and source revision. It is never quote storage,
+identity authority or proof of a completed write. No new durable ledger.
+
 WORK connected release additions (2026-10-18):
 
 | Domain | Canonical owner | Boundary |
