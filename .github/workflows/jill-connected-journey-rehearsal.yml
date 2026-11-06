@@ -86,7 +86,7 @@ jobs:
           # A new draft commit intentionally produces HOLD until reviewed
           # and both pins are explicitly updated in a separate source PR.
           EXPECTED_MY_SHA="a93f601e2864028c7e9671a946e3bdac7c553282"
-          EXPECTED_VIS_SHA="43a4deab3e909d59bc9aa054110942c8dc737260"
+          EXPECTED_VIS_SHA="c9129160b43a6498e91f7386bae7407223b67823"
           if [[ "$MY_SHA" != "$EXPECTED_MY_SHA" || "$VIS_SHA" != "$EXPECTED_VIS_SHA" ]]; then
             echo 'HOLD: My JILL/HQ visuals draft moved since reviewed integration source.'
             echo 'Review the changed lane before intentionally updating both source pins.'
@@ -165,6 +165,7 @@ jobs:
           node scripts/test-work-hq-request-detail-recovery.mjs
           node scripts/test-work-hq-inbox-item-preview.mjs
           node scripts/test-work-hq-bounded-detail-prefetch.mjs
+          node scripts/test-work-hq-inbox-ui.mjs
           node scripts/test-work-quote-reload-revision-guard.mjs
           node scripts/test-work-quote-recovery-guidance.mjs
           node scripts/test-work-quote-response-once.mjs
@@ -190,6 +191,7 @@ jobs:
           cd "$JILL_EPHEMERAL_JOIN"
           npm run postinstall
           node scripts/test-work-quote-recovery-mounted.mjs
+          node scripts/test-work-hq-inbox-mounted.mjs
       - name: Compile both My JILL entrypoints without publishing
         shell: bash
         run: |
