@@ -1,16 +1,18 @@
 // Phase 34: isolated WORK merchant status command -> real QA GAS writer ->
-// append-only synthetic sheet -> canonical v7 list and v9 detail re-read.
+// append-only synthetic sheet -> HQ and signed My JILL status readback.
 // OFFLINE: no real Google Apps Script, Cloudflare, Shopify, email, R2 or D1.
 // The spreadsheet and Owner session are in-memory fixtures, not live evidence.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createHmac} from 'node:crypto';
+import {createHash,createHmac,randomUUID} from 'node:crypto';
 import vm from 'node:vm';
 import {handleWorkMerchantCommand} from '../services/jill-order-desk/merchant-command.mjs';
 import {readWorkGoogleQaMerchantList,JILL_HQ_WORK_QA_GOOGLE_URL}
   from '../services/jill-order-desk/work-google-merchant-read.mjs';
 import {readWorkGoogleQaMerchantDetail,JILL_HQ_WORK_QA_GOOGLE_DETAIL_URL}
   from '../services/jill-order-desk/work-google-merchant-detail.mjs';
+import {handleWorkCustomOrderAccountRead} from '../backend/custom-order-account-read.mjs';
+import {loadWorkCustomerConversationState} from '../shared/customer-custom-orders.mjs';
 
 const SHOP='jill-work.myshopify.com';
 const ID='jill:22222222-3333-4444-8555-666666666666';
@@ -18,6 +20,11 @@ const OP='jill:hq:status:10000000-2000-4000-8000-900000000000';
 const SECOND='jill:hq:status:10000000-2000-4000-8000-900000000001';
 const READ_SECRET='SYNTHETIC_PHASE34_READ_SECRET_abcdefghijklmnopqrstuvwxyz';
 const WRITE_SECRET='SYNTHETIC_PHASE34_WRITE_SECRET_abcdefghijklmnopqrstuvwxyz';
+const GATEWAY_SECRET='SYNTHETIC_PHASE34_GATEWAY_SECRET_abcdefghijklmnopqrstuvwxyz';
+const APP_SECRET='SYNTHETIC_PHASE34_APP_SECRET_abcdefghijklmnopqrstuvwxyz';
+const CUSTOMER_ENDPOINT='https://script.google.com/macros/s/AKfycbLOCAL_STATUS_FIXTURE/exec';
+const OWNER_GID='gid://shopify/Customer/111';
+const OTHER_GID='gid://shopify/Customer/222';
 const SUBMITTED='2026-10-16T12:00:00.000Z';
 const SRC=readFileSync(
   new URL('../backend/google-apps-script/JILL_Custom_Order_Automation_REWARDS.gs',
@@ -99,18 +106,19 @@ const events=sheet(workflow.HEADERS,[received]);
 const sheets=new Map([['Submissions',intake],['CustomOrderEvents',events]]);
 const cache=new Map();
 let flushes=0,cacheRemovals=0,locks=0,authCalls=0,qaRequests=0;
-const secretHmac=(message,key)=>Array.from(
-  createHmac('sha256',key).update(message).digest(),
-).map(v=>v>127?v-256:v);
+const signedBytes=bytes=>Array.from(bytes,v=>v>127?v-256:v);
+const secretHmac=(message,key)=>signedBytes(createHmac('sha256',key).update(message).digest());
 const context={
   JILL_REWARDS_RUNTIME:'WORK',JILL_CUSTOM_ORDER_SANDBOX:true,
   JILL:{SHEET_ID:'SYNTHETIC_ONLY_PHASE34',SHEET_NAME:'Submissions'},
   HEADERS,JILL_CUSTOM_WORKFLOW:workflow,
   PropertiesService:{getScriptProperties:()=>({
-    getProperty:key=>key==='JILL_HQ_MERCHANT_READ_SECRET'?READ_SECRET:
-      key==='JILL_HQ_MERCHANT_WRITE_SECRET'?WRITE_SECRET:null,
+    getProperty:key=>({JILL_HQ_MERCHANT_READ_SECRET:READ_SECRET,
+      JILL_HQ_MERCHANT_WRITE_SECRET:WRITE_SECRET,
+      JILL_CUSTOM_ORDER_GATEWAY_SECRET:GATEWAY_SECRET})[key]??null,
   })},
-  Utilities:{computeHmacSha256Signature:secretHmac},
+  Utilities:{computeHmacSha256Signature:secretHmac,DigestAlgorithm:{SHA_256:'sha256'},
+    computeDigest:(algorithm,text)=>signedBytes(createHash(algorithm).update(text).digest())},
   constantTimeEqual_:(a,b)=>a===b,
   SpreadsheetApp:{
     openById(id){
@@ -136,12 +144,17 @@ const context={
   getSheet_:()=>intake,
   findSubmissionRow_:(_sheet,id)=>id===ID?2:null,
   jillCustomOrderEventsSheet_:()=>events,
+  clean_:value=>String(value??'').trim(),
   json_:x=>x,Date,JSON,Math,String,Number,Array,Object,Error,console,
 };
 vm.createContext(context);
 for(const code of [
   extract('function jillCustomOrderEventsFor_',
-    '// Minimal customer-facing order details.'),
+    'function jillCustomOrderMerchantRead('),
+  extract('function jillCustomOrderGatewaySignature_',
+    'function jillCustomOrderGatewaySubmissionAllowed_'),
+  extract('/* WORK CUSTOM ORDER OWNERSHIP V1',
+    '/* END WORK CUSTOM ORDER OWNERSHIP V1 */'),
   extract('function jillCustomOrderMerchantUpdateAsActor_',
     'function jillCustomOrderMerchantBackfill'),
   extract('/* WORK HQ MERCHANT READ V1',
@@ -151,6 +164,9 @@ for(const code of [
   extract('/* WORK HQ MERCHANT COMMAND V1',
     '/* END WORK HQ MERCHANT COMMAND V1 */'),
 ])vm.runInContext(code,context,{timeout:2000});
+const owners=sheet(['submission_id','owner_gid','payload_sha256','bound_at'],
+  [[ID,OWNER_GID,context.jillCustomOrderOwnerHash_(raw),SUBMITTED]]);
+sheets.set('CustomOrderOwners',owners);
 
 const makeEvent=body=>{
   const p=Object.fromEntries(new URLSearchParams(body));
@@ -162,6 +178,8 @@ const backendFetch=async(url,req)=>{
   assert.equal(req.method,'POST');
   assert.ok(req.signal);
   const event=makeEvent(req.body);
+  if(url===CUSTOMER_ENDPOINT&&event.parameter.jill_order_customer_list==='1')
+    return Response.json(context.jillCustomOrderGatewayCustomerList_(event));
   if(url===JILL_HQ_WORK_QA_GOOGLE_URL){
     if(event.parameter.jill_order_merchant_command==='1')
       return Response.json(context.jillWorkHqMerchantCommand_(event));
@@ -187,6 +205,24 @@ assert.equal((await readDetail()).revision,1);
 const authority={shop:SHOP,environment:'WORK',
   app_client_id:'f8e1ebdbae84490dc8ea5b133637e6c0',
   owner_staff_id:'123',policy_version:1};
+const readCustomer=async(gid)=>{
+  const now=Math.floor(Date.now()/1000);
+  const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
+  const claim=encode({alg:'HS256',typ:'JWT'})+'.'+encode({
+    aud:authority.app_client_id,dest:SHOP,sub:gid,iat:now,nbf:now,exp:now+300,jti:randomUUID(),
+  });
+  const jwt=claim+'.'+createHmac('sha256',APP_SECRET).update(claim).digest('base64url');
+  return loadWorkCustomerConversationState({sessionToken:{get:async()=>jwt},
+    request:(url,options)=>handleWorkCustomOrderAccountRead(new Request(url,options),{
+      shopifyAppSecret:APP_SECRET,googleGatewaySecret:GATEWAY_SECRET,
+      googleQaEndpoint:CUSTOMER_ENDPOINT,backendFetch,rateLimit:async()=>true,
+    }),
+  });
+};
+const initialCustomer=await readCustomer(OWNER_GID);
+assert.equal(initialCustomer.orders.length,1);
+assert.equal(initialCustomer.orders[0].revision,1);
+assert.equal(initialCustomer.orders[0].status,'received');
 const db={prepare(sql){
   return {bind(){return {first:async()=>sql.includes('jill_merchant_authority')
     ?authority:null};}};
@@ -204,7 +240,7 @@ const command={
   current_status:'received',customer_status:'reviewing',
   internal_status:'needs_quote',
   public_note:'Synthetic QA review started.',
-  internal_note:'',handoff_reference:'',
+  internal_note:'SYNTHETIC_INTERNAL_STATUS_NOTE',handoff_reference:'',
 };
 function request(data=command,origin='https://work.example'){
   return new Request('https://work.example/app/requests/command',{
@@ -246,6 +282,17 @@ const history=context.jillCustomOrderEventsFor_(events,ID);
 assert.equal(history.length,2);
 assert.equal(history[1].public_note,'Synthetic QA review started.');
 assert.equal(history[1].actor,'shopify:WORK:staff:123');
+assert.equal(history[1].internal_note,command.internal_note);
+const updatedCustomer=await readCustomer(OWNER_GID);
+assert.equal(updatedCustomer.orders.length,1);
+const [updatedOrder]=updatedCustomer.orders;
+assert.equal(updatedOrder.submission_id,ID);
+assert.equal(updatedOrder.revision,detail.revision);
+assert.equal(updatedOrder.status,fresh[0].customer_status);
+assert.equal(updatedOrder.timeline.at(-1).note,command.public_note);
+assert.doesNotMatch(JSON.stringify(updatedOrder),/SYNTHETIC_INTERNAL_STATUS_NOTE|shopify:WORK:staff|synthetic@example\.invalid/);
+assert.deepEqual((await readCustomer(OTHER_GID)).orders,[]);
+assert.deepEqual((await readCustomer(OWNER_GID)).orders,updatedCustomer.orders);
 assert.equal(locks,0);
 out=await send(); // Same signed payload and idempotency key, new HMAC nonce.
 assert.equal(out.status,200);
@@ -265,6 +312,6 @@ assert.equal(locks,0);
 assert.equal(flushes,1,'Only one synthetic append is allowed');
 assert.ok(authCalls>=4);
 assert.ok(qaRequests>=7);
-assert.equal(sheets.size,2,'No email outbox or new worksheet');
-console.log('PASS WORK Phase34 OFFLINE synthetic status receipt: real command HMAC -> actual QA verifier + canonical CAS event append -> cache invalidation -> signed v7 list/v9 detail revision-2 readback, duplicate idempotency and stale/cross-Origin denials.');
+assert.deepEqual([...sheets.keys()],['Submissions','CustomOrderEvents','CustomOrderOwners']);
+console.log('PASS WORK OFFLINE status: signed HQ command -> canonical event append -> matching HQ and signed My JILL readback, A/B/A isolation, private-note exclusion, idempotency and stale/cross-origin denials.');
 console.log('HOLD: all sheet rows, sessions, keys and backend responses were synthetic; NO real WORK QA mutation, Shopify session or deployed-v34 byte parity was proved.');
