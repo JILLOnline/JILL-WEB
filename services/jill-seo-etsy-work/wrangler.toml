@@ -3,12 +3,15 @@ main = "worker.mjs"
 compatibility_date = "2026-11-08"
 workers_dev = true
 preview_urls = false
+# Preserve Cloudflare dashboard-managed bindings, including encrypted secrets.
+keep_vars = true
 
 [observability]
 enabled = false
 
 [vars]
-JILL_SEO_ETSY_ENABLED = "false"
+ETSY_KEYSTRING = "6rjp44gzwzfgk1xntlrzmx32"
+JILL_SEO_ETSY_ENABLED = "true"
 JILL_SEO_ORIGIN = "https://jill-seo-etsy-work.jill-work-custom-orders.workers.dev"
 ETSY_SHOP_NAME = "JillOnlineStore"
 
