@@ -1,10 +1,12 @@
-// Mount the real three request-history surfaces. Synthetic transport only;
+// Mount the real request-history surfaces and their account hub. Synthetic transport only;
 // never contact Shopify or the WORK gateway from this test.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {unlinkSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
+import {CUSTOMER_ACCOUNT_API,ACCOUNT_HUB_SUMMARY_QUERY} from '../shared/customer-account-api.mjs';
+import {WORK_CUSTOM_ORDER_ACCOUNT_URL} from '../shared/customer-custom-orders.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const extension=root+'extensions/jill-account-dashboard/';
 const require=createRequire(extension+'package.json');
@@ -20,10 +22,11 @@ try{
  await build({stdin:{contents:`
   export {default as CustomOrders} from './src/pages/CustomOrders.jsx';
   export {default as RecentRequests} from './src/pages/RecentRequests.jsx';
-  export {default as Messages} from './src/pages/Messages.jsx';`,
+  export {default as Messages} from './src/pages/Messages.jsx';
+  export {default as ConnectedHub} from './src/hub/ConnectedHub.jsx';`,
   resolveDir:extension},outfile:output,bundle:true,format:'esm',platform:'node',
   jsx:'automatic',jsxImportSource:'preact',external:['preact','preact/*']});
- const components=await import(pathToFileURL(output));
+ const {ConnectedHub,...components}=await import(pathToFileURL(output));
  const host=document.querySelector('main');
  const flush=async callback=>act(async()=>{callback();await new Promise(r=>setTimeout(r,25));});
  const responseFor=(title=null)=>new Response(JSON.stringify({version:1,
@@ -106,9 +109,89 @@ try{
   await flush(()=>render(null,host));
  }
  console.log('PASS mounted Home, Custom Orders and Messages distinguish verified empty from failed refresh, recover on explicit retry, and fence obsolete reads after navigation.');
+
+ // Unlike a component remount chosen by the harness, the mounted hub must
+ // detect the new principal through its real account re-verification path.
+ const navigation=new EventTarget();
+ navigation.currentEntry={url:'https://account.example.invalid/overview'};
+ globalThis.navigation=navigation;
+ Object.defineProperty(document,'visibilityState',{value:'visible',configurable:true});
+ const principalFor=(id,name)=>Response.json({data:{customer:{
+  id:`gid://shopify/Customer/${id}`,displayName:name,
+ }}});
+ let currentPrincipal=()=>principalFor(111,'Synthetic Alpha');
+ let currentHistory=()=>responseFor('Alpha original history');
+ let signedToken='synthetic-alpha-token'.repeat(3),historyReads=0;
+ globalThis.shopify={sessionToken:{get:async()=>signedToken}};
+ globalThis.fetch=async(url,options)=>{
+  assert.equal(options.method,'POST');
+  if(url===CUSTOMER_ACCOUNT_API){
+   assert.deepEqual(JSON.parse(options.body),{query:ACCOUNT_HUB_SUMMARY_QUERY});
+   return currentPrincipal();
+  }
+  assert.equal(url,WORK_CUSTOM_ORDER_ACCOUNT_URL);
+  assert.equal(options.headers.Authorization,`Bearer ${signedToken}`);
+  assert.equal(options.body,'','Owner is never supplied by the UI');
+  historyReads++;
+  return currentHistory(options.signal);
+ };
+ const recheck=()=>navigation.dispatchEvent(new Event('currententrychange'));
+ const visible=()=>document.dispatchEvent(new window.Event('visibilitychange'));
+ const waitFor=async(pattern)=>{
+  const deadline=Date.now()+2000;
+  while(!pattern.test(host.textContent)&&Date.now()<deadline)await flush(()=>{});
+  assert.match(host.textContent,pattern);
+ };
+ await flush(()=>render(h(ConnectedHub),host));
+ await waitFor(/Alpha original history/);
+ assert.match(host.textContent,/Synthetic Alpha/);
+
+ let oldHistorySignal,finishOldHistory,finishBetaPrincipal;
+ currentHistory=signal=>new Promise(resolve=>{
+  oldHistorySignal=signal;
+  finishOldHistory=resolve;
+ });
+ await flush(()=>click(button('Refresh activity')));
+ assert.ok(finishOldHistory,'Alpha history is pending');
+ signedToken='synthetic-beta-token'.repeat(3);
+ currentPrincipal=()=>new Promise(resolve=>{finishBetaPrincipal=resolve;});
+ currentHistory=()=>responseFor('Beta verified history');
+ await flush(recheck);
+ assert.ok(finishBetaPrincipal,'Navigation re-verifies the principal');
+ assert.match(host.textContent,/Checking your verified Shopify account/);
+ assert.doesNotMatch(host.textContent,/Synthetic Alpha|Your recent requests/);
+ assert.ok(oldHistorySignal.aborted,'Principal check aborts the old screen read');
+ await flush(()=>finishBetaPrincipal(principalFor(222,'Synthetic Beta')));
+ await waitFor(/Beta verified history/);
+ assert.match(host.textContent,/Synthetic Beta/);
+ await flush(()=>finishOldHistory(responseFor('Obsolete Alpha history')));
+ assert.doesNotMatch(host.textContent,/Synthetic Alpha|Obsolete Alpha history/);
+
+ signedToken='synthetic-alpha-return-token'.repeat(3);
+ currentPrincipal=()=>principalFor(111,'Synthetic Alpha');
+ currentHistory=()=>responseFor('Alpha newly verified history');
+ await flush(visible);
+ await waitFor(/Alpha newly verified history/);
+ assert.match(host.textContent,/Synthetic Alpha/);
+ assert.doesNotMatch(host.textContent,/Synthetic Beta|Beta verified history|Alpha original history/);
+
+ let finishOldPrincipal;
+ currentPrincipal=()=>new Promise(resolve=>{finishOldPrincipal=resolve;});
+ await flush(recheck);
+ assert.ok(finishOldPrincipal,'An older principal read is pending before sign-out');
+ const priorHistoryReads=historyReads;
+ currentPrincipal=()=>new Response(null,{status:401});
+ await flush(visible);
+ await waitFor(/couldn't verify your Shopify account/);
+ await flush(()=>finishOldPrincipal(principalFor(111,'Obsolete Alpha principal')));
+ assert.match(host.textContent,/couldn't verify your Shopify account/);
+ assert.doesNotMatch(host.textContent,/Obsolete Alpha principal|Your recent requests/);
+ assert.equal(historyReads,priorHistoryReads,'No private read runs while signed out');
+ console.log('PASS mounted ConnectedHub hides private screens while checking, verifies A/B/A, and fences late history and principal reads across account changes and simulated sign-out.');
 }finally{
  render(null,document.querySelector('main'));
  try{unlinkSync(output);}catch{}
  delete globalThis.fetch;
  delete globalThis.shopify;
+ delete globalThis.navigation;
 }
