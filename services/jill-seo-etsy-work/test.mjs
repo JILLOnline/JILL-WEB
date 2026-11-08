@@ -39,6 +39,7 @@ const options = {
     if (url.pathname === "/v3/public/oauth/token") {
       const form = new URLSearchParams(await request.text());
       assert.equal(form.get("client_id"), "test_key");
+      assert.equal(request.headers.get("x-api-key"), "test_key:test_secret");
       if (form.get("grant_type") === "authorization_code") {
         assert.equal(form.get("redirect_uri"), origin + CALLBACK);
         assert.equal(form.get("code"), "mock-code");
@@ -118,6 +119,31 @@ try {
   assert.ok(Number(limited.headers.get("Retry-After")) >= 59);
   assert.equal((await post(sample, bindings.JILL_SEO_OWNER_KEY)).status, 429);
   assert.equal(calls.length, 5);
+
+  // Failure diagnostics must identify the stage without echoing Etsy response content.
+  for (const [path, stage, status] of [
+    ["/v3/public/oauth/token", "token_exchange", 400],
+    ["/v3/application/users/20/shops", "shop_lookup", 403],
+    ["/v3/application/shops/10/listings?state=active&limit=1", "listing_read", 401],
+  ]) {
+    const failedStorage = new Map();
+    const failure = new EtsyConnection({ storage: { kv: {
+      get: key => failedStorage.get(key),
+      put: (key, value) => failedStorage.set(key, value),
+    } } }, bindings, async () =>
+      Response.json({ secret: "never-echo-this" }, { status }));
+    let rejected;
+    try {
+      await failure.call(path, { method: "GET" });
+    } catch (error) {
+      rejected = error.response;
+    }
+    assert.ok(rejected instanceof Response);
+    assert.equal(rejected.status, 502);
+    assert.deepEqual(await rejected.json(), {
+      error: "etsy_request_failed", stage, upstream_status: status,
+    });
+  }
 
   const storage = new Map();
   const wrongShop = new EtsyConnection({ storage: { kv: {
