@@ -25,11 +25,16 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
   // No local storage, contact matching or second durable conversation.
   const {text='',state='idle',operation=null,busy=false,staleRevision=null}=draft;
   const busyRef=useRef(false);
+  const mounted=useRef(false);
   const copy=COPY[language];
   const pending=['unconfirmed','missing'].includes(state)||busy&&operation!==null;
   const closed=['completed','cancelled'].includes(order.status);
   const enabled=replyEnabled===true&&order.timeline_version===2&&!closed&&order.revision<100;
   const recoverable=order.timeline_version===2&&operation!==null;
+  useEffect(()=>{
+    mounted.current=true;
+    return ()=>{mounted.current=false;};
+  },[]);
   useEffect(()=>{
     if(state==='stale'&&staleRevision!==null&&order.revision>staleRevision)
       onDraftChange({state:'idle',staleRevision:null},{expectedOperationId:operation?.operation_id??null});
@@ -52,7 +57,9 @@ export default function RequestConversation({order,onRefresh,draft,onDraftChange
         command:{...command,mode}});
       onDraftChange({operation:null,text:'',state:'sent',staleRevision:null,busy:false},
         {expectedOperationId:command.operation_id});
-      onRefresh();
+      // A late receipt may settle its own draft, but must not reload the
+      // inbox after the customer has moved to a different conversation.
+      if(mounted.current)onRefresh();
     }catch(error){
       if(error.message==='stale_revision'){
         onDraftChange({operation:null,state:'stale',staleRevision:command.expected_revision,busy:false},

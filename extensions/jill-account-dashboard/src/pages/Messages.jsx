@@ -220,7 +220,8 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
                   </s-box>
                 )}
                 <s-divider/>
-                <RequestConversation order={order} replyEnabled={state.replyEnabled}
+                <RequestConversation order={order} key={order.submission_id}
+                  replyEnabled={state.replyEnabled}
                   draft={drafts[order.submission_id]||{}}
                   onDraftChange={(change,meta)=>onDraftsChange(previous=>
                     updateOwnedMessageDraft(previous,order.submission_id,change,meta))}

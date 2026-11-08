@@ -16,6 +16,7 @@ const {document,window}=parseHTML('<html><body><main></main></body></html>');
 Object.assign(globalThis,{document,window,HTMLElement:window.HTMLElement});
 // Use the same ESM Preact instance as the bundled components and hooks.
 const {render,h}=await import(pathToFileURL(require.resolve('preact').replace(/\.js$/,'.mjs')));
+const {useState}=await import(pathToFileURL(require.resolve('preact/hooks').replace(/\.js$/,'.mjs')));
 const {act}=await import(pathToFileURL(require.resolve('preact/test-utils').replace(/\.js$/,'.mjs')));
 const output=extension+'.read-recovery-mounted-'+randomUUID()+'.mjs';
 try{
@@ -166,6 +167,81 @@ try{
  assert.ok(button('View tracking & details'),'A failed read clears expanded details before retry');
  await flush(()=>render(null,host));
  console.log('PASS mounted Custom Orders preserves refreshed owned details, consumes a verified deep link once, and drops details on removal or failed verification.');
+
+ // Keep two owned conversations mounted under the real Messages page and
+ // real shared draft ledger. Only transport is synthetic.
+ {
+  function Inbox(){
+   const [drafts,setDrafts]=useState({});
+   return h(components.Messages,{drafts,onDraftsChange:setDrafts});
+  }
+  const replyUrl=new URL('/jill-custom-order-reply',WORK_CUSTOM_ORDER_ACCOUNT_URL).href;
+  const fixtureOrders=[firstId,secondId].map((id,index)=>({
+   submission_id:id,revision:1,status:'received',updated_at:firstEvent.occurred_at,
+   timeline_version:2,timeline:[{...firstEvent,revision:1,kind:'status',author:'system'}],
+   summary:{items:[{title:index===0?'First conversation':'Second conversation',quantity:1}],
+    date_needed:'',fulfillment:'pickup'},
+  }));
+  let inboxReads=0;
+  const sent=[];
+  const receipt=command=>Response.json({version:1,operation:'custom_order.account.reply.result',
+   ok:true,submission_id:command.submission_id,operation_id:command.operation_id,
+   revision:command.expected_revision+1});
+  globalThis.fetch=async(url,options)=>{
+   if(url===WORK_CUSTOM_ORDER_ACCOUNT_URL){
+    inboxReads++;
+    return Response.json({version:1,operation:'custom_order.account.list.result',
+     ok:true,reply_enabled:true,orders:fixtureOrders});
+   }
+   assert.equal(url,replyUrl);
+   const command=JSON.parse(options.body);
+   return new Promise(resolve=>sent.push({command,resolve}));
+  };
+  const draftInput=()=>host.querySelector('s-text-area');
+  const typeMessage=text=>{
+   const input=draftInput();
+   input.value=text;
+   input.dispatchEvent(new window.Event('input',{bubbles:true}));
+  };
+  const choose=id=>{
+   const select=host.querySelector('s-select[label="Choose a verified conversation"]');
+   select.value=id;
+   select.dispatchEvent(new window.Event('change',{bubbles:true}));
+  };
+  await flush(()=>render(h(Inbox),host));
+  await flush(()=>{});
+  await flush(()=>typeMessage('First synthetic reply'));
+  await flush(()=>click(button('Send message')));
+  assert.equal(sent.length,1);
+  assert.equal(sent[0].command.submission_id,firstId);
+  await flush(()=>choose(secondId));
+  await flush(()=>typeMessage('Second synthetic reply'));
+  await flush(()=>click(button('Send message')));
+  assert.equal(sent.length,2,'A pending send cannot block another owned conversation');
+  assert.equal(sent[1].command.submission_id,secondId);
+  assert.notEqual(sent[0].command.operation_id,sent[1].command.operation_id);
+  await flush(()=>sent[0].resolve(receipt(sent[0].command)));
+  assert.equal(inboxReads,1,'A late acknowledgement must not refresh the newly selected conversation');
+  assert.equal(draftInput().value,'Second synthetic reply');
+  await flush(()=>sent[1].resolve(new Response('synthetic lost response',{status:503})));
+  assert.ok(button('Check delivery'),'A lost acknowledgement keeps the pending operation');
+  await flush(()=>click(button('Check delivery')));
+  assert.deepEqual(sent[2].command,{...sent[1].command,mode:'receipt'});
+  const occurred_at='2026-10-22T17:00:00.000Z';
+  const secondOrder=fixtureOrders[1];
+  secondOrder.revision=2;
+  secondOrder.updated_at=occurred_at;
+  secondOrder.timeline.push({revision:2,status:'received',kind:'customer_reply',
+   author:'customer',occurred_at,note:sent[1].command.text});
+  await flush(()=>sent[2].resolve(receipt(sent[2].command)));
+  await flush(()=>{});
+  assert.equal(inboxReads,2,'The active conversation refreshes after its confirmed receipt');
+  assert.match(host.textContent,/Message received by JILL/);
+  assert.match(host.textContent,/Second synthetic reply/,'The signed refresh shows the reply in the thread');
+  assert.equal(draftInput().value??draftInput().getAttribute('value')??'','');
+  await flush(()=>render(null,host));
+ }
+ console.log('PASS mounted My JILL Messages scopes concurrent sends to each selected thread and checks a lost acknowledgement using the same operation.');
 
  // Unlike a component remount chosen by the harness, the mounted hub must
  // detect the new principal through its real account re-verification path.
