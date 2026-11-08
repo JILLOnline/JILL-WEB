@@ -1,4 +1,4 @@
-import {Form,Link,useLoaderData,type LoaderFunctionArgs} from "react-router";
+import {Form,Link,useLoaderData,useLocation,type LoaderFunctionArgs} from "react-router";
 import {workShopify} from "../shopify.server";
 import {handleWorkCatalogRead} from "../../../work-catalog-read.mjs";
 import {describeWorkCatalogProductInventory}
@@ -32,6 +32,8 @@ function price(value:string,currency:string){
 }
 export default function Catalog(){
   const data=useLoaderData<typeof loader>() as unknown as Catalog;
+  const location=useLocation();
+  const searchInputValue=data.search??new URLSearchParams(location.search).get("q")??"";
   const view=viewOptions.includes(data.view as typeof viewOptions[number])
     ?data.view!:"products";
   const records=data.records||[];
@@ -60,8 +62,9 @@ export default function Catalog(){
         className="jill-catalog__search" role="search" aria-label="Search Shopify product titles">
         <input type="hidden" name="view" value="products"/>
         <label htmlFor="jill-catalog-product-search">Find a Shopify product
-          <input id="jill-catalog-product-search" type="search" name="q"
-            defaultValue={data.search||""} maxLength={64}
+          {/* A new location resets edits even when Clear replaces the same URL. */}
+          <input key={location.key} id="jill-catalog-product-search" type="search" name="q"
+            defaultValue={searchInputValue} maxLength={64}
             placeholder="Enter product title (2–64 characters)"/>
         </label>
         <button type="submit">Search Shopify</button>
