@@ -4,7 +4,7 @@ This standalone Worker owns the connection between JILL SEO and the Etsy Seller 
 `targeted-seo`. Its first operation is a manual read of one active listing from the
 configured shop. The Worker requests only the `listings_r` OAuth scope.
 
-The service defaults to disabled. It accepts requests only on its designated WORK
+The committed WORK Wrangler config is enabled for the controlled OAuth verification. It accepts requests only on its designated WORK
 origin. Once enabled, its home page lets the owner connect Etsy and run the listing
 check with a separate WORK access key. The callback verifies a browser cookie,
 single-use state, and PKCE. It looks up the authorizing owner's shop and verifies
@@ -26,6 +26,17 @@ Use Wrangler's `deploy --dry-run` with this directory's `wrangler.toml` to valid
 the build. Put the output in this service's ignored `.wrangler-dist` directory.
 
 ## First WORK setup
+
+Wrangler keeps Cloudflare dashboard-managed variables and secrets via `keep_vars = true`.
+The public Etsy keystring, canonical origin, shop name, and enabled toggle are
+pinned in this WORK-only Wrangler config. Leave `ETSY_SHARED_SECRET`,
+`JILL_SEO_OWNER_KEY`, and `JILL_SEO_TOKEN_KEY` as Cloudflare secrets.
+Do not deploy or rotate the token encryption key as part of OAuth debugging.
+
+A GitHub commit does not deploy the Worker. Check the WORK-only diff, run local tests
+and `wrangler deploy --dry-run`, then deploy just this service. The callback
+responds with a sanitized `stage` and `upstream_status` if Etsy rejects a request;
+do not log OAuth query parameters, request bodies, or token responses.
 
 The candidate callback is
 `https://jill-seo-etsy-work.jill-work-custom-orders.workers.dev/api/etsy/oauth/callback`.
