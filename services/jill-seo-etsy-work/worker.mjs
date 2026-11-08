@@ -17,7 +17,11 @@ function setupPage() {
 <label>WORK access key <input name="key" type="password" required autocomplete="off"></label>
 <button formaction="/api/etsy/oauth/start">Connect Etsy</button>
 <button formaction="/api/etsy/listings/sample">Check one active listing</button>
-</form></main></html>`, 200, { "Content-Type": "text/html; charset=utf-8" });
+</form></main></html>`, 200, {
+    "Content-Type": "text/html; charset=utf-8",
+    // HTML form POSTs need their same-origin Origin header for the owner gate.
+    "Referrer-Policy": "same-origin",
+  });
 }
 
 function configured(env) {

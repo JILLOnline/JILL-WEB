@@ -77,9 +77,13 @@ const start = "/api/etsy/oauth/start";
 const sample = "/api/etsy/listings/sample";
 try {
   assert.equal((await runtime.dispatchFetch("https://wrong.example/healthz")).status, 421);
-  assert.equal((await get(CALLBACK)).status, 400);
+  assert.equal((await get("/")).headers.get("Referrer-Policy"), "same-origin");
+  const missingState = await get(CALLBACK);
+  assert.equal(missingState.status, 400);
+  assert.equal(missingState.headers.get("Referrer-Policy"), "no-referrer");
   assert.equal((await post(start, "x".repeat(43))).status, 403);
   assert.equal((await post(start, bindings.JILL_SEO_OWNER_KEY, "https://wrong.example")).status, 403);
+  assert.equal((await post(start, bindings.JILL_SEO_OWNER_KEY, "null")).status, 403);
   assert.equal((await post(sample, bindings.JILL_SEO_OWNER_KEY)).status, 409);
   assert.equal(calls.length, 0);
 
