@@ -56,12 +56,13 @@ async function parseBounded(request){
  return data;
 }
 /** @param {{
- * request?:Request,enabled?:boolean,authenticate?:{admin:(request:Request)=>Promise<any>},
+ * request?:Request,enabled?:boolean,expectedTicketId?:string,
+ * authenticate?:{admin:(request:Request)=>Promise<any>},
  * authorize?:typeof readWorkMerchantPermission,db?:any,now?:()=>number
  * }} [options]
  */
 export async function handleWorkContactStatusChange({
- request,enabled=false,authenticate,authorize=readWorkMerchantPermission,
+ request,enabled=false,expectedTicketId,authenticate,authorize=readWorkMerchantPermission,
  db,now=Date.now,
 }={}){
  // Explicit WORK flag: no session, body, DB, or clock access while OFF.
@@ -85,6 +86,7 @@ export async function handleWorkContactStatusChange({
  let body;
  try{body=await parseBounded(request);}
  catch{return response(400,'invalid_request');}
+ if(body.ticket_id!==expectedTicketId)return response(400,'invalid_ticket');
  const time=now();
  if(!Number.isSafeInteger(time)||time<1600000000000)
   return response(503,'source_unavailable');

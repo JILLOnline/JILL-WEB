@@ -29,11 +29,12 @@ assert.match(detail,/readWorkContactTicketDetail\(\{/);
 assert.match(detail,/authenticateWorkAdminOnce\(\{/);
 assert.match(detail,/JILL_WORK_CONTACT_STATUS_ENABLED==="true"/);
 assert.match(detail,/handleWorkContactStatusChange/);
+assert.match(detail,/expectedTicketId:params\.ticketId/);
 assert.match(detail,/expected_revision:ticket.revision/);
 assert.ok(detail.includes('crypto.randomUUID()'));
 assert.ok(detail.includes('encType:"application/json"'));
 assert.match(detail,/No contact details are displayed/);
-assert.match(detail,/Customer identity and reply availability are not yet verified/);
+assert.match(detail,/!data\.can_post_message&&<p>Messages are not available until/);
 assert.doesNotMatch(detail,/draftOrderCreate|fetch\(|localStorage|orderCreate/);
 const messageRoute=readFileSync(
  'services/jill-order-desk/app-home/app/routes/app.contacts.$ticketId.message.tsx','utf8');

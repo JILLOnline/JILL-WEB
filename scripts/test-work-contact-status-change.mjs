@@ -4,11 +4,12 @@ import {handleWorkContactStatusChange}
 
 const shop='jill-work.myshopify.com';
 const ticket='jill:contact:11111111-2222-4333-8444-555555555555';
+const otherTicket='jill:contact:22222222-2222-4333-8444-555555555555';
 const op='jill:work:contact:status:11111111-2222-4333-8444-555555555555';
 const clock=1792800001000, staff='111';
 const command={ticket_id:ticket,operation_id:op,expected_revision:1,
  expected_status:'received',next_status:'reviewing'};
-const req=(payload=command)=>new Request('https://hq.qa.example.invalid/app/contacts/'+ticket,{
+const req=(payload=command,target=ticket)=>new Request('https://hq.qa.example.invalid/app/contacts/'+target,{
  method:'POST',headers:{origin:'https://hq.qa.example.invalid',
  'content-type':'application/json'},body:JSON.stringify(payload),
 });
@@ -40,7 +41,7 @@ const authorize=async({session,action})=>{
  assert.ok(session.verified);assert.equal(action,'requests.write');
  return {allowed:true,role:'owner',staffId:staff};
 };
-const opts={authenticate,authorize,db,now:()=>clock};
+const opts={authenticate,authorize,db,now:()=>clock,expectedTicketId:ticket};
 const off=await handleWorkContactStatusChange(opts);
 assert.equal(off.status,503);assert.equal(auths,0);assert.equal(reads,0);assert.equal(writes,0);
 const noAuth=await handleWorkContactStatusChange({...opts,enabled:true,
@@ -60,6 +61,15 @@ assert.equal(badStatus.status,400);assert.equal(writes,0);
 const spoof=await handleWorkContactStatusChange({...opts,enabled:true,
  request:req({...command,actor_staff_id:'999'})});
 assert.equal(spoof.status,400);assert.equal(writes,0);
+const wrongTicket=await handleWorkContactStatusChange({...opts,enabled:true,
+ expectedTicketId:otherTicket,request:req(command,otherTicket)});
+assert.equal(wrongTicket.status,400,'A command for A cannot execute from the route for B');
+assert.equal((await wrongTicket.json()).code,'invalid_ticket');
+const missingTicket=await handleWorkContactStatusChange({...opts,enabled:true,
+ expectedTicketId:undefined,request:req()});
+assert.equal(missingTicket.status,400,'No status command may execute without a route ticket');
+assert.equal(writes,0);assert.equal(reads,0);
+assert.equal(record.revision,1);
 const ok=await handleWorkContactStatusChange({...opts,enabled:true,request:req()});
 assert.equal(ok.status,200);assert.equal((await ok.json()).code,'updated');
 assert.equal(record.state,'reviewing');assert.equal(record.revision,2);
@@ -88,4 +98,4 @@ const foreign=new Request('https://hq.qa.example.invalid/app/contacts/'+ticket,{
 assert.equal((await handleWorkContactStatusChange({...opts,enabled:true,
  request:foreign})).status,400);
 assert.equal(writes,4);
-console.log('PASS HQ Contact status: hard OFF; Shopify Owner permission; bounded command; optimistic revision; stable operation receipts; no fake payment or cross-origin update.');
+console.log('PASS HQ Contact status: hard OFF; Owner permission; exact route ticket; bounded command; optimistic revision; stable operation receipts; no cross-origin update.');

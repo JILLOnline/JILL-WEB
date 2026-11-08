@@ -37,10 +37,11 @@ export async function loader({request,params,context}:LoaderFunctionArgs){
   })},
  });
 }
-export async function action({request,context}:ActionFunctionArgs){
+export async function action({request,params,context}:ActionFunctionArgs){
  const env=context.cloudflare.env;
  return handleWorkContactStatusChange({
-  request,enabled:env.JILL_WORK_CONTACT_STATUS_ENABLED==="true"&&
+  request,expectedTicketId:params.ticketId,
+  enabled:env.JILL_WORK_CONTACT_STATUS_ENABLED==="true"&&
     env.JILL_WORK_CONTACT_INBOX_ENABLED==="true",
   db:env.JILL_ORDER_DESK_WORK_DB,
   authenticate:{admin:()=>authenticateWorkAdminOnce({
@@ -62,6 +63,11 @@ const LABEL:Record<string,string>={
 export default function ContactTicketDetail(){
  const data=useLoaderData<typeof loader>() as Data;
  const ticket=data.ok===true&&data.code==="ready"?data.detail:null;
+ // Router parameter changes reuse this route. Keep drafts, fetchers and
+ // operation receipts scoped to the verified ticket that created them.
+ return <ContactTicketActions key={ticket?.ticket_id??null} data={data} ticket={ticket??null}/>;
+}
+function ContactTicketActions({data,ticket}:{data:Data;ticket:Detail|null}){
  const fetcher=useFetcher<UpdateData>();
  const messageFetcher=useFetcher<UpdateData>();
  const revalidator=useRevalidator();
