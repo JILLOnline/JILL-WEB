@@ -25,8 +25,7 @@ function configured(env) {
     /^[\w-]{43}$/.test(env.JILL_SEO_TOKEN_KEY ?? "") &&
     /^[a-zA-Z0-9_-]+$/.test(env.ETSY_KEYSTRING ?? "") &&
     /^[a-zA-Z0-9_-]+$/.test(env.ETSY_SHARED_SECRET ?? "") &&
-    /^[1-9][0-9]{0,15}$/.test(env.ETSY_SHOP_ID ?? "") &&
-    /^[1-9][0-9]{0,15}$/.test(env.ETSY_OWNER_USER_ID ?? "") &&
+    /^[a-zA-Z0-9]+$/.test(env.ETSY_SHOP_NAME ?? "") &&
     env.ETSY_CONNECTION;
 }
 

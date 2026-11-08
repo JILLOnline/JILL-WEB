@@ -18,8 +18,7 @@ const bindings = {
   JILL_SEO_TOKEN_KEY: randomBytes(32).toString("base64url"),
   ETSY_KEYSTRING: "test_key",
   ETSY_SHARED_SECRET: "test_secret",
-  ETSY_SHOP_ID: "10",
-  ETSY_OWNER_USER_ID: "20",
+  ETSY_SHOP_NAME: "JillOnlineStore",
 };
 const calls = [];
 let challenge;
@@ -52,8 +51,8 @@ const options = {
         refresh_token: "20.refresh", expires_in: form.has("code") ? 1 : 3600, scope: "listings_r" });
     }
     assert.equal(request.headers.get("x-api-key"), "test_key:test_secret");
-    if (url.pathname === "/v3/application/shops/10") {
-      return Response.json({ shop_id: 10, user_id: 20 });
+    if (url.pathname === "/v3/application/users/20/shops") {
+      return Response.json({ shop_id: 10, user_id: 20, shop_name: "JillOnlineStore" });
     }
     assert.equal(url.pathname, "/v3/application/shops/10/listings");
     assert.equal(url.search, "?state=active&limit=1");
@@ -115,6 +114,18 @@ try {
   assert.ok(Number(limited.headers.get("Retry-After")) >= 59);
   assert.equal((await post(sample, bindings.JILL_SEO_OWNER_KEY)).status, 429);
   assert.equal(calls.length, 5);
+
+  const storage = new Map();
+  const wrongShop = new EtsyConnection({ storage: { kv: {
+    get: key => storage.get(key), put: (key, value) => storage.set(key, value),
+  } } }, bindings,
+    async url => url.endsWith("/token")
+      ? Response.json({ token_type: "Bearer", access_token: "20.access",
+        refresh_token: "20.refresh", expires_in: 3600 })
+      : Response.json({ shop_id: 10, user_id: 20, shop_name: "AnotherShop" }));
+  await assert.rejects(wrongShop.exchange({ grant_type: "authorization_code" }),
+    error => error.response?.status === 502);
+  assert.equal(storage.has("tokens"), false);
 
   await runtime.setOptions(runtimeOptions({ ...options, bindings: { ...bindings, JILL_SEO_ETSY_ENABLED: "false" } }));
   assert.equal((await get(CALLBACK)).status, 503);

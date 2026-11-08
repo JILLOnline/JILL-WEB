@@ -120,9 +120,9 @@ export class EtsyConnection {
   }
 
   context(iv) {
-    const { JILL_SEO_ORIGIN, ETSY_KEYSTRING, ETSY_SHOP_ID, ETSY_OWNER_USER_ID } = this.env;
+    const { JILL_SEO_ORIGIN, ETSY_KEYSTRING, ETSY_SHOP_NAME } = this.env;
     return { name: "AES-GCM", iv,
-      additionalData: encode.encode(JSON.stringify([JILL_SEO_ORIGIN, ETSY_KEYSTRING, ETSY_SHOP_ID, ETSY_OWNER_USER_ID])) };
+      additionalData: encode.encode(JSON.stringify([JILL_SEO_ORIGIN, ETSY_KEYSTRING, ETSY_SHOP_NAME])) };
   }
 
   async save(tokens) {
@@ -140,30 +140,35 @@ export class EtsyConnection {
     return JSON.parse(new TextDecoder().decode(plain));
   }
 
-  async exchange(fields) {
+  async exchange(fields, previous) {
     const body = await this.call("/v3/public/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ ...fields, client_id: this.env.ETSY_KEYSTRING }),
     });
     const { access_token, refresh_token, token_type, expires_in, scope } = body;
-    const validToken = token => typeof token === "string" && token.length <= 2048 &&
-      /^\d+\.[\w-]+$/.test(token) && token.split(".")[0] === this.env.ETSY_OWNER_USER_ID;
-    if (!validToken(access_token) || !validToken(refresh_token) || token_type !== "Bearer" ||
+    const tokenOwner = token => typeof token === "string" && token.length <= 2048
+      ? /^([1-9]\d{0,15})\.[\w-]+$/.exec(token)?.[1] : undefined;
+    const owner = tokenOwner(access_token);
+    if (!owner || tokenOwner(refresh_token) !== owner || (previous && previous.owner !== owner) ||
+        token_type !== "Bearer" ||
         !Number.isSafeInteger(expires_in) || expires_in < 1 || expires_in > 86400 ||
         (scope !== undefined && scope !== SCOPE)) {
       throw responseError("unexpected_etsy_token_or_owner", 502);
     }
-    if (fields.grant_type === "authorization_code") {
-      const shop = await this.call(`/v3/application/shops/${this.env.ETSY_SHOP_ID}`, {
+    let shopId = previous?.shopId;
+    if (!previous) {
+      const shop = await this.call(`/v3/application/users/${owner}/shops`, {
         headers: { "x-api-key": this.apiKey() },
       });
-      if (String(shop.shop_id) !== this.env.ETSY_SHOP_ID ||
-          String(shop.user_id) !== this.env.ETSY_OWNER_USER_ID) {
+      if (String(shop.user_id) !== owner || !/^[1-9]\d{0,15}$/.test(String(shop.shop_id)) ||
+          typeof shop.shop_name !== "string" ||
+          shop.shop_name.toLowerCase() !== this.env.ETSY_SHOP_NAME.toLowerCase()) {
         throw responseError("unexpected_etsy_shop_owner", 502);
       }
+      shopId = String(shop.shop_id);
     }
-    const tokens = { access_token, refresh_token, expires: Date.now() + expires_in * 1000 };
+    const tokens = { access_token, refresh_token, owner, shopId, expires: Date.now() + expires_in * 1000 };
     await this.save(tokens);
     return tokens;
   }
@@ -175,9 +180,9 @@ export class EtsyConnection {
   async sample() {
     let tokens = await this.load();
     if (tokens.expires <= Date.now() + 30_000) {
-      tokens = await this.exchange({ grant_type: "refresh_token", refresh_token: tokens.refresh_token });
+      tokens = await this.exchange({ grant_type: "refresh_token", refresh_token: tokens.refresh_token }, tokens);
     }
-    const shop = this.env.ETSY_SHOP_ID;
+    const shop = tokens.shopId;
     const page = await this.call(`/v3/application/shops/${shop}/listings?state=active&limit=1`, {
       headers: {
         "x-api-key": this.apiKey(),

@@ -7,7 +7,8 @@ configured shop. The Worker requests only the `listings_r` OAuth scope.
 The service defaults to disabled. It accepts requests only on its designated WORK
 origin. Once enabled, its home page lets the owner connect Etsy and run the listing
 check with a separate WORK access key. The callback verifies a browser cookie,
-single-use state, and PKCE. It checks the Etsy owner and shop before storing
+single-use state, and PKCE. It looks up the authorizing owner's shop and verifies
+the configured shop name before storing
 encrypted access and refresh tokens in the service's own Durable Object.
 
 Every Etsy request from this service shares a rolling budget of 1,000 attempts per
@@ -40,8 +41,7 @@ encoded as unpadded base64url. Keep the token encryption key stable across relea
 | --- | --- |
 | `ETSY_KEYSTRING` | Keystring for `targeted-seo` |
 | `ETSY_SHARED_SECRET` | Shared secret for that same Etsy app |
-| `ETSY_SHOP_ID` | Numeric Etsy shop ID |
-| `ETSY_OWNER_USER_ID` | Numeric Etsy user ID that owns the configured shop |
+| `ETSY_SHOP_NAME` | Shop name pinned in the WORK configuration |
 | `JILL_SEO_OWNER_KEY` | WORK access key for the setup form |
 | `JILL_SEO_TOKEN_KEY` | Separate key used to encrypt stored Etsy tokens |
 | `JILL_SEO_ETSY_ENABLED` | Set to `true` when the isolated WORK release is ready to verify |

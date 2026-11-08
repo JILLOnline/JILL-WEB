@@ -10,6 +10,7 @@ enabled = false
 [vars]
 JILL_SEO_ETSY_ENABLED = "false"
 JILL_SEO_ORIGIN = "https://jill-seo-etsy-work.jill-work-custom-orders.workers.dev"
+ETSY_SHOP_NAME = "JillOnlineStore"
 
 [[durable_objects.bindings]]
 name = "ETSY_CONNECTION"
