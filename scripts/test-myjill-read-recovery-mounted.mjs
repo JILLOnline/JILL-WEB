@@ -50,10 +50,19 @@ try{
   const {empty,refresh}=surfaces[name];
   const props={drafts:{},onNavigate:()=>{},onDraftsChange:()=>{}};
   globalThis.shopify={sessionToken:{get:async()=>'synthetic-session-proof'.repeat(3)}};
-  globalThis.fetch=async()=>responseFor();
+  let emptyStateReads=0;
+  globalThis.fetch=async()=>responseFor(++emptyStateReads===1?null:'Newly verified request');
   await flush(()=>render(h(Component,props),host));
   await flush(()=>{});
   assert.match(host.textContent,empty,name+' renders the verified empty state');
+  assert.equal(emptyStateReads,1,name+' waits for customer action');
+  const refreshEmpty=button(refresh);
+  assert.ok(refreshEmpty,name+' offers refresh from the verified empty state');
+  await flush(()=>click(refreshEmpty));
+  await flush(()=>{});
+  assert.equal(emptyStateReads,2,name+' refresh issues exactly one read');
+  assert.match(host.textContent,/Newly verified request/);
+  assert.doesNotMatch(host.textContent,empty);
   await flush(()=>render(null,host));
 
   for(const [status,expected] of [[429,/Wait a minute/],[401,/Sign out and sign back in/],

@@ -293,7 +293,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
               </s-box>
             );
           })}
-          {state.status==='ready' && state.orders.length>0 && (
+          {state.status==='ready' && (
             <s-stack direction="inline" justifyContent="end">
               <s-button variant="secondary" onClick={()=>setAttempt(value=>value+1)}>
                 Refresh updates

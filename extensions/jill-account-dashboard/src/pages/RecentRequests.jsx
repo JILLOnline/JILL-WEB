@@ -135,11 +135,11 @@ export default function RecentRequests({onNavigate}){
     </s-stack>
    </s-box>;
   })}
-  {state.status==='ready'&&state.total>0&&
+  {state.status==='ready'&&
    <s-stack direction="inline" gap="base">
-    <s-button variant="primary" onClick={()=>onNavigate('custom-orders')}>
+    {state.total>0&&<s-button variant="primary" onClick={()=>onNavigate('custom-orders')}>
      View all requests
-    </s-button>
+    </s-button>}
     <s-button variant="secondary" onClick={()=>setAttempt(x=>x+1)}>
      Refresh activity
     </s-button>

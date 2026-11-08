@@ -59,6 +59,9 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
   const order=state.orders.find(x=>x.submission_id===currentSelection);
   const current=visibleInbox.find(x=>x.submission_id===currentSelection);
   const visibleConversation=order&&current?projectVerifiedConversation(order):null;
+  const refreshButton=<s-button variant="secondary" onClick={()=>setAttempt(x=>x+1)}>
+    Refresh messages
+  </s-button>;
   return <s-stack direction="block" gap="large">
     <s-section>
       <s-stack direction="block" gap="base">
@@ -92,9 +95,12 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
               <s-text color="subdued">
                 Guest requests aren't attached to your account by email alone.
               </s-text>
-              <s-button variant="secondary" onClick={()=>onNavigate?.('custom-orders')}>
-                View Custom Orders
-              </s-button>
+              <s-stack direction="inline" gap="small-200">
+                <s-button variant="secondary" onClick={()=>onNavigate?.('custom-orders')}>
+                  View Custom Orders
+                </s-button>
+                {refreshButton}
+              </s-stack>
             </s-stack>
           </s-box>}
         {state.status==='ready'&&inbox.length>0&&<>
@@ -113,9 +119,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
               {' · '}{availableThreads} secure {availableThreads===1?'thread':'threads'} available
               {' · '}Unread counts are not available.
             </s-text>
-            <s-button variant="secondary" onClick={()=>setAttempt(x=>x+1)}>
-              Refresh messages
-            </s-button>
+            {refreshButton}
           </s-stack>
           <s-grid gridTemplateColumns="minmax(0, 1fr)"
             gap="base">
