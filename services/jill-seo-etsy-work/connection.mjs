@@ -143,7 +143,10 @@ export class EtsyConnection {
   async exchange(fields, previous) {
     const body = await this.call("/v3/public/oauth/token", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-api-key": this.apiKey(),
+      },
       body: new URLSearchParams({ ...fields, client_id: this.env.ETSY_KEYSTRING }),
     });
     const { access_token, refresh_token, token_type, expires_in, scope } = body;
@@ -223,7 +226,16 @@ export class EtsyConnection {
       this.store.put("blockedUntil", until);
       throw responseError("etsy_cooldown", 429, retryAfter(until));
     }
-    if (!response.ok) throw responseError("etsy_request_failed", 502);
+    if (!response.ok) {
+      // Report only the failed operation and status. Never return Etsy's response
+      // body, authorization code, access tokens, or credential values.
+      const stage = path === "/v3/public/oauth/token" ? "token_exchange"
+        : path.startsWith("/v3/application/users/") ? "shop_lookup"
+        : "listing_read";
+      throw { response: result({
+        error: "etsy_request_failed", stage, upstream_status: response.status,
+      }, 502) };
+    }
     const data = await response.json();
     if (!data || typeof data !== "object" || Array.isArray(data)) {
       throw responseError("invalid_etsy_response", 502);
