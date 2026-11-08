@@ -29,12 +29,14 @@ try{
  const {ConnectedHub,...components}=await import(pathToFileURL(output));
  const host=document.querySelector('main');
  const flush=async callback=>act(async()=>{callback();await new Promise(r=>setTimeout(r,25));});
- const responseFor=(title=null)=>new Response(JSON.stringify({version:1,
+ const firstId='jill:11111111-2222-4333-8444-555555555555';
+ const firstEvent={status:'received',note:'Request received',occurred_at:'2026-10-22T16:00:00.000Z'};
+ const responseFor=(title=null,{id=firstId,update=null}={})=>new Response(JSON.stringify({version:1,
   operation:'custom_order.account.list.result',ok:true,reply_enabled:false,
-  orders:title?[{submission_id:'jill:11111111-2222-4333-8444-555555555555',
-   status:'received',revision:1,updated_at:'2026-10-22T16:00:00.000Z',
+  orders:title?[{submission_id:id,status:update?.status??firstEvent.status,
+   revision:update?2:1,updated_at:update?.occurred_at??firstEvent.occurred_at,
    summary:{items:[{title,quantity:1}],date_needed:'',fulfillment:'pickup'},
-   timeline:[{status:'received',note:'Request received',occurred_at:'2026-10-22T16:00:00.000Z'}],
+   timeline:update?[firstEvent,update]:[firstEvent],
   }]:[],
  }));
  const button=(label)=>[...host.querySelectorAll('s-button')].find(x=>x.textContent.trim()===label);
@@ -109,6 +111,52 @@ try{
   await flush(()=>render(null,host));
  }
  console.log('PASS mounted Home, Custom Orders and Messages distinguish verified empty from failed refresh, recover on explicit retry, and fence obsolete reads after navigation.');
+
+ const {CustomOrders}=components;
+ const props={drafts:{},onNavigate:()=>{},onDraftsChange:()=>{}};
+ const update={status:'reviewing',note:'Synthetic HQ status note',occurred_at:'2026-10-22T17:00:00.000Z'};
+ const secondId='jill:22222222-3333-4444-8555-666666666666';
+ let orderResponse=()=>responseFor('First request');
+ globalThis.fetch=async()=>orderResponse();
+ await flush(()=>render(h(CustomOrders,props),host));
+ await flush(()=>{});
+ await flush(()=>click(button('View tracking & details')));
+ assert.match(host.textContent,/Tracking history/);
+ orderResponse=()=>responseFor('First request',{update});
+ await flush(()=>click(button('Refresh updates')));
+ await flush(()=>{});
+ assert.match(host.textContent,/Tracking history/,'A fresh owned result keeps the current details open');
+ assert.match(host.textContent,/In review/);
+ assert.match(host.textContent,/Synthetic HQ status note/);
+
+ orderResponse=()=>responseFor('Second request',{id:secondId});
+ await flush(()=>click(button('Refresh updates')));
+ await flush(()=>{});
+ assert.match(host.textContent,/Second request/);
+ assert.doesNotMatch(host.textContent,/Tracking history|First request|Synthetic HQ status note/);
+ orderResponse=()=>responseFor('First request',{update});
+ await flush(()=>click(button('Refresh updates')));
+ await flush(()=>{});
+ assert.ok(button('View tracking & details'),'A removed ID does not regain its old expansion');
+ await flush(()=>render(h(CustomOrders,{...props,requestedSubmissionId:firstId}),host));
+ await flush(()=>{});
+ assert.ok(button('Hide tracking & details'),'A newly verified deep link opens its target');
+ await flush(()=>click(button('Hide tracking & details')));
+ await flush(()=>click(button('Refresh updates')));
+ await flush(()=>{});
+ assert.ok(button('View tracking & details'),'Manual refresh does not reopen the consumed link');
+
+ await flush(()=>click(button('View tracking & details')));
+ orderResponse=()=>new Response('Synthetic read failure',{status:503});
+ await flush(()=>click(button('Refresh updates')));
+ await flush(()=>{});
+ assert.doesNotMatch(host.textContent,/Tracking history|First request|Synthetic HQ status note/);
+ orderResponse=()=>responseFor('First request',{update});
+ await flush(()=>click(button('Try again')));
+ await flush(()=>{});
+ assert.ok(button('View tracking & details'),'A failed read clears expanded details before retry');
+ await flush(()=>render(null,host));
+ console.log('PASS mounted Custom Orders preserves refreshed owned details, consumes a verified deep link once, and drops details on removal or failed verification.');
 
  // Unlike a component remount chosen by the harness, the mounted hub must
  // detect the new principal through its real account re-verification path.

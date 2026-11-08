@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'preact/hooks';
+import {useEffect,useRef,useState} from 'preact/hooks';
 import {loadWorkCustomerConversationState} from '../../../../shared/customer-custom-orders.mjs';
 import RequestConversation from './RequestConversation.jsx';
 import {MYJILL_ORDER_FILTERS,projectMyJillOrderActivity,searchVerifiedMyJillOrders}
@@ -21,6 +21,9 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
   const [searchQuery,setSearchQuery]=useState('');
   const [expandedIds,setExpandedIds]=useState({});
   const [refreshing,setRefreshing]=useState(false);
+  const appliedTarget=useRef(null);
+
+  useEffect(()=>{appliedTarget.current=null;},[requestedSubmissionId]);
 
   useEffect(()=>{
     let active=true;
@@ -40,10 +43,14 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
           // The Home navigation ID is an untrusted selection hint. Only
           // a freshly signed account list can authorize which details open.
           const ownedTarget=typeof requestedSubmissionId==='string'&&
+            requestedSubmissionId!==appliedTarget.current&&
             orders.some(order=>order.submission_id===requestedSubmissionId)
             ?requestedSubmissionId:null;
-          setExpandedIds(ownedTarget?{[ownedTarget]:true}:{});
+          setExpandedIds(previous=>Object.fromEntries(orders
+            .filter(({submission_id:id})=>id===ownedTarget||previous[id]===true)
+            .map(({submission_id:id})=>[id,true])));
           if(ownedTarget){
+            appliedTarget.current=ownedTarget;
             // An authenticated deep link must not stay hidden behind an old
             // search term or status folder. Only clear after the fresh signed
             // account response proves ownership of this exact request ID.
