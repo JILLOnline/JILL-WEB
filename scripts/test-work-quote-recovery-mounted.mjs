@@ -58,10 +58,11 @@ try{
  writeFileSync(file,result.outputFiles[0].text,{flag:'wx'});
  const {WorkQuoteWorksheet}=await import(pathToFileURL(file));
  const model={state:'ready',detail:{submission_id:id,revision:3,items:[{item_id:item,title:'Synthetic item',quantity:1}]}};
- const render=async(enabled=true)=>{await act(async()=>{
+ const render=async(enabled=true,preflightEnabled=false)=>{await act(async()=>{
   mounted=createRoot(mount);
   mounted.render(React.createElement(WorkQuoteWorksheet,{model,submissionId:id,
-   customerStatus:'reviewing',sourceRevision:3,savedDraft:draft(4),saveDraftEnabled:enabled}));
+   customerStatus:'reviewing',sourceRevision:3,savedDraft:draft(4),saveDraftEnabled:enabled,
+   quotePreflightEnabled:preflightEnabled}));
  });};
  await render(false);
  assert.equal(harness.reads.length,0);assert.equal(harness.saves.length,0);
@@ -123,7 +124,34 @@ try{
  await act(async()=>mounted.unmount());mounted=null;
  unlock();await flush();
  assert.equal(harness.saves.length,2,'No POST after an asynchronous lock outlives the component');
- console.log('PASS mounted React quote: OFF zero I/O; 50 clicks; uncertain save → older read → remount → late commit; exact operation ACK/readback; Owner isolation; no automatic write retry.');
+ browser.data.clear();
+ await render(true,true);
+ await deliver(harness.reads.at(-1).f,read());
+ await act(async()=>click('Verify saved quote'));
+ const oldReview=harness.reads.at(-1);
+ const reviewParams=({url})=>new URL(url,'https://synthetic.invalid').searchParams;
+ assert.equal(reviewParams(oldReview).get('expected_source_revision'),'3');
+ assert.equal(reviewParams(oldReview).get('expected_draft_revision'),'4');
+ const ready=draft_revision=>({state:'ready_for_native_shopify_calculation',
+  source_revision:3,draft_revision,verified_line_count:1,
+  can_publish:false,can_invoice:false,can_create_order:false,
+  can_charge_customer:false,can_send_email:false});
+ await deliver(oldReview.f,ready(4));
+ assert.match(mount.textContent,/Source and catalog checks passed/);
+ await act(async()=>click('Reload saved draft'));
+ await deliver(harness.reads.at(-1).f,read(5));
+ assert.doesNotMatch(mount.textContent,/Source and catalog checks passed/,
+  'A verified reload of revision 5 must not carry forward readiness for revision 4');
+ await act(async()=>click('Verify saved quote'));
+ const currentReview=harness.reads.at(-1);
+ assert.equal(reviewParams(currentReview).get('expected_draft_revision'),'5');
+ await deliver(currentReview.f,ready(4));
+ assert.doesNotMatch(mount.textContent,/Source and catalog checks passed/,
+  'A mismatched readiness response must stay on HOLD');
+ await act(async()=>click('Verify saved quote'));
+ await deliver(harness.reads.at(-1).f,ready(5));
+ assert.match(mount.textContent,/Source and catalog checks passed/);
+ console.log('PASS mounted React quote: OFF zero I/O; 50 clicks; uncertain save → older read → remount → late commit; exact operation ACK/readback; Owner isolation; no automatic write retry; readiness scoped to the restored revision.');
 }finally{
  if(mounted)await act(async()=>mounted.unmount());
  unlinkSync(file);

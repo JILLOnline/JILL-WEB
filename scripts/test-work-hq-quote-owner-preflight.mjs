@@ -89,7 +89,9 @@ const readCatalog=async({variantIds,enabled,authenticate:catalogAuth,db:boundDb}
 };
 const base={enabled:true,authenticate,db,readFreshList,readExactDetail,
  readCatalog,now:()=>NOW+1000};
-const url=ROOT+'/app/requests/quote-preflight?submission_id='+encodeURIComponent(ID);
+const path=ROOT+'/app/requests/quote-preflight?submission_id='+encodeURIComponent(ID);
+const reviewUrl=(source,draft)=>path+`&expected_source_revision=${source}&expected_draft_revision=${draft}`;
+const url=reviewUrl(row.source_revision,row.draft_revision);
 const req=(input=url,options)=>new Request(input,options);
 function safe(x){
  assert.equal(x.can_publish,false);assert.equal(x.can_invoice,false);
@@ -139,6 +141,11 @@ const previous=before();
 response=await handleWorkQuoteOwnerPreflight({...base,request:req(url+'&email=forged@example.test')});
 assert.equal(response.status,400);
 assert.equal(state.auth,previous.auth,'Bad query must be denied before Shopify');
+for(const invalid of [path,reviewUrl('03',1),url+'&expected_draft_revision=2']){
+ response=await handleWorkQuoteOwnerPreflight({...base,request:req(invalid)});
+ assert.equal(response.status,400);
+}
+assert.equal(state.auth,previous.auth,'Missing or ambiguous revisions must be denied before Shopify');
 response=await handleWorkQuoteOwnerPreflight({...base,
  request:req(url,{headers:{origin:'https://untrusted.example.invalid'}})});
 assert.equal(response.status,400);
@@ -150,6 +157,16 @@ sourceDetail={...detail,revision:4};
 response=await handleWorkQuoteOwnerPreflight({...base,request:req()});
 assert.equal(response.status,409);assert.equal((await response.json()).reason,'source_revision_changed');
 sourceDetail=detail;
+const beforeDrift=before();
+response=await handleWorkQuoteOwnerPreflight({...base,request:req(reviewUrl(2,row.draft_revision))});
+assert.equal(response.status,409);
+assert.equal((await response.json()).reason,'source_revision_changed');
+response=await handleWorkQuoteOwnerPreflight({...base,request:req(reviewUrl(row.source_revision,2))});
+assert.equal(response.status,409);
+data=await response.json();
+assert.equal(data.reason,'draft_revision_changed');
+assert.equal(data.next_action,'reload_saved_quote_draft');
+assert.equal(state.catalog,beforeDrift.catalog,'A changed revision cannot reach the catalog');
 saved=null;
 response=await handleWorkQuoteOwnerPreflight({...base,request:req()});
 assert.equal(response.status,200);assert.equal((await response.json()).reason,'no_saved_draft');
@@ -190,6 +207,8 @@ assert.equal(response.status,200);
 data=await response.json();
 assert.equal(data.state,'ready_for_native_shopify_calculation');
 assert.equal(data.next_action,'request_fresh_shopify_calculation');
+assert.equal(data.source_revision,row.source_revision);
+assert.equal(data.draft_revision,row.draft_revision);
 assert.equal(data.can_invoice,false);assert.equal(data.can_create_order,false);
 assert.equal(data.shopify_totals_verified,false);
 assert.equal(JSON.stringify(data).includes('Synthetic Road'),false);

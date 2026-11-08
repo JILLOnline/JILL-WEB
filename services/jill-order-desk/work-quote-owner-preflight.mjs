@@ -16,13 +16,14 @@ import {workQuoteCatalogReviewReady}
 
 const SHOP='jill-work.myshopify.com';
 const ID=/^[A-Za-z0-9._:-]{8,128}$/;
+const REVISION=/^(?:[1-9][0-9]?|100)$/;
 const GID=/^gid:\/\/shopify\/ProductVariant\/[1-9][0-9]*$/;
 const HEADERS={'cache-control':'private, no-store, max-age=0',
  'x-content-type-options':'nosniff'};
 const REASONS=new Set([
  'not_enabled','source_unavailable','invalid_request','access_denied',
  'owner_authority_unavailable','request_not_found','source_revision_changed',
- 'canonical_source_unavailable','no_saved_draft','unverified_saved_draft',
+ 'canonical_source_unavailable','no_saved_draft','unverified_saved_draft','draft_revision_changed',
  'variant_mapping_held','catalog_unavailable','catalog_unverified',
  'personalization_requires_review','catalog_price_review_required',
  'trusted_customer_context_unavailable',
@@ -32,6 +33,7 @@ const respond=(status,state,reason=state,more={})=>Response.json({
  next_action:reason==='catalog_price_review_required'?'compare_shopify_price':
   reason==='no_saved_draft'?'save_quote_draft':
   reason==='source_revision_changed'?'reload_original_request':
+  reason==='draft_revision_changed'?'reload_saved_quote_draft':
   reason==='trusted_customer_context_unavailable'?'verify_shopify_customer':
   'manual_owner_review',
  can_publish:false,can_invoice:false,can_create_order:false,
@@ -65,9 +67,12 @@ export async function handleWorkQuoteOwnerPreflight({
     typeof readExactDetail!=='function'||typeof readCatalog!=='function')
    return respond(503,'source_unavailable');
  const url=new URL(request.url),entries=[...url.searchParams.entries()];
- const id=entries.length===1&&entries[0][0]==='submission_id'?
-  entries[0][1]:null;
- if(!ID.test(id||'')||(request.headers.get('origin')&&
+ const id=url.searchParams.get('submission_id');
+ const expectedSource=url.searchParams.get('expected_source_revision');
+ const expectedDraft=url.searchParams.get('expected_draft_revision');
+ if(entries.length!==3||!ID.test(id||'')||
+   !REVISION.test(expectedSource||'')||!REVISION.test(expectedDraft||'')||
+   (request.headers.get('origin')&&
    request.headers.get('origin')!==url.origin))
    return respond(400,'invalid_request');
  // Let SDK redirect/401 propagate; never convert auth errors to source data.
@@ -87,6 +92,7 @@ export async function handleWorkQuoteOwnerPreflight({
   detail=await readExactDetail({submissionId:id});
   if(detail?.submission_id!==id||
      detail.revision!==entry.revision||
+     detail.revision!==Number(expectedSource)||
      detail.items?.length!==entry.item_count)
     return respond(409,'source_revision_changed');
   const row=await db.prepare(
@@ -98,6 +104,8 @@ export async function handleWorkQuoteOwnerPreflight({
   if(row===null)return respond(200,'held','no_saved_draft');
   try{draft=projectVerifiedWorkQuoteDraft({row,detail,submissionId:id});}
   catch{return respond(409,'held','unverified_saved_draft');}
+  if(draft.draft_revision!==Number(expectedDraft))
+   return respond(409,'held','draft_revision_changed');
  }catch{return respond(503,'canonical_source_unavailable');}
  const variants=deriveVerifiedWorkQuoteVariantIds({
   detail,submissionId:id,revision:detail.revision,
@@ -179,6 +187,7 @@ export async function handleWorkQuoteOwnerPreflight({
  // Even a ready state is a review-only eligibility to ask Shopify for
  // a FRESH native calculation in a DIFFERENT gated request.
  return Response.json({...review,
+  source_revision:detail.revision,draft_revision:draft.draft_revision,
   can_publish:false,can_invoice:false,can_create_order:false,
   can_charge_customer:false,can_send_email:false,
  },{status:200,headers:HEADERS});

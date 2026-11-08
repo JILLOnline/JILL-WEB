@@ -164,7 +164,10 @@ export function WorkQuoteWorksheet({
   const merchantEdited=useRef(false);
   const merchantExplicitReload=useRef(false);
   const [draftRevision,setDraftRevision]=useState(restored?.draftRevision??0);
-  const [restoredActive,setRestoredActive]=useState(restored!==null);
+  const [restoredSourceRevision,setRestoredSourceRevision]=useState<number|null>(
+    restored?savedDraft!.source_revision:null,
+  );
+  const restoredActive=restoredSourceRevision!==null&&restoredSourceRevision===sourceRevision;
   const [blocked,setBlocked]=useState(false);
   const [feedback,setFeedback]=useState("");
   const busy=saveFetcher.state!=="idle"||readFetcher.state!=="idle";
@@ -257,13 +260,14 @@ export function WorkQuoteWorksheet({
       setPrices(projection.prices);
       setFees(projection.fees as Fees);
       setDraftRevision(projection.draftRevision);
-      setRestoredActive(true);
+      setRestoredSourceRevision(response.draft!.source_revision);
       setBlocked(false);
       setFeedback("Verified draft revision "+
         projection.draftRevision+" restored.");
       return;
     }
     if(check.state==="none"){
+      setRestoredSourceRevision(null);
       setBlocked(false);
       setFeedback("No saved quote draft exists for this request.");
       return;
@@ -291,7 +295,7 @@ export function WorkQuoteWorksheet({
   const edited=()=>{
     // Do not replace the operation ID after an ambiguous commit.
     merchantEdited.current=true;
-    setRestoredActive(false);
+    setRestoredSourceRevision(null);
     setFeedback("");
   };
 
@@ -533,8 +537,11 @@ export function WorkQuoteWorksheet({
           <WorkQuoteCatalogComparison
             submissionId={submissionId} sourceRevision={sourceRevision}
             review={priceReview} enabled={catalogReviewEnabled}/>
-          {quotePreflightEnabled&&<WorkQuoteOwnerPreflightPanel
-            submissionId={submissionId}/>}
+          {quotePreflightEnabled&&verifiedSource&&restoredActive&&!busy&&!blocked&&
+            !locked&&draftRevision>0&&<WorkQuoteOwnerPreflightPanel
+              key={JSON.stringify([submissionId,sourceRevision,draftRevision])}
+              submissionId={submissionId} sourceRevision={sourceRevision}
+              draftRevision={draftRevision}/>}
           <WorkQuoteArtworkAudit detail={detail}
             submissionId={submissionId} sourceRevision={sourceRevision}/>
             </div>
