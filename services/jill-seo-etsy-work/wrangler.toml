@@ -1,0 +1,20 @@
+name = "jill-seo-etsy-work"
+main = "worker.mjs"
+compatibility_date = "2026-11-08"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = false
+
+[vars]
+JILL_SEO_ETSY_ENABLED = "false"
+JILL_SEO_ORIGIN = "https://jill-seo-etsy-work.jill-work-custom-orders.workers.dev"
+
+[[durable_objects.bindings]]
+name = "ETSY_CONNECTION"
+class_name = "EtsyConnection"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EtsyConnection"]
