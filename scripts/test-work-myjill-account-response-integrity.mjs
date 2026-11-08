@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
-import {loadWorkCustomerConversationState,WORK_CUSTOM_ORDER_ACCOUNT_URL}
+import {loadWorkCustomerConversationState,WORK_CUSTOM_ORDER_ACCOUNT_URL,
+ WorkCustomerAccountReadError}
  from '../shared/customer-custom-orders.mjs';
+import {customOrderReadRecovery}
+ from '../extensions/jill-account-dashboard/src/pages/custom-order-presentation.mjs';
 
 const id='jill:11111111-2222-4333-8444-555555555555';
 const now='2026-10-22T16:00:00.000Z';
@@ -47,4 +50,30 @@ for(const [orders,reason] of bad){
  await assert.rejects(()=>read(orders),reason);
 }
 assert.deepEqual((await read([])).orders,[]);
+// Failures remain failures, with bounded recovery guidance and one fresh
+// token per explicit attempt. Never trust or retain server error text.
+let tokenReads=0,requests=0;
+for(const [status,code,copy] of [
+ [429,'rate_limited',/Wait a minute/],
+ [401,'unauthenticated_account',/Sign out and sign back in/],
+ [503,'service_unavailable',/temporarily unavailable/],
+ [403,'read_rejected',/^$/],
+]){
+ await assert.rejects(()=>loadWorkCustomerConversationState({
+  sessionToken:{get:async()=>{tokenReads++;return token;}},
+  request:async()=>{requests++;return {ok:false,status,
+   json:()=>{throw Error('Failure body must not be read or displayed.');}};},
+ }),error=>{
+  assert.ok(error instanceof WorkCustomerAccountReadError);
+  assert.equal(error.code,code);
+  assert.match(customOrderReadRecovery(error),copy);
+  assert.ok(!JSON.stringify(error).includes(token));
+  return true;
+ });
+}
+assert.equal(tokenReads,4);
+assert.equal(requests,4,'No automatic retry consumes more quota.');
+assert.equal(customOrderReadRecovery({code:'rate_limited'}),'',
+ 'Unknown thrown values cannot manufacture a classified failure.');
+assert.equal(customOrderReadRecovery(new Error('private diagnostic')),'');
 console.log('PASS My JILL shared account read rejects duplicate, malformed or forged public threads before either customer screen renders.');

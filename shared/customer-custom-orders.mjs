@@ -7,6 +7,19 @@ export const WORK_CUSTOM_ORDER_ACCOUNT_URL=
   'https://jill-work-custom-orders-qa.jill-work-custom-orders.workers.dev/jill-custom-order-account';
 const REPLY_URL=new URL('/jill-custom-order-reply',WORK_CUSTOM_ORDER_ACCOUNT_URL).href;
 
+// Retain only a bounded failure category, never a token, response body or
+// customer identifier. Callers still discard all data on a failed read.
+export class WorkCustomerAccountReadError extends Error {
+  constructor(status) {
+    super(status===401
+      ? 'Please sign in to view your Custom Orders.'
+      : 'Your Custom Orders could not be verified. Please try again.');
+    this.name='WorkCustomerAccountReadError';
+    this.code=status===429?'rate_limited':status===401?'unauthenticated_account'
+      :status>=500&&status<=599?'service_unavailable':'read_rejected';
+  }
+}
+
 // Kept in memory by the composing screen across failed sends. A fresh token
 // is acquired for EACH send or receipt read. No customer identity in input.
 export async function sendWorkCustomerReply({sessionToken,command,request=fetch}={}){
@@ -79,11 +92,7 @@ export async function loadWorkCustomerConversationState({
     },
     body:'',
   });
-  if(!response?.ok)throw new Error(
-    response?.status===401
-      ? 'Please sign in to view your Custom Orders.'
-      : 'Your Custom Orders could not be verified. Please try again.',
-  );
+  if(!response?.ok)throw new WorkCustomerAccountReadError(response?.status);
   const data=await response.json();
   signal?.throwIfAborted?.();
   if(data?.version!==1||

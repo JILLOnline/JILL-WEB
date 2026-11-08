@@ -1,5 +1,18 @@
 // Presentation-only formatting for the canonical My JILL Custom Orders screen.
 // No account identity, backend reads, or durable order state is owned here.
+import {WorkCustomerAccountReadError} from '../../../../shared/customer-custom-orders.mjs';
+
+export function customOrderReadRecovery(error) {
+  if(!(error instanceof WorkCustomerAccountReadError))return '';
+  if(error.code==='rate_limited')
+    return 'Requests are being checked too quickly. Wait a minute before trying again.';
+  if(error.code==='unauthenticated_account')
+    return 'Sign out and sign back in, then try again.';
+  if(error.code==='service_unavailable')
+    return 'Request history is temporarily unavailable. Please try again later.';
+  return '';
+}
+
 export const CUSTOM_ORDER_STATUS = Object.freeze({
   received: {label:'Received',tone:'info',detail:'Your request has been received.'},
   reviewing: {label:'In review',tone:'info',detail:'We are reviewing your request.'},

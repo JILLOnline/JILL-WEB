@@ -8,7 +8,8 @@ import {projectVerifiedConversation}
 import {selectOwnedMessageRequest,retainOwnedMessageDrafts,updateOwnedMessageDraft,
   filterOwnedMessageThreads,MYJILL_MESSAGE_FILTERS}
   from '../../../../shared/customer-message-selection.mjs';
-import {customOrderShortId,customOrderDateTime,customOrderTitle,customOrderNextStep}
+import {customOrderShortId,customOrderDateTime,customOrderTitle,customOrderNextStep,
+  customOrderReadRecovery}
   from './custom-order-presentation.mjs';
 import RequestConversation from './RequestConversation.jsx';
 
@@ -16,6 +17,7 @@ import RequestConversation from './RequestConversation.jsx';
 // per owned Custom Order. NOT a new account identifier or message store.
 export default function Messages({requestedSubmissionId=null,drafts,onDraftsChange,onNavigate}){
   const [attempt,setAttempt]=useState(0);
+  const [recovery,setRecovery]=useState('');
   const [state,setState]=useState({status:'loading',orders:[],replyEnabled:false});
   const [selected,setSelected]=useState(null);
   const [filter,setFilter]=useState('all');
@@ -27,6 +29,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
     // select only if the freshly authenticated account actually owns it.
     if(requestedSubmissionId!==null)setFilter('all');
     setState({status:'loading',orders:[],replyEnabled:false});
+    setRecovery('');
     const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
     loadWorkCustomerConversationState({sessionToken,signal:controller.signal}).then(({orders,replyEnabled})=>{
       const list=projectCustomerMessageInbox(orders);
@@ -38,11 +41,12 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
         requestedId:requestedSubmissionId,previousId:previous,
       }));
       setState({status:'ready',orders,replyEnabled});
-    }).catch(()=>{
+    }).catch(error=>{
       if(!active)return;
       // Never show stale messages from another signed-in account.
       onDraftsChange({});setSelected(null);
       setState({status:'error',orders:[],replyEnabled:false});
+      setRecovery(customOrderReadRecovery(error));
     });
     return ()=>{active=false;controller.abort();};
   },[attempt,requestedSubmissionId]);
@@ -74,6 +78,7 @@ export default function Messages({requestedSubmissionId=null,drafts,onDraftsChan
           <s-banner tone="warning">
             We couldn't verify your messages. No previous account's
             conversations are displayed.
+            {recovery&&` ${recovery}`}
           </s-banner>
           <s-button variant="secondary" onClick={()=>setAttempt(x=>x+1)}>
             Try again

@@ -8,12 +8,14 @@ import {
   customOrderStatus,customOrderNextStep,customOrderTitle,customOrderShortId,
   customOrderDateTime,customOrderDateOnly,customOrderFulfillment,
   customOrderRequestedQuantity,
+  customOrderReadRecovery,
 } from './custom-order-presentation.mjs';
 
 // UI-only WORK account screen. Every read obtains a fresh Shopify session
 // token through the existing canonical reader. Never select orders by email.
 export default function CustomOrders({onNavigate,drafts,onDraftsChange,requestedSubmissionId=null}) {
   const [attempt,setAttempt]=useState(0);
+  const [recovery,setRecovery]=useState('');
   const [state,setState]=useState({status:'loading',orders:[],activity:null,replyEnabled:false});
   const [filter,setFilter]=useState('all');
   const [searchQuery,setSearchQuery]=useState('');
@@ -24,6 +26,7 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
     let active=true;
     const controller=new AbortController();
     setState({status:'loading',orders:[],activity:null,replyEnabled:false});
+    setRecovery('');
     setRefreshing(true);
     const sessionToken=typeof shopify!=='undefined'
       ? shopify.sessionToken : null;
@@ -51,11 +54,12 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
           setRefreshing(false);
         }
       })
-      .catch(()=>{
+      .catch(error=>{
         if(active){
           onDraftsChange({}); // Account could have changed; clear uncertain replies.
           setExpandedIds({});
           setState({status:'error',orders:[],activity:null,replyEnabled:false});
+          setRecovery(customOrderReadRecovery(error));
           setRefreshing(false);
         }
       });
@@ -91,7 +95,10 @@ export default function CustomOrders({onNavigate,drafts,onDraftsChange,requested
           )}
           {state.status==='error' && (
             <s-stack direction="block" gap="base">
-              <s-banner tone="warning">We couldn't verify your Custom Order history. Your requests haven't been changed.</s-banner>
+              <s-banner tone="warning">
+                We couldn't verify your Custom Order history. Your requests haven't been changed.
+                {recovery&&` ${recovery}`}
+              </s-banner>
               <s-button variant="secondary" onClick={()=>setAttempt(value=>value+1)}>
                 Try again
               </s-button>

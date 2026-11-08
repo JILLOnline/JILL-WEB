@@ -4,18 +4,20 @@ import {loadWorkCustomerConversationState}
 import {projectMyJillRecentRequests}
  from './myjill-recent-requests.mjs';
 import {customOrderShortId,customOrderStatus,customOrderNextStep,customOrderDateTime,
- customOrderDateOnly,customOrderFulfillment}
+ customOrderDateOnly,customOrderFulfillment,customOrderReadRecovery}
  from './custom-order-presentation.mjs';
 
 // Uses exactly the same signed Shopify Customer Account reader as Custom
 // Orders and Messages. No email matching, guest claims or shadow request DB.
 export default function RecentRequests({onNavigate}){
  const [attempt,setAttempt]=useState(0);
+ const [recovery,setRecovery]=useState('');
  const [state,setState]=useState({status:'loading',recent:[],total:0});
  useEffect(()=>{
   let active=true;
   const controller=new AbortController();
   setState({status:'loading',recent:[],total:0});
+  setRecovery('');
   const sessionToken=typeof shopify!=='undefined'?shopify.sessionToken:null;
   loadWorkCustomerConversationState({sessionToken,signal:controller.signal})
    .then(({orders})=>{
@@ -23,8 +25,11 @@ export default function RecentRequests({onNavigate}){
     const projected=projectMyJillRecentRequests(orders);
     setState({status:'ready',...projected});
    })
-   .catch(()=>{
-    if(active)setState({status:'unavailable',recent:[],total:0});
+   .catch(error=>{
+    if(active){
+      setState({status:'unavailable',recent:[],total:0});
+      setRecovery(customOrderReadRecovery(error));
+    }
    });
   return ()=>{active=false;controller.abort();};
  },[attempt]);
@@ -44,6 +49,7 @@ export default function RecentRequests({onNavigate}){
    <s-banner tone="warning">
     Recent requests couldn't be verified. We won't show unconfirmed
     activity from another account.
+    {recovery&&` ${recovery}`}
     <s-button variant="secondary" onClick={()=>setAttempt(x=>x+1)}>
      Try again
     </s-button>
