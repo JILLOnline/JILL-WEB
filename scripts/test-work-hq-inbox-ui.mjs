@@ -64,7 +64,10 @@ const landing=readFileSync(
 // Shopify App Bridge must authenticate route DATA requests. React Router's
 // automatic prefetch link requests may lack a fresh embedded session token;
 // they have historically generated spurious /auth/login 200 navigation.
-assert.match(readFileSync('services/jill-order-desk/app-home/app/routes/app.tsx','utf8'),/<NavLink to="\/app\/requests"/);
+const appShell=readFileSync('services/jill-order-desk/app-home/app/routes/app.tsx','utf8');
+assert.match(appShell,/<NavLink to="\/app\/requests"/);
+for(const section of ['Home','Requests','Messages','Contact Us','Catalog','Settings'])
+  assert.match(appShell,new RegExp('>\\s*'+section+'\\s*</NavLink>'));
 assert.doesNotMatch(landing,/prefetch\s*=/);
 assert.doesNotMatch(route,/prefetch\s*=/);
 const serverLoader=readFileSync(
@@ -118,7 +121,7 @@ assert.match(route,/onClick=\{toggleDetails\}/);
 assert.match(route,/<div className="jill-inbox__columns"/);
 assert.match(route,/<div className="jill-inbox__row"/);
 assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
-assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
 assert.doesNotMatch(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
 assert.match(quickActions,/className="jill-actions__direct-buttons"/);
