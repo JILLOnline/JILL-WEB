@@ -18,6 +18,7 @@ const home=fs.readFileSync(new URL('../services/jill-order-desk/app-home/app/rou
 const shell=fs.readFileSync(new URL('../services/jill-order-desk/app-home/app/routes/app.tsx',import.meta.url),'utf8');
 assert.doesNotMatch(home,/to="\/app\/requests"/);assert.equal((shell.match(/to="\/app\/requests"/g)||[]).length,1);
 assert.match(home,/loadVerifiedMerchantInbox\(args\)/);assert.match(home,/inboxStats\(model.records\)/);
+assert.match(home,/summarizeWorkHomePriorities\(model\.records\)/);
 assert.match(home,/home.state==="staff_verified"&&home.role==="owner"/);
 assert.match(home,/<Suspense/);assert.match(home,/Request counts are temporarily unavailable/);
 assert.doesNotMatch(home,/stats:\{total:|sessionStorage|localStorage|draftOrderCreate/);
@@ -49,11 +50,18 @@ for(const home of [{state:'access_denied'},{state:'staff_verified',role:'staff'}
  const env={home,sdkCalls:0,feedCalls:0};const response=await loader(args(env));assert.equal(env.feedCalls,0);assert.equal(await response.data.requestSummary,null);
 }
 let releaseFeed;
-const env={home:{state:'staff_verified',role:'owner'},sdkCalls:0,feedCalls:0,feedGate:new Promise(r=>releaseFeed=r),feed:{state:'ready',records:[{submission_id:'PRIVATE_SYNTHETIC_ID',customer_status:'reviewing',internal_status:'needs_quote'},{submission_id:'ANOTHER_PRIVATE_SYNTHETIC_ID',customer_status:'received',internal_status:'new'}]}};
+const env={home:{state:'staff_verified',role:'owner'},sdkCalls:0,feedCalls:0,feedGate:new Promise(r=>releaseFeed=r),feed:{state:'ready',records:[
+ {submission_id:'PRIVATE_SYNTHETIC_ID',customer_status:'reviewing',internal_status:'needs_quote',date_needed:'2026-11-20',customer_name:'SYNTHETIC CUSTOMER'},
+ {submission_id:'ANOTHER_PRIVATE_SYNTHETIC_ID',customer_status:'received',internal_status:'new',date_needed:'2026-11-25'},
+ {submission_id:'PAST_DUE_SYNTHETIC_ID',customer_status:'in_production',internal_status:'printing',date_needed:'2026-11-10'},
+ {submission_id:'UPCOMING_SYNTHETIC_ID',customer_status:'in_production',internal_status:'assembly',date_needed:'2026-11-13'},
+]}};
 const response=await loader(args(env));assert.equal(env.sdkCalls,1);assert.equal(env.feedCalls,1);assert.match(response.init.headers.get('cache-control'),/no-store/);
 let settled=false;response.data.requestSummary.then(()=>settled=true);await Promise.resolve();assert.equal(settled,false,'Home shell must not wait for canonical counts');
 releaseFeed();const summary=await response.data.requestSummary;
-assert.deepEqual(summary,{state:'ready',stats:{total:2,reviewing:1,needsQuote:1}});assert.doesNotMatch(JSON.stringify(summary),/PRIVATE_SYNTHETIC/);
+assert.deepEqual(summary,{state:'ready',stats:{total:4,reviewing:1,needsQuote:1},
+ nextActions:{pastDue:1,newRequests:1,approaching:1}});
+assert.doesNotMatch(JSON.stringify(summary),/PRIVATE_SYNTHETIC|ANOTHER_PRIVATE|PAST_DUE|UPCOMING|SYNTHETIC CUSTOMER/);
 const outage=await loader(args({home:{state:'staff_verified',role:'owner'},sdkCalls:0,feedCalls:0,feed:{state:'source_unavailable',records:[]}}));
 assert.deepEqual(await outage.data.requestSummary,{state:'source_unavailable'},'Failed source read must not become zero requests');
-console.log('PASS actual Home loader: staff/denied never read feed; authorized counts stream after shell; only aggregate stats serialize; outage is not zero.');
+console.log('PASS actual Home loader: staff/denied never read feed; authorized KPIs and priority counts stream after shell; no request IDs serialize; outage is not zero.');

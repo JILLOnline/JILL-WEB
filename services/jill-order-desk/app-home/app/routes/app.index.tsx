@@ -5,11 +5,16 @@ import {loadWorkShopifyAdminRoute} from "../../../shopify-host/app-home-route.mj
 import {authenticateWorkAdminOnce} from "../../../work-admin-auth-once.mjs";
 import {loadVerifiedMerchantInbox} from "./app.requests-source.server";
 import {inboxStats} from "../../../inbox-display.mjs";
+import {summarizeWorkHomePriorities} from "../../../work-hq-home-priorities.mjs";
 import "../styles/hq-home.css";
 
 const WORK_ADMIN="https://admin.shopify.com/store/jill-work";
 
-type RequestSummary={state:string;stats?:{total:number;reviewing:number;needsQuote:number}};
+type RequestSummary={
+  state:string;
+  stats?:{total:number;reviewing:number;needsQuote:number};
+  nextActions:{pastDue:number;newRequests:number;approaching:number}|null;
+};
 type HomeModel={state:string;description:string;role?:string;requestSummary:Promise<RequestSummary|null>};
 export async function loader(args:LoaderFunctionArgs) {
   const {request,context}=args,env=context.cloudflare.env;
@@ -25,17 +30,35 @@ export async function loader(args:LoaderFunctionArgs) {
     ? (async()=>{
         const result=await loadVerifiedMerchantInbox(args);
         const model=await result.json() as {state:string;records:unknown[]};
-        return model.state==="ready"?{state:model.state,stats:inboxStats(model.records)}:{state:model.state};
+        return model.state==="ready"?{state:model.state,stats:inboxStats(model.records),
+          nextActions:summarizeWorkHomePriorities(model.records)}:{state:model.state};
       })()
     : Promise.resolve(null);
   return routeData({...home,requestSummary},{status:response.status,headers:response.headers});
 }
 function RequestOverview({summary}:{summary:RequestSummary|null}){
   if(summary?.state!=="ready"||!summary.stats)return <p className="jill-hq__summary-state" role="status">Request counts are temporarily unavailable.</p>;
+  const actions:{label:string;count:number}[]|null=summary.nextActions?[
+    {label:"New requests",count:summary.nextActions.newRequests},
+    {label:"Requested dates passed",count:summary.nextActions.pastDue},
+    {label:"Dates approaching",count:summary.nextActions.approaching},
+  ].filter(action=>action.count>0):null;
   return <div className="jill-hq__metrics" aria-label="Request overview">
     <div><span>Requests</span><strong>{summary.stats.total}</strong></div>
     <div><span>In review</span><strong>{summary.stats.reviewing}</strong></div>
     <div><span>Needs a quote</span><strong>{summary.stats.needsQuote}</strong></div>
+    <section className="jill-hq__priority" aria-labelledby="hq-next-actions">
+      <h3 id="hq-next-actions">Next actions</h3>
+      {actions===null?<p className="jill-hq__summary-state">Priority signals are temporarily unavailable.</p>:
+       actions.length>0?<ul className="jill-hq__priority-list">
+        {actions.map(action=><li key={action.label}>
+          <strong>{action.count}</strong><span>{action.label}</span>
+        </li>)}
+      </ul>:<p className="jill-hq__summary-state">No matching priority signals in the current request feed.</p>}
+      <p className="jill-hq__source-note">
+        Use the single Requests entry in navigation to review details. Requested dates are not delivery promises.
+      </p>
+    </section>
   </div>;
 }
 
