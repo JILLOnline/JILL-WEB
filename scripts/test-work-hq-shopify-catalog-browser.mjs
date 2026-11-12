@@ -144,6 +144,7 @@ assert.match(ui,/name="q"/);
 assert.match(ui,/next\.set\("q",data\.search!\)/);
 assert.match(ui,/variants_truncated/);
 assert.match(ui,/product\.total_inventory/);
+assert.match(ui,/entry\.tracked===false&&<p>Not tracked \/ quantity unknown<\/p>/);
 assert.match(ui,/href=\{product\.admin_url\}/);
 assert.match(ui,/WORK · SHOPIFY ADMIN/);
 assert.match(ui,/No product, price or inventory edits from HQ/);
