@@ -40,7 +40,8 @@ export function requestShortId(id){
 }
 export function dateLabel(value,{includeTime=false}={}){
   if(!value)return 'Not supplied';
-  const iso=includeTime?value:value+'T12:00:00.000Z';
+  const iso=includeTime||/^\d{4}-\d{2}-\d{2}T/.test(value)
+    ?value:value+'T12:00:00.000Z';
   const date=new Date(iso);
   if(!Number.isFinite(date.getTime()))return 'Not supplied';
   const formatted=new Intl.DateTimeFormat('en-US',{
