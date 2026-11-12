@@ -118,7 +118,7 @@ assert.match(route,/onClick=\{toggleDetails\}/);
 assert.match(route,/<div className="jill-inbox__columns"/);
 assert.match(route,/<div className="jill-inbox__row"/);
 assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
-assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
 assert.doesNotMatch(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
 assert.match(quickActions,/className="jill-actions__direct-buttons"/);
