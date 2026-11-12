@@ -154,6 +154,9 @@
 .jill-inbox__cell--actions .jill-actions--direct{
   width:auto;min-width:0;flex:1 1 auto
 }
+@media(pointer:coarse){
+  .jill-actions__direct-buttons button{min-height:44px}
+}
 @media(max-width:760px){
   .jill-actions__direct-buttons{
     justify-content:flex-start

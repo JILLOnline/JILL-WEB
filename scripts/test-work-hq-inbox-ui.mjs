@@ -57,6 +57,7 @@ assert.deepEqual(new Set(INBOX_FILTERS.map(row=>row[0])).size,INBOX_FILTERS.leng
 // merchant reader; never introduce an unverified customer profile or write.
 const route=readFileSync(
   'services/jill-order-desk/app-home/app/routes/app.requests.tsx','utf8');
+const executableRoute=route.replace(/\{\/\*[\s\S]*?\*\/\}/g,'');
 const style=readFileSync(
   'services/jill-order-desk/app-home/app/styles/inbox.css','utf8');
 const helper=readFileSync(
@@ -124,7 +125,7 @@ assert.match(route,/<div className="jill-inbox__columns"/);
 assert.match(route,/<div className="jill-inbox__row"/);
 assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
 assert.match(route,/dateLabel\(item\.submitted_at\)/);
-assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
+assert.match(executableRoute,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
 assert.doesNotMatch(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
 assert.match(quickActions,/className="jill-actions__direct-buttons"/);
@@ -152,6 +153,7 @@ assert.match(directButtonStyle,/min-height:40px/);
 assert.match(directButtonStyle,/padding:8px 10px/);
 assert.match(directButtonStyle,/white-space:nowrap/);
 assert.match(actionStyle,/\.jill-actions button:focus-visible/);
+assert.match(actionStyle,/@media\(pointer:coarse\)\{\s*\.jill-actions__direct-buttons button\{min-height:44px\}/);
 assert.match(style,/\.jill-inbox__row-trigger\{/);
 assert.match(style,/\.jill-inbox__order-details\[hidden\]/);
 assert.match(actionStyle,/\.jill-actions__quick-menu summary\{/);
