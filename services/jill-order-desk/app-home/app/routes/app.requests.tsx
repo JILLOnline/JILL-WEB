@@ -168,7 +168,7 @@ function RequestCard({item,controlsEnabled,archiveEnabled,removed,onArchiveChang
       </span>
       <span className="jill-inbox__cell jill-inbox__cell--submitted" data-label="Submitted">
         <time dateTime={item.submitted_at} title={fullSubmitted}>
-          {dateLabel(item.submitted_at)}
+          {dateLabel(item.submitted_at.slice(0,10))}
         </time>
       </span>
       </button>
