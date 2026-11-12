@@ -23,7 +23,9 @@ assert.doesNotMatch(opener,/<Link\b|<a\b|<input\b|<select\b|<textarea\b|<button\
 assert.doesNotMatch(opener,/<div className="jill-inbox__cell/,
   'Phrasing content only inside native button');
 const outside=route.slice(ending);
-assert.match(outside,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} direct\/>/);
+assert.match(outside,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
+assert.match(outside,/className="jill-inbox__editor-slot" ref=\{setEditorHost\}/);
+assert.match(actions,/direct&&editorHost&&editorVisible\?createPortal\(/);
 assert.match(outside,/<ArchiveControl item=\{item\}/);
 assert.match(outside,/id=\{"jill-inbox-details-"/);
 assert.match(outside,/hidden=\{!detailsOpen\}/);
