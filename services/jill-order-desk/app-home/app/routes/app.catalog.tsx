@@ -81,7 +81,7 @@ export default function Catalog(){
         </p>}
         {view==="products"?<div className="jill-catalog__table">
           <div className="jill-catalog__columns" aria-hidden="true">
-            <span>Product</span><span>Status</span><span>Shopify stock</span>
+            <span>Product</span><span>Status</span><span>Shopify quantity</span>
             <span>Variants / price / SKU</span><span>Manage</span>
           </div>
           {records.length===0?<p className="jill-catalog__empty">
@@ -98,10 +98,10 @@ export default function Catalog(){
               <span className={"jill-catalog__status jill-catalog__status--"+
                 (product.status||"UNKNOWN").toLowerCase()}>{product.status||"Unknown"}</span>
             </div>
-            <div className="jill-catalog__cell" data-label="Shopify stock">
+            <div className="jill-catalog__cell" data-label="Shopify quantity">
               {product.total_inventory===null||product.total_inventory===undefined
-                ?"Unknown":product.total_inventory+" total"}
-              <small>Not custom-order capacity</small>
+                ?"Quantity unavailable":"Shopify reports "+product.total_inventory}
+              <small>Variant tracking may be off; check Inventory before interpreting zero. Not custom-production capacity.</small>
             </div>
             <div className="jill-catalog__cell jill-catalog__variants" data-label="Variants">
               {product.variants?.map(variant=><div key={variant.id}>

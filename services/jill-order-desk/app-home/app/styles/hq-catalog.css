@@ -37,7 +37,7 @@
 .jill-catalog__row:nth-child(odd){background:#fdfbff}
 .jill-catalog__row:hover{background:#f7f0fb}
 .jill-catalog__cell{min-width:0;font-size:12px;overflow-wrap:anywhere}
-.jill-catalog__cell small{display:block;font-size:10px;color:var(--jill-muted);
+.jill-catalog__cell small{display:block;font-size:12px;color:var(--jill-muted);
   margin-top:3px}
 .jill-catalog__identity{display:grid;gap:4px}
 .jill-catalog__identity>strong{font-size:13px;color:#452a5b}

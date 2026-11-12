@@ -145,11 +145,17 @@ assert.match(ui,/next\.set\("q",data\.search!\)/);
 assert.match(ui,/variants_truncated/);
 assert.match(ui,/product\.total_inventory/);
 assert.match(ui,/entry\.tracked===false&&<p>Not tracked \/ quantity unknown<\/p>/);
+assert.match(ui,/<span>Shopify quantity<\/span>/);
+assert.match(ui,/data-label="Shopify quantity"/);
+assert.match(ui,/Shopify reports "\+product\.total_inventory/);
+assert.match(ui,/Variant tracking may be off; check Inventory before interpreting zero/);
+assert.doesNotMatch(ui,/product\.total_inventory\+" total"/);
 assert.match(ui,/href=\{product\.admin_url\}/);
 assert.match(ui,/WORK · SHOPIFY ADMIN/);
 assert.match(ui,/No product, price or inventory edits from HQ/);
 assert.match(style,/@media\(max-width:980px\)/);
 assert.match(style,/\.jill-catalog__table/);
+assert.match(style,/\.jill-catalog__cell small\{display:block;font-size:12px/);
 for(const source of [ui,style]){
   assert.doesNotMatch(source,/fetch\(|localStorage|sessionStorage|document\.cookie|window\.parent|!important/);
 }

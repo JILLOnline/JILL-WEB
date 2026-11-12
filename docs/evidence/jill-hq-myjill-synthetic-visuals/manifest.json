@@ -1,0 +1,39 @@
+{
+  "evidenceType": "synthetic local preview screenshots",
+  "viewportCssWidths": [390, 768, 1440],
+  "viewportCssHeightPixels": 1200,
+  "captureMode": "Viewport captures, not full-page screenshots.",
+  "screens": [
+    "hq-home",
+    "hq-requests",
+    "hq-request-detail",
+    "hq-messages",
+    "hq-contact-us",
+    "hq-catalog",
+    "hq-settings",
+    "myjill-overview",
+    "myjill-custom-orders",
+    "myjill-messages",
+    "myjill-rewards",
+    "myjill-coupons"
+  ],
+  "fidelity": {
+    "hq": "Synthetic static markup with fictional data, canonical HQ theme and route styles; authenticated route components and Shopify Admin chrome are not mounted.",
+    "myJill": "Synthetic static markup with fictional data and a local approximation of Shopify UI extension elements; actual Preact components and Shopify rendering are not mounted."
+  },
+  "limits": [
+    "Not authenticated WORK acceptance or evidence of live behavior.",
+    "HQ route components, Shopify Admin chrome, My JILL Preact components, and Shopify UI extension rendering are not mounted."
+  ],
+  "networkAndWriteBoundary": "The preview makes no external data/API calls; its loopback-only screenshot receiver writes only the allowlisted synthetic PNGs.",
+  "browserChecks": {
+    "screenshots": 36,
+    "documentHorizontalOverflowCases": 0,
+    "externalNetworkRequests": 0,
+    "hqNavigationLinks": 6,
+    "hqMobileNavigationMinimumHeightPixels": 44,
+    "requestDetailsDisclosure": "opens and closes",
+    "myJillTargetNavigation": "works inside fixture only",
+    "outOfScopeMyJillNavigationItems": "disabled"
+  }
+}
