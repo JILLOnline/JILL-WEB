@@ -123,7 +123,7 @@ export default function Catalog(){
             <article className="jill-catalog__collection" key={entry.id}>
               <h3>{entry.product_title?entry.product_title+" · ":""}{entry.title}</h3>
               {entry.active!==undefined&&<p>{entry.active?"Active location":"Inactive location"}</p>}
-              {entry.tracked===false&&<p>Inventory tracking is off. Stock is unknown.</p>}
+              {entry.tracked===false&&<p>Not tracked / quantity unknown</p>}
               {entry.locations&&<ul>{entry.locations.map(location=><li key={location.id}>
                 {location.name}: {location.available===null?"Not tracked":location.available+" available"}
               </li>)}</ul>}
