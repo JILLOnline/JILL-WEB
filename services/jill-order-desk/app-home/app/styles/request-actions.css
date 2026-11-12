@@ -123,12 +123,12 @@
 }
 .jill-actions__direct-buttons button{
   display:inline-flex;justify-content:center;align-items:center;
-  box-sizing:border-box;min-height:36px;max-width:100%;
-  padding:6px 10px;border-radius:8px;
+  box-sizing:border-box;min-height:40px;max-width:100%;
+  padding:8px 10px;border-radius:8px;
   border:1px solid #d6c1e6;background:#fff;
-  color:#68328e;font:inherit;font-size:10px;
-  font-weight:790;line-height:1.2;
-  white-space:normal;text-align:center;cursor:pointer
+  color:#68328e;font:inherit;font-size:12px;
+  font-weight:750;line-height:1.2;
+  white-space:nowrap;text-align:center;cursor:pointer
 }
 .jill-actions__direct-buttons .jill-actions__direct-status{
   background:linear-gradient(135deg,#7e42af,#69329b);
@@ -153,6 +153,9 @@
 }
 .jill-inbox__cell--actions .jill-actions--direct{
   width:auto;min-width:0;flex:1 1 auto
+}
+@media(pointer:coarse){
+  .jill-actions__direct-buttons button{min-height:44px}
 }
 @media(max-width:760px){
   .jill-actions__direct-buttons{

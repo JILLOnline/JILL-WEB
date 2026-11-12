@@ -144,6 +144,16 @@ assert.match(quickActions,/aria-expanded=\{panel==="status"\}/);
 assert.match(quickActions,/aria-expanded=\{panel==="message"\}/);
 assert.match(quickActions,/action:"\/app\/requests\/command"/);
 assert.match(actionStyle,/\.jill-actions__direct-buttons/);
+const directButtonStyle=actionStyle.match(
+  /\.jill-actions__direct-buttons button\{([^}]+)\}/,
+)?.[1];
+assert.ok(directButtonStyle,'Direct request actions need a dedicated button rule');
+assert.match(directButtonStyle,/font-size:12px/);
+assert.match(directButtonStyle,/min-height:40px/);
+assert.match(directButtonStyle,/padding:8px 10px/);
+assert.match(directButtonStyle,/white-space:nowrap/);
+assert.match(actionStyle,/\.jill-actions button:focus-visible/);
+assert.match(actionStyle,/@media\(pointer:coarse\)\{\s*\.jill-actions__direct-buttons button\{min-height:44px\}/);
 assert.match(style,/\.jill-inbox__row-trigger\{/);
 assert.match(style,/\.jill-inbox__order-details\[hidden\]/);
 assert.match(actionStyle,/\.jill-actions__quick-menu summary\{/);
