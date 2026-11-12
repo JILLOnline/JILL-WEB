@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {selectWorkHomePriorities} from '../services/jill-order-desk/work-hq-home-priorities.mjs';
+import {selectWorkHomePriorities,summarizeWorkHomePriorities}
+ from '../services/jill-order-desk/work-hq-home-priorities.mjs';
 const rows=[
  {submission_id:'req-NEEDS123',customer_status:'reviewing',internal_status:'needs_quote',
   date_needed:'2026-11-20',updated_at:'2026-10-20T12:00:00Z',customer_name:'SECRET'},
@@ -27,4 +28,10 @@ assert.deepEqual(selectWorkHomePriorities(rows,{today:'invalid'}),[]);
 assert.deepEqual(selectWorkHomePriorities(null),[]);
 assert.deepEqual(selectWorkHomePriorities(rows,{today:'2026-10-21',limit:0}),[]);
 assert.equal(selectWorkHomePriorities(rows,{today:'2026-10-21',limit:1}).length,1);
+assert.deepEqual(summarizeWorkHomePriorities(rows,{today:'2026-10-21'}),
+ {pastDue:1,newRequests:1,approaching:0});
+assert.equal(summarizeWorkHomePriorities(null),null);
+assert.equal(summarizeWorkHomePriorities(rows,{today:'invalid'}),null);
+assert.doesNotMatch(JSON.stringify(summarizeWorkHomePriorities(rows,{today:'2026-10-21'})),
+ /submission_id|customer_name|SECRET/);
 console.log('PASS authenticated Home priorities: bounded source projection, zero PII and no fabricated message/payment state.');
