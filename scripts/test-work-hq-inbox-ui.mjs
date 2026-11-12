@@ -46,6 +46,8 @@ assert.equal(customerStatusLabel('unknown'),'Unknown status');
 assert.equal(dateLabel('2026-10-30'),'Oct 30, 2026');
 assert.equal(dateLabel('2026-10-13T21:13:57.364Z',{includeTime:true}),
   'Oct 13, 2026, 9:13 PM UTC');
+assert.equal(dateLabel('2026-01-01T00:30:00+14:00'),'Dec 31, 2025');
+assert.equal(dateLabel('2025-12-31T23:30:00-03:00'),'Jan 1, 2026');
 assert.equal(dateLabel(''),'Not supplied');
 assert.equal(dateLabel('bad-date'),'Not supplied');
 assert.equal(INBOX_FILTERS[0][0],'all');
@@ -110,7 +112,7 @@ const actionStyle=readFileSync(
   'services/jill-order-desk/app-home/app/styles/request-actions.css','utf8');
 // Compact card: one submitted timestamp, no duplicate three-field overview,
 // one prominent uppercase disclosure, and one Owner-scoped primary route link.
-assert.equal((route.match(/dateLabel\(item\.submitted_at\.slice\(0,10\)\)/g)||[]).length,1);
+assert.equal((route.match(/dateLabel\(item\.submitted_at\)/g)||[]).length,1);
 assert.doesNotMatch(route,/jill-inbox__facts|jill-inbox__open|Open request/);
 assert.match(route,/className="jill-inbox__row-trigger"/);
 assert.match(route,/hidden=\{!detailsOpen\}/);
@@ -121,7 +123,7 @@ assert.match(route,/onClick=\{toggleDetails\}/);
 assert.match(route,/<div className="jill-inbox__columns"/);
 assert.match(route,/<div className="jill-inbox__row"/);
 assert.match(route,/<time dateTime=\{item\.submitted_at\}/);
-assert.match(route,/dateLabel\(item\.submitted_at\.slice\(0,10\)\)/);
+assert.match(route,/dateLabel\(item\.submitted_at\)/);
 assert.match(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\}\s+direct editorHost=\{editorHost\}\/>/);
 assert.doesNotMatch(route,/<WorkRequestQuickActions record=\{item\} enabled=\{controlsEnabled\} compact\/>/);
 assert.match(quickActions,/: compact\s*\? <div className="jill-actions__quick-menu">/);
