@@ -56,7 +56,7 @@ function RequestOverview({summary}:{summary:RequestSummary|null}){
         </li>)}
       </ul>:<p className="jill-hq__summary-state">No matching priority signals in the current request feed.</p>}
       <p className="jill-hq__source-note">
-        Use the single Requests entry in navigation to review details. Requested dates are not delivery promises.
+        The request feed provides no freshness timestamp. Use Requests in navigation for details; requested dates are not delivery promises.
       </p>
     </section>
   </div>;
