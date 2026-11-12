@@ -21,6 +21,7 @@ assert.match(home,/loadVerifiedMerchantInbox\(args\)/);assert.match(home,/inboxS
 assert.match(home,/summarizeWorkHomePriorities\(model\.records\)/);
 assert.match(home,/home.state==="staff_verified"&&home.role==="owner"/);
 assert.match(home,/<Suspense/);assert.match(home,/Request counts are temporarily unavailable/);
+assert.match(home,/request feed provides no freshness timestamp/i);
 assert.doesNotMatch(home,/stats:\{total:|sessionStorage|localStorage|draftOrderCreate/);
 const baseline={deployment:profile.deployment,versions:[{id:profile.base,percentage:100},{id:HQ_QUOTE,percentage:0}]};
 visualBaseline(baseline,profile);assert.throws(()=>visualBaseline(baseline));
