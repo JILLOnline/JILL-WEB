@@ -60,7 +60,14 @@ assert.match(css,/\.jill-inbox__row-trigger:focus-visible/);
 assert.match(css,/\.jill-inbox__row:has\(\.jill-actions__body\) \.jill-actions--direct/);
 assert.match(actionCss,/\.jill-actions__direct-buttons button\{/);
 assert.match(actionCss,/\.jill-actions__direct-status/);
-assert.match(actionCss,/min-height:44px/);
+const directButtonRule=actionCss.match(/\.jill-actions__direct-buttons button\{([^}]*)\}/)?.[1];
+assert.ok(directButtonRule,'Direct actions must have one canonical style rule');
+assert.match(directButtonRule,/font-size:12px/,'Direct desktop action labels must be legible');
+assert.match(directButtonRule,/min-height:38px/,'Keep compact but usable desktop controls');
+assert.match(directButtonRule,/white-space:normal/,'Labels may wrap in narrow columns');
+assert.match(actionCss,/@media\(pointer:coarse\)\{\s*\.jill-actions__direct-buttons button\{min-height:44px\}/);
+assert.match(actionCss,/@media\(max-width:760px\)\{[\s\S]*?\.jill-actions__direct-buttons button\{min-height:44px;font-size:13px\}/);
+assert.match(actionCss,/\.jill-actions button:focus-visible/);
 for(const x of [css,actionCss,route,actions])
  assert.doesNotMatch(x,/window\.parent|parent\.document|document\.body\.style|position:\s*fixed|height:\s*100vh|overflow-y:\s*(?:auto|scroll)|!important/);
 console.log('PASS WORK requests: six-cell keyboard button expands order details, direct message/status sibling actions, reviewed source-only UI, no nested scroll or commerce writes.');
